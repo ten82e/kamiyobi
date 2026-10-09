@@ -821,6 +821,10 @@ function 名乘りの案内(query: string, list: Row[]): string[] {
   const 名前の語 = 語々.filter((w) => !(/\d/u.test(w) && /^[\d\s./\-年月日時分秒週周]+$/u.test(w)));
   if (!名前の語.length) return [];
   const 行の鍵 = new Set(list.map((r) => String(r.conf.key ?? "")));
+  /* **收錄全体**の行の鍵（第 928 回 – 實測 2026-11-13: `SOSP` を検索すると窓には 1 行も
+   * 無いので名簿が「締切の行が 1 本もありません」と言つたが、收錄には 13 行ある – 全部が
+   * 過去のもの。AI は其の読み方だと「SOSP の締切は無い」と答えてしまう）。 */
+  const 收錄の鍵 = new Set(allRows().map((r) => String(r.conf.key ?? "")));
   const 會議々 = snapshot().conferences ?? [];
   const 名前の殼 = (c: Record<string, unknown>): string =>
     [String(c.key ?? ""), String(c.title ?? ""), String(c.acronym ?? ""), String(c.full_name ?? "")]
@@ -847,11 +851,14 @@ function 名乘りの案内(query: string, list: Row[]): string[] {
     const 會期あり = 版々.some((e) =>
       String((e as { event_start?: unknown } | null)?.event_start ?? "").trim(),
     );
+    /* 三段で書く（第 928 回）: 絞り込みの內 → **收錄の全体** → 會期だけ / 何も無い。 */
     const 狀態 = 行の鍵.has(key)
       ? "締切の行は在りますが、いまの絞り込みで 0 件に成つて居ます（絞り込みを外すと出ます）"
-      : 會期あり
-        ? "締切の行が 1 本もありません（会期だけが収録に在り、upcoming.md とカレンダーには「開催」として載ります）"
-        : "締切の行が 1 本もありません（会期も確認できて居ません）";
+      : 收錄の鍵.has(key)
+        ? 'この窓には締切の行がありませんが、**収録には在ります**（scope: "all" で過去の分行が出せます）'
+        : 會期あり
+          ? "締切の行が 1 本もありません（会期だけが収録に在り、upcoming.md とカレンダーには「開催」として載ります）"
+          : "締切の行が 1 本もありません（会期も確認できて居ません）";
     return `- ${String(c.title ?? key)}（key: ${key}・版 ${版々.length} 件）: ${狀態}`;
   });
   return [

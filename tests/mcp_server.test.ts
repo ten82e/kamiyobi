@@ -3107,3 +3107,17 @@ it("explain_word も、切り詰めて居る時に其の旨を書く（第 925 �
     "このうち 3 行を出します",
   );
 });
+
+it("名簿の注は、收錄全体にも締切の行があればそれを言う（第 928 回）", async () => {
+  /* 實測 2026-11-13: `SOSP` を検索すると窓には 1 行も無いので名簿が「締切の行が 1 本もあり
+   * ません」と言つたが、**收錄には 13 行ある** – 全部が過去のもの。AI は其の読み方だと
+   * 「SOSP の締切は無い」と答えてしまう（実際は「公開済みの締切は過去のもの」）。 */
+  const 窓 = await call("search_deadlines", { query: "SOSP", limit: 1 });
+  const 行 = 窓.split("\n").filter((l) => /^- /.test(l) && l.includes("key:"));
+  expect(行.length, "名簿の注が出て居ん（此の檢査の前提が崩れた）").toBeGreaterThan(0);
+  expect(行[0], "收錄に締切の行があるのに「1 本も無い」と言つた").toContain("収録には在ります");
+  expect(行[0], "古い文言が残つて居る").not.toContain("締切の行が 1 本もありません");
+  /* 收錄にも大字が無い會議は從來の言葉のまま – 其れを潰さない（此处の會議は窗に有る）。 */
+  const 窓で有る = await call("search_deadlines", { query: "ICDE", limit: 1 });
+  expect(窓で有る.split("\n")[0] ?? "", "有る會議が 0 件に成った").toContain("件");
+});
