@@ -2582,3 +2582,37 @@ it("collection_stats は data.json の容量を、測れる時にだけ書く（
     `data.json（収録の全体。機械可読の正・${期待}）`,
   );
 });
+
+it("scope の別名を受け、知らない値は名指す（第 908 回）", async () => {
+  /* 實測 2026-11-01: `scope: "collection"`（索引の語「収録の全体」）も `scope: "nosuch"` も
+   * 黙って**窓**を返して居た。schema には `screen` / `all` の 2 つしか無いので、AI が資料の
+   * 語或其の儕の打鍵違いで別の物を見る – 第 886 回の「知らない種別」と同じ括り。 */
+  const 窓 = await call("search_deadlines", { query: "セキュリティ", scope: "screen", limit: 1 });
+  const 全 = await call("search_deadlines", { query: "セキュリティ", scope: "all", limit: 1 });
+  expect(窓).toContain("画面が最初に読む窓");
+  expect(全).toContain("収録の全体");
+  /* 別名は `all` と**同じ答え**を返す（資料の語をそのまま使える）。 */
+  for (const 別名 of ["collection", "full"]) {
+    const 答 = await call("search_deadlines", { query: "セキュリティ", scope: 別名, limit: 1 });
+    expect(答, `別名 ${別名} が all と違ふ`).toBe(全);
+  }
+  for (const 別名 of ["window", "catalog"]) {
+    const 答 = await call("search_deadlines", { query: "セキュリティ", scope: 別名, limit: 1 });
+    expect(答, `別名 ${別名} が screen と違ふ`).toBe(窓);
+  }
+  /* 知らない値は**名指す**（黙って別の物を返さない）。 */
+  for (const 道具 of [
+    { name: "search_deadlines", args: { query: "セキュリティ", scope: "nosuch", limit: 1 } },
+    { name: "list_upcoming", args: { days: 7, scope: "nosuch" } },
+    { name: "explain_word", args: { word: "ネットワーク GPU", scope: "nosuch" } },
+    { name: "venue_info", args: { key: "sigkdd", scope: "nosuch" } },
+  ] as const) {
+    const 答 = await call(道具.name, 道具.args as Record<string, unknown>);
+    expect(答, `${道具.name} が知らない scope を名指して居ん`).toContain(
+      "知らない scope「nosuch」",
+    );
+  }
+  /* 省いた時は名指さない（騷音を增やさない）。 */
+  const 省 = await call("search_deadlines", { query: "セキュリティ", limit: 1 });
+  expect(省, "scope を省いたのに名指した").not.toContain("知らない scope");
+});

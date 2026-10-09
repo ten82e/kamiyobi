@@ -155,8 +155,30 @@ function 品書の軸(): Map<string, unknown> {
   return 軸の索引;
 }
 
+/** `scope` を正本に直す（`collection` は `all` と同じ物 – 索引の語）。 */
+function scopeValue(scope: unknown): string {
+  const 語 = String(scope ?? "")
+    .trim()
+    .toLowerCase();
+  if (!語) return "";
+  if (語 === "all" || 語 === "collection" || 語 === "full") return "all";
+  if (語 === "screen" || 語 === "window" || 語 === "catalog") return "screen";
+  return "";
+}
+/** 直前の `pick` が「知らない scope」を見た時の文（次の返り値の頭に付ける）。 */
+let scopeErr = "";
+
 function pick(scope: unknown): { list: Row[]; 名: string; 生成: unknown; 窓が無い: boolean } {
-  if (String(scope ?? "") === "all")
+  scopeErr = "";
+  /* **覚えてwifiらない scope は名指す**（第 908 回 – 實測 2026-11-01: `scope: "collection"`
+   * や `scope: "nosuch"` は黙って**窓**を返して居た。索引の語は「収録の全体」なのに
+   * schema には `all` としか無いため、AI が資料の語或其の儕の打鍵違いで別の物を見る –
+   * 第 886 回の種別のと同じ括り）。`collection` は `all` の別名として受ける。 */
+  if (String(scope ?? "") !== "" && scopeValue(scope) === "")
+    scopeErr =
+      `知らない scope「${String(scope)}」です（screen＝画面の窓／all＝収録の全体。` +
+      "collection・full・window・catalog も受ける）。そのままの窓で出しました。";
+  if (scopeValue(scope) === "all")
     return {
       list: allRows(),
       名: "収録の全体",
@@ -861,7 +883,7 @@ function searchDeadlines(
     /(?:\d+月|\d+日|今月|来月|先月|今週|来週|先週|今年|来年|年内|年度|以内|までに|以降)/.test(
       query,
     );
-  const 頭 = `${絞り込みだけ ? "語を指定せず、絞り込みだけ" : `検索語「${query}」に当たる締切`}: ${hit.length} 件（${名} ${list.length} 行・画面の既定と同じ絞り込み。絞る前は ${素の.length} 行${ランク ? `／ランク ${ランク}` : ""}${args.domestic === true ? "／国内のみ" : ""}${args.online === true ? "／オンライン参加可のみ" : ""}${窓あり ? `／締切まで ${窓の日數} 日以内` : ""}${讀めない引數}）${知らん.length ? `／知らない種別（其の侭では 0 件に成ります）: ${知らん.join("・")}` : ""}${知らんランク ? `／知らないランク（等級は ${Recommender.rankGradeOrderJa().join("・")}）: ${知らんランク}` : ""}${日付の語 ? "\n日付は日本時間（JST）。月や日付の語は、締切の日付と「会期」の日付の両方に当たる（画面のてびきと同じ約束）ので、月で引いた時に見出しの月と違ふ日が出る行が在る。" : ""}${窓が無い ? `\n${窓が無いの斷り(true)}` : ""}`;
+  const 頭 = `${絞り込みだけ ? "語を指定せず、絞り込みだけ" : `検索語「${query}」に当たる締切`}: ${hit.length} 件（${名} ${list.length} 行・画面の既定と同じ絞り込み。絞る前は ${素の.length} 行${ランク ? `／ランク ${ランク}` : ""}${args.domestic === true ? "／国内のみ" : ""}${args.online === true ? "／オンライン参加可のみ" : ""}${窓あり ? `／締切まで ${窓の日數} 日以内` : ""}${讀めない引數}）${知らん.length ? `／知らない種別（其の侭では 0 件に成ります）: ${知らん.join("・")}` : ""}${知らんランク ? `／知らないランク（等級は ${Recommender.rankGradeOrderJa().join("・")}）: ${知らんランク}` : ""}${日付の語 ? "\n日付は日本時間（JST）。月や日付の語は、締切の日付と「会期」の日付の両方に当たる（画面のてびきと同じ約束）ので、月で引いた時に見出しの月と違ふ日が出る行が在る。" : ""}${窓が無い ? `\n${窓が無いの斷り(true)}` : ""}${scopeErr ? `\n${scopeErr}` : ""}`;
   if (!hit.length) {
     /* 畫面と同じ約束 – 案内は「素の當たりが 0」の時に出る物なので、絞り込みで 0 に成つた時は
      * 其の旨を書く（絞り込みを外せば出る事がある）。 */
@@ -1002,6 +1024,7 @@ function listUpcoming(
     : "";
   return [
     `今日から ${日數の表現}（JST の暦日で数える）の締切: ${hit.length} 件（${名}・日本時間の早い順${讀めない引數}${知らんの斷り}）`,
+    ...(scopeErr ? [scopeErr] : []),
     ...(窓が無いの斷り(窓が無い) ? [窓が無いの斷り(窓が無い)] : []),
     "",
     ...hit.slice(0, 100).map((r) => line(r, now)),
@@ -1118,6 +1141,7 @@ function venueInfo(args: { key?: unknown; name?: unknown; scope?: unknown }, now
     }
     return [
       `「${key || name}」には ${會々.length} の会議が当たりました。名を細く打つか、key で指してください:`,
+      ...(scopeErr ? [scopeErr] : []),
       ...名乗り
         .slice(0, 20)
         .map(([k, t]) => `- ${t}（key: ${k}）${繋ぎ先.get(k) ? ` ${繋ぎ先.get(k)}` : ""}`),
@@ -1159,6 +1183,7 @@ function venueInfo(args: { key?: unknown; name?: unknown; scope?: unknown }, now
   return [
     斷り +
       `会議: ${一つ.conf.title}（key: ${一つ.conf.key}${一つ.conf.acronym ? `・${一つ.conf.acronym}` : ""}）`,
+    ...(scopeErr ? [scopeErr] : []),
     `版: ${版.join(" / ")}`,
     /* 分野は畫面と同じ日本語で出す（第 726 回 – 機械向けのキー（`ai`）の侭では、人が讀む時に
      * 畫面のチップと結び付かん。同じ入口（`categoryLabelJa`）から取る – 書き寫すとずれる）。*/
@@ -1237,6 +1262,7 @@ function explainWord(args: { word?: unknown; scope?: unknown }, now: number): st
   }
   return [
     `「${word}」は 0 行です。画面が此の時に出す案内:`,
+    ...(scopeErr ? [scopeErr] : []),
     ...(窓が無いの斷り(窓が無い) ? [窓が無いの斷り(窓が無い)] : []),
     ...(窓の外
       ? [
@@ -1578,7 +1604,11 @@ const TOOLS = [
           items: { type: "string" },
           description: "種別のキーの並び（search_deadlines と同じ名。どちらでも受ける）",
         },
-        scope: { type: "string", enum: ["screen", "all"], description: "見る窓（既定 all）" },
+        scope: {
+          type: "string",
+          enum: ["screen", "all"],
+          description: "見る窓（既定 all。collection・full・window・catalog も同じ）",
+        },
       },
     },
   },
@@ -1591,7 +1621,11 @@ const TOOLS = [
       properties: {
         key: { type: "string", description: "会議の識別子（例: kdd）" },
         name: { type: "string", description: "会議名の一部（例: KDD）" },
-        scope: { type: "string", enum: ["screen", "all"], description: "見る窓（既定 all）" },
+        scope: {
+          type: "string",
+          enum: ["screen", "all"],
+          description: "見る窓（既定 all。collection・full・window・catalog も同じ）",
+        },
       },
     },
   },
