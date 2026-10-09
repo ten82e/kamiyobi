@@ -3031,3 +3031,24 @@ it("二つ與えた片方を黙って捨てない（第 921 回）", async () =>
   const 空 = await call("venue_info", { key: "sigkdd", name: "" });
   expect(空, "空文字列で名指した").not.toContain("見て居ません");
 });
+
+it("collection_stats も絞り込みの引数を黙って捨てない（第 922 回）", async () => {
+  /* この道具は収録の全体を數へる物（行から數へると「締切を持つ物」だけに成り、建てた表示と
+   * 食ひ違ふ – 第 769 回）。`scope` を渡す AI が居ても**黙って捨てない** – 第 920・921 と同じ
+   * 括り（この道具で絞り込めないことを、名前で示す）。 */
+  const 素 = await call("collection_stats", {});
+  expect(素.split("\n")[0] ?? "", "絞り込みが無い時に注を付けた").not.toContain("無視した絞り込み");
+  const 付 = await call("collection_stats", { scope: "screen" });
+  expect(付.split("\n")[0] ?? "", "`scope` を渡しても名指して居ん").toContain(
+    "無視した絞り込み scope",
+  );
+  expect(付.split("\n")[0] ?? "", "収録の全体を数えます の語が無い").toContain(
+    "収録の全体を数えます",
+  );
+  /* 数そのものは変わらない（絞り込んで居ないことの証明）。 */
+  const 数 = (t: string): string => (t.match(/会議 [\d,]+ 件/) ?? [""])[0];
+  expect(数(付), "絞り込んで居ない（件数が同じ）").toBe(数(素));
+  /* 空文字は「渡して無い」と見る。 */
+  const 空 = await call("collection_stats", { scope: "" });
+  expect(空.split("\n")[0] ?? "", "空文字列で注を付けた").not.toContain("無視した絞り込み");
+});

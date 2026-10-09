@@ -1480,7 +1480,13 @@ function 容量の文(bytes: number): string {
   return `約 ${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-function collectionStats(now: number): string {
+function collectionStats(args: Record<string, unknown> = {}, now: number): string {
+  /* この道具は**絞り込みない** – 収録の全体を數へる（第 769 回の實測で、行から數へると
+   * 「締切を持つ物」だけに成り、建てた表示と食ひ違ふ）。渡された絞り込みの引数は黙って
+   * 捨てない（第 922 回 – `scope` を渡す AI が居た）。 */
+  const 無視した引數 = Object.keys(args ?? {}).filter(
+    (k) => args[k] !== undefined && args[k] !== null && String(args[k]).trim() !== "",
+  );
   const list = allRows();
   /* 会議と版は**收錄その物**から數へる（行から數へると「締切を持つ物」だけに成り、建てた時の
    * 「696 会議 / 2,603 版」と食ひ違ふ – 第 769 回に一度其れを踏んだ）。行は締切の數へに使ふ。*/
@@ -1498,7 +1504,7 @@ function collectionStats(now: number): string {
   const 窓の生成 = catalog() ? 生成の表示(catalog()?.generated_at) : "";
   const 古さ = 古さの斷り(元の生成, now);
   /* 容量は**測った値だけ**書く（第 906 回 – 實測 2026-10-31: 畫面は「収録の全体」を押す前に
-   * 容量を數字で示す樣にした（第 905 回）が、AI 側は「全部取り込むのにどれ-elles要るか」が
+   * 容量を數字で示す樣にした（第 905 回）が、AI 側は「全部取り込むのにどれ位要るか」が
    * 分から無い。品書が `history_bytes` を載せて居れば其れを使い、無い時は**書かない**
    * – 數をでっち上げない。畫面と同じ単位（MiB）に揃へる）。 */
   const 全体容量 = (() => {
@@ -1520,6 +1526,11 @@ function collectionStats(now: number): string {
     "llms.txt（機械向けの索引。何が何処に在るか）",
   ];
   return [
+    ...(無視した引數.length
+      ? [
+          `注: 無視した絞り込み ${無視した引數.join("・")} は此の道具では効きません – 収録の全体を数えます`,
+        ]
+      : []),
     `収録（${DATA_PATH.replace(`${ROOT}/`, "")}）: 会議 ${会議} 件 / 版 ${版} 件（生の収録。建てる時は同じ物を束ねるので、建てた表示とは少し違い得る）/ 締切の行 ${list.length} 行（日付の幅 ${日[0]} 〜 ${日[日.length - 1]}）`,
     `データ生成: ${生成の表示(元の生成)}（上の行と同じ出所。画面の右上と同じ書き方）`,
     ...(窓の生成 ? [`画面が最初に読む窓（public/catalog.json）のデータ生成: ${窓の生成}`] : []),
@@ -1912,7 +1923,7 @@ function callTool(name: string, args: Record<string, unknown>, now: number): str
   if (name === "venue_info") return venueInfo(args, now);
   if (name === "explain_word") return explainWord(args, now);
   if (name === "recommend_venues") return recommendVenues(args, now);
-  if (name === "collection_stats") return collectionStats(now);
+  if (name === "collection_stats") return collectionStats(args, now);
   throw new Error(`知らない道具: ${name}`);
 }
 
