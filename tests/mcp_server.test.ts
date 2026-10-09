@@ -2904,3 +2904,32 @@ it("畫面と MCP が、同じ問に同じ行を出す（第 917 回）", async 
     ).toEqual(畫面);
   }
 });
+
+it("recommend_venues の見出しは、題名の最初の一行だけを出す（第 918 回）", async () => {
+  /* 實測 2026-11-08: 3 行の摘要を渡すと、見出しが三行の全部を「 / 」で繋いだ 1 行になって
+   * 目的を覆ふ。畫面は摘要 其侭の紙面を出さず、候補の行に會議を出す – 此方も最初の一行を
+   * 題として出す（其の他の行も計算には使うので、行数を書く）。 */
+  const 三行 = [
+    "時間スケジューリング手法を用いた協調型edge computing",
+    "我々は分散したIoT機器群の間でジョブを分散実行する枠組みを提案する。",
+    "keywords: scheduling, edge computing, IoT",
+  ].join("\n");
+  const text = await call("recommend_venues", { paper: 三行, limit: 2 });
+  const 頭 = text.split("\n")[0] ?? "";
+  expect(頭, "最初の一行の題が出て居ん").toContain(
+    "時間スケジューリング手法を用いた協調型edge computing",
+  );
+  expect(頭, "2 行目以降を繋いで居る（目的が覆ふ）").not.toContain("分散したIoT機器群");
+  expect(頭, "其の他の行も見て居ることを言つて居ん").toContain("ほか 2 行の語も見て居ます");
+  /* 1 行だけなら「ほか」の文は出さない（騒音を增やさない）。 */
+  const 一行 = await call("recommend_venues", {
+    paper: "Time-Sensitive Networking | tsn",
+    limit: 2,
+  });
+  expect(一行.split("\n")[0] ?? "", "1 行で「ほか」を出した").not.toContain("行の語も見て居ます");
+  /* 長い題名は 40 字で切る（1 行でも見出しが壁にならない）。 */
+  const 長い = await call("recommend_venues", { paper: `${"A".repeat(80)} | tsn`, limit: 1 });
+  const 長い頭 = 長い.split("\n")[0] ?? "";
+  expect(長い頭, "長い題名を切り詰めなかった").toContain("…");
+  expect(長い頭, "切り詰めたのに 80 字出て居る").not.toContain("A".repeat(60));
+});

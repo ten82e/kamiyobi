@@ -1611,16 +1611,20 @@ function recommendVenues(args: { paper?: unknown; limit?: unknown }, now: number
   const 候補 = Recommender.venueRecommendations(pool, lines, null, now, {
     fieldedLexical: true,
   }).filter((r) => r.fit.score >= 10);
-  const 題 = lines
-    .map((l) => String(l.title ?? "").trim())
-    .filter(Boolean)
-    .join(" / ");
+  /* 題名は**最初の一行だけ**を出す（第 918 回 – 實測 2026-11-08: 3 行の要約を渡すと、
+   * 見出しが三行の全部を「 / 」で繋いだ 1 行になって目的を覆ふ。畫面は摘要 其侭の
+   * 紙面を出さず、候補の行に會議を出す – 此方も**最初の一行**を題として出す。
+   * 其の他の行も計算には使うので「ほか N 行の語も見て居ます」と書く。 */
+  const 題々 = lines.map((l) => String(l.title ?? "").trim()).filter(Boolean);
+  const 題 = 題々[0] ?? "";
+  const 餘 = 題々.length > 1 ? `（ほか ${題々.length - 1} 行の語も見て居ます）` : "";
+  const 題の見出し = `「${題.length > 40 ? `${題.slice(0, 39)}…` : 題}${餘}」`;
   /* pool には「これからの締切が無い會議の過去代表 1 行」が入る（畫面と同じ）。黙って居ると
    * AI が「今後締め切れる會報」として過去の行を勧めてしまふ – 畫面の「締切済み」と同じ
    * 言い方で件數を頭に書く（第 894 回）。 */
   const 過ぎた件數 = 候補.filter((r) => Number(r.row.t) < now).length;
   const 頭 =
-    `「${題}」に合う投稿先: ${候補.length} 件（語の一致と再学習の重みで評価 – ` +
+    `${題の見出し}に合う投稿先: ${候補.length} 件（語の一致と再学習の重みで評価 – ` +
     `意味検索の埋め込みは読まないので、埋め込みを使える画面とは点が動く事があります${限り.斷り}）` +
     /* 過ぎた候補は「次回の開催に向けた参考」として件数を分けて書く（黙って居ると AI が
      * 今出せるように勧めてしまふ – 画面の「締切済み」と同じ出し分け）。 */
