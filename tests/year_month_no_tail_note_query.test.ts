@@ -121,6 +121,28 @@ describe("相対の語がどう解けたかを名乗る（第 940 回）", () =>
     expect(Recommender.relativeDayNotes("2026年", now)[0] ?? "").toContain("1〜12 か月");
     expect(Recommender.relativeDayNotes("来年", now)[0] ?? "").toContain("1〜12 か月");
   });
+  it("月の後に機能語が続いても、其の月だけを名乗る（第 941 回）", () => {
+    /* 實測 2026-11-09: `今月の締切` は 63 行（其の月だけ）なのに、元は末尾だけを見るやり方だと
+     * 「2026年の締切（1〜12 か月）」と書いて居た – 年全体を見たと誤解させる。絞りを變えない
+     * 機能語（`の`・`締切`）は飛ばして「月で終わつた」と見る。 */
+    for (const 語 of ["今月の締切", "来月の締切"]) {
+      const 注 = Recommender.relativeDayNotes(
+        (
+          Recommender as unknown as { expandRelativeMonths(q: string, n: number): string }
+        ).expandRelativeMonths?.(語, now) ?? 語,
+        now,
+      );
+      expect(注[0] ?? "", `「${語}」に其の月が書いて居ん`).toContain("其の月だけ");
+      expect(注[0] ?? "", `「${語}」を年全体と言つて居る（嘘）`).not.toContain("1〜12 か月");
+    }
+    /* 幅の語尾（`まで`・`から`）は飛ばさない – 其の處の行が幅を名乘る（第 493 回）。 */
+    for (const 語 of ["来年12月まで", "来年12月から"]) {
+      expect(Recommender.relativeDayNotes(語, now)[0] ?? "").toContain("1〜12 か月");
+    }
+    /* 自分で月を打つ形は黙つていい（年は既に其の文にある – 危險なのは勝手に解けた形）。 */
+    expect(Recommender.relativeDayNotes("2026年11月", now)[0] ?? "").toContain("其の月だけ");
+  });
+
   it("幅の言い方は、其の處の行に讓る（第 493 回の約束 – 潰さない）", () => {
     for (const 語 of ["来年12月から", "来年12月まで", "来年3月まで"]) {
       const 注 = Recommender.relativeDayNotes(語, now);
