@@ -3409,6 +3409,11 @@ it("venue_info は過去の締切も出して、其の札を書く（第 945 回
   const 説明 = (一覽.result?.tools ?? []).find((t) => t.name === "venue_info")?.description ?? "";
   expect(説明, "venue_info の説明が讀めない（此の檢査の前提が崩れた）").not.toBe("");
   expect(説明, "過去が出ると書いて居ない").toContain("過ぎた分も全部出る");
+
+  /* 推薦の**截り**も説明に書く（第 954 回で入れた 20 行 – AI は先に説明を讀む）。 */
+  const 推薦 =
+    (一覽.result?.tools ?? []).find((t) => t.name === "recommend_venues")?.description ?? "";
+  expect(推薦, "推薦の截りを說明に書いて居ない").toContain("最初の 20 行");
 });
 
 it("曖昧な名の候補は、一番新しい版の繋ぎ先を添へる（第 946 回）", async () => {
