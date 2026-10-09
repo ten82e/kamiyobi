@@ -1579,7 +1579,10 @@ function recommendation(): { rows: Row[]; conferences: unknown[] } | null {
   return recommendationCache;
 }
 
-function recommendVenues(args: { paper?: unknown; limit?: unknown }, now: number): string {
+function recommendVenues(
+  args: Record<string, unknown> & { paper?: unknown; limit?: unknown },
+  now: number,
+): string {
   const paper = String(args.paper ?? "").trim();
   if (!paper)
     return [
@@ -1589,6 +1592,24 @@ function recommendVenues(args: { paper?: unknown; limit?: unknown }, now: number
   const 索引 = recommendation();
   if (!索引)
     return `推薦の索引（${RECOMMENDATION_PATH.replace(`${ROOT}/`, "")}）が読めません。建てた物（\`npm run build\`）と同じ場所に置いてから使つてください。`;
+  /* **絞り込みの引数は効かない** – 黙って捨てない（第 920 回 – 實測 2026-11-09: `rank`
+   * `domestic` `scope` `within_days` `include_past` を渡しても件数が其のままで、どこにも
+   * 書かれなかった。畫面の推薦モードもチップを無視する（`site/app.ts` の
+   * `if (!inRecommend && …)`）ので**其れと同じ** – 順位で選ぶのが畫面と同じ用法。 */
+  const 無視した = [
+    "scope",
+    "within_days",
+    "include_past",
+    "include_estimated",
+    "kinds",
+    "kind",
+    "rank",
+    "domestic",
+    "online",
+  ].filter((k) => args[k] !== undefined && args[k] !== null && String(args[k]).trim() !== "");
+  const 無視の斷り = 無視した.length
+    ? `（無視した絞り込み ${無視した.join("・")} は此の道具では効きません – 順位と点で選びます）`
+    : "";
   const 限り = 數の引數("limit", args.limit, 1);
   const limit = Math.min(限り.使ふ ?? 10, 30);
   const lines = Recommender.parsePaperLines(paper);
@@ -1624,7 +1645,7 @@ function recommendVenues(args: { paper?: unknown; limit?: unknown }, now: number
    * 言い方で件數を頭に書く（第 894 回）。 */
   const 過ぎた件數 = 候補.filter((r) => Number(r.row.t) < now).length;
   const 頭 =
-    `${題の見出し}に合う投稿先: ${候補.length} 件（語の一致と再学習の重みで評価 – ` +
+    `${題の見出し}に合う投稿先: ${候補.length} 件（語の一致と再学習の重みで評価${無視の斷り} – ` +
     `意味検索の埋め込みは読まないので、埋め込みを使える画面とは点が動く事があります${限り.斷り}）` +
     /* 過ぎた候補は「次回の開催に向けた参考」として件数を分けて書く（黙って居ると AI が
      * 今出せるように勧めてしまふ – 画面の「締切済み」と同じ出し分け）。 */

@@ -2972,3 +2972,27 @@ it("道具の返り値に、壊れた補間の跡（$）が残らない（第 91
     `返り値にドルが出て居る（壊れた補間の跡 – 第 919 回）:\n${見つかった.join("\n")}`,
   ).toEqual([]);
 });
+
+it("recommend_venues は、効かない絞り込みの引数を名指す（第 920 回）", async () => {
+  /* 實測 2026-11-09: `rank` `domestic` `scope` `within_days` `include_past` を渡しても件数が
+   * 其のままで、どこにも書かれなかった – AI が「CCF A の會報だけで」と頼んでも、絞らない答が
+   * 返る。畫面の推薦モードもチップを無視する（`site/app.ts` の `if (!inRecommend && …）`）ので、
+   * **其れと同じ** – 順位で選ぶのが畫面と同じ用法。ただし**黙って捨てない**。 */
+  const 題 = "Time-Sensitive Networking | tsn";
+  const 素 = await call("recommend_venues", { paper: 題, limit: 2 });
+  expect(素.split("\n")[0] ?? "", "絞り込みが無い時に名指した").not.toContain("無視した絞り込み");
+  for (const 鍵 of ["rank", "domestic", "online", "scope", "within_days", "include_past"]) {
+    const 答 = await call("recommend_venues", {
+      paper: 題,
+      limit: 2,
+      [鍵]: 鍵 === "rank" ? "A" : true,
+    });
+    expect(答, `\`${鍵}\` を渡しても名指して居ん`).toContain("無視した絞り込み");
+    expect(答.split("\n")[0] ?? "", `\`${鍵}\` の名前が出て居ん`).toContain(鍵);
+    /* 絞り込まないことを文字でも示す（順位で選ぶ）。 */
+    expect(答, "順位で選ぶ謀を言つて居ん").toContain("順位と点で選びます");
+  }
+  /* 空文字の絞り込みは「渡して無い」と見る（混入した空値で騒音を增やさない）。 */
+  const 空 = await call("recommend_venues", { paper: 題, limit: 2, rank: "" });
+  expect(空.split("\n")[0] ?? "", "空文字列で名指した").not.toContain("無視した絞り込み");
+});
