@@ -14,6 +14,13 @@ type RecommendationResult = ReturnType<typeof Recommender.venueRecommendations>[
 type ScoreBreakdown = ReturnType<typeof Recommender.breakdown>;
 type ConferenceRecord = CandidateRow["conf"] & {
   link?: string;
+  /* 収録の締切の日（品書が申告 – 第 295 回・第 949 回）。窓の外の「一番遠い日」と
+   * 「推定なら其の日に締切がある」。 */
+  record_deadline_last?: string | null;
+  record_deadline_next?: string;
+  record_deadline_next_kind?: string;
+  record_deadline_count?: number;
+  record_estimated_next?: string;
   editions?: EditionRecord[];
   dblp?: string | null;
   sources?: string[];
@@ -298,6 +305,9 @@ function isConferenceRecord(value: unknown): value is ConferenceRecord {
       typeof value.record_deadline_last === "string") &&
     hasOptionalString(value, "record_deadline_next") &&
     hasOptionalString(value, "record_deadline_next_kind") &&
+    /* 推定の未來の締切（第 949 回 – 品書が申告する。推定の行は `utc` しかないので
+     * `recordDeadlineNext` は數へない）。 */
+    hasOptionalString(value, "record_estimated_next") &&
     (value.record_deadline_count === undefined ||
       (typeof value.record_deadline_count === "number" &&
         Number.isFinite(value.record_deadline_count))) &&
@@ -3208,6 +3218,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     nextDay: string;
     nextKind: string;
     nextCount: number;
+    estimatedNext: string;
   } | null {
     const terms = String(query || "")
       .split(/\s+/u)
@@ -3253,6 +3264,9 @@ function semanticOutput(value: unknown): value is SemanticOutput {
        締切が過ぎただけの会と、まだ開かれるだけの会を分けないと、人は「終わった会議の話を
        見た」と誤解する。推定の会期は数えない。 */
     let eventNext = "";
+    /* 推定の未來の締切（第 949 回 – 品書が申告する。推定は確約ではないので、畫面は
+     * 「推定なら」と添えて出す）。 */
+    let 推定の次の手がかり = "";
     /* 収録の側に残っている締切の、一番近い日と種別と本数（第 298 回）。実測で、収録に
        これからの締切が在る会議 42 件のうち 19 件は、一番近い締切が品書の申告（一番遠い日）より
        前に在る – 遠い日だけ教えると、人は間違った日に間に合うと思う。 */
@@ -3290,6 +3304,10 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         nextKind =
           typeof conf.record_deadline_next_kind === "string" ? conf.record_deadline_next_kind : "";
       }
+      // 推定の未來の締切（第 949 回 – 品書が申告している）。
+      const 推定の次 =
+        typeof conf.record_estimated_next === "string" ? conf.record_estimated_next : "";
+      if (推定の次) 推定の次の手がかり = 推定の次;
       // 収録の側にその会の締切が在るか（第 295 回 – 品書が申告している）。
       const recordLast = conf.record_deadline_last;
       if (recordLast === null) recordNull = true;
@@ -3312,6 +3330,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       nextDay: count === 1 ? nextDay : "",
       nextKind: count === 1 ? nextKind : "",
       nextCount: count === 1 ? nextCount : 0,
+      estimatedNext: count === 1 ? 推定の次の手がかり : "",
     };
   }
 
@@ -3327,6 +3346,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       nextDay?: string;
       nextKind?: string;
       nextCount?: number;
+      estimatedNext?: string;
     } | null,
     nowMs: number,
     kindLabel: Record<string, string>,
@@ -3342,6 +3362,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     /** その種別の日本語（表と同じ語）。未登録の種別は空にして括弧を付けない。 */
     nextLabel: string;
     nextCount: number;
+    estimatedNext?: string;
   } | null {
     if (!found) return null;
     const nextOf = (
@@ -3362,11 +3383,28 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       return { nextDay: day, nextLabel: kindLabel[kind] || "", nextCount: count };
     };
     const next = nextOf(found);
-    if (found.recordLast === null) return { ...found, recordFuture: false, ...next };
-    if (!found.recordLast) return { ...found, recordFuture: false, ...next };
+    if (found.recordLast === null)
+      return {
+        ...found,
+        recordFuture: false,
+        ...next,
+        estimatedNext: String(found.estimatedNext ?? ""),
+      };
+    if (!found.recordLast)
+      return {
+        ...found,
+        recordFuture: false,
+        ...next,
+        estimatedNext: String(found.estimatedNext ?? ""),
+      };
     const noon = Recommender.jstNoonMs(found.recordLast, Number.NaN);
     if (!Number.isFinite(noon)) return { ...found, recordLast: "", recordFuture: false, ...next };
-    return { ...found, recordFuture: noon >= nowMs, ...next };
+    return {
+      ...found,
+      recordFuture: noon >= nowMs,
+      ...next,
+      estimatedNext: String(found.estimatedNext ?? ""),
+    };
   }
 
   function emptyDeadlineHint(filter: {
@@ -3410,6 +3448,8 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       nextDay?: string;
       nextLabel?: string;
       nextCount?: number;
+      /** 推定ならその会の締切が収録に在る日（確約ではない – 第 949 回）。 */
+      estimatedNext?: string;
     } | null;
     loadedLastDay?: string;
     recordLastDay?: string;
@@ -3583,6 +3623,11 @@ function semanticOutput(value: unknown): value is SemanticOutput {
             })()
           : `収録にあるのは過ぎた締切（${record}）だけで、${beyond}` +
             "読み込まれるときは「過去の締切も表示」もいっしょにオンにしてください。" +
+            /* 推定の未來の締切も品書が申告して居るなら添える（第 949 回 – MCP と同じ事実を
+             * 同じ言葉で言ふ。斷り: 推定は確約ではない）。 */
+            (filter.nameOnly.estimatedNext
+              ? ` ただし推定なら ${filter.nameOnly.estimatedNext} の締切が収録にあります（「推定の締切も表示」で一覧に出せます – 確約ではありません）。`
+              : "") +
             // 締切が過ぎただけで、会議が終わったわけではない（実測 – 過ぎた締切だけの会議
             // 174 件のうち 118 件は、品書にこれからの開催日が在る）。
             (filter.nameOnly.eventNext

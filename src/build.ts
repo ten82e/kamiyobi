@@ -1228,18 +1228,22 @@ function recordDeadlineLastDay(conf: JsonRecord): string | null | "" {
 function recordEstimatedNextDay(conf: JsonRecord, nowMs: number): string {
   let bestMs = Number.NaN;
   jsonRecords(conf.editions).forEach((edition) => {
-    /* 版の推定は**除外しない** – 實測 2026-11-15: `SOSP` の推定は版ごと推定（`sosp27-est`）で、
-     * 版のフラグで切ると一つも數へない。行の推定で十分（第 931 回）。 */
+    /* 推定は**版か行のどちらか**に付く（實測 2026-11-12: `SOSP` は版ごと推定（`sosp27-est`）。
+     * 行側の推定だけを見ると一つも數へない – 畫面の `est` も `!!ed.estimated` で決めて居る
+     * （`site/recommender.ts`）ので、此方も同じ決め方に揃へる）。 */
+    const 版ごと推定 = edition.estimated === true;
     jsonRecords(edition.deadlines).forEach((deadline) => {
-      if (deadline.estimated !== true) return;
-      const day = typeof deadline.local_date === "string" ? deadline.local_date : "";
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) return;
-      const noon = Date.parse(`${day}T00:00:00Z`) + 9 * 3600000;
-      if (!Number.isFinite(noon) || noon < nowMs) return;
-      if (!Number.isFinite(bestMs) || noon < bestMs) bestMs = noon;
+      if (!版ごと推定 && deadline.estimated !== true) return;
+      /* 日は `local_date` が無ければ**瞬間から** JST の暦日に直す（實測 2026-11-12:
+       * 推定の行は `local_date` を持たず `utc` だけ持つ – `local_date` しか見ないと
+       * 一つも數へない）。*/
+      const range = jsonDeadlineRange(deadline);
+      if (range === null) return;
+      if (range[1] < nowMs) return;
+      if (!Number.isFinite(bestMs) || range[1] < bestMs) bestMs = range[1];
     });
   });
-  return Number.isFinite(bestMs) ? new Date(bestMs - 9 * 3600000).toISOString().slice(0, 10) : "";
+  return Number.isFinite(bestMs) ? new Date(bestMs + 9 * 3600000).toISOString().slice(0, 10) : "";
 }
 
 function recordDeadlineNext(

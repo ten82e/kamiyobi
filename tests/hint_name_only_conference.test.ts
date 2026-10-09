@@ -180,6 +180,29 @@ describe("名簿に在る会議の話を 0 件の案内が言う（第 294 回�
     expect(out, "効かない打ち直しを並べた").not.toContain("別の語で試す");
   });
 
+  it("収録にあるのが過ぎた締切だけの時、推定ならその日を添える（第 949 回）", () => {
+    /* 品書の申告に推定の未來の締切が在るとき（MCP と同じ事実を同じ言葉で – 第 930 回の
+     * MCP 側と揃へる）。推定は確約ではないので、其の旨も書く。 */
+    const found = nameOnly(example().name);
+    expect(found, "名簿の注が立てない（この檢查の前提が崩れた）").not.toBeNull();
+    const 推定 = "2027-03-19";
+    const out = hintFor(example().name, {
+      nameOnly: found
+        ? { ...found, recordLast: "2026-04-02", recordFuture: false, estimatedNext: 推定 }
+        : undefined,
+    });
+    expect(out, "過ぎた締切の話が無い").toContain("収録にあるのは過ぎた締切");
+    expect(out, "推定ならの話が出て居ん").toContain(
+      `ただし推定なら ${推定} の締切が収録にあります`,
+    );
+    expect(out, "確约ではない事を言つて居ん").toContain("確約ではありません");
+    /* 申告が無い時は足さない（MCP と同じ – 第 941 回と同じ決まり）。 */
+    const 無 = hintFor(example().name, {
+      nameOnly: found ? { ...found, recordLast: "2026-04-02", recordFuture: false } : undefined,
+    });
+    expect(無, "推定の申告が無いのに足した").not.toContain("ただし推定なら");
+  });
+
   it("例に挙げるのは、打った語すべてに当たる会議が 1 件だけるとき", () => {
     const name = example().name;
     expect(nameOnly(name)?.example, "1 件に絞れる例を挙げていない").toBe(name);
