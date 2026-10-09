@@ -16,6 +16,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import Recommender from "../site/recommender.ts";
 import { builtSite } from "./built_site.ts";
+import { REPO_ROOT } from "./helpers.ts";
 
 const 基準 = Date.parse("2026-08-09T00:00:00Z");
 function 品書(): string[] {
@@ -49,19 +50,22 @@ describe("語尾の無い年＋暦月にも其の年の幅の案内が出る（�
     ] as Array<[string, string]>) {
       expect([繋, 対称差(列(繋), 列(離))], `「${繋}」が「${離}」と違ふ`).toEqual([繋, 0]);
       expect([繋, 日の案内(繋)], `「${繋}」の案内が違ふ`).toEqual([繋, 日の案内(離)]);
-      /* 年の幅を名乗る（其の年の語で書いた形と同じ文）。*/
-      expect(日の案内(繋), `「${繋}」に年の幅が無い`).toContain("年の締切（1〜12 か月）");
+      /* 年**と其の月**を名乗る（第 940 回 – 實測 2026-11-08: 检索 `2026年11月` は 237 行だが
+       * `2026年` は 802 行 – つまり**其の月だけ**を引いて居るのに「年の締切（1〜12 か月）」と
+       * 書いて居たのは嘘。第 497 回は「黙らない」ことを主旨にして居たが、幅の書き方が實際と
+       * 違つて居た。黙らさないまま、其の月だけだと名乗る）。 */
+      expect(日の案内(繋), `「${繋}」に月の幅が無い`).toMatch(/\d+月の締切（其の月だけ/);
     }
   });
   it("品書に締切が無い月でも、何も出ない理由が畫面に出る", () => {
     expect(列("2028年3月").size).toBe(0);
-    expect(日の案内("2028年3月")).toContain("2028年の締切（1〜12 か月）");
+    expect(日の案内("2028年3月")).toContain("2028年3月の締切");
     expect(日の案内("2028年3月")).not.toContain("絞り込まずにいます");
   });
   it("日の続く形と週の數は此の目で割らない（其方の目が受ける）", () => {
     /* `2027年8月10日頃` は其の方の案内（其の日の幅）を保つ。`2027年2月第5週` は幅を作らず無言。*/
     expect(日の案内("2027年8月10日頃")).toContain("2027年8月10日");
-    expect(日の案内("2027年8月10日頃")).not.toContain("年の締切（1〜12 か月）");
+    expect(日の案内("2027年8月10日頃")).not.toContain("年の締切");
     expect(日の案内("2027年2月第5週")).toBe("");
     expect(列("2027年2月第5週").size).toBe(0);
   });
@@ -99,5 +103,44 @@ describe("ビルド成果物に目が在る事（第 466 回 – 成果物だけ
     expect(物).toContain(
       "((?:来|今|去|明|昨|翌)年)([0-9]{1,2}月|[〇一二三四五六七八九十]{1,3}月)(?![ \\u3000]*(?:から|より|以降",
     );
+  });
+});
+describe("相対の語がどう解けたかを名乗る（第 940 回）", () => {
+  const now = new Date("2026-11-08T00:00:00Z").getTime();
+  it("「年＋月」は、其の月だけだと名乗る（年全体と言わない）", () => {
+    /* 實測 2026-11-08: `relativeDayNotes` は `2026年11月` を `2026年` と `11月` に割る。
+     * 年の分岐が先に當たって「2026年 = 2026年の締切（1〜12 か月）」と書いて居たが、
+     * **實測**で `2026年11月` は 237 行、`2026年` は 802 行 – 其の月しか引いて居ないので嘘。 */
+    for (const 語 of ["2026年11月", "来年12月", "再来年3月"]) {
+      const 注 = Recommender.relativeDayNotes(語, now);
+      expect(注.length, `「${語}」の注が無い（黙って居る）`).toBeGreaterThan(0);
+      expect(注[0], `「${語}」に其の月が無い`).toContain("其の月だけ");
+      expect(注[0], `「${語}」を年全体と言つて居る（嘘）`).not.toContain("1〜12 か月");
+    }
+    /* 年だけなら從來の文（其れは嘘ではない – 其の年全体を見る）。 */
+    expect(Recommender.relativeDayNotes("2026年", now)[0] ?? "").toContain("1〜12 か月");
+    expect(Recommender.relativeDayNotes("来年", now)[0] ?? "").toContain("1〜12 か月");
+  });
+  it("幅の言い方は、其の處の行に讓る（第 493 回の約束 – 潰さない）", () => {
+    for (const 語 of ["来年12月から", "来年12月まで", "来年3月まで"]) {
+      const 注 = Recommender.relativeDayNotes(語, now);
+      expect(注[0] ?? "", `「${語}」の注`).toContain("1〜12 か月");
+      expect(注[0] ?? "", `「${語}」を其の月だと名乗つて居る`).not.toContain("其の月だけ");
+    }
+  });
+  it("行の数と案内の幅が合う（檢算できる – 第 496 回の數え方）", () => {
+    /* 品書で「其の月」と「其の年」の行數を數へて、案内の幅と比べる。 */
+    const snap = JSON.parse(
+      readFileSync(join(REPO_ROOT, "data", "snapshot.json"), "utf8"),
+    ) as never;
+    const 行 = Recommender.candidateRows(snap);
+    const 照合 = (語: string): number => {
+      const m = Recommender.searchMatcher(語, now);
+      return 行.filter((r) => m(r.hay) === true).length;
+    };
+    const 月 = 照合("2026年11月");
+    const 年 = 照合("2026年");
+    expect(月, "「其の月」で 0 行（検査が空振り）").toBeGreaterThan(0);
+    expect(年, "「其の年」が「其の月」より少い（檢算が逆だ）").toBeGreaterThan(月);
   });
 });
