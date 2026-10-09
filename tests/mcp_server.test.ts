@@ -2734,3 +2734,30 @@ it("collection_stats が分野別の会議数を出す – health.json と同じ
     "多い順に並んで居ない",
   ).toEqual(數々);
 });
+
+it("collection_stats が上流のソースの状態を出す – 品書と同じ（第 912 回）", async () => {
+  /* 實測 2026-11-03: health.json の `source_status` と品書の `source_updates` に在る
+   * （上流から新しく取ったか、前回のキャッシュで足りたか）が、道具のどれからも出て居た。
+   * 収録が新しいかは數字ではなく出所で決まるので、**數だけで當てるのは危ない**。 */
+  const 品書 = join(REPO_ROOT, "public", "catalog.json");
+  if (!existsSync(品書)) return; // 品書は建てた時だけ在る。
+  const catalog = JSON.parse(readFileSync(品書, "utf8")) as {
+    source_updates?: Array<{ name?: string; status?: string }>;
+  };
+  const 更新 = catalog.source_updates ?? [];
+  expect(更新.length, "此の檢査の前提（品書にソースの更新が在る）が崩れた").toBeGreaterThan(0);
+  const text = await call("collection_stats", {});
+  expect(text, "上流のソースの行が無い").toContain("上流のソース:");
+  /* 品書の值と同じ言葉で出す（`fresh` / `cache-fallback` 等の內部の語を見せない）。 */
+  expect(text, "內部の語をそのまま出した").not.toMatch(/(cache-fallback|snapshot-fallback)\b/);
+  const 期待: Record<string, string> = {
+    fresh: "今回あたって取得",
+    "cache-fallback": "前回の取得データ（今回は上流にあたらず）",
+    "snapshot-fallback": "確定済みの収録データ（今回は上流にあたらず）",
+  };
+  for (const u of 更新) {
+    const 名 = String(u.name ?? "");
+    const 狀態 = 期待[String(u.status)] ?? String(u.status);
+    expect(text, `ソース ${名} の状態を言つて居ん`).toContain(`${名}: ${狀態}`);
+  }
+});

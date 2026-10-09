@@ -245,6 +245,32 @@ function 生成の表示(生成: unknown): string {
 
 /** 畫面と同じ「データは N 日前」の斷り（生成から 3 日以上の時だけ）。**同じ函數から取る**ので、
  * 閾値も日数の數へ方も畫面と必ず一致する。 */
+/** 上流のソースがどうなったかを、畫面と同じ言葉で並べる（第 912 回）。
+ *
+ * 実測 2026-11-03: health.json の source_status と品書の source_updates に在る
+ * （上流から新しく取ったか、前回のキャッシュで足りたか）が道具のどれからも出て居た。
+ * 収録が新しいかは数ではなく出所で決まるので、一番先に知りたい事 –
+ * AI が数だけで当てると外す。 */
+function ソースの狀態(): string[] {
+  const 更新 = (catalog() as { source_updates?: unknown } | null)?.source_updates;
+  if (!Array.isArray(更新) || !更新.length) return [];
+  const 語: Record<string, string> = {
+    fresh: "今回あたって取得",
+    "cache-fallback": "前回の取得データ（今回は上流にあたらず）",
+    "snapshot-fallback": "確定済みの収録データ（今回は上流にあたらず）",
+  };
+  const 一覧 = (更新 as Array<{ name?: unknown; status?: unknown; fetched_at?: unknown }>)
+    .map((u) => {
+      const 名 = String(u.name ?? "?");
+      const 狀態 = String(u.status ?? "");
+      const 見た = Date.parse(String(u.fetched_at ?? ""));
+      const 日 = Number.isFinite(見た) ? new Date(見た).toISOString().slice(0, 10) : "";
+      return `${名}: ${語[狀態] ?? 狀態}${日 ? `（${日} に取得）` : ""}`;
+    })
+    .join("・");
+  return [`上流のソース: ${一覧}`];
+}
+
 function 古さの斷り(生成: unknown, now: number): string {
   return String(Recommender.dataAgeNoteJa(生成, now) ?? "").trim();
 }
@@ -1502,6 +1528,7 @@ function collectionStats(now: number): string {
         .map(([k, n]) => `${Recommender.categoryLabelJa(k) ?? k} ${n}`);
       return [`分野別の会議数（多い順・会議 1 件は複数の分野に数える）: ${並び.join("・")}`];
     })(),
+    ...ソースの狀態(),
     ...(古さ ? ["", 古さ] : []),
     "",
     "配付して居るファイル（サイトと同じ場所に在る）:",
