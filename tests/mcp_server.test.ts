@@ -2397,3 +2397,46 @@ it("推薦の行は、取得狀態と締切の競合が普通でない時だけ�
     expect(競合の行[0], "競合のある行に件數が無い").toMatch(/締切の競合: [1-9]\d* 件/);
   }
 });
+
+it("品書の推薦の軸は全版で數へて居る – 新規の會議を新規と言ひ切らない（第 900 回）", async () => {
+  /* 實測 2026-10-31: 画面は `r.conf.recommendation_axes` が無いと其場で軸を求めるが、品書の
+   * 會議は**窓の版**しか持って居ないので历年が 1 年になり、`ICDE` が「新規・確認した年 1 年」
+   * と出て居た（実物は「成長中・確認した年 7 年」）。会議 696 件の內 627 件が「新規」になつて
+   * 居た – 選擇の材料を壊して居た。索引には全版で數へた軸が在つたが、画面は索引を読まない。 */
+  const 品書 = join(REPO_ROOT, "public", "catalog.json");
+  if (!existsSync(品書)) return;
+  const catalog = JSON.parse(readFileSync(品書, "utf8")) as {
+    conferences?: Array<{
+      key?: string;
+      recommendation_axes?: {
+        venue_maturity?: { status?: string; evidence?: { yearsObserved?: number } };
+      };
+    }>;
+  };
+  const 會議 = catalog.conferences ?? [];
+  const 軸を持つ = 會議.filter((c) => c.recommendation_axes?.venue_maturity);
+  expect(軸を持つ.length, "品書に推薦の軸が無い（此の檢査の前提が崩れた）").toBe(會議.length);
+  /* 窓の版から其場で數へると 1 年に成る會議が、少なからず在る（= 其れ曾是「新規」だった）。 */
+  const 直で數へた = 會議.filter((c) => {
+    const 窓の版 = (c as unknown as { editions?: unknown[] }).editions ?? [];
+    const 年 = new Set(
+      窓の版.map((e) => Number((e as { year?: unknown }).year)).filter((y) => y > 0),
+    );
+    return (
+      年.size <= 1 &&
+      Number(c.recommendation_axes?.venue_maturity?.evidence?.yearsObserved ?? 0) >= 2
+    );
+  });
+  expect(
+    直で數へた.length,
+    "窓の版で數へると 1 年になるのに、載せた軸が 2 年以上 – 實測と違ふ",
+  ).toBeGreaterThan(0);
+  /* MCP は**載せた軸**を使う（會議の續いて居る年数が其の値になる）。 */
+  const text = await call("recommend_venues", {
+    paper: "ICDE International Conference on Data Engineering | icde, database, data mining",
+    limit: 5,
+  });
+  expect(text, "成熟度の文を言つて居ん").toContain("会議の続いている年数: ");
+  /* 內部の語を出さない（畫面と同じ約束）。 */
+  expect(text, "內部の語をそのまま出した").not.toMatch(/(established|emerging|unverified)\b/);
+});

@@ -137,6 +137,24 @@ function allRows(): Row[] {
 
 /** 使ふ窓を決める（既定は畫面と同じ。`scope: "all"` で收錄の全體）。
  * **生成時刻も一緒に返す** – 窓に依って出所の檔案が違ふので、古さの斷りも其れに合わせる。 */
+/** 品書が載せた推薦の軸を、會議の key で引く（`candidateRows` は會議の欄を絞るので、
+ * 軸は行の `conf` に残らない – 第 900 回）。品書が軸を持たない時は空を返す（其Caller は
+ * 其場で計算する）。 */
+let 軸の索引: Map<string, unknown> | undefined;
+function 品書の軸(): Map<string, unknown> {
+  if (軸の索引 !== undefined) return 軸の索引;
+  const 品書 = catalog();
+  const 會議 = Array.isArray(品書?.conferences) ? (品書!.conferences as unknown[]) : [];
+  const 帶軸 = (會議 as Array<{ key?: unknown; recommendation_axes?: unknown }>).filter(
+    (c) =>
+      typeof c.key === "string" &&
+      c.recommendation_axes &&
+      typeof c.recommendation_axes === "object",
+  );
+  軸の索引 = new Map(帶軸.map((c) => [String(c.key), c.recommendation_axes] as [string, unknown]));
+  return 軸の索引;
+}
+
 function pick(scope: unknown): { list: Row[]; 名: string; 生成: unknown; 窓が無い: boolean } {
   if (String(scope ?? "") === "all")
     return {
@@ -1379,11 +1397,18 @@ function recommendVenues(args: { paper?: unknown; limit?: unknown }, now: number
        * `deadlineTrust`。軸その物は `recommendation-core.ts` の共有計算）。實測
        * 2026-10-29: MCP の推薦行は日付と種別だけを出して、**その締切が公式確認できて居るか**
        * を言はなかつた（AI が「次は 2027-01-29 です」と言へても、推定の日付なのか分からん）。 */
-      const 軸 = recommendationAxes(
-        r.row.conf as unknown as Record<string, unknown>,
-        Number(r.fit.score) || null,
-        now,
-      );
+      /* 軸は**品書が載せた値**を先に読む（畫面の `axesForRecommendation` と同じ順番 –
+       * 其れが無い時だけ其場で求める）。品書が其れを持つ前は、品書の会議は窓の版しか無くて
+       * 历年が 1 年になり、`ICDE` が「新規・確認した年 1 年」と出て居た（第 900 回）。 */
+      const 載つて居る軸 = 品書の軸().get(String(r.row.conf.key ?? ""));
+      const 軸 =
+        載つて居る軸 && typeof 載つて居る軸 === "object"
+          ? (載つて居る軸 as ReturnType<typeof recommendationAxes>)
+          : recommendationAxes(
+              r.row.conf as unknown as Record<string, unknown>,
+              Number(r.fit.score) || null,
+              now,
+            );
       const 信賴の札: Record<string, string> = {
         official: "公式確認",
         publisher: "出版社確認",
@@ -1393,6 +1418,19 @@ function recommendVenues(args: { paper?: unknown; limit?: unknown }, now: number
         unverified: "未確認",
       };
       const 締切の信賴 = 軸.deadline_trust;
+      /* **會議の續いて居る年数** – 畫面のカードと同じ言ひ回し。實測 2026-10-31: 品書に載せた
+       * 軸を読む樣にして居るため、`ICDE` が「新規・確認した年 1 年」で無くて
+       * 「成長中・確認した年 7 年」になる（選擇の材料になる – 新規の會報は査讀が亂暴な筈）。 */
+      const 成熟の語: Record<string, string> = {
+        established: "確立",
+        emerging: "成長中",
+        new: "新規",
+        unverified: "未確認",
+      };
+      const 成熟 = 軸.venue_maturity;
+      const 成熟の文 =
+        `会議の続いている年数: ${成熟の語[成熟.status] ?? String(成熟.status)}` +
+        `（確認した年 ${Number(成熟.evidence?.yearsObserved) || 0}年、その会議の論文サンプル ${Number(成熟.evidence?.profileCoverage) || 0}件）`;
       const 確認狀況 =
         `締切の確認状況: 日付 ${信賴の札[締切の信賴.date] ?? String(締切の信賴.date)}` +
         ` ／ 時刻 ${信賴の札[締切の信賴.time] ?? String(締切の信賴.time)}` +
@@ -1431,7 +1469,7 @@ function recommendVenues(args: { paper?: unknown; limit?: unknown }, now: number
       if (意味順) 理由.push(`意味検索順位 ${意味順}`);
       if (r.boosted) 理由.push("同じ分野（掲載先から推定）");
       return (
-        `${i + 1}. 一致評価 ${評價}｜${line(r.row as unknown as Row, now)}｜${確認狀況}` +
+        `${i + 1}. 一致評価 ${評價}｜${line(r.row as unknown as Row, now)}｜${成熟の文}｜${確認狀況}` +
         `${特記.length ? `｜${特記.join("｜")}` : ""}｜選定理由: ` +
         `${理由.length ? 理由.join(" / ") : "目立つ一致はないが候補に入った"}`
       );
