@@ -8,11 +8,12 @@
  * 機械に「この先いつまでの締切が出せるか」を訊かれた人は、索引だけ見て答えを作る。
  */
 
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { deadlineSpan, toLlmsTxt } from "../src/build.ts";
 import { data, site } from "./built_golden_shared.ts";
+import { REPO_ROOT } from "./helpers.ts";
 
 function llms(): string {
   return readFileSync(join(site, "llms.txt"), "utf8");
@@ -171,4 +172,85 @@ it("索引が、カレンダーの購読先の URL を言う（第 877 回）", 
   /* 購讀と 1 度のダウンロードの違いを隱さない（編集のない購讀は每日更新される）。 */
   expect(本文, "購讀と download の違いを言つて居ん").toContain("ダウンロードするだけでは");
   expect(本文, "每日入れ替はる事を言つて居ん").toContain("毎日朝の更新のあと");
+});
+
+describe("data.csv の値の書き方", () => {
+  it("状態の列は、値の意味が索引（llms.txt）に書いてある（第 926 回）", () => {
+    /* 實測 2026-11-11: `data.csv` の `verification_status` には 3 種の値が在る。AI が
+     * `manual-required` を何と讀むかは索引を見ないと分からん – 畫面の札とは別の言葉
+     * （第 848 回の約束）なので、解釈が違ふと困る。索引には今 全部の値が書いてある
+     * （實測で確かめた）が、**列を足した時に書かない**と又落入する – 機械で確かめられる。 */
+    const csv = join(REPO_ROOT, "public", "data.csv");
+    const llmsPath = join(REPO_ROOT, "public", "llms.txt");
+    if (!existsSync(csv) || !existsSync(llmsPath)) return; // 生成物は CI が作る
+    /* 値の**意味**が要る列だけを見る（会議名・URL・日付は列に依らないので対象外）。 */
+    const 対象 = [
+      "verification_status",
+      "verification_source_class",
+      "deadline_precision",
+      "estimated",
+      "extended",
+      "date_field",
+    ];
+    const notes = new Map<string, string>();
+    for (const line of readFileSync(llmsPath, "utf8").split("\n")) {
+      const m = line.match(/^- ([a-z_]+)：(.*)$/);
+      if (m) notes.set(m[1], m[2]);
+    }
+    /* CSV は**引用符の中にカンマ**がある（`evidence` 列の JSON）ので、Split だけでは列が
+     * ずれる – 引用符の狀態を見て 1 文字ずつ讀む（第 926 回で実際にずれた）。 */
+    const 割る = (line: string): string[] => {
+      const out: string[] = [];
+      let cur = "";
+      let quoted = false;
+      for (let i = 0; i < line.length; i += 1) {
+        const ch = line[i];
+        if (ch === '"') {
+          if (quoted && line[i + 1] === '"') {
+            cur += '"';
+            i += 1;
+          } else {
+            quoted = !quoted;
+          }
+          continue;
+        }
+        if (ch === "," && !quoted) {
+          out.push(cur);
+          cur = "";
+          continue;
+        }
+        cur += ch;
+      }
+      out.push(cur);
+      return out;
+    };
+    const 行 = readFileSync(csv, "utf8").split("\n");
+    const 頭 = 割る(行.shift() ?? "");
+    const 索引 = new Map<string, Set<string>>();
+    for (const line of 行) {
+      if (!line) continue;
+      const 値 = 割る(line);
+      for (const col of 対象) {
+        const i = 頭.indexOf(col);
+        if (i < 0) continue;
+        const v = (値[i] ?? "").trim().replace(/^"|"$/g, "");
+        if (!v) continue;
+        if (!索引.has(col)) 索引.set(col, new Set());
+        (索引.get(col) as Set<string>).add(v);
+      }
+    }
+    const 未記載: string[] = [];
+    for (const [col, vals] of 索引) {
+      const note = notes.get(col) ?? "";
+      for (const v of vals) {
+        if (!note.includes(v)) 未記載.push(`${col} の値「${v}」が索引に書かれて居ない`);
+      }
+    }
+    expect(
+      未記載,
+      `索引（llms.txt）に書かれて居ない値がある:\n${未記載.join("\n")}\n` +
+        "状态・種別・真偽の列は値の意味が要る（讀む人が同じ値に別の解釈を持つと困る）。",
+    ).toEqual([]);
+    expect(索引.size, "此の檢査の前提（列が読めて居ない）が崩れた").toBe(対象.length);
+  });
 });
