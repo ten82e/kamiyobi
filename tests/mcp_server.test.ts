@@ -3223,3 +3223,77 @@ it("曖昧な語の常時の案内を出す（畫面と同じ – 第 942 回）
     expect(素, `「${語}」に關係無い案内が出た`).not.toContain("この道具が出せるのは行だけです");
   }
 });
+
+describe("list_upcoming の行が畫面と同じ（第 944 回）", () => {
+  /* 第 874・910 回は**件數**を見た。**どの行**かまでは見て居なかつた – 件數が同じでも
+   * 畫面と別の行を返して居る事があり得る（AI が「この會議は來ない」と答へると誤る）。
+   *
+   * 此の道具は**種別で絞らない**（設計 – 說明にも書いてある）ので、畫面の同等物は「種別の
+   * 篩を掛けない defaults の一覽」= `upcoming.md` と同じ行。畫面の `filter` で
+   * `kind: ""`（篩）・同じ窓にして突き合はせる。 */
+  const 品書 = join(REPO_ROOT, "public", "catalog.json");
+  it("同じ窓で、同じ行を返す", async () => {
+    if (!existsSync(品書)) return;
+    const html = siteRuntime();
+    const rowsFile = join(tmpdir(), `kamiyobi-screen-upcoming-${process.pid}.json`);
+    writeFileSync(
+      rowsFile,
+      JSON.stringify(Recommender.candidateRows(JSON.parse(readFileSync(品書, "utf8")))),
+    );
+    afterAll(() => rmSync(rowsFile, { force: true }));
+    const 畫面の行 = (win: string): string[] => {
+      const script = [
+        "const DAY = 86400000;",
+        `const FILTER = ${JSON.stringify(jsFunction(html, "filter"))};`,
+        `const NOW = ${Date.now()};`,
+        "class FakeDate extends Date { static now() { return NOW; } }",
+        "const fs = require('node:fs');",
+        `const catalog = JSON.parse(fs.readFileSync(${JSON.stringify(品書)}, 'utf8'));`,
+        FILTER_RUNTIME_STUBS,
+        `const rows = JSON.parse(fs.readFileSync(${JSON.stringify(rowsFile)}, 'utf8'));`,
+        "const filter = new Function('Date','DAY','rows','state','sortAsc','sortKey',",
+        "  'return (' + FILTER + ')')(FakeDate, DAY, rows, JSON.parse(process.env.STATE), false, 'time');",
+        "console.log(JSON.stringify([...new Set(filter().map((r) => r.ed.id))].sort()));",
+      ].join("\n");
+      const proc = spawnSync("node", ["-e", vmSafeSource(script)], {
+        encoding: "utf8",
+        timeout: 120_000,
+        env: {
+          ...process.env,
+          /* `list_upcoming` は**推定も既定で入れる**（説明に書いてある – `search_deadlines` の
+           * 既定は外す）。條件を揃へるので畫面の state も推定を入れる。 */
+          STATE: JSON.stringify({ q: "", cats: [], kind: "", rank: "", win, est: true }),
+        },
+      });
+      expect(proc.status, `畫面の絞り込みが動かない（${win}）: ${proc.stderr.slice(0, 300)}`).toBe(
+        0,
+      );
+      return JSON.parse(proc.stdout.trim()) as string[];
+    };
+    /* 窓は**行數が 100 を超えない物**にする（此の道具は 100 行を超えると打ち切る – 齊に
+     * 入らない行が出る）。180 日も**品書の果て**（建造日の 180 日ぶん）を越えるので外す –
+     * 畫面は品書の切れ目で停まる（第 293 回の同じ約束）に対し、道具は今日からの N 日を數へる。
+     * 品書の中に納まり、100 行にも納まる 7 日と 30 日で。 */
+    for (const days of [7, 30]) {
+      /* `list_upcoming` は**種別で絞らない**（設計 – 説明にも書いてある）ので、畫面の
+       * defaults の一覽（投稿締切だけ）と齊が違ふ。齊を合はせる為に**同じ種別**を渡す –
+       * `kinds` は此の道具も畫面と同じ種別名で受ける（第 727 回）。 */
+      const 答 = await call("list_upcoming", {
+        days,
+        kinds: ["abstract", "paper", "journal"],
+        limit: 400,
+      });
+      const mcp = [
+        ...new Set([...答.matchAll(/（([a-z0-9][a-z0-9.'-]*)）/g)].map((m) => m[1])),
+      ].sort();
+      const 畫面 = 畫面の行(`${days}d`);
+      if (process.env.DBG_UPCOMING) {
+        const a = new Set(mcp);
+        const b = new Set(畫面);
+        console.log("DBG MCP だけ:", [...a].filter((x) => !b.has(x)).slice(0, 10));
+        console.log("DBG 畫面だけ:", [...b].filter((x) => !a.has(x)).slice(0, 14));
+      }
+      expect(mcp, `list_upcoming と畫面の行が違ふ（${days} 日）`).toEqual(畫面);
+    }
+  });
+});
