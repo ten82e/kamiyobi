@@ -857,8 +857,21 @@ it("投稿先の推薦が、畫面と同じ核で出る（第 857 回）", async
   const 題 =
     "Time-Sensitive Networking Scheduling for Deterministic Industrial Networks | tsn, real-time, scheduling, deterministic";
   const now = Date.now();
+  /* pool は**畫面と同じ** – 品書（畫面が讀む一覽）の行から、これからの締切 + 常時受付の
+   * ジャーナル + これからの締切が無い會議の過去代表 1 行を選ぶ（第 894 回。其れ迄は索引の
+   * 行をそのまま使つて居た – 2,458 本の内 2,270 本が過ぎた締切だつた）。 */
+  const 品書 = join(REPO_ROOT, "public", "catalog.json");
+  const 品書の會議 = existsSync(品書)
+    ? ((JSON.parse(readFileSync(品書, "utf8")) as { conferences?: unknown[] }).conferences ?? [])
+    : (索引.conferences ?? []);
+  索引.conferences = 品書の會議; // 行・ジャーナルとも品書から（MCP と同じ出所）
+  const 行 = Recommender.candidateRows(索引 as never);
+  const pool = (行 as unknown as Parameters<typeof Recommender.deadlineRowIsPast>[0][])
+    .filter((r) => !Recommender.deadlineRowIsPast(r as never, now))
+    .concat(Recommender.journalRows(索引.conferences ?? [], now) as unknown as never[])
+    .concat(Recommender.pastRepresentatives(行 as never, now) as unknown as never[]);
   const 正 = Recommender.venueRecommendations(
-    Recommender.candidateRows(索引 as never),
+    pool as never,
     Recommender.parsePaperLines(題),
     null,
     now,
@@ -868,8 +881,10 @@ it("投稿先の推薦が、畫面と同じ核で出る（第 857 回）", async
   const text = await call("recommend_venues", { paper: 題, limit: 5 });
   expect(text, "件數が核と違ふ").toContain(`に合う投稿先: ${正.length} 件`);
   expect(text, "先頭の候補が核と違ふ").toContain(String(正[0].row.conf.title));
-  /* **語の一致だけ**である事を頭で斷る（人が見る數と AI が言ふ數が違ふのが一番惡い）。 */
-  expect(text, "語の一致だけである事を言つて居ん").toContain("語の一致だけ");
+  /* **何で評價して居るか**を頭で斷る（意味検索の埋め込みを讀まない事・點が畫面と動く事。
+   * 人が見る數と AI が言ふ數が違ふのが一番惡い）。 */
+  expect(text, "何で評價して居るか言つて居ん").toContain("語の一致と再学習の重みで評価");
+  expect(text, "埋め込みを讀まない事を言つて居ん").toContain("埋め込みは読まない");
   expect(text, "切り詰めを默つて居る").toContain("残り");
   /* 題名が空なら、打ち方を敎へる（默らない）。 */
   const 空 = await call("recommend_venues", { paper: "" });
@@ -2147,4 +2162,45 @@ it("venue_info は次の投稿締切を先頭で言ふ（第 893 回）", async 
   /* 行の一覽は變へない（默つて減らさない）。 */
   const 行數 = 過ぎた.split("\n").filter((l) => /^\d{4}-\d{2}-\d{2}/.test(l)).length;
   expect(行數, "行の一覽が減つた").toBeGreaterThan(1);
+});
+
+it("推薦の pool は畫面と同じ組み立て（第 894 回）", async () => {
+  /* 實測 2026-10-25: `recommend_venues` は索引の行（2,458 本）をそのまま pool に使つて居た。
+   * 其の 92% は**過ぎた締切**なので、「おすすめの投稿先」の 1・2 番目に締め切つた會報が
+   * 擧がり、AI は「來年でなく今出せる」と誤つて勧めてしまふ。畫面は「これからの締切 +
+   * 常時受付のジャーナル + これからの締切が無い會議の過去代表 1 行」で選ぶので、其れに揃へる。 */
+  const 品書 = join(REPO_ROOT, "public", "catalog.json");
+  if (!existsSync(品書)) return; // 品書は建てた時だけ在る（此の檔案の約束）。
+  const 索引 = JSON.parse(
+    readFileSync(join(REPO_ROOT, "public", "recommendation-index.json"), "utf8"),
+  ) as { conferences?: unknown[]; reranker?: unknown };
+  Recommender.setNameIdf(Recommender.buildNameIdf(索引.conferences ?? []));
+  Recommender.setReranker(索引.reranker ?? null);
+  const catalog = JSON.parse(readFileSync(品書, "utf8"));
+  const rows = Recommender.candidateRows(catalog) as unknown as Array<Record<string, unknown>>;
+  const now = Date.now();
+  /* 畫面の pool を此方で組み立てる（`site/app.ts` の `pool` と同じ 3 つ）。 */
+  const pool = (rows as unknown as Parameters<typeof Recommender.deadlineRowIsPast>[0][])
+    .filter((r) => !Recommender.deadlineRowIsPast(r as never, now))
+    .concat(Recommender.journalRows(catalog.conferences, now) as unknown as never[])
+    .concat(Recommender.pastRepresentatives(rows as never, now) as unknown as never[]);
+  const 題 =
+    "Time-Sensitive Networking Scheduling for Deterministic Industrial Networks | tsn, real-time, scheduling, deterministic";
+  const 正 = Recommender.venueRecommendations(
+    pool as never,
+    Recommender.parsePaperLines(題),
+    null,
+    now,
+    { fieldedLexical: true },
+  ).filter((r) => r.fit.score >= 10);
+  expect(正.length, "畫面と同じ pool で候補が出ない（此の檢查の前提が崩れた）").toBeGreaterThan(0);
+  const text = await call("recommend_venues", { paper: 題, limit: 5 });
+  expect(text, `候補の數が畫面と同じ pool と違ふ: ${正.length} 件の筈`).toContain(
+    `に合う投稿先: ${正.length} 件`,
+  );
+  expect(text, "先頭の候補が違ふ").toContain(String(正[0].row.conf.title));
+  /* **過ぎた候補が幾つあるか**を頭で分けて言ふ（默つて居ると AI が今出せる樣に勧める）。 */
+  const 過ぎた = 正.filter((r) => Number(r.row.t) < now).length;
+  if (過ぎた > 0)
+    expect(text, "過ぎた候補の件數を言つて居ん").toContain(`うち ${過ぎた} 件は締切が過ぎた会議`);
 });

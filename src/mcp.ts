@@ -149,7 +149,7 @@ function pick(scope: unknown): { list: Row[]; 名: string; 生成: unknown; 窓�
     ? { list: 窓, 名: "画面が最初に読む窓", 生成: catalog()?.generated_at, 窓が無い: false }
     : /* 窓が無い時は收錄の全体を見るが、**其の旨を言はないと件數が配布先と違ふ理由が
        * 讀めない**（第 892 回 – 實測 2026-10-23: 品書をbuildして居ない手元では
-       * `セキュリティ` が 37 件／42 件に割れた。默つて居ると AI は「畫面と違ふ」で躊く）。 */
+       * `セキュリティ` が 37 件／42 件に割れた。黙って居ると AI は「畫面と違ふ」で躊く）。 */
       {
         list: allRows(),
         名: "収録の全体",
@@ -1319,14 +1319,39 @@ function recommendVenues(args: { paper?: unknown; limit?: unknown }, now: number
   const lines = Recommender.parsePaperLines(paper);
   if (!lines.length)
     return "論文の題名を読み取れませんでした。題名を 1 行でください（`|` でキーワードと投稿先を添へられます）。";
-  const 候補 = Recommender.venueRecommendations(索引.rows, lines, null, now, {
+  /* **候補の pool は畫面と同じ**（第 894 回 – 實測 2026-10-25: 此方は索引の行をそのまま使つて
+   * 居たので、2,458 本の内 2,270 本（92%）が**過ぎた締切**だつた。「投稿先を探す」の候補が
+   * 1・2 番目に過ぎた締切を擧げ、AI は「おすすめ」として締め切つた會報を勧めてしまふ。
+   * 畫面は「これからの締切 + 常時受付のジャーナル + これからの締切が無い會議の過去代表 1 行」
+   * （`site/app.ts` の `pool`）で選ぶので、此方も其の行を使ふ。索引は**品書が在る時は讀まない**
+   * – 畫面が讀むのは品書で、索引は IDF と再学習の重みだけを持ち出す（第 714 回と同じ役目の
+   * 分け方）。品書が無い手元では索引の行へ落とす（候補が 0 件にならん樣に）。 */
+  const 品書の行 = screenRows();
+  const 行 = 品書の行 ?? 索引.rows;
+  const 會議 = 品書の行 ? ((catalog()?.conferences as unknown[]) ?? []) : 索引.conferences;
+  const pool = 行
+    .filter((r) => !Recommender.deadlineRowIsPast(r, now))
+    .concat(Recommender.journalRows(會議, now) as unknown as Row[])
+    .concat(Recommender.pastRepresentatives(行 as never, now) as unknown as Row[]);
+  const 候補 = Recommender.venueRecommendations(pool, lines, null, now, {
     fieldedLexical: true,
   }).filter((r) => r.fit.score >= 10);
   const 題 = lines
     .map((l) => String(l.title ?? "").trim())
     .filter(Boolean)
     .join(" / ");
-  const 頭 = `「${題}」に合う投稿先: ${候補.length} 件（語の一致だけで評価 – 意味検索の埋め込みは読まないので、埋め込みを使へる画面とは点が少し動く事がある${限り.斷り}）`;
+  /* pool には「これからの締切が無い會議の過去代表 1 行」が入る（畫面と同じ）。黙って居ると
+   * AI が「今後締め切れる會報」として過去の行を勧めてしまふ – 畫面の「締切済み」と同じ
+   * 言い方で件數を頭に書く（第 894 回）。 */
+  const 過ぎた件數 = 候補.filter((r) => Number(r.row.t) < now).length;
+  const 頭 =
+    `「${題}」に合う投稿先: ${候補.length} 件（語の一致と再学習の重みで評価 – ` +
+    `意味検索の埋め込みは読まないので、埋め込みを使える画面とは点が動く事があります${限り.斷り}）` +
+    /* 過ぎた候補は「次回の開催に向けた参考」として件数を分けて書く（黙って居ると AI が
+     * 今出せるように勧めてしまふ – 画面の「締切済み」と同じ出し分け）。 */
+    (候補.length > 過ぎた件數
+      ? `（うち ${過ぎた件數} 件は締切が過ぎた会議です – 次回の開催に向けた参考に載せています）`
+      : "");
   if (!候補.length)
     return [
       頭,
@@ -1334,6 +1359,8 @@ function recommendVenues(args: { paper?: unknown; limit?: unknown }, now: number
       "この題名の語と重なる投稿先は見付かりませんでした。題名に加へて、分野の語やキーワード（`tsn, real-time, scheduling` の様に）を添へると当たりやすくなります。",
     ].join("\n");
   const 見本 = 候補.slice(0, limit);
+  /* pool に過去の代表が入って居ることを默らない（AI が「これから締め切る會報」として
+   * 過去の行を�めないように – 頭で件數を分けて言ふ）。 */
   return [
     頭,
     `（一致評価の高い順。${limit} 件まで表示${候補.length > limit ? `・残り ${候補.length - limit} 件` : ""}）`,
@@ -1451,7 +1478,7 @@ const TOOLS = [
   {
     name: "recommend_venues",
     description:
-      "投稿予定の論文（題名・キーワード・概要）に合う投稿先を、一致評価の高い順に返す（画面の「投稿先を探す」と同じ推薦核を使ふ）。**語の一致だけで評価する**ので、意味検索の埋め込みを使へる画面とは点が少し動く事がある（其の旨は返り値の頭に書く）。入力は画面と同じ `題名 | キーワード, キーワード | 投稿先` の形が一番よく当たる。候補は点の高い順で、切り詰めた時は残り件数を書く。",
+      "投稿予定の論文（題名・キーワード・概要）に合う投稿先を、一致評価の高い順に返す（画面の「投稿先を探す」と同じ推薦核を使ふ）。**語の一致と再学習の重みで評価する**（意味検索の埋め込みは読まない – 使える画面とは点が動く。再学習の重みも画面は読んでいないので、札の付き方が画面と違う事が在る。其の旨は返り値の頭に書く）。**候補の pool は画面と同じ**（これからの締切 + 常時受付のジャーナル + これからの締切が無い会議の過去代表 1 行 – 過ぎた候補の件数は頭に分けて書く）。入力は画面と同じ `題名 | キーワード, キーワード | 投稿先` の形が一番よく当たる。候補は点の高い順で、切り詰めた時は残り件数を書く。",
     inputSchema: {
       type: "object",
       properties: {
