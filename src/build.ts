@@ -417,7 +417,7 @@ const LLMS_OUTPUT_NOTES_JA: Record<string, string> = {
     "実測で 4,984 行のうち 311 行が締切ではない日 – 締切として数えると間違える。収録が増えれば" +
     "この数も動く）。",
   "upcoming.md":
-    "直近 180 日の締切と開催の表。**会期の行はこの表にだけ在る**（畫面・MCP・`deadlines.ics` は締切の行だけ – MCP の `list_upcoming` はこの表と同じ會期の行を続けて書く）。",
+    "直近 180 日の締切と開催の表。**会期の行はこの表にだけ在る**（画面・MCP・`deadlines.ics` は締切の行だけ – MCP の `list_upcoming` はこの表と同じ会期の行を続けて書く）。",
   "upcoming.html":
     "`upcoming.md` と同じ表を、ブラウザでそのまま読める形にしたもの（第 263 回）。Markdown の" +
     " 方は機械が読む用のまま残してある。",
