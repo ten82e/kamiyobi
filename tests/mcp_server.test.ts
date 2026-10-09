@@ -9,8 +9,8 @@
  * 建てた時だけ在る物なので、檢査が其れに依ると、配付物を持たない手元で落ちる。
  */
 
-import { spawn } from "node:child_process";
-import { existsSync, readFileSync } from "node:fs";
+import { spawn, spawnSync } from "node:child_process";
+import { copyFileSync, existsSync, readFileSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { afterAll, describe, expect, it } from "vitest";
 import Recommender from "../site/recommender.ts";
@@ -2067,4 +2067,61 @@ it("檢索と言語の道具で、案内の有無が一致する（第 889 回�
       );
     }
   }
+});
+
+it("窓が無い手元では、何を讀んで居るかを言ふ（第 892 回）", async () => {
+  /* 品書（`public/catalog.json`）を build して居ない手元では、窓が無いので收錄の全體を見る。
+   * 默つて居ると**件數が配布先の畫面と違ふ理由が讀めない** – 實測 2026-10-23: 品書が在る時は
+   * `セキュリティ` 37 件・無い時は 42 件。AI は「畫面と違ふ」で躪き、利用者は噓を疑ふ。
+   * 讀み込みは起動時に一度だけなので、此の檢查は**別の手順を起こして**試す（長生きのサーバは
+   * 既に品書を讀んで仕舞ふ – 實測 2026-10-23 に踏んだ）。 */
+  const 品書 = join(REPO_ROOT, "public", "catalog.json");
+  if (!existsSync(品書)) return; // 品書が無い時は threshold の確認なので空振り。
+  const 控え = `${品書}.bak-test`;
+  copyFileSync(品書, 控え);
+  try {
+    rmSync(品書);
+    const 聞く = (call: Record<string, unknown>): string => {
+      const 返事 = spawnSync(process.execPath, [join(REPO_ROOT, "src", "mcp.ts")], {
+        input: `${JSON.stringify({
+          jsonrpc: "2.0",
+          id: 1,
+          method: "initialize",
+          params: { protocolVersion: "2025-06-18", clientInfo: { name: "t", version: "0" } },
+        })}\n${JSON.stringify({ jsonrpc: "2.0", id: 2, method: "tools/call", params: call })}\n`,
+        encoding: "utf8",
+        timeout: 180_000,
+      });
+      const 行 = (返事.stdout || "")
+        .trim()
+        .split("\n")
+        .map((l) => {
+          try {
+            return JSON.parse(l) as Record<string, unknown>;
+          } catch {
+            return null;
+          }
+        })
+        .find((m) => m && m.id === 2);
+      return String(
+        (行?.result as { content?: Array<{ text?: string }> } | undefined)?.content?.[0]?.text ??
+          "",
+      );
+    };
+    const 斷り = "public/catalog.json）がこの手元に無い";
+    const 檢索 = 聞く({ name: "search_deadlines", arguments: { query: "セキュリティ", limit: 1 } });
+    expect(檢索, "窓が無い事を言つて居ん").toContain(斷り);
+    expect(檢索, "どうすればよいか言つて居ん").toContain("npm run build");
+    const 一覽 = 聞く({ name: "list_upcoming", arguments: { days: 30, scope: "screen" } });
+    expect(一覽, "一覽が窓が無い事を言つて居ん").toContain(斷り);
+    const 語 = 聞く({ name: "explain_word", arguments: { word: "ネットワーク GPU" } });
+    expect(語, "語の案内が窓が無い事を言つて居ん").toContain(斷り);
+  } finally {
+    copyFileSync(控え, 品書);
+    rmSync(控え);
+  }
+  /* 品書が在る時は斷りを出さない（騷音を增やさない）。 */
+  const 在る = await call("search_deadlines", { query: "セキュリティ", limit: 1 });
+  expect(在る, "品書が在る時に斷りを付けた").not.toContain("この手元に無い");
+  expect(在る, "品書が在る時に窓の名を變へた").toContain("画面が最初に読む窓");
 });

@@ -136,13 +136,35 @@ function allRows(): Row[] {
 
 /** 使ふ窓を決める（既定は畫面と同じ。`scope: "all"` で收錄の全體）。
  * **生成時刻も一緒に返す** – 窓に依って出所の檔案が違ふので、古さの斷りも其れに合わせる。 */
-function pick(scope: unknown): { list: Row[]; 名: string; 生成: unknown } {
+function pick(scope: unknown): { list: Row[]; 名: string; 生成: unknown; 窓が無い: boolean } {
   if (String(scope ?? "") === "all")
-    return { list: allRows(), 名: "収録の全体", 生成: snapshot().snapshot_metadata?.generated_at };
+    return {
+      list: allRows(),
+      名: "収録の全体",
+      生成: snapshot().snapshot_metadata?.generated_at,
+      窓が無い: false,
+    };
   const 窓 = screenRows();
   return 窓
-    ? { list: 窓, 名: "画面が最初に読む窓", 生成: catalog()?.generated_at }
-    : { list: allRows(), 名: "収録の全体", 生成: snapshot().snapshot_metadata?.generated_at };
+    ? { list: 窓, 名: "画面が最初に読む窓", 生成: catalog()?.generated_at, 窓が無い: false }
+    : /* 窓が無い時は收錄の全体を見るが、**其の旨を言はないと件數が配布先と違ふ理由が
+       * 讀めない**（第 892 回 – 實測 2026-10-23: 品書をbuildして居ない手元では
+       * `セキュリティ` が 37 件／42 件に割れた。默つて居ると AI は「畫面と違ふ」で躊く）。 */
+      {
+        list: allRows(),
+        名: "収録の全体",
+        生成: snapshot().snapshot_metadata?.generated_at,
+        窓が無い: true,
+      };
+}
+
+/** 窓が無い時の斷り（一覽を返す道具の頭に付ける）。空文字の時は何も足さない。 */
+function 窓が無いの斷り(窓が無い: boolean): string {
+  if (!窓が無い) return "";
+  return (
+    "※ 画面が最初に読む窓（public/catalog.json）がこの手元に無いので、収録の全体を読んでいます。" +
+    "公開先の画面と同じ件数にするには、このリポジトリで `npm run build` してからお試しください。"
+  );
 }
 
 const JST = new Intl.DateTimeFormat("ja-JP", {
@@ -784,7 +806,7 @@ function searchDeadlines(
   const 窓の日數 = 窓の引數.使ふ;
   const 窓あり = 窓の日數 !== null;
   const 讀めない引數 = [限り.斷り, 窓の引數.斷り].filter((t) => t).join("");
-  const { list, 名, 生成 } = pick(args.scope);
+  const { list, 名, 生成, 窓が無い } = pick(args.scope);
   const 古さ = 古さの斷り(生成, now);
   /* 語が空（種別だけの時）は**全部に當たる**目にする（第 793 回）。 */
   const 照合 = 絞り込みだけ
@@ -820,7 +842,7 @@ function searchDeadlines(
     /(?:\d+月|\d+日|今月|来月|先月|今週|来週|先週|今年|来年|年内|年度|以内|までに|以降)/.test(
       query,
     );
-  const 頭 = `${絞り込みだけ ? "語を指定せず、絞り込みだけ" : `検索語「${query}」に当たる締切`}: ${hit.length} 件（${名} ${list.length} 行・画面の既定と同じ絞り込み。絞る前は ${素の.length} 行${ランク ? `／ランク ${ランク}` : ""}${args.domestic === true ? "／国内のみ" : ""}${args.online === true ? "／オンライン参加可のみ" : ""}${窓あり ? `／締切まで ${窓の日數} 日以内` : ""}${讀めない引數}）${知らん.length ? `／知らない種別（其の侭では 0 件に成ります）: ${知らん.join("・")}` : ""}${知らんランク ? `／知らないランク（等級は ${Recommender.rankGradeOrderJa().join("・")}）: ${知らんランク}` : ""}${日付の語 ? "\n日付は日本時間（JST）。月や日付の語は、締切の日付と「会期」の日付の両方に当たる（画面のてびきと同じ約束）ので、月で引いた時に見出しの月と違ふ日が出る行が在る。" : ""}`;
+  const 頭 = `${絞り込みだけ ? "語を指定せず、絞り込みだけ" : `検索語「${query}」に当たる締切`}: ${hit.length} 件（${名} ${list.length} 行・画面の既定と同じ絞り込み。絞る前は ${素の.length} 行${ランク ? `／ランク ${ランク}` : ""}${args.domestic === true ? "／国内のみ" : ""}${args.online === true ? "／オンライン参加可のみ" : ""}${窓あり ? `／締切まで ${窓の日數} 日以内` : ""}${讀めない引數}）${知らん.length ? `／知らない種別（其の侭では 0 件に成ります）: ${知らん.join("・")}` : ""}${知らんランク ? `／知らないランク（等級は ${Recommender.rankGradeOrderJa().join("・")}）: ${知らんランク}` : ""}${日付の語 ? "\n日付は日本時間（JST）。月や日付の語は、締切の日付と「会期」の日付の両方に当たる（画面のてびきと同じ約束）ので、月で引いた時に見出しの月と違ふ日が出る行が在る。" : ""}${窓が無い ? `\n${窓が無いの斷り(true)}` : ""}`;
   if (!hit.length) {
     /* 畫面と同じ約束 – 案内は「素の當たりが 0」の時に出る物なので、絞り込みで 0 に成つた時は
      * 其の旨を書く（絞り込みを外せば出る事がある）。 */
@@ -937,7 +959,7 @@ function listUpcoming(
     "other",
   ];
   const 知らん = 名乘り.filter((k) => !知って居る種別.includes(k.toLowerCase()));
-  const { list, 名, 生成 } = pick(args.scope ?? "all");
+  const { list, 名, 生成, 窓が無い } = pick(args.scope ?? "all");
   const 古さ = 古さの斷り(生成, now);
   /* 上の境目は**畫面の窓と同じ** JST の暦日で切る（第 874 回）。經由 24 時間で切つて居ると、
    * 同じ「N 日以内」の問に二つの道具が違ふ數を返す – 實測 2026-10-10（窓・論文のみ）:
@@ -961,6 +983,7 @@ function listUpcoming(
     : "";
   return [
     `今日から ${日數の表現}（JST の暦日で数える）の締切: ${hit.length} 件（${名}・日本時間の早い順${讀めない引數}${知らんの斷り}）`,
+    ...(窓が無いの斷り(窓が無い) ? [窓が無いの斷り(窓が無い)] : []),
     "",
     ...hit.slice(0, 100).map((r) => line(r, now)),
     ...(hit.length > 100 ? ["", `（100 件まで表示・残り ${hit.length - 100} 件）`] : []),
@@ -1123,7 +1146,7 @@ function venueInfo(args: { key?: unknown; name?: unknown; scope?: unknown }, now
 function explainWord(args: { word?: unknown; scope?: unknown }, now: number): string {
   const word = String(args.word ?? "").trim();
   if (!word) return "語をください。";
-  const { list, 名, 生成 } = pick(args.scope);
+  const { list, 名, 生成, 窓が無い } = pick(args.scope);
   const 古さ = 古さの斷り(生成, now);
   const 照合 = Recommender.searchMatcher(Recommender.expandRelativeMonths(word, now), now);
   const 件數 = list.filter((r) => 照合(r.hay) === true).length;
@@ -1175,6 +1198,7 @@ function explainWord(args: { word?: unknown; scope?: unknown }, now: number): st
   }
   return [
     `「${word}」は 0 行です。画面が此の時に出す案内:`,
+    ...(窓が無いの斷り(窓が無い) ? [窓が無いの斷り(窓が無い)] : []),
     ...(窓の外
       ? [
           `- 画面が最初に読む窓（${list.length} 行）には 1 行もありませんが、**収録の全体には ${窓の外} 行あります**（scope: "all" で引けます）`,
