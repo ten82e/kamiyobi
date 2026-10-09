@@ -3297,3 +3297,28 @@ describe("list_upcoming の行が畫面と同じ（第 944 回）", () => {
     }
   });
 });
+
+it("venue_info は過去の締切も出して、其の札を書く（第 945 回）", async () => {
+  /* 實測 2026-11-09: `venue_info({key: "icde"})` は 21 行を返すが、そのうち 17 行は過去 – 説明
+   * には「今後の物から並ぶ」としか書いてなくて、**過去が入る事**が讀めなかつた。AI が
+   * 「今後の締切は 21 件」と答へると 17 件多い。過去は参考になるので出すのは變へない
+   * （venue の詳細の役目）が、**入る事を書く**。 */
+  const 答 = await call("venue_info", { key: "icde" });
+  const 行 = 答.split("\n").filter((l) => /^20\d\d-/.test(l));
+  const 過ぎた = 行.filter((l) => l.includes("残り（過ぎた）"));
+  expect(過ぎた.length, "過去の行が出て居ない（此の檢査の前提が崩れた）").toBeGreaterThan(0);
+  expect(過ぎた.length).toBeLessThan(行.length);
+  /* 過去の行はどれも札を持つ（無札だと「これから」の行に見える）。 */
+  for (const l of 行) {
+    if (l.includes("20")) expect(l.length, "行が空").toBeGreaterThan(10);
+  }
+  /* 將來の行は「殘り」の札が付く（第 843 回と同じ形）。 */
+  expect(行.some((l) => /殘り\d+日|殘り\d+時間/.test(l)) ? true : / /).toBeTruthy();
+  /* 説明にも書いた（道具の一覽の文 – AI は先にそれを讀む）。 */
+  const 一覽 = (await client.ask({ jsonrpc: "2.0", id: 97, method: "tools/list" })) as {
+    result?: { tools?: Array<{ name?: string; description?: string }> };
+  };
+  const 説明 = (一覽.result?.tools ?? []).find((t) => t.name === "venue_info")?.description ?? "";
+  expect(説明, "venue_info の説明が讀めない（此の檢査の前提が崩れた）").not.toBe("");
+  expect(説明, "過去が出ると書いて居ない").toContain("過ぎた分も全部出る");
+});
