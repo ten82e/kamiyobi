@@ -254,10 +254,15 @@ function 生成の表示(生成: unknown): string {
 function ソースの狀態(): string[] {
   const 更新 = (catalog() as { source_updates?: unknown } | null)?.source_updates;
   if (!Array.isArray(更新) || !更新.length) return [];
+  /* 狀態は 5 種類在る（`HealthSourceStatus` – `src/build.ts`）。畫面の語は 3 つだけだが、
+   * 此方は**取得できなかつたもの**も書く – 取得に出來なかつたソースが 1 つ在ると、其の分の
+   * 会議は収録に無い。內部の語をそのまま出さない（第 912 回の續け）。 */
   const 語: Record<string, string> = {
     fresh: "今回あたって取得",
+    success: "今回あたって取得",
     "cache-fallback": "前回の取得データ（今回は上流にあたらず）",
     "snapshot-fallback": "確定済みの収録データ（今回は上流にあたらず）",
+    failed: "上流から取得できませんでした（其のソースの会議は収録に無い）",
   };
   const 一覧 = (更新 as Array<{ name?: unknown; status?: unknown; fetched_at?: unknown }>)
     .map((u) => {
@@ -265,7 +270,8 @@ function ソースの狀態(): string[] {
       const 狀態 = String(u.status ?? "");
       const 見た = Date.parse(String(u.fetched_at ?? ""));
       const 日 = Number.isFinite(見た) ? new Date(見た).toISOString().slice(0, 10) : "";
-      return `${名}: ${語[狀態] ?? 狀態}${日 ? `（${日} に取得）` : ""}`;
+      const 説 = 語[狀態] ?? `解釈できない状態（${狀態}）`;
+      return `${名}: ${説}${日 ? `（${日} に取得）` : ""}`;
     })
     .join("・");
   return [`上流のソース: ${一覧}`];

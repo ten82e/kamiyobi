@@ -10,7 +10,7 @@
  */
 
 import { spawn, spawnSync } from "node:child_process";
-import { copyFileSync, existsSync, readFileSync, rmSync, statSync } from "node:fs";
+import { copyFileSync, existsSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { afterAll, describe, expect, it } from "vitest";
 import { recommendationAxes } from "../site/recommendation-core.ts";
@@ -2759,5 +2759,43 @@ it("collection_stats が上流のソースの状態を出す – 品書と同じ
     const 名 = String(u.name ?? "");
     const 狀態 = 期待[String(u.status)] ?? String(u.status);
     expect(text, `ソース ${名} の状態を言つて居ん`).toContain(`${名}: ${狀態}`);
+  }
+  /* **5 種類すべての狀態**を日本語で言える（`HealthSourceStatus` – `src/build.ts`）。內部の語
+   * （`failed` / `success`）をそのまま出さない – 取得できなかつたソースが在ると、其の分の會議が
+   * 收录に無いので|その分を知る必要がある）。 */
+  const 狀態の語 = [
+    ["fresh", "今回あたって取得"],
+    ["success", "今回あたって取得"],
+    ["cache-fallback", "前回の取得データ（今回は上流にあたらず）"],
+    ["snapshot-fallback", "確定済みの収録データ（今回は上流にあたらず）"],
+    ["failed", "上流から取得できませんでした"],
+  ] as const;
+  const 控え = `${品書}.bak-status`;
+  copyFileSync(品書, 控え);
+  try {
+    const 品 = JSON.parse(readFileSync(品書, "utf8")) as { source_updates?: unknown[] };
+    品.source_updates = 狀態の語.map(([status]) => ({
+      name: `t${status}`,
+      status,
+      fetched_at: null,
+    }));
+    writeFileSync(品書, `${JSON.stringify(品, null, 2)}\n`);
+    /* 讀み込みは起動時に一度だけ – 別の手順を起こして試す（第 892 回と同じ扱い）。 */
+    const 答 = (() => {
+      const 手順 = spawnSync(process.execPath, [join(REPO_ROOT, "src", "mcp.ts"), "stats"], {
+        encoding: "utf8",
+        timeout: 180_000,
+      });
+      return `${手順.stdout ?? ""}${手順.stderr ?? ""}`;
+    })();
+    for (const [status, 日本語] of 狀態の語) {
+      expect(答, `狀態 ${status} を日本語で言つて居ん`).toContain(`t${status}: ${日本語}`);
+    }
+    expect(答, "內部の語をそのまま出した").not.toMatch(
+      /(failed|success|cache-fallback|snapshot-fallback)\*\//u,
+    );
+  } finally {
+    copyFileSync(控え, 品書);
+    rmSync(控え);
   }
 });
