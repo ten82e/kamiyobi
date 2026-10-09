@@ -1483,6 +1483,25 @@ function collectionStats(now: number): string {
     ...(窓の生成 ? [`画面が最初に読む窓（public/catalog.json）のデータ生成: ${窓の生成}`] : []),
     `うち今後の締切: ${今後} 行（${new Date(now).toISOString().slice(0, 10)} 以降）`,
     `確認の状態: ${確認の內譯(list)}`,
+    /* **分野別の会議数**（第 911 回 – 實測 2026-11-03: この數は `health.json` の
+     * `category_counts` に在るのに道具のどれからも出なかった。「此の収録は何を覆うか」を
+     * 數へずに是多分 – AI は 9 分野の名（索引には在る）だけから中身を當てずに見積もりを書く）。
+     * 數へるものは収録の会議から同じ数を出す（別の集計だと数が合わない）。 */
+    ...((): string[] => {
+      const 数 = new Map<string, number>();
+      for (const c of 收錄.conferences ?? []) {
+        const 会議 = c as { categories?: unknown };
+        for (const key of Array.isArray(会議.categories) ? 会議.categories : []) {
+          const k = String(key);
+          数.set(k, (数.get(k) ?? 0) + 1);
+        }
+      }
+      if (!数.size) return [];
+      const 並び = [...数.entries()]
+        .sort((a, b) => b[1] - a[1] || String(a[0]).localeCompare(String(b[0]), "ja"))
+        .map(([k, n]) => `${Recommender.categoryLabelJa(k) ?? k} ${n}`);
+      return [`分野別の会議数（多い順・会議 1 件は複数の分野に数える）: ${並び.join("・")}`];
+    })(),
     ...(古さ ? ["", 古さ] : []),
     "",
     "配付して居るファイル（サイトと同じ場所に在る）:",

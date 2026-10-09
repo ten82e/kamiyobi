@@ -2695,3 +2695,42 @@ it("list_upcoming に会期（開催）の行を出す（第 910 回）", async 
   /* 締切の行も出て居る（開催の節を足しても、締切の行は減らして居ない）。 */
   expect(text, "締切の行が見えない").toMatch(/^20\d\d-\d\d-\d\d/mu);
 });
+
+it("collection_stats が分野別の会議数を出す – health.json と同じ数（第 911 回）", async () => {
+  /* 實測 2026-11-03: 分野別の会議数は `health.json` の `category_counts` に在るのに、
+   * 道具のどれからも出て居なかった。「此の収録は何を覆うか」を数へずに多想 – AI は
+   * 9 分野の名（索引には在る）だけから中身を当てずに見積もりを書く。 */
+  const text = await call("collection_stats", {});
+  expect(text, "分野別の件数が無い").toContain("分野別の会議数（多い順");
+  /* 數へるものは收錄の會議から – 公開している `health.json` の數と**一つも違わない**。 */
+  const 品書 = join(REPO_ROOT, "public", "catalog.json");
+  const health = join(REPO_ROOT, "public", "health.json");
+  if (!existsSync(品書) || !existsSync(health)) return;
+  const healthJson = JSON.parse(readFileSync(health, "utf8")) as {
+    category_counts?: Record<string, number>;
+  };
+  const 數 = healthJson.category_counts ?? {};
+  expect(
+    Object.keys(數).length,
+    "此の檢查の前提（health.json の分野別が在る）が崩れた",
+  ).toBeGreaterThan(0);
+  for (const [key, n] of Object.entries(數)) {
+    const 名 = Recommender.categoryLabelJa(key) ?? key;
+    expect(
+      text,
+      `health.json の ${名} ${n} 件と答が違ふ（別の集計に居ると数が合わない）`,
+    ).toContain(`${名} ${n}`);
+  }
+  /* 多い順に並ぶ（讀む人が最初に見る物から順に – 索引の 9 分野の順ではない）。 */
+  const 並び = [
+    ...text.matchAll(
+      /(人工知能|システム|セキュリティ|ネットワーク|高性能計算|データベース|計算理論|グラフィックス|人間情報処理) (\d+)/g,
+    ),
+  ];
+  expect(並び.length, "分野の数が出て居ん").toBe(9);
+  const 數々 = 並び.map((m) => Number(m[2]));
+  expect(
+    [...數々].sort((a, b) => b - a),
+    "多い順に並んで居ない",
+  ).toEqual(數々);
+});
