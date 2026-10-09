@@ -3491,3 +3491,20 @@ it("長い論文は最初の 20 行だけを見て、其の旨を言ふ（第 95
   });
   expect(短い, "短い論文に截りの文を付けた").not.toContain("行のうち、最初の");
 });
+
+it("venue_info は過去の件數を頭で言ふ（第 961 回）", async () => {
+  /* 實測 2026-11-14: `venue icde` は 21 件のうち **17 件が過ぎた物** – 行ごとに「（過ぎた）」と
+   * 書いてあるが、AI が 21 行を數へて「21 件の締切がある」と答へる方が自然。何件が過去かを
+   * 頭で言ふ（`search_deadlines` の「絞る前は N 行」と同じ役目）。 */
+  const 答 = await call("venue_info", { key: "icde" });
+  const 行 = 答.split("\n").filter((l) => /^20\d\d-/.test(l));
+  const 過去 = 行.filter((l) => l.includes("（過ぎた）")).length;
+  expect(過去, "過去の行が無い（この檢查の前提が崩れた）").toBeGreaterThan(0);
+  expect(過去).toBeLessThan(行.length);
+  expect(答, "過去の件數を頭で言つて居ん").toMatch(new RegExp(`過去は ${過去} 件`));
+  /* 切り詰めと兩立する（96 件の會議 – VLDB）。 */
+  const 長い = await call("venue_info", { key: "vldb" });
+  const 頭 = 長い.split("\n").find((l) => l.startsWith("締切と会期")) ?? "";
+  expect(頭, "切り詰めの件數が無い").toMatch(/\d+ 件のうち 60 件/);
+  expect(頭, "切り詰めと過去の件數が兩立して居ん").toMatch(/・過去は \d+ 件/);
+});
