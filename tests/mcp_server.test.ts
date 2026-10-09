@@ -2908,6 +2908,34 @@ it("道具の說明が、實際に出ているものを名指す（第 914 回�
   expect(一覧, "說明に在る開催の節が實際の返り値に無い").toContain("開催（会期の行）");
 });
 
+it("畫面も「其の月だけ」を件數欄に書く（第 940 回の畫面側）", async () => {
+  /* 第 940・941 回で MCP が「判定: 2026年10月 = 2026年10月の締切（其の月だけ…）」を
+   * 出す樣にした。畫面は**同じ函數**（`relativeDayNotes`）で其れを出す – 兩者が同じ事を
+   * 同じ言葉で言つて居ることを見る。 */
+
+  /* 1. **同じ函數**を呼んで居る（ソースの約束 – 畫面が別の物を書き出したら此處で落ちる）。 */
+  const 畫面の註 = readFileSync(join(REPO_ROOT, "site", "app.ts"), "utf8");
+  expect(畫面の註, "畫面が件數欄の注に relativeDayNotes を呼んで居ない").toContain(
+    "Recommender.relativeDayNotes(searchQuery",
+  );
+
+  /* 2. **同じ言ふ方** – MCP の判定の行は、此の方（正典の函數）と同じ文を含む。實測
+   *    2026-11-12: 兩者は「其の月だけ – 年全体ではありません」を共有する。 */
+  const 正典の注 = Recommender.relativeDayNotes(
+    Recommender.expandRelativeMonths("今月", Date.now()),
+    Date.now(),
+  );
+  expect(正典の注.length, "正典の函數が注を返さない（此の檢查の前提が崩れた）").toBeGreaterThan(0);
+  expect(正典の注[0], "正典が其の月だけを名乗つて居ない").toContain("其の月だけ");
+  const mcp = await call("search_deadlines", { query: "今月", limit: 1 });
+  const 判定 = mcp.split("\n").find((l) => l.startsWith("判定:")) ?? "";
+  expect(判定, "MCP が判定を出して居ん").not.toBe("");
+  /* 兩者の**年と月**が一致する（「2026年10月」の部分）。 */
+  const 年と月 = /(\d{4}年\d{1,2}月)/.exec(正典の注[0])?.[1] ?? "";
+  expect(年と月, "正典の注から年と月が讀めない").not.toBe("");
+  expect(判定, `畫面と同じ年と月に成つて居ない（${年と月}）`).toContain(年と月);
+});
+
 it("畫面と MCP が、同じ問に同じ行を出す（第 917 回）", async () => {
   /* 件數が一致することは第 858・894・895 回で確かめた。**どの行**が出るかまでは見て
    * 居なかつた – AI が「載せる」と-entry 人や 画面と別の會報を答えても、中の件数は同じで
