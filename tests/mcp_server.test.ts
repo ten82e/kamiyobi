@@ -2370,3 +2370,30 @@ it("推薦の行に、畫面と同じ締切の確認狀況が付く（第 898 �
     }
   }
 });
+
+it("推薦の行は、取得狀態と締切の競合が普通でない時だけ書く（第 899 回）", async () => {
+  /* 實測 2026-10-30: 會議 696 件の取得狀態は**全部**「今回あたって確認」、締切の競合が有るのは
+   * 4 會議だけ（ALT / COMPSAC / cvm / ICST）。畫面のカードは常に 2 つを出すが、MCP の返り値は
+   * AI が讀む文 – 常套の文を各行に足すと、變な 1 行だけが埋もれる。普通の時は黙つて居る。 */
+  const 静か = await call("recommend_venues", {
+    paper:
+      "Time-Sensitive Networking Scheduling for Deterministic Industrial Networks | tsn, real-time, scheduling",
+    limit: 5,
+  });
+  expect(静か, "普通の時に取得狀態を書いた").not.toContain("取得状態: ");
+  expect(静か, "競合 0 件の時に競合を書いた").not.toContain("締切の競合:");
+  /* 競合がある會議では** contrario に書く**（黙ると其の會議だけ読まれない）。 */
+  const 競合 = await call("recommend_venues", {
+    paper: "ALT algorithmic learning theory | learning theory, algorithms",
+    limit: 10,
+  });
+  expect(競合, "候補が出て居ん（此の檢查の前提が崩れた）").toMatch(/一致評価/);
+  /* 競合が有る會議の中に 1 件でも推荐されたなら、その行には競合の件數がある。 */
+  const 競合の行 = 競合
+    .split("\n")
+    .filter((l) => /一致評価/.test(l))
+    .filter((l) => /ALT/.test(l));
+  if (競合の行.length) {
+    expect(競合の行[0], "競合のある行に件數が無い").toMatch(/締切の競合: [1-9]\d* 件/);
+  }
+});

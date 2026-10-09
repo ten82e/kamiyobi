@@ -1398,6 +1398,24 @@ function recommendVenues(args: { paper?: unknown; limit?: unknown }, now: number
         ` ／ 時刻 ${信賴の札[締切の信賴.time] ?? String(締切の信賴.time)}` +
         ` ／ タイムゾーン ${信賴の札[締切の信賴.timezone] ?? String(締切の信賴.timezone)}` +
         ` ／ 種別 ${信賴の札[締切の信賴.kind] ?? String(締切の信賴.kind)}`;
+      /* **取得狀態と締切の競合** – 畫面のカードが常に出す 2 つを、**普通の時は黙つて居る**
+       * （第 899 回 – 實測 2026-10-30: 會議 696 件の取得狀態は全部「今回あたって確認」、
+       * 競合が有るのは 4 會議だけ。常套の文を各行に足すと、變な 1 行だけが埋もれる）。 */
+      const 新しい狀態: Record<string, string> = {
+        fresh: "今回あたって確認",
+        "cache-fallback": "前回の取得データ（今回は上流にあたらず）",
+        "snapshot-fallback": "確定済みの収録データ（今回は上流にあたらず）",
+      };
+      const 特記 = [
+        ...(締切の信賴.sourceFreshness !== "fresh"
+          ? [
+              `取得状態: ${新しい狀態[締切の信賴.sourceFreshness] ?? String(締切の信賴.sourceFreshness)}`,
+            ]
+          : []),
+        ...(Number(締切の信賴.conflicts) > 0
+          ? [`締切の競合: ${Number(締切の信賴.conflicts)} 件`]
+          : []),
+      ];
       const agg = (r.match as { agg?: Record<string, number> } | undefined)?.agg ?? {};
       const 理由: string[] = [];
       const 號: Array<[string, number]> = [
@@ -1412,9 +1430,11 @@ function recommendVenues(args: { paper?: unknown; limit?: unknown }, now: number
       const 意味順 = (r.fit as { semanticRank?: number | null }).semanticRank;
       if (意味順) 理由.push(`意味検索順位 ${意味順}`);
       if (r.boosted) 理由.push("同じ分野（掲載先から推定）");
-      return `${i + 1}. 一致評価 ${評價}｜${line(r.row as unknown as Row, now)}｜${確認狀況}｜選定理由: ${
-        理由.length ? 理由.join(" / ") : "目立つ一致はないが候補に入った"
-      }`;
+      return (
+        `${i + 1}. 一致評価 ${評價}｜${line(r.row as unknown as Row, now)}｜${確認狀況}` +
+        `${特記.length ? `｜${特記.join("｜")}` : ""}｜選定理由: ` +
+        `${理由.length ? 理由.join(" / ") : "目立つ一致はないが候補に入った"}`
+      );
     }),
   ].join("\n");
 }
