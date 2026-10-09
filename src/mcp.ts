@@ -825,6 +825,15 @@ function 名乘りの案内(query: string, list: Row[]): string[] {
    * 無いので名簿が「締切の行が 1 本もありません」と言つたが、收錄には 13 行ある – 全部が
    * 過去のもの。AI は其の読み方だと「SOSP の締切は無い」と答えてしまう）。 */
   const 收錄の鍵 = new Set(allRows().map((r) => String(r.conf.key ?? "")));
+  /* 収録の締切の**日**も名指す（畫面と同じ – `site/app.ts` は品書の
+   * `record_deadline_last` と `record_deadline_next` から其れを示して居る。第 929 回）。
+   * 「収録に在ります」だけでは、読む人は「いつ”的问题を持たない。 */
+  const 品書の會議 = new Map(
+    ((catalog() as { conferences?: unknown[] } | null)?.conferences ?? []).map((c) => [
+      String((c as { key?: unknown }).key ?? ""),
+      c as Record<string, unknown>,
+    ]),
+  );
   const 會議々 = snapshot().conferences ?? [];
   const 名前の殼 = (c: Record<string, unknown>): string =>
     [String(c.key ?? ""), String(c.title ?? ""), String(c.acronym ?? ""), String(c.full_name ?? "")]
@@ -855,7 +864,19 @@ function 名乘りの案内(query: string, list: Row[]): string[] {
     const 狀態 = 行の鍵.has(key)
       ? "締切の行は在りますが、いまの絞り込みで 0 件に成つて居ます（絞り込みを外すと出ます）"
       : 收錄の鍵.has(key)
-        ? 'この窓には締切の行がありませんが、**収録には在ります**（scope: "all" で過去の分行が出せます）'
+        ? (() => {
+            /* 収録にあるのは**何の日か**まで言ふ（畫面の同じ言葉 – 第 929 回）。 */
+            const 品書 = 品書の會議.get(key) ?? {};
+            const 最後 =
+              typeof 品書.record_deadline_last === "string" ? 品書.record_deadline_last : "";
+            const 次 =
+              typeof 品書.record_deadline_next === "string" ? 品書.record_deadline_next : "";
+            if (次)
+              return `この窓には締切の行がありませんが、**収録には ${次} の締切が在ります**（scope: "all" で引けます）`;
+            if (最後)
+              return `この窓には締切の行がありませんが、**収録にあるのは過ぎた締切（${最後}）だけ**です（scope: "all" と include_past で読めます）`;
+            return 'この窓には締切の行がありませんが、**収録には在ります**（scope: "all" で過去の分行が出せます）';
+          })()
         : 會期あり
           ? "締切の行が 1 本もありません（会期だけが収録に在り、upcoming.md とカレンダーには「開催」として載ります）"
           : "締切の行が 1 本もありません（会期も確認できて居ません）";

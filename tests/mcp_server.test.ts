@@ -3115,9 +3115,31 @@ it("名簿の注は、收錄全体にも締切の行があればそれを言う�
   const 窓 = await call("search_deadlines", { query: "SOSP", limit: 1 });
   const 行 = 窓.split("\n").filter((l) => /^- /.test(l) && l.includes("key:"));
   expect(行.length, "名簿の注が出て居ん（此の檢査の前提が崩れた）").toBeGreaterThan(0);
-  expect(行[0], "收錄に締切の行があるのに「1 本も無い」と言つた").toContain("収録には在ります");
+  expect(行[0], "收錄に締切の行があるのに「1 本も無い」と言つた").toContain(
+    "この窓には締切の行がありませんが",
+  );
   expect(行[0], "古い文言が残つて居る").not.toContain("締切の行が 1 本もありません");
   /* 收錄にも大字が無い會議は從來の言葉のまま – 其れを潰さない（此处の會議は窗に有る）。 */
   const 窓で有る = await call("search_deadlines", { query: "ICDE", limit: 1 });
   expect(窓で有る.split("\n")[0] ?? "", "有る會議が 0 件に成った").toContain("件");
+});
+
+it("名簿の注は、収録の締切の日まで畫面と同じ言葉で言う（第 929 回）", async () => {
+  /* 畫面は品書の `record_deadline_last` / `record_deadline_next` から「収録にあるのは過ぎた
+   * 締切（2026-04-02）だけ」と言う（`site/app.ts`）。MCP は第 928 回まで「収録には在ります」までしか
+   * 言わなかった – 読む人は「いつ”的问题を持たない。言葉と出所を揃える。 */
+  const text = await call("search_deadlines", { query: "SOSP", limit: 1 });
+  const 注 = text.split("\n").find((l) => l.includes("key: sosp")) ?? "";
+  expect(注, "名簿の注が出て居ん").not.toBe("");
+  expect(注, "収録にある日を名指して居ん").toMatch(
+    /収録にあるのは過ぎた締切（\d{4}-\d{2}-\d{2}）だけ/,
+  );
+  /* 未来の締切がある會議は、近い日を言う（畫面の第 298 回と同じ – 遠い日だけを示すと人は間の
+   * 締切を見落とす）。 */
+  const 有る = await call("search_deadlines", { query: "ICDE", limit: 1 });
+  expect(有る.split("\n")[0] ?? "", "ICDE が出て來ない").toMatch(/件/);
+  /* 収録に何も無い會議の舊い文言は殘って居ない（SOSP の注と同じ形）。 */
+  expect(注, "古い文言が残つて居る").not.toContain(
+    'この窓には締切の行がありませんが、**収録には在ります**（scope: "all" で過去の分行が出せます）',
+  );
 });
