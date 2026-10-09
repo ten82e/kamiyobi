@@ -1492,8 +1492,12 @@ function handle(raw: string, now: number): void {
       const text = callTool(name, args, now);
       reply({ content: [{ type: "text", text }] });
     } catch (error) {
+      /* 「Error: 」を外して讀める文にする（第 890 回 – 實測 2026-10-22: 知らない道具を
+       * 呼ぶと「道具の実行に失敗: Error: 知らない道具: nope」と出て居た。`String(error)`
+       * は `Error:` を先頭に付けるので、利用者が讀む文は其れを剝ぐ）。 */
+      const 文 = String(error instanceof Error ? error.message : error).trim();
       reply({
-        content: [{ type: "text", text: `道具の実行に失敗: ${String(error)}` }],
+        content: [{ type: "text", text: `道具の実行に失敗: ${文 || "不明な失敗"}` }],
         isError: true,
       });
     }

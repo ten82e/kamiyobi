@@ -117,6 +117,35 @@ describe("MCP の手順が話せる（第 714 回）", () => {
     }
   });
 
+  it("知らない道具の失敗文は、讀める形で返す（第 890 回）", async () => {
+    /* 實測 2026-10-22: 知らない道具を呼ぶと「道具の実行に失敗: Error: 知らない道具: nope」と
+     * 出て居た。`String(error)` は `Error:` を先頭に付けるので、AI でも人でも讀める文に剝ぐ
+     * （併せて `isError` は立つたまま – 呼んだ側が失敗と判る）。 */
+    const res = (await client.ask({
+      jsonrpc: "2.0",
+      id: 90,
+      method: "tools/call",
+      params: { name: "nope" },
+    })) as { result?: { content?: Array<{ text?: string }>; isError?: boolean } };
+    const 文 = String(res.result?.content?.[0]?.text ?? "");
+    expect(res.result?.isError, "失敗と判る印が立って居ん").toBe(true);
+    expect(文, "內部の錯誤の接頭語が殘つて居る").not.toContain("Error:");
+    expect(文, "道具の實行に失敗した事を言つて居ん").toContain("道具の実行に失敗");
+    /* どこの道具だか分かる（打ち直しが出來る）。 */
+    expect(文, "知らない道具の名を言つて居ん").toContain("nope");
+    /* 引數が缺けた呼び出しでも、文で落ちる（例外を露出しない）。 */
+    const 缺け = (await client.ask({
+      jsonrpc: "2.0",
+      id: 91,
+      method: "tools/call",
+      params: { name: "search_deadlines" },
+    })) as { result?: { content?: Array<{ text?: string }>; isError?: boolean } };
+    const 缺け文 = String(缺け.result?.content?.[0]?.text ?? "");
+    expect(缺け.result?.isError, "引數の缺けを失敗として居ん").toBeFalsy();
+    expect(缺け文).not.toContain("Error:");
+    expect(缺け文, "何を足せばよいか言つて居ん").toContain("検索語が空です");
+  });
+
   it("知らない呼び出しには誤りを返す（默らない）", async () => {
     const res = (await client.ask({ jsonrpc: "2.0", id: 4, method: "not/a/method" })) as {
       error?: { code?: number };
