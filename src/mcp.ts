@@ -1379,7 +1379,7 @@ function recommendVenues(args: { paper?: unknown; limit?: unknown }, now: number
     ].join("\n");
   const 見本 = 候補.slice(0, limit);
   /* pool に過去の代表が入って居ることを默らない（AI が「これから締め切る會報」として
-   * 過去の行を�めないように – 頭で件數を分けて言ふ）。 */
+   * 過去の行を埋めないように – 頭で件数を分けて言ふ）。 */
   return [
     頭,
     /* 札の意味は**畫面のてびきと同じ言い回し**で添える（第 896 回 – 實測 2026-10-27:

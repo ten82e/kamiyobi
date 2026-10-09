@@ -1360,7 +1360,7 @@ export function toCatalog(
       }
     }
     /* 推薦の軸を**全版の歴**で求めて載せる（第 900 回 – 實測 2026-10-31: 画面は
-     * `r.conf.recommendation_axes` が無いと其場で計算するが、���書の會議は窓の版しか持たない
+     * `r.conf.recommendation_axes` が無いと其場で計算するが、品書の会議は窓の版しか持たない
      * ので `ICDE` が「新規・確認した年 1 年」と出て居た（実物は「成長中・確認した年 7 年」）。
      * 画面も索引と同じ軸を読む樣に – 畫面は `r.conf.recommendation_axes` を先に見る）。 */
     return {
