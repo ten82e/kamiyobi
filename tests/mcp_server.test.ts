@@ -2891,7 +2891,20 @@ it("畫面と MCP が、同じ問に同じ行を出す（第 917 回）", async 
     expect(proc.status, `畫面の絞り込みが動かない（${問}）: ${proc.stderr.slice(0, 300)}`).toBe(0);
     return JSON.parse(proc.stdout.trim()) as string[];
   };
-  for (const 問 of ["AAMAS", "セキュリティ", "今月", "来週", "ネットワーク GPU", "ICDE"]) {
+  /* 第 943 回 – 今囘の三直し（今月・今月の締切・ics）が入る形を齊の中に足した。
+   * 「今月の締切」は絞り込みに使ふ機能語が續く形で、`ics` は曖昧に當たる形 – どちらも
+   * 畫面と同じ行を返さねばならない（文を足したので行が動じて居ないことの保險）。 */
+  for (const 問 of [
+    "AAMAS",
+    "セキュリティ",
+    "今月",
+    "今月の締切",
+    "ics",
+    "来週",
+    "2026年11月",
+    "ネットワーク GPU",
+    "ICDE",
+  ]) {
     const 畫面 = 畫面の行(問);
     const 答 = await call("search_deadlines", { query: 問, limit: 400 });
     /* MCP の行は「… | 會議名（版の識別子）|…」の形 – 版の識別子を集めて比べる。 */
