@@ -51,6 +51,34 @@ function llmsIcsDays(): string[] {
 }
 
 describe("索引が収録範囲を実測で言う（第 291 回）", () => {
+  it("`data.json` の行が、正典を實測した件数と両端の日を言う（第 927 回）", () => {
+    /* 第 726 回が `catalog.json` についてしたのと同じで、**正典**（`data.json`）實測の
+     * 件数と範囲を索引が言っているか。実測 2026-11-12: 索引は「4,984 件（2019-05-25 〜
+     * 2028-03-30）」と書いて居て、`data.json` と一致した – 一致して居るので**守ればよい**
+     * （次の增發で古くなるのを防ぐ）。索引の數は建造が實測して書く（第 291 回の決まり）。 */
+    const line = indexLine("data.json");
+    const 正典 = json("data.json") as {
+      conferences?: Array<{ editions?: Array<{ deadlines?: unknown[] }> }>;
+    };
+    const 締切: Array<Record<string, unknown>> = [];
+    for (const c of 正典.conferences ?? []) {
+      for (const e of c.editions ?? []) {
+        for (const dl of e.deadlines ?? []) 締切.push(dl as Record<string, unknown>);
+      }
+    }
+    expect(締切.length, "正典から締切が数えられない").toBeGreaterThan(0);
+    const 数 = String(締切.length).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    expect(line, `正典の ${数} 件を索引が言っていない`).toContain(`${数} 件`);
+    /* 両端の日（JST の暦日 – `local_date` が無い行は UTC の日）。 */
+    const 日々 = 締切
+      .map((dl) => String(dl.local_date ?? String(dl.utc ?? "").slice(0, 10)))
+      .filter((d) => /^\d{4}-\d{2}-\d{2}$/.test(d))
+      .sort();
+    const 最早 = 日々[0];
+    expect(最早, "正典から日を探せない").toBeDefined();
+    expect(line, "最早の日に索引が触れて居ない").toContain(String(日々[0]));
+    expect(line, "最晩の日に索引が触れて居ない").toContain(String(日々[日々.length - 1]));
+  });
   it("`catalog.json` の行が、品書を実測した件数・両端の日・窓の日数を言う", () => {
     const line = indexLine("catalog.json");
     const span = deadlineSpan(json("catalog.json"));
