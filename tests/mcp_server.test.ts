@@ -3214,8 +3214,9 @@ it("曖昧な語の常時の案内を出す（畫面と同じ – 第 942 回）
   const 案内 = 答.split("\n").find((l) => l.startsWith("「ics」のことなら")) ?? "";
   expect(案内, "曖昧さの案内が出て居ん").not.toBe("");
   expect(案内).toContain("二つの物があり得ます");
-  /* 此の道具を使ふ AI に、配付物の名を添える（畫面の UI の名は此では使へない）。 */
-  const 添 = 答.split("\n").find((l) => l.startsWith("（この道具が出せるのは行だけです")) ?? "";
+  /* 此の道具を使ふ AI に、配付物の名を添える（畫面の UI の名は此では使へない）。第 948 回で
+   * 類語の注と同じ經路に纏めたので、文は其の侭に括弧が無い行に成つた。 */
+  const 添 = 答.split("\n").find((l) => l.startsWith("この道具が出せるのは行だけです")) ?? "";
   expect(添, "配付物の名が出て居ん").toContain("deadlines.ics");
   /* 行が出ない時は出さない（0 件案内が同じ事を言ふ – 畫面と同じ決まり）。 */
   for (const 語 of ["セキュリティ", "締切"]) {
@@ -3353,4 +3354,25 @@ it("曖昧な名の候補は、一番新しい版の繋ぎ先を添へる（第 
     if (行 === undefined) continue; // 曖昧で無い（一つに決まる）會議は此の檢查の對象外
     expect(行, `${名} の候補の繋ぎ先が古い年版: ${行}`).not.toMatch(/20(1[0-9]|2[0-5])\b/);
   }
+});
+
+it("見えて居る行にも、畫面が添える注を出す（第 948 回）", async () => {
+  /* 實測 2026-11-11: 畫面は `ランク` を打つと件數欄に
+   * 「「ランク」だけでは等級を絞れていません…」を出す（`app.ts` の `synonymNotes`）。
+   * MCP は行を出すだけで其れを言はなかつた – AI が「ランクだけで等級を絞れた」と誤解する。
+   * 0 件の時だけ出す `guidance` では足りない（行が見えて居る時が**むしろ罠**）。 */
+  for (const 道具 of ["search_deadlines", "explain_word"] as const) {
+    const 答 =
+      道具 === "search_deadlines"
+        ? await call("search_deadlines", { query: "ランク", limit: 3 })
+        : await call("explain_word", { word: "ランク" });
+    expect(答, `${道具} に類語の注が出て居ん`).toContain("「ランク」だけでは等級を絞れていません");
+  }
+  /* 關係無い語には出さない（騒音を増やさない – 第 852 回と同じ）。 */
+  const 無 = await call("search_deadlines", { query: "セキュリティ", limit: 3 });
+  expect(無, "無關係な語に類語の注が出た").not.toContain("だけでは");
+  /* 曖昧な語の方も、此の經路から出る（第 942 回と同じ文 – 重ねて出さない）。 */
+  const 曖昧 = await call("explain_word", { word: "ics" });
+  expect(曖昧, "explain_word に曖昧さの注が出て居ん").toContain("二つの物があり得ます");
+  expect(曖昧.split("\n").filter((l) => l.includes("この道具が出せるのは行だけ")).length).toBe(1);
 });

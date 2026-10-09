@@ -929,6 +929,28 @@ function sortRows(list: Row[]): Row[] {
 
 /* ---- 道具 ---- */
 
+/** 畫面が**行が見えて居る時**に件數欄へ添える注（類語の寄せ先と、曖昧さの常時の案内）。
+ *
+ * 實測 2026-11-11: 畫面は `ランク` を打つと件數欄に
+ * 「「ランク」だけでは等級を絞れていません…」を出す（`app.ts` の `synonymNotes`）。
+ * MCP の `search_deadlines`・`explain_word` は行を出すだけで其れを言はなかつた –
+ * AI が「ランクだけで等級を絞れた」と誤解する。同じ函數から採るので、次に畫面が
+ * 直せば此方も直る（第 948 回）。 */
+function 見えて居る注(query: string, 行數: number): string {
+  if (行數 <= 0) return "";
+  const 類語 = Recommender.querySynonymNotes(query)
+    .map((n) => String(n).trim())
+    .filter((n) => n.length > 0);
+  const 常時 = String(Recommender.uiWordAlwaysNoteJa(query) ?? "").trim();
+  const 全部 = [...類語, ...(常時 ? [常時] : [])].filter((n) => n.length > 0);
+  if (!全部.length) return "";
+  /* この道具を使ふ AI に配付物の名を添える（畫面の UI の名は此では使へない – 第 942 回）。 */
+  const 添 = 常時
+    ? "この道具が出せるのは行だけです。カレンダーのファイルは deadlines.ics、購読 URL はページ（README の購読手順）に在ります"
+    : "";
+  return `\n${全部.join("\n")}${添 ? `\n${添}` : ""}`;
+}
+
 function searchDeadlines(
   args: {
     query?: unknown;
@@ -1049,14 +1071,9 @@ function searchDeadlines(
   /* 行が**見えて居る**時にだけ、行が當たるかどうかに関係なく言ふ案内（`ics` のやうな
    * 曖昧さ – 畫面の `uiWordAlwaysNoteJa` と同じ。第 942 回）。0 件の時は 0 件案内が同じ事を
    * 言ふので、此の道具でも重ねない（畫面と同じ決まり）。 */
-  const 常時 = String(Recommender.uiWordAlwaysNoteJa(query) ?? "").trim();
-  /* 常時の案内は畫面の UI の名を示すので、**此の道具を使ふ AI** には配付物の名を添える
-   * （`llms.txt` が同じ名を持つ – 第 942 回）。 */
-  const 常時の文 =
-    hit.length && !絞り込みだけ && 常時
-      ? `\n${常時}\n（この道具が出せるのは行だけです。カレンダーのファイルは deadlines.ics、購読 URL はページ（README の購読手順）に在ります）`
-      : "";
-  const 頭 = `${絞り込みだけ ? "語を指定せず、絞り込みだけ" : `検索語「${query}」に当たる締切`}: ${hit.length} 件（${名} ${list.length} 行・画面の既定と同じ絞り込み。絞る前は ${素の.length} 行${ランク ? `／ランク ${ランク}` : ""}${args.domestic === true ? "／国内のみ" : ""}${args.online === true ? "／オンライン参加可のみ" : ""}${窓あり ? `／締切まで ${窓の日數} 日以内` : ""}${讀めない引數}）${知らん.length ? `／知らない種別（其の侭では 0 件に成ります）: ${知らん.join("・")}` : ""}${種別一種 ? `／kind は kinds と共に与えられたので見て居ません` : ""}${知らんランク ? `／知らないランク（等級は ${Recommender.rankGradeOrderJa().join("・")}）: ${知らんランク}` : ""}${日付の語 ? "\n日付は日本時間（JST）。月や日付の語は、締切の日付と「会期」の日付の両方に当たる（画面のてびきと同じ約束）ので、月で引いた時に見出しの月と違ふ日が出る行が在る。" : ""}${窓が無い ? `\n${窓が無いの斷り(true)}` : ""}${scopeErr ? `\n${scopeErr}` : ""}${解決の文}${常時の文}`;
+  /* 行が見えて居る時に出す注（類語・曖昧さ – 第 942・948 回）。 */
+  const 見えて居る文 = 見えて居る注(query, hit.length);
+  const 頭 = `${絞り込みだけ ? "語を指定せず、絞り込みだけ" : `検索語「${query}」に当たる締切`}: ${hit.length} 件（${名} ${list.length} 行・画面の既定と同じ絞り込み。絞る前は ${素の.length} 行${ランク ? `／ランク ${ランク}` : ""}${args.domestic === true ? "／国内のみ" : ""}${args.online === true ? "／オンライン参加可のみ" : ""}${窓あり ? `／締切まで ${窓の日數} 日以内` : ""}${讀めない引數}）${知らん.length ? `／知らない種別（其の侭では 0 件に成ります）: ${知らん.join("・")}` : ""}${種別一種 ? `／kind は kinds と共に与えられたので見て居ません` : ""}${知らんランク ? `／知らないランク（等級は ${Recommender.rankGradeOrderJa().join("・")}）: ${知らんランク}` : ""}${日付の語 ? "\n日付は日本時間（JST）。月や日付の語は、締切の日付と「会期」の日付の両方に当たる（画面のてびきと同じ約束）ので、月で引いた時に見出しの月と違ふ日が出る行が在る。" : ""}${窓が無い ? `\n${窓が無いの斷り(true)}` : ""}${scopeErr ? `\n${scopeErr}` : ""}${解決の文}${見えて居る文}`;
   if (!hit.length) {
     /* 畫面と同じ約束 – 案内は「素の當たりが 0」の時に出る物なので、絞り込みで 0 に成つた時は
      * 其の旨を書く（絞り込みを外せば出る事がある）。 */
@@ -1540,8 +1557,12 @@ function explainWord(args: { word?: unknown; scope?: unknown }, now: number): st
     /* **切り詰めて居る時は其の旨を書く**（第 925 回 – 實測 2026-11-11: 見出しは「37 行」と
      * 書きながら 3 行しか出ない。読む人は 37 行Assumeる – 第 924 回の `limit` と同じ括り）。 */
     const 切替 = 畫面の行.length > 行.length ? `・このうち ${行.length} 行を出します` : "";
+    /* 語を調べる人にも、畫面が行と一緒に出す注を添える（類語・曖昧さ – 第 948 回）。
+     * `explain_word` は行を調べる道具なので、ガイダンス（0 件用）だけで足りない。 */
+    const 見えて居る文 = 見えて居る注(word, 畫面の行.length);
     return [
       `「${word}」は素の照合で ${件數} 行・画面の既定の絞り込み（今後・投稿締切の種別・推定を除く）を通すと ${畫面の行.length} 行です（${名}${切替}）。`,
+      ...(見えて居る文 ? [見えて居る文.trim()] : []),
       ...行.map((r) => `- ${line(r, now)}`),
       ...(畫面の行.length > 行.length
         ? [`- …ほか ${畫面の行.length - 行.length} 行（search_deadlines で引けます）`]
