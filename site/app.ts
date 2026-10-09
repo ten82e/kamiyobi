@@ -606,6 +606,9 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   // 種別の日本語表記は recommender の正典と同じ表を使う（表示している語で検索できない、
   // という状態を作らないため）。
   const KIND_LABEL: Record<string, string> = Recommender.kindLabelTable();
+  /* 推薦で**省いた論文の行數**（第 954 回 – 長い論文は最初の 20 行だけを見る）。件數欄に
+   * 書くので filter の外に置く（描畫が讀む）。 */
+  let 截つた行 = 0;
   /* 検証状態の語も recommender の正本から取る（上の KIND_LABEL と同じ理由）。
    * 関数の中で `Recommender.…` を参照しないこと – 行の詳細を作る関数は検査が
    * ビルド成果物から単独で抜き出して動かすので、依存を増やすと抜き出した先に
@@ -2661,11 +2664,19 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         : "";
     // 単体抽出テスト（node probe）でも動くよう、filter 内では window 経由で解決する
     const Rec = Recommender;
-    const pLines = Rec
+    /* **行の數を截る**（第 954 回 – 實測 2026-11-13: 39 KB の論文を貼ると推薦が
+     * **120 秒逾** answer しなかつた。推薦は會議のまとまり（696）ごとに論文の行を見るので、
+     * 行が增えると掛け算で膨らむ）。切るのは信號のない部分 – 題名と概要（最初の 20 行）が
+     * 候補を決め、1000 行の本文は何も增やさない。MCP と同じ 20 行（兩方で同じ結果）。
+     * 切つたことは件數欄の注で言ふ（默つて切ると「參考にして居ない」がばれる）。 */
+    const 行の截 = 20;
+    const 全部の行 = Rec
       ? Rec.parsePaperLines(pText)
       : pText
         ? [{ title: pText, keywords: "", venue: "" }]
         : [];
+    const pLines = 全部の行.slice(0, 行の截);
+    截つた行 = 全部の行.length > pLines.length ? 全部の行.length - pLines.length : 0;
 
     // 分野: 手動チップがあればそれで絞る。論文モードではチップ自体を見せていない
     // （`.field.deadline-only` で非表示）ので、ここで絞る必要は無い。
@@ -5194,7 +5205,11 @@ function semanticOutput(value: unknown): value is SemanticOutput {
           shown.length > RECOMMENDATION_PAGE
             ? `（まず上位 ${countJa(RECOMMENDATION_PAGE)} 件を表示）`
             : ""
-        }${venueMissNotice ? ` ｜ ${venueMissNotice}` : ""}`
+        }${venueMissNotice ? ` ｜ ${venueMissNotice}` : ""}${
+          /* 長い論文は最初の 20 行だけを見る（第 954 回 – 39 KB を貼ると 120 秒逾も
+             固まつて居た）。切つたことを此處で言ふ（默つて切ると「參考にして居ない」）。 */
+          截つた行 > 0 ? ` ｜ ${countJa(截つた行)} 行を省いて調べました（最初の 20 行だけ）` : ""
+        }`
       : recMode
         ? "投稿先を探すには論文情報を入力してください"
         : `${countJa(shown.length)} 件 / 全 ${countJa(rows.length)} 件`;
