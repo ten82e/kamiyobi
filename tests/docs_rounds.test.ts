@@ -57,3 +57,38 @@ it("README と SPEC で、箇条書きが前の項の文末に繋がっていな
     expect(glued, `${name} に繋がった箇条書きがある`).toEqual([]);
   }
 });
+
+it("README が MCP サーバの入口と、實装と同じ 6 つの道具を書いて居る（第 891 回）", () => {
+  /* 實測 2026-10-22: README の「機械可読の出力」は「次の **2 つ**を見るのが早い」と書いた儘で
+   * 表には 5 つ並び、**MCP サーバに一度も觸れて居なかつた**。MCP は AI がこの收錄を使ふ時の
+   * 入口（`node src/mcp.ts`）なので、購讀手順を書く README に無いのは穴だ。 */
+  const readme = readFileSync(join(ROOT, "README.md"), "utf8");
+  expect(readme, "MCP サーバの節が無い").toContain("### MCP サーバとして使う");
+  expect(readme, "起動の命令を書いて居ん").toContain("node src/mcp.ts");
+  expect(readme, "stdio・讀み取り專用と言つて居ん").toContain("stdio");
+  expect(readme, "外部へ送らん事を書いて居ん").toContain("外部への送信は行わない");
+  /* 「2 つ」が殘つて居ると、讀む人は表の 5 つを見て齟齬を覺える。 */
+  const 節 = readme.slice(
+    readme.indexOf("## 機械可読の出力"),
+    readme.indexOf("### MCP サーバとして使う"),
+  );
+  expect(節, "表の立てる數が殘つて居る").not.toContain("次の 2 つ");
+  expect(節, "表の 5 つを數へて居ん").toContain("次の 5 つ");
+  /* 道具の一覽は**實装が持つ物**と突き合はせる（第 882 回の畫面のてびきと同じ決めごと）。
+   * 增えた道具が默つた儘に成らない。 */
+  const mcp = readFileSync(join(ROOT, "src", "mcp.ts"), "utf8");
+  const 宣言 = [...mcp.matchAll(/^\s{4}name: "([a-z_]+)",$/gm)].map((m) => m[1]);
+  expect(宣言.length, "此の檢查の前提（道具の宣言）が崩れた").toBe(6);
+  const 表 = readme.slice(readme.indexOf("### MCP サーバとして使う"));
+  for (const 名 of 宣言) {
+    expect(表, `README の道具の表が ${名} を書いて居ん`).toContain(`\`${名}\``);
+  }
+  /* 表中の cellule に逃げて居ない `|` が在ると、譯と同じ表が割れる（實測 2026-10-22 で踏んだ）。 */
+  const 行 = 表.split("\n").filter((l) => l.startsWith("| `"));
+  expect(行.length, "README の道具の表が讀めない").toBeGreaterThan(3);
+  for (const l of 行) {
+    const cellule = l.slice(1, -1).split("|");
+    for (const c of cellule)
+      expect(c.includes("|"), `表中に逃げて居ない | が在る: ${l}`).toBe(false);
+  }
+});
