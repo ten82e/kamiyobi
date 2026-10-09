@@ -502,6 +502,27 @@ function 數の引數(
   return { 使ふ: n, 斷り: "", 省かれた: false };
 }
 
+/** 真偽の引數（第 909 回）。
+ *
+ * schema は boolean と書いてあるが、實測 2026-11-01 では `"true"` / `1` / `"yes"` を渡しても
+ * **`=== true` の比較一つで黙って外れて居た** – `include_past: "true"` は 89 件のはずが 37 件に
+ * なり、AI は「過去の締切を出した中得到 37 件」と返る（絞り込みが付かないのに Reasons を
+ * 言わない）。數の引數（第 878 回）と同じ扱いにした – 読める形は其れで受け、讀めない形は
+ * **名指す**。 */
+function 真偽の引數(名: string, 値: unknown): { 使ふ: boolean; 斷り: string } {
+  if (値 === undefined || 値 === null || String(値).trim() === "") return { 使ふ: false, 斷り: "" };
+  if (typeof 値 === "boolean") return { 使ふ: 値, 斷り: "" };
+  const 語 = String(値).trim().toLowerCase();
+  if (["true", "1", "yes", "on"].includes(語)) return { 使ふ: true, 斷り: "" };
+  if (["false", "0", "no", "off"].includes(語)) return { 使ふ: false, 斷り: "" };
+  if (語 === "真") return { 使ふ: true, 斷り: "" };
+  if (語 === "偽") return { 使ふ: false, 斷り: "" };
+  return {
+    使ふ: false,
+    斷り: `／${名} は true か false で指定してください（いま ${JSON.stringify(値)}）。其の値は使はないので、既定の儘扱います`,
+  };
+}
+
 /* 畫面の既定の一覧と同じ絞り込み（第 714 回）。**同じ數字を返す**のが此の道具の値打ちなので、
  * 畫面が既定で隠して居る物（過去の締切・投稿締切以外の種別・推定）は此處でも隠す。
  * 隱した件數は頭に書く（默つて減らすと、AI が「37 件」と言つて人が「722 件」と見る）。 */
@@ -825,6 +846,27 @@ function searchDeadlines(
   },
   now: number,
 ): string {
+  /* 真偽の引數を**一度だけ**読み、読める形に直す（第 909 回 – `include_past: "true"` は
+   * `=== true` の比較一つで黙って外れて居た。數の引數（第 878 回）と同じ扱ひ）。 */
+  const 真偽 = {
+    include_past: 真偽の引數("include_past", args.include_past),
+    include_estimated: 真偽の引數("include_estimated", args.include_estimated),
+    domestic: 真偽の引數("domestic", args.domestic),
+    online: 真偽の引數("online", args.online),
+  };
+  /* 絞り込みは**正規化した引數**で見る（下の判定は `=== true` だけ – 一箇所で直す）。
+   * **在った引數だけ**書き戻す（省いた物を false にしてしまうと、「絞り込みを指定した」判定が
+   *  – 語も絞り込みも無ければ「検索語が空です」と返す筈が、行を返して居た）。 */
+  const _ARGS = args;
+  args = {
+    ...args,
+    ...(_ARGS.include_past !== undefined ? { include_past: 真偽.include_past.使ふ } : {}),
+    ...(_ARGS.include_estimated !== undefined
+      ? { include_estimated: 真偽.include_estimated.使ふ }
+      : {}),
+    ...(_ARGS.domestic !== undefined ? { domestic: 真偽.domestic.使ふ } : {}),
+    ...(_ARGS.online !== undefined ? { online: 真偽.online.使ふ } : {}),
+  };
   const query = String(args.query ?? "").trim();
   /* 語が空でも**絞り込みを指定して居れば**引ける（第 793 回 – 實測 2026-10-06: 「登録締切を全部
    * 見たい」と云ふ聞き方に答へられなかつた。第 865 回に `rank`・`domestic`・`online` へ廣げた –
@@ -846,7 +888,16 @@ function searchDeadlines(
   const 窓の引數 = 數の引數("within_days", args.within_days, 1);
   const 窓の日數 = 窓の引數.使ふ;
   const 窓あり = 窓の日數 !== null;
-  const 讀めない引數 = [限り.斷り, 窓の引數.斷り].filter((t) => t).join("");
+  const 讀めない引數 = [
+    限り.斷り,
+    窓の引數.斷り,
+    真偽.include_past.斷り,
+    真偽.include_estimated.斷り,
+    真偽.domestic.斷り,
+    真偽.online.斷り,
+  ]
+    .filter((t) => t)
+    .join("");
   const { list, 名, 生成, 窓が無い } = pick(args.scope);
   const 古さ = 古さの斷り(生成, now);
   /* 語が空（種別だけの時）は**全部に當たる**目にする（第 793 回）。 */

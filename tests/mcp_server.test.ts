@@ -2616,3 +2616,56 @@ it("scope の別名を受け、知らない値は名指す（第 908 回）", as
   const 省 = await call("search_deadlines", { query: "セキュリティ", limit: 1 });
   expect(省, "scope を省いたのに名指した").not.toContain("知らない scope");
 });
+
+it("真偽の引数は文字列でも効く – 読めない値は名指す（第 909 回）", async () => {
+  /* 實測 2026-11-01: `include_past: "true"` を渡しても `=== true` の比較一つで黙って外れて居た
+   * – 89 件のはずが 37 件になり、AI は「過去の締切を出した中得到 37 件」と返す（絞り込みが
+   * 付かないのに其在言わない）。數の引數（第 878 回）と同じ扱いにした。 */
+  const 基本 = await call("search_deadlines", { query: "セキュリティ", limit: 1 });
+  const 件數 = (t: string): string => /締切: ([\d,]+) 件/.exec(t)?.[1] ?? "";
+  const 過去 = await call("search_deadlines", {
+    query: "セキュリティ",
+    limit: 1,
+    include_past: true,
+  });
+  expect(件數(過去), "include_past が効いて居ん").not.toBe(件數(基本));
+  /* 文字列・數字・-other の読みやすい形も同じ答えにする。 */
+  for (const 値 of ["true", "1", "yes", "on", "真"]) {
+    const 答 = await call("search_deadlines", {
+      query: "セキュリティ",
+      limit: 1,
+      include_past: 値,
+    });
+    expect(答, `include_past: "${値}" が効かない`).toBe(過去);
+  }
+  for (const 値 of ["false", "0", "no", "off", "偽"]) {
+    const 答 = await call("search_deadlines", {
+      query: "セキュリティ",
+      limit: 1,
+      include_past: 値,
+    });
+    expect(答, `include_past: "${値}" が基本と違ふ`).toBe(基本);
+  }
+  /* 読めない値は**名指す**（數の引數と同じ – 黙って既定に戻さない）。 */
+  for (const [名, 値] of [
+    ["include_past", "bogus"],
+    ["include_estimated", "maybe"],
+    ["domestic", "x"],
+    ["online", "はい"],
+  ] as const) {
+    const 答 = await call("search_deadlines", { query: "セキュリティ", limit: 1, [名]: 値 });
+    expect(答, `${名} の讀めない値を名指して居ん`).toContain(
+      `${名} は true か false で指定してください`,
+    );
+  }
+  /* `domestic` / `online` も讀める形では効く（頭の「国内のみ」の札が出る）。 */
+  const 國內 = await call("search_deadlines", {
+    query: "セキュリティ",
+    limit: 1,
+    domestic: "true",
+  });
+  expect(國內, "domestic の文字列が効いて居ん").toContain("国内のみ");
+  expect(件數(國內)).not.toBe(件數(基本));
+  /* 省いた時は名指さない。 */
+  expect(基本, "省いたのに名指した").not.toContain("true か false で指定してください");
+});
