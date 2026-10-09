@@ -2799,3 +2799,39 @@ it("collection_stats が上流のソースの状態を出す – 品書と同じ
     rmSync(控え);
   }
 });
+
+it("道具の說明が、實際に出ているものを名指す（第 914 回）", async () => {
+  /* 実態を増やしても說明が追ひ付かないと、AI は其れを知らずに道具を選べない（読む前に分からない – 第 891 回の README と同じ括り）。返り値に**在る節**を說明が
+   * 一つずつ名指して居ることを見る。 */
+  const 必要な語: Array<[string, string[]]> = [
+    ["search_deadlines", ["0 件", "within_days", "scope", "kinds"]],
+    ["list_upcoming", ["開催", "kind", "days"]],
+    ["venue_info", ["key", "次の投稿締切", "版"]],
+    ["explain_word", ["0 行", "案内"]],
+    ["recommend_venues", ["一致評価", "選定理由", "pool"]],
+    ["collection_stats", ["分野別の会議数", "上流のソース"]],
+  ];
+  const res = (await client.ask({ jsonrpc: "2.0", id: 92, method: "tools/list" })) as {
+    result?: { tools?: Array<{ name: string; description?: string }> };
+  };
+  const listed = res.result?.tools ?? [];
+  if (process.env.DEBUG_TOOLS) {
+    const d = listed.find((t) => t.name === "recommend_venues")?.description ?? "";
+    console.log("DEBUG len", d.length, "has:", d.includes("選定理由"), d.slice(-120));
+  }
+  const 有二 = listed.filter((t) => 必要な語.some(([名]) => 名 === t.name));
+  expect(有二.length, "道具が六つ揃つて居ない（此の檢査の前提が崩れた）").toBe(必要な語.length);
+  for (const [名, 語々] of 必要な語) {
+    const 説 = 有二.find((t) => t.name === 名)?.description ?? "";
+    for (const 語 of 語々) {
+      if (process.env.DEBUG_TOOLS)
+        console.log("DEBUG", 名, JSON.stringify(語), 説.includes(語), "len", 説.length, "indexOf", 説.indexOf("選定理由"));
+      expect(説, `${名} の說明が「${語}」を名指して居ん`).toContain(語);
+    }
+  }
+  /* 實際の返り値にその語が在ることも見る（說明だけの書き起こしが reality とずれない – 第 910 回の開催）。 */
+  const 上記 = await call("collection_stats", {});
+  expect(上記, "說明に在る節が實際の返り値に無い").toContain("分野別の会議数");
+  const 一覧 = await call("list_upcoming", { days: 30, scope: "all", limit: 1 });
+  expect(一覧, "說明に在る開催の節が實際の返り値に無い").toContain("開催（会期の行）");
+});
