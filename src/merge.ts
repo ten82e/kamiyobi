@@ -858,7 +858,7 @@ function normLabel(label: string | null | undefined): string {
 }
 
 // スロットキーの一般語(deadlineTrackKey の generic 集合)そのものに限ると、
-// "Full Paper Due"・"Submission deadline" のような常套句が非空の擬似trackに
+// "Full Paper Due"・"Submission deadline" のような常套句が非空の擬似トラックに
 // なりスロットキーが食い違うため、この救済路自体が発火条件と矛盾し到達不能
 // だった (#733)。ここでは独自に「kind 語・author/full/regular/final/extended
 // /research/metadata/contribution 等の非弁別的修飾語・ストップワードを除いた

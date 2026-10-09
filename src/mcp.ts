@@ -138,7 +138,7 @@ function allRows(): Row[] {
 /** 使ふ窓を決める（既定は畫面と同じ。`scope: "all"` で收錄の全體）。
  * **生成時刻も一緒に返す** – 窓に依って出所の檔案が違ふので、古さの斷りも其れに合わせる。 */
 /** 品書が載せた推薦の軸を、會議の key で引く（`candidateRows` は會議の欄を絞るので、
- * 軸は行の `conf` に残らない – 第 900 回）。品書が軸を持たない時は空を返す（其Caller は
+ * 軸は行の `conf` に残らない – 第 900 回）。品書が軸を持たない時は空を返す（其の呼び出し側は
  * 其場で計算する）。 */
 let 軸の索引: Map<string, unknown> | undefined;
 function 品書の軸(): Map<string, unknown> {
@@ -170,7 +170,7 @@ let scopeErr = "";
 
 function pick(scope: unknown): { list: Row[]; 名: string; 生成: unknown; 窓が無い: boolean } {
   scopeErr = "";
-  /* **覚えてwifiらない scope は名指す**（第 908 回 – 實測 2026-11-01: `scope: "collection"`
+  /* **覚えて居ない scope は名指す**（第 908 回 – 實測 2026-11-01: `scope: "collection"`
    * や `scope: "nosuch"` は黙って**窓**を返して居た。索引の語は「収録の全体」なのに
    * schema には `all` としか無いため、AI が資料の語或其の儕の打鍵違いで別の物を見る –
    * 第 886 回の種別のと同じ括り）。`collection` は `all` の別名として受ける。 */
@@ -189,7 +189,7 @@ function pick(scope: unknown): { list: Row[]; 名: string; 生成: unknown; 窓�
   return 窓
     ? { list: 窓, 名: "画面が最初に読む窓", 生成: catalog()?.generated_at, 窓が無い: false }
     : /* 窓が無い時は收錄の全体を見るが、**其の旨を言はないと件數が配布先と違ふ理由が
-       * 讀めない**（第 892 回 – 實測 2026-10-23: 品書をbuildして居ない手元では
+       * 讀めない**（第 892 回 – 實測 2026-10-23: 品書を作って居ない手元では
        * `セキュリティ` が 37 件／42 件に割れた。黙って居ると AI は「畫面と違ふ」で躊く）。 */
       {
         list: allRows(),
@@ -2028,7 +2028,7 @@ function main(): void {
     venue: "venue_info",
     explain: "explain_word",
     recommend: "recommend_venues",
-    /* 殘りの一つにも讀みやすい短い名indle（第 904 回 – 其它 5 つに有るのに此れだけ無かった）。 */
+    /* 殘りの一つにも讀みやすい短い別名（第 904 回 – 其它 5 つに有るのに此れだけ無かった）。 */
     stats: "collection_stats",
   };
   const 名 = 別名[tool] ?? tool;

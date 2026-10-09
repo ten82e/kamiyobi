@@ -3971,7 +3971,7 @@ export function toUpcomingMd(
   ];
   if (rows.length === 0) rows.push("| - | - | 該当なし | - | - | - | - | - |");
   /* 1,000 行を超える表なので、最後まで読んだ人にも出口を置く（`upcoming.html` と同じ言い回しを
-   * 同じ正本から使う）。GitHub の生的な表示では、この名前はコードspanになるだけで辿れない。 */
+   * 同じ正本から使う）。GitHub の生的な表示では、この名前はコードのスパンになるだけで辿れない。 */
   const tail = [
     "",
     `[${UPCOMING_BACK_TEXT_JA}](index.html) ―― 日本時間への換算・残り日数・絞り込みはそちら。` +
