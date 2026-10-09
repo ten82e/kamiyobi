@@ -1800,6 +1800,16 @@ it("「評価でしぼる」でのぞいた件数を件数欄に出す（SPEC §
    * 切つたことは**件數欄**で言ふ（默つて切ると「參考にして居ない」がばれる）。 */
   expect(runtime, "截つた行の宣告が件數欄に無い").toContain("行を省いて調べました");
   expect(runtime, "截つた行を數へて居ない").toContain("截つた行 =");
+  /* 截る行數は**兩方で同じ**（第 954 回 – MCP も畫面も 20 行。片方だけ變更すると
+   * 「AI は 20 行で調べた・畫面は 50 行で調べた」になり、同じ論文で違ふ候補が出る）。 */
+  const 截りの値 = (字: string): number => {
+    const m = /(?:const |let |var )?行の截 = (\d+)/.exec(字);
+    expect(m, "截る行數の宣言が見つからない").not.toBeNull();
+    return Number(m?.[1] ?? "-1");
+  };
+  const mcp = readFileSync(join(REPO_ROOT, "src", "mcp.ts"), "utf8");
+  expect(截りの値(mcp), "MCP の截る行數が讀書めない").toBeGreaterThan(0);
+  expect(截りの値(runtime), `畫面の截る行數が MCP（${截りの値(mcp)}）と違ふ`).toBe(截りの値(mcp));
 
   const rec = readFileSync(join(site, "recommender.js"), "utf8");
   const filterSrc = jsFunction(runtime, "filter");
