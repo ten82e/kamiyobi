@@ -3143,3 +3143,20 @@ it("名簿の注は、収録の締切の日まで畫面と同じ言葉で言う�
     'この窓には締切の行がありませんが、**収録には在ります**（scope: "all" で過去の分行が出せます）',
   );
 });
+
+it("名簿の注は、収録の推定の未来も名指す（第 930 回）", async () => {
+  /* 品書の `record_deadline_next` は**確認できた日だけ**を数へる（推定の行は `utc` が無いので
+   * 入らない – 實測 2026-11-14: `SOSP` に推定の 2027-03-19 が在るのに、品書の申告は空だつた）。
+   * 畫面は仕様通り「過ぎた締切（2026-04-02）だけ」と言う – 讀む人は其れで足りる。MCP は收錄の
+   * 行を持つので、**推定なら何日か**も言へる（研究者なら其の推定の日も知りたい）。 */
+  const text = await call("search_deadlines", { query: "SOSP", limit: 1 });
+  const 注 = text.split("\n").find((l) => l.includes("key: sosp")) ?? "";
+  expect(注, "名簿の注が出て居ん").not.toBe("");
+  expect(注, "推定の未来を名指して居ん").toContain("推定なら");
+  expect(注, "推定の日に確約と書いて居る（確かではない）").toContain("確約では無い");
+  /* 推定の日が actual と一致する（画面に出るのは `venue_info` の推定の行）。 */
+  const 室 = await call("venue_info", { key: "sosp", scope: "all" });
+  const 日 = /次の投稿締切: (\d{4}-\d{2}-\d{2})/.exec(室)?.[1] ?? "";
+  expect(日, "venue_info から推定の日が読めない").toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  expect(注, `推定の日（${日}）と名簿の注が違ふ`).toContain(日);
+});

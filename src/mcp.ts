@@ -802,7 +802,31 @@ function 種別の報べ(
  * 其の計算は畫面の側に在り、MCP は Recommender 層の案内しか使つて居なかつた – 締切を持たん
  * 會議の名前で引くと「1 行も出ません」とだけ言ひ、**収録に在る事**も、會期が何處に載るかも
  * 言はなかつた（實測 2026-10-08: `apnoms` は版 1 件・會期ありで upcoming.md に載つて居る）。 */
-function 名乘りの案内(query: string, list: Row[]): string[] {
+/** その會議の**推定の未来の締切**の最早日（第 930 回）。
+ *
+ * 品書の `record_deadline_next` は**確認できた日だけ**を数へる（推定の行は `utc` が無いので
+ * 入らない – 實測 2026-11-14: `SOSP` に推定の 2027-03-19 が在るのに、品書の申告は空だつた）。
+ * 此方は收錄の行を持つので、推定の未来を自分で見て一天る。
+ */
+function 推定の未来(key: string, now: number): string {
+  let 最早 = "";
+  let 最早ms = Number.POSITIVE_INFINITY;
+  for (const r of allRows()) {
+    if (String(r.conf.key ?? "") !== key || r.est !== true) continue;
+    const 日 = r.dateOnly
+      ? Recommender.jstNoonMs(String(r.tShown ?? r.t ?? ""), Number.NaN)
+      : Number(r.t);
+    if (!Number.isFinite(日) || 日 < now) continue;
+    if (日 >= 最早ms) continue;
+    最早ms = 日;
+    最早 = r.dateOnly
+      ? String(r.tShown ?? "").slice(0, 10)
+      : new Date(r.t + 9 * 3600000).toISOString().slice(0, 10);
+  }
+  return 最早;
+}
+
+function 名乘りの案内(query: string, list: Row[], now: number): string[] {
   /* URL を貼つた人にも、ドメインの部品を會議の名として扱はない（畫面は名簿の問を空白で切るので、
    * URL は一つの語の儘で名前に當たらない – 第 153 回）。此方は `/` でも切るので、其の儘だと
    * 「cfp に似た名前の会議」の樣な部品の話が出てしまふ。 */
@@ -871,10 +895,20 @@ function 名乘りの案内(query: string, list: Row[]): string[] {
               typeof 品書.record_deadline_last === "string" ? 品書.record_deadline_last : "";
             const 次 =
               typeof 品書.record_deadline_next === "string" ? 品書.record_deadline_next : "";
+            const 推定 = 推定の未来(key, now);
             if (次)
               return `この窓には締切の行がありませんが、**収録には ${次} の締切が在ります**（scope: "all" で引けます）`;
             if (最後)
-              return `この窓には締切の行がありませんが、**収録にあるのは過ぎた締切（${最後}）だけ**です（scope: "all" と include_past で読めます）`;
+              return (
+                `この窓には締切の行がありませんが、**収録にあるのは過ぎた締切（${最後}）だけ**です` +
+                (推定
+                  ? `。推定なら ${推定} も在ります（include_estimated で出ます – 確約では無い）`
+                  : "") +
+                '（scope: "all" と include_past で読めます）'
+              );
+            return `この窓には締切の行がありませんが、**収録にあるのは過ぎた締切（${最後}）だけ**です（scope: "all" と include_past で読めます）`;
+            if (推定)
+              return `この窓には締切の行がありませんが、**推定なら ${推定} に締切が在ります**（include_estimated で出ます – 確約では無い）`;
             return 'この窓には締切の行がありませんが、**収録には在ります**（scope: "all" で過去の分行が出せます）';
           })()
         : 會期あり
@@ -1055,7 +1089,7 @@ function searchDeadlines(
       ...(() => {
         if (案内.length || 日數幅の案内(query, list, now, args).length) return [];
         if (窓の外 || 果て) return [];
-        if (名乘りの案内(query, list).length) return [];
+        if (名乘りの案内(query, list, now).length) return [];
         if (URLの案内(query).length) return [];
         if (隱れた種別の語(query).length) return [];
         if (語ごとの案號(query, list, now).length) return [];
@@ -1066,7 +1100,7 @@ function searchDeadlines(
       /* 名簿の案内は**見える結果が 0 の時**に出す（畫面と同じ – 畫面は raw の當たりが在つても、
        * 既定の絞り込みで 0 件に成つた時に名簿を名指す。實測 2026-10-11: `情報処理学会 HPC 研究會` は
        * 窓に 4 行當たるが、既定の絞り込みで 0 件 – MCP は「include_past を試して」だけを返して居た）。 */
-      ...名乘りの案内(query, list),
+      ...名乘りの案内(query, list, now),
       ...(() => {
         if (素の.length) return [];
         const 手 = retypeTips(query, 畫面の既定(list, now, args), now);
@@ -1451,7 +1485,7 @@ function explainWord(args: { word?: unknown; scope?: unknown }, now: number): st
   const 種別の報 = 種別の報べ(word, list, now, {});
   const 語ごと = 語ごとの案號(word, list, now);
   const URLの報 = URLの案内(word);
-  const 名簿 = 名乘りの案内(word, list);
+  const 名簿 = 名乘りの案内(word, list, now);
   const 手 = retypeTips(word, 畫面の既定(list, now, {}), now);
   const 指南 = [
     ...案内,
