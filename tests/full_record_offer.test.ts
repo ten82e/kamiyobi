@@ -132,8 +132,10 @@ describe("品書の果てを伝える（第 290 回）", () => {
     const out = runInNode(
       [
         `const countJa = ${jsFunction(app, "countJa")};`,
+        // 第 905 回: 容量を数字で示す為、`fullRecordNoteJa` が `bytesJa` を呼ぶ樣になった。
+        `const bytesJa = ${jsFunction(app, "bytesJa")};`,
         `const fullRecordNoteJa = ${jsFunction(app, "fullRecordNoteJa")};`,
-        `console.log(fullRecordNoteJa("2027-02-04", "2028-03-30", ${days ?? 0}));`,
+        `console.log(fullRecordNoteJa("2027-02-04", "2028-03-30", ${days ?? 0}, 9490437));`,
       ].join("\n"),
     );
     expect(out).toContain("2027-02-04");
@@ -145,8 +147,10 @@ describe("品書の果てを伝える（第 290 回）", () => {
     const noDays = runInNode(
       [
         `const countJa = ${jsFunction(app, "countJa")};`,
+        // 第 905 回: 容量を数字で示す為、`fullRecordNoteJa` が `bytesJa` を呼ぶ樣になった。
+        `const bytesJa = ${jsFunction(app, "bytesJa")};`,
         `const fullRecordNoteJa = ${jsFunction(app, "fullRecordNoteJa")};`,
-        'console.log(fullRecordNoteJa("2027-02-04", "2028-03-30", 0));',
+        'console.log(fullRecordNoteJa("2027-02-04", "2028-03-30", 0, 9490437));',
       ].join("\n"),
     );
     expect(noDays).toContain("収録の全体を読み込む");

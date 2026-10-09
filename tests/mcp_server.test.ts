@@ -10,7 +10,7 @@
  */
 
 import { spawn, spawnSync } from "node:child_process";
-import { copyFileSync, existsSync, readFileSync, rmSync } from "node:fs";
+import { copyFileSync, existsSync, readFileSync, rmSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { afterAll, describe, expect, it } from "vitest";
 import { recommendationAxes } from "../site/recommendation-core.ts";
@@ -2513,4 +2513,48 @@ it("人が道具の名を間違えたら、跡ytics ではなく助けを書く�
     expect(出, `別名 ${別名} が利かない`).toContain(期待);
     expect(出, `別名 ${別名} が道具に繋げて居ない`).not.toContain("知らない道具");
   }
+});
+
+it("「収録の全体」を押す前に、読み込む容量を数字で示す（第 905 回）", () => {
+  /* 實測 2026-10-31: 画面の案内は「一覧より大きめのデータを読みます」だけで、實測すると
+   * `data.json` は 9,490,437 バイト（約 9.1 MB）。內部の註釋は今も 6 MB 強と書いて居た。
+   * 押す前に**読める量**を知らせ無いと、讀む人は自分の通信量で選べるのに其れが分から無い。 */
+  const 品書 = join(REPO_ROOT, "public", "catalog.json");
+  if (!existsSync(品書)) return;
+  const catalog = JSON.parse(readFileSync(品書, "utf8")) as {
+    history_ref?: string;
+    history_bytes?: number;
+  };
+  expect(catalog.history_bytes, "品書が容量を載せて居ん").toBeGreaterThan(0);
+  /* 申告した數字が**其の物の寸法**と一致する（別の物を数えて居ない – 第 289 回の決めごと）。 */
+  const 実寸 = statSync(join(REPO_ROOT, "public", String(catalog.history_ref ?? "data.json"))).size;
+  expect(
+    catalog.history_bytes,
+    `品書の申告 ${String(catalog.history_bytes)} と實寸 ${実寸} が違ふ`,
+  ).toBe(実寸);
+
+  /* 畫面の文は容量を数字で出す。容量を持た無い古い品書では從來の言葉に戻る（第 293 回の
+   * 決めごと – 品書が申告が無い時に數を作らない）。 */
+  const app = siteRuntime();
+  const 函數を拔く = (量: number): string => {
+    const src = [
+      `const countJa = ${jsFunction(app, "countJa")};`,
+      // 第 905 回: 容量を数字で示す為、`fullRecordNoteJa` が `bytesJa` を呼ぶ樣になった。
+      `const bytesJa = ${jsFunction(app, "bytesJa")};`,
+      `const fullRecordNoteJa = ${jsFunction(app, "fullRecordNoteJa")};`,
+      `console.log(fullRecordNoteJa("2027-02-04", "2028-06-05", 180, ${量}));`,
+    ].join("\n");
+    const proc = spawnSync("node", ["-e", vmSafeSource(src)], {
+      encoding: "utf8",
+      timeout: 60_000,
+    });
+    expect(proc.status, proc.stderr.slice(0, 300)).toBe(0);
+    return proc.stdout.trim();
+  };
+  const 有り = 函數を拔く(Number(catalog.history_bytes));
+  expect(有り, "容量を数字で言つて居ん").toMatch(/(KB|MB)/);
+  expect(有り, "容量が無いのに從來の言葉のまま").not.toContain("大きめのデータ");
+  const 無し = 函數を拔く(0);
+  expect(無し, "容量が無い時に從來の言葉へ戻らない").toContain("大きめのデータ");
+  expect(無し, "容量が無い時に數を作つた").not.toMatch(/(KB|MB)/);
 });

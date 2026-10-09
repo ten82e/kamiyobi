@@ -136,6 +136,9 @@ interface Catalog {
   categories: Record<string, string>;
   conferences: ConferenceRecord[];
   history_ref?: string;
+  /** 「収録の全体」（`history_ref`）のバイト数。押す前に読める量を知らせる為 –
+   *  第 905 回（畫面は今も「大きめのデータ」だけで，更有實際は約 9.1 MB）。 */
+  history_bytes?: number;
   reranker?: Record<string, unknown>;
 }
 
@@ -383,6 +386,10 @@ function catalogFrom(value: unknown): Catalog | null {
         })
       : [],
     history_ref: typeof value.history_ref === "string" ? value.history_ref : undefined,
+    history_bytes:
+      typeof value.history_bytes === "number" && Number.isFinite(value.history_bytes)
+        ? value.history_bytes
+        : undefined,
     calendar: calendarSpan(value.calendar),
     window: catalogWindow(value.window),
     reranker: isRecord(value.reranker) ? value.reranker : undefined,
@@ -693,7 +700,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   let recommendationError = false;
   let historyStatus: LoadStatus = "idle";
   // 「収録の全体を読む」ボタンで立つ旗。既定（この旗が下がったまま）は品書だけで開く –
-  // 6 MB 強を毎回読みに行くと開くのが遅くなる。
+  // 9 MB 強を毎回読みに行くと開くのが遅くなる（第 905 回で數を更新）。
   let fullRecordRequested = false;
 
   /* 画面に差し込んだ品書（`catalog.json`）の外を読む必要があるか。
@@ -2939,14 +2946,30 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     return `${jst.getUTCFullYear()}-${month}-${day}`;
   }
 
-  function fullRecordNoteJa(lastDay: string, calendarLastDay: string, horizonDays: number): string {
+  /** 容量を画面の読みやすい単位で示す（9,490,437 バイト → 「約 9.1 MB」）。 */
+  function bytesJa(bytes: number): string {
+    if (!Number.isFinite(bytes) || bytes <= 0) return "";
+    if (bytes < 1024 * 1024) return `約 ${Math.max(1, Math.round(bytes / 1024))} KB`;
+    return `約 ${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  }
+  function fullRecordNoteJa(
+    lastDay: string,
+    calendarLastDay: string,
+    horizonDays: number,
+    historyBytes: number,
+  ): string {
+    const 容量 = bytesJa(historyBytes);
     return (
       `この一覧に出る一番遠い締切は ${lastDay} です。` +
       (horizonDays
         ? `速く開くためのデータが生成から ${countJa(horizonDays)} 日先で切れているためで、`
         : "速く開くためのデータが生成からの期限で切れているためで、") +
       "収録その物にはこれより先の締切もあります。先まで見るにはこの欄の" +
-      "「収録の全体を読み込む」を押してください（一覧より大きめのデータを読みます）。" +
+      /* **容量を数字で**言う（理不尽 – 押す前に読める量を知る）。品書が実測値を
+       * 持って居ない古い差し込みでは「大きめのデータ」になる（第 905 回）。 */
+      `「収録の全体を読み込む」を押してください（${
+        容量 ? `読み込む量は${容量}です` : "一覧より大きめのデータを読みます"
+      }）。` +
       (calendarLastDay ? `カレンダー（.ics）には ${calendarLastDay} まで入っています。` : "")
     );
   }
@@ -3514,7 +3537,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
           : "打った語に似た名前の会議は、収録の名簿に見えます。";
       /* 収録の側に何が待っているかで言い分ける（第 295 回）。実測で品書に締切行の無い会議
          248 件のうち 74 件は収録にも締切が 1 本も無い – そこへ「収録の全体を読み込む」を勧げるのは、
-         6 MB 強を読ませて 1 件も増えない人にボタンを押させることになる。 */
+         9 MB 強を読ませて 1 件も増えない人にボタンを押させることになる。 */
       const record = filter.nameOnly.recordLast;
       const named_only = Boolean(filter.nameOnly.example);
       const beyond = horizonDay
@@ -5415,7 +5438,12 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       const lastDay = farthestRowDayJa(rows);
       const calendarLastDay = DATA.calendar ? DATA.calendar.last_day : "";
       $("fullRecordText").textContent = lastDay
-        ? fullRecordNoteJa(lastDay, calendarLastDay, DATA.window ? DATA.window.upcoming_days : 0)
+        ? fullRecordNoteJa(
+            lastDay,
+            calendarLastDay,
+            DATA.window ? DATA.window.upcoming_days : 0,
+            Number(DATA.history_bytes) || 0,
+          )
         : "";
       fullRecordOffer.hidden = !lastDay;
     }

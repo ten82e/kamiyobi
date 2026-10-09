@@ -1346,7 +1346,7 @@ export function toCatalog(
     const entry = compactConference(conf, editions, false);
     /* 品の窓に締切が 1 本も入らない会議は、品書に名簿だけが残る – 画面はそこで名前の語を引いた
        人を「収録の全体を読み込む」へ送るが、収録の側に締切が 1 本も無い会も在る（実測 248 件のうち
-       74 件 – 6 MB 強を読んでも 1 件も増えない）。読み込む価値があるか、どんな締切が待っているかを
+       74 件 – 9 MB 強を読んでも 1 件も増えない）。読み込む価値があるか、どんな締切が待っているかを
        画面が数え直さずに言えるよう、収録側の一番遠い締切日をここへ書いておく（第 295 回）。 */
     if (!editions.some((edition) => jsonRecords(edition.deadlines).length > 0)) {
       entry.record_deadline_last = recordDeadlineLastDay(conf);
@@ -4311,6 +4311,10 @@ export async function buildAll(
     }));
   const jsonText = JSON.stringify(data, null, 2);
   write("data.json", `${jsonText}\n`);
+  /* 品書に「収録の全体」のバイト数を載せる（第 905 回 – 實測 2026-10-31: 画面の案内は
+   * 「一覧より大きめのデータを読みます」だけで、實際は約 9.1 MB。內部の註釋は今も 6 MB 強と
+   * 書いて居た（第 905 回で 9 MB 強に直した）。押す前に **`數字で**告知する – 讀む人が自分の讀める量を覺えてから押せる樣に）。 */
+  catalog.history_bytes = Buffer.byteLength(`${jsonText}\n`, "utf8");
   write("catalog.json", `${JSON.stringify(catalog, null, 2)}\n`);
   const publishProvenance =
     opts.publishProvenance ?? collectPublishProvenance(ROOT, undefined, { now: nowUtc });
