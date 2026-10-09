@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { expect, it } from "vitest";
@@ -1800,6 +1800,47 @@ it("「評価でしぼる」でのぞいた件数を件数欄に出す（SPEC §
    * 切つたことは**件數欄**で言ふ（默つて切ると「參考にして居ない」がばれる）。 */
   expect(runtime, "截つた行の宣告が件數欄に無い").toContain("行を省いて調べました");
   expect(runtime, "截つた行を數へて居ない").toContain("截つた行 =");
+
+  /* `upcoming.md` の**推定の行**に札が付いて居るか（第 962 回）。實測 2026-11-14:
+   * 1,128 行のうち 19 行が「推定期間 …」（推定）で、その全てに「推定」の札が付いて居た。
+   * **數へ方を間違へると見落とす** – 推定の行は「| 20…」ではなく「| 推定期間 …」で始まるので、
+   * 日付の行だけを拾ふ篩だと 0 件に見える（此の回で實際に誤報した）。兩方は**同じ事實の
+   * 同じ出所**（版の estimate）なので、片方だけ立って居ると噓になる。 */
+  /* 見るのは**配つてある物**（`public/upcoming.md`）– 此のビルドが使ふ fixture のキャッシュ
+   * には推定の版が入つて居ない（實測 2026-11-14: fixture 0 行・本物 19 行）ので、
+   * fixture を見ると coverage が空になる。CI は `public/` を作るので、無い時は飛ばす。 */
+  const 配布物 = join(REPO_ROOT, "public", "upcoming.md");
+  if (!existsSync(配布物)) return;
+  const md = readFileSync(配布物, "utf8").split("\n");
+  const 頭の行 = md.findIndex((l) => l.startsWith("| 日付"));
+  expect(頭の行, "upcoming.md の表の見出しが讀めない").toBeGreaterThan(0);
+  const 欄 = md[頭の行]
+    .trim()
+    .replace(/^\|/, "")
+    .replace(/\|$/, "")
+    .split("|")
+    .map((c) => c.trim());
+  const 推定の欄 = 欄.indexOf("推定");
+  expect(推定の欄, "推定の欄が無い（この檢查の前提が崩れた）").toBeGreaterThan(0);
+  const 箱 = (l: string): string[] =>
+    l
+      .trim()
+      .replace(/^\|/, "")
+      .replace(/\|$/, "")
+      .split("|")
+      .map((c) => c.trim());
+  const 行々 = md.slice(頭の行 + 2).filter((l) => l.startsWith("|"));
+  const 推定期間の行 = 行々.filter((l) => 箱(l)[0].startsWith("推定期間"));
+  const 札の無い = 推定期間の行.filter((l) => 箱(l)[推定の欄] !== "推定");
+  expect(推定期間の行.length, "推定期間の行が 1 行も無い（この檢查が空振り）").toBeGreaterThan(0);
+  expect(札の無い, `推定期間の行に「推定」の札が付いて居ない:\n${札の無い.join("\n")}`).toEqual([]);
+  const 立たない札 = 行々
+    .filter((l) => 箱(l).length === 欄.length && 箱(l)[推定の欄] === "推定")
+    .filter((l) => !箱(l)[0].startsWith("推定期間"));
+  expect(
+    立たない札,
+    `「推定」の札が、推定期間以外の行に付いて居る:\n${立たない札.join("\n")}`,
+  ).toEqual([]);
   /* 截る行數は**兩方で同じ**（第 954 回 – MCP も畫面も 20 行。片方だけ變更すると
    * 「AI は 20 行で調べた・畫面は 50 行で調べた」になり、同じ論文で違ふ候補が出る）。 */
   const 截りの値 = (字: string): number => {
