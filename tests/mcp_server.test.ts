@@ -4178,3 +4178,52 @@ it("list_upcoming も種別の空配列を默らない（第 1000 回）", async
   const 知らん = await call("list_upcoming", { kind: "zzz" });
   expect(知らん, "知らない單數の kind を默つて 0 件にして居ん").toContain("知らない種別");
 });
+it("直近の一覽の「対象期間」の申告は、本文と合ふ（第 1002 回）", async () => {
+  /* 第 1001 回で ICS の件數の申告を見た。**`upcoming.md` の期間の申告**も – 頭に
+   * 「対象期間: 2026-08-09 〜 2027-02-05(金)（生成時刻から 180 日先まで。進行中の会期は
+   * 開始日が生成時刻より前でも載る）」と出る。期間が本文と合はないと、讀む人が
+   * 「180 日なのに超出て居る」と疑ふ。
+   *
+   * 實測 2026-11-19: 全部一致。超出る 5 行は **書いてある通りの二種類**:
+   * ①進行中の会期（WISA 2026 – 8/7 開始で 8/9 も開催中）
+   * ②推定期間（trustcom・pam・nlbse – 幅を持つ值なので、外側が期日を超える事がある） */
+  const path = join(REPO_ROOT, "public", "upcoming.md");
+  if (!existsSync(path)) return;
+  const md = readFileSync(path, "utf8");
+  const m = /対象期間: (\d{4}-\d{2}-\d{2}) 〜 (\d{4}-\d{2}-\d{2})/.exec(md);
+  expect(m, "期間の申告が讀めない").not.toBeNull();
+  const 始まり = m?.[1] ?? "";
+  const 期日 = m?.[2] ?? "";
+  /* 生成時刻から 180 日先である事（此れが狂つて居ると全部狂ふ）。 */
+  const 生成 = /生成時刻: (\d{4}-\d{2}-\d{2})T/.exec(md)?.[1] ?? "";
+  expect(生成, "生成時刻が讀めない").not.toBe("");
+  const 一日 = 86400000;
+  const 差 = Math.round((Date.parse(`${期日}T00:00:00Z`) - Date.parse(`${生成}T00:00:00Z`)) / 一日);
+  expect(差, `期間が ${差} 日（180 では無い）`).toBe(180);
+  /* 本文の行が期日を超えて居ない事（超えて良しと書いてある二種類を除く）。 */
+  const 行 = md
+    .split("\n")
+    .filter(
+      (l) => l.startsWith("| 2026-") || l.startsWith("| 2027-") || l.startsWith("| 推定期間"),
+    );
+  expect(行.length, "本文の行が讀めない（この檢查の前提が崩れた）").toBeGreaterThan(100);
+  /* 先頭の `| ` と「推定期間 」を除いて日付を取る（殘すと縦線が日數の比較に混ざる）。 */
+  const 日付の行 = (l: string): string =>
+    l
+      .replace(/^\|\s*(?:推定期間\s*)?/, "")
+      .trim()
+      .slice(0, 10);
+  const 超出し = 行.filter((l) => {
+    const d = 日付の行(l);
+    return d < 始まり || d > 期日;
+  });
+  for (const l of 超出し) {
+    /* 超えて居る行は「推定期間」か「會期が進行中（開催中）」の行だけ。 */
+    expect(
+      l.startsWith("| 推定期間") || l.includes("開催中"),
+      `期間を超える行が、書いてある二種類ではない: ${l.slice(0, 80)}`,
+    ).toBe(true);
+  }
+  /* 超過は 0 でも良い（データに依る）が、多すぎたら狂つて居る。 */
+  expect(超出し.length, `期間を超える行が ${超出し.length} 行もある`).toBeLessThan(30);
+});
