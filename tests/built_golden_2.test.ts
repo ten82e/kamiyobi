@@ -4865,3 +4865,89 @@ it("手引きが名指すファイルは、画面から押して辿れる（SPEC
     ).toBe(true);
   }
 });
+/** 1 行 1 締切の CSV を讀む（引用符の中のカンマを岑まない – `data.csv` の
+ * `place`「Zurich, Switzerland」の様な値が在る。實測 2026-11-19: 侮辱すると
+ * 4,798 行が「非締切」に見える）。 */
+function csvRows(text: string): string[][] {
+  const out: string[][] = [];
+  let 箱: string[] = [];
+  let cur = "";
+  let quoted = false;
+  for (let i = 0; i < text.length; i += 1) {
+    const ch = text[i];
+    if (quoted) {
+      if (ch === '"') {
+        if (text[i + 1] === '"') {
+          cur += '"';
+          i += 1;
+        } else quoted = false;
+      } else cur += ch;
+      continue;
+    }
+    if (ch === '"') {
+      quoted = true;
+      continue;
+    }
+    if (ch === ",") {
+      箱.push(cur);
+      cur = "";
+      continue;
+    }
+    if (ch === "\n") {
+      箱.push(cur);
+      out.push(箱);
+      箱 = [];
+      cur = "";
+      continue;
+    }
+    cur += ch;
+  }
+  if (cur.length || 箱.length) {
+    箱.push(cur);
+    out.push(箱);
+  }
+  return out;
+}
+
+function digits(n: number): string {
+  return String(n).replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1,");
+}
+
+/** 索引（`llms.txt`）の中の**實測値** – 機械が讀む索引なので、數字が本文と合はないと
+ * 其の數を信じ込む。實測 2026-11-19: 5 つの數字全部一致。
+ * （「收録が增えればこの数も動く」と書いてある物は、其の増減を見る。） */
+function 索引の實測値(): void {
+  const 索引 = join(REPO_ROOT, "public", "llms.txt");
+  if (!existsSync(索引)) return;
+  const 文 = readFileSync(索引, "utf8");
+  const 表 = csvRows(readFileSync(join(REPO_ROOT, "public", "data.csv"), "utf8").trim());
+  const 頭 = 表[0] ?? [];
+  const 行 = 表.slice(1);
+  /* ① `data.csv` の行數（= 收録している締切 4,984） */
+  expect(文, `索引の「收録している締切」が ${行.length} 行と違ふ`).toContain(
+    `収録している締切は ${digits(行.length)} 件`,
+  );
+  /* ② 品書の締切數（870） */
+  const 品書 = JSON.parse(readFileSync(join(REPO_ROOT, "public", "catalog.json"), "utf8")) as {
+    conferences?: Array<{ editions?: Array<{ deadlines?: unknown[] }> }>;
+  };
+  const 窓の行 = (品書.conferences ?? []).reduce(
+    (n, c) => n + (c.editions ?? []).reduce((m, e) => m + (e.deadlines ?? []).length, 0),
+    0,
+  );
+  expect(文, `索引の「載る締切」が品書の ${窓の行} 行と違ふ`).toContain(`載る締切は ${窓の行} 件`);
+  /* ③ `date_field` が締切ではない行（311）– 列の場所は頭から探す（固定番號にしない）。 */
+  const dateFieldの番 = 頭.indexOf("date_field");
+  expect(dateFieldの番, "CSV に date_field の列が無い（この檢查の前提が崩れた）").toBeGreaterThan(
+    0,
+  );
+  const 非締切 = 行.filter((箱) => (箱[dateFieldの番] ?? "") !== "締切").length;
+  expect(非締切, "この檢查の前提（非締切の行）が崩れた").toBeGreaterThan(100);
+  expect(文, `索引の「締切ではない日」が ${非締切} 行と違ふ`).toContain(
+    `${非締切} 行が締切ではない日`,
+  );
+}
+
+it("索引（llms.txt）の中の實測値は、本文と合ふ（第 1003 回）", () => {
+  索引の實測値();
+});
