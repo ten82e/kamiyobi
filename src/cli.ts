@@ -1931,6 +1931,19 @@ export function parseArgs(argv: string[] | null | undefined): CliArgs {
     }
   }
   const command = positionals[0];
+  /* **使はれない位置引數**を默つて捨てない（第 1021 回 – 實測 2026-11-19:
+   * `review xyz` も `build extra --offline` も、`xyz`・`extra` は**默つて消えて居た**
+   * （`positionals[0]` だけをコマンドとして讀み、殘りを見て居なかつた）。打ち間違ひ
+   * （KDD を sigkdd と書くべき處を SigKDD とする）で、實行結果が意圖と違ふのに
+   * 氣付かない – 第 886・997 回と同じ決まり）。 */
+  /* 0 番目（コマンド）と、reverify・evidence の 1 番目（動作）は使ふ – 其れ以外を拔く。 */
+  const 予約 = command === "reverify" || command === "evidence" ? 2 : 1;
+  const 使はぬ位置 = positionals.slice(予約);
+  if (使はぬ位置.length > 0) {
+    process.stderr.write(
+      `warning: ${使はぬ位置.map((p) => JSON.stringify(p)).join("・")} は此のコマンドでは使はれません（無視します）\n`,
+    );
+  }
   const reverifyAction = command === "reverify" ? positionals[1] : undefined;
   const evidenceAction = command === "evidence" ? positionals[1] : undefined;
   const args: CliArgs = {};

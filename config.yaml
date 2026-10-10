@@ -34,6 +34,7 @@ venue_identities:
   icvrv: {source_ids: {ccfddl: CG/icvrv, local: icvrv}}
   ijcai: {source_ids: {aideadlines: ijcai, ccfddl: AI/ijcai}} # https://2026.ijcai.org/
   ijcnn: {source_ids: {aideadlines: ijcnn, ccfddl: AI/ijcnn}}
+  icdm: {source_ids: {aideadlines: icdm, ccfddl: DB/icdm, local: icdm}}
   interspeech: {source_ids: {aideadlines: interspeech, ccfddl: CG/interspeech}} # https://interspeech2026.org/
   iros: {source_ids: {aideadlines: iros, ccfddl: AI/iros}} # https://2026.ieee-iros.org/
   iui: {source_ids: {aideadlines: iui, ccfddl: HI/iui}}

@@ -7,7 +7,7 @@ import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync
 import { join } from "node:path";
 import { env } from "@huggingface/transformers";
 import { load as loadYaml } from "js-yaml";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { runHealthGate } from "../scripts/health-gate.ts";
 import Recommender from "../site/recommender.ts";
 import type { HealthDeadlineRef, HealthReport } from "../src/build.ts";
@@ -5896,4 +5896,46 @@ it("略称と年の合わせ打ちが実カタログで当たり、2 文字語�
   expect(out.scSpaced).toBeLessThan(out.gluedSc);
   expect(out.boundedSc).toBeGreaterThan(0);
   expect(out.boundedSc).toBeLessThan(out.gluedSc);
+});
+
+it("使はれない位置引數は默つて捨てない（第 1021 回）", () => {
+  /* 實測 2026-11-19: `review xyz` も `build extra --offline` も、`xyz`・`extra` は
+   * **默つて消えて居た**（`positionals[0]` だけをコマンドとして讀み、殘りを見て居なかつた）。
+   * 打ち間違ひ（KDD を SigKDD と書く）で、實行結果が意圖と違ふのに氣付かない –
+   * 第 886・997 回と同じ決まり。 */
+  const spy = vi.spyOn(process.stderr, "write").mockImplementation(() => true);
+  try {
+    /* 使はれない位置引數が在ると warning を出す。 */
+    for (const argv of [
+      ["review", "xyz"],
+      ["build", "extra"],
+      ["evidence", "gc", "stray"],
+    ]) {
+      spy.mockClear();
+      const 出た = parseCliArgs(argv);
+      expect(出た.command, `${JSON.stringify(argv)} のコマンドが讀めない`).toBe(argv[0]);
+      const 鳴いた = spy.mock.calls.filter((c) => String(c[0]).includes("warning")).length;
+      expect(鳴いた, `${JSON.stringify(argv)} の餘分な引數を默つて捨てた`).toBe(1);
+      expect(String(spy.mock.calls[0]?.[0]), "どれを無視するか書いて居ん").toContain(
+        "使はれません",
+      );
+    }
+    /* **予約された位置**（reverify・evidence の動作）は warning を出さない。 */
+    for (const argv of [
+      ["reverify", "plan"],
+      ["evidence", "gc"],
+      ["evidence", "verify"],
+      ["review"],
+      ["build"],
+    ]) {
+      spy.mockClear();
+      parseCliArgs(argv);
+      const 鳴いた = spy.mock.calls.filter((c) => String(c[0]).includes("warning")).length;
+      expect(鳴いた, `${JSON.stringify(argv)} は正しい形なのに warning を出した`).toBe(0);
+    }
+    /* reverify の動作が未知なら**此の截りより先で彈く**（第 928 回の誤りの件 – 其れは別の堵塞）。 */
+    expect(() => parseCliArgs(["reverify", "bad", "extra"])).toThrow(/unknown reverify action/);
+  } finally {
+    spy.mockRestore();
+  }
 });

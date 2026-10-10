@@ -520,6 +520,35 @@ const TEMPLATE_MARKER = "/*__DATA__*/null";
  * または短縮年（例: `SC '26`, `SC ’26`）で終わっている場合は年を二重に付けない。
  * year が 0 / 未指定の場合はタイトルのみを返す。
  */
+/** `llms.txt` の「稀有な欄」の實測文（第 1022 回）。**ビルドが持つ data を數へる** –
+ * 書き初めの數字は收録が増えると噓に成る（`icdm` を足した時に判った）。 */
+function 稀有な欄の實測(data: Record<string, unknown>): string {
+  const 會議 = (data.conferences ?? []) as Array<Record<string, unknown>>;
+  const 版 = 會議.flatMap((c) => (c.editions ?? []) as Array<Record<string, unknown>>);
+  const 締切 = 版.flatMap((e) => (e.deadlines ?? []) as Array<Record<string, unknown>>);
+  const 欄の數 = (箱: Array<Record<string, unknown>>, 名: string): number =>
+    箱.filter((r) => 名 in r).length;
+  const 切つた = (箱: Array<Record<string, unknown>>, 名: string): number =>
+    箱.filter((r) => {
+      const v = r[名];
+      if (v === undefined || v === null) return false;
+      if (typeof v === "string") return v.trim().length > 0;
+      if (Array.isArray(v)) return v.length > 0;
+      if (typeof v === "object") return Object.keys(v as object).length > 0;
+      return true;
+    }).length;
+  const 數 = (n: number): string => String(n).replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1,");
+  return (
+    `版 ${數(版.length)} のうち call_identity ${欄の數(版, "call_identity")}・` +
+    `legacy_ids ${欄の數(版, "legacy_ids")}・event_review ${欄の數(版, "event_review")}／` +
+    `締切 ${數(締切.length)} のうち track ${切つた(締切, "track")}・` +
+    `superseded_deadlines ${欄の數(締切, "superseded_deadlines")}・` +
+    `promotion_ref ${欄の數(締切, "promotion_ref")}。` +
+    `verification は ${欄の數(締切, "verification")} 件で殆どの締切に付く。` +
+    `upstream_sub は会議 ${數(會議.length)} のうち ${欄の數(會議, "upstream_sub")} 件`
+  );
+}
+
 export function titleWithYear(
   title: string | null | undefined,
   year: number | null | undefined,
@@ -4016,6 +4045,7 @@ export function toUpcomingMd(
 export function toLlmsTxt(
   config: Record<string, unknown> | null | undefined,
   spans?: LlmsSpans | null,
+  data?: Record<string, unknown> | null,
 ): string {
   const safeConfig = config ?? {};
   const categories = (safeConfig.categories as Record<string, string> | null) ?? DEFAULT_CATEGORIES;
@@ -4213,7 +4243,7 @@ export function toLlmsTxt(
     "      - verification: object：公式 URL を確かめた記録（official_url・last_attempt_at・last_verified_at など）。",
     "      - superseded_deadlines: array：上書きされた古い締切の記録（value・precision・source・supersededBy・reason。reason は 'official-extension' など）。",
     "      - promotion_ref: object：{batch, resolution}。公開した締切から、其れを載せた判断（昇格）への参照。",
-    "    - 上の内、稀にしか付かない物と、殆どの行に付く物とがある（実測 2026-10-06: 版 2,603 のうち call_identity 12・legacy_ids 18・event_review 7／締切 4,984 のうち track 8・superseded_deadlines 35・promotion_ref 19。verification は 4,467 件で殆どの締切に付く。upstream_sub は会議 696 のうち 354 件。収録が増えればこの数も動く）。",
+    `    - 上の内、稀にしか付かない物と、殆どの行に付く物とがある（ビルド時の実测: ${data ? 稀有な欄の實測(data) : "data を渡して居ないので數へられません"}）。`,
     "      - comment: string|null：上流の注記。",
     "      - status: 'confirmed'|'estimated'：開催回の確定/推定状態。",
     "      - selection_rule: string：採用値を選んだ決定規則。",
@@ -4438,12 +4468,16 @@ export async function buildAll(
 
   write(
     "llms.txt",
-    toLlmsTxt(safeConfig, {
-      all: deadlineSpan(data),
-      catalog: deadlineSpan(catalog),
-      horizonDays: upcomingDays使ふ,
-      calendar: icsMeta,
-    }),
+    toLlmsTxt(
+      safeConfig,
+      {
+        all: deadlineSpan(data),
+        catalog: deadlineSpan(catalog),
+        horizonDays: upcomingDays使ふ,
+        calendar: icsMeta,
+      },
+      data as Record<string, unknown>,
+    ),
   );
   write("icon.svg", SITE_ICON_SVG);
   write(".nojekyll", "");
