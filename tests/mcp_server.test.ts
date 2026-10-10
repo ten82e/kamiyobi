@@ -4278,7 +4278,9 @@ it("返す行の形を說明に書いて、實物もその通りに分けられ�
   const 說明 =
     (res.result?.tools ?? []).find((t) => t.name === "search_deadlines")?.description ?? "";
   expect(說明, "返す行の形を說明に書いて居ん").toContain("返す行の形");
-  expect(說明, "區切りの書き方を書いて居ん").toContain("`| ` で 6 つ");
+  expect(說明, "區切りの書き方を書いて居ん").toContain("`| ` で切り");
+  /* 確認の札は在る時だけ入るので 5 つか 6 つ（第 1010 回で實測して書いた）。 */
+  expect(說明, "5 つか 6 つに分かれる事を書いて居ん").toContain("5 つか 6 つに分かれる");
   expect(說明, "版の識別子が丸括弧の中だと書いて居ん").toContain("丸括弧の中が**版の識別子**");
   /* 實物もその通り – 全部の行が 6 つに分かれ、版の識別子が拔ける。 */
   const 答 = await call("search_deadlines", { query: "セキュリティ", limit: 5 });
@@ -4288,5 +4290,312 @@ it("返す行の形を說明に書いて、實物もその通りに分けられ�
     expect(l.split(" | ").length, `行が 6 つに分かれん: ${l.slice(0, 60)}`).toBe(6);
     const 最後の丸括弧 = [...l.matchAll(/（([a-z0-9'.-]+)）/g)].at(-1);
     expect(最後の丸括弧, `版の識別子が拔けない: ${l.slice(0, 60)}`).toBeTruthy();
+  }
+});
+
+it("死語が多い問は、数えた殘りを言ふ（第 994 回）", async () => {
+  /* 實測 2026-11-19: 7 語（9 語）の死語を打つと「うち zzz9・zzz8」の **2 語だけ**出て
+   * 「ほか 5 語」の言はれが無かつた – 讀む人は「この 2 語だけが見当たらない」と思ひ、
+   * 殘りの語まで調べ直してしまふ。默つた切り詰めにしない（第 924・993 回と同じ決まり）。 */
+  const 多い = await call("search_deadlines", {
+    query: "zzz9 zzz8 zzz7 zzz6 zzz5 zzz4 zzz3 zzz2",
+    limit: 1,
+  });
+  const 注 = 多い.split("\n").find((l) => l.includes("見当たりません")) ?? "";
+  expect(注, "死語の注が出て居ん").not.toBe("");
+  expect(注, "殘りの語の數を言つて居ん").toContain("ほか 6 語も");
+  /* 2 語までは何も添へない（默つて居る – 第 852 回と同じ決まり）。 */
+  const 少ない = await call("search_deadlines", { query: "zzz9 zzz8", limit: 1 });
+  const 注2 = 少ない.split("\n").find((l) => l.includes("見当たりません")) ?? "";
+  expect(注2, "2 語なのに「ほか」が出た").not.toContain("ほか");
+  /* 1 語だけ當たる問（セキュリティ + 死語）は「外すと増えます」を其の儘出す。 */
+  const 混在 = await call("search_deadlines", { query: "セキュリティ zzz9", limit: 1 });
+  expect(混在, "その語を外すと增えると言つて居ん").toContain("その語を外すと増えます。");
+  expect(混在, "混在なのに「ほか」が出た").not.toContain("ほか 1 語も");
+});
+
+it("語ごとの件數も 4 語目以降を落とさない（第 995 回）", async () => {
+  /* 第 994 回で死語の殘りを数えた。**語ごとの件數**も默つて 3 語だけで切り詰めて居た –
+   * 實測 2026-11-19: 5 語全部が收錄に在るのに「セキュリティ・ネットワーク・データベース」
+   * の 3 語だけ出て、4・5 語目は**何も言はれなかつた**（調べて居ないやうに讀める）。
+   * 「・ほか N 語」を添へる（第 994 回と同じ形）。 */
+  const 多い = await call("search_deadlines", {
+    query: "セキュリティ ネットワーク データベース 人工知能 システム",
+    limit: 1,
+  });
+  const 注 = 多い.split("\n").find((l) => l.includes("行はありません")) ?? "";
+  expect(注, "語ごとの件數が出て居ん").not.toBe("");
+  expect(注, "4 語目以降の數を言つて居ん").toContain("ほか 2 語");
+  /* 3 語までは何も添へない。 */
+  const 少ない = await call("search_deadlines", {
+    query: "セキュリティ ネットワーク データベース",
+    limit: 1,
+  });
+  const 注2 = 少ない.split("\n").find((l) => l.includes("行はありません")) ?? "";
+  expect(注2, "3 語なのに「ほか」が出た").not.toContain("ほか");
+});
+
+it("推薦の見出しを 40 字に切つたら、切つた事を添へる（第 996 回）", async () => {
+  /* 第 993〜995 回で「切り詰めは默らない」を三つ潰した。**推薦の見出し**も默つて 40 字に
+   * 切つて居た – 實測 2026-11-19: 55 字の題名が「…研究」で切れて居て、調べたのが其の
+   * 40 字だけやうに讀めた（實際は**全文**で調べて居る）。默つて切ると言はれない事實が增える。 */
+  const 長い題 =
+    "深層学習を用いた自然言語処理のための事前学習モデルとその応用に関する詳細な研究を超えてさらに長い題名";
+  const 答 = await call("recommend_venues", { paper: 長い題, limit: 3 });
+  expect(答, "見出しを切つたと言つて居ん").toContain(
+    "（見出しは 40 字に切り詰めた物です。調べたのは全文です）",
+  );
+  expect(答.split("\n")[0], "全文が見出しに出て居る（切れて居らん）").not.toContain(長い題);
+  /* 短い題名には何も添へない（第 852 回と同じ決まり）。 */
+  const 短い = await call("recommend_venues", { paper: "セキュリティの会報", limit: 3 });
+  expect(短い, "短い題名に切り詰めの斷りが出た").not.toContain("切り詰めた物です");
+});
+
+describe(" schema に無い引数は默つて捨てない（第 997 回）", () => {
+  /* 第 920 回で**篩り込みの引數**（rank・domestic・…）は「此の道具では効きません」と言ふ
+   * やうにした。但其れは**宣言して在る引數**の中の話 – AI が勝手に `offset`・`page`・
+   * `verbose`・`format` の樣な**schema に無い引數**を送ると、未だ**默つて**讀み捨てられて居た
+   * （實測 2026-11-19: `offset: 5` を送つても何も出ず、最初の 20 行が其の儘返る）。
+   *
+   * AI は「次を見る」爲に `offset` を取り敢えず打つ – 默つて捨てると「同じ 20 行」が
+   * 返り、AI は「以上が全部」と思ふ。**何が効かなかつたか**を言ふ。 */
+  const 持ち物 = async (名前: string): Promise<string[]> => {
+    const res = (await client.ask({ jsonrpc: "2.0", id: 1, method: "tools/list" })) as {
+      result?: {
+        tools?: Array<{ name?: string; inputSchema?: { properties?: Record<string, unknown> } }>;
+      };
+    };
+    const tool = (res.result?.tools ?? []).find((t) => t.name === 名前);
+    return Object.keys(tool?.inputSchema?.properties ?? {});
+  };
+  it("未宣言の引數を送ると、其の名を言ふ", async () => {
+    for (const [名前, 未宣言] of [
+      ["search_deadlines", { offset: 5 }],
+      ["list_upcoming", { page: 2 }],
+      ["explain_word", { verbose: true }],
+      ["collection_stats", { format: "json" }],
+    ] as const) {
+      const 持つ = await 持ち物(名前);
+      const 余分 = Object.keys(未宣言).filter((k) => !持つ.includes(k));
+      expect(余分.length, `${名前} の未宣言の引數が決まらない`).toBeGreaterThan(0);
+      const 引數 =
+        名前 === "search_deadlines"
+          ? { query: "セキュリティ" }
+          : 名前 === "explain_word"
+            ? { word: "セキュリティ" }
+            : {};
+      const 答 = await call(名前, { ...引數, ...未宣言 });
+      expect(
+        答,
+        `「${名前}」に ${余分.join("・")} を送つたのに効かなかつた事を言つて居ん`,
+      ).toContain(余分[0]);
+    }
+  });
+  /* **宣言して在る引數**には言はない（其れは各自の斷りの擔當 – 第 920 回・第 921 回）。 */
+  it("宣言して在る引數には言はない", async () => {
+    const 答 = await call("search_deadlines", {
+      query: "セキュリティ",
+      limit: 2,
+      include_past: true,
+    });
+    expect(答, "宣言して在る引數に對して餘計な斷りが出た").not.toContain("此の道具に無い引数");
+  });
+});
+
+it("種別の打ち間違ひを默つて 0 件にしない（第 999 回）", async () => {
+  /* 實測 2026-11-19: `kinds: ["paper","zzz"]` は第 886 回で知らない值を名指すやうに
+   * 成つて居たが、**`kind`（單數）は默つて 0 件**だつた。同じ引數なので同じ決まり。
+   * あと `kinds: []`（空配列）も默つて「濾さない」扱ひ – AI は「0 件にして」のつもりで
+   * 打つかも知れない。兩方默らない。 */
+  const 單數 = await call("search_deadlines", { query: "セキュリティ", kind: "zzz" });
+  expect(單數, "知らない kind を名指して居ん").toContain("知らない種別");
+  expect(單數.split("\\n")[0], "默つて 0 件に成つて居る").toContain("知らない種別");
+  /* 空配列は「濾して居ません」と言ふ。 */
+  const 空 = await call("search_deadlines", { query: "セキュリティ", kinds: [] });
+  expect(空, "空の kinds を默つて濾さない扱ひにして居ん").toContain(
+    "kinds が空なので種別で濾して居ません",
+  );
+  /* 良い値には何も言はない（第 852 回と同じ決まり）。 */
+  for (const 良い of [{ kind: "paper" }, { kinds: ["paper"] }, { kinds: ["paper", "abstract"] }]) {
+    const 答 = await call("search_deadlines", { query: "セキュリティ", ...良い });
+    expect(答, `${JSON.stringify(良い)} に餘計な斷りが出た`).not.toContain("知らない種別");
+    expect(答, `${JSON.stringify(良い)} に餘計な斷りが出た`).not.toContain("種別で濾して居ません");
+  }
+});
+
+it("list_upcoming も種別の空配列を默らない（第 1000 回）", async () => {
+  /* 第 999 回で `search_deadlines` の `kinds: []` に「濾して居ません」と言ふやうにした。
+   * **`list_upcoming` も同じ孖**（`kind`・`kinds`）を持つので、默つて居ないか確かめた –
+   * 實測 2026-11-19: 其方は默つて「濾さない」扱ひだつた。兩方で同じ決まりに揃へる。 */
+  const 空 = await call("list_upcoming", { kinds: [] });
+  expect(空, "空の kinds を默つて濾さない扱ひにして居ん").toContain(
+    "kinds が空なので種別で濾して居ません",
+  );
+  /* 良い値には何も言はない。 */
+  const 良い = await call("list_upcoming", { kinds: ["paper"] });
+  expect(良い, "良い値に餘計な斷りが出た").not.toContain("種別で濾して居ません");
+  const 知らん = await call("list_upcoming", { kind: "zzz" });
+  expect(知らん, "知らない單數の kind を默つて 0 件にして居ん").toContain("知らない種別");
+});
+it("直近の一覽の「対象期間」の申告は、本文と合ふ（第 1002 回）", async () => {
+  /* 第 1001 回で ICS の件數の申告を見た。**`upcoming.md` の期間の申告**も – 頭に
+   * 「対象期間: 2026-08-09 〜 2027-02-05(金)（生成時刻から 180 日先まで。進行中の会期は
+   * 開始日が生成時刻より前でも載る）」と出る。期間が本文と合はないと、讀む人が
+   * 「180 日なのに超出て居る」と疑ふ。
+   *
+   * 實測 2026-11-19: 全部一致。超出る 5 行は **書いてある通りの二種類**:
+   * ①進行中の会期（WISA 2026 – 8/7 開始で 8/9 も開催中）
+   * ②推定期間（trustcom・pam・nlbse – 幅を持つ值なので、外側が期日を超える事がある） */
+  const path = join(REPO_ROOT, "public", "upcoming.md");
+  if (!existsSync(path)) return;
+  const md = readFileSync(path, "utf8");
+  const m = /対象期間: (\d{4}-\d{2}-\d{2}) 〜 (\d{4}-\d{2}-\d{2})/.exec(md);
+  expect(m, "期間の申告が讀めない").not.toBeNull();
+  const 始まり = m?.[1] ?? "";
+  const 期日 = m?.[2] ?? "";
+  /* 生成時刻から 180 日先である事（此れが狂つて居ると全部狂ふ）。 */
+  const 生成 = /生成時刻: (\d{4}-\d{2}-\d{2})T/.exec(md)?.[1] ?? "";
+  expect(生成, "生成時刻が讀めない").not.toBe("");
+  const 一日 = 86400000;
+  const 差 = Math.round((Date.parse(`${期日}T00:00:00Z`) - Date.parse(`${生成}T00:00:00Z`)) / 一日);
+  expect(差, `期間が ${差} 日（180 では無い）`).toBe(180);
+  /* 本文の行が期日を超えて居ない事（超えて良しと書いてある二種類を除く）。 */
+  const 行 = md
+    .split("\n")
+    .filter(
+      (l) => l.startsWith("| 2026-") || l.startsWith("| 2027-") || l.startsWith("| 推定期間"),
+    );
+  expect(行.length, "本文の行が讀めない（この檢查の前提が崩れた）").toBeGreaterThan(100);
+  /* 先頭の `| ` と「推定期間 」を除いて日付を取る（殘すと縦線が日數の比較に混ざる）。 */
+  const 日付の行 = (l: string): string =>
+    l
+      .replace(/^\|\s*(?:推定期間\s*)?/, "")
+      .trim()
+      .slice(0, 10);
+  const 超出し = 行.filter((l) => {
+    const d = 日付の行(l);
+    return d < 始まり || d > 期日;
+  });
+  for (const l of 超出し) {
+    /* 超えて居る行は「推定期間」か「會期が進行中（開催中）」の行だけ。 */
+    expect(
+      l.startsWith("| 推定期間") || l.includes("開催中"),
+      `期間を超える行が、書いてある二種類ではない: ${l.slice(0, 80)}`,
+    ).toBe(true);
+  }
+  /* 超過は 0 でも良い（データに依る）が、多すぎたら狂つて居る。 */
+  expect(超出し.length, `期間を超える行が ${超出し.length} 行もある`).toBeLessThan(30);
+});
+
+it("索引が觸れて居る打ち方は、全部效く（第 1006 回）", async () => {
+  /* 第 1003〜1005 回で索引の**數字**が本文と合ふことを見た。今囘は**書いてある打ち方** –
+   * AI が索引を讀んで「この打ち方で試す」とし、效かないと「收錄が貧弱」と誤解する。
+   * 實測 2026-11-19: 下の全部が效く（件數は 0 でも「語が無い」ではなく
+   * 「既定の篩り込みで 0」で、打ち方は效いて居る）。 */
+  const 效く打ち方: string[] = [
+    "人工知能・データベース",
+    "機械学習",
+    "韓国",
+    "オンライン",
+    "12月",
+    "2026年12月",
+    "今月",
+    "来月",
+    "再来月",
+    "先月",
+    "第 2 ラウンド",
+    "第2ラウンド",
+    "R2",
+    "1日",
+    "8月1日",
+    "おきなわ",
+    "岡山",
+    "沖縄",
+  ];
+  for (const 打ち方 of 效く打ち方) {
+    const 答 = await call("search_deadlines", { query: 打ち方, limit: 1 });
+    /* 「収録データにも見当たりません」は**語が無い**＝打ち方が效いて居ない。
+     * 0 件でも其れが出なければ打ち方は效いて居る（篩り込みの話）。 */
+    expect(答, `索引が效くと書いて居る「${打ち方}」が語として無い`).not.toContain("見当たりません");
+    expect(答, `「${打ち方}」で頭が出て居ん`).toContain("に当たる締切");
+  }
+  /* 打ち方が效く時は「語は當たります」か件數が出る（0 件でも意味が違ふ）。 */
+  const 先月 = await call("search_deadlines", { query: "先月", limit: 1 });
+  expect(先月, "過去の月（先月）は 0 件でも打ち方が效いて居る").toContain("に当たる締切: 0 件");
+});
+
+it("返す行の形を說明に書いて、實物もその通りに分けられる（第 1008 回）", async () => {
+  /* 實測 2026-11-19: 返る行は `日付 | 種別 | 確認の札 | 会議名（版の識別子）| ランク | 会期…`
+   * の 6 つだが、**其の形が何處にも書かれて居なかつた** – AI が行を分ける時に「何區切り？」
+   * と當てるはないと思ふ。道具の說明に形を書く（`| ` で 6 つ・丸括弧の中が版の識別子）。
+   *
+   * あはせて、**會議名が括弧を含む**事も言ふ – `The 9th IEEE … (BSD 2026)（id）` の
+   * 樣に丸括弧が二重に成るので、版の識別子は**一番最後の丸括弧**だと讀めるやうに。 */
+  const res = (await client.ask({ jsonrpc: "2.0", id: 1, method: "tools/list" })) as {
+    result?: { tools?: Array<{ name?: string; description?: string }> };
+  };
+  const 說明 =
+    (res.result?.tools ?? []).find((t) => t.name === "search_deadlines")?.description ?? "";
+  expect(說明, "返す行の形を說明に書いて居ん").toContain("返す行の形");
+  expect(說明, "區切りの書き方を書いて居ん").toContain("`| ` で切り");
+  expect(說明, "版の識別子が丸括弧の中だと書いて居ん").toContain("丸括弧の中が**版の識別子**");
+  /* 實物もその通り – 全部の行が 6 つに分かれ、版の識別子が拔ける。 */
+  const 答 = await call("search_deadlines", { query: "セキュリティ", limit: 5 });
+  const 行 = 答.split("\n").filter((l) => /^20\d\d-/.test(l));
+  expect(行.length, "行が出て居ん").toBeGreaterThan(0);
+  for (const l of 行) {
+    /* **5 つか 6 つ** – 確認の札は在る時だけ入る（實測 2026-11-19: 37 行のうち
+     * 30 行が 6 つ・7 行が 5 つ = 札が無い行）。第 1010 回で說明にも書いた。 */
+    expect(
+      [5, 6].includes(l.split(" | ").length),
+      `行が 5 か 6 つに分かれん: ${l.slice(0, 60)}`,
+    ).toBe(true);
+    const 最後の丸括弧 = [...l.matchAll(/（([a-z0-9'.-]+)）/g)].at(-1);
+    expect(最後の丸括弧, `版の識別子が拔けない: ${l.slice(0, 60)}`).toBeTruthy();
+  }
+});
+
+it("行を返す 4 つの道具は、全部「返す行の形」を書く（第 1009 回）", async () => {
+  /* 第 1008 回で `search_deadlines` の行の形を説明に書いた。**行を返す他の道具**も –
+   * 實測 2026-11-19: `list_upcoming`（締切 + 會期の二種類）・`recommend_venues`（順位と
+   * 札が先頭）・`explain_word`（`- ` が付くだけ）は默つて居た。
+   * AI が「行を分ける」時に當てるはないので、全部の説明に形を書く。 */
+  const res = (await client.ask({ jsonrpc: "2.0", id: 1, method: "tools/list" })) as {
+    result?: { tools?: Array<{ name?: string; description?: string }> };
+  };
+  const 全部 = (res.result?.tools ?? []).map((t) => ({
+    name: String(t.name ?? ""),
+    文: t.description ?? "",
+  }));
+  for (const n of ["search_deadlines", "list_upcoming", "recommend_venues", "explain_word"]) {
+    const 道具 = 全部.find((t) => t.name === n);
+    expect(道具, `${n} が無い`).toBeTruthy();
+    expect(道具?.文, `${n} が「返す行の形」を書いて居ん`).toContain("返す行の形");
+  }
+  /* `list_upcoming` は**二種類**（締切・會期）を持つ事も言ふ。 */
+  const 近く = 全部.find((t) => t.name === "list_upcoming");
+  expect(近く?.文, "list_upcoming が會期の行の形を書いて居ん").toContain("会期の行は別の形");
+  /* 實物もその通り – 6 つに分かれる。 */
+  for (const [名前, 引數] of [
+    ["search_deadlines", { query: "セキュリティ", limit: 2 }],
+    ["list_upcoming", { days: 30, limit: 2 }],
+    ["explain_word", { word: "セキュリティ" }],
+  ] as const) {
+    const 答 = await call(名前, 引數);
+    /* 會期の行（`- 2026-10-01(木) 〜 2026-10-31(土) | CSS（key: …・…） | 開催地 URL`）は
+     * **別の形**で「（key: 」を持つので、此の 6 つの檢查の對象外 – それを持つ行を除く。
+     * 1 日の會期（`- 2026-10-12(月) | ISTAI26（key: …`）も同樣に「（key: 」を持つ。 */
+    const 行 = 答.split("\n").filter((l) => /^[-\s]*20\d\d-/.test(l) && !l.includes("（key: "));
+    expect(行.length, `${名前} の行が出て居ん`).toBeGreaterThan(0);
+    /* **5 つか 6 つ** – 確認の札は在る時だけ入る（實測 2026-11-19: `list_upcoming` では
+     * 94 行が 6 つ・6 行が 5 つ）。第 1010 回で說明にも書いた。 */
+    for (const l of 行) {
+      const 本体 = l.replace(/^-\s*/, "");
+      const 數 = 本体.split(" | ").length;
+      expect(
+        [5, 6].includes(數),
+        `${名前} の行が 5 か 6 つに分かれん（${數}）: ${本体.slice(0, 50)}`,
+      ).toBe(true);
+    }
   }
 });
