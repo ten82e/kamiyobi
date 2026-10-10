@@ -4142,3 +4142,24 @@ describe(" schema に無い引数は默つて捨てない（第 997 回）", () 
     expect(答, "宣言して在る引數に對して餘計な斷りが出た").not.toContain("此の道具に無い引数");
   });
 });
+
+it("種別の打ち間違ひを默つて 0 件にしない（第 999 回）", async () => {
+  /* 實測 2026-11-19: `kinds: ["paper","zzz"]` は第 886 回で知らない值を名指すやうに
+   * 成つて居たが、**`kind`（單數）は默つて 0 件**だつた。同じ引數なので同じ決まり。
+   * あと `kinds: []`（空配列）も默つて「濾さない」扱ひ – AI は「0 件にして」のつもりで
+   * 打つかも知れない。兩方默らない。 */
+  const 單數 = await call("search_deadlines", { query: "セキュリティ", kind: "zzz" });
+  expect(單數, "知らない kind を名指して居ん").toContain("知らない種別");
+  expect(單數.split("\\n")[0], "默つて 0 件に成つて居る").toContain("知らない種別");
+  /* 空配列は「濾して居ません」と言ふ。 */
+  const 空 = await call("search_deadlines", { query: "セキュリティ", kinds: [] });
+  expect(空, "空の kinds を默つて濾さない扱ひにして居ん").toContain(
+    "kinds が空なので種別で濾して居ません",
+  );
+  /* 良い値には何も言はない（第 852 回と同じ決まり）。 */
+  for (const 良い of [{ kind: "paper" }, { kinds: ["paper"] }, { kinds: ["paper", "abstract"] }]) {
+    const 答 = await call("search_deadlines", { query: "セキュリティ", ...良い });
+    expect(答, `${JSON.stringify(良い)} に餘計な斷りが出た`).not.toContain("知らない種別");
+    expect(答, `${JSON.stringify(良い)} に餘計な斷りが出た`).not.toContain("種別で濾して居ません");
+  }
+});

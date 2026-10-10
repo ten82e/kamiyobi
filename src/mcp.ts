@@ -1067,6 +1067,10 @@ function searchDeadlines(
   const { list, 名, 生成, 窓が無い } = pick(args.scope);
   /* `kinds` と `kind` を両方渡した時は **`kind` を見て居ない**ことを言う（第 921 回 –
    * 默って片方を捨てると、讀む人は別の一方を効かせて居ると误解する）。 */
+  /* `kinds: []` の**空配列**は「種別で濾さない」として默つて扱つて居た（第 999 回 –
+   * 實測: `kinds: []` を送ると 37 件=全部。AI は「０件にして」のつもりで打つかも知れない）。
+   * 空なら其の旨を言ふ（默つて既定に戾さない – 第 852 回と同じ決まり）。 */
+  const 空の種別 = Array.isArray(args.kinds) && args.kinds.length === 0;
   const 種別一種 = args.kinds !== undefined && (args as { kind?: unknown }).kind !== undefined;
   const 古さ = 古さの斷り(生成, now);
   /* 語が空（種別だけの時）は**全部に當たる**目にする（第 793 回）。 */
@@ -1101,9 +1105,16 @@ function searchDeadlines(
     "supplementary",
     "other",
   ];
-  const 知らん = (Array.isArray(args.kinds) ? args.kinds.map((k) => String(k)) : []).filter(
-    (k) => !知って居る種別.includes(k),
-  );
+  /* `kind`（單數）も `kinds` と**同じ**く確かめる（第 999 回 – 實測 2026-11-19:
+   * `kind: "zzz"` は默つて 0 件に成つて居た。`kinds` の方は第 886 回で知らない值を
+   * 名指すやうにしたが、單數の方は其の儘だつた – 同じ引數なので同じ決まり）。 */
+  const 名乘り全部 = [
+    ...(Array.isArray(args.kinds) ? args.kinds.map((k) => String(k)) : []),
+    ...(typeof (args as { kind?: unknown }).kind === "string"
+      ? [String((args as { kind?: unknown }).kind)]
+      : []),
+  ];
+  const 知らん = 名乘り全部.filter((k) => !知って居る種別.includes(k));
   /* 知らない等級も名指す（`A+` の樣な無い値は、其の侭では 0 件に成る – AI が打ち直せる樣に）。 */
   const ランク = String(args.rank ?? "").trim();
   const 知らんランク = ランク && !Recommender.rankGradeOrderJa().includes(ランク) ? ランク : "";
@@ -1129,7 +1140,7 @@ function searchDeadlines(
    * 言ふので、此の道具でも重ねない（畫面と同じ決まり）。 */
   /* 行が見えて居る時に出す注（類語・曖昧さ – 第 942・948 回）。 */
   const 見えて居る文 = 見えて居る注(query, hit.length);
-  const 頭 = `${絞り込みだけ ? "語を指定せず、絞り込みだけ" : `検索語「${query}」に当たる締切`}: ${hit.length} 件（${名} ${list.length} 行・画面の既定と同じ絞り込み。絞る前は ${素の.length} 行${ランク ? `／ランク ${ランク}` : ""}${args.domestic === true ? "／国内のみ" : ""}${args.online === true ? "／オンライン参加可のみ" : ""}${窓あり ? `／締切まで ${窓の日數} 日以內${窓の端数の斷り}` : ""}${讀めない引數}）${知らん.length ? `／知らない種別（其の侭では 0 件に成ります）: ${知らん.join("・")}` : ""}${種別一種 ? `／kind は kinds と共に与えられたので見て居ません` : ""}${知らんランク ? `／知らないランク（等級は ${Recommender.rankGradeOrderJa().join("・")}）: ${知らんランク}` : ""}${日付の語 ? "\n日付は日本時間（JST）。月や日付の語は、締切の日付と「会期」の日付の両方に当たる（画面のてびきと同じ約束）ので、月で引いた時に見出しの月と違ふ日が出る行が在る。" : ""}${窓が無い ? `\n${窓が無いの斷り(true)}` : ""}${scopeErr ? `\n${scopeErr}` : ""}${解決の文}${記号だけの文 ? `\n${記号だけの文}` : ""}${見えて居る文}`;
+  const 頭 = `${絞り込みだけ ? "語を指定せず、絞り込みだけ" : `検索語「${query}」に当たる締切`}: ${hit.length} 件（${名} ${list.length} 行・画面の既定と同じ絞り込み。絞る前は ${素の.length} 行${ランク ? `／ランク ${ランク}` : ""}${args.domestic === true ? "／国内のみ" : ""}${args.online === true ? "／オンライン参加可のみ" : ""}${窓あり ? `／締切まで ${窓の日數} 日以內${窓の端数の斷り}` : ""}${讀めない引數}）${知らん.length ? `／知らない種別（其の侭では 0 件に成ります）: ${知らん.join("・")}` : ""}${空の種別 ? `／kinds が空なので種別で濾して居ません（0 件にしたいなら kind を 1 つ）` : ""}${種別一種 ? `／kind は kinds と共に与えられたので見て居ません` : ""}${知らんランク ? `／知らないランク（等級は ${Recommender.rankGradeOrderJa().join("・")}）: ${知らんランク}` : ""}${日付の語 ? "\n日付は日本時間（JST）。月や日付の語は、締切の日付と「会期」の日付の両方に当たる（画面のてびきと同じ約束）ので、月で引いた時に見出しの月と違ふ日が出る行が在る。" : ""}${窓が無い ? `\n${窓が無いの斷り(true)}` : ""}${scopeErr ? `\n${scopeErr}` : ""}${解決の文}${記号だけの文 ? `\n${記号だけの文}` : ""}${見えて居る文}`;
   if (!hit.length) {
     /* 畫面と同じ約束 – 案内は「素の當たりが 0」の時に出る物なので、絞り込みで 0 に成つた時は
      * 其の旨を書く（絞り込みを外せば出る事がある）。 */
