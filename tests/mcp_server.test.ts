@@ -4651,3 +4651,29 @@ it("ランクの大文字小文字の嚴密さを說明に書く（第 1013 回�
   const 大文字 = await call("search_deadlines", { query: "セキュリティ", rank: "A", limit: 1 });
   expect(大文字, "大文字の A が效いて居ん").not.toContain("知らないランク");
 });
+
+it("list_upcoming の days が上限を超えたら默つて截めない（第 1017 回）", async () => {
+  /* 第 1016 回で建造の `upcoming_days` に上限 400 を付けた。MCP の `days` は**默つて**
+   * 400 に截めて居た – 實測 2026-11-19: `days: 900` は 400 日として數へるのに何も言はれず、
+   * 讀む AI は「900 日調べた」と思ふ。建造と同じ決まりに揃へる（第 852 回）。 */
+  for (const 値 of [401, 900, 5000, 999999]) {
+    const 答 = await call("list_upcoming", { days: 値, limit: 1 });
+    expect(答, `days: ${値} を默つて截めて居ん`).toContain(
+      `（${値} 日は上限 400 を超えたので 400 日として切りました）`,
+    );
+  }
+  /* 上限ぴったり（400）は何も言はない。 */
+  const ぴったり = await call("list_upcoming", { days: 400, limit: 1 });
+  expect(ぴったり, "上限ぴったりに斷りが出た").not.toContain("上限 400 を超えた");
+  /* 端數と同時に貰つた時は端數の文を出す（重ねて言はない – 第 993 回の文が殘る）。 */
+  const 端數と = await call("list_upcoming", { days: 900.5, limit: 1 });
+  expect(端數と, "端數の文が殘って居ん").toContain("端数なので");
+  /* 兩方の斷りが重なつても括弧が崩れない（空の種別と同時）。 */
+  const 重ねた = await call("list_upcoming", { days: 900, kinds: [], limit: 1 });
+  expect(重ねた, "上限の斷りが無い").toContain("上限 400 を超えた");
+  expect(重ねた, "空の種別の斷りが無い").toContain("kinds が空なので");
+  const 頭 = 重ねた.split("\n")[0] ?? "";
+  const 開き = (頭.match(/（/g) ?? []).length;
+  const 閉じ = (頭.match(/）/g) ?? []).length;
+  expect(開き, `開き括弧が多すぎる: ${頭.slice(0, 120)}`).toBe(閉じ);
+});
