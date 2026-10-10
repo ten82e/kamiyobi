@@ -6,7 +6,7 @@ import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { load as loadYaml } from "js-yaml";
 import { describe, expect, it, vi } from "vitest";
-import { positiveIntegerValue } from "../src/args.ts";
+import { booleanValue, positiveIntegerValue } from "../src/args.ts";
 import {
   canonicalizeCategories,
   cleanDbworldTitle,
@@ -2036,6 +2036,54 @@ it("整數の引數が效かなくても默つて戾さない（第 1018 回）"
     expect(鳴いた, "效かない値なのに默つて居る").toBe(3);
     const 文 = spy.mock.calls.map((c) => String(c[0])).join("");
     expect(文, "既定の値を使ふと書いて居ん").toContain("既定の 60 を使います");
+  } finally {
+    spy.mockRestore();
+  }
+});
+
+it("true / false として讀めない値は默つて true にしない（第 1019 回）", () => {
+  /* 實測 2026-11-19: `booleanValue("xyz")` は默つて **true** に成つて居た。
+   * `--offline xyz` なら「上流に取りに行かない」が打ち間違ひで發動する – 收録が古い
+   * ままで氣付かない、最も惡い失敗。`--dry-run xyz` なら**書かずに結果だけ見せる**。
+   * 第 878 回の MCP の眞僞の引數と同じ決まりに揃へる。 */
+  const spy = vi.spyOn(process.stderr, "write").mockImplementation(() => true);
+  try {
+    /* 效く組は其の儘（warning を出さない）。 */
+    for (const [語, 應] of [
+      ["true", true],
+      ["1", true],
+      ["yes", true],
+      ["on", true],
+      ["false", false],
+      ["0", false],
+      ["no", false],
+      ["off", false],
+    ] as const) {
+      spy.mockClear();
+      const 出た = booleanValue(語, true);
+      expect(出た, `「${語}」の interpreted が違ふ`).toBe(應);
+      expect(spy.mock.calls.length, `「${語}」は效く組なのに warning を出した`).toBe(0);
+    }
+    /* 讀めない値は fallback の儘 + warning（默つて true にしない）。 */
+    for (const 語 of ["xyz", "maybe", "2", "TRUE!"]) {
+      spy.mockClear();
+      const 出た = booleanValue(語, true);
+      expect(出た, `「${語}」が fallback に戾つて居らん`).toBe(true);
+      expect(spy.mock.calls.length, `「${語}」を默つて fallback にした`).toBe(1);
+      expect(String(spy.mock.calls[0]?.[0]), "warning に讀める組が書かれて居ん").toContain(
+        "讀める組",
+      );
+    }
+    /* fallback = false の時も warning を出す（默つて逆にしない）。 */
+    spy.mockClear();
+    expect(booleanValue("xyz", false)).toBe(false);
+    expect(spy.mock.calls.length, "fallback=false の時に默つて居る").toBe(1);
+    /* 省略（undefined・布林値）は默る（第 852 回と同じ）。 */
+    spy.mockClear();
+    booleanValue(undefined, true);
+    booleanValue(true, true);
+    booleanValue(false, false);
+    expect(spy.mock.calls.length, "省略した時に warning を出した").toBe(0);
   } finally {
     spy.mockRestore();
   }
