@@ -3525,3 +3525,64 @@ it("名簿の注は、窓に行が在る會議でも推定の日を言ふ（第 
   /* **推定の日の形**を見る（實際の日付が入つて居る – 空の文だと讀めない）。 */
   expect(注, "推定の日が讀めない").toMatch(/推定なら \d{4}-\d{2}-\d{2} も在ります/);
 });
+
+describe("名簿の注は、全部の會議で事實と合ふ（第 968 回）", () => {
+  /* 第 928〜964 回で三段の名簿の注を作つた。**悉皆**を確かめた回（第 967 回 – 696 會議を
+   * 全部叩いて 0 件の誤り）。其れは 9 分かかるのでCIには入れられない – **間引きした 20 會議**
+   * （35 番目ごと）で同じ四つの事實を見る。 */
+  const 會議 =
+    (
+      JSON.parse(readFileSync(join(REPO_ROOT, "data", "snapshot.json"), "utf8")) as {
+        conferences?: Array<Record<string, unknown>>;
+      }
+    ).conferences ?? [];
+  const 題の一覽 = 會議.map((c) => ({
+    key: String(c.key ?? ""),
+    題: String(c.title ?? ""),
+    行: ((c.editions ?? []) as unknown[]).flatMap((e) =>
+      ((e as { deadlines?: unknown[] }).deadlines ?? []).map(() => 1),
+    ).length,
+    推定: ((c.editions ?? []) as unknown[]).some(
+      (e) => (e as { estimated?: boolean }).estimated === true,
+    ),
+    推定の未來: ((c.editions ?? []) as Array<Record<string, unknown>>).reduce(
+      (n: number, e: Record<string, unknown>) => {
+        if (e.estimated !== true) return n;
+        return (
+          n +
+          ((e.deadlines ?? []) as Array<Record<string, unknown>>).filter(
+            (d) => Date.parse(String(d.utc ?? "")) > Date.now(),
+          ).length
+        );
+      },
+      0,
+    ),
+  }));
+  it("四つの事實が、注の言ふ事と合ふ", async () => {
+    const 樣本 = 題の一覽.filter((_, i) => i % 35 === 0);
+    expect(樣本.length, "間引きの結果が空（會議が讀めて居ない）").toBeGreaterThan(15);
+    for (const c of 樣本) {
+      const 答 = await call("search_deadlines", { query: c.題, limit: 1, scope: "all" });
+      const 注 = 答.split("\n").find((l) => l.startsWith("- ") && l.includes(`key: ${c.key}`));
+      if (!注) continue;
+      /* 1. 「行は在ります」は行が無い會議に言はない */
+      if (注.includes("締切の行は在りますが")) {
+        expect(c.行, `「${c.key}」に行が無いのに「行は在ります」と言つた`).toBeGreaterThan(0);
+      }
+      /* 2. 「1 本もありません」は行が在る會議に言はない */
+      if (注.includes("締切の行が 1 本もありません")) {
+        expect(c.行, `「${c.key}」に行が ${c.行} あるのに「1 本もありません」と言つた`).toBe(0);
+      }
+      /* 3. 「推定なら」は推定の版が無い會議に言はない */
+      if (注.includes("推定なら")) {
+        expect(c.推定, `「${c.key}」に推定の版が無いのに「推定なら」と言つた`).toBe(true);
+      }
+      /* 4. 未來の推定が在る會議は「推定なら」を言ふ（第 964 回） */
+      if (c.推定の未來 > 0) {
+        expect(注, `「${c.key}」に未來の推定が ${c.推定の未來} 行あるのに言つて居ない`).toContain(
+          "推定なら",
+        );
+      }
+    }
+  });
+});
