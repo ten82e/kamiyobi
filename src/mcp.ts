@@ -1464,7 +1464,24 @@ function venueInfo(args: { key?: unknown; name?: unknown; scope?: unknown }, now
     ].join("\n");
   }
   const 一つ = hit[0];
-  const 版 = [...new Set(hit.map((r) => r.ed.id))].sort();
+  /* 版の一覽は**行ではなく收錄その物**から組む（第 969 回 – 實測 2026-11-16: `venue siggraph`
+   * は 8 版のうち 6 版しか出して居なかつた。落ちた 2 版は**締切が 1 本も無い版**で、
+   * `siggraph27`（2027 年の一番新しい版！）が其の中にあつた – 「この會議の版」を聞いた人が
+   * 一番知りたい版が見えない）。締切が無い版は「(会期だけ)」と添へる（第 866 回と同じ
+   * 決まり – 無いことを「無い」と區別する）。*/
+  const 會議の版 = (snapshot().conferences ?? []).find(
+    (c: { key?: unknown }) =>
+      String(c.key ?? "").toLowerCase() === String(一つ.conf.key ?? "").toLowerCase(),
+  );
+  const 行を持つ版 = new Set(hit.map((r) => r.ed.id));
+  const 版 = [
+    ...new Set([
+      ...((會議の版?.editions ?? []) as Array<{ id?: unknown }>).map((e) => String(e.id ?? "")),
+      ...行を持つ版,
+    ]),
+  ]
+    .filter((id) => id.length > 0)
+    .sort();
   /* **今後の物を先に**並べる（第 751 回 – 實測 2026-10-06: `venue sigkdd` の一覽が 2021 年から
    * 始まつて居た。人は「次はいつか」を聞いて居るので、過去を先に讀ませない。同じ側では日の早い順）。*/
   const 見本 = sortRows(hit)
@@ -1502,7 +1519,7 @@ function venueInfo(args: { key?: unknown; name?: unknown; scope?: unknown }, now
     斷り + (key && name ? "注: name は key と共に与えられたので見て居ません\n" : ""),
     `会議: ${一つ.conf.title}（key: ${一つ.conf.key}${一つ.conf.acronym ? `・${一つ.conf.acronym}` : ""}）`,
     ...(scopeErr ? [scopeErr] : []),
-    `版: ${版.join(" / ")}`,
+    `版: ${版.map((id) => (行を持つ版.has(id) ? id : `${id}(会期だけ)`)).join(" / ")}`,
     /* 分野は畫面と同じ日本語で出す（第 726 回 – 機械向けのキー（`ai`）の侭では、人が讀む時に
      * 畫面のチップと結び付かん。同じ入口（`categoryLabelJa`）から取る – 書き寫すとずれる）。*/
     `分野: ${

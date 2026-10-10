@@ -3586,3 +3586,71 @@ describe("名簿の注は、全部の會議で事實と合ふ（第 968 回）",
     }
   });
 });
+
+describe("venue_info は版の一覽を收錄通りに出す（第 969 回）", () => {
+  /* 第 967 回の**悉皆**で見つけた本物 – 實測 2026-11-16: `venue siggraph` は 8 版のうち
+   * 6 版しか出して居なかつた。落ちた 2 版は**締切が 1 本も無い版**で、`siggraph27`
+   * （2027 年の一番新しい版）が其の中にあつた。「この會議の版」を聞いた人が一番知りたい版が
+   * 見えない。版の一覽は**行ではなく收錄その物**から組む（第 866 回と同じ決まり – 締切が無い
+   * 版は「(会期だけ)」と添へて、無いことを「無い」と區別する）。
+   *
+   * 悉皆（696 會議）は 0 件の誤り。CI では**間引き**して同じ事實を見る。 */
+  const 會議 =
+    (
+      JSON.parse(readFileSync(join(REPO_ROOT, "data", "snapshot.json"), "utf8")) as {
+        conferences?: Array<Record<string, unknown>>;
+      }
+    ).conferences ?? [];
+  const 投稿の種別 = new Set(["abstract", "paper", "journal"]);
+  it("版の一覽と「次の投稿締切」が事實と合ふ", async () => {
+    const 樣本 = 會議.filter((_, i) => i % 35 === 0);
+    expect(樣本.length, "間引きの結果が空").toBeGreaterThan(15);
+    for (const c of 樣本) {
+      const key = String(c.key ?? "");
+      const 答 = await call("venue_info", { key, scope: "all" });
+      const 版の行 = 答.split("\n").find((l) => l.startsWith("版: ")) ?? "";
+      const 本の版 = ((c.editions ?? []) as unknown[]).length;
+      if (版の行) {
+        const 版 = 版の行
+          .replace(/^版: /, "")
+          .split(" / ")
+          .filter((v) => v.length > 0);
+        expect(版.length, `「${key}」の版の數が收錄と違ふ（${版.length} ／ ${本の版}）`).toBe(
+          本の版,
+        );
+      } else {
+        /* 締切が 1 本も無い會議は「版 N 件」の形（第 866 回 – 其れも事實を言つて居る）*/
+        const 件の形 = /版 (\d+) 件/.exec(答);
+        expect(件の形, `「${key}」の版の言ひ方が讀めない`).not.toBeNull();
+        expect(Number(件の形?.[1]), `「${key}」の版の數が違ふ`).toBe(本の版);
+      }
+      /* 「次の投稿締切」は**投稿の種別で一番近い未來**（第 893 回の約束）。*/
+      const 次の行 = 答.split("\n").find((l) => l.startsWith("次の投稿締切: ")) ?? "";
+      const 本の次 = ((c.editions ?? []) as unknown[])
+        .flatMap((e) => {
+          const dls = (e as { deadlines?: unknown[] }).deadlines ?? [];
+          return dls.map((d) => ({
+            版: String((e as { id?: unknown }).id ?? ""),
+            日: Date.parse(String((d as { utc?: unknown }).utc ?? "")),
+            種別: String((d as { kind?: unknown }).kind ?? ""),
+          }));
+        })
+        .filter((x) => 投稿の種別.has(x.種別) && Number.isFinite(x.日) && x.日 > Date.now())
+        .sort((a, b) => a.日 - b.日)[0];
+      if (本の次 === undefined) {
+        expect(
+          答,
+          `「${key}」に未來の投稿締切が無いのに「次の投稿締切」を出して居る`,
+        ).not.toContain("次の投稿締切: 2");
+      } else {
+        const m = /次の投稿締切: (\d{4}-\d{2}-\d{2})/.exec(次の行);
+        expect(m, `「${key}」に未來の投稿締切が在るのに言つて居ない`).not.toBeNull();
+        const 言つた日 = Date.parse(`${m?.[1]}T00:00:00Z`);
+        expect(
+          Math.abs(言つた日 - 本の次.日),
+          `「${key}」の次の投稿締切が ${m?.[1]}（本物 ${new Date(本の次.日).toISOString().slice(0, 10)}・${本の次.版}）`,
+        ).toBeLessThanOrEqual(2 * 86400000);
+      }
+    }
+  });
+});
