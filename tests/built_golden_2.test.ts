@@ -1841,6 +1841,21 @@ it("「評価でしぼる」でのぞいた件数を件数欄に出す（SPEC §
     立たない札,
     `「推定」の札が、推定期間以外の行に付いて居る:\n${立たない札.join("\n")}`,
   ).toEqual([]);
+  /* **瀏覽器で讀む版**（`upcoming.html`）も – あの文件は `upcoming.md` から作るが、行の
+   * 作りが別に成つた日におかしくなるので、此處でも見る（第 962 回の續き – 實測
+   * 2026-11-14: md と html は**同じ 19 行**に同じ札が付いて居た）。 */
+  const html = join(REPO_ROOT, "public", "upcoming.html");
+  if (existsSync(html)) {
+    const 表の行 = [...readFileSync(html, "utf8").matchAll(/<tr>([\s\S]*?)<\/tr>/g)].map(
+      (m) => m[1],
+    );
+    const 推定期間の表 = 表の行.filter((t) => t.includes("推定期間"));
+    const 札なし = 推定期間の表.filter((t) => !/<td[^>]*>推定<\/td>/.test(t));
+    expect(推定期間の表.length, "upcoming.html に推定期間の行が無い").toBeGreaterThan(0);
+    expect(札なし, `upcoming.html の推定期間の行に「推定」が無い:\n${札なし.join("\n")}`).toEqual(
+      [],
+    );
+  }
   /* 截る行數は**兩方で同じ**（第 954 回 – MCP も畫面も 20 行。片方だけ變更すると
    * 「AI は 20 行で調べた・畫面は 50 行で調べた」になり、同じ論文で違ふ候補が出る）。 */
   const 截りの値 = (字: string): number => {
