@@ -3727,3 +3727,21 @@ it("記号だけの問は「絞り込みが効いて居ない」と言ふ（第 
   const 素 = await call("search_deadlines", { kinds: ["paper"], limit: 2 });
   expect(素, "語を省いた呼び方に斷りが出た").not.toContain("絞り込みとして効く語がありません");
 });
+
+it("explain_word も、記号だけの語に「絞り込みが効いて居ない」と言ふ（第 985 回）", async () => {
+  /* 實測 2026-11-19: `explain_word("。")` は「素の照合で **870 行**」と言つて居た – 全部に
+   * 當たるので數が意味を成さない。`search_deadlines` の第 981 回と同じ括りで、此方にも注を
+   * 足す（語を調べる人が「870 行も當たる」と誤解しない爲）。 */
+  const 記號 = await call("explain_word", { word: "。" });
+  expect(記號, "記号だけの語に注が出て居ん").toContain(
+    "この語は記号だけなので、絞り込みとして効く語がありません",
+  );
+  /* 語のある語には出さない（第 852 回と同じ決まり）。 */
+  for (const 語 of ["セキュリティ", "KDD", "締切"]) {
+    const 答 = await call("explain_word", { word: 語 });
+    expect(答, `「${語}」に關係無い注が出た`).not.toContain("この語は記号だけなので");
+  }
+  /* 混在（語 + 句點）にも出さない。 */
+  const 混在 = await call("explain_word", { word: "セキュリティ。" });
+  expect(混在, "混在を記号だけと誤認識した").not.toContain("この語は記号だけなので");
+});
