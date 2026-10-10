@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { expect, it } from "vitest";
@@ -5156,4 +5156,31 @@ it("畫面の filter() は邊境でも落ちない（第 1015 回）", async () 
    * （第 675 回）– 其れは仕樣。此處で見たいのは「**持たない行が落ちる**」事。 */
   expect(出た, "AND の意味論が崩れた（兩方を持つ行だけになるべき）").not.toContain("hpc 会議");
   expect(出た.length, "AND で行が揃つて居ん").toBeGreaterThan(0);
+});
+
+it("upcoming_days が上限を超えたら截めて、其の旨を言ふ（第 1016 回）", async () => {
+  /* 實測 2026-11-19: `site.upcoming_days = 99999` にすると `upcoming.md` の頭が
+   * 「対象期間: 2026-08-09 〜 2300-05-24」に成つた。數字は噓では無い（其の日數先まで
+   * 拾つて居る）が、**收録の果ては 2027-02-03** なので、讀む人に「276 年分の data が
+   * 在る」と誤解させる。MCP の `days` は 400 で截めて居る（第 993 回）ので揃へる。
+   *
+   * config は**一時目錄に書く**（本源を汚染しない – 他の檢查が讀む）。 */
+  const { mkdtempSync, readFileSync, writeFileSync } = await import("node:fs");
+  const { join } = await import("node:path");
+  const { tmpdir } = await import("node:os");
+  const 元 = readFileSync(join(REPO_ROOT, "config.yaml"), "utf8");
+  const 燒く = 元.replace(/upcoming_days:\s*\d+/, "upcoming_days: 99999");
+  expect(燒く, "config.yaml の upcoming_days が讀めない").not.toBe(元);
+  const 目錄 = mkdtempSync(join(tmpdir(), "cfp-cap-"));
+  const cfg = join(目錄, "config.yaml");
+  writeFileSync(cfg, 燒く, "utf8");
+  const outdir = join(目錄, "public");
+  const run = runCli(outdir, { extra: ["--no-embeddings", "--config", cfg] });
+  const 言 = (run.stderr || "") + (run.stdout || "");
+  expect(言, "上限を超えた旨を言つて居ん").toContain("上限 400 を超えた");
+  const md = readFileSync(join(outdir, "upcoming.md"), "utf8");
+  expect(md, "400 日として截められて居ん").toContain("# 直近 400 日の締切と開催");
+  const 期間 = /対象期間: \S+ 〜 (\S+)/.exec(md)?.[1] ?? "";
+  expect(期間, "2300 年の樣な飾りの期間に成つて居る").not.toContain("23");
+  rmSync(目錄, { recursive: true, force: true });
 });

@@ -4325,10 +4325,24 @@ export async function buildAll(
   // config.yaml の site.upcoming_days（既定 180）: upcoming.md の窓を決める。
   // 設定値を読まないと 180 に固定されるため、site.upcoming_days を反映する。
   const rawUpcomingDays = Number(site.upcoming_days ?? 180);
+  /* `upcoming_days` に**上限**を付ける（第 1016 回 – 實測 2026-11-19: `99999` を渡すと
+   * `upcoming.md` の頭が「対象期間: 2026-08-09 〜 2300-05-24」に成つた。數字は噓では
+   * 無い（其の日數先まで拾つて居る）が、**收録の果ては 2027-02-03** なので、讀む人に
+   * 「276 年分の data が在る」と誤解させる。MCP の `days` は 400 で截めて居る（第 993 回）
+   * ので、建造も同じ上限に揃へる。超えた時は**其の旨を stderr に書く**（默つて截めない –
+   * 第 852 回と同じ決まり）。 */
+  const UPCOMING_DAYS_CAP = 400;
   const upcomingDays =
     Number.isFinite(rawUpcomingDays) && Number.isInteger(rawUpcomingDays) && rawUpcomingDays > 0
       ? rawUpcomingDays
       : 180;
+  const upcomingDays使ふ = Math.min(upcomingDays, UPCOMING_DAYS_CAP);
+  if (upcomingDays使ふ < upcomingDays) {
+    process.stderr.write(
+      `warning: site.upcoming_days=${upcomingDays} は上限 ${UPCOMING_DAYS_CAP} を超えたので ${UPCOMING_DAYS_CAP} 日として扱います` +
+        "（収録の果てより先は行が無いので、大きな日數は飾りに成ります）\n",
+    );
+  }
 
   const records = recordsOf(safeConfs);
   records.sort((a, b) => {
@@ -4349,7 +4363,7 @@ export async function buildAll(
   const icsMeta = icsCalendarMeta(icsRows);
   // 品書は 1 回だけ組む（`catalog.json` と、画面に差し込む物と、索引の申告が
   // それぞれ違う品書を指さないため。第 289 回と同じ轍を踏まない）。
-  const catalog = toCatalog(data, nowUtc, upcomingDays, icsMeta);
+  const catalog = toCatalog(data, nowUtc, upcomingDays使ふ, icsMeta);
   // A new page build does not imply that upstream deadlines were checked again.
   catalog.source_updates = Object.values(opts.health?.sourceMetadata ?? {})
     .filter((source) => source.source !== "local")
@@ -4388,7 +4402,7 @@ export async function buildAll(
   write("data.csv", toCsv(records));
   /* 「直近の締切と会期」の表はここが 1 本。ブラウザで読める版（下の `upcoming.html`）は
    * この文字列から作る（同じ表を二重に作らないため）。 */
-  const upcomingMd = toUpcomingMd(records, nowUtc, upcomingDays);
+  const upcomingMd = toUpcomingMd(records, nowUtc, upcomingDays使ふ);
   write("upcoming.md", upcomingMd);
   write("deadlines.ics", icsCalendarText(icsRows, nowUtc));
 
@@ -4427,7 +4441,7 @@ export async function buildAll(
     toLlmsTxt(safeConfig, {
       all: deadlineSpan(data),
       catalog: deadlineSpan(catalog),
-      horizonDays: upcomingDays,
+      horizonDays: upcomingDays使ふ,
       calendar: icsMeta,
     }),
   );
