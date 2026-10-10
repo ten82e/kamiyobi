@@ -192,7 +192,7 @@ describe("AI 向けの索引が、MCP の在り處を書いて居る（第 714 �
 });
 
 describe("數字と案内が畫面と同じ（第 714 回）", () => {
-  /* 同じ検索核・同じ收錄から、此方で數へて突き合はせる（數字を檢査に寫さない）。 */
+  /* 同じ検索核・同じ收錄から、此方で数えて突き合はせる（數字を檢査に寫さない）。 */
   const rows = Recommender.candidateRows(
     JSON.parse(readFileSync(join(REPO_ROOT, "data", "snapshot.json"), "utf8")) as never,
   ) as unknown as Array<{
@@ -234,7 +234,7 @@ describe("數字と案内が畫面と同じ（第 714 回）", () => {
   });
 
   it("行が出る語には、案内を付けずに行を返す", async () => {
-    /* 語は此方で數へてから使ふ（0 件に成る語を選ぶと、檢査が空振りする）。 */
+    /* 語は此方で数えてから使ふ（0 件に成る語を選ぶと、檢査が空振りする）。 */
     const 語 = "機械学習";
     const 正 = 畫面の既定で數へる(語, Date.now());
     expect(正, `此の檢査の前提（既定の絞り込みで行が出る語）が崩れた: ${語}`).toBeGreaterThan(0);
@@ -1085,7 +1085,7 @@ it("行に、延長と確認の状態の札が付く（畫面の一覧の札と�
   if (確認済み) {
     const t2 = await call("venue_info", { key: String(確認済み.conf.key), scope: "all" });
     /* **行の札**には付けない（確認済みの行は畫面も印を出さない）。第 868 回に足した
-     * 「確認: 」の內譯の行は別 – 其方は狀態の語を數へて出す物。 */
+     * 「確認: 」の內譯の行は別 – 其方は狀態の語を数えて出す物。 */
     for (const l of t2.split("\n").filter((l) => /^\d{4}-\d{2}-\d{2}/.test(l)))
       expect(l, `確認済みの行に札を付けた: ${l.slice(0, 60)}`).not.toContain("確認済み");
   }
@@ -1231,7 +1231,7 @@ it("確認の状態の内訳を、画面と同じ語で返す（第 868 回）",
   const 行 = text.split("\n").find((l) => l.startsWith("確認の状態: "));
   expect(行, "確認の状態の行が無い").toBeTruthy();
   for (const [語, n] of 期待) expect(行, `${語} の數が違ふ`).toContain(`${語} ${n} 行`);
-  expect(行, "記録なしを數へて居ん").toContain(`確認の記録なし ${記録なし} 行`);
+  expect(行, "記録なしを数えて居ん").toContain(`確認の記録なし ${記録なし} 行`);
   /* 內部の狀態の名（`manual-required` など）は出さない（畫面と同じ語だけ）。 */
   expect(text, "內部の狀態の名を出して居る").not.toContain("manual-required");
   /* 會議ごとの內譯も言ふ（行ごとの札だけでは、其の會議の偏りが分からん）。 */
@@ -1426,7 +1426,7 @@ it("within_days は、畫面の「締切まで N 日」と同じ行を返す（�
   const text = await call("search_deadlines", { within_days: 30, scope: "all", limit: 1 });
   const 後 = Date.now();
   expect(text, "語を省いて窓だけで引ける事を言つて居ん").toContain("語を指定せず、絞り込みだけ");
-  expect(text, "窓を頭に書いて居ん").toContain("／締切まで 30 日以内");
+  expect(text, "窓を頭に書いて居ん").toContain("／締切まで 30 日");
   /* 數へ方は**呼び出しの前後**の時計で挾む（道具は自分の時計で數へるので、境目を跨いでも
    * 落ちない樣に – 其の幅の中で一致する事を見る）。 */
   const 幅 = [期待(30, 前, false), 期待(30, 後, false)].sort((a, b) => a - b);
@@ -1471,7 +1471,7 @@ it("within_days は、畫面の「締切まで N 日」と同じ行を返す（�
     within_days: 30,
     scope: "all",
   });
-  expect(語と, "語と窓の併用が効いて居ん").toContain("／締切まで 30 日以内");
+  expect(語と, "語と窓の併用が効いて居ん").toContain("／締切まで 30 日");
 });
 
 it("欄の名前を打たれたら、値で打ち直す案内を返す（第 873 回）", async () => {
@@ -1675,7 +1675,7 @@ it("使へない數の引數は默つて既定に戻さない（第 878 回）",
   /* 使へる値は其の儘通す（斷りを付けない）。 */
   const 使へる = await call("search_deadlines", { query: "セキュリティ", within_days: 30 });
   expect(使へる, "使へる値に斷りを付けた").not.toContain("1 以上の数で指定してください");
-  expect(使へる, "窓を書いて居ん").toContain("／締切まで 30 日以内");
+  expect(使へる, "窓を書いて居ん").toContain("／締切まで 30 日");
   /* 他の數の引數も同じ（`limit`・`days`）。 */
   const 件數 = await call("search_deadlines", { query: "ai", limit: 0 });
   expect(件數, "limit を默つた").toContain("limit は 1 以上の数で指定してください");
@@ -2498,7 +2498,7 @@ it("推薦の行は、取得狀態と締切の競合が普通でない時だけ�
   }
 });
 
-it("品書の推薦の軸は全版で數へて居る – 新規の會議を新規と言ひ切らない（第 900 回）", async () => {
+it("品書の推薦の軸は全版で数えて居る – 新規の會議を新規と言ひ切らない（第 900 回）", async () => {
   /* 實測 2026-10-31: 画面は `r.conf.recommendation_axes` が無いと其場で軸を求めるが、品書の
    * 會議は**窓の版**しか持って居ないので历年が 1 年になり、`ICDE` が「新規・確認した年 1 年」
    * と出て居た（実物は「成長中・確認した年 7 年」）。会議 696 件の內 627 件が「新規」になつて
@@ -3530,7 +3530,7 @@ it("長い論文は最初の 20 行だけを見て、其の旨を言ふ（第 95
 
 it("venue_info は過去の件數を頭で言ふ（第 961 回）", async () => {
   /* 實測 2026-11-14: `venue icde` は 21 件のうち **17 件が過ぎた物** – 行ごとに「（過ぎた）」と
-   * 書いてあるが、AI が 21 行を數へて「21 件の締切がある」と答へる方が自然。何件が過去かを
+   * 書いてあるが、AI が 21 行を数えて「21 件の締切がある」と答へる方が自然。何件が過去かを
    * 頭で言ふ（`search_deadlines` の「絞る前は N 行」と同じ役目）。 */
   const 答 = await call("venue_info", { key: "icde" });
   const 行 = 答.split("\n").filter((l) => /^20\d\d-/.test(l));
@@ -4003,4 +4003,33 @@ it("推薦の「候補の件數」と「過ぎた件數」は事實と合ふ（�
       );
     }
   }
+});
+
+it("日にちの引數に端数を貰つたら、切つて居る事を言ふ（第 993 回）", async () => {
+  /* 實測 2026-11-19: `days: 1.5`・`within_days: 2.5`・`within_days: 3.7` は**默つて**
+   * 其の儘使はれて居た。畫面の「締切まで」の選粍は 7・30・90・180 日の**整數**しか
+   * 出さないので、端数は機械だけの打ち方 – 第 924 回で `limit` は「3.7 件まで表示」の樣に
+   * 書かずに切つた（**默つて切つた**）。日にちも同じ決まりに揃へる: 切り下げて、切つた
+   * 事を頭に書く。
+   *
+   * 默つて切ると、AI は「1.5 日」と聞いたつもりで「1 日」の結果を報告してしまふ。 */
+  /* 1. `list_upcoming` の `days` */
+  const 目錄 = await call("list_upcoming", { days: 1.5, limit: 1 });
+  expect(目錄, "days の端数を切つたと言つて居ん").toMatch(/1 日|端数|切/);
+  expect(目錄.split("\n")[0], "1.5 日の儘を表示して居る").toContain("1 日");
+  const 目錄の健全 = await call("list_upcoming", { days: 7, limit: 1 });
+  expect(目錄の健全, "整數なのに端数の斷りが出た").not.toMatch(/端数/);
+  /* 2. `search_deadlines` の `within_days` */
+  const 檢索 = await call("search_deadlines", {
+    query: "セキュリティ",
+    within_days: 3.7,
+    limit: 1,
+  });
+  expect(檢索, "within_days の端数を默つて使つて居る").toMatch(/端数|切/);
+  const 檢索の健全 = await call("search_deadlines", {
+    query: "セキュリティ",
+    within_days: 30,
+    limit: 1,
+  });
+  expect(檢索の健全, "整數なのに端数の斷りが出た").not.toMatch(/端数/);
 });
