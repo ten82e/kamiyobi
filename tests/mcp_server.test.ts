@@ -4627,3 +4627,27 @@ it("venue_info も、どの窓を見たか頭に書く（第 1012 回）", async
   const 過去 = await call("venue_info", { key: "aft" });
   expect(過去, "今後の締切が無い事を先に言つて居ん").toContain("今後の締切は収録にありません");
 });
+
+it("ランクの大文字小文字の嚴密さを說明に書く（第 1013 回）", async () => {
+  /* 實測 2026-11-19: `rank: "a"` は 0 件になる（大文字の `A` しか受け付けない）。
+   * 說明は「畫面のランク欄と同じ厳密比較」と書くが、**大小文字の話**が無かつた –
+   * AI が `a` を打つと 0 件で、「この收錄に A ランクが無い」と誤解する。
+   * 知らない等級は頭で名指す（第 858 回）ので、其れで氣付けるが、說明にも書く。 */
+  const res = (await client.ask({ jsonrpc: "2.0", id: 1, method: "tools/list" })) as {
+    result?: {
+      tools?: Array<{
+        name?: string;
+        inputSchema?: { properties?: Record<string, { description?: string }> };
+      }>;
+    };
+  };
+  const rank = (res.result?.tools ?? []).find((t) => t.name === "search_deadlines")?.inputSchema
+    ?.properties?.rank?.description;
+  expect(rank, "rank の說明が無い").toBeTruthy();
+  expect(rank, "大文字小文字の嚴密さを書いて居ん").toContain("大文字小文字も違ふ");
+  /* 實物もその通り – `a` は 0 件で、知らない等級として名指す。 */
+  const 小文字 = await call("search_deadlines", { query: "セキュリティ", rank: "a", limit: 1 });
+  expect(小文字, "小文字の a を默つて 0 件にして居ん").toContain("知らないランク");
+  const 大文字 = await call("search_deadlines", { query: "セキュリティ", rank: "A", limit: 1 });
+  expect(大文字, "大文字の A が效いて居ん").not.toContain("知らないランク");
+});

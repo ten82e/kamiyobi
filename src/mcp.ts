@@ -2085,7 +2085,7 @@ const TOOLS = [
         rank: {
           type: "string",
           description:
-            "ランクの等級で絞る（`A*` / `A` / `B` / `C` / `N`。画面のランク欄と同じ厳密比較 – `A` は `core:A*` を巻き込まない）",
+            "ランクの等級で絞る（`A*` / `A` / `B` / `C` / `N`。画面のランク欄と同じ**厳密比較**（大文字小文字も違ふ – `a` は効かない） – `A` は `core:A*` を巻き込まない）",
         },
         domestic: {
           type: "boolean",
