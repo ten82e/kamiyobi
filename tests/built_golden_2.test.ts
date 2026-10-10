@@ -5000,3 +5000,78 @@ it("health.md の表は health.json の値と合ふ（第 1005 回）", () => {
   }
   expect(違ふ.join("\n"), "health.md と health.json が違ふ").toBe("");
 });
+
+it("data.json のスキーマの申告は、實物と合ふ（第 1007 回）", async () => {
+  /* 第 1003〜1006 回で索引の數字・打ち方を見た。**殘るは `data.json` のスキーマの申告** –
+   * 索引は「上の内、稀にしか付かない物…（實測: 版 2,603 のうち call_identity 12・legacy_ids 18・
+   * event_review 7／締切 4,984 のうち track 8・superseded_deadlines 35・promotion_ref 19。
+   * verification は 4,467 件…upstream_sub は 696 のうち 354 件）」と**實測值**を書く。
+   * 機械が讀む索引なので、其の數がズレると「此れだけ在る」と誤解する。
+   *
+   * 實測 2026-11-19: **全部一致**（`track` は「空でない」行の數 – 4,984 行全部に欄は在るが
+   * 空なので、索引の 8 は**值が入つて居る行**を數へて居る）。 */
+  const jsonPath = join(REPO_ROOT, "public", "data.json");
+  if (!existsSync(jsonPath)) return;
+  const d = JSON.parse(readFileSync(jsonPath, "utf8")) as {
+    conferences?: Array<Record<string, unknown>>;
+    site?: Record<string, unknown>;
+    categories?: Record<string, unknown>;
+    sources?: unknown[];
+  };
+  const 版の欄 = ["call_identity", "legacy_ids", "event_review"];
+  const 締切の欄 = ["superseded_deadlines", "promotion_ref"];
+  const 數 = {
+    call_identity: 0,
+    legacy_ids: 0,
+    event_review: 0,
+    superseded_deadlines: 0,
+    promotion_ref: 0,
+    verification: 0,
+    track有事: 0,
+    upstream_sub: 0,
+    版: 0,
+    締切: 0,
+    会議: 0,
+  };
+  for (const c of d.conferences ?? []) {
+    數.会議 += 1;
+    if ("upstream_sub" in c) 數.upstream_sub += 1;
+    for (const e of (c.editions ?? []) as Array<Record<string, unknown>>) {
+      數.版 += 1;
+      for (const k of 版の欄) if (k in e) 數[k as "call_identity"] += 1;
+      for (const dl of (e.deadlines ?? []) as Array<Record<string, unknown>>) {
+        數.締切 += 1;
+        const t = dl.track;
+        if (typeof t === "string" && t.trim().length > 0) 數.track有事 += 1;
+        if ("superseded_deadlines" in dl) 數.superseded_deadlines += 1;
+        if ("promotion_ref" in dl) 數.promotion_ref += 1;
+        if ("verification" in dl) 數.verification += 1;
+      }
+    }
+  }
+  const 文 = readFileSync(join(REPO_ROOT, "public", "llms.txt"), "utf8");
+  /* 欄が在る行の數（索引は「载つて居る數」を書く – 空の `track` は入れない）。 */
+  const 全部の事實: Array<[string, number]> = [
+    ["call_identity", 數.call_identity],
+    ["legacy_ids", 數.legacy_ids],
+    ["event_review", 數.event_review],
+    ["superseded_deadlines", 數.superseded_deadlines],
+    ["promotion_ref", 數.promotion_ref],
+    ["verification", 數.verification],
+    ["track", 數.track有事],
+    ["upstream_sub", 數.upstream_sub],
+  ];
+  for (const [名, 事] of 全部の事實) {
+    /* `toContain` は正則を「その儘含む」とは解さないので、`test` で確かめる。
+     * 數は**千の桁區切りでも/無しでも**書かれ得る（4,467 と 4467）。 */
+    const 千の桁 = String(事).replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1,");
+    const 桁の候補 = 千の桁 === String(事) ? [String(事)] : [String(事), 千の桁];
+    /* 「會社 696 のうち 354 件」の樣に、名と數の間に**數字**が入るのも在る。 */
+    const 合ふ = 桁の候補.some((桁) => new RegExp(`${名}.{0,30}${桁}(?![0-9])`).test(文));
+    expect(合ふ, `索引の「${名}」の數が ${事} と違ふ`).toBe(true);
+  }
+  /* 版と締切の總數も（「版 2,603」「締切 4,984」）。 */
+  const 千 = (n: number): string => String(n).replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1,");
+  expect(文, `索引の「版」の數が ${數.版} と違ふ`).toContain(`版 ${千(數.版)}`);
+  expect(文, `索引の「締切」の數が ${數.締切} と違ふ`).toContain(`締切 ${千(數.締切)}`);
+});
