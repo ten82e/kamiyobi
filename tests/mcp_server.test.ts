@@ -3794,3 +3794,49 @@ it("explain_word も、記号だけの語に「絞り込みが効いて居ない
   const 混在 = await call("explain_word", { word: "セキュリティ。" });
   expect(混在, "混在を記号だけと誤認識した").not.toContain("この語は記号だけなので");
 });
+
+it("venue_info の確認の內訣は、その會議の行の數と合ふ（第 988 回）", async () => {
+  /* 第 987 回で `collection_stats` の數を收錄で確かめた。**會議ごとの內訣**も
+   * `venue_info` の「確認: …」で出て居る – 實測 2026-11-19: 100 會議（7 件おきに抽出）を
+   * 叩いて **0 件の誤り**。此れを間引きで固定する（CI で全會議は 9 分かかる）。
+   *
+   * `manual-required` と `parser-failed` は畫面上「複数候補のため要確認」に**同じ札**で出る
+   * ので、事實の方でも合算して比べる（第 912 回・第 987 回と同じ決まり）。 */
+  const 收錄 = JSON.parse(readFileSync(join(REPO_ROOT, "data", "snapshot.json"), "utf8")) as {
+    conferences?: Array<Record<string, unknown>>;
+  };
+  const 樣本 = (收錄.conferences ?? []).filter((_, i) => i % 35 === 0);
+  expect(樣本.length, "間引きの結果が空（會議が讀めて居ない）").toBeGreaterThan(15);
+  for (const c of 樣本) {
+    const key = String(c.key ?? "");
+    if (!key) continue;
+    const 答 = await call("venue_info", { key, scope: "all" });
+    const 行 = 答.split("\n").find((l) => l.startsWith("確認: ")) ?? "";
+    const 版々 = ((c.editions ?? []) as Array<Record<string, unknown>>).flatMap(
+      (e) => (e.deadlines ?? []) as Array<Record<string, unknown>>,
+    );
+    let 複數 = 0;
+    let 確認済み = 0;
+    let 記録なし = 0;
+    for (const d of 版々) {
+      const st = String(
+        (d.verification && typeof d.verification === "object"
+          ? (d.verification as { status?: unknown }).status
+          : d.verification) ?? "",
+      );
+      if (!st) 記録なし += 1;
+      else if (st === "manual-required" || st === "parser-failed") 複數 += 1;
+      else if (st === "verified") 確認済み += 1;
+    }
+    /* 締切が 1 本も無い會議（實測: `fgcs`）は「確認: …」を出さないので其の儘次へ（第 866 回）。 */
+    if (!(複數 + 確認済み + 記録なし)) {
+      expect(答, `「${key}」は締切が無いのに「確認: 」を出して居る`).not.toContain("確認: ");
+      continue;
+    }
+    if (複數)
+      expect(行, `「${key}」の複数候補の數が違ふ`).toContain(`複数候補のため要確認 ${複數} 行`);
+    if (記録なし)
+      expect(行, `「${key}」の記録なしの數が違ふ`).toContain(`確認の記録なし ${記録なし} 行`);
+    if (確認済み) expect(行, `「${key}」の確認済みの數が違ふ`).toContain(`確認済み ${確認済み} 行`);
+  }
+});
