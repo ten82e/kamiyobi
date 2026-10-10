@@ -2226,9 +2226,28 @@ function handle(raw: string, now: number): void {
   if (method === "tools/call") {
     const name = String(params.name ?? "");
     const args = (params.arguments ?? {}) as Record<string, unknown>;
+    /* **schema に無い引数**は默つて讀み捨てない（第 997 回 – 實測 2026-11-19: `offset: 5`
+     * を送つても何も出ず、最初の 20 行が其の儘返つた。AI は「次を見る」爲に `offset`・`page`
+     * を取り敢えず打つ – 默つて捨てると同じ 20 行が返り「以上が全部」と誤る）。
+     * 篩り込みの引数が効かない事は第 920 回で言つて居るが、あれは**宣言して在る**引数の話 –
+     * 此れは宣言そのものが無い引数。*/
+    const 此の道具 = TOOLS.find((t) => t.name === name);
+    const 未宣言 = Object.keys(args).filter(
+      (k) => !Object.keys(此の道具?.inputSchema?.properties ?? {}).includes(k),
+    );
     try {
       const text = callTool(name, args, now);
-      reply({ content: [{ type: "text", text }] });
+      reply({
+        content: [
+          {
+            type: "text",
+            text:
+              未宣言.length && !text.startsWith("道具の実行に失敗")
+                ? `${text}\n注: 此の道具に無い引数 ${未宣言.join("・")} は効きません（schema に無い物です）`
+                : text,
+          },
+        ],
+      });
     } catch (error) {
       /* 「Error: 」を外して讀める文にする（第 890 回 – 實測 2026-10-22: 知らない道具を
        * 呼ぶと「道具の実行に失敗: Error: 知らない道具: nope」と出て居た。`String(error)`

@@ -4091,3 +4091,54 @@ it("推薦の見出しを 40 字に切つたら、切つた事を添へる（第
   const 短い = await call("recommend_venues", { paper: "セキュリティの会報", limit: 3 });
   expect(短い, "短い題名に切り詰めの斷りが出た").not.toContain("切り詰めた物です");
 });
+
+describe(" schema に無い引数は默つて捨てない（第 997 回）", () => {
+  /* 第 920 回で**篩り込みの引數**（rank・domestic・…）は「此の道具では効きません」と言ふ
+   * やうにした。但其れは**宣言して在る引數**の中の話 – AI が勝手に `offset`・`page`・
+   * `verbose`・`format` の樣な**schema に無い引數**を送ると、未だ**默つて**讀み捨てられて居た
+   * （實測 2026-11-19: `offset: 5` を送つても何も出ず、最初の 20 行が其の儘返る）。
+   *
+   * AI は「次を見る」爲に `offset` を取り敢えず打つ – 默つて捨てると「同じ 20 行」が
+   * 返り、AI は「以上が全部」と思ふ。**何が効かなかつたか**を言ふ。 */
+  const 持ち物 = async (名前: string): Promise<string[]> => {
+    const res = (await client.ask({ jsonrpc: "2.0", id: 1, method: "tools/list" })) as {
+      result?: {
+        tools?: Array<{ name?: string; inputSchema?: { properties?: Record<string, unknown> } }>;
+      };
+    };
+    const tool = (res.result?.tools ?? []).find((t) => t.name === 名前);
+    return Object.keys(tool?.inputSchema?.properties ?? {});
+  };
+  it("未宣言の引數を送ると、其の名を言ふ", async () => {
+    for (const [名前, 未宣言] of [
+      ["search_deadlines", { offset: 5 }],
+      ["list_upcoming", { page: 2 }],
+      ["explain_word", { verbose: true }],
+      ["collection_stats", { format: "json" }],
+    ] as const) {
+      const 持つ = await 持ち物(名前);
+      const 余分 = Object.keys(未宣言).filter((k) => !持つ.includes(k));
+      expect(余分.length, `${名前} の未宣言の引數が決まらない`).toBeGreaterThan(0);
+      const 引數 =
+        名前 === "search_deadlines"
+          ? { query: "セキュリティ" }
+          : 名前 === "explain_word"
+            ? { word: "セキュリティ" }
+            : {};
+      const 答 = await call(名前, { ...引數, ...未宣言 });
+      expect(
+        答,
+        `「${名前}」に ${余分.join("・")} を送つたのに効かなかつた事を言つて居ん`,
+      ).toContain(余分[0]);
+    }
+  });
+  /* **宣言して在る引數**には言はない（其れは各自の斷りの擔當 – 第 920 回・第 921 回）。 */
+  it("宣言して在る引數には言はない", async () => {
+    const 答 = await call("search_deadlines", {
+      query: "セキュリティ",
+      limit: 2,
+      include_past: true,
+    });
+    expect(答, "宣言して在る引數に對して餘計な斷りが出た").not.toContain("此の道具に無い引数");
+  });
+});
