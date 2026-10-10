@@ -20,5 +20,14 @@ export function stringValue(value: unknown): string | undefined {
 
 export function positiveIntegerValue(raw: string | undefined, fallback: number): number {
   const value = Number(raw);
-  return Number.isInteger(value) && value > 0 ? value : fallback;
+  if (Number.isInteger(value) && value > 0) return value;
+  /* **默つて既定に戾さない**（第 1018 回 – 實測 2026-11-19: `review --limit 0` は默つて
+   * 60 件を出し、「0 件だけ見たい」と打つた人は 60 行を讀まされた。`/tmp` の CLI と同じ
+   * 決まりに揃へる – 第 993 回の `days: 0`・第 1017 回の上限と同じ）。 */
+  if (raw !== undefined && String(raw).trim() !== "") {
+    process.stderr.write(
+      `warning: ${JSON.stringify(raw)} は 1 以上の整數ではないので、既定の ${fallback} を使います\n`,
+    );
+  }
+  return fallback;
 }

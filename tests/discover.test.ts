@@ -6,6 +6,7 @@ import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { load as loadYaml } from "js-yaml";
 import { describe, expect, it, vi } from "vitest";
+import { positiveIntegerValue } from "../src/args.ts";
 import {
   canonicalizeCategories,
   cleanDbworldTitle,
@@ -2006,4 +2007,36 @@ describe("discover lifecycle and year parsing (#762)", () => {
       expect(registry.candidates[0]?.categories).toContain("hpc");
     });
   });
+});
+
+it("整數の引數が效かなくても默つて戾さない（第 1018 回）", () => {
+  /* 實測 2026-11-19: `review --limit 0` は默つて 60 件を出し、「0 件だけ見たい」と
+   * 打つた人は 60 行を讀まされた。`positiveIntegerValue` が**默つて** fallback に
+   * 戾して居た – MCP の `數の引數`（第 878 回）と同じ決まりに揃へる。 */
+  /* 效く値は其の儘。 */
+  expect(positiveIntegerValue("5", 60)).toBe(5);
+  expect(positiveIntegerValue("99999", 60)).toBe(99999);
+  /* 效かない値は fallback（其れは仕樣 – 此處で見たいのは「默つて居ない」事）。 */
+  expect(positiveIntegerValue("0", 60)).toBe(60);
+  expect(positiveIntegerValue("-5", 60)).toBe(60);
+  expect(positiveIntegerValue("abc", 60)).toBe(60);
+  /* 打たれて居ない時（undefined・空）は默る（其れは「省略」なので – 第 852 回と同じ）。 */
+  const spy = vi.spyOn(process.stderr, "write").mockImplementation(() => true);
+  try {
+    positiveIntegerValue(undefined, 60);
+    positiveIntegerValue("", 60);
+    const 默った = spy.mock.calls.filter((c) => String(c[0]).includes("warning")).length;
+    expect(默った, "省略した時に warning を出した").toBe(0);
+    /* 效かない値が打たれた時は warning を出す。 */
+    spy.mockClear();
+    positiveIntegerValue("0", 60);
+    positiveIntegerValue("-5", 60);
+    positiveIntegerValue("abc", 60);
+    const 鳴いた = spy.mock.calls.filter((c) => String(c[0]).includes("warning")).length;
+    expect(鳴いた, "效かない値なのに默つて居る").toBe(3);
+    const 文 = spy.mock.calls.map((c) => String(c[0])).join("");
+    expect(文, "既定の値を使ふと書いて居ん").toContain("既定の 60 を使います");
+  } finally {
+    spy.mockRestore();
+  }
 });
