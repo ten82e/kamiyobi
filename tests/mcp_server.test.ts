@@ -4555,7 +4555,7 @@ it("返す行の形を說明に書いて、實物もその通りに分けられ�
   }
 });
 
-it("行を返す 4 つの道具は、全部「返す行の形」を書く（第 1009 回）", async () => {
+it("行を返す 6 つの道具は、全部「返す行の形」を書く（第 1009 回）", async () => {
   /* 第 1008 回で `search_deadlines` の行の形を説明に書いた。**行を返す他の道具**も –
    * 實測 2026-11-19: `list_upcoming`（締切 + 會期の二種類）・`recommend_venues`（順位と
    * 札が先頭）・`explain_word`（`- ` が付くだけ）は默つて居た。
@@ -4567,10 +4567,19 @@ it("行を返す 4 つの道具は、全部「返す行の形」を書く（第 
     name: String(t.name ?? ""),
     文: t.description ?? "",
   }));
-  for (const n of ["search_deadlines", "list_upcoming", "recommend_venues", "explain_word"]) {
+  /* 第 1011 回で `venue_info`（締切の行 + 名簿）と `collection_stats`（`ラベル: 値` の行）
+   * も足した – 6 つ全部が書く。 */
+  for (const n of [
+    "search_deadlines",
+    "list_upcoming",
+    "recommend_venues",
+    "explain_word",
+    "venue_info",
+    "collection_stats",
+  ]) {
     const 道具 = 全部.find((t) => t.name === n);
     expect(道具, `${n} が無い`).toBeTruthy();
-    expect(道具?.文, `${n} が「返す行の形」を書いて居ん`).toContain("返す行の形");
+    expect(道具?.文, `${n} が返す形を書いて居ん`).toMatch(/返す行の形|返る文の形/);
   }
   /* `list_upcoming` は**二種類**（締切・會期）を持つ事も言ふ。 */
   const 近く = 全部.find((t) => t.name === "list_upcoming");
