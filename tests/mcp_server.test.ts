@@ -3957,3 +3957,50 @@ it("list_upcoming の件數は、其の窓の事实と合ふ（第 990 回）", 
     expect(殘り, `「殘り」の數が事實と違ふ（宣告 ${殘り} ／ 事實 ${表示 - 行}）`).toBe(表示 - 行);
   }
 });
+
+it("推薦の「候補の件數」と「過ぎた件數」は事實と合ふ（第 992 回）", async () => {
+  /* 第 990・991 回で `list_upcoming` の二つの件數を確かめた。**推薦**の二つも。
+   * 實測 2026-11-19: 3 つの論文で 0 件の誤り。
+   *
+   * **事实の作り方** – MCP は `screenRows()`（品書）を pool の元に使ふ。品書の
+   * `reranker` も讀むので、其れを**忘れると點が變はり候補が減る**（實測: reranker を
+   * null にすると 92 件が 46 件に減つた – 自分の測り方の失敗。第 962・966・979・990 回と
+   * 同じ「事實は道具と同じ出所・同じ設定で數へる」）。 */
+  const 品書 = JSON.parse(readFileSync(join(REPO_ROOT, "public", "catalog.json"), "utf8")) as {
+    conferences?: unknown[];
+    reranker?: unknown;
+  };
+  const 今 = Date.now();
+  const 事實 = (題: string): { 候補: number; 過去: number } => {
+    Recommender.setNameIdf(Recommender.buildNameIdf(品書.conferences ?? []));
+    Recommender.setReranker(品書.reranker ?? null);
+    const 行 = Recommender.candidateRows(品書 as never);
+    const pool = 行
+      .filter((r) => !Recommender.deadlineRowIsPast(r, 今))
+      .concat(
+        Recommender.journalRows(品書.conferences ?? [], 今) as never,
+        Recommender.pastRepresentatives(行, 今) as never,
+      );
+    const lines = Recommender.parsePaperLines(題);
+    const 候補 = Recommender.venueRecommendations(pool, lines, null, 今, {
+      fieldedLexical: true,
+    }).filter((r) => r.fit.score >= 10);
+    return { 候補: 候補.length, 過去: 候補.filter((r) => Number(r.row.t) < 今).length };
+  };
+  for (const 題 of [
+    "分散システムのスケーラビリティと耐故障性",
+    "深層学習を用いた自然言語処理の教師なし学習",
+    "暗号理論とゼロ知識証明の実装",
+  ]) {
+    const 答 = await call("recommend_venues", { paper: 題, limit: 20 });
+    const 頭 = 答.split("\n")[0] ?? "";
+    const 事 = 事實(題);
+    expect(事.候補, `「${題}」の候補が 0 件（この檢查の前提が崩れた）`).toBeGreaterThan(0);
+    expect(頭, `「${題}」に合う投稿先: ${事.候補} 件`).toContain(`に合う投稿先: ${事.候補} 件`);
+    if (事.過去) {
+      expect(頭, `「${題}」に過ぎた ${事.過去} 件の宣告が無い`).toContain(
+        `うち ${事.過去} 件は締切が過ぎた`,
+      );
+    }
+  }
+});
