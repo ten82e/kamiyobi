@@ -23,6 +23,7 @@ import {
   toIcsText,
 } from "../src/build.ts";
 import { site } from "./built_golden_shared.ts";
+import { REPO_ROOT } from "./helpers.ts";
 import { jsFunction, siteRuntime, vmSafeSource } from "./runtime_extract.ts";
 
 /* ------------------------------------------------------------------  Helpers */
@@ -111,6 +112,33 @@ describe("deadlines.ics の形（RFC 5545）", () => {
     // 文字の途中で切っていない（切っていれば開いたときに復元できない）。
     const values = unfoldIcs(raw).filter((l) => l.startsWith("DESCRIPTION:"));
     expect(values.join("\n"), "説明が復元できない").toContain("高性能計算ワークショップ");
+  });
+
+  /* 上の合成の行で畳みの動きを見る。此れは**配つてある物**を見る – 畳み忘れは實際の
+   * 會議名・URL で起きる（合成で足りるとは限らない）。第三者のカレンダーアプリが
+   * 75 オクテット超の行を切る・落とすことが在る。 */
+  it("配つてある deadlines.ics も 75 オクテット以内・CRLF だけで閉じて居る", () => {
+    const path = join(REPO_ROOT, "public", "deadlines.ics");
+    if (!existsSync(path)) return; // CI が作る
+    const raw = readFileSync(path);
+    const lines = raw.toString("utf8").split("\r\n");
+    expect(lines.length, "行事が 1 つも無い（この檢查が空振り）").toBeGreaterThan(1000);
+    const 超えた = lines.filter((l) => Buffer.byteLength(l, "utf8") > 75);
+    expect(
+      超えた.length,
+      `75 オクテットを超えた行が ${超えた.length} 本ある: ${超えた
+        .slice(0, 3)
+        .map((l) => l.slice(0, 40))
+        .join(" / ")}`,
+    ).toBe(0);
+    // CRLF だけで書いて居る（LF が混ざると読み手が行を切り違へる）。
+    expect(
+      raw
+        .toString("utf8")
+        .split("\n")
+        .filter((l) => l !== "" && !l.endsWith("\r")).length,
+    ).toBe(0);
+    expect(raw.toString("utf8").endsWith("END:VCALENDAR\r\n")).toBe(true);
   });
 
   it("TEXT の特殊文字をエスケープする", () => {
