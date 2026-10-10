@@ -4033,3 +4033,24 @@ it("日にちの引數に端数を貰つたら、切つて居る事を言ふ（�
   });
   expect(檢索の健全, "整數なのに端数の斷りが出た").not.toMatch(/端数/);
 });
+
+it("死語が多い問は、數へた殘りを言ふ（第 994 回）", async () => {
+  /* 實測 2026-11-19: 7 語（9 語）の死語を打つと「うち zzz9・zzz8」の **2 語だけ**出て
+   * 「ほか 5 語」の言はれが無かつた – 讀む人は「この 2 語だけが見当たらない」と思ひ、
+   * 殘りの語まで調べ直してしまふ。默つた切り詰めにしない（第 924・993 回と同じ決まり）。 */
+  const 多い = await call("search_deadlines", {
+    query: "zzz9 zzz8 zzz7 zzz6 zzz5 zzz4 zzz3 zzz2",
+    limit: 1,
+  });
+  const 注 = 多い.split("\n").find((l) => l.includes("見当たりません")) ?? "";
+  expect(注, "死語の注が出て居ん").not.toBe("");
+  expect(注, "殘りの語の數を言つて居ん").toContain("ほか 6 語も");
+  /* 2 語までは何も添へない（默つて居る – 第 852 回と同じ決まり）。 */
+  const 少ない = await call("search_deadlines", { query: "zzz9 zzz8", limit: 1 });
+  const 注2 = 少ない.split("\n").find((l) => l.includes("見当たりません")) ?? "";
+  expect(注2, "2 語なのに「ほか」が出た").not.toContain("ほか");
+  /* 1 語だけ當たる問（セキュリティ + 死語）は「外すと増えます」を其の儘出す。 */
+  const 混在 = await call("search_deadlines", { query: "セキュリティ zzz9", limit: 1 });
+  expect(混在, "その語を外すと增えると言つて居ん").toContain("その語を外すと増えます。");
+  expect(混在, "混在なのに「ほか」が出た").not.toContain("ほか 1 語も");
+});
