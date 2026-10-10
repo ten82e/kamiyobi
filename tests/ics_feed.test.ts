@@ -1166,3 +1166,26 @@ it("確認の状態と延長の札が、カレンダーの本文にも入る（�
   const llms = readFileSync(join(site, "llms.txt"), "utf8");
   expect(llms, "索引がカレンダーの狀態を言って居ん").toContain("`状態: ` の行");
 });
+it("配つてある ICS の「いま N 件」の申告は、本文と合ふ（第 1001 回）", async () => {
+  /* 第 975 回で行の幅（RFC 5545）を見た。**說明文の中の數字**も – カレンダーの情報欄に
+   * 「いま 932 件（2026-08-09 〜 2028-03-30）。うち締切は 765 件」と出る。數字が本文と
+   * 合はないと、購讀した人が「何人か分からない一覽」を信じ込む。
+   * 實測 2026-11-19: 全部一致（行事 932・締切 765・非締切 167）。
+   *
+   * 折り返し（CRLF + 空白）を戾してから數へる – 其の儘數へると「締切: 」が
+   * 「締切\\n 切: 」に裂けて 12 件減る（自分の測り方の失敗）。 */
+  const path = join(REPO_ROOT, "public", "deadlines.ics");
+  if (!existsSync(path)) return;
+  const raw = readFileSync(path, "utf8").replace(/\r\n(?: |\t)/g, "");
+  const 説明 = /X-WR-CALDESC:(?:[^\n]*\n )?([\s\S]*?)(?:\r?\n[A-Z])/.exec(raw)?.[1] ?? "";
+  const folds = 説明.replace(/\r\n(?: |\t)/g, "");
+  const 行事 = Number((/いま ([\d,]+) 件/.exec(folds) ?? [0, "0"])[1].replace(/,/g, ""));
+  const 締切 = Number((/うち締切は ([\d,]+) 件/.exec(folds) ?? [0, "0"])[1].replace(/,/g, ""));
+  expect(行事, "行事の數が讀めない").toBeGreaterThan(100);
+  expect(締切, "締切の數が讀めない").toBeGreaterThan(0);
+  const 本文の行事 = (raw.match(/BEGIN:VEVENT/g) ?? []).length;
+  const 本文の締切 = (raw.match(/\\n締切: \d{4}-\d{2}-\d{2}/g) ?? []).length;
+  expect(行事, `行事の申告 ${行事} が本文 ${本文の行事} と違ふ`).toBe(本文の行事);
+  expect(締切, `締切の申告 ${締切} が本文 ${本文の締切} と違ふ`).toBe(本文の締切);
+  expect(行事 - 締切, "締切以外の行事が負數").toBeGreaterThanOrEqual(0);
+});
