@@ -3636,7 +3636,12 @@ export function toUpcomingHtml(markdown: string, styleBlock = "", baseUrl = ""):
        * `[${UPCOMING_BACK_TEXT_JA}](index.html)` の二つが**生のマークダウンの侭**頁に出て居た
        * （2026-10-06 實測 – upcoming.html の冒頭と末尾。読者は括弧と丸括弧の並びを読まされ、
        * 行き先も押せなかつた）。筋（`javascript:` の樣な物）は通さない – 相対と http(s) だけ。*/
-      .replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (_all, text: string, url: string) => {
+      /* 題名は `[` を**含む**ことが在る（實測 2026-11-17: 「CODS 2026 [14th ACM IKDD
+       * International Conference on Data Science] 2026」– 角括弧の内に角括弧が在る）。内側の
+       * 括弧を一段だけ許さないと、此の行だけ**生のマークダウンの侭** upcoming.html に出て、
+       * 讀者が括弧と丸括弧の列を讀まされる（リンクも押せない）。一段だけ許す（二段は
+       * 收錄に無い – 一段で足りる）。 */
+      .replace(/\[([\s\S]*?)\]\(([^)\s]+)\)/g, (_all, text: string, url: string) => {
         const 筋付き = /^[A-Za-z][A-Za-z0-9+.-]*:/.test(url);
         if (筋付き && !/^https?:\/\//.test(url)) return _all;
         // URL は `escapeMdUrl` でパーセント形式（`&` を含まない）にしているが、

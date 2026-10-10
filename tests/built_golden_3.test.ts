@@ -4153,7 +4153,10 @@ it("締切一覧のファイルは、読みやすい版へ導線を送り、Mark
   expect(md.startsWith("# "), "upcoming.md がマークダウン文書でない").toBe(true);
   const tableRows = md.split("\n").filter((l) => l.startsWith("| "));
   expect(tableRows.length, "upcoming.md に行が見つからない").toBeGreaterThan(10);
-  const bracketLinks = tableRows.filter((l) => /\[[^\]]+\]\(https?:\/\//.test(l));
+  /* 題名は `[` を**含む**ことが在る（實測 2026-11-17: 「CODS 2026 [14th ACM IKDD …] 2026」
+   * – 内側の括弧を含まない形だと、其の行を數へ落として**建つた頁でリンクが 1 本增えた**
+   * やうに見えて居た）。非貪欲で「URL の前の ]」まで取る。 */
+  const bracketLinks = tableRows.filter((l) => /\[[\s\S]*?\]\(https?:\/\//.test(l));
   expect(
     bracketLinks.length,
     "upcoming.md の会議名がマークダウンの記号で書かれていない（説明の実態が変わった）",

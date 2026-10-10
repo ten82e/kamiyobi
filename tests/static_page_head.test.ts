@@ -15,6 +15,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { toUpcomingHtml } from "../src/build.ts";
 import { site } from "./built_golden_shared.ts";
+import { REPO_ROOT } from "./helpers.ts";
 
 function page(name: string): string {
   return readFileSync(join(site, name), "utf8");
@@ -210,6 +211,35 @@ describe("静的な一覧の入口情報（第 286 回）", () => {
     expect(absolute, "絕對 URL がリンクになつて居ない").toContain(
       '<a href="https://example.test/a" rel="noopener">公式</a>',
     );
+  });
+
+  /* 上の合成で變換の動きを見る。此れは**配つてある物** – 合成の表に無い形（長い會議名・
+   * URL の中の括弧・「|」を含む語）が實際の行には在る。變換が踓れて居ないかを本物で見る。 */
+  it("upcoming.html は upcoming.md と同じ行を持って居る（配つてある物）", () => {
+    const md = join(REPO_ROOT, "public", "upcoming.md");
+    const html = join(REPO_ROOT, "public", "upcoming.html");
+    if (!existsSync(md) || !existsSync(html)) return; // CI が作る
+    const 行 = readFileSync(md, "utf8")
+      .split("\n")
+      .filter((l) => l.startsWith("|"))
+      .slice(2); // 見出しと區切り線を外す
+    const 頁 = readFileSync(html, "utf8");
+    const tr = [...頁.matchAll(/<tr>([\s\S]*?)<\/tr>/g)].map((m) => m[1]).slice(1);
+    expect(行.length, "md の行が讀めない（この檢查が空振り）").toBeGreaterThan(1000);
+    expect(tr.length, `md の ${行.length} 行に対して html が ${tr.length} 行しか無い`).toBe(
+      行.length,
+    );
+    /* 會議名が兩方で同數（變換で落として居ない）ので、行ごとに「<a …>名前</a>」が在るかを見る。 */
+    let 落ちた = 0;
+    for (const l of 行) {
+      /* 會議名は `[` や `]` を**含む**ことが在る（實測: 「CODS 2026 [14th ACM IKDD …] 2026」）
+       * ので、名前は「最初の ] 」では無く**URL の前の ]**で切る（greedy）。 */
+      const m = /^\|.*?\[([\s\S]*)\]\((\S+)\)/.exec(l);
+      if (!m) continue;
+      const 名 = m[1].replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+      if (!頁.includes(`>${名}</a>`)) 落ちた += 1;
+    }
+    expect(落ちた, `md にある會議名が html に出て居らないものが ${落ちた} 行ある`).toBe(0);
   });
 
   it("所在を渡さない組み立てでも、ページは壊れない（呼び出しの既定）", () => {
