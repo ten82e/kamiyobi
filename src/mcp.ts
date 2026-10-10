@@ -1415,7 +1415,7 @@ function venueInfo(args: { key?: unknown; name?: unknown; scope?: unknown }, now
   const name = String(args.name ?? "").trim();
   if (!key && !name) return "key（会議の識別子）か name（会議名の一部）をください。";
   /* `名` は使はない（此の道具は會議の名を自分で組み立てる）ので受け取らない。 */
-  const { list, 生成 } = pick(args.scope ?? "all");
+  const { list, 生成, 名 } = pick(args.scope ?? "all");
   const 古さ = 古さの斷り(生成, now);
   /* 会議は**略稱で打たれる**のが普通（實測 2026-10-06: `KDD` `CCS` `AsiaCCS` は此の matching では
    * 見付からなかつた – 表の題は「ACM SIGKDD Conference …」の樣に長く、略稱は別の欄に在る）。
@@ -1598,7 +1598,13 @@ function venueInfo(args: { key?: unknown; name?: unknown; scope?: unknown }, now
   return [
     /* `key` と `name` を兩方渡した時は **`name` を見て居ない**ことを言う（第 921 回 –
      * 默って片方を捨てると、讀む人は其の會報を指して居ると误解する）。 */
-    斷り + (key && name ? "注: name は key と共に与えられたので見て居ません\n" : ""),
+    /* **どの窓を見たか**を頭に書く（第 1012 回 – 實測 2026-11-19: 此の道具だけ默つて居た。
+     * `search_deadlines`・`list_upcoming`・`explain_word` は全部「收録の全体」「画面が最初に
+     * 讀む窓」と書くが、此の道具は既定 `all`（收録の全体・過去も入る）なのに何も言はなかつた
+     * – AI が「畫面で見る數と同じ」と誤解する。 */
+    斷り +
+      `（${名}・${list.length} 行から）` +
+      (key && name ? "\n注: name は key と共に与えられたので見て居ません" : ""),
     `会議: ${一つ.conf.title}（key: ${一つ.conf.key}${一つ.conf.acronym ? `・${一つ.conf.acronym}` : ""}）`,
     ...(scopeErr ? [scopeErr] : []),
     `版: ${版.map((id) => (行を持つ版.has(id) ? id : `${id}(会期だけ)`)).join(" / ")}`,

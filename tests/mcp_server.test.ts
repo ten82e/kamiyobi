@@ -4608,3 +4608,22 @@ it("行を返す 6 つの道具は、全部「返す行の形」を書く（第 
     }
   }
 });
+
+it("venue_info も、どの窓を見たか頭に書く（第 1012 回）", async () => {
+  /* 實測 2026-11-19: `venue icde` は默つて「会議: …」から始まつて居た。
+   * `search_deadlines`・`list_upcoming`・`explain_word` は全部「収録の全体」「画面が最初に
+   * 読む窓」と書くが、此の道具は既定 `all`（収録の全体・過去も入る・5,069 行）なのに
+   * 何も言はなかつた – AI が「畫面で見る數と同じ」と誤解する。 */
+  const 默 = await call("venue_info", { key: "icde" });
+  expect(默, "どの窓を見たか書いて居ん").toContain("（収録の全体・");
+  expect(默, "行數も書いて居ん").toMatch(/（収録の全体・[\d,]+ 行から）/);
+  /* `name` と `key` を兩方渡した時の注も、從來の文を保つ（第 921 回）。 */
+  const 兩方 = await call("venue_info", { key: "icde", name: "X" });
+  expect(兩方, "name を見て居ない事を言つて居ん").toContain(
+    "name は key と共に与えられたので見て居ません",
+  );
+  expect(兩方, "窓の言と兩方載つて居ん").toContain("（収録の全体・");
+  /* 今後の締切が無い会议の斷りも先頭に殘る（第 754 回 – 私の行で押し出されて居ない）。 */
+  const 過去 = await call("venue_info", { key: "aft" });
+  expect(過去, "今後の締切が無い事を先に言つて居ん").toContain("今後の締切は収録にありません");
+});
