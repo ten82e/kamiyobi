@@ -4965,3 +4965,38 @@ function 索引の實測値(): void {
 it("索引（llms.txt）の中の實測値は、本文と合ふ（第 1003 回）", () => {
   索引の實測値();
 });
+
+it("health.md の表は health.json の値と合ふ（第 1005 回）", () => {
+  /* 第 1001〜1004 回で「申告は自分と合ふ」を ICS・md・索引で押さへた。**最後の申告** –
+   * `health.md` の「收録の數」の表は `health.json` のキーを其の儘書くので、值が違ふと
+   * 讀む人は json と md の**どちらを信じて良いか**判らなくなる。實測 2026-11-19:
+   * 14 行全部一致。
+   *
+   * `identity_migrations` は**物**（`{schema_version, migrations: [...]}`）なので、中の
+   * `migrations` の長さを比べる（25 件）。 */
+  const jsonPath = join(REPO_ROOT, "public", "health.json");
+  const mdPath = join(REPO_ROOT, "public", "health.md");
+  if (!existsSync(jsonPath) || !existsSync(mdPath)) return;
+  const json = JSON.parse(readFileSync(jsonPath, "utf8")) as Record<string, unknown>;
+  const md = readFileSync(mdPath, "utf8");
+  const 行 = [...md.matchAll(/^\| [^|`]*`([a-z_]+)`[^|]*\| ([^|]+)\|/gm)];
+  expect(行.length, "health.md の表が讀めない（この檢查の前提が崩れた）").toBeGreaterThan(10);
+  const 違ふ: string[] = [];
+  for (const m of 行) {
+    const key = String(m[1]);
+    const 書いた = String(m[2] ?? "").trim();
+    const v = json[key];
+    const 事實 =
+      v === false
+        ? "いいえ"
+        : v === true
+          ? "はい"
+          : Array.isArray(v)
+            ? String(v.length)
+            : typeof v === "object" && v !== null
+              ? String((v as { migrations?: unknown[] }).migrations?.length ?? "")
+              : String(v);
+    if (書いた !== 事實) 違ふ.push(`${key}: md=${書いた} json=${事實}`);
+  }
+  expect(違ふ.join("\n"), "health.md と health.json が違ふ").toBe("");
+});
