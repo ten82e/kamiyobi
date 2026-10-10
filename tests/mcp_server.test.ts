@@ -447,6 +447,42 @@ it("collection_stats が、收錄その物の數と檔案を返す（第 769 回
   };
   const 數 = (收錄.conferences ?? []).length;
   expect(text, "会議の數が収録と合はん").toContain(`会議 ${數} 件`);
+  /* 締切の行の數も**收錄その物**の締切の數と合ふ（行から數へると「締切を持つ版」だけに
+   * 成る – 第 769 回と同じ穴）。數へ方は `conferences[].editions[].deadlines[]` の全覆盖。 */
+  const 全ての版 = ((收錄.conferences ?? []) as Array<{ editions?: unknown[] }>).flatMap(
+    (c) => (c.editions ?? []) as Array<{ deadlines?: unknown[] }>,
+  );
+  const 締切の數 = 全ての版.reduce(
+    (n: number, e: { deadlines?: unknown[] }) => n + (e.deadlines ?? []).length,
+    0,
+  );
+  expect(締切の數, "この檢查の前提（締切が數へられない）が崩れた").toBeGreaterThan(1000);
+  /* 千の桁を區切る（第 987 回 – MCP の統計の行が「5,069」を出すやうにした – 索引（llms.txt）と同じ形）。 */
+  const 千の桁 = (n: number): string => String(n).replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1,");
+  expect(text, "締切の行の數が収録と合はん").toContain(`締切の行 ${千の桁(締切の數)} 行`);
+  /* 確認の狀態の數も收錄の `verification.status` と合ふ。`parser-failed` は畫面上
+   * 「複数候補のため要確認」に**同じ札**で出る（第 912 回 – 二つを別に數へると齟齬する）。 */
+  const 締切々 = 全ての版.flatMap(
+    (e) => (e.deadlines ?? []) as Array<{ verification?: { status?: unknown } }>,
+  );
+  const 狀態の數 = 締切々.reduce((數へる: Map<string, number>, d) => {
+    const st = String(d.verification?.status ?? "");
+    if (st) 數へる.set(st, (數へる.get(st) ?? 0) + 1);
+    return 數へる;
+  }, new Map<string, number>());
+  const 複數 = (狀態の數.get("manual-required") ?? 0) + (狀態の數.get("parser-failed") ?? 0);
+  expect(複數, "この檢查の前提（複數候補が數へられない）が崩れた").toBeGreaterThan(100);
+  expect(text, "「複数候補のため要確認」の數が収録と合はん").toContain(
+    `複数候補のため要確認 ${String(複數)} 行`,
+  );
+  expect(text, "「確認済み」の數が収録と合はん").toContain(
+    `確認済み ${狀態の數.get("verified") ?? 0} 行`,
+  );
+  /* 「確認の記録なし」も收錄で `verification` が無い行の數と合ふ（行ごとの札が無いだけ）。 */
+  const 記録なしの數 = 締切々.filter((d) => !String(d.verification?.status ?? "")).length;
+  expect(text, "「確認の記録なし」の數が収録と合はん").toContain(
+    `確認の記録なし ${記録なしの數} 行`,
+  );
 });
 
 it("語を省いて、種別だけでも引ける（第 793 回）", async () => {
@@ -1195,7 +1231,7 @@ it("確認の状態の内訳を、画面と同じ語で返す（第 868 回）",
   const 行 = text.split("\n").find((l) => l.startsWith("確認の状態: "));
   expect(行, "確認の状態の行が無い").toBeTruthy();
   for (const [語, n] of 期待) expect(行, `${語} の數が違ふ`).toContain(`${語} ${n} 行`);
-  expect(行, "記錄なしを數へて居ん").toContain(`確認の記録なし ${記録なし} 行`);
+  expect(行, "記録なしを數へて居ん").toContain(`確認の記録なし ${記録なし} 行`);
   /* 內部の狀態の名（`manual-required` など）は出さない（畫面と同じ語だけ）。 */
   expect(text, "內部の狀態の名を出して居る").not.toContain("manual-required");
   /* 會議ごとの內譯も言ふ（行ごとの札だけでは、其の會議の偏りが分からん）。 */

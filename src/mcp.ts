@@ -1685,6 +1685,11 @@ function 容量の文(bytes: number): string {
   return `約 ${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+/* 千の桁を區切る（索引やビルドの表示と同じ形 – 實測 2026-11-19: 「締切の行 5069 行」と
+ * 出て居たが、索引（`llms.txt`）は「締切の行 5,069」と書く – 兩方が違ふと讀む比べる人が
+ * 迷ふ。`countJa` と同じ式を使ふ）。 */
+const 千の桁の文 = (n: number): string => String(n).replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1,");
+
 function collectionStats(args: Record<string, unknown> = {}, now: number): string {
   /* この道具は**絞り込みない** – 収録の全体を數へる（第 769 回の實測で、行から數へると
    * 「締切を持つ物」だけに成り、建てた表示と食ひ違ふ）。渡された絞り込みの引数は黙って
@@ -1736,10 +1741,10 @@ function collectionStats(args: Record<string, unknown> = {}, now: number): strin
           `注: 無視した絞り込み ${無視した引數.join("・")} は此の道具では効きません – 収録の全体を数えます`,
         ]
       : []),
-    `収録（${DATA_PATH.replace(`${ROOT}/`, "")}）: 会議 ${会議} 件 / 版 ${版} 件（生の収録。建てる時は同じ物を束ねるので、建てた表示とは少し違い得る）/ 締切の行 ${list.length} 行（日付の幅 ${日[0]} 〜 ${日[日.length - 1]}）`,
+    `収録（${DATA_PATH.replace(`${ROOT}/`, "")}）: 会議 ${会議} 件 / 版 ${版} 件（生の収録。建てる時は同じ物を束ねるので、建てた表示とは少し違い得る）/ 締切の行 ${千の桁の文(list.length)} 行（日付の幅 ${日[0]} 〜 ${日[日.length - 1]}）`,
     `データ生成: ${生成の表示(元の生成)}（上の行と同じ出所。画面の右上と同じ書き方）`,
     ...(窓の生成 ? [`画面が最初に読む窓（public/catalog.json）のデータ生成: ${窓の生成}`] : []),
-    `うち今後の締切: ${今後} 行（${new Date(now).toISOString().slice(0, 10)} 以降）`,
+    `うち今後の締切: ${千の桁の文(今後)} 行（${new Date(now).toISOString().slice(0, 10)} 以降）`,
     `確認の状態: ${確認の內譯(list)}`,
     /* **分野別の会議数**（第 911 回 – 實測 2026-11-03: この數は `health.json` の
      * `category_counts` に在るのに道具のどれからも出なかった。「此の収録は何を覆うか」を
