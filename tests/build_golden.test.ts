@@ -1138,6 +1138,52 @@ it("no deadline is in the far future by accident", () => {
 
 // --- other artefacts -------------------------------------------------------
 
+it("CSV は表計算で讀める形（引用符の中でカンマ・改行を許す）", () => {
+  /* 實測 2026-11-18: 9,103 個の値が引用符を要する（開催地「Zurich, Switzerland」の様な
+   * カンマ入り）。表計算（Excel・Numbers）が讀めるのは**引用符が正しく竛まれて居る**時だけ。
+   * 下の「1 行 1 締切」の檢查は `split("\n")` で數へて居たので、値の中に改行が入った日に
+   * **氣づかずに減る** – 此處で止める。 */
+  const text = readFileSync(join(site, "data.csv"), "utf8");
+  /* 引用符の外の改行で切る（プライスの1行を壊さない）。 */
+  const 行々: string[] = [];
+  let cur = "";
+  let quoted = false;
+  for (let i = 0; i < text.length; i += 1) {
+    const ch = text[i];
+    if (ch === '"') {
+      quoted = !quoted;
+      cur += ch;
+      continue;
+    }
+    if (ch === "\n" && !quoted) {
+      行々.push(cur);
+      cur = "";
+      continue;
+    }
+    cur += ch;
+  }
+  if (cur.trim()) 行々.push(cur);
+  const 列數 = 行々[0].split(",").length;
+  expect(列數, "列の數が 1 つも數へられない").toBeGreaterThan(30);
+  for (const l of 行々) {
+    let n = 1;
+    let inQuotes = false;
+    for (let i = 0; i < l.length; i += 1) {
+      const ch = l[i];
+      if (ch === '"') inQuotes = !inQuotes;
+      else if (ch === "," && !inQuotes) n += 1;
+    }
+    expect(
+      n,
+      `列の數が ${列數} と違ふ行が在る（引用符の竛みが崩れて居る）: ${l.slice(0, 60)}`,
+    ).toBe(列數);
+  }
+  /* 行數は「1 行 1 締切」の檢查と同じ（兩方が同じ數え方をして居る）。 */
+  expect(行々.length - 1).toBeGreaterThan(1000);
+  const 需 = [...text].filter((c) => c === String.fromCharCode(34)).length;
+  expect(需 % 2, "引用符の數が偶數でない（竛み方が崩れて居る）").toBe(0);
+});
+
 it("CSV is one row per deadline", () => {
   const text = readFileSync(join(site, "data.csv"), "utf8");
   const rows = text.trim().split("\n").slice(1);
