@@ -4163,3 +4163,18 @@ it("種別の打ち間違ひを默つて 0 件にしない（第 999 回）", as
     expect(答, `${JSON.stringify(良い)} に餘計な斷りが出た`).not.toContain("種別で濾して居ません");
   }
 });
+
+it("list_upcoming も種別の空配列を默らない（第 1000 回）", async () => {
+  /* 第 999 回で `search_deadlines` の `kinds: []` に「濾して居ません」と言ふやうにした。
+   * **`list_upcoming` も同じ孖**（`kind`・`kinds`）を持つので、默つて居ないか確かめた –
+   * 實測 2026-11-19: 其方は默つて「濾さない」扱ひだつた。兩方で同じ決まりに揃へる。 */
+  const 空 = await call("list_upcoming", { kinds: [] });
+  expect(空, "空の kinds を默つて濾さない扱ひにして居ん").toContain(
+    "kinds が空なので種別で濾して居ません",
+  );
+  /* 良い値には何も言はない。 */
+  const 良い = await call("list_upcoming", { kinds: ["paper"] });
+  expect(良い, "良い値に餘計な斷りが出た").not.toContain("種別で濾して居ません");
+  const 知らん = await call("list_upcoming", { kind: "zzz" });
+  expect(知らん, "知らない單數の kind を默つて 0 件にして居ん").toContain("知らない種別");
+});

@@ -1309,7 +1309,7 @@ function 開催の行(
 }
 
 function listUpcoming(
-  args: { days?: unknown; kind?: unknown; scope?: unknown },
+  args: { days?: unknown; kind?: unknown; kinds?: unknown; scope?: unknown },
   now: number,
 ): string {
   const 日數の引數 = 數の引數("days", args.days, 1);
@@ -1351,6 +1351,9 @@ function listUpcoming(
     "other",
   ];
   const 知らん = 名乘り.filter((k) => !知って居る種別.includes(k.toLowerCase()));
+  /* `kinds: []`（空配列）も默つて「濾さない」扱ひにする（第 1000 回 – `search_deadlines` の
+   * 第 999 回と同じ決まり。兩方の引數が孖で在るので、兩方で同じ爲）。 */
+  const 空の種別 = Array.isArray(args.kinds) && args.kinds.length === 0;
   const { list, 名, 生成, 窓が無い } = pick(args.scope ?? "all");
   const 古さ = 古さの斷り(生成, now);
   /* 上の境目は**畫面の窓と同じ** JST の暦日で切る（第 874 回）。經由 24 時間で切つて居ると、
@@ -1374,7 +1377,7 @@ function listUpcoming(
     ? `／知らない種別（其の侭では 0 件に成ります）: ${知らん.join("・")}`
     : "";
   return [
-    `今日から ${日數の表現}（JST の暦日で数える）の締切: ${hit.length} 件（${名}・日本時間の早い順${讀めない引數}${知らんの斷り}${端数の斷り}）`,
+    `今日から ${日數の表現}（JST の暦日で数える）の締切: ${hit.length} 件（${名}・日本時間の早い順${讀めない引數}${知らんの斷り}${端数の斷り}${空の種別 ? `／kinds が空なので種別で濾して居ません（0 件にしたいなら kind を 1 つ）` : ""}）`,
     ...(scopeErr ? [scopeErr] : []),
     ...(窓が無いの斷り(窓が無い) ? [窓が無いの斷り(窓が無い)] : []),
     "",
