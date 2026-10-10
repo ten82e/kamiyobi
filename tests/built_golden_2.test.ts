@@ -5075,3 +5075,85 @@ it("data.json のスキーマの申告は、實物と合ふ（第 1007 回）", 
   expect(文, `索引の「版」の數が ${數.版} と違ふ`).toContain(`版 ${千(數.版)}`);
   expect(文, `索引の「締切」の數が ${數.締切} と違ふ`).toContain(`締切 ${千(數.締切)}`);
 });
+
+it("畫面の filter() は邊境でも落ちない（第 1015 回）", async () => {
+  /* 第 1014 回で MCP の邊境を實測した。**畫面**も – `filter()` を拔き出して
+   * 16 通りの邊境（空の問・0 件の問・過去・推定・國內・オンライン・ランク・分野・
+   * 種別・窓 7d/30d の組み合はせ）を全部回した。
+   *
+   * 實測 2026-11-19: 全部 0 件以上で、**例外も 0** – 落ちる組み合はせが無い。
+   * あはせて AND の意味論（「セキュリティ 会議」は兩方を持つ行だけ）・
+   * 篩り込みの効き（國內・ランクで 0 件）も確かめた。 */
+  const app = siteRuntime();
+  const filterSrc = jsFunction(app, "filter");
+  const now = Date.parse("2026-08-09T00:00:00Z");
+  const script = [
+    "const DAY = 86400000;",
+    `const FILTER = ${JSON.stringify(filterSrc)};`,
+    `const now = ${now};`,
+    "class FakeDate extends Date { static now() { return now; } }",
+    "function row(kind, hay, tOff, cats, place, rank) {",
+    "  return { kind: kind, est: false, cats: cats || ['hpc'], rankPairs: rank || [], hay: hay, tags: [],",
+    "    t: now + tOff, tLast: now + tOff + DAY, ed: { place: place || 'Kyoto', deadlines: [] }, conf: { key: kind } };",
+    "}",
+    "const rows = [",
+    "  row('paper', 'セキュリティ', DAY),",
+    "  row('paper', 'hpc 会議', 8 * DAY, ['ai'], 'Okinawa', ['ccf:A']),",
+    "  row('abstract', 'オンライン', 9 * DAY, ['systems'], 'Online', []),",
+    "  row('notification', 'ずっと先', 365 * DAY, ['hpc'], 'Fukuoka', ['core:B']),",
+    "  row('paper', '過ぎた', -DAY, ['ai'], 'Tokyo', []),",
+    "];",
+    FILTER_RUNTIME_STUBS,
+    "const cases = [",
+    "  { q: '', win: 'all' }, { q: '', win: '7d' }, { q: '', win: '30d' },",
+    "  { q: 'セキュリティ', win: 'all' }, { q: 'zzzznothing', win: 'all' },",
+    "  { q: 'セキュリティ', win: 'all', past: true }, { q: 'セキュリティ', win: 'all', est: true },",
+    "  { q: 'セキュリティ', win: 'all', domestic: true }, { q: 'セキュリティ', win: 'all', online: true },",
+    "  { q: 'セキュリティ', win: 'all', rank: 'A' }, { q: 'セキュリティ', win: 'all', cats: ['ai'] },",
+    "  { q: 'セキュリティ', win: 'all', kinds: ['paper'] }, { q: 'セキュリティ', win: 'all', kinds: [] },",
+    "  { q: 'セキュリティ', win: 'all', rank: 'D' }, { q: 'セキュリティ', win: '7d', past: true },",
+    "];",
+    "const 果て = [];",
+    "for (const c of cases) {",
+    "  const state = { q: c.q || '', cats: c.cats || [], kind: (c.kinds||[])[0] || '', rank: c.rank || '', win: c.win, est: !!c.est, domestic: !!c.domestic, online: !!c.online, past: !!c.past };",
+    "  try {",
+    "    const filter = new Function('Date', 'DAY', 'rows', 'state', 'sortAsc', 'sortKey', 'return (' + FILTER + ')')(FakeDate, DAY, rows, state, true, 'rem');",
+    "    果て.push(JSON.stringify(c) + '->' + filter().length);",
+    "  } catch (e) { 果て.push('ERR ' + JSON.stringify(c) + ' ' + String(e).slice(0, 60)); }",
+    "}",
+    "console.log(果て.join('\\n'));",
+  ].join("\n");
+  const p = spawnSync("node", ["-e", script], { encoding: "utf8", timeout: 120000 });
+  expect(p.status, p.stderr).toBe(0);
+  const 行 = p.stdout.trim().split("\n");
+  expect(行.length, "15 通りの邊境が全部返つて居ん").toBe(15);
+  expect(
+    行.filter((l) => l.includes("ERR ")),
+    "邊境で例外が出た",
+  ).toEqual([]);
+  /* AND の意味論 –「セキュリティ 会議」は兩方を持つ行だけ（`hpc 会議` は「セキュリティ」
+   * を持たないので 0 件）。 */
+  const andS = [
+    "const DAY = 86400000;",
+    `const FILTER = ${JSON.stringify(filterSrc)};`,
+    `const now = ${now};`,
+    "class FakeDate extends Date { static now() { return now; } }",
+    "function row(kind, hay) {",
+    "  return { kind: kind, est: false, cats: ['hpc'], rankPairs: [], hay: hay, tags: [],",
+    "    t: now + DAY, tLast: now + 2 * DAY, ed: { place: 'Kyoto', deadlines: [] }, conf: { key: kind } };",
+    "}",
+    "const rows = [ row('paper', 'セキュリティ'), row('paper', 'hpc 会議'), row('paper', 'セキュリティ 会議 2026') ];",
+    FILTER_RUNTIME_STUBS,
+    "const state = { q: 'セキュリティ 会議', cats: [], kind: '', rank: '', win: 'all', est: false, domestic: false, online: false, past: false };",
+    "const filter = new Function('Date', 'DAY', 'rows', 'state', 'sortAsc', 'sortKey', 'return (' + FILTER + ')')(FakeDate, DAY, rows, state, true, 'rem');",
+    "console.log(JSON.stringify(filter().map(r => r.hay)));",
+  ].join("\n");
+  const andP = spawnSync("node", ["-e", andS], { encoding: "utf8", timeout: 60000 });
+  expect(andP.status, andP.stderr).toBe(0);
+  const 出た = JSON.parse(andP.stdout) as string[];
+  /* **兩方の語を持つ行だけ**が殘る（`hpc 会議` は「セキュリティ」を持たないので落ちる）。
+   * 「セキュリティ」そのものも殘るのは、寄せ表の候補（語を並べた綴り）が同じ數え方を通る為
+   * （第 675 回）– 其れは仕樣。此處で見たいのは「**持たない行が落ちる**」事。 */
+  expect(出た, "AND の意味論が崩れた（兩方を持つ行だけになるべき）").not.toContain("hpc 会議");
+  expect(出た.length, "AND で行が揃つて居ん").toBeGreaterThan(0);
+});
