@@ -930,6 +930,12 @@ function 名乘りの案内(query: string, list: Row[], now: number): string[] {
   ];
 }
 
+/** 行の**表示の刻み**（JST）。日付だけの行は `t`（一番早い可能性の瞬間）だと表示の日と
+ * 食ひ違ふ事が在るので、`tShown`（表示して居る JST の瞬間）を優先する（第 970 回）。 */
+function 表示の刻み(r: Row): number {
+  return typeof r.tShown === "number" && Number.isFinite(r.tShown) ? r.tShown : r.t;
+}
+
 function sortRows(list: Row[]): Row[] {
   /* **表示の早さ**で並べる（第 970 回 – 實測 2026-11-16: `t` で並べると、日付だけの行が
    * 表示と食ひ違ふ順に出た。`ipsj-27-m26` は「2026-11-27（時刻未確認）」と表示するのに、
@@ -937,8 +943,6 @@ function sortRows(list: Row[]): Row[] {
    * 「2026-11-26(木) 20:59 JST」の行より**先**に出た。讀む人は「27 日なのに 26 日の上？」と
    * なる）。`tShown`（表示して居る JST の瞬間）で並べれば、畫面の「残り」の順と一致する。
    * `tShown` が無い行は `t` に落とす（此れまでと同じ）。 */
-  const 表示の刻み = (r: Row): number =>
-    typeof r.tShown === "number" && Number.isFinite(r.tShown) ? r.tShown : r.t;
   return list
     .slice()
     .sort(
@@ -1498,7 +1502,14 @@ function venueInfo(args: { key?: unknown; name?: unknown; scope?: unknown }, now
    * 始まつて居た。人は「次はいつか」を聞いて居るので、過去を先に讀ませない。同じ側では日の早い順）。*/
   const 見本 = sortRows(hit)
     .slice()
-    .sort((a, b) => Number(a.t < now) - Number(b.t < now) || a.t - b.t)
+    /* 今後の物を先に、同じ側では**表示の早さ**（第 751＋970 回 – `t` だと日付だけの行が
+     * 表示と食ひ違ふ順に出る。画面と同じ「残り」の順）。 */
+    .sort(
+      (a, b) =>
+        Number(a.t < now) - Number(b.t < now) ||
+        表示の刻み(a) - 表示の刻み(b) ||
+        a.conf.title.localeCompare(b.conf.title, "ja"),
+    )
     .map((r) => line(r, now));
   /* 今後の締切が無い会議では、**其の事を先に言ふ**（第 754 回 – 過ぎた行だけを並べると、
    * 讀む人（と AI）が「次はこれ」と取り違へる）。 */
