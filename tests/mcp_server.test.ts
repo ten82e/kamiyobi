@@ -3877,3 +3877,43 @@ it("檢索の頭の「當たる件數」と「絞る前」は、兩方事實と�
     ).toBe(當たるの事實);
   }
 });
+
+it("list_upcoming の件數は、其の窓の事实と合ふ（第 990 回）", async () => {
+  /* 第 989 回で `search_deadlines` の頭の 2 數を確かめた。**直近の一覧**の頭も。
+   * 實測 2026-11-19: 窓 5 つ（7・30・90・180・400 日）で **0 件の誤り**。
+   *
+   * **出所に注意** – 既定の `scope` は `all` = **`data/snapshot.json`**（5,069 行）。
+   * 品書（`public/catalog.json`, 870 行）で數へると **180 日で 489 の處が 375 に減る** –
+   * 此れで誤靜を出さないやうに、事實は**道具と同じ** snapshot から數へる（第 965・966 回の
+   * 元の收録と建てた表示の差と同じ）。 */
+  const 收錄 = JSON.parse(readFileSync(join(REPO_ROOT, "data", "snapshot.json"), "utf8")) as {
+    conferences?: unknown[];
+  };
+  const 行々 = Recommender.candidateRows(收錄 as never);
+  const 今 = Date.now();
+  const 窓 = [7, 30, 90, 180, 400];
+  for (const days of 窓) {
+    const 答 = await call("list_upcoming", { days, limit: 900 });
+    const 頭 = 答.split("\n")[0] ?? "";
+    const m = /の締切: ([\d,]+) 件/.exec(頭);
+    expect(m, `days=${days} の頭から數が讀めない: ${頭.slice(0, 60)}`).not.toBeNull();
+    const 表示 = Number(m?.[1].replace(/,/g, ""));
+    const 限り = Recommender.withinDaysLimitMs(days, 今);
+    const 事實 = 行々.filter(
+      (r) => !Recommender.deadlineRowIsPast(r, 今) && (r.tShown ?? r.t) < 限り,
+    ).length;
+    expect(事實, `days=${days} の事實が 0 行（この檢查の前提が崩れた）`).toBeGreaterThan(0);
+    expect(表示, `days=${days} の件數が事實と違ふ（表示 ${表示} ／ 事實 ${事實}）`).toBe(事實);
+  }
+  /* 切り詰めの宣告も事實と合ふ（100 件まで）。180 日は 489 件なので切られる。 */
+  const 長い = await call("list_upcoming", { days: 180, limit: 900 });
+  const 頭 = 長い.split("\n")[0] ?? "";
+  const 表示 = Number((/の締切: ([\d,]+) 件/.exec(頭) ?? [0, "0"])[1].replace(/,/g, ""));
+  if (表示 > 100) {
+    const 行 = 長い.split("\n").filter((l) => /^20\d\d-/.test(l)).length;
+    expect(行, "切り詰めた行數が 100 を超えて居る").toBeLessThanOrEqual(100);
+    const 宣告 = 長い.split("\n").find((l) => l.includes("まで表示")) ?? "";
+    const 殘り = Number((/残り ([\d,]+) 件/.exec(宣告) ?? [0, "0"])[1].replace(/,/g, ""));
+    expect(殘り, `「殘り」の數が事實と違ふ（宣告 ${殘り} ／ 事實 ${表示 - 行}）`).toBe(表示 - 行);
+  }
+});
