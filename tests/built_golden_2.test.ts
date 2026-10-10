@@ -124,6 +124,20 @@ it("同じ締切時刻の行は表に出る会議名と種別で並ぶ（SPEC §
   // 並び順は表のセルに出る語を共通の helper で使う（セルとSORTが別文字列を持つのが原因）。
   expect(runtime).toContain("const name = conferenceNameCell(r);");
   expect(runtime).not.toContain('localeCompare(b.conf.title || "")');
+  /* 並びの基準は**表示の刻み**（`tShown`）– 第 970〜973 回で MCP の `t` を燒き潰した。
+   * 畫面は初めから `tShown` を使つて居る（此れが正）。此處で**其れを守る** – `t` に
+   * 差し戻されると、日付だけの行が表示と食ひ違ふ順に出る（實測 2026-11-16: 「2026-11-27
+   * （時刻未確認）」が「2026-11-26(木) 20:59 JST」の**先**に出た）。 */
+  expect(runtime, "並びの基準が表示の刻みになつて居ない").toContain(
+    "Number.isFinite(r.tShown) ? r.tShown",
+  );
+  expect(runtime, "表示の刻みのフォールバックが無い").toContain(
+    "Number.isFinite(r.t) ? r.t : Number.NaN",
+  );
+  // 月見出しのキーも表示と同じ JST（表示と違ふ單位で区切ると迷ふ）。
+  expect(runtime).toContain(
+    "// 月キーは JST で決める（表示が JST なので、表示と違う単位で区切ると迷う）。",
+  );
   // ロケールを明示しない比較は閲覧者の UI ロケールで順序が変わる（実測で en/de と ja が違った）。
   expect(
     (runtime.match(/\.localeCompare\(conferenceNameCell\(b\), "ja"\)/g) || []).length,
