@@ -3840,3 +3840,40 @@ it("venue_info の確認の內訣は、その會議の行の數と合ふ（第 9
     if (確認済み) expect(行, `「${key}」の確認済みの數が違ふ`).toContain(`確認済み ${確認済み} 行`);
   }
 });
+
+it("檢索の頭の「當たる件數」と「絞る前」は、兩方事實と合ふ（第 989 回）", async () => {
+  /* 第 987・988 回で統計と會議の內訣を收錄で確かめた。**檢索の頭**の二つの數も – 實測
+   * 2026-11-19: 10 問で 0 件の誤り。「當たる締切: N 件」は畫面の既定（今後・投稿締切・
+   * 推定を除く）を通した數、「絞る前は M 行」は**絞り込みの前**の生の數。
+   * 兩方が事實と合はないと、AI が「N 件當たつた」と誤つて報告する。 */
+  const 品書 = JSON.parse(readFileSync(join(REPO_ROOT, "public", "catalog.json"), "utf8")) as {
+    conferences?: unknown[];
+  };
+  const 行々 = Recommender.candidateRows(品書 as never);
+  const 今 = Date.now();
+  const 投稿の種別 = new Set(["abstract", "paper", "journal"]);
+  const 問 = ["セキュリティ", "今月", "締切", "3月", "ICDE", "国内", "オンライン", "来月"];
+  for (const q of 問) {
+    const 答 = await call("search_deadlines", { query: q, limit: 400 });
+    const 頭 = 答.split("\n")[0] ?? "";
+    const m = /に当たる締切: ([\d,]+) 件[\s\S]*?絞る前は ([\d,]+) 行/.exec(頭);
+    expect(m, `「${q}」の頭から數が讀めない: ${頭.slice(0, 70)}`).not.toBeNull();
+    const 當たる = Number(m?.[1].replace(/,/g, ""));
+    const 生 = Number(m?.[2].replace(/,/g, ""));
+    const 篩 = Recommender.searchMatcher(q, 今);
+    const 生の事實 = 行々.filter((r) => 篩(r.hay as string) === true).length;
+    const 當たるの事實 = 行々.filter(
+      (r) =>
+        篩(r.hay as string) === true &&
+        !Recommender.deadlineRowIsPast(r, 今) &&
+        r.est !== true &&
+        投稿の種別.has(r.kind),
+    ).length;
+    expect(生の事實, `「${q}」の生の行が數へられない（この檢查の前提が崩れた）`).toBeGreaterThan(0);
+    expect(生, `「${q}」の「絞る前」が事實と違ふ（表示 ${生} ／ 事實 ${生の事實}）`).toBe(生の事實);
+    expect(
+      當たる,
+      `「${q}」の「當たる」が事實と違ふ（表示 ${當たる} ／ 事實 ${當たるの事實}）`,
+    ).toBe(當たるの事實);
+  }
+});
