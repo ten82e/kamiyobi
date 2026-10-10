@@ -3905,6 +3905,46 @@ it("list_upcoming の件數は、其の窓の事实と合ふ（第 990 回）", 
     expect(事實, `days=${days} の事實が 0 行（この檢查の前提が崩れた）`).toBeGreaterThan(0);
     expect(表示, `days=${days} の件數が事實と違ふ（表示 ${表示} ／ 事實 ${事實}）`).toBe(事實);
   }
+  /* **開催（会期）の行**も同じ窓の事实と合ふ – 實測 2026-11-19: 7 日 21 件・30 日 85 件・
+   * 180 日 296 件、全部一致。會期は**推測の版を入れない**・**區分ごと**に 1 行
+   * （`event_segments`）・會期中の會議も入る（第 910 回）。 */
+  const 開催の事實 = (days: number): number => {
+    const 限り = Recommender.withinDaysLimitMs(days, 今);
+    let n = 0;
+    for (const c of (收錄.conferences ?? []) as Array<Record<string, unknown>>) {
+      for (const e of (c.editions ?? []) as Array<Record<string, unknown>>) {
+        if (e.estimated === true) continue;
+        const segs =
+          Array.isArray(e.event_segments) && (e.event_segments as unknown[]).length
+            ? (e.event_segments as Array<Record<string, unknown>>)
+            : e.event_start
+              ? [{ start: e.event_start, end: e.event_end ?? e.event_start }]
+              : [];
+        for (const seg of segs) {
+          const 開 = Date.parse(String(seg.start ?? ""));
+          if (!Number.isFinite(開)) continue;
+          const 終 = Date.parse(String(seg.end ?? seg.start ?? "")) || 開;
+          if (終 < 今 || 開 >= 限り) continue;
+          n += 1;
+        }
+      }
+    }
+    return n;
+  };
+  for (const days of 窓) {
+    const 答 = await call("list_upcoming", { days, limit: 900 });
+    const 節 = 答.split("\n").find((l) => l.startsWith("開催（会期の行）")) ?? "";
+    expect(節, `days=${days} に開催の節が出て居ん`).not.toBe("");
+    const 表示 = Number(
+      (/開催（会期の行）: ([\d,]+) 件/.exec(節) ?? [0, "0"])[1].replace(/,/g, ""),
+    );
+    const 事實 = 開催の事實(days);
+    expect(事實, `days=${days} の開催が 0 件（この檢查の前提が崩れた）`).toBeGreaterThan(0);
+    expect(表示, `days=${days} の開催の件數が事實と違ふ（表示 ${表示} ／ 事實 ${事實}）`).toBe(
+      事實,
+    );
+  }
+
   /* 切り詰めの宣告も事實と合ふ（100 件まで）。180 日は 489 件なので切られる。 */
   const 長い = await call("list_upcoming", { days: 180, limit: 900 });
   const 頭 = 長い.split("\n")[0] ?? "";
