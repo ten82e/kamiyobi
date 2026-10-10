@@ -1521,13 +1521,18 @@ function venueInfo(args: { key?: unknown; name?: unknown; scope?: unknown }, now
    * 先頭へ出す – 「締切」と言へば投稿の締切を指すのが普通。 */
   const 投稿の行 = hit
     .filter((r) => 投稿の種別.includes(r.kind))
-    .sort((a, b) => Number(a.t < now) - Number(b.t < now) || a.t - b.t);
+    /* 表示の早さで並べる（第 972 回 – `t` だと日付だけの行が表示より先に出る。
+     * 「次の投稿締切」として**表示の日が後ろの行**を拾ふと、人が畫面で見る日と違ふ）。 */
+    .sort((a, b) => Number(a.t < now) - Number(b.t < now) || 表示の刻み(a) - 表示の刻み(b));
   const 次の投稿 = 投稿の行.find((r) => !Recommender.deadlineRowIsPast(r, now));
   /* 過ぎた分の「直近」は**一番遲い過去**（投稿の締切が今年の分まで出たなら其れを言ふ –
    * 一番古い過去を出すと「5 年前に終はつた會議」と讀めてしまふ）。 */
   const 直近の過去 = 投稿の行
     .filter((r) => r.t < now)
-    .reduce<(typeof 投稿の行)[number] | null>((a, b) => (!a || b.t > a.t ? b : a), null);
+    .reduce<(typeof 投稿の行)[number] | null>(
+      (a, b) => (!a || 表示の刻み(b) > 表示の刻み(a) ? b : a),
+      null,
+    );
   const 投稿の案內 = 次の投稿
     ? `次の投稿締切: ${line(次の投稿, now)}`
     : 直近の過去
