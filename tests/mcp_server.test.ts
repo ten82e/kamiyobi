@@ -3654,3 +3654,34 @@ describe("venue_info は版の一覽を收錄通りに出す（第 969 回）", 
     }
   });
 });
+
+describe("行は表示の早さで並ぶ（第 970 回）", () => {
+  /* 實測 2026-11-16: `t`（一番早い可能性の瞬間）で並べると、**表示と食ひ違ふ順**に出た。
+   * `ipsj-27-m26` は「2026-11-27（時刻未確認）」と表示するのに、`t` はタイムゾーンの
+   * 取り得る範圍の先頭（UTC+14 の 0 時）なので、「2026-11-26(木) 20:59 JST」の行より
+   * **先**に出た – 讀む人は「27 日なのに 26 日の上？」となる。畫面は「残り」の早さ
+   * （`tShown`）で並べるので、此方も表示の刻みで並べる（同じパラグラフ）。 */
+  const 問 = ["セキュリティ", "今月", "締切", "3月", "ICDE", "国内", "オンライン", "来月"];
+  it("表示の日が昇順に並ぶ", async () => {
+    for (const q of 問) {
+      const 答 = await call("search_deadlines", { query: q, limit: 400 });
+      const 行 = 答.split("\n").filter((l) => /^20\d\d-/.test(l));
+      const 日 = 行.map((l) => l.slice(0, 10));
+      const 崩れ = 日
+        .map((d, i) => (i > 0 && 日[i - 1] > d ? `${日[i - 1]} → ${d}` : ""))
+        .filter((x) => x.length > 0);
+      expect(行.length, `「${q}」の行が讀めない（この檢查の前提が崩れた）`).toBeGreaterThan(0);
+      expect(崩れ, `「${q}」で表示の日が昇順でない: ${崩れ.join("・")}`).toEqual([]);
+    }
+  });
+  /* `list_upcoming` も同じ並び（`sortRows` は共用 – 第 970 回の直しで全部變はる）。 */
+  it("list_upcoming も表示の日が昇順に並ぶ", async () => {
+    const 答 = await call("list_upcoming", { days: 60, limit: 400 });
+    const 行 = 答.split("\n").filter((l) => /^20\d\d-/.test(l));
+    const 日 = 行.map((l) => l.slice(0, 10));
+    const 崩れ = 日
+      .map((d, i) => (i > 0 && 日[i - 1] > d ? `${日[i - 1]} → ${d}` : ""))
+      .filter((x) => x.length > 0);
+    expect(崩れ, `list_upcoming で表示の日が昇順でない: ${崩れ.join("・")}`).toEqual([]);
+  });
+});

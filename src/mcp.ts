@@ -931,7 +931,19 @@ function 名乘りの案内(query: string, list: Row[], now: number): string[] {
 }
 
 function sortRows(list: Row[]): Row[] {
-  return list.slice().sort((a, b) => a.t - b.t || a.conf.title.localeCompare(b.conf.title, "ja"));
+  /* **表示の早さ**で並べる（第 970 回 – 實測 2026-11-16: `t` で並べると、日付だけの行が
+   * 表示と食ひ違ふ順に出た。`ipsj-27-m26` は「2026-11-27（時刻未確認）」と表示するのに、
+   * `t` は「一番早い可能性の瞬間」（タイムゾーンの取り得る範囲の先頭 = UTC+14 の 0 時）なので
+   * 「2026-11-26(木) 20:59 JST」の行より**先**に出た。讀む人は「27 日なのに 26 日の上？」と
+   * なる）。`tShown`（表示して居る JST の瞬間）で並べれば、畫面の「残り」の順と一致する。
+   * `tShown` が無い行は `t` に落とす（此れまでと同じ）。 */
+  const 表示の刻み = (r: Row): number =>
+    typeof r.tShown === "number" && Number.isFinite(r.tShown) ? r.tShown : r.t;
+  return list
+    .slice()
+    .sort(
+      (a, b) => 表示の刻み(a) - 表示の刻み(b) || a.conf.title.localeCompare(b.conf.title, "ja"),
+    );
 }
 
 /* ---- 道具 ---- */
