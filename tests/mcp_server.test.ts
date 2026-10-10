@@ -3715,6 +3715,19 @@ it("記号だけの問は「絞り込みが効いて居ない」と言ふ（第 
     const 答 = await call("search_deadlines", { query: 問, limit: 2 });
     expect(答, `「${問}」に關係無い斷りが出た`).not.toContain("絞り込みとして効く語がありません");
   }
+  /* 他の篩り込みと**組み合はせても**出る（篩り込みが減つて居ても「質が記号だけ」は事實） */
+  for (const 追 of [
+    { domestic: true },
+    { scope: "all" },
+    { kinds: ["paper"] },
+    { within_days: 30 },
+  ]) {
+    const 答 = await call("search_deadlines", { query: "。", limit: 2, ...追 });
+    expect(答, `飾り込み ${JSON.stringify(追)} と組み合はせた時に注が出て居ん`).toContain(
+      "絞り込みとして効く語がありません",
+    );
+  }
+
   /* 語と記號の**混在**は出さない（記號が尻に付くだけの普通の打ち方 – 實測 2026-11-19:
    * 「セキュリティ。」は 37 件のままで、記號だけでは無い）。KDD は全締切が過去なので
    * 0 件に成るが、其れでも「記号だけ」とは言はない（= 絞り込みは效いて居る）。 */
