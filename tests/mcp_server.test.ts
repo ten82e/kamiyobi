@@ -4264,3 +4264,29 @@ it("索引が觸れて居る打ち方は、全部效く（第 1006 回）", asyn
   const 先月 = await call("search_deadlines", { query: "先月", limit: 1 });
   expect(先月, "過去の月（先月）は 0 件でも打ち方が效いて居る").toContain("に当たる締切: 0 件");
 });
+
+it("返す行の形を說明に書いて、實物もその通りに分けられる（第 1008 回）", async () => {
+  /* 實測 2026-11-19: 返る行は `日付 | 種別 | 確認の札 | 会議名（版の識別子）| ランク | 会期…`
+   * の 6 つだが、**其の形が何處にも書かれて居なかつた** – AI が行を分ける時に「何區切り？」
+   * と當てるはないと思ふ。道具の說明に形を書く（`| ` で 6 つ・丸括弧の中が版の識別子）。
+   *
+   * あはせて、**會議名が括弧を含む**事も言ふ – `The 9th IEEE … (BSD 2026)（id）` の
+   * 樣に丸括弧が二重に成るので、版の識別子は**一番最後の丸括弧**だと讀めるやうに。 */
+  const res = (await client.ask({ jsonrpc: "2.0", id: 1, method: "tools/list" })) as {
+    result?: { tools?: Array<{ name?: string; description?: string }> };
+  };
+  const 說明 =
+    (res.result?.tools ?? []).find((t) => t.name === "search_deadlines")?.description ?? "";
+  expect(說明, "返す行の形を說明に書いて居ん").toContain("返す行の形");
+  expect(說明, "區切りの書き方を書いて居ん").toContain("`| ` で 6 つ");
+  expect(說明, "版の識別子が丸括弧の中だと書いて居ん").toContain("丸括弧の中が**版の識別子**");
+  /* 實物もその通り – 全部の行が 6 つに分かれ、版の識別子が拔ける。 */
+  const 答 = await call("search_deadlines", { query: "セキュリティ", limit: 5 });
+  const 行 = 答.split("\n").filter((l) => /^20\d\d-/.test(l));
+  expect(行.length, "行が出て居ん").toBeGreaterThan(0);
+  for (const l of 行) {
+    expect(l.split(" | ").length, `行が 6 つに分かれん: ${l.slice(0, 60)}`).toBe(6);
+    const 最後の丸括弧 = [...l.matchAll(/（([a-z0-9'.-]+)）/g)].at(-1);
+    expect(最後の丸括弧, `版の識別子が拔けない: ${l.slice(0, 60)}`).toBeTruthy();
+  }
+});
