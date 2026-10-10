@@ -3119,7 +3119,7 @@ it("二つ與えた片方を黙って捨てない（第 921 回）", async () =>
     limit: 1,
   });
   const 件數 = (t: string): string => /締切: ([\d,]+) 件/.exec(t)?.[1] ?? "-1";
-  expect(件數(両方), "`kind` を效かせてしまつた").toBe(件數(片));
+  expect(件數(両方), "`kind` を効かせてしまつた").toBe(件數(片));
   /* venue_info も – `key` と `name` を両方渡した時は `name` を見て居ない。 */
   const 會 = await call("venue_info", { key: "sigkdd", name: "ICDE" });
   expect(會, "`key` と `name` を両方渡しても名指して居ん").toContain(
@@ -3684,4 +3684,30 @@ describe("行は表示の早さで並ぶ（第 970 回）", () => {
       .filter((x) => x.length > 0);
     expect(崩れ, `list_upcoming で表示の日が昇順でない: ${崩れ.join("・")}`).toEqual([]);
   });
+});
+
+it("記号だけの問は「絞り込みが効いて居ない」と言ふ（第 981 回）", async () => {
+  /* 實測 2026-11-18: 「。」「・」「-」「！」は**語が 1 つも無い**ので `searchMatcher` が
+   * 全部を通す述語を返し、**870 行全部**が「當たる」になつた。頭に「當たる締切: 212 件」
+   * と出るので、讀む人は「。」で 212 件も引けると思ふ。默つて全部を返さない。 */
+  for (const 問 of ["。", "-", "・", "！"]) {
+    const 答 = await call("search_deadlines", { query: 問, limit: 2 });
+    expect(答, `「${問}」で絞り込みが効いて居ないことを言つて居ん`).toContain(
+      "絞り込みとして効く語がありません",
+    );
+    expect(答.split("\n")[1] ?? "", `「${問}」の註の行が讀めない`).toContain("記号だけ");
+    /* 行は出す（畫面と同じ – 全部の行）。0 件にはしない。 */
+    expect(
+      答.split("\n").filter((l) => /^20\d\d-/.test(l)).length,
+      `「${問}」の行が出て居ん`,
+    ).toBeGreaterThan(0);
+  }
+  /* 語のある問には出さない（騒音を增やさない – 第 852 回と同じ決まり）。 */
+  for (const 問 of ["セキュリティ", "KDD", "1"]) {
+    const 答 = await call("search_deadlines", { query: 問, limit: 2 });
+    expect(答, `「${問}」に關係無い斷りが出た`).not.toContain("絞り込みとして効く語がありません");
+  }
+  /* 語を省いた呼び方にも出さない（「絞り込みだけ」は全部を示すのが筋）。 */
+  const 素 = await call("search_deadlines", { kinds: ["paper"], limit: 2 });
+  expect(素, "語を省いた呼び方に斷りが出た").not.toContain("絞り込みとして効く語がありません");
 });
