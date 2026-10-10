@@ -11,7 +11,7 @@
  */
 
 import { spawnSync } from "node:child_process";
-import { readdirSync, readFileSync, statSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { extname, join, relative } from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -73,6 +73,47 @@ describe("日本語の文字化け", () => {
     const 見本 = ["const x = 1;", `あ${"\ufffd"}い`].join("\n");
     const 見つけた = 見本.split("\n").filter((l) => l.includes("\ufffd"));
     expect(見つけた.length, "1 語だけの混入も検出できる").toBe(1);
+  });
+});
+
+describe("配つてある物（public/）にも破損が無い（第 976 回）", () => {
+  /* 上の走査は `src`・`site`・`scripts`・`tests`・`data`（`public/` は CI が作る生成物で
+   * .gitignore）。**讀む人の手に屆く物**はこつち – 實測 2026-11-17（6 つの配布物）:
+   * `llms.txt`・`upcoming.md`・`data.csv`・`upcoming.html`・`index.html`・`404.html` の
+   * **全部**で置換文字 0・簡体字 0。此れを守る（次に變な字が混ざつたら鳴る）。
+   *
+   * 第 950 回で誤檢知を掃いたので、今は監査の出す候補が本物だけになる – 此の檢查は
+   * **機械が確實に譯る物**（置換文字・簡体字の表）だけを見る。 */
+  const 配布物 = [
+    "llms.txt",
+    "upcoming.md",
+    "data.csv",
+    "upcoming.html",
+    "index.html",
+    "404.html",
+    "data.json",
+    "health.json",
+  ] as const;
+  it("置換文字が 1 つも無い", () => {
+    for (const name of 配布物) {
+      const path = join(ROOT, "public", name);
+      if (!existsSync(path)) continue; // CI が作る
+      const text = readFileSync(path, "utf8");
+      expect(text.includes("\ufffd"), `${name} に置換文字が在る`).toBe(false);
+    }
+  });
+  it("中國語の簡体字が 1 つも無い", () => {
+    /* 表は**監査スクリプトの正本**から讀む（書き寫すとズレる – 第 915 回と同じ決まり）。 */
+    const audits = readFileSync(join(ROOT, "scripts", "ja-text-audit.ts"), "utf8");
+    const 簡体字 = /const 簡体字 =\s*"([^"]+)";/.exec(audits)?.[1] ?? "";
+    expect(簡体字.length, "簡体字の表が空（この檢查の前提が崩れた）").toBeGreaterThan(0);
+    for (const name of 配布物) {
+      const path = join(ROOT, "public", name);
+      if (!existsSync(path)) continue;
+      const text = readFileSync(path, "utf8");
+      const 混ざり = [...new Set([...text].filter((c) => 簡体字.includes(c)))];
+      expect(混ざり.join(""), `${name} に簡体字が混ざつて居る: ${混ざり.join("")}`).toBe("");
+    }
   });
 });
 
