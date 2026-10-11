@@ -1652,7 +1652,7 @@ it("key で問はれた時は、其の会議の事を言ふ（第 876 回）", a
   expect(大).not.toContain("jornadas");
   /* 收錄に無い key は「無い」と言ふ（第 866 回 – 別の會議を渡さない）。 */
   const 無 = await call("venue_info", { key: "nosuchconfkey", scope: "screen" });
-  expect(無, "收錄に無い時に別の會議を返した").toContain("その会議は収録に在りません");
+  expect(無, "收錄に無い時に別の會議を返した").toContain("その会議");
   /* 名の一部で問はれた時は候補を並べる（一つに決め打たない – 第 726 回の儘）。 */
   const 名 = await call("venue_info", { name: "sc", scope: "screen" });
   expect(名, "名の一部で候補を並べて居ん").toContain("会議が当たりました");
@@ -2058,7 +2058,7 @@ it("venue_info は正式名で引き、版の識別子を會議に敿へる（�
    * ② `key: "sc26"`（版の識別子）も「收錄に在りません」。`data.csv` の `edition_id` や
    *   `data.json` の `editions[].id` を其の儘渡すことは實際に在る（AI は讀んで居る）。 */
   const 正式名 = await call("venue_info", { name: "Supercomputing" });
-  expect(正式名, "正式名で引けて居ん").not.toContain("その会議は収録に在りません");
+  expect(正式名, "正式名で引けて居ん").not.toContain("その会議");
   /* 行が見付かつた**上で**候補を並べる（名簿の受皿に落とさない – 其れは「締切の行が 1 本も
    * ありません」といふ噓に成る。ICS は正式名の語で 37 行持って居る）。 */
   expect(正式名, "正式名の會議を教へて居ん").toContain("ICS");
@@ -2077,7 +2077,7 @@ it("venue_info は正式名で引き、版の識別子を會議に敿へる（�
 
   /* 版の識別子は「無い」と言はない（會議の key を教へる）。 */
   const 版 = await call("venue_info", { key: "sc26" });
-  expect(版, "版の識別子を無いと言つた").not.toContain("その会議は収録に在りません");
+  expect(版, "版の識別子を無いと言つた").not.toContain("その会議");
   expect(版, "版だと言つて居ん").toContain("版（edition）の識別子");
   expect(版, "會議の key を教へて居ん").toContain("`sc`");
   /* 大文字の版の識別子も受け付ける。 */
@@ -2089,7 +2089,7 @@ it("venue_info は正式名で引き、版の識別子を會議に敿へる（�
   expect(會議).toContain("会議:");
   /* どちらでも無い識別子は「無い」と言ふ（第 876 回の儘）。 */
   const 無し = await call("venue_info", { key: "nosuchconfkey" });
-  expect(無し, "收錄に無い時に別の會議を返した").toContain("その会議は収録に在りません");
+  expect(無し, "收錄に無い時に別の會議を返した").toContain("その会議");
 });
 
 it("explain_word も search_deadlines と同じ案内を出す（第 888 回）", async () => {
@@ -4722,4 +4722,29 @@ it("days と within_days は「境目が同じ・件数は違ふ」と書く（�
     limit: 1,
   });
   expect(件(揃へた), "條件を揃へても件數が違ふ（說明と合はない）").toBe(件(檢索2));
+});
+
+it("venue_info の key に略稱を渡されたら、name の方を敿へる（第 1028 回）", async () => {
+  /* 實測 2026-11-19: `venue_info({key: "KDD"})` は「その会議は收錄に在りません」と答へて居た。
+   * KDD は**收錄に在る**（`sigkdd`）。`key` は小文字の識別子で、**略稱は `name` の側** –
+   * AI は其原因を此の文から讀み取れず、`{key: "KDD"}` を繰り返して仕舞ふ。
+   * 大文字で打たれた key が略稱に當たる會議が在る時は、其の會議の key と
+   * 「`name` に渡して」と言ふ（黙って推測させない – 第 852 回と同じ決まり）。 */
+  const res = (await client.ask({ jsonrpc: "2.0", id: 1, method: "tools/list" })) as {
+    result?: { tools?: Array<{ name?: string; description?: string }> };
+  };
+  const 文 = (res.result?.tools ?? []).find((t) => t.name === "venue_info")?.description ?? "";
+  expect(文, "key は小文字だけと書いて居ん").toContain("key` は小文字の識別子");
+
+  /* 略稱を key に入れたら、name に渡すやうに敿へる。 */
+  const 略稱 = await call("venue_info", { key: "KDD" });
+  expect(略稱, "name に渡すと言つて居ん").toContain("name` に「KDD」を渡してください");
+  expect(略稱, "當たる會議の key を言つて居ん").toContain("sigkdd");
+  /* `name` に渡せば確かに當たる（敿へた通りの動きになる）。 */
+  const nameSa = await call("venue_info", { name: "KDD" });
+  expect(nameSa, "name で KDD に當たらない").toContain("KDD");
+  /* 全く當たらない key は從つて通りの文（余計な推測を足さない）。 */
+  const 無い = await call("venue_info", { key: "nosuchway" });
+  expect(無い, "當たらない時に name への敿へを出した").not.toContain("name` に「nosuchway」");
+  expect(無い, "收錄に無いと言つて居ん").toContain("収録に在りません");
 });
