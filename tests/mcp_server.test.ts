@@ -5273,3 +5273,38 @@ it("行に足した 3 つの值は、4 つの道具の行と説明に出る（�
     }
   }
 });
+
+it("端數の limit は默つて切り捨てない（第 1043 回）", async () => {
+  /* 實測 2026-11-19: `limit: 3.7` は默つて 3 件に成つて居た。`days`・`within_days` は
+   * 第 993 囘で「3.7 日は端数なので、3 日として切りました」と言ふやうにして居たのに、
+   * **件數の方は默つて居た** – 同じ形の見落とし。AI が「3.7 件出る」と思つて數へる
+   * 齟齬が生まれる。 */
+  /* `0.9` は「1 以上では無い」ので第 878 囘の文（默つて既定に戾さない）になる –
+   * 其方で默つて居ないので此の對象外。 */
+  const 小 = await call("search_deadlines", { query: "セキュリティ", limit: 0.9 });
+  expect(小, "0.9 を默つて扱つた").toContain("limit は 1 以上の数で指定してください");
+  for (const 値 of [3.7, 2.5, 100.1]) {
+    const 答 = await call("search_deadlines", { query: "セキュリティ", limit: 値 });
+    expect(答, `limit: ${値} を默つて切り捨てた`).toContain(
+      `（${値} 件は端数なので、${Math.floor(値)} 件として切りました）`,
+    );
+  }
+  /* 整數は默る（其の儘使ふ – 第 852 回と同じ決まり）。 */
+  const 整數 = await call("search_deadlines", { query: "セキュリティ", limit: 3 });
+  expect(整數, "整數の limit に斷りを出した").not.toContain("端数なので");
+  /* 讀めない値は第 878 囘の文（默つて既定に戾さない）。 */
+  const 讀めない = await call("search_deadlines", { query: "セキュリティ", limit: -5 });
+  expect(讀めない, "讀めない limit の文が消えた").toContain(
+    "limit は 1 以上の数で指定してください",
+  );
+
+  /* 推薦も同じ（第 1043 囘 – 兩方の limit を直した）。 */
+  for (const 値 of [3.7, 2.5]) {
+    const 答 = await call("recommend_venues", { paper: "分散システム", limit: 値 });
+    expect(答, `推薦の limit: ${値} を默つて切り捨てた`).toContain(
+      `（${値} 件は端数なので、${Math.floor(値)} 件として切りました）`,
+    );
+  }
+  const 推薦の整數 = await call("recommend_venues", { paper: "分散システム", limit: 5 });
+  expect(推薦の整數, "推薦の整數 limit に斷りを出した").not.toContain("端数なので");
+});
