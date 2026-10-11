@@ -4923,7 +4923,7 @@ function 索引の實測値(): void {
   const 表 = csvRows(readFileSync(join(REPO_ROOT, "public", "data.csv"), "utf8").trim());
   const 頭 = 表[0] ?? [];
   const 行 = 表.slice(1);
-  /* ① `data.csv` の行數（= 收録している締切 4,984） */
+  /* ① `data.csv` の行數（= 收録している締切 4,990） */
   expect(文, `索引の「收録している締切」が ${行.length} 行と違ふ`).toContain(
     `収録している締切は ${digits(行.length)} 件`,
   );
@@ -5004,11 +5004,11 @@ it("health.md の表は health.json の値と合ふ（第 1005 回）", () => {
 it("data.json のスキーマの申告は、實物と合ふ（第 1007 回）", async () => {
   /* 第 1003〜1006 回で索引の數字・打ち方を見た。**殘るは `data.json` のスキーマの申告** –
    * 索引は「上の内、稀にしか付かない物…（實測: 版 2,603 のうち call_identity 12・legacy_ids 18・
-   * event_review 7／締切 4,984 のうち track 8・superseded_deadlines 35・promotion_ref 19。
+   * event_review 7／締切 4,990 のうち track 8・superseded_deadlines 35・promotion_ref 19。
    * verification は 4,467 件…upstream_sub は 696 のうち 354 件）」と**實測值**を書く。
    * 機械が讀む索引なので、其の數がズレると「此れだけ在る」と誤解する。
    *
-   * 實測 2026-11-19: **全部一致**（`track` は「空でない」行の數 – 4,984 行全部に欄は在るが
+   * 實測 2026-11-19: **全部一致**（`track` は「空でない」行の數 – 4,990 行全部に欄は在るが
    * 空なので、索引の 8 は**值が入つて居る行**を數へて居る）。 */
   const jsonPath = join(REPO_ROOT, "public", "data.json");
   if (!existsSync(jsonPath)) return;
@@ -5070,7 +5070,7 @@ it("data.json のスキーマの申告は、實物と合ふ（第 1007 回）", 
     const 合ふ = 桁の候補.some((桁) => new RegExp(`${名}.{0,30}${桁}(?![0-9])`).test(文));
     expect(合ふ, `索引の「${名}」の數が ${事} と違ふ`).toBe(true);
   }
-  /* 版と締切の總數も（「版 2,603」「締切 4,984」）。 */
+  /* 版と締切の總數も（「版 2,606」「締切 4,990」）。 */
   const 千 = (n: number): string => String(n).replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1,");
   expect(文, `索引の「版」の數が ${數.版} と違ふ`).toContain(`版 ${千(數.版)}`);
   expect(文, `索引の「締切」の數が ${數.締切} と違ふ`).toContain(`締切 ${千(數.締切)}`);
