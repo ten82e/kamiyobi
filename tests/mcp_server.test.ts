@@ -4842,3 +4842,46 @@ it("種別は行に出す日本語の名でも濾せる（第 1030 回）", asyn
   const 知らん = await call("search_deadlines", { query: "セキュリティ", limit: 1, kind: "zzz" });
   expect(知らん, "知らない種別に敿へを出した").toContain("知らない種別");
 });
+
+it("ランクは行の出し方（CCF A）でも濾せる（第 1031 回）", async () => {
+  /* 實測 2026-11-19: 行は「CCF A・CORE A*・THCPL A」の**尺度+等級**の形で出すのに、
+   * `rank` は等級だけ（`A`・`A*`）を受け付けて居た。AI が行を讀んで `rank: \"CCF A\"` を
+   * 送ると **0 件**（知らないランクとして名指す）。種別の日本語（第 1030 回）と同じ形の
+   * 失敗 – **出す言葉と受け取る言葉が違ふ**。 */
+  const res = (await client.ask({ jsonrpc: "2.0", id: 1, method: "tools/list" })) as {
+    result?: {
+      tools?: Array<{
+        name?: string;
+        inputSchema?: { properties?: Record<string, { description?: string }> };
+      }>;
+    };
+  };
+  const 文 =
+    (res.result?.tools ?? []).find((t) => t.name === "search_deadlines")?.inputSchema?.properties
+      ?.rank?.description ?? "";
+  expect(文, "行の出し方でも受けると書いて居ん").toContain("行の出し方（`CCF A`");
+
+  const 件 = (t: string): number =>
+    Number((t.split("\n")[0].match(/([\d,]+) 件/)?.[1] ?? "0").replace(/,/g, ""));
+  /* 行の出し方と、等級だけで同じ件數に成る。 */
+  for (const [出し方, 等級] of [
+    ["CCF A", "A"],
+    ["CORE A*", "A*"],
+    ["THCPL B", "B"],
+  ] as const) {
+    const a = 件(await call("search_deadlines", { query: "セキュリティ", limit: 1, rank: 出し方 }));
+    const b = 件(await call("search_deadlines", { query: "セキュリティ", limit: 1, rank: 等級 }));
+    expect(a, `「${出し方}」と「${等級}」で件數が違ふ`).toBe(b);
+    const 答 = await call("search_deadlines", { query: "セキュリティ", limit: 1, rank: 出し方 });
+    expect(答, `「${出し方}」を知らないランクとして弾いた`).not.toContain("知らないランク");
+  }
+  /* 素の `rankPairs` の形（`core:A*`）も其の儘效く。 */
+  const ccf = 件(
+    await call("search_deadlines", { query: "セキュリティ", limit: 1, rank: "core:A*" }),
+  );
+  const star = 件(await call("search_deadlines", { query: "セキュリティ", limit: 1, rank: "A*" }));
+  expect(ccf, "core:A* と A* で件數が違ふ").toBe(star);
+  /* 本当に知らない等級は從つて通り（余計な推測を足さない）。 */
+  const 知らん = await call("search_deadlines", { query: "セキュリティ", limit: 1, rank: "D" });
+  expect(知らん, "知らない等級に敿へを出した").toContain("知らないランク");
+});

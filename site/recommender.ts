@@ -1633,6 +1633,29 @@ const Recommender = (() => {
     return (rankPairs || []).some((pair) => pair.slice(pair.indexOf(":") + 1) === grade);
   }
 
+  /** **ランクの「等級」を、行の出し方の言葉からも受け取る**（第 1031 回 – 實測 2026-11-19）。
+   *
+   * 行は「CCF A・CORE A*・THCPL A」の**尺度+等級**の形で出すのに、`rank` は等級だけ
+   * （`A`・`A*`）を受け付けて居た。AI が行を讀んで `rank: "CCF A"` を送ると **0 件**
+   * （知らないランクとして名指す）。種別の日本語（第 1030 回）と同じ形の失敗 –
+   * **出す言葉と受け取る言葉が違ふ**。此れで直す。
+   *
+   * 受ける形:
+   *   - `A`・`A*`（其の儘 – 第 1031 回の前から效つて居たもの）
+   *   - `CCF A`（尺度+等級 – **後ろの等級だけ**を取る）
+   *   - `core:A*`（素の `rankPairs` の形 – 其の儘效つ）
+   * 當たらない時は空文字（呼んだ側が其の儘「知らないランク」として名指す）。 */
+  function rankGradeJa(rank: unknown): string {
+    const 打たれた = String(rank ?? "").trim();
+    if (打たれた === "") return "";
+    /* `scale:grade` の形（素の `rankPairs`）は其の儘通す。 */
+    if (打たれた.includes(":")) return 打たれた.slice(打たれた.indexOf(":") + 1).trim();
+    /* 「CCF A」の様に尺度の名が前に着て居る – **後ろの等級だけ**を取る。 */
+    const 語 = 打たれた.split(/\s+/).filter(Boolean);
+    if (語.length > 1) return 語[語.length - 1]!;
+    return 打たれた;
+  }
+
   /* SPEC §7: サイト UI は日本語。data.json の categories は機械可読の英表記を保つため、
    * 日本語表示名はここを単一正典にする（絞り込みチップ・行タグ・検索語の共通元）。 */
   const CATEGORY_LABELS_JA: Record<string, string> = {
@@ -17214,6 +17237,7 @@ const Recommender = (() => {
     fitLabel: fitLabel,
     journalRows: journalRows,
     rankMatches: rankMatches,
+    rankGradeJa: rankGradeJa,
     candidateRows: candidateRows,
     categoryLabelJa: categoryLabelJa,
     meetingRangeJa: meetingRangeJa,
