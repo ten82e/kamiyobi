@@ -5545,3 +5545,38 @@ it("時刻未確認の行は「いつ終はつたか」を言ふ（第 1055 回�
   const 確定 = icde.split("\n").filter((l) => /^2\d{3}-/.test(l) && /残り\d+日/.test(l));
   expect(確定.length, "確定の行に「殘り」が出て居ん").toBeGreaterThan(0);
 });
+
+it("札の「未確認」は正本から取る（第 1058 回）", async () => {
+  /* 實測 2026-11-19: `src/mcp.ts` に「未確認」を**べた書き**で持つて居る所が 4 箇所
+   * あつた（生成の表示・分野・場所・信賴の對應表）。值は同じだが、**書き寫すとずれる**。
+   * 其のうち 3 箇所（信賴の對應表は除く – 其れは他の語と同じ分類で一まとまりの表）を
+   * `Recommender.unconfirmedLabelJa()` に直した。第 1057 囮の決まり（注記の文は其の儘）
+   * との境目: **事實として出る札**は正本にまとめる。
+   *
+   * 更に第 726 囘の註（「同じ入口（`categoryLabelJa`）から取る – 書き寫すとずれる」）が
+   * 其の儘效いて居なかつた所も直した – fallback だけ書き寫んで居た。 */
+  const R = (await import("../site/recommender.ts")).default;
+  const 正本 = String(R.unconfirmedLabelJa() ?? "").trim();
+  expect(正本, "正本が讀めない").toBe("未確認");
+
+  /* **實物** – 札の「未確認」が、正本と同じ値で出る。 */
+  const 答 = await call("venue_info", { key: "stacs-2027-first", scope: "all" });
+  expect(答, "札の「未確認」が出て居ん").toContain("未確認");
+  const 行 = 答.split("\n").filter((l) => /^2\d{3}-/.test(l));
+  for (const l of 行) {
+    for (const 欄 of l.split("|").slice(1)) {
+      const 値 = 欄
+        .trim()
+        .replace(/（[^）]*）/g, "")
+        .replace(/\s*https?:\/\/\S*/g, "")
+        .trim();
+      if (値.includes("未確")) {
+        /* 「会期 未確認」・「ランク未確認」は欄名を添へる別の語。之れも正しい –
+         * 確かめるのは「未確認」**其の物**が立つ欄（場所・年數）だけ。 */
+        if (値 !== "ランク未確認" && 値 !== "会期 未確認") {
+          expect(値, "札が正本と違ふ").toBe(正本);
+        }
+      }
+    }
+  }
+});

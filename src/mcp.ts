@@ -237,8 +237,10 @@ function jst(ms: number): string {
 /** 畫面の右上の「データ生成」と同じ書き方（分まで）。讀めない値は原文のまま返す
  * （畫面と同じ扱ひ – 勝手に日付を作らない）。 */
 function 生成の表示(生成: unknown): string {
+  /* 未確認の札は**正本から取る**（第 1058 囮 – 實測 2026-11-19: 此の他に 3 箇所
+   * 「未確認」をべた書きで持つて居た。値は同じでも、書き寫すとずれる）。 */
   const raw = typeof 生成 === "string" ? 生成.trim() : "";
-  if (!raw) return "未確認";
+  if (!raw) return String(Recommender.unconfirmedLabelJa() ?? "未確認");
   const at = Date.parse(raw);
   return Number.isFinite(at) ? jst書(at, false) : raw;
 }
@@ -349,7 +351,11 @@ function line(r: Row, now: number): string {
   const 種別 =
     String(Recommender.kindLabelJa(r.kind) ?? r.kind) + (トラック ? `（${トラック}）` : "");
   const 回 = (r.dl.round ?? 1) > 1 ? ` R${r.dl.round}` : "";
-  const 場所 = String(Recommender.placeJa(r.ed.place) ?? "").trim() || "未確認";
+  /* 場所の「未確認」も**正本から取る**（第 1058 囮 – 實測 2026-11-19: 此の行の他の
+   * 「未確認」（生成の表示・分野）と同じべた書きだつた。書き寫すとずれる）。 */
+  const 場所 =
+    String(Recommender.placeJa(r.ed.place) ?? "").trim() ||
+    String(Recommender.unconfirmedLabelJa() ?? "未確認");
   const ランク = ランクJa(r);
   /* 一覧の行に付く**札**も入れる（畫面の列の外にある印 – 語も入口も畫面と同じ）。
    * ①延長（上流の締切名に Extended と付く行）②検証状態（確認済みと未設定では空 – 畫面も
@@ -1785,11 +1791,12 @@ function venueInfo(args: { key?: unknown; name?: unknown; scope?: unknown }, now
     ...(scopeErr ? [scopeErr] : []),
     `版: ${版.map((id) => (行を持つ版.has(id) ? id : `${id}(会期だけ)`)).join(" / ")}`,
     /* 分野は畫面と同じ日本語で出す（第 726 回 – 機械向けのキー（`ai`）の侭では、人が讀む時に
-     * 畫面のチップと結び付かん。同じ入口（`categoryLabelJa`）から取る – 書き寫すとずれる）。*/
+     * 畫面のチップと結び付かん。同じ入口（`categoryLabelJa`）から取る – 書き寫すとずれる）。
+     * **空の時の札も同じ入口から**（第 1058 囮 – 其れ迄は此處だけ「未確認」を書き寫んで居た）。*/
     `分野: ${
       (一つ.conf.categories ?? [])
         .map((key) => String(Recommender.categoryLabelJa(key) ?? key))
-        .join("・") || "未確認"
+        .join("・") || String(Recommender.unconfirmedLabelJa() ?? "未確認")
     }`,
     /* ランクも言ふ（一つの會議を調べた人が、次の一手を決めるのに要る – 畫面の列と同じ語）。 */
     `ランク: ${ランクJa(一つ)}`,
