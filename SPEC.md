@@ -2806,14 +2806,20 @@ conferences:
     MCP の中の不變件（表示の日の昇順）で見る – 集合の突き合はせは第 917 回の通り。
   - 過去判定 – `deadlineRowIsPast` で見る（`r.t < now` は時刻未確認の行を落とす – 第 917 回）。
   - 邊境は全部實測で潰した（第 1013・114 回 – 實測 2026-11-19）:
-    - **建造が負けて居た**（第 1020 回）– `config.yaml` の `venue_identities` に `icdm` が
-      一枚も無かつた。ccfddl・aideadlines・local の**三つ**から來るので `venueMatch` が
-      2 件に當たつて `ambiguous published history identity` で飛び、其の後ろで
-      `retainPublishedHistory` が拔けて**`icdm` の歴史が落ちて居た**。テストは通つて居る。
+    - **三つ以上の source を持つ會議は `venue_identities` で結ばなければならない**（第 1020 回 –
+      實測 2026-11-19）– `config.yaml` に **`icdm` が一枚も無かつた**。icdm は
+      ccfddl（`DB/icdm`）・aideadlines・local の**三つ**から來るので、結ぶ指定が無いと
+      兩方が `key = icdm` になり、`uniqueConferenceKeys` の衝突處理で `icdm-<後倔>` 二つに
+      割れて、`venueMatch` が `legacy_keys` で**兩方**に當たつて
+      `ambiguous published history identity` でビルドが飛ぶ。足したら通り、icdm の 7 版・
+      14 行の締切が讀めるやうに成つた。**取こぼしは CI が鳴いて居た** –
+      `tests/update_data_canary.test.ts` と `tests/published_history.test.ts` の両方が
+      此を彈く（此の計畫で「作つた」のではなく「既に守られて居た」件）。
     - **同じ形の他の會議**（第 1025 回 – 實測 2026-11-19）– 三つ以上の source を持つ會議は
-      3 個（`alt`・`fg`・`icdm`）。内 `fg` と `icdm` は config で結ばれて居るが、**`alt` は
-      結ばれて居ない**。それでもビルドは通り、alt の 7 版は讀める。**同じ形の會社が片方だけ
-      跳ねた理由は未解明** – icdm を足したら通り、履歷が入つた（14 行の締切）事實だけを書く。
+      3 個（`alt`・`fg`・`icdm`）。`fg`・`icdm` は config で結ばれて居るが、**`alt` は
+      結ばれて居ない**。それでもビルドは通り、alt の 7 版は讀める（後で同じ事故を踏まない
+      爲に足すべきかは未決 – **跳ねない理由は未解明**で、推測で足すと餘計な結び付きが
+      入る危うさがある）。
     - **ハードコードされた數字は收録が増えると噓に成る**（第 1022・1023 回）– 索引の
       「稀有な欄」の實測の數（2,603・4,984・4,467）と、檢查の中の「32 件」「37 件」を
       **ビルド／同時に取つた件數から數へる**形にした。
@@ -2822,7 +2828,6 @@ conferences:
       （`review xyz` の `xyz` が默つて消える）。
     - 建造の極端な設定 – `upcoming_days` の**上限 400**（第 1016 回）・MCP の `days` も
       同上限で宣告（第 1017 回）。`99999` を渡すと「2300 年の飾りの期間」が出て居た。
-  - 邊境は全部實測で潰した（第 1013・114 回 – 實測 2026-11-19）:
     - 分野 9 種（`ai`・`db`・`graphics`・`hci`・`hpc`・`networking`・`security`・`systems`・
       `theory`）が英語名・日本語名の**兩方**で效く（畫面・MCP 共通）。
     - `rank` は**大文字小文字も嚴密**（`a` は 0 件で「知らないランク」として名指す – 第 858 回）。
