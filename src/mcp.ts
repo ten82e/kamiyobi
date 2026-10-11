@@ -350,7 +350,22 @@ function line(r: Row, now: number): string {
         ? Recommender.notApplicableLabelJa()
         : Recommender.unconfirmedLabelJa(),
     );
+  /* **推定の行は幅を出す**（第 1034 回 – 實測 2026-11-19: `estimate.window_start` /
+   * `window_end` を持つ推定の行は **162 行全部**（106 版全部が幅を持つ）なのに、此の行は
+   * **單獨の日付**（`point_estimate`）だけで出して居た）。`upcoming.md` は「推定期間 A〜B」
+   * と書くのに、MCP は書かない – 同じ事實の別の表記ではなく、**幅を落として居た**。
+   * AI が「ACML 2027 の締切は 2027-07-04」と**事實のやうに**答へるので、幅を添へる。 */
+  const 推定の幅 =
+    (r.ed as { estimate?: Record<string, unknown> } | undefined)?.estimate ?? undefined;
+  const 始め = String(推定の幅?.window_start ?? "").trim();
+  const 終り = String(推定の幅?.window_end ?? "").trim();
   const 推定 = r.est ? "（推定）" : "";
+  const 幅 = r.est && 始め && 終り ? `推定期間 ${始め}〜${終り}` : "";
+  /* 「殘り」は**其の下の点推定点**（`元の宣言` の瞬間）を數へて居る。幅と一續きに並べると
+   * 「幅の終はりまでの殘り」と讀めるので、其れを防ぐ言を添へる（第 1034 回 – 實測 2026-11-19:
+   * `upcoming.md` は「推定期間」と「殘り」が**別の欄**なので誤讀しにくいが、此の行は
+   * `|` で區切る前の同じ欄に入る）。 */
+  const 幅の但し = 幅 ? "（残りは点推定点の分）" : "";
   const 出典 = r.ed.link ? ` ${r.ed.link}` : "";
   /* 畫面の日時欄は「日本時間の読み」と「元の日時」の二段で出す。**日本時間で無い宣言**の行は、
    * 宣言した時間帯と瞬間（UTC）を添へる（實測 2026-10-06: `dl.tz_raw` は AoE・UTC-7・PDT・
@@ -361,7 +376,7 @@ function line(r: Row, now: number): string {
     tz && utc && !/^JST$/i.test(tz)
       ? `（元の宣言 ${tz}／${utc.replace("T", " ").replace("Z", " UTC")}）`
       : "";
-  return `${日}${殘り文}${元} | ${種別}${回}${推定}${印.length ? ` | ${印.join("・")}` : ""} | ${r.conf.title}（${r.ed.id}）| ${ランク} | 会期 ${會期} | ${場所}${出典}`;
+  return `${幅 ? 幅 : 日}${幅の但し}${殘り文}${元} | ${種別}${回}${推定}${印.length ? ` | ${印.join("・")}` : ""} | ${r.conf.title}（${r.ed.id}）| ${ランク} | 会期 ${會期} | ${場所}${出典}`;
 }
 
 /** 0 件の時に畫面が出す「打ち直すなら」と同じ物を組む（第 762 回）。
