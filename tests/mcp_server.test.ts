@@ -5610,3 +5610,40 @@ it("常時受付の行も版の識別子を持つ（第 1059 回）", async () =
   const 常時 = 答.split("\n").filter((l) => /^\d\. /.test(l) && l.includes("常時受付"));
   for (const l of 常時) expect(l, "常時受付の行に會期が出て居る").toContain("会期 該当なし");
 });
+
+it("讀めない字を實答に出さない（第 1060 回）", async () => {
+  /* 第 1059 囮で常時受付の行の「（undefined）」を直した。其れが**唯一**では無い事を
+   * 確かめる爲に、實答の全部を搜す。AI は實答だけを讀むので、「未定義」「非數」の樣な
+   * 字が漏れると、其の儘人間に傳へてしまふ。
+   *
+   * 實測 2026-11-19: 6 つの道具の代表問を全部搜して、**0 件**。此れを固定化して、
+   * 將來どつかの改定で漏らしても氣づけるやうにする（畫面も同じ配慮 – `site/app.ts` の
+   * `generatedAtLabel` は「空文字なら默る・`undefined` は其の英字が出る」と對處して居る）。 */
+  const 全部: Array<[string, Promise<string>]> = [
+    ["search_deadlines", call("search_deadlines", { query: "セキュリティ", limit: 100 })],
+    [
+      "search_deadlines2",
+      call("search_deadlines", {
+        query: "ネットワーク",
+        scope: "all",
+        limit: 100,
+        kinds: [],
+        include_estimated: true,
+      }),
+    ],
+    ["search_deadlines3", call("search_deadlines", { query: "", kind: "journal", scope: "all" })],
+    ["list_upcoming", call("list_upcoming", { days: 400 })],
+    ["venue_info", call("venue_info", { key: "icde", scope: "all" })],
+    ["venue_info2", call("venue_info", { name: "a", scope: "all" })],
+    ["explain_word", call("explain_word", { word: "セキュリティ" })],
+    ["recommend_venues", call("recommend_venues", { paper: "分散システム", limit: 30 })],
+    ["recommend_venues2", call("recommend_venues", { paper: "ネットワーク", limit: 30 })],
+    ["collection_stats", call("collection_stats", {})],
+  ];
+  for (const [名, 約束] of 全部) {
+    const 答 = await 約束;
+    for (const 字 of ["undefined", "NaN", "[object Object]", "[object Null]"]) {
+      expect(答, `${名} の實答に「${字}」が出て居る`).not.toContain(字);
+    }
+  }
+});
