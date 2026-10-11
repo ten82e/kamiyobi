@@ -343,10 +343,17 @@ function line(r: Row, now: number): string {
    * ①延長（上流の締切名に Extended と付く行）②検証状態（確認済みと未設定では空 – 畫面も
    * 印を出さない）。「複数候補のため要確認」は上流に候補が複数あつて人が確かめるべき行で、
    * 此れを言はないと、AI が候補の一つを確定の締切として答へる。 */
+  /* **上流が締切を差し替えた行**も札で言ふ（第 1037 回 – 實測 2026-11-19: `superseded_deadlines`
+   * を持つ締切は **35 件**。畫面（`site/app.ts`）は行の詳細に「前に出ていた締切: A → B
+   * （延長後）」と出して居るのに、**此の行は何も言はなかつた** – AI が「この日は動いて
+   * 居ない」と答へる。前に見た日付と違ふ行を開いた人は「此のサイトは古いのか / 会議が
+   * 動いたのか」を判定できない（第 224 回の畫面の直しと同じ）。 */
+  const 差し替え = String(Recommender.deadlineShiftLineJa(r.dl) ?? "").trim();
   const 印 = [
     Recommender.isExtendedDeadline(r.dl) ? String(Recommender.extendedLabelJa() ?? "").trim() : "",
     String(Recommender.verificationStatusLabelJa(r.dl?.verification) ?? "").trim(),
   ].filter(Boolean);
+  if (差し替え) 印.push(差し替え);
   /* **會期も入れる**（畫面の「会期」列と同じ入口 `eventCellJa`）。出張の段取りは此れで決める
    * ので、締切だけ言へても足りん。決まって居ない行は畫面と同じ語（常時受付の期刊行は
    * 「該当なし」、それ以外は「未確認」）で書く – 默ると「無い」と讀まれる。 */

@@ -5090,3 +5090,50 @@ it("投稿のトラックも行に出す（第 1035 回）", async () => {
     (res.result?.tools ?? []).find((t) => t.name === "search_deadlines")?.description ?? "";
   expect(文, "種別の欄の丸括弧が別の物だと書いて居ん").toContain("種別の欄の丸括弧は別の物");
 });
+
+it("上流が差し替へた締切も札で言ふ（第 1037 回）", async () => {
+  /* 實測 2026-11-19: `superseded_deadlines` を持つ締切は **35 件**（24 會議）。
+   * 畫面（`site/app.ts`）は行の詳細に「前に出ていた締切: A → B（延長後／前倒し）」と
+   * 出して居るのに、**此の行は何も言はなかつた** – AI が「この日は動いて居ない」と答へる。
+   * 前に見た日付と違ふ行を開いた人は「此のサイトは古いのか / 会議が動いたのか」を
+   * 判定できない（第 224 回の畫面の直しと同じ事が此方に殘つて居た）。 */
+  const edbt = await call("venue_info", { key: "edbt", scope: "all" });
+  const 行 = edbt.split("\n").filter((l) => /^2\d{3}-/.test(l));
+  const 差し替え = 行.filter((l) => l.includes("前に出ていた締切"));
+  expect(差し替え.length, "差し替へた締切を言つて居ん").toBeGreaterThan(0);
+  /* 文組みは同じ正本（`Recommender.deadlineShiftLineJa`）を使ふので、畫面と同し文に成る。 */
+  expect(差し替え[0], "差し替への文が讀めない").toMatch(
+    /前に出ていた締切: \d{4}-\d{2}-\d{2}\([^)]*\) [\d:]* → \d{4}-\d{2}-\d{2}\([^)]*\) [\d:]*（延長後|前倒し）/,
+  );
+  /* **悉皆** – 上書きを持つ 24 會議全部が、行に差し替へを出す。 */
+  const 收錄 = JSON.parse(readFileSync(join(REPO_ROOT, "data", "snapshot.json"), "utf8")) as {
+    conferences: Array<Record<string, any>>;
+  };
+  const 會議 = new Set<string>();
+  for (const c of 收錄.conferences) {
+    for (const e of c.editions ?? []) {
+      for (const dl of e.deadlines ?? []) {
+        if (Array.isArray(dl.superseded_deadlines) && dl.superseded_deadlines.length) {
+          會議.add(String(c.key ?? ""));
+        }
+      }
+    }
+  }
+  expect(會議.size, "上書きを持つ會議が讀めない").toBeGreaterThan(20);
+  let 行の合計 = 0;
+  for (const key of 會議) {
+    const 答 = await call("venue_info", { key, scope: "all" });
+    const n = 答
+      .split("\n")
+      .filter((l) => /^2\d{3}-/.test(l) && l.includes("前に出ていた締切")).length;
+    expect(n, `${key} が差し替へを言つて居ない`).toBeGreaterThan(0);
+    行の合計 += n;
+  }
+  expect(行の合計, "差し替への行が收錄と合はない").toBe(35);
+
+  /* 差し替への**無い**行は從つて通り（札を足さない）。 */
+  const wsdm = await call("venue_info", { key: "wsdm", scope: "all" });
+  for (const l of wsdm.split("\n").filter((l) => /^2\d{3}-/.test(l))) {
+    expect(l, "差し替への無い行に札を出した").not.toContain("前に出ていた締切");
+  }
+});
