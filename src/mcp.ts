@@ -579,10 +579,13 @@ function 畫面の既定(
   const 窓あり = Number.isFinite(窓の日數) && 窓の日數 > 0;
   const 推定も = args.include_estimated === true;
   const 引き = args.kinds ?? (args as { kind?: unknown }).kind;
+  /* **日本語の種別名も英語に直す**（第 1030 回 – 行は「論文締切」の日本語で出すのに、
+   * 受け取るのは英語だけだつた。此の函數は `search_deadlines` の既定の篩り込み其の物
+   * （`名乘り` の斷りとは別の經路）なので、此處でも直す必要があつた）。 */
   const 種別 = Array.isArray(引き)
-    ? 引き.map((k) => String(k))
+    ? 引き.map((k) => 種別の英語(String(k)))
     : typeof 引き === "string"
-      ? [引き]
+      ? [種別の英語(引き)]
       : null;
   /* `kinds: ["all"]`（又は `"all"`）は**種別で絞らん**の意（第 727 回 – 實測 2026-10-06:
    * 此れを彈いて居たので、全ての種別を見る道が無く、「kinds を試してください」と言はれても
@@ -778,6 +781,20 @@ function URLの案内(query: string): string[] {
   return [
     "検索語の URL の会議は収録に見当たりません。収録の中心はランク付けの一覧に載る会議と国内研究会です。公式ページのアドレスではなく会議名（「ICDE」など）で試してください。",
   ];
+}
+
+/** **種別の日本語名を英語のキーに直す**（第 1030 回 – 實測 2026-11-19）。
+ *
+ * 此の道具は行を「論文締切｜採否通知｜カメラレディ締切」の**日本語**で出す
+ * （`Recommender.kindLabelJa` が其の正本）。が、受け取る `kind` / `kinds` は英語の
+ * キー（`paper` など）だけだつた。AI が行を讀んで「論文締切」で濾さうと
+ * `kind: "論文締切"` を送ると **0 件**（知らない種別として名指す）。
+ * **出す言葉と受け取る言葉が違ふ**のは、此の計畫で一番惡い形 – 直す。
+ *
+ * 英語のキーは其の儘も效つ（`paper`・`PAPER` – 第 1030 回の前に效つて居たもの）。 */
+function 種別の英語(k: string): string {
+  const key = Recommender.kindKeyJa(k);
+  return key !== "" && key !== k ? key : k;
 }
 
 /** 表に出さん種別の語が打たれた時の文（第 879 回・第 888 回）。
@@ -1113,7 +1130,9 @@ function searchDeadlines(
     ...(typeof (args as { kind?: unknown }).kind === "string"
       ? [String((args as { kind?: unknown }).kind)]
       : []),
-  ];
+    /* **日本語の名も受ける**（第 1030 回 – 行は日本語で出すのに、受け取るのは英語だけ
+     * だつた。AI が「論文締切」で濾さうとして 0 件に成つて居た）。 */
+  ].map((k) => 種別の英語(k.trim()));
   const 知らん = 名乘り全部.filter((k) => !知って居る種別.includes(k));
   /* 知らない等級も名指す（`A+` の樣な無い値は、其の侭では 0 件に成る – AI が打ち直せる樣に）。 */
   const ランク = String(args.rank ?? "").trim();
@@ -1338,7 +1357,10 @@ function listUpcoming(
   const 名乘り = (Array.isArray(引き) ? 引き : 引き === undefined ? [] : [引き])
     .flat()
     .map((k) => String(k).trim())
-    .filter((k) => k.length > 0);
+    .filter((k) => k.length > 0)
+    /* **日本語の名も受ける**（第 1030 回 – 行は日本語で出すのに、受け取るのは英語だけ
+     * だつた。AI が「論文締切」で濾さうとして 0 件に成つて居た）。 */
+    .map((k) => 種別の英語(k));
   const 全部 = 名乘り.some((k) => k.toLowerCase() === "all");
   /* 種別は**どれかに当たる行**として選ぶ（第 886 回）。`kinds: ["paper","zzz"]` の樣に
    * 複數をもらつた時、空白で繫いで「paper zzz」といふ存在せぬ種別にして居た – 實測
@@ -2104,12 +2126,13 @@ const TOOLS = [
         include_estimated: { type: "boolean", description: "推定の締切も含める（既定 false）" },
         kinds: {
           type: "array",
-          items: { type: "string" },
-          description: "種別のキーで絞る（既定は画面と同じ abstract / paper / journal）",
+          description:
+            "種別のキーで絞る（既定は画面と同じ abstract / paper / journal）。**日本語の種別名でも受けます**（論文締切＝paper・採否通知＝notification のように – 行に出す言葉と同じ。実測 2026-11-19）",
         },
         kind: {
           type: "string",
-          description: "種別のキーを一つだけ絞る（`kinds` の単数の書き方。同じ物を受ける）",
+          description:
+            "種別のキーを一つだけ絞る（`kinds` の単数の書き方。同じ物を受ける）。**日本語の種別名でも受けます**",
         },
         rank: {
           type: "string",
@@ -2156,12 +2179,13 @@ const TOOLS = [
         kind: {
           type: "string",
           description:
-            '種別のキー（例: paper / abstract / camera_ready。全部なら "all"。複数を配列で渡すとどれかに当たる行を選ぶ。大文字は小文字に直して受ける）',
+            '種別のキー（例: paper / abstract / camera_ready。**日本語の種別名でも受けます** – 論文締切＝paper・採否通知＝notification のように、行に出す言葉と同じ（実測 2026-11-19）。全部なら "all"。複数を配列で渡すとどれかに当たる行を選ぶ。大文字は小文字に直して受ける）',
         },
         kinds: {
           type: "array",
           items: { type: "string" },
-          description: "種別のキーの並び（search_deadlines と同じ名。どちらでも受ける）",
+          description:
+            "種別のキーの並び（search_deadlines と同じ名。どちらでも受ける）。**日本語の種別名でも受けます**",
         },
         scope: {
           type: "string",

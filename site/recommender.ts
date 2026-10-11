@@ -14036,6 +14036,24 @@ const Recommender = (() => {
     return KIND_LABEL_JA[key] || key;
   }
 
+  /** **日本語の種別名から英語のキーを返す**（第 1030 回 – `kindLabelJa` の逆引き）。
+   *
+   * 表の行は「論文締切」「採否通知」の**日本語**で出すのに、MCP の `kind` / `kinds` は
+   * 英語のキー（`paper` など）だけ受け付けて居た – 實測 2026-11-19: AI が行を讀んで
+   * `kind: "論文締切"` を送ると **0 件**（知らない種別として名指される）。
+   * **出す言葉と受け取る言葉が違ふ**のは、此の計畫で一番惡い形。此れで直す。
+   *
+   * 当たらない時は空文字（呼んだ側が其の儘使ふ）。英語のキーは via `kindKeyJa` でも
+   * 其のまま返るので、`paper` を通しても壊れない。 */
+  function kindKeyJa(label: unknown): string {
+    const 名 = String(label ?? "").trim();
+    if (名 === "") return "";
+    const 其の儘 = KIND_LABEL_JA[名];
+    if (其の儘) return 名;
+    const 見つかった = Object.keys(KIND_LABEL_JA).find((k) => KIND_LABEL_JA[k] === 名);
+    return 見つかった ?? "";
+  }
+
   /* 日付の欄を何と呼ぶか、種別ごとに決める（第 299 回）。カレンダー配信用の `deadlines.ics` は
    * 本文の行がそのまま表示されるので、欄の名前がその日の呼称になる。実測（2026-09-24・
    * 2026-08-09 生成ビルド）では 928 個のイベントのうち **167 個**が採否通知・査読結果公開・
@@ -17310,6 +17328,7 @@ const Recommender = (() => {
     tagSearchTerms: tagSearchTerms,
     scheduleOnlyEditions: scheduleOnlyEditions,
     kindLabelJa: kindLabelJa,
+    kindKeyJa: kindKeyJa,
     kindLabelTable: () => ({ ...KIND_LABEL_JA }),
     kindDateFieldJa: kindDateFieldJa,
     verificationStatusLabelTable: () => ({ ...VERIFICATION_STATUS_LABELS_JA }),

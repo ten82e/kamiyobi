@@ -4791,3 +4791,54 @@ it("scope のエイリアスは schema の enum にも載る（第 1029 回）",
     expect(答, `scope: ${別名} が ${應} に成つて居ん`).toContain(應);
   }
 });
+
+it("種別は行に出す日本語の名でも濾せる（第 1030 回）", async () => {
+  /* 實測 2026-11-19: 行は「論文締切」「採否通知」の**日本語**で出すのに、`kind` / `kinds`
+   * は英語のキー（`paper` など）だけ受け付けて居た。AI が行を讀んで
+   * `kind: "論文締切"` を送ると **0 件**（知らない種別として名指される）–
+   * **出す言葉と受け取る言葉が違ふ**のは、此の計畫で一番惡い形。
+   * `Recommender.kindKeyJa`（`kindLabelJa` の逆引き）で英語に直して受けるやうにした。 */
+  const res = (await client.ask({ jsonrpc: "2.0", id: 1, method: "tools/list" })) as {
+    result?: {
+      tools?: Array<{
+        name?: string;
+        inputSchema?: { properties?: Record<string, { description?: string }> };
+      }>;
+    };
+  };
+  const 全部 = res.result?.tools ?? [];
+  for (const n of ["search_deadlines", "list_upcoming"]) {
+    for (const k of n === "search_deadlines" ? ["kinds", "kind"] : ["kind", "kinds"]) {
+      const 文 = 全部.find((t) => t.name === n)?.inputSchema?.properties?.[k]?.description ?? "";
+      expect(文, `${n} の ${k} に日本語の名を書いて居ん`).toContain("日本語の種別名でも受けます");
+    }
+  }
+  /* 實物: 日本語の名と英語のキーで**同じ件數**に成る。 */
+  const 件 = (t: string): number =>
+    Number((t.split("\n")[0].match(/([\d,]+) 件/)?.[1] ?? "0").replace(/,/g, ""));
+  for (const 名 of ["論文締切", "採否通知", "カメラレディ締切", "登録締切", "概要締切"]) {
+    const 日本 = await call("search_deadlines", { query: "セキュリティ", limit: 1, kind: 名 });
+    const 英語 = await call("search_deadlines", {
+      query: "セキュリティ",
+      limit: 1,
+      kind: Recommender.kindKeyJa(名),
+    });
+    expect(件(日本), `「${名}」と英語のキーで件數が違ふ`).toBe(件(英語));
+    expect(日本, `「${名}」を知らない種別として弾いた`).not.toContain("知らない種別");
+  }
+  /* `kinds`（配列）でも同じ。 */
+  const 配列日本 = await call("search_deadlines", {
+    query: "セキュリティ",
+    limit: 1,
+    kinds: ["論文締切", "採否通知"],
+  });
+  const 配列英語 = await call("search_deadlines", {
+    query: "セキュリティ",
+    limit: 1,
+    kinds: ["paper", "notification"],
+  });
+  expect(件(配列日本), "配列の日本語と英語で件數が違ふ").toBe(件(配列英語));
+  /* 本当に知らない種別は從つて通りの文（余計な推測を足さない）。 */
+  const 知らん = await call("search_deadlines", { query: "セキュリティ", limit: 1, kind: "zzz" });
+  expect(知らん, "知らない種別に敿へを出した").toContain("知らない種別");
+});
