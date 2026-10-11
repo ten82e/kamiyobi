@@ -5580,3 +5580,33 @@ it("札の「未確認」は正本から取る（第 1058 回）", async () => {
     }
   }
 });
+
+it("常時受付の行も版の識別子を持つ（第 1059 回）", async () => {
+  /* 實測 2026-11-19: 常時受付のジャーナルの推薦行は「（undefined）」と出して居た –
+   * `Recommender.journalRows` が作る行の `ed` に `id` が無かつた。AI が行を讀んで
+   * `venue_info` を引く時の手がかりが無い（「版の識別子」を書いて居る行として不完全）。
+   *
+   * 會議の key を其の儘入れるやうにした（「版」は無いが、會議は一意に指せる）。 */
+  const R = (await import("../site/recommender.ts")).default;
+  const now = Date.parse("2026-11-19T00:00:00Z");
+  const 品書 = JSON.parse(readFileSync(join(REPO_ROOT, "public", "catalog.json"), "utf8"));
+  const 期刊行 = R.journalRows(品書.conferences, now) as Array<{
+    ed: { id?: string };
+    conf: { key?: string };
+  }>;
+  expect(期刊行.length, "常時受付の行が讀めない（この檢查が空振り）").toBeGreaterThan(0);
+  for (const r of 期刊行) {
+    expect(String(r.ed?.id ?? "").trim(), "常時受付の行に id が無い").toBe(
+      String(r.conf?.key ?? ""),
+    );
+    expect(String(r.ed?.id ?? ""), "空文字の id").not.toBe("");
+  }
+
+  /* **實物** – 推薦の行に「（undefined）」が出ない。 */
+  const 答 = await call("recommend_venues", { paper: "ネットワーク", limit: 30 });
+  expect(答, "推薦に「（undefined）」が出て居る").not.toContain("（undefined）");
+  expect(答, "推薦の行が出て居ん").toMatch(/^1\. /m);
+  /* 常時受付の行は「會期 該当なし」（第 852 囘の決まり – 變はらない）。 */
+  const 常時 = 答.split("\n").filter((l) => /^\d\. /.test(l) && l.includes("常時受付"));
+  for (const l of 常時) expect(l, "常時受付の行に會期が出て居る").toContain("会期 該当なし");
+});

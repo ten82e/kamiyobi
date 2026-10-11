@@ -63,6 +63,10 @@ interface EditionRecord {
   year?: number;
   place?: string;
   date_text?: string;
+  /** 版の識別子（`data.csv` の `edition_id` と同値）。常時受付のジャーナルは「版」を
+   * 持たないので、其の時は會議の key を入れる（第 1059 囮 – MCP の行が「（undefined）」
+   * と出して居た。AI が行を讀んで `venue_info` を引く時の手がかり）。 */
+  id?: string;
   /** 会期の暦日。国際会議の `date_text` は英語表記なので、月での検索はこっちを使う。 */
   event_start?: string;
   event_end?: string;
@@ -16084,7 +16088,10 @@ const Recommender = (() => {
       const cats = conf.categories || [];
       out.push({
         conf: conf,
-        ed: { place: "", date_text: "" },
+        /* **版の識別子は會議の key**（第 1059 囮 – 實測 2026-11-19: `ed.id` が無いと
+         * MCP の行が「（undefined）」と出して居た。常時受付のジャーナルに「版」は無いが、
+         * AI が行を讀んで `venue_info` を引く時の手がかりになる。會議の key を其の儘使ふ）。 */
+        ed: { place: "", date_text: "", id: conf.key },
         dl: { label: "", round: 1 },
         kind: "journal",
         est: false,
