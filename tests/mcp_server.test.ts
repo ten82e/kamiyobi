@@ -5360,3 +5360,59 @@ it("端數と上限は兩方続けて言ふ（第 1044 回）", async () => {
   const 推薦 = 帶(await call("recommend_venues", { paper: "分散", limit: 999.9 }));
   expect(推薦, "推薦の上限を言つて居ん").toContain("上限 100 を超えた");
 });
+
+it("ヘルプの例は 6 つの道具を全部覆ひ、実際に效く（第 1046 回）", async () => {
+  /* 實測 2026-11-19: `--help` の例は 4 つ（search・explain_word・list_upcoming・venue_info）
+   * で、**`recommend_venues` と `collection_stats` に例が無かつた**。參照經路（ヘルプ）が
+   * 6 つの道具を覆つて居ない – 人は此の例を見て打つ。
+   * あはせて**例が效く事**も確かめる（`recommend "時間スケジューリング"` は 0 件だつた –
+   * 實測 2026-11-19: 「分散システム」は 5 件。0 件の例を載せると人は「使へない」と思ふ）。 */
+  const res = (await client.ask({ jsonrpc: "2.0", id: 1, method: "tools/list" })) as {
+    result?: { tools?: Array<{ name?: string }> };
+  };
+  const 道具 = (res.result?.tools ?? []).map((t) => String(t.name ?? ""));
+  expect(道具.length, "道具が讀めない").toBe(6);
+
+  const 手引き = spawnSync(process.execPath, [join(REPO_ROOT, "src", "mcp.ts"), "--help"], {
+    encoding: "utf8",
+    timeout: 60000,
+  });
+  expect(手引き.status, `ヘルプが落ちた: ${手引き.stderr?.slice(0, 120)}`).toBe(0);
+  const 例 = 手引き.stdout.split("\n").filter((l) => l.startsWith("  例: node src/mcp.ts "));
+  expect(例.length, "例が讀めない（この檢查が空振り）").toBe(6);
+
+  /* 全部の例が**效く**（0 件・知らない道具・落ちる、の何れでもない）。 */
+  for (const l of 例) {
+    const 引數 = l
+      .replace("  例: node src/mcp.ts ", "")
+      .split(" ")
+      .filter((s) => s.length > 0);
+    const r = spawnSync(process.execPath, [join(REPO_ROOT, "src", "mcp.ts"), ...引數], {
+      encoding: "utf8",
+      timeout: 60000,
+    });
+    const 出た = r.stdout.split("\n")[0] ?? "";
+    expect(r.status, `例が落ちた: ${l}`).toBe(0);
+    expect(出た, `例が知らない道具を返した: ${l}`).not.toContain("知らない道具");
+    expect(出た, `例が 0 件を返した（使へない例）: ${l} → ${出た.slice(0, 60)}`).not.toMatch(
+      /: 0 件|0 件（/,
+    );
+  }
+
+  /* 6 つの道具全部が例に在る（漏れが無い）。 */
+  for (const n of 道具) {
+    /* 短い別名で例を書いて居る道具（ヘルプの例は人が打つので短い方が良い）。 */
+    const 短い: Record<string, string> = {
+      search_deadlines: "search",
+      collection_stats: "stats",
+      recommend_venues: "recommend",
+    };
+    const 烙印 = 短い[n] ?? n;
+    /* 烙印の後ろは空白**または行末**（`stats` は引數が無いので行末）。 */
+    const 一歡 = 例.some((l) => {
+      const 打たれた = l.replace(/^\s*例: node src\/mcp\.ts\s*/, "");
+      return 打たれた === 烙印 || 打たれた.startsWith(`${烙印} `);
+    });
+    expect(一歡, `${n} に例が無い`).toBe(true);
+  }
+});

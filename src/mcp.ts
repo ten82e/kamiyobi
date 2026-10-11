@@ -2495,6 +2495,8 @@ function main(): void {
         '  例: node src/mcp.ts explain_word "学生でも投稿できる"',
         "  例: node src/mcp.ts list_upcoming 30",
         "  例: node src/mcp.ts venue_info kdd",
+        '  例: node src/mcp.ts recommend "分散システム"',
+        "  例: node src/mcp.ts stats",
       ].join("\n") + "\n",
     );
     return;
