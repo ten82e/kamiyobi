@@ -5510,3 +5510,38 @@ it("推定の幅は一つの正本から兩方が出る（第 1053 回）", asyn
     expect(l).toMatch(/推定期間 \d{4}-\d{2}-\d{2}〜\d{4}-\d{2}-\d{2}/);
   }
 });
+
+it("時刻未確認の行は「いつ終はつたか」を言ふ（第 1055 回）", async () => {
+  /* 實測 2026-11-19: 此の行は時刻未確認の行を「YYYY-MM-DD（時刻未確認）」とだけ出して、
+   * **「殘り」を默つて省いて居た**。畫面のドロワーは「（時刻未確認。すでに終了している
+   * 可能性があります）」と出して居るのに、MCP は默つて居た – AI が「提出期限は明日です」
+   * と答えても、實は昨日終はつて居た。**畫面と同じ規則**を見て、三狀態を言ふ。 */
+  const R = (await import("../site/recommender.ts")).default;
+  const D = 86400000;
+  const now = Date.parse("2026-11-01T00:00:00Z");
+  const mk = (t: number, tLast: number) => ({ dateOnly: true, t, tLast, localDate: "2026-10-11" });
+  /* 正本の動き（3 狀態 + null）。 */
+  expect(R.dateOnlyStateJa(mk(now + 10 * D, now + 11 * D), now)).toBe("definitely-future");
+  expect(R.dateOnlyStateJa(mk(now - D, now + D), now)).toBe("uncertain-on-date");
+  expect(R.dateOnlyStateJa(mk(now - 11 * D, now - 10 * D), now)).toBe("definitely-past");
+  expect(R.dateOnlyStateJa({ dateOnly: false, t: now, tLast: now }, now)).toBeNull();
+  /* 邊境（其の日にちょうど = uncertain・t が數で無い = null）。 */
+  expect(R.dateOnlyStateJa(mk(now, now), now)).toBe("uncertain-on-date");
+  expect(R.dateOnlyStateJa({ dateOnly: true }, now)).toBeNull();
+
+  /* **實物** – 時刻未確認の行が「すでに終了している可能性」を言ふ。 */
+  const 答 = await call("venue_info", { key: "stacs-2027-first", scope: "all" });
+  const 行 = 答.split("\n").filter((l) => /^2\d{3}-/.test(l) && l.includes("時刻未確認"));
+  expect(行.length, "時刻未確認の行が出て居ん").toBeGreaterThan(0);
+  for (const l of 行) {
+    expect(l, "終はつた可能性を默つて居る").toContain(
+      "（時刻未確認。すでに終了している可能性があります）",
+    );
+    /* 二重に「（時刻未確認）」と並べない（重複は slops）。 */
+    expect(l.split("（時刻未確認）").length - 1, "「（時刻未確認）」が重なつて居る").toBe(0);
+  }
+  /* **確認された時刻の行**は「殘り N 日」の儘（第 852 囘の決まり – 變へない）。 */
+  const icde = await call("venue_info", { key: "icde", scope: "all" });
+  const 確定 = icde.split("\n").filter((l) => /^2\d{3}-/.test(l) && /残り\d+日/.test(l));
+  expect(確定.length, "確定の行に「殘り」が出て居ん").toBeGreaterThan(0);
+});

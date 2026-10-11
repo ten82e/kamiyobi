@@ -325,9 +325,21 @@ function 確認の內譯(rows: Row[]): string {
  * 会期・開催地）。並びは此方の都合（日時 → 種別 → 会議 → ランク → 会期 → 開催地）で、
  * 畫面の列の順其の侭ではない。 */
 function line(r: Row, now: number): string {
-  const 日 = r.dateOnly ? `${r.localDate}（時刻未確認）` : jst(r.t);
+  const 日 = r.dateOnly ? r.localDate : jst(r.t);
   const 殘り = Math.floor((r.t - now) / 86400000);
-  const 殘り文 = r.dateOnly ? "" : ` 残り${殘り < 0 ? "（過ぎた）" : `${殘り}日`}`;
+  /* **時刻未確認の行は「いつ終はつたか」を言ふ**（第 1055 囘 – 實測 2026-11-19: 此の行は
+   * 「（時刻未確認）」とだけ出して、**「殘り」を默つて省いて居た**。畫面のドロワーは
+   * 「（時刻未確認。すでに終了している可能性があります）」と出して居るのに、MCP は
+   * 默つて居た – AI が「提出期限は明日です」と答えても、實は昨日終はつて居た。
+   * `Recommender.dateOnlyStateJa` の正本（`site/app.ts` と共有）で三狀態を見る。 */
+  const 日の狀態 = Recommender.dateOnlyStateJa(r, now);
+  const 殘り文 = r.dateOnly
+    ? 日の狀態 === "definitely-past"
+      ? "（時刻未確認。締切日経過）"
+      : 日の狀態 === "uncertain-on-date"
+        ? "（時刻未確認。すでに終了している可能性があります）"
+        : ""
+    : ` 残り${殘り < 0 ? "（過ぎた）" : `${殘り}日`}`;
   /* **投稿のトラック**も種別に添へる（第 1035 回 – 實測 2026-11-19: `track` が空でない
    * 締切は 8 件（closer・cpal など）で、`data.json`・`llms.txt` のどちらにも在る（索引の
    * スキーマの說明にも「track: string：投稿のトラック」と書かれて居る）のに、**此の行は

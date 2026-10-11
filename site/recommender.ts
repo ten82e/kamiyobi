@@ -8575,6 +8575,30 @@ const Recommender = (() => {
   const PAST_DEADLINE_TAG_JA = "締切済み";
 
   /** 行が締切を過ぎたかどうか（一覧の印・過去の締切の絞り込み・残り欄が同じ 1 本を見る）。 */
+  /* **時刻未確認の行が「いつ終はつたか」の三狀態**（第 1055 囘 –
+   * `site/app.ts` の `rowDateOnlyState` は畫面のローカルだつた。MCP は「（時刻未確認）」
+   * としか出せず、**「すでに終はつて居る可能性」**を默つて居た（畫面のドロワーは
+   * 「（時刻未確認。すでに終了している可能性があります）」と出して居る）。
+   * AI が「提出期限は明日です」と答へても、實は昨日終はつて居た – 之を正本にする。
+   *
+   * 返り値:
+   *   - `definitely-future` : 一番遲い可能性の日でも未來
+   *   - `uncertain-on-date` : 其の日の中（終はつたかも知れない）
+   *   - `definitely-past`   : 一番遲い可能性の日でも過去
+   *   - `null`              : 時刻が確認されて居る行（此の状態は持ち得ない） */
+  function dateOnlyStateJa(
+    r: { dateOnly?: unknown; t?: unknown; tLast?: unknown },
+    now: number,
+  ): "definitely-future" | "uncertain-on-date" | "definitely-past" | null {
+    if (!r.dateOnly) return null;
+    if (typeof r.t !== "number" || typeof r.tLast !== "number") return null;
+    const t = r.t;
+    const tLast = r.tLast;
+    if (now < t) return "definitely-future";
+    if (now <= tLast) return "uncertain-on-date";
+    return "definitely-past";
+  }
+
   function deadlineRowIsPast(
     row: { t?: unknown; tLast?: unknown; dateOnly?: unknown },
     nowMs: number,
@@ -17263,6 +17287,7 @@ const Recommender = (() => {
     deadlineRowIsPast: deadlineRowIsPast,
     jstNoonMs: jstNoonMs,
     pastDeadlineTagJa: pastDeadlineTagJa,
+    dateOnlyStateJa: dateOnlyStateJa,
     deadlineShiftsOf: deadlineShiftsOf,
     deadlineShiftLineJa: deadlineShiftLineJa,
     estimateWindowJa: estimateWindowJa,

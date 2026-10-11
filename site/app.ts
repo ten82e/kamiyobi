@@ -911,12 +911,11 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     );
   }
 
+  /* 時刻未確認の三狀態は **recommender.js の正本**（第 1055 囮で MCP と共有 –
+   * 畫面と AI が同じ規則を見るやうに）。MCP の行は此れで「（時刻未確認。すでに終了して
+   * 居る可能性があります）」を出す。 */
   function rowDateOnlyState(r: AppRow | DrawerRow, now: number) {
-    if (!r.dateOnly) return null;
-    if (typeof r.t !== "number" || typeof r.tLast !== "number") return null;
-    if (now < r.t) return "definitely-future";
-    if (now <= r.tLast) return "uncertain-on-date";
-    return "definitely-past";
+    return Recommender.dateOnlyStateJa(r, now);
   }
 
   function rowIsPast(r: AppRow, now: number) {

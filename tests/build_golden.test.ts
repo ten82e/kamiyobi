@@ -2692,6 +2692,10 @@ it("browser date-only state is independent of the viewer timezone", () => {
     "Recommender.deadlineRowIsPast = " +
       jsFunction(siteRuntime("recommender.js"), "deadlineRowIsPast") +
       ";",
+    // rowDateOnlyState も recommender.js の正本に寄った（第 1055 囮）ので、雛形に足す。
+    "Recommender.dateOnlyStateJa = " +
+      jsFunction(siteRuntime("recommender.js"), "dateOnlyStateJa") +
+      ";",
     jsFunction(app, "rowDateOnlyState"),
     jsFunction(app, "rowIsPast"),
     "const data = { conferences: [{ key: 'x', title: 'X', editions: [{ year: 2026, deadlines: [{ kind: 'paper', precision: 'date-only', local_date: '2026-08-24', earliest_utc: '2026-08-23T10:00:00.000Z', latest_utc: '2026-08-25T11:59:59.999Z' }] }] }] };",
