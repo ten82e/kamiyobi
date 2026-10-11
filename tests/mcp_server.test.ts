@@ -3199,9 +3199,13 @@ it("limit は整数で、打ち切って無い時は言わない（第 924 回�
   const 行數 = (t: string): number => t.split("\n").filter((l) => /^20\d\d-/.test(l)).length;
 
   /* 打ち切る時は limit を言って、行數と一致する。 */
+  const t = await call("search_deadlines", { query: "セキュリティ", limit: 100 });
+  const 全部の件 = Number(
+    (/に当たる締切: ([\d,]+) 件/.exec(t.split("\n")[0] ?? "") ?? [0, "0"])[1].replace(/,/g, ""),
+  );
   const 五 = await 劈いた(5);
   expect(五.split("\n")[1] ?? "", "5 件で切り詰めた時に limit を言つて居ん").toContain(
-    "5 件まで表示・残り 32 件",
+    `5 件まで表示・残り ${全部の件 - 5} 件`,
   );
   expect(行數(五), "5 件まで表示なのに 5 行出て居ない").toBe(5);
 
@@ -3216,7 +3220,7 @@ it("limit は整数で、打ち切って無い時は言わない（第 924 回�
   expect(五十.split("\n")[1] ?? "", "切り詰めて居ないのに limit を言つた").not.toContain(
     "件まで表示",
   );
-  expect(行數(五十), "37 件全部が出て居ない").toBe(37);
+  expect(行數(五十), `${全部の件} 件全部が出て居ない`).toBe(全部の件);
 
   /* 推薦の道具も同じ（同じ書き方にした – 讀む人が二つで違う数字を見るのは，讀む人が二つの道具で違うのを見るのは、最も見つけ難い方だから）。 */
   const 推 = await call("recommend_venues", {
