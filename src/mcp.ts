@@ -2066,11 +2066,37 @@ function recommendVenues(
   const 行の截 = 20;
   const lines = 全部の行.slice(0, 行の截);
 
+  /* **一つの論文の中の行數**も截る（第 1050 回 – 實測 2026-11-19: `parsePaperLines` は
+   * 1 本の長い論文を **1 件**にまとめ、全部の行を `title` に入れる。其の迄は論文數
+   * （`全部の行.length`）しか截つて居なかつたので、1,000 行の論文を送つても**截りの文が
+   * 出ず**、「殘りは參考にして居ません」と言つて居なかつた。第 954 囘の實測
+   * （1,000 行で 120 秒）は今も有效 – 默つて全部を見て居た。切つた事を言ふ。 */
+  const 行數の截 = 20;
+  const 論文ごとの行 = lines.map((p) => {
+    const 割つた = String(p.title ?? "")
+      .split("\n")
+      .map((l) => l.trim())
+      .filter((l) => l.length > 0);
+    if (割つた.length <= 行數の截) return p;
+    return { ...p, title: 割つた.slice(0, 行數の截).join("\n") };
+  });
+  const 一番長い論文 = Math.max(
+    0,
+    ...全部の行.map(
+      (p) =>
+        String(p.title ?? "")
+          .split("\n")
+          .filter((l) => l.trim()).length,
+    ),
+  );
+
   const 截りの文 =
     全部の行.length > 行の截
       ? `（${全部の行.length} 行のうち、最初の ${行の截} 行（題名・概要）で調べました – 残りは参考にして居ません）`
-      : "";
-  if (!lines.length)
+      : 一番長い論文 > 行數の截
+        ? `（論文の中の ${一番長い論文} 行のうち、最初の ${行數の截} 行で調べました – 残りの行は参考にして居ません）`
+        : "";
+  if (!論文ごとの行.length)
     return "論文の題名を読み取れませんでした。題名を 1 行でください（`|` でキーワードと投稿先を添へられます）。";
   /* **候補の pool は畫面と同じ**（第 894 回 – 實測 2026-10-25: 此方は索引の行をそのまま使つて
    * 居たので、2,458 本の内 2,270 本（92%）が**過ぎた締切**だつた。「投稿先を探す」の候補が
@@ -2086,14 +2112,17 @@ function recommendVenues(
     .filter((r) => !Recommender.deadlineRowIsPast(r, now))
     .concat(Recommender.journalRows(會議, now) as unknown as Row[])
     .concat(Recommender.pastRepresentatives(行 as never, now) as unknown as Row[]);
-  const 候補 = Recommender.venueRecommendations(pool, lines, null, now, {
+  /* **截つた行**を推薦に渡す（第 1050 回 – `lines` は未截りだつた。實測 2026-11-19:
+   * 100 行の論文で候補が 15 件・1,000 行では 0 件（「filler」だらけで軸が壊れた）。
+   * 截つた 20 行にすると、行數が增えても候補が變はらない）。 */
+  const 候補 = Recommender.venueRecommendations(pool, 論文ごとの行, null, now, {
     fieldedLexical: true,
   }).filter((r) => r.fit.score >= 10);
   /* 題名は**最初の一行だけ**を出す（第 918 回 – 實測 2026-11-08: 3 行の要約を渡すと、
    * 見出しが三行の全部を「 / 」で繋いだ 1 行になって目的を覆ふ。畫面は摘要 其侭の
    * 紙面を出さず、候補の行に會議を出す – 此方も**最初の一行**を題として出す。
    * 其の他の行も計算には使うので「ほか N 行の語も見て居ます」と書く。 */
-  const 題々 = lines.map((l) => String(l.title ?? "").trim()).filter(Boolean);
+  const 題々 = 論文ごとの行.map((l) => String(l.title ?? "").trim()).filter(Boolean);
   const 題 = 題々[0] ?? "";
   const 餘 = 題々.length > 1 ? `（ほか ${題々.length - 1} 行の語も見て居ます）` : "";
   /* 見出しは 40 字で切るが、**計算には全部使つて居る** – 默つて切ると讀む人が
