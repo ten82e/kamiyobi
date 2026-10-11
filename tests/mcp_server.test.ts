@@ -5235,3 +5235,41 @@ it("古い key（legacy_keys）でも會議を引ける（第 1039 回）", asyn
   expect(cli.stdout, "CLI が古い key を name として渡して仕舞つた").toContain("key: admit-2026");
   expect(cli.stdout, "CLI が「收錄に在りません」と言つた").not.toContain("収録に在りません");
 });
+
+it("行に足した 3 つの值は、4 つの道具の行と説明に出る（第 1041 回）", async () => {
+  /* 第 1034・1035・1037 囘で**行**に推定の幅・トラック・差し替へを足した。**說明を
+   * 更新し忘れて居た** – 悉皆 2026-11-19: 4 つの道具のうち `search_deadlines` は
+   * トラックだけ言つて居て、`list_upcoming`・`recommend_venues`・`explain_word` は
+   * **三つとも默つて居た**。行だけ直しても、說明が「この欄は會期…」と書くだけなので、
+   * AI は幅を期待しない。「同じ形がもう一箇所」のまた一つ。 */
+  const res = (await client.ask({ jsonrpc: "2.0", id: 1, method: "tools/list" })) as {
+    result?: { tools?: Array<{ name?: string; description?: string }> };
+  };
+  const 文 = (n: string): string =>
+    (res.result?.tools ?? []).find((t) => t.name === n)?.description ?? "";
+  /* 直接書く 2 つ。 */
+  for (const n of ["search_deadlines", "list_upcoming"]) {
+    const d = 文(n);
+    expect(d, `${n} の說明に推定期間が無い`).toContain("推定期間");
+    expect(d, `${n} の説明にトラックが無い`).toContain("トラック");
+    expect(d, `${n} の説明に差し替へが無い`).toContain("前に出ていた締切");
+  }
+  /* 殘る 2 つは「`search_deadlines` と同じ欄」と參照して居る – 其の參照が實際に效く事を
+   * **實物**で確かめる（說明だけ合つて居て行が出して居ない、の逆を防ぐ）。 */
+  const 推薦 = await call("recommend_venues", { paper: "CLOSER の position", limit: 5 });
+  const 推薦の行 = 推薦.split("\n").filter((l) => /^\d\. /.test(l));
+  expect(推薦の行.length, "推薦の行が出て居ん").toBeGreaterThan(0);
+  expect(
+    推薦の行.some((l) => /論文締切（[^）]+）/.test(l)),
+    "推薦の行にトラックが出て居ない（search_deadlines と同じ欄の筈）",
+  ).toBe(true);
+  const 語 = await call("explain_word", { word: "closer" });
+  const 語の行 = 語.split("\n").filter((l) => /^-\s*2\d{3}-/.test(l));
+  expect(語の行.length, "explain_word の行が出て居ん").toBeGreaterThan(0);
+  for (const l of 語の行) {
+    /* 差し替への札が出る筈（closer は 2026-11-18 が regular・2026-12-22 が position）。 */
+    if (l.includes("closer")) {
+      expect(l, "explain_word の行にトラックが出て居ない").toMatch(/論文締切（[^）]+）/);
+    }
+  }
+});
