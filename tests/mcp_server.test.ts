@@ -4714,7 +4714,7 @@ it("list_upcoming の days が上限を超えたら默つて截めない（第 1
   for (const 値 of [401, 900, 5000, 999999]) {
     const 答 = await call("list_upcoming", { days: 値, limit: 1 });
     expect(答, `days: ${値} を默つて截めて居ん`).toContain(
-      `（${値} 日は上限 400 を超えたので 400 日として切りました）`,
+      `（上限 400 を超えたので 400 日として切りました）`,
     );
   }
   /* 上限ぴったり（400）は何も言はない。 */
@@ -5286,7 +5286,7 @@ it("端數の limit は默つて切り捨てない（第 1043 回）", async () 
   for (const 値 of [3.7, 2.5, 100.1]) {
     const 答 = await call("search_deadlines", { query: "セキュリティ", limit: 値 });
     expect(答, `limit: ${値} を默つて切り捨てた`).toContain(
-      `（${値} 件は端数なので、${Math.floor(値)} 件として切りました）`,
+      `（${値} は端数なので、${Math.floor(値)} として切りました）`,
     );
   }
   /* 整數は默る（其の儘使ふ – 第 852 回と同じ決まり）。 */
@@ -5302,9 +5302,61 @@ it("端數の limit は默つて切り捨てない（第 1043 回）", async () 
   for (const 値 of [3.7, 2.5]) {
     const 答 = await call("recommend_venues", { paper: "分散システム", limit: 値 });
     expect(答, `推薦の limit: ${値} を默つて切り捨てた`).toContain(
-      `（${値} 件は端数なので、${Math.floor(値)} 件として切りました）`,
+      `（${値} は端数なので、${Math.floor(値)} として切りました）`,
     );
   }
   const 推薦の整數 = await call("recommend_venues", { paper: "分散システム", limit: 5 });
   expect(推薦の整數, "推薦の整數 limit に斷りを出した").not.toContain("端数なので");
+});
+
+it("端數と上限は兩方続けて言ふ（第 1044 回）", async () => {
+  /* 第 1043 囘で端數の `limit` を默つて切り捨てないやうにした。が、**二つの軸が交はる
+   * 所**が拔けて居た – 實測 2026-11-19:
+   *   - `days: 900.5` → 「900.5 日は端数なので、900 日として切りました」と言つたきりで、
+   *     **上限 400** が效いた事を言つて居ない（AI は「900 日調べた」と思ふ）。
+   *   - `limit: 999.9` → 「999.9 件は端数なので、999 件として切りました」だけで、
+   *     **上限 100** が效いた事を言つて居ない。
+   * 端數を切つた**後の値**で上限を見るので、兩方を續けて言ふ。 */
+  const 帶 = (t: string): string => t.split("\n")[0] ?? "";
+  for (const [名, 引數, 端數の文, 上限の文] of [
+    [
+      "list_upcoming",
+      { days: 900.5 },
+      "900.5 日は端数なので、900 日として切りました",
+      "上限 400 を超えたので 400 日として切りました",
+    ],
+    ["list_upcoming", { days: 400.5 }, "400.5 日は端数なので、400 日として切りました", ""],
+    ["list_upcoming", { days: 900 }, "", "上限 400 を超えたので 400 日として切りました"],
+    ["list_upcoming", { days: 3.7 }, "3.7 日は端数なので、3 日として切りました", ""],
+  ] as const) {
+    const 頭 = 帶(await call(名, 引數));
+    if (端數の文)
+      expect(頭, `${名} ${JSON.stringify(引數)} の端數を言つて居ん`).toContain(端數の文);
+    if (上限の文)
+      expect(頭, `${名} ${JSON.stringify(引數)} の上限を言つて居ん`).toContain(上限の文);
+    if (!端數の文)
+      expect(頭, `${名} ${JSON.stringify(引數)} に端數の文を出した`).not.toContain("端数なので");
+    if (!上限の文)
+      expect(頭, `${名} ${JSON.stringify(引數)} に上限の文を出した`).not.toContain(
+        "上限 400 を超えた",
+      );
+  }
+  for (const [引數, 端數の文, 上限の文] of [
+    [
+      { query: "セキュリティ", limit: 999.9 },
+      "999.9 は端数なので、999 として切りました",
+      "上限 100 を超えたので 100 として切りました",
+    ],
+    [{ query: "セキュリティ", limit: 100.5 }, "100.5 は端数なので、100 として切りました", ""],
+    [{ query: "セキュリティ", limit: 3.7 }, "3.7 は端数なので、3 として切りました", ""],
+  ] as const) {
+    const 頭 = 帶(await call("search_deadlines", 引數));
+    if (端數の文) expect(頭, `${JSON.stringify(引數)} の端數を言つて居ん`).toContain(端數の文);
+    if (上限の文) expect(頭, `${JSON.stringify(引數)} の上限を言つて居ん`).toContain(上限の文);
+    if (!上限の文)
+      expect(頭, `${JSON.stringify(引數)} に上限の文を出した`).not.toContain("上限 100 を超えた");
+  }
+  /* 推薦も兩方。 */
+  const 推薦 = 帶(await call("recommend_venues", { paper: "分散", limit: 999.9 }));
+  expect(推薦, "推薦の上限を言つて居ん").toContain("上限 100 を超えた");
 });
