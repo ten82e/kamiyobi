@@ -681,16 +681,26 @@ function 名前に立つ(語: string, 殼: string): boolean {
  * どちらが足りんのかは分かるが、**收錄が其の語を一つも持たん事**が讀めない。實測
  * 2026-10-15: `ネットワーク GPU` は GPU が窓 0 行・收錄 0 行（`gpu` の語がどこにも無い）。
  *
- * 件數は畫面と同じ正典（`Recommender.queryTermCounts`）で、**同じ行の集合**を數へる。 */
-function 語ごとの案號(query: string, list: Row[], now: number): string[] {
+ * 件數は畫面と同じ正典（`Recommender.queryTermCounts`）で、**同じ行の集合**を數へる。
+ *
+ * **「收録データにも見當たらない」は收錄の全体で數へる**（第 1033 回 – 實測 2026-11-19:
+ * `Jeju Island` は「この語は畫面が最初に讀む窓には 1 行もありませんが、收録の全體には 4 行
+ * あります」と**同時に**「「jeju」・「island」は收録データにも見當たりません」と出して居た –
+ * 後者は**窓の行**だけで數へて居たので、言ふ事が逆に成つて居た。窓の中で死んで居る語は
+ * 全部の收錄では生きて居る事が普通なので（ICDM 2027 のやうに年が增えた會議）、
+ * **主張の通りの所**（收錄の全体）で數へて真偽を揃へる）。 */
+function 語ごとの案號(query: string, list: Row[], now: number, 全部の收錄?: Row[]): string[] {
   /* URL を貼つた人には**ドメインの部品を語として扱はない**（畫面が `termNote` を `!filter.urlQuery`
    * で閉じて居るのと同じ – 第 153 回）。實測 2026-10-16: `https://icde2027.example.org/cfp` に
    * 「『example』は収録データにも見当たりません」と出て居た – 分解された語はドメインの一部で、
    * 檢索の失敗理由では無い。 */
   if (Recommender.looksLikeUrlQuery(query)) return [];
+  /* 上の第 1033 回の註 – **收錄の全体**で數へる（窓だけで數へると「收録に見當たらない」
+   * が噓に成る）。收錄の全体を渡して居ない時（窓が其の儘全部の時）は其の儘。 */
+  const 數へる對照 = 全部の收錄 ?? list;
   const 件數 = Recommender.queryTermCounts(
     Recommender.expandRelativeMonths(query, now),
-    list.map((r) => r.hay),
+    數へる對照.map((r) => r.hay),
     now,
   );
   if (件數.length < 2) return []; // 語が一つの時は他の家（打ち直し・種別の話）が受持ちを持つ。
@@ -1203,7 +1213,7 @@ function searchDeadlines(
           `検索語は${選べる}の種別に当たります（表には投稿締切だけを出します）。kinds: ${JSON.stringify(鍵々)} で引けます（${件數} 件当たります）。`,
         ];
       })(),
-      ...語ごとの案號(query, list, now),
+      ...語ごとの案號(query, list, now, 窓の外 > 0 ? allRows() : undefined),
       ...(素の.length ? [] : URLの案内(query)),
       ...案内.map((n) => `案内: ${n}`),
       /* 日數の幅（「1か月以内」）は畫面の「締切まで」と同じ引數（`within_days`・第 872 回）を
@@ -1217,7 +1227,7 @@ function searchDeadlines(
         if (名乘りの案内(query, list, now).length) return [];
         if (URLの案内(query).length) return [];
         if (隱れた種別の語(query).length) return [];
-        if (語ごとの案號(query, list, now).length) return [];
+        if (語ごとの案號(query, list, now, 窓の外 > 0 ? allRows() : undefined).length) return [];
         /* 行が**見えて居る**時にだけ、行が当たるかどうかに関係なく言ふ案内（`ics` のやうな
          * 曖昧さ – 畫面の `uiWordAlwaysNoteJa` と同じ。第 942 回）。0 件の時は 0 件案内が同じ事を
          * 言ふので、此の道具でも重ねない。 */

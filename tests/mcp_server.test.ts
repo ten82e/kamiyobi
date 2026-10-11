@@ -4885,3 +4885,30 @@ it("ランクは行の出し方（CCF A）でも濾せる（第 1031 回）", as
   const 知らん = await call("search_deadlines", { query: "セキュリティ", limit: 1, rank: "D" });
   expect(知らん, "知らない等級に敿へを出した").toContain("知らないランク");
 });
+
+it("「收録に見当たらない」は收録の全體で數へる（第 1033 回）", async () => {
+  /* 實測 2026-11-19: `Jeju Island` は**同時に二つの逆の事**を言つて居た。
+   *   「この語は画面が最初に読む窓（871 行）には 1 行もありませんが、収録の全体には 4 行あります」
+   *   「検索語のうち「jeju」・「island」は収録データにも見当たりません」
+   * 後者は**窓の行**だけで數へて居たので、收録の全体では生きて居る語が「見当たらない」に
+   * 成つて居た。**主張（「収録データにも」）と數へた所が違ふ** – 此の計畫で一番惡い形。
+   * 收錄の全體で數へるやうに直した（窓の中で死んで居る語は、年が增えた會議では
+   * 全体では生きて居る事が普通 – ICDM 2027 の事故と同じ構圖）。 */
+  const 答 = await call("search_deadlines", { query: "Jeju Island", limit: 1 });
+  expect(答, "收録の全體に行が在ると言つて居ん").toContain("収録の全体には 4 行あります");
+  expect(答, "「jeju」を收録に見当たらないと言つた（逆の事を言つて居る）").not.toContain(
+    "「jeju」は収録データにも見当たりません",
+  );
+  expect(答, "「island」を收録に見当たらないと言つた（逆の事を言つて居る）").not.toContain(
+    "「island」は収録データにも見当たりません",
+  );
+  expect(答, "語が在る事を言つて居ん").toMatch(/語をすべて含む行はありません/);
+  expect(答, "語ごとの件數が讀めない").toMatch(/「jeju」\d+件・「island」\d+件/);
+
+  /* 逆に、**本当に**收錄のどこにも無い語は從つて通り「見当たらない」と言ふ。 */
+  const 死語 = await call("search_deadlines", { query: "セキュリティ zzz9", limit: 1 });
+  expect(死語, "死語の報べが消えた").toContain("「zzz9」は収録データにも見当たりません");
+  /* `セキュリティ GPU` の形 – GPU がどこにも無いので、其の儘「見当たらない」が出る。 */
+  const gpu = await call("search_deadlines", { query: "セキュリティ GPU", limit: 1 });
+  expect(gpu, "gpu の死語の報べが變はつた").toContain("「gpu」は収録データにも見当たりません");
+});
