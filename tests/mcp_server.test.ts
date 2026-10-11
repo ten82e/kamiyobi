@@ -5191,3 +5191,47 @@ it("會期の見直しの覺え書きも行に出す（第 1038 回）", async (
     }
   }
 });
+
+it("古い key（legacy_keys）でも會議を引ける（第 1039 回）", async () => {
+  /* 實測 2026-11-19: `identity_migrations` に **32 件**の「古い key → 新しい key」が記錄
+   * されて居る（會議の `legacy_keys` は 16 件）。`data.json` にも `llms.txt` のスキーマの
+   * 說明（「legacy_keys: string[]：以前の版の識別子（改名・統合の前に使っていた物）」）にも
+   * 在るのに、**引く經路が無かつた** – `venue_info({key: "ieee-admit-2026"})` は
+   * 「收錄に在りません」と答へて居た。AI は改名・統合の前の ID を持つ文獻・引用を讀むので、
+   * 其の儘では手がかりが無い。版の識別子（第 887 回）と同じ決まりに揃へる。 */
+  const 收錄 = JSON.parse(readFileSync(join(REPO_ROOT, "data", "snapshot.json"), "utf8")) as {
+    conferences: Array<Record<string, any>>;
+  };
+  const 古い鍵 = new Map<string, string>();
+  for (const c of 收錄.conferences) {
+    for (const l of Array.isArray(c.legacy_keys) ? c.legacy_keys : []) {
+      if (String(l ?? "").trim()) 古い鍵.set(String(l), String(c.key ?? ""));
+    }
+  }
+  /* `fse` は 2 會議（fse-sc・fse-se）が同じ古い key を持つので、ユニークは 15 に成る
+   * （重複は 16 件）。兩方に「同じ古い key」が在る事は venueMatch の曖昧さと同じ型 –
+   * 其の場合は「どちらとも決められない」と答へるべきで、此の檢查では其の儘通す。 */
+  expect(古い鍵.size, "古い key が讀めない（この檢查が空振り）").toBe(15);
+
+  /* **悉皆** – 古い key 全部が、會議を引ける（「收錄に在りません」と言はない）。 */
+  for (const [古い, 新] of 古い鍵) {
+    const 答 = await call("venue_info", { key: 古い, scope: "all" });
+    expect(答, `古い key「${古い}」で會議が引けない`).not.toContain("収録に在りません");
+    /* 新しい key も言ふ（次の呼び出しで其れを使へる）。 */
+    expect(答, `「${古い}」から新しい key が讀めない`).toContain(`key: ${新}`);
+  }
+
+  /* 人の道（CLI）も同じ（實測 2026-11-19: `name` として渡つて仕舞ひ、`venue ieee-admit-2026`
+   * だけ「收錄に在りません」と答へて居た – MCP の tools/call の經路では收到て居た）。 */
+  const cli = spawnSync(
+    process.execPath,
+    [join(REPO_ROOT, "src", "mcp.ts"), "venue", "ieee-admit-2026"],
+    {
+      encoding: "utf8",
+      timeout: 60000,
+    },
+  );
+  expect(cli.status, `CLI が落ちた: ${cli.stderr?.slice(0, 120)}`).toBe(0);
+  expect(cli.stdout, "CLI が古い key を name として渡して仕舞つた").toContain("key: admit-2026");
+  expect(cli.stdout, "CLI が「收錄に在りません」と言つた").not.toContain("収録に在りません");
+});

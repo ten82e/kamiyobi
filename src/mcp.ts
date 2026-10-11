@@ -1526,8 +1526,38 @@ function venueInfo(args: { key?: unknown; name?: unknown; scope?: unknown }, now
      * `title.includes("")` がどれにも當たつて**先頭の会議**を返してしまふ – 實測 2026-10-12:
      * `venue_info({key: "sc"})`（窓に行が無い）が、全く別の會議（jornadas-dl2）の情報を
      * 「その会議は収録に在りますが…」と返して居た。問はた會議の事を言ふのが此の道具の役目。 */
+    /* **古い key（`legacy_keys`）でも受け付ける**（第 1039 回 – 實測 2026-11-19:
+     * `identity_migrations` に 32 件の「古い key → 新しい key」が記錄されて居る
+     * （`ieee-admit-2026` → `admit-2026`・`csp-ei-2027` → `csp-2027`・`evomusart` →
+     * `evomusart-2027`…）。AI は「改名・統合の前の ID」を持つ文獻・引用を讀むので、
+     * 古い key で引くと**「收錄に在りません」**と答へて居た – `data.json` にも
+     * `llms.txt` のスキーマの説明（「legacy_keys: string[]：以前の版の識別子」）にも
+     * 在るのに、引く經路が無かつた。版の識別子（第 887 囘）と同じ決まりに揃へる。
+     * **古い key は複數の會議に重なる事が在る**（`fse` は `fse-sc` と `fse-se` の兩方が
+     * 持つ）ので、複數に當たる時は決め打たず候補を並べる（第 852 回と同じ決まり）。 */
+    const 古い鍵で當たる = (c: (typeof 收錄の會議)[number]): boolean => {
+      if (String(c.key ?? "").toLowerCase() === key.toLowerCase()) return true;
+      const 古い = (c as { legacy_keys?: unknown }).legacy_keys;
+      return (Array.isArray(古い) ? 古い : []).some(
+        (l: unknown) => String(l ?? "").toLowerCase() === key.toLowerCase(),
+      );
+    };
+    const 問はた全部 = key ? 收錄の會議.filter(古い鍵で當たる) : [];
+    const 問はた候補 = key && 問はた全部.length > 1 ? 問はた全部 : [];
+    if (問はた候補.length > 1) {
+      return [
+        `「${String(key).trim()}」は ${問はた候補.length} つの会議の古い key です（改名・統合の前に使つて居た物）。` +
+          `どちらかを key で引き直してください:`,
+        ...問はた候補.map(
+          (c) =>
+            `- ${String(c.acronym || c.title || c.key)}（key: ${String(c.key)}）` +
+            `${String(c.link ?? "") ? ` ${String(c.link)}` : ""}`,
+        ),
+        ...(古さ ? ["", 古さ] : []),
+      ].join("\n");
+    }
     const 在る = key
-      ? 收錄の會議.find((c) => String(c.key ?? "").toLowerCase() === key.toLowerCase())
+      ? 問はた全部[0]
       : 收錄の會議.find((c) => {
           const ck = String(c.key ?? "").toLowerCase();
           const title = String(c.title ?? "").toLowerCase();
@@ -2480,11 +2510,20 @@ function main(): void {
                * `sc` の様に 42 件の候補に割れてしまふ（實測 2026-10-12 – 其の語の會議を
                * 一意に指して居るのに、候補の一覽を返して居た）。 */
               const 語 = String(rest[0] ?? "").trim();
+              /* **古い key も其の儘受け付ける**（第 1039 回 – 實測 2026-11-19:
+               * `node src/mcp.ts venue ieee-admit-2026` は `name` として渡つて仕舞ひ、
+               * 「收錄に在りません」と答へて居た。MCP の tools/call の經路では收到て
+               * 居る（`venueInfo` が `legacy_keys` を見る）のに、人の道だけ漏れて居た –
+               * **同じ形がもう一箇所**）。 */
               const 其の儘 =
                 Boolean(語) &&
-                (snapshot().conferences ?? []).some(
-                  (c) => String(c.key ?? "").toLowerCase() === 語.toLowerCase(),
-                );
+                (snapshot().conferences ?? []).some((c) => {
+                  if (String(c.key ?? "").toLowerCase() === 語.toLowerCase()) return true;
+                  const 古い = (c as { legacy_keys?: unknown }).legacy_keys;
+                  return (Array.isArray(古い) ? 古い : []).some(
+                    (l: unknown) => String(l ?? "").toLowerCase() === 語.toLowerCase(),
+                  );
+                });
               return 其の儘 ? { key: 語 } : { name: 語 };
             })();
   process.stdout.write(`${callTool(名, args, now)}\n`);
