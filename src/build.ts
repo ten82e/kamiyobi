@@ -3929,10 +3929,9 @@ export function toUpcomingMd(
             left = "まもなく";
           }
         }
-        when =
-          ed.estimated && ed.estimate
-            ? `推定期間 ${ed.estimate.window_start}〜${ed.estimate.window_end}`
-            : deadlineWhenText(dl.at_utc, dl.tz_raw);
+        /* 推定の幅は `Recommender.estimateWindowJa` の正本（第 1053 囮で共通化 –
+         * 其れ迄は此れと `src/mcp.ts` の兩方がべた書きで持つて居た）。 */
+        when = Recommender.estimateWindowJa(ed) || deadlineWhenText(dl.at_utc, dl.tz_raw);
       }
       const kindText = escapeMdCell(rec.kind_label);
       const roundText = `R${dl.round}`;

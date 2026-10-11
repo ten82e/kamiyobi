@@ -5466,3 +5466,47 @@ it("推薦は論文の中の行數も切つたと言ふ（第 1050 回）", asyn
   const 複數 = await call("recommend_venues", { paper: 多, limit: 3 });
   expect(複數, "複數論文の截りの文が消えた").toContain("（25 行のうち、最初の 20 行（題名・概要）");
 });
+
+it("推定の幅は一つの正本から兩方が出る（第 1053 回）", async () => {
+  /* 實測 2026-11-19: 「推定期間 A〜B」の形を **`src/build.ts`（`upcoming.md`）と
+   * `src/mcp.ts`（行）の兩方がべた書き**で持つて居た。形は同じだが、**正本が二つ** –
+   * 其れは片方が古くなると兩方が違ふ文を出す樣に成る（第 764 囘と同じ轍）。
+   *
+   * `Recommender.estimateWindowJa` を正本にして、兩方から呼ぶやうにした。 */
+  const R = (await import("../site/recommender.ts")).default;
+  /* 正本の動き。 */
+  expect(
+    R.estimateWindowJa({
+      estimated: true,
+      estimate: { window_start: "2026-11-05", window_end: "2027-05-06" },
+    }),
+  ).toBe("推定期間 2026-11-05〜2027-05-06");
+  /* 推定で無い・幅が無い時は空（默る）。 */
+  expect(
+    R.estimateWindowJa({ estimated: false, estimate: { window_start: "a", window_end: "b" } }),
+  ).toBe("");
+  expect(R.estimateWindowJa({ estimated: true, estimate: {} })).toBe("");
+  expect(R.estimateWindowJa({})).toBe("");
+
+  /* MCP の行が其の正本を通して居る（實物）。 */
+  const mcp = await call("search_deadlines", {
+    query: "acml",
+    scope: "all",
+    limit: 5,
+    kinds: [],
+    include_estimated: true,
+  });
+  const mcp行 = mcp.split("\n").filter((l) => l.includes("推定期間"));
+  expect(mcp行.length, "MCP の行に幅が出て居ん").toBeGreaterThan(0);
+  expect(mcp行[0]).toMatch(/推定期間 \d{4}-\d{2}-\d{2}〜\d{4}-\d{2}-\d{2}/);
+
+  /* **建造物**（`upcoming.md`）が同じ書式を出して居る – 兩方が同じ正本を使ふので、
+   * べた書きの時代の「片方が古くなる」が起きない。 */
+  const md = readFileSync(join(REPO_ROOT, "public", "upcoming.md"), "utf8");
+  /* 散文の説明行（「『推定期間 A〜B』の形」）ではなく、**表の行**だけを見る。 */
+  const md行 = md.split("\n").filter((l) => l.includes("推定期間") && l.startsWith("| "));
+  expect(md行.length, "upcoming.md に幅が出て居ん").toBeGreaterThan(0);
+  for (const l of [...mcp行.slice(0, 3), ...md行.slice(0, 3)]) {
+    expect(l).toMatch(/推定期間 \d{4}-\d{2}-\d{2}〜\d{4}-\d{2}-\d{2}/);
+  }
+});

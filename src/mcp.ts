@@ -380,12 +380,10 @@ function line(r: Row, now: number): string {
    * **單獨の日付**（`point_estimate`）だけで出して居た）。`upcoming.md` は「推定期間 A〜B」
    * と書くのに、MCP は書かない – 同じ事實の別の表記ではなく、**幅を落として居た**。
    * AI が「ACML 2027 の締切は 2027-07-04」と**事實のやうに**答へるので、幅を添へる。 */
-  const 推定の幅 =
-    (r.ed as { estimate?: Record<string, unknown> } | undefined)?.estimate ?? undefined;
-  const 始め = String(推定の幅?.window_start ?? "").trim();
-  const 終り = String(推定の幅?.window_end ?? "").trim();
+  /* 形は `Recommender.estimateWindowJa` の正本（第 1053 囮で共通化 – 其れ迄は此れと
+   * `src/build.ts` の兩方がべた書きで持つて居た）。 */
+  const 幅 = String(Recommender.estimateWindowJa(r.ed) ?? "").trim();
   const 推定 = r.est ? "（推定）" : "";
-  const 幅 = r.est && 始め && 終り ? `推定期間 ${始め}〜${終り}` : "";
   /* 「殘り」は**其の下の点推定点**（`元の宣言` の瞬間）を數へて居る。幅と一續きに並べると
    * 「幅の終はりまでの殘り」と讀めるので、其れを防ぐ言を添へる（第 1034 回 – 實測 2026-11-19:
    * `upcoming.md` は「推定期間」と「殘り」が**別の欄**なので誤讀しにくいが、此の行は

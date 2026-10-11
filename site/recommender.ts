@@ -8451,6 +8451,19 @@ const Recommender = (() => {
    * 「このサイトは古いのか / 会議が動いたのか」を判定できなかった）。
    * 前の日付を行の詳細に出し、その日付を貼るとその行に出会えるようにする（第 220 回と同じ
    * 約束 – ドロワーに並ぶ語は引ける）。延びた行は既存の「延長後」の印も出す。 */
+  /* **推定の行が持つ幅**の文（第 1053 囘 – `src/mcp.ts` の `line` と `src/build.ts` の
+   * `upcoming.md` の**兩方**がべた書きで持つて居た。形は同じだが、正本が二つあると
+   * 片方が古くなる（第 764 囘と同じ轍）。此處を正本にする。 */
+  function estimateWindowJa(ed: unknown): string {
+    const e = (ed ?? {}) as Record<string, unknown>;
+    if (e.estimated !== true) return "";
+    const estimate = (e.estimate ?? {}) as Record<string, unknown>;
+    const from = String(estimate.window_start ?? "").trim();
+    const to = String(estimate.window_end ?? "").trim();
+    if (!from || !to) return "";
+    return `推定期間 ${from}〜${to}`;
+  }
+
   const PULL_FORWARD_LABEL_JA = "前倒し";
   /* 行の詳細に出す一行の先頭語。索引にも同じ語を入れるので、この文をそのまま貼った人も
    * 日付の語でその行に戻ってこられる。 */
@@ -17252,6 +17265,7 @@ const Recommender = (() => {
     pastDeadlineTagJa: pastDeadlineTagJa,
     deadlineShiftsOf: deadlineShiftsOf,
     deadlineShiftLineJa: deadlineShiftLineJa,
+    estimateWindowJa: estimateWindowJa,
     deadlineShiftSearchWords: deadlineShiftSearchWords,
     weekdaySearchTerms: weekdaySearchTerms,
     splitHintJa: splitHintJa,
