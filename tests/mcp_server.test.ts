@@ -4738,10 +4738,11 @@ it("list_upcoming の days が上限を超えたら默つて截めない（第 1
 it("days と within_days は「境目が同じ・件数は違ふ」と書く（第 1027 回）", async () => {
   /* 實測 2026-11-19: `list_upcoming` の說明は「`search_deadlines` の `within_days` と同じ
    * 數へ方です（同じ條件なら同じ件數になります）」と書いて居た。**境目の切り方は同じ**だが、
-   * 件數は默つたままでは**違ふ** – 30 日で 86 件と 85 件。違ふのは:
+   * 件數は默つたままでは**違ふ** – 30 日で 130 件と 87 件（2026-11-19 實測。收錄が增えれ
+   * ば此の數も動くので、**數字は固定しない**）。違ふのは:
    *   1. **種別** – `list_upcoming` は既定で全部・`search_deadlines` は abstract / paper / journal のみ
    *   2. **推定** – `list_upcoming` は入る・`search_deadlines` の既定は外す
-   * 「同じ條件なら同じ件數」は**どつちの條件も變へなければ成り立たない** – AI が 86 と 85 を
+   * 「同じ條件なら同じ件數」は**どつちの條件も變へなければ成り立たない** – AI が 130 と 87 を
    * 見て「一つが壞れて居る」と誤る。實測で確かめて、其の儘書く。 */
   const res = (await client.ask({ jsonrpc: "2.0", id: 1, method: "tools/list" })) as {
     result?: { tools?: Array<{ name?: string; description?: string }> };
