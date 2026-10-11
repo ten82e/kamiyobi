@@ -364,6 +364,17 @@ function line(r: Row, now: number): string {
         ? Recommender.notApplicableLabelJa()
         : Recommender.unconfirmedLabelJa(),
     );
+  /* **會期の見直しの覚え書き**も會期に添へる（第 1038 回 – 實測 2026-11-19:
+   * `event_review.note` を持つ版は **7 件**（adma21・dai2021・focs21・mobicom21・
+   * probml2021・slt22・wasa22）。いづれも**會期が發表年と違ふ年**にずれた版で、
+   * `llms.txt` のスキーマの説明（「event_review: object：会期の見直しの記録（…覚え書き
+   * note など」）に在るのに、**此の行は出して居なかつた**（第 1035 囘の track と同じ型）。
+   * AI が「2021 年版が 2022 年に開かれた」理由を讀めない – 「正本は src/model.ts」と
+   * 丸投げせず、行の中で理由が言へるやうに覺え書きを添へる。 */
+  const 見直し = String(
+    (r.ed as { event_review?: Record<string, unknown> } | undefined)?.event_review?.note ?? "",
+  ).trim();
+  const 會期の文 = 見直し ? `${會期}（${見直し}）` : 會期;
   /* **推定の行は幅を出す**（第 1034 回 – 實測 2026-11-19: `estimate.window_start` /
    * `window_end` を持つ推定の行は **162 行全部**（106 版全部が幅を持つ）なのに、此の行は
    * **單獨の日付**（`point_estimate`）だけで出して居た）。`upcoming.md` は「推定期間 A〜B」
@@ -390,7 +401,7 @@ function line(r: Row, now: number): string {
     tz && utc && !/^JST$/i.test(tz)
       ? `（元の宣言 ${tz}／${utc.replace("T", " ").replace("Z", " UTC")}）`
       : "";
-  return `${幅 ? 幅 : 日}${幅の但し}${殘り文}${元} | ${種別}${回}${推定}${印.length ? ` | ${印.join("・")}` : ""} | ${r.conf.title}（${r.ed.id}）| ${ランク} | 会期 ${會期} | ${場所}${出典}`;
+  return `${幅 ? 幅 : 日}${幅の但し}${殘り文}${元} | ${種別}${回}${推定}${印.length ? ` | ${印.join("・")}` : ""} | ${r.conf.title}（${r.ed.id}）| ${ランク} | 会期 ${會期の文} | ${場所}${出典}`;
 }
 
 /** 0 件の時に畫面が出す「打ち直すなら」と同じ物を組む（第 762 回）。

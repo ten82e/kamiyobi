@@ -5137,3 +5137,57 @@ it("上流が差し替へた締切も札で言ふ（第 1037 回）", async () =
     expect(l, "差し替への無い行に札を出した").not.toContain("前に出ていた締切");
   }
 });
+
+it("會期の見直しの覺え書きも行に出す（第 1038 回）", async () => {
+  /* 實測 2026-11-19: `event_review.note` を持つ版は **7 件**（adma21・dai2021・focs21・
+   * mobicom21・probml2021・slt22・wasa22）。`llms.txt` のスキーマの説明（「event_review:
+   * object：会期の見直しの記録（…覚え書き note など」）に在るのに、**此の行は出して
+   * 居なかつた**（第 1035 囘の track と同じ型 – 索引と道具が食ひ違つて居る）。
+   * いづれも**會期が發表年と違ふ年**にずれた版なので、AI が「2021 年版が 2022 年に
+   * 開かれた」理由を讀めない。 */
+  const 收錄 = JSON.parse(readFileSync(join(REPO_ROOT, "data", "snapshot.json"), "utf8")) as {
+    conferences: Array<Record<string, any>>;
+  };
+  const 版の覺え書き = new Map<string, string>();
+  for (const c of 收錄.conferences) {
+    for (const e of c.editions ?? []) {
+      const note = String((e as any).event_review?.note ?? "").trim();
+      const id = String((e as any).id ?? "");
+      if (note && id) 版の覺え書き.set(id, note);
+    }
+  }
+  expect(版の覺え書き.size, "覺え書きを持つ版が讀めない（この檢查が空振り）").toBe(7);
+
+  /* 覺え書きを持つ版の會議を引き、行に覺え書きが出て居る事を確かめる。 */
+  const 會議 = new Set<string>();
+  for (const c of 收錄.conferences) {
+    for (const e of c.editions ?? []) {
+      const note = String((e as any).event_review?.note ?? "").trim();
+      if (note) 會議.add(String(c.key ?? ""));
+    }
+  }
+  expect(會議.size, "覺え書きを持つ會議が讀めない").toBe(7);
+  for (const key of 會議) {
+    const 答 = await call("venue_info", { key, scope: "all" });
+    for (const l of 答.split("\n").filter((l) => /^2\d{3}-/.test(l))) {
+      /* 行の會期の欄（`| 会期 … |`）に覺え書きが入つて居るか。 */
+      const m = /\| 会期 ([^|]*?)（([^|]+?)） \| /.exec(l);
+      if (!m) continue;
+      /* 會期の日期の後ろの丸括弧は**二つ**在り得る（差し替への札は別欄）ので、
+       * 覺え書きの中に版の id が入つて居るかで判斷する。 */
+      const id = /（([a-z0-9][a-z0-9.'-]*)）\|/.exec(l)?.[1] ?? "";
+      if (!版の覺え書き.has(id)) continue;
+      expect(
+        l.includes(`（${版の覺え書き.get(id)}）`),
+        `${key} の行に覺え書きが出て居ない: ${l.slice(0, 120)}`,
+      ).toBe(true);
+    }
+  }
+  /* **悉皆の裏** – 覺え書きの**無い**版の行には足さない（第 852 回と同じ決まり）。 */
+  const 無い = await call("venue_info", { key: "adma", scope: "all" });
+  for (const l of 無い.split("\n").filter((l) => /^2\d{3}-/.test(l))) {
+    if (l.includes("adma22") || l.includes("adma23")) {
+      expect(l, "覺え書きの無い版に足した").not.toContain("ADMA 2021年版を2022年2月に開催");
+    }
+  }
+});
