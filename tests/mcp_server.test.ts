@@ -4681,3 +4681,45 @@ it("list_upcoming の days が上限を超えたら默つて截めない（第 1
   const 閉じ = (頭.match(/）/g) ?? []).length;
   expect(開き, `開き括弧が多すぎる: ${頭.slice(0, 120)}`).toBe(閉じ);
 });
+
+it("days と within_days は「境目が同じ・件数は違ふ」と書く（第 1027 回）", async () => {
+  /* 實測 2026-11-19: `list_upcoming` の說明は「`search_deadlines` の `within_days` と同じ
+   * 數へ方です（同じ條件なら同じ件數になります）」と書いて居た。**境目の切り方は同じ**だが、
+   * 件數は默つたままでは**違ふ** – 30 日で 86 件と 85 件。違ふのは:
+   *   1. **種別** – `list_upcoming` は既定で全部・`search_deadlines` は abstract / paper / journal のみ
+   *   2. **推定** – `list_upcoming` は入る・`search_deadlines` の既定は外す
+   * 「同じ條件なら同じ件數」は**どつちの條件も變へなければ成り立たない** – AI が 86 と 85 を
+   * 見て「一つが壞れて居る」と誤る。實測で確かめて、其の儘書く。 */
+  const res = (await client.ask({ jsonrpc: "2.0", id: 1, method: "tools/list" })) as {
+    result?: { tools?: Array<{ name?: string; description?: string }> };
+  };
+  const 文 = (res.result?.tools ?? []).find((t) => t.name === "list_upcoming")?.description ?? "";
+  expect(文, "境目の切り方は同じと書いて居ん").toContain("境目の切り方は同じ");
+  expect(文, "件數はそのままでは違ふと書いて居ん").toContain("件数は其の儘では違う");
+  expect(文, "違う二つの理由を書いて居ん").toContain("種別");
+  expect(文, "推定の違いを書いて居ん").toContain("推定");
+
+  const 件 = (t: string): number =>
+    Number((t.split("\n")[0].match(/([\d,]+) 件/)?.[1] ?? "0").replace(/,/g, ""));
+  /* 默つたつまりでは divergent（86 vs 85 – 種別と推定の二つが乘る）。 */
+  const 默つた = await call("list_upcoming", { days: 30, scope: "all", limit: 1 });
+  const 檢索 = await call("search_deadlines", { within_days: 30, scope: "all", limit: 1 });
+  const a = 件(默つた);
+  const b = 件(檢索);
+  expect(a, "list_upcoming の件數が讀めない").toBeGreaterThan(0);
+  expect(b, "search_deadlines の件數が讀めない").toBeGreaterThan(0);
+  /* 件數を揃へると一致する（種別と推定を同じにした時）。 */
+  const 揃へた = await call("list_upcoming", {
+    days: 30,
+    scope: "all",
+    kind: ["abstract", "paper", "journal"],
+    limit: 1,
+  });
+  const 檢索2 = await call("search_deadlines", {
+    within_days: 30,
+    scope: "all",
+    include_estimated: true,
+    limit: 1,
+  });
+  expect(件(揃へた), "條件を揃へても件數が違ふ（說明と合はない）").toBe(件(檢索2));
+});
