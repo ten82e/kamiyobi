@@ -1665,7 +1665,7 @@ it("使へない數の引數は默つて既定に戻さない（第 878 回）",
    * 知らないランク（第 858 回）を頭で名指すのと同じ扱ひにした。 */
   const 檢索 = await call("search_deadlines", { query: "セキュリティ", within_days: 0 });
   expect(檢索, "使ひ切れない値を默つた").toContain("within_days は 1 以上の数で指定してください");
-  expect(檢索, "其の値を使つた事にして居る").toContain("其の値は使はないので、既定の儘引きます");
+  expect(檢索, "其の值を使つた事にして居る").toContain("其の值は使はないので、既定の儘引きます");
   expect(檢索, "窓を書いた").not.toContain("／締切まで");
   /* 負の値・數でない値も（`Number("abc")` は NaN になる）。 */
   const 負 = await call("search_deadlines", { query: "セキュリティ", within_days: -5 });
@@ -5685,4 +5685,38 @@ it("説明の欄數と實答の欄數が合ふ（第 1061 回）", async () => {
     expect(欄, `explain_word の欄の數が 6 か 7 でない（${欄}）`).toBeGreaterThanOrEqual(6);
     expect(欄, `explain_word の欄の數が 6 か 7 でない（${欄}）`).toBeLessThanOrEqual(7);
   }
+});
+
+it("型の違ふ數の引數は默つて讀み替へない（第 1063 回）", async () => {
+  /* 實測 2026-11-19: `limit: "5"` は默つて 5 として使はれて居た – schema は `number` と
+   * 書いて居るので、**變へた事を言ふ**べきだつた。`"abc"` は第 878 囮で「使はない」と
+   * 名指すのに、`"5"` は默つて居た – **同じ型の穴**。
+   *
+   * 讀める形（`"5"`・`5`・`true`）は其の儘受ける（布林の引數・第 909 囮と同じ決まり）。 */
+  /* 文字列の「5」は讀めるが、**變へた事を言ふ**。 */
+  const 文字 = await call("search_deadlines", { query: "セキュリティ", limit: "5" });
+  expect(文字, "型を默つて讀み替へた").toContain(
+    '／limit は数で指定してください（いま "5" – その字を数として読みました）',
+  );
+  /* 其の值は其の儘使ふ（5 件の表示に成る – 既定に戾さない）。 */
+  expect(文字, "默つて既定に戾した").toContain("36 件");
+
+  /* **整數**は默る（其の儘使ふ）。 */
+  const 整數 = await call("search_deadlines", { query: "セキュリティ", limit: 5 });
+  expect(整數, "整數に斷りを付けた").not.toContain("その字を数として読みました");
+
+  /* 讀めない形（`"abc"`）は第 878 囮の文（變はない）。 */
+  const abc = await call("search_deadlines", { query: "セキュリティ", limit: "abc" });
+  expect(abc, "讀めない形の文が消えた").toContain("limit は 1 以上の数で指定してください");
+  expect(abc, "讀めない形の文が違ふ").toContain('（いま "abc"）');
+
+  /* **他の數の引數**も同じ（`days`・`within_days`）。 */
+  const days = await call("list_upcoming", { days: "30" });
+  expect(days, "days の型を默つて讀み替へた").toContain(
+    '／days は数で指定してください（いま "30" – その字を数として読みました）',
+  );
+  const 窓 = await call("search_deadlines", { query: "セキュリティ", within_days: "30" });
+  expect(窓, "within_days の型を默つて讀み替へた").toContain(
+    '／within_days は数で指定してください（いま "30" – その字を数として読みました）',
+  );
 });
