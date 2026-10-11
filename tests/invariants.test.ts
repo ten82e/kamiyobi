@@ -275,3 +275,91 @@ describe("invariants", () => {
     ).toEqual([]);
   });
 });
+
+it("I29: 公式ドメインの宿主が割れる會議は venue_identities で結ぶ（第 1032 回）", async () => {
+  /* 本番事故（2026-11 朝の自動更新の停止・ユーザーからの屆出）:
+   *   Error: ambiguous published history identity: icdm
+   *
+   * 原因（ユーザーの診斷を實測で確かめた）:
+   *   - 上流 ccfddl に **ICDM 2027** が增えた（`id: icdm2027`・
+   *     `link: https://icdm2027-website.onrender.com/`）。
+   *   - local（manual.yaml + primary observations）の ICDM の公式ドメインは
+   *     `icdm2027-website.onrender.com`、ccfddl の ICDM は `icdm2026.neu.edu.cn`
+   *     – **宿主が全然違ふ**。
+   *   - `mergeSources` は local を上流と同じ公式ドメインで結ぶので、結べず**別會議**に成る。
+   *     兩方 `key: icdm` なので、`uniqueConferenceKeys` の衝突處理で
+   *     `icdm-<後軀>` 二つに割れ、兩方の `legacy_keys` に `icdm` が殘る。
+   *   - `retainPublishedHistory` の `venueMatch` が其の兩方に當たつて
+   *     `ambiguous published history identity` で**建造が飛ぶ**。
+   *     （過去データを何方へ引き繼ぐか決められないので、fail-closed が正しい動き。）
+   *
+   * 修正: `config.yaml` の `venue_identities` に三つの情報源の ID を結ぶ一件。
+   *   icdm: {source_ids: {aideadlines: icdm, ccfddl: DB/icdm, local: icdm}}
+   *
+   * 此の檢查は**一件だけ**を見ず、**同じ形を持つ全部の會議**を見る（第 1025 回の教訓 –
+   * icdm を直しても alt が殘つて居た）。實測 2026-11-19: 宿主が割れる會議は **15 件**、
+   * 其の全部が venue_identities で結ばれて居る。ICDM だけ特別扱ひせず、**形で拾ふ**。 */
+  const config =
+    (loadYaml(readFileSync(join(REPO_ROOT, "config.yaml"), "utf8")) as Record<string, any>) ?? {};
+  const 結び = (config.venue_identities ?? {}) as Record<
+    string,
+    { source_ids?: Record<string, string> }
+  >;
+  expect(
+    Object.keys(結び).length,
+    "venue_identities が讀めない（この檢查が空振り）",
+  ).toBeGreaterThan(5);
+
+  /* 宿主（`new URL(...).hostname`）を取り出す – 年が違ふだけの同じサイトは
+   * `2027.aclweb.org` / `2026.aclweb.org` の様に**別の宿主**に成るが、其れは事故ではない
+   * （mergeSources が別の絲で結ぶ）。此處で見たいのは **ICDM の様に全然違う宿主**。 */
+  const 宿主 = (公式: unknown): string => {
+    const 文 = String(Array.isArray(公式) ? (公式[0] ?? "") : (公式 ?? "")).trim();
+    try {
+      return new URL(文).hostname.replace(/^www\./, "");
+    } catch {
+      return "";
+    }
+  };
+
+  /* 上流の ccfddl と local を持つ會議で、宿主が割れて居る物を全部集める。
+   * キャッシュが在る時だけ走る（CI の offline ビルドと同じ經路）。 */
+  const { hooks } = await import("../src/cli.ts");
+  const collected = await hooks.collect(join(REPO_ROOT, ".cache"), { offline: true });
+  const local = (collected.groups[0] ?? []) as Array<Record<string, any>>;
+  const ccfddl = (collected.groups[1] ?? []) as Array<Record<string, any>>;
+  expect(local.length, "local 源が讀めない").toBeGreaterThan(0);
+  expect(ccfddl.length, "ccfddl 源が讀めない").toBeGreaterThan(0);
+
+  const 割れた: string[] = [];
+  for (const l of local) {
+    const key = String(l.key ?? "");
+    const c = ccfddl.find((x) => x.key === key);
+    if (!c) continue;
+    const lh = 宿主(l.identity?.officialDomains);
+    const ch = 宿主(c.identity?.officialDomains);
+    if (lh && ch && lh !== ch) 割れた.push(key);
+  }
+  expect(割れた.length, "宿主が割れる會議が一つも無い（この檢查が空振り）").toBeGreaterThan(3);
+
+  const 結んで無い = 割れた.filter((key) => !(key in 結び));
+  expect(
+    結んで無い,
+    "公式ドメインの宿主が local と ccfddl で割れる會議に venue_identities の一枚が無い（ICDM 2027 の事故と同じ形 – 建造が ambiguous published history identity で飛ぶ）",
+  ).toEqual([]);
+
+  /* `icdm` の一枚は**三つの情報源**を結んで居なければならない（事故の核）。
+   * `source_ids` は「情報源の名 → 其の情報源の中の ID」。 */
+  const icdm = 結び.icdm;
+  expect(icdm, "venue_identities に icdm が無い").toBeTruthy();
+  const icdmの源 = Object.keys(icdm?.source_ids ?? {});
+  const 實際の源 = new Set((local.find((c) => c.key === "icdm")?.sources ?? []) as string[]);
+  for (const 源 of 實際の源) {
+    expect(icdmの源, `icdm の結びに ${源} が無い`).toContain(源);
+  }
+  /* ccfddl の ICDM は `DB/icdm`（フォルダ付き）なので、素の `icdm` ではない。
+   * 此を書き間違へると同じ事故に成る。 */
+  expect(icdm?.source_ids?.ccfddl, "icdm の ccfddl の ID が DB/icdm ではない").toBe("DB/icdm");
+  expect(icdm?.source_ids?.local, "icdm の local の ID が icdm ではない").toBe("icdm");
+  expect(icdm?.source_ids?.aideadlines, "icdm の aideadlines の ID が icdm ではない").toBe("icdm");
+});
