@@ -3030,9 +3030,30 @@ it("畫面と MCP が、同じ問に同じ行を出す（第 917 回）", async 
   ]) {
     const 畫面 = 畫面の行(問);
     const 答 = await call("search_deadlines", { query: 問, limit: 400 });
-    /* MCP の行は「… | 會議名（版の識別子）|…」の形 – 版の識別子を集めて比べる。 */
+    /* MCP の行は「… | 種別 | 札 | 會議名（版の識別子）| ランク | 会期 | 開催地 URL」。
+     * **行を `|` で切って、會議名の欄だけ**を取る（第 1035 回 – 種別の欄に
+     * 「論文締切（regular）」の樣にトラックを出すやうになつたので、凡ゆる丸括弧を拾ふと
+     * 種別の方を版の識別子と誤認する）。版の識別子は**會議名の後ろの丸括弧**で、
+     * `|` で切る前の欄なので、會議名の欄の**最初の丸括弧**を取ればよい。 */
     const mcp = [
-      ...new Set([...答.matchAll(/（([a-z0-9][a-z0-9.'-]*)）/g)].map((m) => m[1])),
+      ...new Set(
+        答
+          .split("\n")
+          .filter((l) => /^2\d{3}-/.test(l))
+          .flatMap((l) => {
+            /* 札は在る時だけ入る（5 つか 6 つ – 第 1017 回）。會議名の欄は札のある
+             * 行が 4 番目・無い行が 3 番目。**丸括弧が入る欄**で探す。 */
+            /* 會議名の欄は「…（版の識別子）| ランク…」で、**必ず `| ランク` が續く**
+             * （空白は入らない – `）| ラ`）。種別の欄（「論文締切（regular）」）は其の續きが
+             * 無いので、其れで區別できる（第 1035 回 – トラックを種別に足した時に凡ゆる
+             * 丸括弧を拾ふ正則が誤認した）。 */
+            for (const f of l.split(" | ")) {
+              const m = /^(.+?)（([a-z0-9][a-z0-9.'-]*)）\| .+$/.exec(f.trim());
+              if (m && m[1].trim().length > 0) return [m[2]];
+            }
+            return [];
+          }),
+      ),
     ].sort();
     expect(
       mcp,
@@ -4988,4 +5009,84 @@ it("推定の行は幅を出し、事實のやうに見せない（第 1034 回�
   for (const l of 推定行) {
     expect(l, "幅を持つ推定の行が幅を落として居る").toContain("推定期間");
   }
+});
+
+it("投稿のトラックも行に出す（第 1035 回）", async () => {
+  /* 實測 2026-11-19: `track` が空でない締切は **8 件**（closer・cpal など）で、
+   * `data.json`・`llms.txt`（スキーマの説明にも「track: string：投稿のトラック」と書かれて
+   * 居る）の**どちらにも在る**のに、此の行は出して居なかつた。CLOSER の 2 つの論文締切は
+   * `regular` と `position` で**別の募集**なのに、兩方「論文締切」とだけ出る –
+   * AI が兩方を同じ締切と見る。索引と道具が食ひ違つて居た。 */
+  const closer = await call("search_deadlines", {
+    query: "closer",
+    scope: "all",
+    limit: 20,
+    include_estimated: true,
+    kinds: [],
+  });
+  const 行 = closer.split("\n").filter((l) => /^2\d{3}-/.test(l));
+  expect(行.length, "closer の行が出て居ん").toBeGreaterThan(1);
+  expect(
+    行.filter((l) => l.includes("論文締切（regular）")).length,
+    "regular の締切に出して居ん",
+  ).toBeGreaterThan(0);
+  expect(
+    行.filter((l) => l.includes("論文締切（position）")).length,
+    "position の締切に出して居ん",
+  ).toBeGreaterThan(0);
+
+  /* トラックの**無い**行は從つて通り（余計な括弧を足さない – 5,061 行が空）。 */
+  const wsdm = await call("search_deadlines", { query: "wsdm", scope: "all", limit: 5 });
+  for (const l of wsdm.split("\n").filter((l) => /^2\d{3}-/.test(l))) {
+    expect(l, "トラックの無い行に空の括弧を出した").not.toMatch(/論文締切（\s*）/);
+  }
+
+  /* **悉皆** – トラックを持つ會議を一つづつ引き、行に出るトラックが**收錄の中に在る値**
+   * だけである事を確かめる（でたらめを出さない）。*/
+  const 收錄 = JSON.parse(readFileSync(join(REPO_ROOT, "data", "snapshot.json"), "utf8")) as {
+    conferences: Array<Record<string, any>>;
+  };
+  const 值 = new Set<string>();
+  const 會議 = new Set<string>();
+  for (const c of 收錄.conferences) {
+    for (const e of c.editions ?? []) {
+      for (const dl of e.deadlines ?? []) {
+        const t = String(dl.track ?? "").trim();
+        if (t) {
+          值.add(t);
+          會議.add(String(c.key ?? ""));
+        }
+      }
+    }
+  }
+  expect([...值], "トラックの值が讀めない（この檢查が空振り）").toEqual(
+    expect.arrayContaining(["regular", "position"]),
+  );
+  expect(會議.size, "トラックを持つ會議が讀めない").toBeGreaterThan(0);
+  for (const key of 會議) {
+    const 答 = await call("search_deadlines", {
+      query: key,
+      scope: "all",
+      limit: 30,
+      include_estimated: true,
+      kinds: [],
+    });
+    for (const l of 答.split("\n").filter((l) => /^2\d{3}-/.test(l))) {
+      /* 種別の欄の丸括弧（トラック）を拔く。 */
+      const 種別の欄 = l.split(" | ")[1] ?? "";
+      const m = /（([^）]+)）/.exec(種別の欄);
+      if (m) {
+        expect(值.has(m[1]), `${key} の行が收錄に無いトラック「${m[1]}」を出した`).toBe(true);
+      }
+    }
+  }
+
+  /* 行の形の說明に「種別の欄の丸括弧は別の物」と書く（第 1036 回 – 版の識別子と
+   * 誤認しない為）。 */
+  const res = (await client.ask({ jsonrpc: "2.0", id: 1, method: "tools/list" })) as {
+    result?: { tools?: Array<{ name?: string; description?: string }> };
+  };
+  const 文 =
+    (res.result?.tools ?? []).find((t) => t.name === "search_deadlines")?.description ?? "";
+  expect(文, "種別の欄の丸括弧が別の物だと書いて居ん").toContain("種別の欄の丸括弧は別の物");
 });
