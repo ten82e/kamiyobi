@@ -3041,7 +3041,8 @@ it("畫面と MCP が、同じ問に同じ行を出す（第 917 回）", async 
           .split("\n")
           .filter((l) => /^2\d{3}-/.test(l))
           .flatMap((l) => {
-            /* 札は在る時だけ入る（5 つか 6 つ – 第 1017 回）。會議名の欄は札のある
+            /* 札は在る時だけ入る（6 つか 7 つ – 第 1061 囮で實測して直した。會議名とランクが
+             * 續いて居るので數へ方が違つて居た）。會議名の欄は札のある
              * 行が 4 番目・無い行が 3 番目。**丸括弧が入る欄**で探す。 */
             /* 會議名の欄は「…（版の識別子）| ランク…」で、**必ず `| ランク` が續く**
              * （空白は入らない – `）| ラ`）。種別の欄（「論文締切（regular）」）は其の續きが
@@ -4334,8 +4335,9 @@ it("返す行の形を說明に書いて、實物もその通りに分けられ�
     (res.result?.tools ?? []).find((t) => t.name === "search_deadlines")?.description ?? "";
   expect(說明, "返す行の形を說明に書いて居ん").toContain("返す行の形");
   expect(說明, "區切りの書き方を書いて居ん").toContain("`| ` で切り");
-  /* 確認の札は在る時だけ入るので 5 つか 6 つ（第 1010 回で實測して書いた）。 */
-  expect(說明, "5 つか 6 つに分かれる事を書いて居ん").toContain("5 つか 6 つに分かれる");
+  /* 確認の札は在る時だけ入るので 6 つか 7 つ（第 1010 囮で書いた時の數は違つて居た –
+   * 第 1061 囮で實測して直した）。 */
+  expect(說明, "6 つか 7 つに分かれる事を書いて居ん").toContain("6 つか 7 つに分かれる");
   expect(說明, "版の識別子が丸括弧の中だと書いて居ん").toContain("丸括弧の中が**版の識別子**");
   /* 實物もその通り – 全部の行が 6 つに分かれ、版の識別子が拔ける。 */
   const 答 = await call("search_deadlines", { query: "セキュリティ", limit: 5 });
@@ -5645,5 +5647,41 @@ it("讀めない字を實答に出さない（第 1060 回）", async () => {
     for (const 字 of ["undefined", "NaN", "[object Object]", "[object Null]"]) {
       expect(答, `${名} の實答に「${字}」が出て居る`).not.toContain(字);
     }
+  }
+});
+
+it("説明の欄數と實答の欄數が合ふ（第 1061 回）", async () => {
+  /* 實測 2026-11-19: 説明は「`| ` で切り、**確認の札は在る時だけ**なので **5 つか 6 つ**」
+   * と書いて居た。**實際は 6 か 7** – 會議名とランクが續いて居る（`|` で分かれて居ない）
+   * ので、數へ方が違つて居た。數を間違へると AI が「6 つに割れる筈」と變な分割を試す。
+   *
+   * 3 箇所（`search_deadlines`・`list_upcoming`・`venue_info`）を「6 つか 7 つ」に直した。
+   * `explain_word`・`recommend_venues` は「`search_deadlines` と同じ」と參照する形なので、
+   * 其の參照が效いて居る事を實物で確かめる。 */
+  const res = (await client.ask({ jsonrpc: "2.0", id: 1, method: "tools/list" })) as {
+    result?: { tools?: Array<{ name?: string; description?: string }> };
+  };
+  const 文 = (n: string): string =>
+    (res.result?.tools ?? []).find((t) => t.name === n)?.description ?? "";
+  for (const n of ["search_deadlines", "list_upcoming", "venue_info"]) {
+    expect(文(n), `${n} の欄數が 6 つか 7 つに成つて居ん`).toContain("6 つか 7 つ");
+  }
+
+  /* **實答** – 全部の行が 6 か 7 に割れる（札が在る時だけ 7）。 */
+  const 答 = await call("venue_info", { key: "icde", scope: "all" });
+  const 行 = 答.split("\n").filter((l) => /^2\d{3}-/.test(l));
+  expect(行.length, "締切の行が出て居ん").toBeGreaterThan(0);
+  for (const l of 行) {
+    const 欄 = l.split("|").length;
+    expect(欄, `欄の數が 6 か 7 でない（${欄}）: ${l.slice(0, 50)}`).toBeGreaterThanOrEqual(6);
+    expect(欄, `欄の數が 6 か 7 でない（${欄}）: ${l.slice(0, 50)}`).toBeLessThanOrEqual(7);
+  }
+  /* **參照が效く** – `explain_word` の行も同じ 6 か 7 に割れる。 */
+  const 語 = await call("explain_word", { word: "セキュリティ" });
+  const 語の行 = 語.split("\n").filter((l) => /^-\s*2\d{3}-/.test(l));
+  for (const l of 語の行) {
+    const 欄 = l.replace(/^-\s*/, "").split("|").length;
+    expect(欄, `explain_word の欄の數が 6 か 7 でない（${欄}）`).toBeGreaterThanOrEqual(6);
+    expect(欄, `explain_word の欄の數が 6 か 7 でない（${欄}）`).toBeLessThanOrEqual(7);
   }
 });
