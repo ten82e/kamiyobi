@@ -4748,3 +4748,46 @@ it("venue_info の key に略稱を渡されたら、name の方を敿へる（�
   expect(無い, "當たらない時に name への敿へを出した").not.toContain("name` に「nosuchway」");
   expect(無い, "收錄に無いと言つて居ん").toContain("収録に在りません");
 });
+
+it("scope のエイリアスは schema の enum にも載る（第 1029 回）", async () => {
+  /* 實測 2026-11-19: `scope` の **schema の enum は `[\"screen\", \"all\"]` だけ**だつたが、
+   * 實裝は `collection`・`full`・`window`・`catalog` も受け付けて居た（venue_info の說明に
+   * 其れを書いてあるのに、enum には無い）。MCP の客户の中には schema で引數を檢證する物が
+   * 在る – 其れらは `scope: \"window\"` を**棄てる**。效く物を schema が邪魔するのは、
+   * AI にとって「使へる筈の引數が使へない」と同じ。
+   * enum に全部載せて、說明にも「同じエイリアス」と書いた。 */
+  const res = (await client.ask({ jsonrpc: "2.0", id: 1, method: "tools/list" })) as {
+    result?: {
+      tools?: Array<{
+        name?: string;
+        inputSchema?: { properties?: Record<string, { enum?: string[]; description?: string }> };
+      }>;
+    };
+  };
+  const 全部 = res.result?.tools ?? [];
+  const 持つ道具 = 全部
+    .map((t) => ({
+      name: String(t.name ?? ""),
+      enum: t.inputSchema?.properties?.scope?.enum ?? [],
+      文: t.inputSchema?.properties?.scope?.description ?? "",
+    }))
+    .filter((t) => t.enum.length > 0);
+  expect(持つ道具.length, "scope を持つ道具が 4 つ無い").toBe(4);
+  for (const { name, enum: values, 文 } of 持つ道具) {
+    for (const 別名 of ["collection", "full", "window", "catalog"]) {
+      expect(values, `${name} の enum に ${別名} が無い`).toContain(別名);
+    }
+    expect(values, `${name} の enum が 6 つ無い`).toHaveLength(6);
+    expect(文, `${name} の說明にエイリアスを書いて居ん`).toContain("同じエイリアス");
+  }
+  /* 實物もその通りに效く（enum に入れただけで實裝が變はつて居ない事の確かめ）。 */
+  for (const [別名, 應] of [
+    ["collection", "収録の全体"],
+    ["full", "収録の全体"],
+    ["window", "画面が最初に読む窓"],
+    ["catalog", "画面が最初に読む窓"],
+  ] as const) {
+    const 答 = await call("search_deadlines", { query: "セキュリティ", limit: 1, scope: 別名 });
+    expect(答, `scope: ${別名} が ${應} に成つて居ん`).toContain(應);
+  }
+});

@@ -2133,9 +2133,9 @@ const TOOLS = [
         },
         scope: {
           type: "string",
-          enum: ["screen", "all"],
+          enum: ["screen", "all", "collection", "full", "window", "catalog"],
           description:
-            "見る窓。screen＝画面が最初に読む窓（180 日。catalog.json が在る時だけ）／all＝収録の全体（過去と先の締切も含む）",
+            "見る窓。screen＝画面が最初に読む窓（180 日。catalog.json が在る時だけ）／all＝収録の全体（過去と先の締切も含む）。**collection・full＝all／window・catalog＝screen**（他の三つの道具と同じエイリアス – 実测 2026-11-19）。省いた時は screen",
         },
       },
       /* **必須の引数は無い**（語も種別も無い時は、代はりの聞き方を返す）。schema で query を
@@ -2165,8 +2165,9 @@ const TOOLS = [
         },
         scope: {
           type: "string",
-          enum: ["screen", "all"],
-          description: "見る窓（既定 all。collection・full・window・catalog も同じ）",
+          enum: ["screen", "all", "collection", "full", "window", "catalog"],
+          description:
+            "見る窓（既定 all）。collection・full＝all／window・catalog＝screen – **同じエイリアス**（省いた時は all）",
         },
       },
     },
@@ -2183,8 +2184,9 @@ const TOOLS = [
         name: { type: "string", description: "会議名の一部（例: KDD）" },
         scope: {
           type: "string",
-          enum: ["screen", "all"],
-          description: "見る窓（既定 all。collection・full・window・catalog も同じ）",
+          enum: ["screen", "all", "collection", "full", "window", "catalog"],
+          description:
+            "見る窓（既定 all）。collection・full＝all／window・catalog＝screen – **同じエイリアス**",
         },
       },
     },
@@ -2224,7 +2226,12 @@ const TOOLS = [
       type: "object",
       properties: {
         word: { type: "string", description: "調べる語（例: 学生でも投稿できる）" },
-        scope: { type: "string", enum: ["screen", "all"], description: "見る窓（既定 screen）" },
+        scope: {
+          type: "string",
+          enum: ["screen", "all", "collection", "full", "window", "catalog"],
+          description:
+            "見る窓（既定 screen）。collection・full＝all／window・catalog＝screen – **同じエイリアス**",
+        },
       },
       required: ["word"],
     },
