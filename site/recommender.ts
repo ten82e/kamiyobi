@@ -16613,10 +16613,12 @@ const Recommender = (() => {
         const fused = activeWeight
           ? Math.round(Math.min(100, (fieldRrf[entry.key] * 100 * (k + 1)) / activeWeight))
           : 0;
+        /* 分類の boost は「既に證據が在る」venue の順位付けに限る（第 1085 囮）。 */
+        const 證據が在る = fused > 0 || (entry.match.venueHit && entry.match.venueScore > 0);
         entry.lexicalScore = Math.min(
           100,
           Math.max(fused, entry.match.venueHit ? entry.match.venueScore : 0) +
-            (entry.boosted ? 10 : 0),
+            (entry.boosted && 證據が在る ? 10 : 0),
         );
       });
     }
