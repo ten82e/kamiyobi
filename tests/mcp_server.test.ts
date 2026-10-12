@@ -5642,11 +5642,22 @@ it("讀めない字を實答に出さない（第 1060 回）", async () => {
     ["recommend_venues", call("recommend_venues", { paper: "分散システム", limit: 30 })],
     ["recommend_venues2", call("recommend_venues", { paper: "ネットワーク", limit: 30 })],
     ["collection_stats", call("collection_stats", {})],
+    /* 簡体字の漏れを見る問（第 1065 囮 – 「其の値は使はないので、既定の儘扱います」は
+     * `include_past` に讀めない値を渡した時の斷り）。之を入れないと固定化の意味が無い。 */
+    ["真偽に讀めない値", call("search_deadlines", { query: "セキュリティ", include_past: "zzz" })],
+    ["推薦の端数", call("recommend_venues", { paper: "分散", limit: 3.7 })],
   ];
   for (const [名, 約束] of 全部) {
     const 答 = await 約束;
     for (const 字 of ["undefined", "NaN", "[object Object]", "[object Null]"]) {
       expect(答, `${名} の實答に「${字}」が出て居る`).not.toContain(字);
+    }
+    /* **簡体字も讀めない字**（第 1065 囮 – 實測 2026-11-19: 計畫の内側には「值」
+     * （U+5024）が 51 箇所在つた。其れは註・識別子で第 854 囮と同じ決まり。但し
+     * **實答**は「値」（U+503C）を使ふので、一つでも漏れると食ひ違ふ。
+     * 減らした 2 箇所: 「其の値は使はないので、既定の儘扱います」「数値は並べるため」。 */
+    for (const 字 of ["\u5024"]) {
+      expect(答, `${名} の實答に簡体字「${字}」が出て居る`).not.toContain(字);
     }
   }
 });
