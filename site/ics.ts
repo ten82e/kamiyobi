@@ -129,6 +129,8 @@ export type IcsRow = {
   body: string[];
   /** 日付の欄が「締切」の行か（第 300 回）。採否通知などは False で、申告の内訳に使う。 */
   deadline: boolean;
+  /** 計畫の計畫（第 1082 囮）。同じ計畫の計畫が 2 つ在る時、消費者は見分けられない。 */
+  kindNote?: string;
 };
 
 export type IcsCalendarMeta = {
@@ -309,6 +311,8 @@ export interface ScreenDeadlineInput {
   kind: string;
   /** 種別の日本語（画面と同じ語）。 */
   kindWord: string;
+  /** 計畫の計畫（第 1082 囮）。同じ計畫の計畫が 2 つ在る時、消費者は見分けられない。 */
+  kindNote?: string;
   /** 日付の欄の名前（「締切」「通知日」など。画面と同じ入口から取った物）。 */
   dateField: string;
   /** JST の暦日（`YYYYMMDD`）。 */
@@ -344,7 +348,10 @@ export function icsRowsFromScreen(
     if (!/^\d{8}$/.test(day)) continue;
     const title = String(item.title ?? "").trim();
     const kindWord = String(item.kindWord ?? "").trim() || "締切";
-    const summary = item.estimated ? `${title}：${kindWord}（推定）` : `${title}：${kindWord}`;
+    /* 計畫の計畫を足す（第 1082 囮）– CLOSER の 2 つは別の募集なのに摘要が同じだつた。 */
+    const kindNote = String(item.kindNote ?? "").trim();
+    const kindShown = kindNote ? `${kindWord}（${kindNote}）` : kindWord;
+    const summary = item.estimated ? `${title}：${kindShown}（推定）` : `${title}：${kindShown}`;
     const catsJa = icsCategoryLabels(item.categories ?? null);
     const placeJa = String(
       Recommender.placeJa(Recommender.placeWithPrefectureJa(item.place)) ?? "",

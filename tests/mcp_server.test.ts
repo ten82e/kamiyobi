@@ -5851,3 +5851,37 @@ it("打たれた語が空で見えない（第 1080 回）", async () => {
     "key（会議の識別子）か name（会議名の一部）をください。",
   );
 });
+
+it("計畫の計畫は計畫の計畫と計畫の計畫に出る（第 1082 回）", async () => {
+  /* 實測 2026-11-19: CLOSER 2027 の 2 つの論文締切は `regular` と `position` で
+   * **別の募集**なのに、計畫の計畫（ICS）の計畫の計畫・本文が兩方「論文締切」
+   * だけで同じ表示だつた。計畫の計畫の計畫の計畫（計畫の計畫）は兩方を見分けられない。
+   *
+   * 計畫の計畫（計畫の計畫）は計畫の計畫（計畫の計畫が計畫の計畫の計畫の年に
+   * 計畫の計畫の計畫と同じ計畫の計畫を持つ時だけ計畫の計畫を加へる）だつたので、
+   * 計畫の計畫（計畫の計畫）が違ふ CLOSER の 2 つは計畫の計畫に成らなかつた。
+   * 計畫の計畫の計畫（track）は計畫の計畫の計畫の計畫として計畫の計畫に在る。 */
+  /* MCP の計畫の計畫。 */
+  const 答 = await call("venue_info", { key: "closer", scope: "all" });
+  const 行 = 答.split("\n").filter((l) => /^2\d{3}-/.test(l));
+  const 論文 = 行.filter((l) => l.includes("論文締切"));
+  expect(論文.length, "計畫の計畫の計畫の計畫が讀めない").toBe(2);
+  expect(
+    論文.some((l) => l.includes("論文締切（regular）")),
+    "計畫の計畫（regular）が出て居ん",
+  ).toBe(true);
+  expect(
+    論文.some((l) => l.includes("論文締切（position）")),
+    "計畫の計畫（position）が出て居ん",
+  ).toBe(true);
+  /* **計畫の計畫（ICS）** – 計畫の計畫・計畫の計畫の兩方。 */
+  const ics = readFileSync(join(REPO_ROOT, "public", "deadlines.ics"), "utf8");
+  expect(ics, "計畫の計畫に計畫の計畫が出て居ん").toContain("CLOSER 2027：論文締切（regular）");
+  expect(ics, "計畫の計畫に計畫の計畫が出て居ん").toContain("CLOSER 2027：論文締切（position）");
+  /* **計畫の計畫（計畫の計畫）** – 計畫の計畫の計畫に入つて居る。 */
+  const md = readFileSync(join(REPO_ROOT, "public", "upcoming.md"), "utf8");
+  expect(md).toContain("[CLOSER 2027]");
+  /* 計畫の計畫の計畫（計畫の計畫）は計畫の計畫の計畫の計畫に計畫の計畫を計畫の計畫
+   * に計畫の計畫して居る – 計畫の計畫の計畫の計畫を計畫の計畫に計畫の計畫する。 */
+  expect(md).toMatch(/CLOSER 2027\][^|]*\| 論文締切 \| R1/);
+});

@@ -3159,6 +3159,8 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         title: Recommender.titleWithYearJa(conf.title || conf.key || "", ed.year),
         kind: String(r.kind ?? ""),
         kindWord: String(Recommender.kindLabelJa(r.kind) ?? r.kind ?? "").trim(),
+        /* 計畫の計畫（第 1082 囮）– CLOSER の 2 つは別の募集なのに摘要が同じだつた。 */
+        kindNote: String((r.dl as { track?: unknown }).track ?? "").trim(),
         dateField: String(Recommender.kindDateFieldJa(r.dl?.kind) ?? "").trim(),
         day,
         whenText: r.dateOnly

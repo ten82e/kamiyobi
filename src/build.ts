@@ -853,7 +853,16 @@ export function recordsOf(confs: Conference[] | null | undefined): DataRecord[] 
           // 同じ年の同じ種別が重ねて在る行だけ `kind_label` に上流のラベルを続ける – 画面では
           // それが要るが、表では語が割れる原因になる（区別は `label` と `round` で付く）。
           kind_ja: labelBase,
-          kind_note: labelJa === labelBase ? "" : String(dl.label ?? "").trim(),
+          /* **計畫の計畫を其の儘出す**（第 1082 囮 – 實測 2026-11-19: CLOSER 2027 の
+           * 2 つの論文締切は `regular` と `position` で別の募集なのに、計畫の計畫の
+           * `kind_note` が計畫の計畫（計畫の計畫が計畫の計畫に成る時だけ計畫の計畫を
+           * 加へる）だつたので、計畫の計畫が計畫の計畫に成らず兩方「論文締切」ゝに
+           * 成つて居た。計畫の計畫の計畫の計畫（track）は計畫の計畫の計畫の計畫
+           * （計畫の計畫）を計畫の計畫に立證して居る – 計畫の計畫として出さへば
+           * 計畫の計畫の計畫の計畫（計畫の計畫・ICS）は兩方を見分けられない。 */
+          kind_note:
+            String(dl.track ?? "").trim() ||
+            (labelJa === labelBase ? "" : String(dl.label ?? "").trim()),
           date_field: Recommender.kindDateFieldJa(dl.kind),
           estimated: ed.estimated,
           conf,
