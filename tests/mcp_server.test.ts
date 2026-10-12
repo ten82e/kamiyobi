@@ -5918,3 +5918,19 @@ it("計畫の計畫を持つ計畫の計畫の計畫の計畫は、計畫の計�
     expect(ics, `ICS に「${語}」が出て居ん`).toContain(語);
   }
 });
+
+it("推薦の說明に「順位表に入る條件」を書く（第 1090 回）", async () => {
+  /* 第 1088 囮で分類の boost に門を付けた（證據が在る venue だけ順位表に入る）。
+   * 説明は「選定理由を出す」と書いて居たが、**順位表に入る條件**は言つて居なかつた。
+   * AI は「何でこの會議が出て居ないのか」を此の文から讀むので、書いて置く必要が有る。
+   * 第 1041 囮（行に足した値を説明にも書く）と同じ型。 */
+  const res = (await client.ask({ jsonrpc: "2.0", id: 1, method: "tools/list" })) as {
+    result?: { tools?: Array<{ name?: string; description?: string }> };
+  };
+  const 文 =
+    (res.result?.tools ?? []).find((t) => t.name === "recommend_venues")?.description ?? "";
+  expect(文, "順位表に入る條件が書かれて居ん").toContain("順位表に入る");
+  expect(文, "實質の一致が條件だと書かれて居ん").toContain("実質の一致が在る");
+  /* 變更の理由（證據が無い會議を薦めて居た）も添へる – 其れが何を直したかが讀める。 */
+  expect(文, "何を直したかが書かれて居ん").toContain("証拠が無い会議");
+});
