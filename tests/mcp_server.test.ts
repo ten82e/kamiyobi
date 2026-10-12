@@ -5771,3 +5771,30 @@ it("長すぎる語は切つたと言ふ（第 1076 回）", async () => {
     expect(答, `${g} の行數が變はつた`).toMatch(/素の照合で [0-9]+ 行/);
   }
 });
+
+it("檢索語が長すぎても切つたと言ふ（第 1077 回）", async () => {
+  /* 實測 2026-11-19: `search_deadlines` も檢索語の長さに比例して掛かつた
+   * （1,000 字 2.3 秒・5,000 字 24 秒・20,000 字は 60 秒逾も answer しなかつた）。
+   * `explain_word`（第 1076 囮）と同じ型 – 其の囮で直した時に此の方は默つた儘だつた。
+   * 檢索語は**複數の語**を空白で繫ぐので、收錄の一番長い會議名（145 字）より
+   * 餘裕を持つ **800 字** で切る。 */
+  /* 800 字までは默る（第 852 囘と同じ決まり）。 */
+  const ぴったり = await call("search_deadlines", { query: "x".repeat(800), limit: 1 });
+  expect(ぴったり, "800 字を截つた").not.toContain("残りの語は参考にして居ません");
+  /* 801 字以上は截つて、其の旨を言ふ。 */
+  for (const 字 of [801, 5000, 100000]) {
+    const 答 = await call("search_deadlines", { query: "x".repeat(字), limit: 1 });
+    expect(答, `${字} 字を默つた`).toContain(
+      `（${字} 字のうち、最初の 800 字で調べました – 残りの語は参考にして居ません）`,
+    );
+  }
+  /* 本物の檢索語は變はない（正式名・複數語は全部 800 字未滿）。 */
+  for (const g of [
+    "セキュリティ",
+    "ネットワーク データベース 人工知能",
+    "The 9th IEEE International Workshop on Big Spatial Data (BSD 2026)",
+  ]) {
+    const 答 = await call("search_deadlines", { query: g, limit: 3 });
+    expect(答, `「${g}」に截りの文を付けた`).not.toContain("残りの語は参考にして居ません");
+  }
+});
