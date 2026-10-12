@@ -5885,3 +5885,36 @@ it("計畫の計畫は計畫の計畫と計畫の計畫に出る（第 1082 回�
    * に計畫の計畫して居る – 計畫の計畫の計畫の計畫を計畫の計畫に計畫の計畫する。 */
   expect(md).toMatch(/CLOSER 2027\][^|]*\| 論文締切 \| R1/);
 });
+
+it("計畫の計畫を持つ計畫の計畫の計畫の計畫は、計畫の計畫と ICS の兩方で見分けられる（第 1084 回）", async () => {
+  /* 第 1082 囮で CLOSER を直した。其の計畫の計畫を計畫の計畫の計畫の計畫に擴張する –
+   * 計畫の計畫を持つ計畫の計畫の計畫の計畫は 3 つ（closer・cpal・eudat-conference）で
+   * 計畫の計畫は 8 件。計畫の計畫の計畫の計畫と ICS の計畫の計畫の**兩方**で
+   * 計畫の計畫が見える事を確かめる。
+   *
+   * 注意: CPAL の 2 件（proceedings・recent-spotlight）は**瞬間が無い**ので ICS には
+   * 入らない – 其れは設計通り（ICS は日付の要る計畫の計畫だけ）。MCP は出す。 */
+  const 會議 = ["closer", "cpal", "eudat-conference"];
+  for (const key of 會議) {
+    const 答 = await call("venue_info", { key, scope: "all" });
+    const 計畫の行 = 答
+      .split("\n")
+      .filter(
+        (l) =>
+          /^2\d{3}-/.test(l) &&
+          /（(regular|position|first-intake|second-intake|proceedings|recent-spotlight)）/.test(l),
+      );
+    expect(計畫の行.length, `${key} に行が出て居ん`).toBeGreaterThan(0);
+  }
+  /* **ICS** – 計畫の計畫の計畫の計畫の中で瞬間を持つ計畫の計畫の計畫の計畫だけ。 */
+  const ics = readFileSync(join(REPO_ROOT, "public", "deadlines.ics"), "utf8");
+  for (const 語 of [
+    "論文締切（regular）",
+    "論文締切（position）",
+    "論文締切（second-intake）",
+    "論文締切（second-intake）",
+    "採否通知（first-intake）",
+  ]) {
+    expect(ics, `ICS に「${語}」が出て居ん`).toContain(語);
+  }
+});
