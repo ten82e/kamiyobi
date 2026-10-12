@@ -108,7 +108,7 @@ describe("原稿を書く道具・手續きの語（第 687 回）", () => {
   it("`都市` は欄『開催地』の名前として案内を出す", () => {
     const 文 = 欄の案内("都市");
     expect(文, "默つた").toContain("欄（開催地）");
-    expect(文, "値で打つ道を書いて居ん").toContain("値で打ってください");
+    expect(文, "値で打つ道を書いて居ん").toContain("值で打ってください");
     for (const 例 of ["国内", "米国"]) {
       expect(文, `例が文に無い: ${例}`).toContain(例);
       expect(件(例), `例が 0 行: ${例}`).toBeGreaterThan(0);

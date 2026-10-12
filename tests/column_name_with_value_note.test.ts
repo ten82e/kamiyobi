@@ -74,7 +74,7 @@ describe("欄の名前を值と並べても打ち直し方が出る（第 507 �
     ]) {
       const 説 = Recommender.columnQueryNoteJa(文);
       expect(説 !== "", `「${文}」に欄の名前の案内が出なかつた`).toBe(true);
-      expect(説).toContain("値で打ってください");
+      expect(説).toContain("值で打ってください");
       expect(説).toContain("例:");
       /* 値の例は収録に實在する語だけ（第 244 回の決まり – 檢査が其れを見る）。*/
       expect(列(文).size, `「${文}」で行が出た`).toBe(0);

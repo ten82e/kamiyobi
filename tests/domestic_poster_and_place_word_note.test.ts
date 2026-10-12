@@ -123,7 +123,7 @@ describe("畫面の欄の名前へ寄せる（第 686 回）", () => {
     expect(件("開催期間"), "行が出る樣に成つた").toBe(0);
     const 文 = String(Recommender.columnQueryNoteJa("開催期間", (語) => 件(語) > 0) || "");
     expect(文, `默つた`).toContain("欄（会期）");
-    expect(文, `値で打つ道を書いて居ん`).toContain("値で打ってください");
+    expect(文, `値で打つ道を書いて居ん`).toContain("值で打ってください");
   });
 
   it("案内が例に擧げる値は、其の方で行が出る（空の例を書かない）", () => {

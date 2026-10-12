@@ -2298,7 +2298,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   /** 受け付けられなかった値を、条件の書き下ろしとは別の文で伝える。 */
   function urlValueNoticeJa(label: string, value: string, behavior: string): string {
     if (!value) return "";
-    return `リンクの${label}「${value}」はこの一覧で使えない値なので、${behavior}`;
+    return `リンクの${label}「${value}」はこの一覧で使えない值なので、${behavior}`;
   }
 
   function hiddenDeadlineCounts(): {
@@ -5464,7 +5464,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
           "意味検索が使えない環境では「意味の近さ」は空になります（0 とは書きません）。" +
           "候補は絞り込みではなく、論文の語との重なりで選ばれています（画面のカードと同じ順・同じ件数）。"
         : "いまの絞り込みで残った行を、表計算で読める形（BOM 付き CSV）にしたファイルです。" +
-          "「残り日数」は数値なので、並べ替えや絞り込みに使えます。日時は JST、日付だけ分かっている行は「時刻未確認」と書きます。" +
+          "「残り日数」は数值なので、並べ替えや絞り込みに使えます。日時は JST、日付だけ分かっている行は「時刻未確認」と書きます。" +
           "この一覧に出ていない行（過ぎた締切や、期間より先の締切）は入りません。";
     }
     // カレンダーへの書き出しも同じ条件（候補が出ていない時は出さない・0 件でも出さない）。

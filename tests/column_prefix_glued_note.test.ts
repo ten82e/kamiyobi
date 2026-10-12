@@ -61,7 +61,7 @@ describe("欄の名前が接頭辞の連結形を、門を通る時だけ受け�
       const 説 = 欄の案内(文);
       expect(説 !== "", `「${文}」に案内が出なかつた`).toBe(true);
       expect(説, `「${文}」の案内が欄の名前を名乘つて居ない`).toContain(名前);
-      expect(説).toContain("値で打ってください");
+      expect(説).toContain("值で打ってください");
       expect(件(文), `「${文}」で行が出た`).toBe(0);
     }
   });
@@ -116,7 +116,7 @@ describe("欄の名前が接頭辞の連結形を、門を通る時だけ受け�
       図({ ...土, query: "分野セキュリティ", termCounts: [], columnValueHits: 問答 } as never),
     );
     expect(乗る).toContain("「分野」はこの表の欄");
-    expect(乗る).toContain("値で打ってください");
+    expect(乗る).toContain("值で打ってください");
     const 乗らん = String(図({ ...土, query: "分野セキュリティ", termCounts: [] } as never));
     expect(乗らん, "問答を渡さないのに欄の名前の案内が出た").not.toContain("「分野」はこの表の欄");
     /* 磁石は畫面でも立たない。*/
@@ -186,7 +186,7 @@ describe("欄の名前が**末尾**に來る連結形（第 608 回）", () => {
       expect(件(文), `增やした道が行を出す打ち方になった ${文}`).toBe(0);
       const 案内 = 欄の案内(文);
       expect(案内, `「${文}」が默つて居る`).toContain(`「${欄}」はこの表の欄`);
-      expect(案内).toContain("値で打ってください");
+      expect(案内).toContain("值で打ってください");
     }
     /* 值の方で打けば出る（關西 6 行 – 檢査の前提）。 */
     expect(件("関西"), "`關西` の行が潰れた").toBeGreaterThan(0);
@@ -209,7 +209,7 @@ describe("欄の名前が**末尾**に來る連結形（第 608 回）", () => {
       expect(件(文), `增やした道が行を出す打ち方になつた ${文}`).toBe(0);
       const 案内 = 欄の案内(文);
       expect(案内, `「${文}」が默つて居る`).toContain(`「${欄}」はこの表の欄`);
-      expect(案内).toContain("値で打ってください");
+      expect(案内).toContain("值で打ってください");
     }
     /* 一文字の欄の名前（`国`）は此の道の門（二文字以上）で今まで通り默る。 */
     expect(欄の案内("会議の国"), "一文字の欄の名前を受けた").toBe("");
