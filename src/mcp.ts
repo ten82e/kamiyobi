@@ -567,6 +567,18 @@ function 果ての案内(query: string, list: Row[], 名: string): string {
   return "";
 }
 
+/** **長すぎる語は切つてから調べる**（第 1076 囮 – 實測 2026-11-19: `explain_word` に
+ * 10,000 字の語を送ると **38 秒**、50,000 字では 120 秒逾も answer しなかつた。
+ * 語の長さに比例して掛かる（1,000 字 0.9 秒・5,000 字 11 秒・10,000 字 38 秒）。
+ * 此の道具は「**1 つの語**が收錄に何行當たるか」を調べる物なので、10,000 字は
+ * 誤つた使い方 – 其れを默つて全部處理すると模型の外で止まる。
+ * 第 954 囮（推薦の長い論文）と同じ決まりで、**切つたことを言ふ**。 */
+const 語の截 = 400;
+function 調べる語(語: string): { 使ふ: string; 切つた: boolean } {
+  if (語.length <= 語の截) return { 使ふ: 語, 切つた: false };
+  return { 使ふ: 語.slice(0, 語の截), 切つた: true };
+}
+
 /** **文字列として讀める形**に直す（第 1074 囮 – 實測 2026-11-19:
  * `venue_info({key: {}})` は「その会議（key: [object Object]）」と答へて居た。
  * `recommend_venues({paper: {}})` も同じ – `String(值)` は**オブジェクトを其の儘
@@ -1858,8 +1870,12 @@ function venueInfo(args: { key?: unknown; name?: unknown; scope?: unknown }, now
 }
 
 function explainWord(args: { word?: unknown; scope?: unknown }, now: number): string {
-  const word = 文字として讀む(args.word);
-  if (!word) return "語をください。";
+  const 打たれた語 = 文字として讀む(args.word);
+  if (!打たれた語) return "語をください。";
+  const { 使ふ: word, 切つた: 語を切つた } = 調べる語(打たれた語);
+  const 語の截りの文 = 語を切つた
+    ? `（${打たれた語.length} 字のうち、最初の ${語の截} 字（1 つの語として）で調べました – 残りは参考にして居ません）`
+    : "";
   const { list, 名, 生成, 窓が無い } = pick(args.scope);
   const 古さ = 古さの斷り(生成, now);
   const 照合 = Recommender.searchMatcher(Recommender.expandRelativeMonths(word, now), now);
@@ -1908,7 +1924,7 @@ function explainWord(args: { word?: unknown; scope?: unknown }, now: number): st
       ? `この語は記号だけなので、絞り込みとして効く語がありません（行は全部を示して居ます）。`
       : "";
     return [
-      `「${word}」は素の照合で ${件數} 行・画面の既定の絞り込み（今後・投稿締切の種別・推定を除く）を通すと ${畫面の行.length} 行です（${名}${切替}）。`,
+      `「${word}」は素の照合で ${件數} 行・画面の既定の絞り込み（今後・投稿締切の種別・推定を除く）を通すと ${畫面の行.length} 行です（${名}${切替}${語の截りの文}）。`,
       ...(記号だけの文 ? [記号だけの文] : []),
       ...(見えて居る文 ? [見えて居る文.trim()] : []),
       ...行.map((r) => `- ${line(r, now)}`),
@@ -1925,7 +1941,7 @@ function explainWord(args: { word?: unknown; scope?: unknown }, now: number): st
     ].join("\n");
   }
   return [
-    `「${word}」は 0 行です。画面が此の時に出す案内:`,
+    `「${word}」は 0 行です${語の截りの文}。画面が此の時に出す案内:`,
     ...(scopeErr ? [scopeErr] : []),
     ...(窓が無いの斷り(窓が無い) ? [窓が無いの斷り(窓が無い)] : []),
     ...(窓の外
