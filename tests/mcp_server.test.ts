@@ -5646,6 +5646,14 @@ it("讀めない字を實答に出さない（第 1060 回）", async () => {
      * `include_past` に讀めない値を渡した時の斷り）。之を入れないと固定化の意味が無い。 */
     ["真偽に讀めない値", call("search_deadlines", { query: "セキュリティ", include_past: "zzz" })],
     ["推薦の端数", call("recommend_venues", { paper: "分散", limit: 3.7 })],
+    /* **變な型の入口**（第 1074 囮 – 實測 2026-11-19: `key: {}`・`paper: {}` は
+     * `String(值)` が其の儘字に變へて「[object Object]」と答へて居た）。
+     * 讀める形（文字列・數・真偽）は其の儘通す。 */
+    ["venue key が對象", call("venue_info", { key: {} })],
+    ["venue key が配列", call("venue_info", { key: [] })],
+    ["venue key が數", call("venue_info", { key: 123 })],
+    ["推薦 paper が對象", call("recommend_venues", { paper: {} })],
+    ["推薦 paper が配列", call("recommend_venues", { paper: [] })],
   ];
   for (const [名, 約束] of 全部) {
     const 答 = await 約束;

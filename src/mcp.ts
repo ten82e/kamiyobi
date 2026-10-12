@@ -567,6 +567,22 @@ function 果ての案内(query: string, list: Row[], 名: string): string {
   return "";
 }
 
+/** **文字列として讀める形**に直す（第 1074 囮 – 實測 2026-11-19:
+ * `venue_info({key: {}})` は「その会議（key: [object Object]）」と答へて居た。
+ * `recommend_venues({paper: {}})` も同じ – `String(值)` は**オブジェクトを其の儘
+ * 字に變へる**ので、讀む人が何を打つたのか判らない（讀めない字を實答に出さない –
+ * 第 1060 囮の決まり）。使へない形は默つて通さず空にして、入口の「ください」の
+ * 文に落とす。讀める形（文字列・數・真偽）は其の儘通す – 其れは第 1063 囮の
+ * 取り扱ひで、默つて切り捨てたりはしない。 */
+function 文字として讀む(值: unknown): string {
+  if (值 === undefined || 值 === null) return "";
+  const t = typeof 值;
+  if (t === "string" || t === "number" || t === "boolean" || t === "bigint") {
+    return String(值).trim();
+  }
+  return "";
+}
+
 /** 數の引數を讀む。**使へない値を默つて既定に戻さない**（第 878 回）。
  *
  * 實測 2026-10-13: `search_deadlines({within_days: 0})` は窓が掛からずに 214 件を返して居た
@@ -1552,8 +1568,8 @@ function 開催の節(行: ReturnType<typeof 開催の行>): string[] {
 }
 
 function venueInfo(args: { key?: unknown; name?: unknown; scope?: unknown }, now: number): string {
-  const key = String(args.key ?? "").trim();
-  const name = String(args.name ?? "").trim();
+  const key = 文字として讀む(args.key);
+  const name = 文字として讀む(args.name);
   if (!key && !name) return "key（会議の識別子）か name（会議名の一部）をください。";
   /* `名` は使はない（此の道具は會議の名を自分で組み立てる）ので受け取らない。 */
   const { list, 生成, 名 } = pick(args.scope ?? "all");
@@ -2050,7 +2066,7 @@ function recommendVenues(
   args: Record<string, unknown> & { paper?: unknown; limit?: unknown },
   now: number,
 ): string {
-  const paper = String(args.paper ?? "").trim();
+  const paper = 文字として讀む(args.paper);
   if (!paper)
     return [
       "論文の題名か概要をください。",
