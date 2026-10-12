@@ -5654,6 +5654,14 @@ it("讀めない字を實答に出さない（第 1060 回）", async () => {
     ["venue key が數", call("venue_info", { key: 123 })],
     ["推薦 paper が對象", call("recommend_venues", { paper: {} })],
     ["推薦 paper が配列", call("recommend_venues", { paper: [] })],
+    /* **種別の入口**（第 1075 囮 – 實測 2026-11-19: `kinds: [{}]` は
+     * 「知らない種別: [object Object]」と答へて居た）。 */
+    ["search kinds が對象の配列", call("search_deadlines", { query: "セキュリティ", kinds: [{}] })],
+    ["list kind が對象", call("list_upcoming", { kind: {} })],
+    ["list kinds が對象の配列", call("list_upcoming", { kind: [{}] })],
+    /* **語の入口**（第 1075 囮 – `query: {}`・`word: {}` も同じ）。 */
+    ["query が對象", call("search_deadlines", { query: {} })],
+    ["word が對象", call("explain_word", { word: {} })],
   ];
   for (const [名, 約束] of 全部) {
     const 答 = await 約束;

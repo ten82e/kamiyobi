@@ -583,6 +583,19 @@ function 文字として讀む(值: unknown): string {
   return "";
 }
 
+/** **配列でも單體でも、文字列として讀める物だけ拔く**（第 1075 囮 – 實測 2026-11-19:
+ * `kinds: [{}]` は「知らない種別（其の侭では 0 件に成ります）: [object Object]」と
+ * 答へて居た。`String(值)` は對象を其の儘字に變へるので、讀む人が何を打つたのか判らない。
+ * **使へない形は默つて落とす** – 其れは第 1074 囮の `文字として讀む` と同じ決まり。 */
+function 名乘りとして讀む(引き: unknown): string[] {
+  if (引き === undefined || 引き === null) return [];
+  const 列 = Array.isArray(引き) ? 引き.flat(Number.POSITIVE_INFINITY) : [引き];
+  return 列
+    .map((k) => 文字として讀む(k))
+    .map((k) => k.trim())
+    .filter((k) => k.length > 0);
+}
+
 /** 數の引數を讀む。**使へない値を默つて既定に戻さない**（第 878 回）。
  *
  * 實測 2026-10-13: `search_deadlines({within_days: 0})` は窓が掛からずに 214 件を返して居た
@@ -1159,7 +1172,7 @@ function searchDeadlines(
     ...(_ARGS.domestic !== undefined ? { domestic: 真偽.domestic.使ふ } : {}),
     ...(_ARGS.online !== undefined ? { online: 真偽.online.使ふ } : {}),
   };
-  const query = String(args.query ?? "").trim();
+  const query = 文字として讀む(args.query);
   /* 語が空でも**絞り込みを指定して居れば**引ける（第 793 回 – 實測 2026-10-06: 「登録締切を全部
    * 見たい」と云ふ聞き方に答へられなかつた。第 865 回に `rank`・`domestic`・`online` へ廣げた –
    * 「國內の締切を全部」も同じ形の聞き方）。語も絞り込みも無い時だけ斷る。 */
@@ -1248,13 +1261,11 @@ function searchDeadlines(
    * `kind: "zzz"` は默つて 0 件に成つて居た。`kinds` の方は第 886 回で知らない值を
    * 名指すやうにしたが、單數の方は其の儘だつた – 同じ引數なので同じ決まり）。 */
   const 名乘り全部 = [
-    ...(Array.isArray(args.kinds) ? args.kinds.map((k) => String(k)) : []),
-    ...(typeof (args as { kind?: unknown }).kind === "string"
-      ? [String((args as { kind?: unknown }).kind)]
-      : []),
+    ...名乘りとして讀む(args.kinds),
+    ...名乘りとして讀む((args as { kind?: unknown }).kind),
     /* **日本語の名も受ける**（第 1030 回 – 行は日本語で出すのに、受け取るのは英語だけ
      * だつた。AI が「論文締切」で濾さうとして 0 件に成つて居た）。 */
-  ].map((k) => 種別の英語(k.trim()));
+  ].map((k) => 種別の英語(k));
   const 知らん = 名乘り全部.filter((k) => !知って居る種別.includes(k));
   /* 知らない等級も名指す（`A+` の樣な無い値は、其の侭では 0 件に成る – AI が打ち直せる樣に）。
    * **行の出し方（`CCF A`）からも受ける**（第 1031 回 – 種別の日本語（第 1030 回）と同じ
@@ -1482,10 +1493,7 @@ function listUpcoming(
   const 日數の表現 =
     使ふ日數 === null && !日數の引數.省かれた ? `${days} 日（既定）` : `${days} 日以内`;
   const 引き = args.kind ?? (args as { kinds?: unknown }).kinds;
-  const 名乘り = (Array.isArray(引き) ? 引き : 引き === undefined ? [] : [引き])
-    .flat()
-    .map((k) => String(k).trim())
-    .filter((k) => k.length > 0)
+  const 名乘り = 名乘りとして讀む(引き)
     /* **日本語の名も受ける**（第 1030 回 – 行は日本語で出すのに、受け取るのは英語だけ
      * だつた。AI が「論文締切」で濾さうとして 0 件に成つて居た）。 */
     .map((k) => 種別の英語(k));
@@ -1850,7 +1858,7 @@ function venueInfo(args: { key?: unknown; name?: unknown; scope?: unknown }, now
 }
 
 function explainWord(args: { word?: unknown; scope?: unknown }, now: number): string {
-  const word = String(args.word ?? "").trim();
+  const word = 文字として讀む(args.word);
   if (!word) return "語をください。";
   const { list, 名, 生成, 窓が無い } = pick(args.scope);
   const 古さ = 古さの斷り(生成, now);
