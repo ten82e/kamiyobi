@@ -17645,6 +17645,25 @@ pin は「本番の機能が變はつた」を意識的に決斷させるため�
 664 會議なので、**池が違ふ**。從つて書き出すと「スコアの變更」と「生データの
 漂流」が一緒に混る – pin が意識的な決斷を強制して居るのは此の爲。
 
+**凍結池で書き出す方法（第 1087 囮で確かめた）**: `--data` に凍結メタデータを渡せば
+池が元と同じに成る。實測 2026-11-19: `--data data/benchmarks/real-paper-feature-baseline.json
+--real-v2-features data/benchmarks/real-paper-features.jsonl --write-required-features <out>`
+で書ける（`--silent` を付けると失敗するので外す）。變更を入れた状態で書くと 201 件中
+**74 件**が差異し、其れは**候補數の減少**（162→123・236→155・279→167）と殘つた候補の
+得點上昇 – 雜音が除かれた效果で、池が同じなので差分はスコア變更だけに歸屬できる。
+
+**reranker の再學習は單獨では成立しない**（第 1087 囮で實測）:
+`scripts/train-reranker.ts` を其の儘叩くと `production_trainer_revision`・
+`candidate_trainer_revision`・`candidate_rejected_reason` が `null` に成り、
+`tests/recommender.test.ts` の `toMatchObject` で落ちる。コミットされたモデルは
+**昇格フロー**（`data/benchmarks/reranker-comparison.json` を作る方）の中で
+生成されて居るもので、單獨実行では職務の一部が埋まらない。
+
+從つて**凍結ストアの更新と reranker の再學習は一つの作業**で、reranker を作る
+昇格フローまで再現する必要が在る。其れをやるまで變更は殘さない。
+（ハッシュを手で書き換へて測試を通すのは**しない** – 其れは「この特徴で學習した」
+と云う虛偽の主張を固定する事になる。）
+
 **正しい直し方**: 凍結メタデータ（`real-paper-feature-baseline.json`）を池にして
 スコアだけを計算し直すか、pin を「スコアが變はつた時に落ちる」物として
 敢えて外して二つの變更を別囘に分ける。**生データで書き出すのは不可** –
