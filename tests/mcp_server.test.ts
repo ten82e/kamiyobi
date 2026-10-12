@@ -5825,3 +5825,29 @@ it("知らない種別は例を 3 つ出して殘りは數へる（第 1078 回�
     expect(答, `${個} 個を全部列舉した`).not.toContain(`k${個 - 1}・`);
   }
 });
+
+it("打たれた語が空で見えない（第 1080 回）", async () => {
+  /* 實測 2026-11-19: `node src/mcp.ts venue xxx` は「その会議（key: ``）」と答へて居た。
+   * CLI は key として存在しない語を `name` として拾ふので、`key` は空・`name` に「xxx」が
+   * 入つて居る。其の儘表示すると**打つた語が見えず**、讀む人が何が起きたのか判らない。
+   * `key` が空なら `name` を表示する – 兩方空なら默る（省かれた時）。 */
+  /* MCP の經路: key に存在しない語を渡す。 */
+  const 答 = await call("venue_info", { key: "xxx" });
+  expect(答, "打たれた語が見えない").toContain("その会議（key: `xxx`）は収録に在りません");
+  expect(答, "空の key を見せて居る").not.toContain("key: ``");
+  /* **CLI の經路**（人の入口 – `node src/mcp.ts venue xxx`）。 */
+  const cli = spawnSync(process.execPath, [join(REPO_ROOT, "src", "mcp.ts"), "venue", "xxx"], {
+    encoding: "utf8",
+    timeout: 60000,
+  });
+  expect(cli.status, `CLI が落ちた: ${cli.stderr?.slice(0, 120)}`).toBe(0);
+  expect(cli.stdout, "CLI で打たれた語が見えない").toContain(
+    "その会議（key: `xxx`）は収録に在りません",
+  );
+  /* 兩方空（省略）なら默つて「ください」に落ちる。 */
+  const 空 = await call("venue_info", {});
+  expect(空, "空の時に key を表示した").not.toContain("その会議（key:");
+  expect(空, "空の時の文が消えた").toContain(
+    "key（会議の識別子）か name（会議名の一部）をください。",
+  );
+});
