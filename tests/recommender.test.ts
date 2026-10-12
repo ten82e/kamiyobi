@@ -5901,3 +5901,89 @@ describe("開催地の翻訳が複合地名を壊さない", () => {
     expect(groups[0]).toContain("new mexico");
   });
 });
+
+describe("venue recommendation boost gate", () => {
+  /* 第 1088 囮 – 分類の boost（`venueCats` による +10）が、會議名が合はず話題も
+   * 合はない venue にも拂はれて居た。證據が 0 の venue が 0 → 10 に膨らんで
+   * 順位表に入つて居た。實測: 日本語の論文 4 件（正解は全て jip・題名は
+   * フィッシング・ゲームコントローラ・視覺效果と無關係）で、1 件あたり
+   * 182 件・5 件の「おすすめ」を返して居た。醉點 96〜98 で、譽の高い間違ひ。
+   * 不正解の推薦の 36%（579 件中 211 件）がブーストのみで浮上し、
+   * 1 位がブーストのみだつた件は 25/80（31%）。
+   *
+   *  boost は「實質の一致が既に有る」順位付けに限る。證據が 0 の venue は
+   *  0 の儘にする。 */
+
+  /** 論文と相手の會議の間に**話題の手がかりが何も無い**壇を作る。 */
+  const 無關係な壇 = [
+    {
+      conf: { key: "venue-alpha", title: "Alpha Workshop", full_name: "Alpha Workshop" },
+      cats: ["security"],
+    },
+    {
+      conf: { key: "venue-beta", title: "Beta Symposium", full_name: "Beta Symposium" },
+      cats: ["security", "networking"],
+    },
+    {
+      conf: { key: "venue-gamma", title: "Gamma Meeting", full_name: "Gamma Meeting" },
+      cats: ["hpc"],
+    },
+  ];
+
+  it("does not admit evidence-free venues into the ranking", () => {
+    const ranked = R.venueRecommendations(
+      無關係な壇,
+      R.parsePaperLines("Webページ表示後のリアルタイム検出によるフィッシング対策の強化"),
+      null,
+      Date.UTC(2026, 0, 1),
+      { fieldedLexical: true, venueCats: ["security"] },
+    );
+    /* 論文と壇の間に話題の一致が無いので、順位表に入るべきでは無い。 */
+    for (const item of ranked) {
+      const fused = (item as unknown as { match: { venueHit: boolean; venueScore: number } }).match;
+      const 欄の一致 = Object.values(
+        (item as unknown as { match: { fieldScores: Record<string, number> } }).match.fieldScores,
+      ).some((score) => score > 0);
+      /* 欄の一致が在る venue だけが順位表に入る。boost だけで入つた物は弾く。 */
+      if (!fused.venueHit && !欄の一致) {
+        expect(item.fit.score, `證據が無い ${item.venueKey} が順位表に入つた`).toBe(0);
+      }
+    }
+  });
+
+  it("keeps boosting venues that already have real evidence", () => {
+    /* 實質の一致が在る venue は boost を受け續ける（順位付けの為の boost は殘す）。 */
+    const 壇 = [
+      {
+        conf: {
+          key: "venue-hits",
+          title: "Security and Privacy Conference",
+          full_name: "International Conference on Security and Privacy",
+        },
+        cats: ["security"],
+      },
+    ];
+    const ranked = R.venueRecommendations(
+      壇,
+      R.parsePaperLines("security and privacy in networked systems"),
+      null,
+      Date.UTC(2026, 0, 1),
+      { fieldedLexical: true, venueCats: ["security"] },
+    );
+    expect(ranked.length, "實質の一致が在る venue が順位表から落ちた").toBeGreaterThan(0);
+    expect(ranked[0].fit.score, "實質の一致が在る venue の得點が 0 に成つた").toBeGreaterThan(0);
+  });
+
+  it("still abstains on a paper with no venue signal", () => {
+    /* 第 1088 囮の利用者の目に見える效果: 遊戲機の論文（正解は jip だが題名からは
+     * 推定不能）は「合ふ投稿先は見つかりませんでした」と正直に答へる。 */
+    const ranked = R.venueRecommendations(
+      無關係な壇,
+      R.parsePaperLines("フラフープ型ゲームコントローラ“Connected Hoop”の提案"),
+      null,
+      Date.UTC(2026, 0, 1),
+      { fieldedLexical: true, venueCats: ["hpc", "security"] },
+    );
+    expect(ranked.length, "話題の手がかりが無い論文に投稿先を薦めた").toBe(0);
+  });
+});
