@@ -95,14 +95,14 @@ describe("推薦の候補を CSV で持ち出す（第 870 回）", () => {
     /* 5 列目から後ろは一覧の CSV と同じ見出し（同じ語を 2 つの書き方に割らない）。 */
     const 一覧 = 行々(Recommender.deadlinesToCsv([候補()], NOW));
     expect(見出し.slice(4), "締切の欄の見出しが一覧と違う").toEqual(一覧.見出し);
-    /* 行も同じ – 締切の欄は同じ関数から作る（値の写し間違いをここで止める）。 */
+    /* 行も同じ – 締切の欄は同じ関数から作る（值の写し間違いをここで止める）。 */
     expect(行.length, "1 行になっていない").toBe(1);
-    expect(行[0].slice(4), "締切の欄の値が一覧と違う").toEqual(一覧.行[0]);
+    expect(行[0].slice(4), "締切の欄の值が一覧と違う").toEqual(一覧.行[0]);
     /* 見出しと行の数が合う（欄を足して見出しを忘れる、を止める）。 */
     expect(行[0].length, "見出しと行の欄数が違う").toBe(見出し.length);
   });
 
-  it("一致の 4 列は、画面の札と行の詳細が出す値をそのまま書く", () => {
+  it("一致の 4 列は、画面の札と行の詳細が出す值をそのまま書く", () => {
     const { 行 } = 行々(Recommender.candidateRowsToCsv([候補()], NOW));
     const [評価, 点, 言葉, 意味] = 行[0];
     expect(評価, "一致評価の語が違う").toBe("候補");
@@ -116,7 +116,7 @@ describe("推薦の候補を CSV で持ち出す（第 870 回）", () => {
     ]);
   });
 
-  it("実際の候補（収録の品書から推薦を回す）でも、4 列が fit の値と一致する", () => {
+  it("実際の候補（収録の品書から推薦を回す）でも、4 列が fit の值と一致する", () => {
     /* 手で作った行ではなく、**本物の推薦の出力**で見る（欄の名前と `fit` の対応がずれても、
      * 見本の行なら気付かない）。品書はテスト用のビルドが作る `catalog.json` を使う。 */
     const catalog = JSON.parse(readFileSync(join(builtSite(), "catalog.json"), "utf8"));
@@ -172,13 +172,13 @@ describe("推薦の候補を CSV で持ち出す（第 870 回）", () => {
       Recommender.candidateRowsToCsv([候補({ _semScore: 0 }), 候補({ _semScore: undefined })], NOW),
     );
     expect(意味無し.行[0][3], "意味の近さ 0 を書いた").toBe("");
-    expect(意味無し.行[1][3], "値の無い行に何か書いた").toBe("");
-    /* 言葉の一致は逆に 0 も書く（行の詳細が「言葉の一致スコア 0点」と出す値）。 */
+    expect(意味無し.行[1][3], "值の無い行に何か書いた").toBe("");
+    /* 言葉の一致は逆に 0 も書く（行の詳細が「言葉の一致スコア 0点」と出す值）。 */
     const 語彙ゼロ = 行々(Recommender.candidateRowsToCsv([候補({ _vocabScore: 0 })], NOW));
     expect(語彙ゼロ.行[0][2], "言葉の一致の 0 を落とした").toBe("0");
   });
 
-  it("値が無い候補でも欄は崩れない（印の無い行・空の入力）", () => {
+  it("值が無い候補でも欄は崩れない（印の無い行・空の入力）", () => {
     /* 印は推薦の経路だけが付ける。素の締切の行を渡しても欄の数は変わらない（呼び出し側の
      * 取り違えで CSV の欄がずれると、表計算の列が全部ひとつずつずれる）。 */
     const 印無し = 行々(Recommender.candidateRowsToCsv([{ t: NOW, kind: "paper", dl: {} }], NOW));
@@ -190,13 +190,13 @@ describe("推薦の候補を CSV で持ち出す（第 870 回）", () => {
     expect(Recommender.candidateRowsToCsv(null, NOW)).toBe(Recommender.candidateRowsToCsv([], NOW));
   });
 
-  it("コンマや引用符を含む値も、欄として壊れない", () => {
+  it("コンマや引用符を含む值も、欄として壊れない", () => {
     const csv = Recommender.candidateRowsToCsv(
       [候補({ conf: { key: "x", title: 'A,B "C"', categories: [] } })],
       NOW,
     );
     const { 見出し, 行 } = 行々(csv);
-    expect(行[0].length, "引用した値で欄が割れた").toBe(見出し.length);
+    expect(行[0].length, "引用した值で欄が割れた").toBe(見出し.length);
     /* 欄の番号は見出しから引く（前に 4 列を足したときに番号を書き写さない）。 */
     expect(行[0][見出し.indexOf("会議")], "会議名が壊れた").toContain('A,B "C"');
   });
@@ -341,7 +341,7 @@ describe("推薦の候補を CSV で持ち出す（第 870 回）", () => {
     const llms = readFileSync(join(builtSite(), "llms.txt"), "utf8");
     expect(llms, "候補の書き出しを書いていない").toContain("投稿先を探す");
     expect(llms, "候補の欄を書いていない").toContain("一致評価・一致の点・言葉の一致・意味の近さ");
-    expect(llms, "一致の点と札の違いを書いていない").toContain("当たった証拠の強さで決まる別の値");
+    expect(llms, "一致の点と札の違いを書いていない").toContain("当たった証拠の強さで決まる別の值");
   });
 
   it("てびきが、候補の CSV を画面と同じ語で書いている", () => {
