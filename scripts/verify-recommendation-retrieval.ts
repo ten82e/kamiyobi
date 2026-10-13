@@ -6,6 +6,7 @@ import {
   existsSync,
   mkdirSync,
   mkdtempSync,
+  readdirSync,
   readFileSync,
   symlinkSync,
   writeFileSync,
@@ -22,8 +23,10 @@ const copied = [
   "src/util.ts",
   "tests/real_papers_models.integration.ts",
   "tests/recommendation_retrieval.test.ts",
-  "tests/fixtures/real-model-evaluation.json",
-  "tests/fixtures/real-model-independent.json",
+  ...readdirSync(join(repo, "tests/fixtures"))
+    .filter((name) => /^real-model-.*\.json$/.test(name))
+    .sort()
+    .map((name) => `tests/fixtures/${name}`),
   "package.json",
   "tsconfig.json",
 ];
@@ -99,12 +102,27 @@ function run(id: string) {
   noGeneratedData();
   return { status: result.status, report };
 }
+let baselineCount: number | null = null;
+const requiredModelChecks = [
+  "real paper evaluation separates profiles, preserves inputs and uses the specified models",
+  "every initial recommendation, including the former English and Japanese misses, stays in the top five",
+  "keeps every confirmation recommendation within the top five",
+  "routes escaped paper content through the correct actual model",
+  "keeps suitable venues in the top five of raw semantic retrieval for every paper input",
+];
 function requirePassing(id: string) {
   const { status, report } = run(id);
   assert.equal(status, 0, `${id}: check ${isolated}`);
-  assert.equal(report.numPassedTests, 21);
   assert.equal(report.numPendingTests, 0);
-  console.log(`${id}: 21 passed; data/ and public/ absent`);
+  const assertions = report.testResults.flatMap((suite) => suite.assertionResults);
+  for (const name of requiredModelChecks)
+    assert(
+      assertions.some((result) => result.fullName === name && result.status === "passed"),
+      `${id}: required model check did not run: ${name}`,
+    );
+  if (baselineCount === null) baselineCount = report.numPassedTests;
+  else assert.equal(report.numPassedTests, baselineCount, `${id}: test coverage changed`);
+  console.log(`${id}: ${report.numPassedTests} passed; data/ and public/ absent`);
 }
 const mutations: Array<{ id: string; file: string; edits: Array<[string, string]> }> = [
   {

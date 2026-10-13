@@ -173,6 +173,38 @@ describe("MCP recommendation results with independent raw fixtures", () => {
     },
   );
 
+  it("reports each independently verified deadline field without promoting other fields", () => {
+    const item = venue("gpu", "GPU", "gpu parallel programming");
+    const edition = item.editions[0] as { deadlines: Array<Record<string, unknown>> };
+    edition.deadlines[0].evidence = [
+      { sourceClass: "official-cfp", verifiedFields: ["date"] },
+      { sourceClass: "publisher", verifiedFields: ["time"] },
+      { sourceClass: "curated-manual", verifiedFields: ["timezone"] },
+      { sourceClass: "aggregator", verifiedFields: ["kind"] },
+    ];
+    edition.deadlines[0].origins = [{ sourceClass: "official-cfp", freshness: "cache-fallback" }];
+    const root = sandbox([item]);
+    try {
+      const result = call(root, { paper: "gpu parallel programming", limit: 1 }).result!;
+      expect(result.structuredContent!.rows).toHaveLength(1);
+      expect(result.structuredContent!.rows[0].axes.deadline_trust).toEqual({
+        date: "official",
+        time: "publisher",
+        timezone: "curated-manual",
+        kind: "aggregator",
+        sourceFreshness: "cache-fallback",
+        conflicts: 0,
+      });
+      const text = result.content.map((c) => c.text).join("\n");
+      expect(text).toContain(
+        "締切の確認状況: 日付 公式確認 ／ 時刻 出版社確認 ／ タイムゾーン 手動確認 ／ 種別 集約情報",
+      );
+      expect(text).toContain("取得状態: 前回の取得データを使用");
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
   it("paginates ranked candidates without repeats and retains absolute rank", () => {
     const root = sandbox(input);
     const paper = "GPU programming memory kernels";
