@@ -20,6 +20,7 @@ const PINS = [
   "actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128 # v5.0.0",
   "actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0",
   "actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2",
+  "actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5",
 ];
 
 function workflow(path: string): { text: string; value: Workflow } {
@@ -212,7 +213,7 @@ describe("CI contracts", () => {
     );
   });
 
-  it("keeps eight CI checks, reports dispatch statuses, and reserves the full benchmark for nightly", () => {
+  it("keeps nine CI checks, reports dispatch statuses, and reserves the full benchmark for nightly", () => {
     const { text, value } = workflow("../.github/workflows/ci.yml");
     expect(text).toContain("workflow_dispatch:");
     expect(Object.keys(value.jobs ?? {}).sort()).toEqual([
@@ -220,6 +221,7 @@ describe("CI contracts", () => {
       "lint",
       "offline-build",
       "production-health-self-check",
+      "real-embedding-models",
       "recommendation-regression",
       "report-dispatch-statuses",
       "typecheck",
@@ -231,6 +233,7 @@ describe("CI contracts", () => {
       "typecheck",
       "lint",
       "unit-integration-tests",
+      "real-embedding-models",
       "offline-build",
       "validate-data",
       "health-transition",
@@ -247,6 +250,12 @@ describe("CI contracts", () => {
     expect(integrationBuild).toContain("--out public");
     expect(integrationBuild).toContain("--offline");
     expect(integrationBuild).toContain("--no-embeddings");
+    const models = value.jobs!["real-embedding-models"]!;
+    expect(models.if).toBeUndefined();
+    expect(
+      step(models, "Generate and verify English and Japanese embeddings with real models").run,
+    ).toBe("npm run test:models");
+    expect(step(models, "Cache pinned model weights").with?.path).toBe(".cache/embedding-models");
     const report = String(step(reporter!, "Report required dispatch statuses").run);
     expect(report).toContain("'.[$context].result'");
     expect(report).toContain('if [ "$result" != success ]');

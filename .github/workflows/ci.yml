@@ -44,6 +44,24 @@ jobs:
       - name: Build real-data test fixture
         run: node src/cli.ts build --out public --offline --no-embeddings --cache /tmp/kamiyobi-test-cache --now 2026-08-09T00:00:00Z
       - run: npm test
+  real-embedding-models:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with: { node-version: '24', cache: npm }
+      - name: Install dependencies (with retry)
+        run: |
+          for i in 1 2 3; do npm ci && break; [ "$i" -lt 3 ] || exit 1; sleep 15; done
+      - name: Cache pinned model weights
+        uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5
+        with:
+          path: .cache/embedding-models
+          key: ${{ runner.os }}-embedding-models-${{ hashFiles('src/embeddings.ts', 'package-lock.json') }}
+      - name: Generate and verify English and Japanese embeddings with real models
+        run: npm run test:models
   offline-build:
     runs-on: ubuntu-latest
     steps:
@@ -174,7 +192,7 @@ jobs:
 
   report-dispatch-statuses:
     if: ${{ always() && github.event_name == 'workflow_dispatch' }}
-    needs: [typecheck, lint, unit-integration-tests, offline-build, validate-data, health-transition, production-health-self-check, recommendation-regression]
+    needs: [typecheck, lint, unit-integration-tests, real-embedding-models, offline-build, validate-data, health-transition, production-health-self-check, recommendation-regression]
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -187,7 +205,7 @@ jobs:
         run: |
           set -euo pipefail
           overall=success
-          for context in typecheck lint unit-integration-tests offline-build validate-data health-transition production-health-self-check recommendation-regression; do
+          for context in typecheck lint unit-integration-tests real-embedding-models offline-build validate-data health-transition production-health-self-check recommendation-regression; do
             result=$(jq -r --arg context "$context" '.[$context].result' <<< "$RESULTS")
             state=success
             if [ "$result" != success ]; then state=failure; overall=failure; fi
