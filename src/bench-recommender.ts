@@ -2772,6 +2772,18 @@ export async function runRealPaperBenchmark(
       ? fixedFeatureRecord(requiredFeatures, record.paper_id, bundle.manifest, split)
       : null;
     const semanticScores = fixed?.semantic_scores ?? inferredSemanticScores;
+    const semanticSimilarities = useFrozenFeatures
+      ? null
+      : Object.fromEntries(
+          confs.map((conference) => [
+            conference.key,
+            Recommender.semanticSimilarity(
+              conference.key,
+              vector!,
+              record.language === "ja" ? bundle.multi.embeddings : bundle.embeddings,
+            ),
+          ]),
+        );
     const recommendations = Recommender.venueRecommendations(
       rows,
       lines,
@@ -2781,6 +2793,7 @@ export async function runRealPaperBenchmark(
         topN: candidateDepth,
         venueCats: Recommender.autoDetectCats(lines),
         fieldedLexical: true,
+        semanticSimilarities,
       },
     ) as VenueRecommendation[];
     const candidateFeatures = recommendations
@@ -2823,7 +2836,11 @@ export async function runRealPaperBenchmark(
           left.venueKey.localeCompare(right.venueKey),
       );
     const semantic = recommendations
-      .filter((recommendation) => recommendation.fit.semanticScore > 0)
+      .filter((recommendation) =>
+        semanticSimilarities
+          ? semanticSimilarities[recommendation.venueKey] > 0
+          : recommendation.fit.semanticScore > 0,
+      )
       .sort(
         (left, right) =>
           (left.fit.semanticRank ?? Number.MAX_SAFE_INTEGER) -

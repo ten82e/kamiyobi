@@ -18,6 +18,7 @@
     "test": "vitest run",
     "test:models": "vitest run --config vitest.models.config.ts",
     "test:real-papers": "vitest run --config vitest.models.config.ts tests/real_papers_models.integration.ts",
+    "test:recommendation-mutations": "node scripts/verify-recommendation-retrieval.ts",
     "clean:tmp": "node scripts/clean_tmp.ts",
     "typecheck": "tsc --noEmit && tsc --noEmit -p site/tsconfig.json && tsc --noEmit -p scripts/tsconfig.json",
     "check": "biome check src scripts site/*.ts tests --files-ignore-unknown=false",

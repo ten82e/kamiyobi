@@ -212,13 +212,16 @@ interface RecommendationOptions {
   venueCats?: string[];
   topN?: number;
   fieldedLexical?: boolean;
+  semanticSimilarities?: Record<string, number> | null;
 }
 interface RecommendationEntry {
   key: string;
   row: CandidateRow;
   match: ScoreBreakdown;
+  retrievalFields: FieldScores;
   lexicalScore: number;
   semantic: number;
+  similarity: number;
   evidenceStrength: number;
   boosted: boolean;
 }
@@ -783,7 +786,7 @@ const Recommender = (() => {
         const jsonRows = records
           .map(normalizePaperRecord)
           .filter((paper): paper is PaperRecord => paper !== null);
-        return jsonRows.length ? jsonRows : null;
+        return jsonRows;
       } catch (_error) {
         return null;
       }
@@ -921,10 +924,11 @@ const Recommender = (() => {
       return Array.isArray(item) ? item.filter(Boolean).join(", ") : String(item || "").trim();
     };
     const title = String(value("title") || value("title_text") || value("name") || "").trim();
-    if (!title) return null;
+    const abstract = String(value("abstract") || value("summary") || "").trim();
+    if (!title && !abstract) return null;
     return {
       title: title,
-      abstract: String(value("abstract") || value("summary") || "").trim(),
+      abstract,
       keywords: list("keywords") || list("keyword"),
       venue: String(value("venue") || value("conference") || "").trim(),
     };
@@ -14398,6 +14402,14 @@ const Recommender = (() => {
     const groups: Record<string, CandidateRow[]> = {};
     const opts = options || {};
     const safeNow = Number.isFinite(now) ? now : Date.now();
+    const retrievalLines = opts.semanticSimilarities
+      ? lines.map((line) => ({
+          ...line,
+          title: `${line.title} ${expandJp(line.title, true)}`.trim(),
+          abstract: `${line.abstract || ""} ${expandJp(line.abstract, true)}`.trim(),
+          keywords: `${line.keywords || ""} ${expandJp(line.keywords, true)}`.trim(),
+        }))
+      : lines;
     rows.map(normalizeCandidateLike).forEach((row) => {
       if (!row) return;
       const key = normKey(row.conf.key);
@@ -14421,14 +14433,31 @@ const Recommender = (() => {
         lexicalScore = Math.min(100, lexicalScore + 10);
         boosted = true;
       }
+      // 旧 API の観測値は正規化した ID。実モデルの経路は正典の ID で受け取る。
+      const semanticKey =
+        opts.semanticSimilarities && Object.hasOwn(semanticScores ?? {}, row.conf.key)
+          ? row.conf.key
+          : key;
       const semantic =
-        semanticScores && Number.isFinite(semanticScores[key]) ? semanticScores[key] : 0;
+        semanticScores && Number.isFinite(semanticScores[semanticKey])
+          ? semanticScores[semanticKey]
+          : 0;
+      const similarityKey = Object.hasOwn(opts.semanticSimilarities ?? {}, row.conf.key)
+        ? row.conf.key
+        : key;
+      const similarity = opts.semanticSimilarities
+        ? (opts.semanticSimilarities[similarityKey] ?? 0)
+        : semantic;
       return {
         key,
         row,
         match,
+        retrievalFields: opts.semanticSimilarities
+          ? breakdown(row, retrievalLines, Boolean(opts.fieldedLexical)).fieldScores
+          : match.fieldScores,
         lexicalScore,
         semantic,
+        similarity: Number.isFinite(similarity) ? similarity : 0,
         evidenceStrength: Math.max(match.topicScore || 0, semantic || 0),
         boosted,
       };
@@ -14440,6 +14469,9 @@ const Recommender = (() => {
       entries.map((entry) => [entry.key, {}]),
     );
     const fieldRrf: Record<string, number> = Object.fromEntries(
+      entries.map((entry) => [entry.key, 0]),
+    );
+    const retrievalRrf: Record<string, number> = Object.fromEntries(
       entries.map((entry) => [entry.key, 0]),
     );
     let activeWeight = 0;
@@ -14458,6 +14490,16 @@ const Recommender = (() => {
           fieldRanks[entry.key][field] = rank;
           fieldRrf[entry.key] += FIELD_WEIGHTS[field] / (k + rank);
         });
+        entries
+          .filter((entry) => entry.retrievalFields[field] > 0)
+          .sort(
+            (a, b) =>
+              b.retrievalFields[field] - a.retrievalFields[field] || a.key.localeCompare(b.key),
+          )
+          .slice(0, topN)
+          .forEach((entry, index) => {
+            retrievalRrf[entry.key] += FIELD_WEIGHTS[field] / (k + index + 1);
+          });
       });
       entries.forEach((entry) => {
         const fused = activeWeight
@@ -14476,7 +14518,7 @@ const Recommender = (() => {
       .slice()
       .sort(
         (a, b) =>
-          (opts.fieldedLexical ? fieldRrf[b.key] - fieldRrf[a.key] : 0) ||
+          (opts.fieldedLexical ? retrievalRrf[b.key] - retrievalRrf[a.key] : 0) ||
           b.lexicalScore - a.lexicalScore ||
           a.key.localeCompare(b.key),
       );
@@ -14485,10 +14527,10 @@ const Recommender = (() => {
       return rank < 0 ? Number.MAX_SAFE_INTEGER : rank;
     };
     const semantic = entries
-      .filter((entry) => entry.semantic > 0)
+      .filter((entry) => entry.similarity > 0)
       .sort(
         (a, b) =>
-          b.semantic - a.semantic ||
+          b.similarity - a.similarity ||
           categoryRank(a) - categoryRank(b) ||
           b.lexicalScore - a.lexicalScore ||
           a.key.localeCompare(b.key),
@@ -14496,7 +14538,7 @@ const Recommender = (() => {
     const lexicalRanks: Record<string, number> = {};
     const semanticRanks: Record<string, number> = {};
     lexical
-      .filter((entry) => entry.lexicalScore > 0)
+      .filter((entry) => entry.lexicalScore > 0 || retrievalRrf[entry.key] > 0)
       .slice(0, topN)
       .forEach((entry, index) => {
         lexicalRanks[entry.key] = index + 1;
@@ -14563,11 +14605,10 @@ const Recommender = (() => {
         if (!entry) return null;
         const lexicalRank = lexicalRanks[key] || null;
         const semanticRank = semanticRanks[key] || null;
-        // Fielded lexical retrieval benefits from a lexical tie-breaker after
-        // the expanded venue profiles; keep the legacy symmetric blend for
-        // the unfielded path used by the synthetic compatibility benchmark.
-        const lexicalRrfWeight = opts.fieldedLexical ? 1.6 : 1;
-        const semanticRrfWeight = opts.fieldedLexical ? 0.4 : 1;
+        // 類似度を取得できるときは意味を主に使う。単語の偶然の一致で
+        // 近い候補を落とさず、既存の表示スコア・学習特徴量は保つ。
+        const lexicalRrfWeight = opts.semanticSimilarities ? 0.4 : opts.fieldedLexical ? 1.6 : 1;
+        const semanticRrfWeight = opts.semanticSimilarities ? 1.6 : opts.fieldedLexical ? 0.4 : 1;
         const rrf =
           (lexicalRank ? lexicalRrfWeight / (k + lexicalRank) : 0) +
           (semanticRank ? semanticRrfWeight / (k + semanticRank) : 0);
@@ -14634,8 +14675,10 @@ const Recommender = (() => {
       })
       .filter((result): result is RecommendationResult => result !== null)
       .sort((a, b) => {
-        const rawA = a.fit.baseScore * (1 - blend) + a.fit.probability * 100 * blend;
-        const rawB = b.fit.baseScore * (1 - blend) + b.fit.probability * 100 * blend;
+        const baseA = hasSemantic ? a.fit.rrf * (k + 1) * 50 : a.fit.baseScore;
+        const baseB = hasSemantic ? b.fit.rrf * (k + 1) * 50 : b.fit.baseScore;
+        const rawA = baseA * (1 - blend) + a.fit.probability * 100 * blend;
+        const rawB = baseB * (1 - blend) + b.fit.probability * 100 * blend;
         return rawB - rawA || b.fit.score - a.fit.score || a.venueKey.localeCompare(b.venueKey);
       });
   }
@@ -14779,7 +14822,7 @@ const Recommender = (() => {
    * （平均重心の汎用化を避けるため埋め込みから論文を外すと、論文タイトルから
    * セマンティックに発見されないため）。
    */
-  function semanticScore(
+  function semanticSimilarity(
     confKey: string,
     queryVec: Vector,
     emb: VectorMap,
@@ -14797,7 +14840,17 @@ const Recommender = (() => {
         if (pc > c) c = pc;
       }
     }
-    return Math.round(Math.max(0, (c - 0.2) / 0.8) * 100); // 0.2 以下は 0、1.0 で 100
+    return c;
+  }
+
+  function semanticScore(
+    confKey: string,
+    queryVec: Vector,
+    emb: VectorMap,
+    vectors?: PaperVectorMap | null,
+  ): number {
+    const c = semanticSimilarity(confKey, queryVec, emb, vectors);
+    return Math.round(Math.max(0, (c - 0.2) / 0.8) * 100);
   }
 
   /* 会議プロファイルの英語比率 0..1。
@@ -15058,12 +15111,24 @@ const Recommender = (() => {
   }
 
   /* 日本語テキストに含まれる分野語を英語に展開する（無ければ ""）。 */
-  function expandJp(text: unknown): string {
+  const RETRIEVAL_TOPIC_ALIASES: Record<string, string> = {
+    clustering: "unsupervised machine learning",
+    "k-means": "unsupervised machine learning",
+    "a/b testing": "statistical inference causal inference",
+    "treatment effect": "causal inference statistical learning",
+  };
+
+  function expandJp(text: unknown, forRetrieval = false): string {
     if (!expandEnabled) return "";
     const t = String(text || "").toLowerCase();
     let out = "";
-    Object.keys(JP_EN).forEach((jp) => {
-      if (t.indexOf(jp.toLowerCase()) !== -1) out += ` ${JP_EN[jp]}`;
+    const aliases = forRetrieval ? { ...JP_EN, ...RETRIEVAL_TOPIC_ALIASES } : JP_EN;
+    Object.keys(aliases).forEach((jp) => {
+      const matches =
+        forRetrieval && /^[a-z0-9/ -]+$/i.test(jp)
+          ? signalInText(t, jp)
+          : t.indexOf(jp.toLowerCase()) !== -1;
+      if (matches) out += ` ${aliases[jp]}`;
     });
     return out.trim();
   }
@@ -15264,6 +15329,7 @@ const Recommender = (() => {
     embeddingSetCompatible: embeddingSetCompatible,
     embeddingProbeMatches: embeddingProbeMatches,
     semanticScore: semanticScore,
+    semanticSimilarity: semanticSimilarity,
     blendScore: blendScore,
     vocabWeight: vocabWeight,
     contentWordCount: contentWordCount,

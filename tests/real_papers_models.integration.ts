@@ -47,9 +47,21 @@ const inputText = readFileSync(
   "utf8",
 );
 const fixture = JSON.parse(inputText) as Fixture;
+const independentText = readFileSync(
+  new URL("./fixtures/real-model-independent.json", import.meta.url),
+  "utf8",
+);
+const independent = JSON.parse(independentText) as Pick<
+  Fixture,
+  "sampling" | "profile_policy" | "papers"
+>;
+const papers = [
+  ...fixture.papers.map((paper) => ({ ...paper, corpus: "initial" as const })),
+  ...independent.papers.map((paper) => ({ ...paper, corpus: "independent" as const })),
+];
 const modes = ["title", "abstract", "title+abstract"] as const;
 type Mode = (typeof modes)[number];
-const queryCases = fixture.papers.flatMap((paper) => modes.map((mode) => ({ paper, mode })));
+const queryCases = papers.flatMap((paper) => modes.map((mode) => ({ paper, mode })));
 const categories = {
   ai: "Artificial Intelligence and Machine Learning",
   theory: "Theoretical Computer Science",
@@ -71,9 +83,15 @@ const contracts: Array<{
   queryCount: number;
   profileCosine: number;
   queryCosine: number;
+  inputs: Array<{
+    actual: ReturnType<typeof Recommender.parsePaperLines>;
+    title: string;
+    abstract: string;
+  }>;
 }> = [];
 const results: Array<{
   id: string;
+  corpus: "initial" | "independent";
   language: "en" | "ja";
   mode: Mode;
   source: string;
@@ -83,6 +101,7 @@ const results: Array<{
   search: string[];
   recommendation: string[];
   scores: Record<string, number>;
+  similarities: Record<string, number>;
 }> = [];
 
 const normalized = (text: string) =>
@@ -110,12 +129,23 @@ function summarize(group: typeof results, method: "search" | "recommendation") {
 }
 
 beforeAll(async () => {
+  expect(createHash("sha256").update(inputText).digest("hex")).toBe(
+    "367f8940d5f2083d929af2ad45c64daf82cd976a3bcb3f8968e896f2e037b033",
+  );
+  expect(createHash("sha256").update(independentText).digest("hex")).toBe(
+    "23e7d903707c9877f035f73ace261692593a324dcb73ecc52db668df59db5ecb",
+  );
+  expect(independent.papers.filter((p) => p.language === "en")).toHaveLength(12);
+  expect(independent.papers.filter((p) => p.language === "ja")).toHaveLength(12);
+  expect(new Set(papers.map((p) => p.id)).size).toBe(papers.length);
+  const initialSources = new Set(fixture.papers.map((p) => p.source));
+  for (const paper of independent.papers) expect(initialSources.has(paper.source)).toBe(false);
   expect(fixture.papers.filter((p) => p.language === "en")).toHaveLength(14);
   expect(fixture.papers.filter((p) => p.language === "ja")).toHaveLength(8);
   expect(fixture.venues).toHaveLength(27);
   const keys = fixture.venues.map((v) => v.key);
   expect(new Set(keys).size).toBe(keys.length);
-  for (const paper of fixture.papers) {
+  for (const paper of papers) {
     expect(paper.title.trim()).not.toBe("");
     expect(paper.abstract.length).toBeGreaterThan(100);
     expect(createHash("sha256").update(paper.abstract).digest("hex")).toBe(paper.abstract_sha256);
@@ -186,6 +216,11 @@ beforeAll(async () => {
         queryCount: group.length,
         profileCosine: Recommender.cosine(embeddings[profiles.keys[0]], expected[0]),
         queryCosine: Recommender.cosine(vectors[0], expected[1]),
+        inputs: group.map(({ paper, mode }, index) => ({
+          actual: lines[index],
+          title: mode === "abstract" ? "" : paper.title,
+          abstract: mode === "title" ? "" : paper.abstract,
+        })),
       });
     } finally {
       await direct.dispose();
@@ -194,7 +229,12 @@ beforeAll(async () => {
       const scores = Object.fromEntries(
         keys.map((key) => [key, Recommender.semanticScore(key, vectors[i], embeddings, null)]),
       );
-      const search = keys.slice().sort((a, b) => scores[b] - scores[a] || a.localeCompare(b));
+      const similarities = Object.fromEntries(
+        keys.map((key) => [key, Recommender.semanticSimilarity(key, vectors[i], embeddings, null)]),
+      );
+      const search = keys
+        .filter((key) => similarities[key] > 0)
+        .sort((a, b) => similarities[b] - similarities[a] || a.localeCompare(b));
       const recommendation = Recommender.venueRecommendations(
         rows,
         lines[i],
@@ -202,6 +242,7 @@ beforeAll(async () => {
         Date.UTC(2026, 0, 1),
         {
           fieldedLexical: true,
+          semanticSimilarities: similarities,
           venueCats: Recommender.autoDetectCats(lines[i]),
           topN: rows.length,
         },
@@ -210,6 +251,7 @@ beforeAll(async () => {
       for (const key of recommendation) expect(keys).toContain(key);
       results.push({
         id: paper.id,
+        corpus: paper.corpus,
         language,
         mode,
         source: paper.source,
@@ -219,21 +261,26 @@ beforeAll(async () => {
         search,
         recommendation,
         scores,
+        similarities,
       });
     }
   }
   const metrics = Object.fromEntries(
-    ["en", "ja"].flatMap((language) =>
-      modes.map((mode) => {
-        const group = results.filter((item) => item.language === language && item.mode === mode);
-        return [
-          `${language}/${mode}`,
-          {
-            search: summarize(group, "search"),
-            recommendation: summarize(group, "recommendation"),
-          },
-        ];
-      }),
+    ["initial", "independent"].flatMap((corpus) =>
+      ["en", "ja"].flatMap((language) =>
+        modes.map((mode) => {
+          const group = results.filter(
+            (item) => item.corpus === corpus && item.language === language && item.mode === mode,
+          );
+          return [
+            `${corpus}/${language}/${mode}`,
+            {
+              search: summarize(group, "search"),
+              recommendation: summarize(group, "recommendation"),
+            },
+          ];
+        }),
+      ),
     ),
   );
   const reportPath =
@@ -245,7 +292,8 @@ beforeAll(async () => {
     JSON.stringify(
       {
         input_sha256: createHash("sha256").update(inputText).digest("hex"),
-        sampling: fixture.sampling,
+        sampling: { initial: fixture.sampling, independent: independent.sampling },
+        independent_sha256: createHash("sha256").update(independentText).digest("hex"),
         profile_policy: fixture.profile_policy,
         ranker:
           "Production fielded lexical/semantic fusion without a trained reranker or paper prototypes",
@@ -283,9 +331,19 @@ it("real paper evaluation separates profiles, preserves inputs and uses the spec
       0.99999,
     );
     expect(new Set(contract.texts).size).toBe(contract.queryCount);
+    for (const input of contract.inputs) {
+      expect(input.actual).toEqual([
+        {
+          title: input.title,
+          abstract: input.abstract,
+          keywords: "",
+          venue: "",
+        },
+      ]);
+    }
     for (const text of contract.texts) expect(text.trim()).not.toBe("");
     for (const profile of contract.profiles) {
-      for (const paper of fixture.papers) {
+      for (const paper of papers) {
         expect(normalized(profile), `profile/query title leak: ${paper.id}`).not.toContain(
           normalized(paper.title),
         );
@@ -300,7 +358,9 @@ it("real paper evaluation separates profiles, preserves inputs and uses the spec
 for (const language of ["en", "ja"] as const) {
   for (const mode of modes) {
     it(`real papers ${language}/${mode}: retrieves and recommends independently suitable venues`, () => {
-      const group = results.filter((item) => item.language === language && item.mode === mode);
+      const group = results.filter(
+        (item) => item.corpus === "initial" && item.language === language && item.mode === mode,
+      );
       expect(group).toHaveLength(language === "en" ? 14 : 8);
       for (const method of ["search", "recommendation"] as const) {
         const summary = summarize(group, method);
@@ -316,3 +376,60 @@ for (const language of ["en", "ja"] as const) {
     });
   }
 }
+
+it("every initial recommendation, including the former English and Japanese misses, stays in the top five", () => {
+  const initial = results.filter((item) => item.corpus === "initial");
+  expect(initial).toHaveLength(66);
+  for (const item of initial) {
+    expect(
+      rank(item.recommendation, item.acceptable),
+      `${item.id}/${item.mode}: ${item.recommendation.join(", ")}`,
+    ).toBeLessThanOrEqual(5);
+  }
+});
+
+for (const language of ["en", "ja"] as const) {
+  for (const mode of modes) {
+    it(`independent papers ${language}/${mode}: maintains the original quality floors`, () => {
+      const group = results.filter(
+        (item) => item.corpus === "independent" && item.language === language && item.mode === mode,
+      );
+      expect(group).toHaveLength(12);
+      for (const method of ["search", "recommendation"] as const) {
+        const summary = summarize(group, method);
+        expect(
+          summary.acceptable_at_5,
+          JSON.stringify({ method, ...summary }),
+        ).toBeGreaterThanOrEqual(0.75);
+        expect(
+          summary.acceptable_mrr,
+          JSON.stringify({ method, ...summary }),
+        ).toBeGreaterThanOrEqual(0.35);
+      }
+    });
+  }
+}
+
+it("improves recommendation ranking on disjoint real papers in both languages", () => {
+  // Measured before the implementation change, with the same papers, labels and profiles.
+  const baseline = {
+    en: { title: 2 / 3, abstract: 19 / 24, "title+abstract": 19 / 24 },
+    ja: {
+      title: 0.4479166666666666,
+      abstract: 0.29328703703703707,
+      "title+abstract": 0.3043981481481482,
+    },
+  };
+  for (const language of ["en", "ja"] as const)
+    for (const mode of modes) {
+      const group = results.filter(
+        (item) => item.corpus === "independent" && item.language === language && item.mode === mode,
+      );
+      const summary = summarize(group, "recommendation");
+      expect(
+        summary.acceptable_mrr,
+        `${language}/${mode}: ${JSON.stringify(summary)}`,
+      ).toBeGreaterThan(baseline[language][mode]);
+      expect(summary.acceptable_at_5).toBeGreaterThanOrEqual(language === "en" ? 11 / 12 : 10 / 12);
+    }
+});

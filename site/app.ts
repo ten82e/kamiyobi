@@ -2716,21 +2716,26 @@ function semanticOutput(value: unknown): value is SemanticOutput {
 
     if (pLines.length && Rec) {
       let semanticScores: Record<string, number> | null = null;
+      let semanticSimilarities: Record<string, number> | null = null;
       if (semQuery && semEmbeddings) {
         const scores: Record<string, number> = {};
+        const similarities: Record<string, number> = {};
         const query = semQuery;
         const embeddings = semEmbeddings;
         out.forEach((r) => {
           const key = r.conf?.key;
           if (key && !Object.hasOwn(scores, key)) {
             scores[key] = Rec.semanticScore(key, query, embeddings, null);
+            similarities[key] = Rec.semanticSimilarity(key, query, embeddings, null);
           }
         });
         semanticScores = scores;
+        semanticSimilarities = similarities;
       }
       out = Rec.venueRecommendations(out, pLines, semanticScores, now, {
         venueCats: venueCats,
         fieldedLexical: true,
+        semanticSimilarities,
       })
         .filter((recommendation) => recommendation.fit.score >= 10)
         .map(

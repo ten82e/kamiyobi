@@ -277,6 +277,7 @@ interface SiteRecommenderApi {
   ): { score: number; fields: Record<string, number> };
   contentWordCount(text: string): number;
   semanticScore(key: string, vector: number[], embeddings: Record<string, number[]>): number;
+  semanticSimilarity(key: string, vector: number[], embeddings: Record<string, number[]>): number;
   blendVectors(left: number[], right: number[], weight: number): number[];
   setNameIdf(value: Record<string, unknown>): void;
   setPaperVecs(value: Record<string, number[][]> | null): void;
