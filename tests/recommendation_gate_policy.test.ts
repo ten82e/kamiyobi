@@ -10,7 +10,12 @@ import { REPO_ROOT, tempWork } from "./helpers.ts";
 it("invalidates a sealed policy when baseline, fixtures, floors or gate wiring change", () => {
   const root = tempWork("kamiyobi-gate-policy-");
   const rootUrl = pathToFileURL(`${root}/`);
-  for (const path of RECOMMENDATION_GATE_INPUTS) {
+  const inputs = new Set([
+    ...RECOMMENDATION_GATE_INPUTS,
+    "src/embedding-runtime.ts",
+    "src/embedding-profiles.ts",
+  ]);
+  for (const path of inputs) {
     const target = join(root, path);
     mkdirSync(dirname(target), { recursive: true });
     writeFileSync(target, readFileSync(join(REPO_ROOT, path)));
@@ -23,6 +28,8 @@ it("invalidates a sealed policy when baseline, fixtures, floors or gate wiring c
     "data/benchmarks/real-paper-heldout.json",
     "data/benchmarks/real-paper-required-manifest.json",
     "src/bench-recommender.ts",
+    "src/embedding-runtime.ts",
+    "src/embedding-profiles.ts",
     ".github/workflows/recommendation-bundle.yml",
   ]) {
     const target = join(root, path);

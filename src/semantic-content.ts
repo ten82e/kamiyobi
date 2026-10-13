@@ -33,6 +33,8 @@ export const RECOMMENDATION_GATE_INPUTS = [
   "src/args.ts",
   "src/util.ts",
   "src/embeddings.ts",
+  "src/embedding-runtime.ts",
+  "src/embedding-profiles.ts",
   "src/build.ts",
   "src/semantic-content.ts",
   "site/recommendation-core.ts",
