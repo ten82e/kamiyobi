@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { readFileSync, statSync } from "node:fs";
+import { readFileSync, realpathSync, statSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import Recommender from "../site/recommendation.ts";
@@ -2411,6 +2411,12 @@ export function runStdio(now?: number): void {
 }
 
 /* 人が確かめる道（`node src/mcp.ts search "セキュリティ" 5`）。 */
+function cliNumber(value: string | undefined): string | number | undefined {
+  if (!value?.trim()) return value;
+  const number = Number(value);
+  return Number.isFinite(number) ? number : value;
+}
+
 function main(): void {
   const [tool, ...rest] = process.argv.slice(2);
   if (!tool || tool === "--help" || tool === "-h") {
@@ -2457,14 +2463,14 @@ function main(): void {
   const 尾が數 = rest.length > 1 && /^\d+$/.test(String(rest[rest.length - 1] ?? ""));
   const args: Record<string, unknown> =
     名 === "search_deadlines" || 名 === "explain_word"
-      ? { query: rest[0], word: rest[0], limit: rest[1] }
+      ? { query: rest[0], word: rest[0], limit: cliNumber(rest[1]) }
       : 名 === "recommend_venues"
         ? {
             paper: (尾が數 ? rest.slice(0, -1) : rest).join(" "),
-            limit: 尾が數 ? rest[rest.length - 1] : undefined,
+            limit: 尾が數 ? cliNumber(rest[rest.length - 1]) : undefined,
           }
         : 名 === "list_upcoming"
-          ? { days: rest[0], kind: rest[1] }
+          ? { days: cliNumber(rest[0]), kind: rest[1] }
           : (() => {
               /* 打たれた語が**そのまま key** にある時は key として扱ふ。名の一部として引くと、
                * `sc` の様に 42 件の候補に割れてしまふ（実測 2026-10-12 – その語の会議を
@@ -2485,8 +2491,17 @@ function main(): void {
   process.stdout.write(`${callTool(名, args, now)}\n`);
 }
 
+function isDirectExecution(): boolean {
+  if (!process.argv[1]) return false;
+  try {
+    return realpathSync(fileURLToPath(import.meta.url)) === realpathSync(process.argv[1]);
+  } catch {
+    return false;
+  }
+}
+
 /* 直接起動された時だけ stdio を開く（import した検査では開かない）。 */
-if (process.argv[1] && import.meta.url === `file://${process.argv[1]}`) {
+if (isDirectExecution()) {
   if (process.argv.length > 2) main();
   else runStdio();
 }
