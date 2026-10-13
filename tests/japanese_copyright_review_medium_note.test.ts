@@ -1,8 +1,3 @@
-/** 著作権・審査の方式・締切の後を**其の方の名前で**打つ人の讓りの檢査（SPEC §7・第 671 回）。
- *
- * 事實（2026-08-09 生成の実ビルド・品書 3,250 行）– `オープンアクセス` `ダブルブラインド` `滑り込み`
- * `日本語` `研究倫理` `非会員` `論文集` は羣の斷りを受けるのに、同じ事を別の名で打つ十六語は搜 0 行・
- * 打ち替え無し・讓り無しで面の三つが皆默つて居た。 */
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import Recommender from "../site/recommender.ts";
@@ -12,7 +7,7 @@ import { queryReferenceSnapshotPath } from "./query_reference.ts";
 const AT = Date.parse("2026-08-09T00:00:00Z");
 type Row = { hay: string };
 function 品書(): Row[] {
-  /* 搜の土臺は實際の品書（3,250 行）で張る – fixtures の品書だと讓りの当たりが別物になる為。*/
+  /* 検索の土臺は実際の品書（3,250 行）で張る – fixtures の品書だと讓りの当たりが別物になる為。*/
   return Recommender.candidateRows(
     JSON.parse(readFileSync(queryReferenceSnapshotPath(), "utf8")),
   ) as Row[];
@@ -23,7 +18,7 @@ function 當(文: string): number {
   const m = Recommender.searchMatcher(Recommender.expandRelativeMonths(文, AT), AT);
   return rows.filter((r) => m(String(r.hay)) === true).length;
 }
-/** 畫麵と同じ順で讓りを再現する（site/app.ts – 欄の名前 → 語の斷り → 日の幅 → 寄せ表 → 助詞）。 */
+/** 画麵と同じ順で讓りを再現する（site/app.ts – 欄の名前 → 語の斷り → 日の幅 → 寄せ表 → 助詞）。 */
 function 讓り(文: string): string {
   return String(
     Recommender.columnQueryNoteJa(文, (語) => 當(語) > 0) ||
@@ -40,7 +35,7 @@ function 後尾(文: string): string {
   return x.slice(x.indexOf("」") + 1);
 }
 
-/** 此の回に羣へ载せた打ち手（搜 0 行で讓りも無かつた十六語）。 */
+/** この回に羣へ载せた打ち手（検索 0 行で讓りも無かつた十六語）。 */
 const 载せた = [
   "著作権",
   "著作権移譲",
@@ -60,7 +55,7 @@ const 载せた = [
   "入会",
 ];
 
-/** 先に讓りの出て居た隣（同じ羣の斷りを受けたい組）。 */
+/** 先に讓りの出ていた隣（同じ羣の斷りを受けたい組）。 */
 const 對 = [
   ["オープンアクセス", "著作権"],
   ["オープンアクセス", "クローズドアクセス"],
@@ -79,7 +74,7 @@ const 對 = [
 ] as const;
 
 describe("著作権・審査の方式・締切の後を別の名で打つ人", () => {
-  it("载せた語は搜 0 行の侬で斷りを受ける（噓の案内を立たん – 第 337 回）", () => {
+  it("载せた語は検索 0 行の侬で斷りを受ける（噓の案内を立たん – 第 337 回）", () => {
     for (const 語 of 载せた) {
       expect(當(語), `"${語}" が行を持つやうに廣がつた`).toBe(0);
       expect(讓り(語).length, `"${語}" が無言に逆戻りした`).toBeGreaterThan(0);
@@ -93,7 +88,7 @@ describe("著作権・審査の方式・締切の後を別の名で打つ人", (
     }
   });
 
-  it("打ち替えと同じ語に兩方喋らん（第 330 回）", () => {
+  it("打ち替えと同じ語に両方喋らん（第 330 回）", () => {
     for (const 語 of 载せた) {
       const chip = Recommender.shorterHitWordsJa(語, hays, AT) || [];
       expect(chip.length, `"${語}" は打ち替えと讓りの両方が出て居る`).toBe(0);
@@ -117,18 +112,18 @@ describe("著作権・審査の方式・締切の後を別の名で打つ人", (
     }
   });
 
-  it("註を縮めた規則が其の侬効いて居る（第 315 回と第 517 回 – 搜の侧）", () => {
-    /* 此の回は二つの註の數字を SPEC.md へ寫した。搜の規則その物は觸つて居ない證左。*/
+  it("注を縮めた規則がその侬効いている（第 315 回と第 517 回 – 検索の侧）", () => {
+    /* この回は二つの注の数字を SPEC.md へ寫した。検索の規則その物は觸つて居ない證左。*/
     expect(當("7日以内")).toBe(206);
     expect(當("30日以内")).toBe(689);
     expect(當("デモ締切")).toBe(7);
     expect(當("抄録提出")).toBe(3);
-    /* 搜れる語を羣に载せ替へた證左 – 讓りが二重に出たり、搜が廣がらん。*/
+    /* 検索れる語を羣に载せ替へた證左 – 讓りが二重に出たり、検索が広がらん。*/
     expect(當("multimedia")).toBe(69);
     expect(當("データベース登録")).toBe(1);
   });
 
-  it("搜の当たり數は此の回、一つも減つて居らん（第 670 回からの實測金庫）", () => {
+  it("検索の当たり数はこの回、一つも減つて居らん（第 670 回からの実測金庫）", () => {
     const 金庫: Record<string, number> = {
       オープンアクセス: 0,
       ダブルブラインド: 0,
@@ -155,7 +150,7 @@ describe("著作権・審査の方式・締切の後を別の名で打つ人", (
     }
   });
 
-  it("品書は 3,250 行 – 搜の土臺を壞して居ん", () => {
+  it("品書は 3,250 行 – 検索の土台を壊していない", () => {
     expect(rows.length).toBe(3250);
   });
 });

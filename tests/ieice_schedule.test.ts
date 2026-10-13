@@ -263,14 +263,14 @@ describe("IEICE 研究会の更新を data/manual.yaml に反映する", () => {
     expect(plan.text).toBe(manual);
   });
 
-  it("manual.yaml に無い研究会は勝手に追加しない", () => {
+  it("manual.yaml にない研究会は勝手に追加しない", () => {
     const manual = manualConference("ieice-ns-2026-12", "2026-12-17", `        deadlines: []`);
     const plan = planIeiceUpdate(manual, { "ieice-nws": rows }, "2026-09-22");
     expect(plan.unregistered).toEqual(["ieice-nws"]);
     expect(plan.text).toBe(manual);
   });
 
-  it("既存版に無い今後の会期を追記し、終わった会期は足さない", () => {
+  it("既存版にない今後の会期を追記し、終わった会期は足さない", () => {
     const manual = manualConference("ieice-ns-2026-12", "2026-12-17", `        deadlines: []`);
     const first = planIeiceUpdate(manual, { "ieice-ns": rows }, "2026-09-22");
     const added = first.entries.find((e) => e.key === "ieice-ns")?.editionsAdded ?? [];

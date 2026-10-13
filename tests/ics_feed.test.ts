@@ -1,16 +1,3 @@
-/**
- * カレンダー配信用の `deadlines.ics` の検査（SPEC §7・第 266 回）。
- *
- * 締切はこの画面を開いた人にしか見えなかった。研究者の実際の動作は「自分のカレンダーに入れて
- * おく」で、その出口がこれまで無かった（`llms.txt` の一覧にも `.ics` は無く、実在しない物として
- * 検査で縛られていた）。ここでは次の形を見張る：
- *   - RFC 5545 として成立する（CRLF・75 オクテットの折り畳み・TEXT のエスケープ）
- *   - 1 締切 = 1 イベントの終日（JST の暦日）。継続時間を作らない = 締切の推測をしない
- *   - 過ぎた締切は入れない。確かめられない物は消さない
- *   - 「時刻未確認」と「推定」をそのまま書く
- *   - UID はビルドをまたいで同じ（日付が動いても同じ締切として更新される）
- */
-
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -114,15 +101,15 @@ describe("deadlines.ics の形（RFC 5545）", () => {
     expect(values.join("\n"), "説明が復元できない").toContain("高性能計算ワークショップ");
   });
 
-  /* 上の合成の行で畳みの動きを見る。此れは**配つてある物**を見る – 畳み忘れは實際の
-   * 會議名・URL で起きる（合成で足りるとは限らない）。第三者のカレンダーアプリが
-   * 75 オクテット超の行を切る・落とすことが在る。 */
-  it("配つてある deadlines.ics も 75 オクテット以内・CRLF だけで閉じて居る", () => {
+  /* 上の合成の行で畳みの動きを見る。これは**配つてある物**を見る – 畳み忘れは実際の
+   * 会議名・URL で起きる（合成で足りるとは限らない）。第三者のカレンダーアプリが
+   * 75 オクテット超の行を切る・落とすことがある。 */
+  it("配つてある deadlines.ics も 75 オクテット以内・CRLF だけで閉じている", () => {
     const path = join(REPO_ROOT, "public", "deadlines.ics");
     if (!existsSync(path)) return; // CI が作る
     const raw = readFileSync(path);
     const lines = raw.toString("utf8").split("\r\n");
-    expect(lines.length, "行事が 1 つも無い（この檢查が空振り）").toBeGreaterThan(1000);
+    expect(lines.length, "行事が 1 つもない（この検查が空振り）").toBeGreaterThan(1000);
     const 超えた = lines.filter((l) => Buffer.byteLength(l, "utf8") > 75);
     expect(
       超えた.length,
@@ -131,7 +118,7 @@ describe("deadlines.ics の形（RFC 5545）", () => {
         .map((l) => l.slice(0, 40))
         .join(" / ")}`,
     ).toBe(0);
-    // CRLF だけで書いて居る（LF が混ざると読み手が行を切り違へる）。
+    // CRLF だけで書いている（LF が混ざると読み手が行を切り違へる）。
     expect(
       raw
         .toString("utf8")
@@ -284,7 +271,7 @@ describe("同じ締切として更新される", () => {
 describe("ビルド成果物に出るカレンダーのファイル", () => {
   function icsText(): string {
     const path = join(site, "deadlines.ics");
-    expect(existsSync(path), "deadlines.ics が無い").toBe(true);
+    expect(existsSync(path), "deadlines.ics がない").toBe(true);
     return readFileSync(path, "utf8");
   }
 
@@ -346,7 +333,7 @@ describe("ビルド成果物に出るカレンダーのファイル", () => {
         .split(/(?<!\\)\|/)
         .map((c) => c.trim().replace(/\\\|/g, "|"));
     const i = cellsOf(md[first]).indexOf("種別");
-    expect(i, "upcoming.md に種別欄が無い").toBeGreaterThan(-1);
+    expect(i, "upcoming.md に種別欄がない").toBeGreaterThan(-1);
     const mdKinds = new Set<string>();
     for (const l of md.slice(first + 2)) {
       if (!l.trim().startsWith("|")) continue;
@@ -356,9 +343,7 @@ describe("ビルド成果物に出るカレンダーのファイル", () => {
     }
     expect(mdKinds.size, "upcoming.md から種別が読めない").toBeGreaterThan(0);
     const icsKinds = new Set<string>();
-    /* 第 303 回から、区別の為の上流ラベルを添える形が出口で違う: `upcoming.md` は語の後ろに
-       ': ' で継ぎ、カレンダーは全角の括弧で括る（値の側が欄名の区切りを真似ないため）。載せる物が
-       同じなのは変わらないので、形を直してから照合する。 */
+
     const icsKindShape = (value: string): string => value.replace(/（([^（）]*)）$/u, ": $1");
     for (const ev of eventsOf(icsText())) {
       const m = /種別: ([^\\]*)/.exec((ev.DESCRIPTION ?? [])[0] ?? "");
@@ -382,24 +367,23 @@ describe("画面のカレンダーへの導線（第 266 回）", () => {
     return readFileSync(join(site, "index.html"), "utf8");
   }
 
-  it("一覧のそばに導線が有り、絞り込みが引き継がれないと書いてある", () => {
+  it("一覧のそばに導線があり、絞り込みが引き継がれないと書いてある", () => {
     const p = page();
     const link = /<a id="icsLink" class="btn-reset" href="deadlines\.ics"[^>]*>([^<]*)<\/a>/.exec(
       p,
     );
-    expect(link, "カレンダーへの導線が無い").toBeTruthy();
+    expect(link, "カレンダーへの導線がない").toBeTruthy();
     expect(link![1], "導線の名前がカレンダーだと分からない").toContain("カレンダー");
-    expect(link![0], "何が起きるか注記が無い").toMatch(/title="[^"]*RFC 5545/);
+    expect(link![0], "何が起きるか注記がない").toMatch(/title="[^"]*RFC 5545/);
     expect(link![0], "絞り込みが引き継がれないことを隠している").toContain("絞り込みは引き継がれ");
   });
 
   it("てびきに、中身の約束と入口を書いている（時刻未確認・推定・購読）", () => {
     const p = page();
     const i = p.indexOf("<dt>カレンダーに追加（.ics）</dt>");
-    expect(i, "てびきの項目が無い").toBeGreaterThan(-1);
+    expect(i, "てびきの項目がない").toBeGreaterThan(-1);
     const entry = p.slice(i, p.indexOf("</dd>", i));
-    /* 画面に物を足したら、てびきも同時に直す（第 267 回で「出口の在りかを言う場所が
-     * 3 か所噓だった」のと同じ過ちを繰り返さない）。 */
+    /* 画面に物を足したら、てびきも同時に直す。 */
     for (const word of [
       "絞り込みは引き継がれません",
       "時刻未確認",
@@ -420,7 +404,7 @@ describe("画面のカレンダーへの導線（第 266 回）", () => {
 
   it("リンクの行と閉じタグが素直に対応している（検査が読める形）", () => {
     const p = page();
-    expect(p.match(/href="deadlines\.ics"/g)?.length, "導線が 1 本も無い").toBeGreaterThanOrEqual(
+    expect(p.match(/href="deadlines\.ics"/g)?.length, "導線が 1 本もない").toBeGreaterThanOrEqual(
       1,
     );
     expect(p.match(/id="icsLink"/g)?.length, "押せる導線が 1 本ではない").toBe(1);
@@ -428,46 +412,43 @@ describe("画面のカレンダーへの導線（第 266 回）", () => {
   });
 });
 
-/* ------------------------------------------------  出口の在りかを言う場所（第 267 回） */
+/* ------------------------------------------------  出口の在りかを言う場所 */
 
 describe("出口の在りかを言う場所が、実物とずれていない", () => {
   function page(): string {
     return readFileSync(join(site, "index.html"), "utf8");
   }
 
-  it("JavaScript が動かないときの案内に、カレンダーの出口が有る（数を言い切らない）", () => {
+  it("JavaScript が動かないときの案内に、カレンダーの出口がある（数を言い切らない）", () => {
     const p = page();
     const block = /<noscript>([\s\S]*?)<\/noscript>/.exec(p);
-    expect(block, "案内ブロックが無い").not.toBeNull();
+    expect(block, "案内ブロックがない").not.toBeNull();
     const inner = String(block![1]);
-    /* ここは「2 つのファイルで直接読めます」と数を言い切っていた場所である。物を足すたびに
-       噓になるので、数を書かない形にしてある（第 266 回で `.ics` を足したときにも直さなかった）。 */
+
     expect(
       inner.match(/[一二三四五六七八九十0-9]+ つのファイル/),
       "ファイルを数で言い切っている（次に物を足すと噓になる）",
     ).toBeNull();
     const link = /<a href="deadlines\.ics"[^>]*>deadlines\.ics<\/a>/.exec(inner);
-    expect(link, "JavaScript が動かない人への案内にカレンダーが無い").toBeTruthy();
+    expect(link, "JavaScript が動かない人への案内にカレンダーがない").toBeTruthy();
     expect(link![0], "どんな形かを書いていない").toMatch(/終日|JST/);
     expect(inner, "カレンダーの意味（表が見えない人に効く）を書いていない").toContain("カレンダー");
   });
 
-  it("静的な直近一覧のページにも出口が有り、指す先が実在する", () => {
+  it("静的な直近一覧のページにも出口があり、指す先が実在する", () => {
     const up = readFileSync(join(site, "upcoming.html"), "utf8");
     const link =
       /締切を自分のカレンダーに入れるには <a href="deadlines\.ics">deadlines\.ics<\/a>（([^<]*)/.exec(
         up,
       );
-    expect(link, "upcoming.html にカレンダーへの導線が無い").toBeTruthy();
+    expect(link, "upcoming.html にカレンダーへの導線がない").toBeTruthy();
     expect(link![1], "終日であること（時間帯を作らない）を書いていない").toContain("終日");
-    expect(link![1], "このページの絞り込みが無いことを隠している").toContain("絞り込み");
+    expect(link![1], "このページの絞り込みがないことを隠している").toContain("絞り込み");
     /* 先頭の案内の文は、サブパス配信の下で動くよう相対パスで、しかも実在する物だけを
        指す（ページの本体は会議の公式ページへの外部リンクなので、そこは数えない）。 */
-    /* 第 269 回で先頭の文に `id="top"` を付けた（長い表の終端から戻り先を置くため）。
-     * `<p>` ぴったりで探すと、属性を付けた瞬間に別な文（リンクの無い注記）を拾って
-     * 空振りする。ここで見たいのは「本文の先頭にある案内の文」なので、属性を許す。 */
+
     const lead = /<main[^>]*>\s*<p(?:\s[^>]*)?>([\s\S]*?)<\/p>/.exec(up);
-    expect(lead, "先頭の案内の文が無い").not.toBeNull();
+    expect(lead, "先頭の案内の文がない").not.toBeNull();
     const hrefs = [...String(lead![1]).matchAll(/href="([^"]+)"/g)].map((m) => m[1]);
     expect(hrefs.length, "案内のリンクが読めない").toBeGreaterThanOrEqual(4);
     for (const href of hrefs) {
@@ -479,7 +460,7 @@ describe("出口の在りかを言う場所が、実物とずれていない", (
   it("llms.txt が、画面の中にカレンダーの導線があると正直に書いている", () => {
     const txt = readFileSync(join(site, "llms.txt"), "utf8");
     const line = txt.split("\n").find((l) => l.startsWith("- index.html："));
-    expect(line, "index.html の説明が無い").toBeTruthy();
+    expect(line, "index.html の説明がない").toBeTruthy();
     expect(line!, "索引が画面の導線を 2 つのままと言う（実物は 3 つ）").toContain(
       "`deadlines.ics` への導線",
     );
@@ -494,7 +475,7 @@ describe("出口の在りかを言う場所が、実物とずれていない", (
   });
 });
 
-/* ----------------------------------------------- 購読 URL を取り出す（第 268 回） */
+/* ----------------------------------------------- 購読 URL を取り出す */
 
 /** 抜き出して走らせるための、DOM のにせ物（押された結果だけを見る最小の形）。 */
 interface FakeNode {
@@ -660,16 +641,16 @@ describe("購読 URL を取り出せる（第 268 回）", () => {
     const page = readFileSync(join(site, "index.html"), "utf8");
     const btn =
       /<button id="icsCopy" type="button" class="btn-reset" hidden>([^<]*)<\/button>/.exec(page);
-    expect(btn, "購読 URL をコピーする物が無い").toBeTruthy();
+    expect(btn, "購読 URL をコピーする物がない").toBeTruthy();
     expect(btn![1], "ラベルが何をする物か言わない").toMatch(/購読/);
     expect(btn![1]).toContain("URL");
     const note = /<div id="icsCopyNote"[^>]*>/.exec(page);
-    expect(note, "押した後の場が無い").toBeTruthy();
+    expect(note, "押した後の場がない").toBeTruthy();
     expect(note![0], "読み上げが返事を追えない").toContain('aria-live="polite"');
     expect(note![0], "既定で見える位置に返事を置いている").toContain("hidden");
     // JavaScript が動いていない画面に、押せない物を置かない（`app.js` が現す）。
     const app = siteRuntime();
-    expect(app, "JavaScript が動いているときに出す手続きが無い").toMatch(
+    expect(app, "JavaScript が動いているときに出す手続きがない").toMatch(
       /\$\("icsCopy"\)[\s\S]{0,160}addEventListener\(\s*"click"[\s\S]{0,60}copyIcsSubscribeUrl/,
     );
   });
@@ -698,13 +679,13 @@ describe("畳みは 2 文字の転義をまたがない（RFC 5545 §3.1・第 2
    * 行ごとに扱う受け手では転義が解けず `\` がそのまま㪹カンダーの画面に出る。
    * §3.1 は 2 文字の転義をまたぐことを禁じていると明記している。 */
 
-  it("実データの配信物に、行末だけバックスラッシュの行が無い", () => {
+  it("実データの配信物に、行末だけバックスラッシュの行がない", () => {
     const raw = readFileSync(join(site, "deadlines.ics"), "utf8");
     const lines = raw.split("\r\n");
-    // 空振りの防止: 実際に畳まれた行が有ること。
+    // 空振りの防止: 実際に畳まれた行があること。
     expect(
       lines.filter((l) => l.startsWith(" ")).length,
-      "折り畳まれた行が無い（この検査が空振りになる）",
+      "折り畳まれた行がない（この検査が空振りになる）",
     ).toBeGreaterThan(100);
     const tails = lines.filter((l) => l.endsWith("\\"));
     expect(
@@ -721,7 +702,7 @@ describe("畳みは 2 文字の転義をまたがない（RFC 5545 §3.1・第 2
   it("開くととと同じに戻り、解いた値に行末のバックスラッシュが残らない", () => {
     const raw = readFileSync(join(site, "deadlines.ics"), "utf8");
     const opened = unfoldIcs(raw);
-    expect(opened.length, "開いた論理行が無い").toBeGreaterThan(100);
+    expect(opened.length, "開いた論理行がない").toBeGreaterThan(100);
     const broken = opened.filter((l) => {
       const at = l.indexOf(":");
       return at > 0 && /\\$/.test(l);
@@ -731,7 +712,7 @@ describe("畳みは 2 文字の転義をまたがない（RFC 5545 §3.1・第 2
     const withLink = opened.filter((l) => l.startsWith("DESCRIPTION:") && l.includes("詳細: http"));
     expect(
       withLink.length,
-      "折り返しを跨いだ収録元リンクが無い（空振り検査の防止）",
+      "折り返しを跨いだ収録元リンクがない（空振り検査の防止）",
     ).toBeGreaterThan(0);
     // 開いた値の中で URL が空白や転義の途中で切れていない（最後まで続く形になっている）。
     expect(withLink[0]).toMatch(/詳細: https?:\/\/[^\s\\]+/);
@@ -771,13 +752,7 @@ describe("畳みは 2 文字の転義をまたがない（RFC 5545 §3.1・第 2
   });
 });
 
-/* ----------------------------------------  締切ではない日に「締切」と書かない（第 299 回） */
-
-/* 実測（2026-09-24・2026-08-09 生成ビルド）: `deadlines.ics` の 928 個のイベントのうち
-   **167 個**が採否通知・査読結果公開・反論期間開始だった。人が何かを提出する日では無いのに、
-   本文の行は全て「締切: 2026-08-09 09:00（JST）」だった。カレンダーでは本文の行がそのまま
-   見えるので、人はその日に締め切られると思う（表に出さない種別でもカレンダーには載る – 第 288 回）。
-   欄の名前を種別の正本で決めるようにした。 */
+/* ----------------------------------------  締切ではない日に「締切」と書かない */
 
 describe("締切ではない日に「締切」と書かない（第 299 回）", () => {
   /* `DESCRIPTION` は畳みを戻した 1 文字列で、項目の区切りは本文のエスケープ（文字としての
@@ -793,8 +768,6 @@ describe("締切ではない日に「締切」と書かない（第 299 回）",
     date_field: Recommender.kindDateFieldJa(kind),
   });
 
-  /* 予定その物の日付の欄名（第 299 回）。第 304 回から本文に「会期: 」の補助行が並ぶ – 会期の
-     予定は立てないので（第 266 回）、この語が予定の日付の欄名として出る事は無い（下の検査で見る）。 */
   const DATE_FIELDS = ["締切", "通知日", "公開日", "開始日"];
   const fieldLines = (desc: string[]): string[] =>
     desc.filter((line) => DATE_FIELDS.some((f) => line.startsWith(`${f}: `)));
@@ -844,12 +817,12 @@ describe("締切ではない日に「締切」と書かない（第 299 回）",
     );
   });
 
-  it("日付の欄は必ず 1 個（無いも多重もない）", () => {
+  it("日付の欄は必ず 1 個（ないも多重もない）", () => {
     const one = fieldLines(descOf({ kind_label: "採否通知", date_field: "通知日" }));
     expect(one.length, `日付の欄が ${one.length} 個`).toBe(1);
     const other = fieldLines(descOf({}));
     expect(other.length, `日付の欄が ${other.length} 個`).toBe(1);
-    expect(other[0].startsWith("締切: "), "既定の欄が締切では無い").toBe(true);
+    expect(other[0].startsWith("締切: "), "既定の欄が締切ではない").toBe(true);
   });
 
   it("ビルド成果の品選びが欄名の正本になっている", () => {
@@ -867,7 +840,7 @@ describe("締切ではない日に「締切」と書かない（第 299 回）",
     expect(built("journal"), "常時受付の欄名が違う").toBe("締切");
     // 品書きに無い種別が来ても「締切」以外の噓を付かない。
     expect(built("whatever"), "知らない種別に別の語を付けた").toBe("締切");
-    expect(built(undefined), "種別が無い行で欄が消えた").toBe("締切");
+    expect(built(undefined), "種別がない行で欄が消えた").toBe("締切");
   });
 
   it("実ビルドのカレンダーに、締切ではない日の『締切』が残っていない", () => {
@@ -895,12 +868,12 @@ describe("締切ではない日に「締切」と書かない（第 299 回）",
         if (field === "締切") deadlines += 1;
       }
     });
-    expect(informative, "締切ではない種別が 1 件も無い（検査が無意味）").toBeGreaterThan(0);
-    expect(deadlines, "締切の欄が 1 件も無い（検査が無意味）").toBeGreaterThan(0);
+    expect(informative, "締切ではない種別が 1 件もない（検査が無意味）").toBeGreaterThan(0);
+    expect(deadlines, "締切の欄が 1 件もない（検査が無意味）").toBeGreaterThan(0);
   });
 });
 
-/* ----------------------------------------------------------  種別の区切り（第 303 回） */
+/* ----------------------------------------------------------  種別の区切り */
 
 describe("種別の語が、自分の区切りを真似ない（第 303 回）", () => {
   const kindsJa = Object.values(Recommender.kindLabelTable());
@@ -914,7 +887,7 @@ describe("種別の語が、自分の区切りを真似ない（第 303 回）",
   }
 
   function kindLine(event: Record<string, string[]>): string {
-    // 本文は 1 つの値に畳まれているので、転義した改行（バックスラッシュ + n）で割る（第 299 回）。
+    // 本文は 1 つの値に畳まれているので、転義した改行（バックスラッシュ + n）で割る。
     return kindLinesOf(event).find((l) => l.startsWith("種別: ")) ?? "";
   }
 
@@ -945,7 +918,7 @@ describe("種別の語が、自分の区切りを真似ない（第 303 回）",
     const withNote = events.filter((e) => /種別: [^\n]*（[A-Za-z][^（）]*）/.test(kindLine(e)));
     expect(
       withNote.length,
-      "区別を添えた行が 1 件も無い（実データに重なる種別が無い？）",
+      "区別を添えた行が 1 件もない（実データに重なる種別がない？）",
     ).toBeGreaterThan(0);
     // 語その物はそのまま – 括弧の中身だけが足されている（語で絞る人が語を見つけられる）。
     const spoken = withNote.filter((e) => {
@@ -993,12 +966,11 @@ describe("種別の語が、自分の区切りを真似ない（第 303 回）",
     expect(est.SUMMARY?.[0] ?? "", "推定の印が消えた").toMatch(/（推定）$/u);
     // 区別が要らない行は括弧を付けない（見かけを増やさない）。
     const plain = eventsOf(toIcsText([rec()], NOW))[0];
-    expect(kindLine(plain), "区別が無い行に括弧が現れた").toBe("種別: 論文締切");
+    expect(kindLine(plain), "区別がない行に括弧が現れた").toBe("種別: 論文締切");
   });
 
   it("区別の欄を足した事で、同じ締切の UID が動いていない", () => {
-    /* UID は「同じ締切かどうか」の目印（第 266 回 – 日付を載せると締切が動いたときに古い物が
-       残る）。表示用の語から作る形を、語を分けたときも動かさない。 */
+    /* UID は「同じ締切かどうか」の目印。表示用の語から作る形を、語を分けたときも動かさない。 */
     const base = rec({ kind_label: "論文締切: Round 2 Full Papers" });
     const split = rec({
       kind_label: "論文締切: Round 2 Full Papers",
@@ -1012,7 +984,7 @@ describe("種別の語が、自分の区切りを真似ない（第 303 回）",
   });
 });
 
-/* ---------------------------------------------------------------  会期（第 304 回） */
+/* ---------------------------------------------------------------  会期 */
 
 describe("会期を出張の段取りに使えるよう、予定の本文に書く（第 304 回）", () => {
   function sessionLine(event: Record<string, string[]>): string {
@@ -1057,10 +1029,10 @@ describe("会期を出張の段取りに使えるよう、予定の本文に書�
     expect([...counts.keys()], `会期の行の本数が揃っていない: ${[...counts].join(", ")}`).toEqual([
       1,
     ]);
-    expect(dated, "会期の日付が入った行が 1 本も無い").toBeGreaterThan(0);
+    expect(dated, "会期の日付が入った行が 1 本もない").toBeGreaterThan(0);
     expect(
       unknown,
-      "会期が未確認の行が 1 本も無い（分からない日の言い方を検査できない）",
+      "会期が未確認の行が 1 本もない（分からない日の言い方を検査できない）",
     ).toBeGreaterThan(0);
     expect(publicationCount).toBeLessThanOrEqual(1);
     expect(dated + unknown + publicationCount, "会期または掲載予定の値が確認できない行がある").toBe(
@@ -1089,7 +1061,7 @@ describe("会期を出張の段取りに使えるよう、予定の本文に書�
     expect(span("2027-04-06", "2027-04-06", false), "1 日の会期に範囲を書いた").toBe(
       "2027-04-06(火)",
     );
-    expect(span("2027-04-06", null, false), "終了日が無い時に噓を足した").toBe("2027-04-06(火)");
+    expect(span("2027-04-06", null, false), "終了日がない時に噓を足した").toBe("2027-04-06(火)");
     // 上流が推定とした会期は、その印を残す（裏取り済みの日と同じ顔で出さない）。
     expect(span("2027-04-06", "2027-04-07", true), "推定の印が消えた").toBe(
       "2027-04-06(火) 〜 2027-04-07(水)（推定）",
@@ -1117,8 +1089,6 @@ describe("会期を出張の段取りに使えるよう、予定の本文に書�
   });
 
   it("出口の言い回しが、会期を並べない事と本文に書く事を同じ事実で言う", () => {
-    /* 「出口の在りかを言う場所が、実物とずれていない」の系譜 – 第 302 回で自分は列の辞書に
-       「会期は `deadlines.ics` だけに出る」と書いたが、実測ではカレンダーに会期は 1 件も無く噓だった。 */
     const llms = readFileSync(join(site, "llms.txt"), "utf8");
     const ics = readFileSync(join(site, "deadlines.ics"), "utf8");
     const html = readFileSync(join(site, "index.html"), "utf8");
@@ -1141,39 +1111,32 @@ describe("会期を出張の段取りに使えるよう、予定の本文に書�
 });
 
 it("確認の状態と延長の札が、カレンダーの本文にも入る（第 861 回）", () => {
-  /* 畫面の一覧の行には札が付くのに、カレンダーには何も無かった – 購読した人は
-   * 「複数候補のため要確認」の締切を、確定の締切として予定表で見て居た（此の計畫の
+  /* 画面の一覧の行には札が付くのに、カレンダーには何も無かった – 購読した人は
+   * 「複数候補のため要確認」の締切を、確定の締切として予定表で見ていた（この計画の
    * 一番怖い失敗は、確かめて居ない締切を確かめた物として使はせる事）。 */
   const 本文 = (r: DataRecord): string => unfoldIcs(toIcsText([r], NOW)).join("\n");
   const 締切 = (over: Record<string, unknown>): DataRecord =>
     rec({ deadline: { precision: "exact", at_utc: new Date("2027-02-12T11:59:00Z"), ...over } });
   const 要確認 = 本文(締切({ verification: { status: "manual-required" } }));
-  expect(要確認, "確認の状態を本文に書いて居ん").toContain(
+  expect(要確認, "確認の状態を本文に書いていない").toContain(
     `状態: ${Recommender.verificationStatusLabelJa({ status: "manual-required" })}`,
   );
-  /* 確認済みと未設定では書かない（畫面も印を出さない – 默るのが正しい）。 */
+  /* 確認済みと未設定では書かない（画面も印を出さない – 黙るのが正しい）。 */
   const 確認済み = 本文(締切({ verification: { status: "verified" } }));
   expect(確認済み, "確認済みに印を付けた").not.toContain("状態: ");
-  expect(本文(締切({})), "狀態が無い行に印を付けた").not.toContain("状態: ");
+  expect(本文(締切({})), "状態がない行に印を付けた").not.toContain("状態: ");
   /* 延長の札（上流が締切を後ろへ動かした行）。 */
   const 延長 = 本文(締切({ label: "Extended deadline" }));
-  expect(延長, "延長の印が無い").toContain(String(Recommender.extendedLabelJa()));
-  /* 語は畫面と同じ正本から取る（書き寫すと、畫面とカレンダーで言ひ方がずれる）。 */
-  expect(要確認, "畫面の語と違ふ").toContain(
+  expect(延長, "延長の印がない").toContain(String(Recommender.extendedLabelJa()));
+  /* 語は画面と同じ正本から取る（書き寫すと、画面とカレンダーで言ひ方がずれる）。 */
+  expect(要確認, "画面の語と違う").toContain(
     String(Recommender.verificationStatusLabelJa({ status: "manual-required" })),
   );
-  /* 索引も、カレンダーが狀態を書く事を言ふ。 */
+  /* 索引も、カレンダーが状態を書く事を言う。 */
   const llms = readFileSync(join(site, "llms.txt"), "utf8");
-  expect(llms, "索引がカレンダーの狀態を言って居ん").toContain("`状態: ` の行");
+  expect(llms, "索引がカレンダーの状態を言っていない").toContain("`状態: ` の行");
 });
-it("配つてある ICS の「いま N 件」の申告は、本文と合ふ（第 1001 回）", async () => {
-  /* 第 975 回で行の幅（RFC 5545）を見た。**說明文の中の數字**も – カレンダーの情報欄に
-   * 「いま 932 件（2026-08-09 〜 2028-03-30）。うち締切は 765 件」と出る。數字が本文と
-   * 合はないと、購讀した人が「何人か分からない一覽」を信じ込む。
-   * 實測 2026-11-19: 全部一致（行事 932・締切 765・非締切 167）。
-   *
-   * 折り返し（CRLF + 空白）を戾してから數へる – 其の儘數へると「締切: 」が
-   * 「締切\\n 切: 」に裂けて 12 件減る（自分の測り方の失敗）。 */
+it("配つてある ICS の「いま N 件」の申告は、本文と合う（第 1001 回）", async () => {
   const path = join(REPO_ROOT, "public", "deadlines.ics");
   if (!existsSync(path)) return;
   const raw = readFileSync(path, "utf8").replace(/\r\n(?: |\t)/g, "");
@@ -1181,11 +1144,11 @@ it("配つてある ICS の「いま N 件」の申告は、本文と合ふ（�
   const folds = 説明.replace(/\r\n(?: |\t)/g, "");
   const 行事 = Number((/いま ([\d,]+) 件/.exec(folds) ?? [0, "0"])[1].replace(/,/g, ""));
   const 締切 = Number((/うち締切は ([\d,]+) 件/.exec(folds) ?? [0, "0"])[1].replace(/,/g, ""));
-  expect(行事, "行事の數が讀めない").toBeGreaterThan(100);
-  expect(締切, "締切の數が讀めない").toBeGreaterThan(0);
+  expect(行事, "行事の数が読めない").toBeGreaterThan(100);
+  expect(締切, "締切の数が読めない").toBeGreaterThan(0);
   const 本文の行事 = (raw.match(/BEGIN:VEVENT/g) ?? []).length;
   const 本文の締切 = (raw.match(/\\n締切: \d{4}-\d{2}-\d{2}/g) ?? []).length;
   expect(行事, `行事の申告 ${行事} が本文 ${本文の行事} と違ふ`).toBe(本文の行事);
   expect(締切, `締切の申告 ${締切} が本文 ${本文の締切} と違ふ`).toBe(本文の締切);
-  expect(行事 - 締切, "締切以外の行事が負數").toBeGreaterThanOrEqual(0);
+  expect(行事 - 締切, "締切以外の行事が負数").toBeGreaterThanOrEqual(0);
 });

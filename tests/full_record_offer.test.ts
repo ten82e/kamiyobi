@@ -1,15 +1,3 @@
-/**
- * 「締切まで: かまわない」が、品書（画面に差し込む速く開くためのデータ）の果てで切れていることを
- * 伝えるかの検査（SPEC §7・第 290 回）。
- *
- * 実測（2026-09-24・2026-08-09 生成ビルド）: 既定の窓は「かまわない」で、てびきは
- * 「期限なく先の締切も出します」と書いていた。ところが一覧に出る締切は 2026-07-10 〜
- * **2027-02-04**（品書が生成から 180 日先で切れている）で、`data.json` には品書の果てを越える
- * 締切が **133 件（74 会議）** 在り、カレンダー（`deadlines.ics`）には **2028-03-30 まで** 入って
- * いた。2027 年秋の締切を調べようとした人は、収録に在ることを知らずに画面を閉じるしかなかった
- * （品書の外を読む入口は「過去の締切も表示」だけだった）。
- */
-
 import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -76,14 +64,14 @@ describe("品書の果てを伝える（第 290 回）", () => {
       catalogDays[catalogDays.length - 1] < ics,
       `品書の末尾 ${catalogDays[catalogDays.length - 1]} がカレンダーの末尾 ${ics} より後ろ`,
     ).toBe(true);
-    // `data.json` には品書の果てを越える締切が実際に在る（= 画面から見えているだけ）。
+    // `data.json` には品書の果てを越える締切が実際にある（= 画面から見えているだけ）。
     // 下限はハーネスのビルドから取る（仮の品書で組むので実測 13 件。実ビルドは 133 件）。
     const edge = catalogDays[catalogDays.length - 1];
     let beyond = 0;
     eachDeadline(dataJson(), (day) => {
       if (day > edge) beyond += 1;
     });
-    expect(beyond, "品書の果てを越える締切が収録に無い（検査の前提が崩れた）").toBeGreaterThan(5);
+    expect(beyond, "品書の果てを越える締切が収録にない（検査の前提が崩れた）").toBeGreaterThan(5);
   });
 
   it("既定の読み方は品書だけ（画面を開くたびに 6 MB 強を読ませない）", () => {
@@ -121,14 +109,13 @@ describe("品書の果てを伝える（第 290 回）", () => {
 
   it("注記の語が、一番遠い締切日・切れ方の理由・カレンダーの末尾を言う", () => {
     const app = siteRuntime("app.js");
-    /* 日の数は品書（`catalog.json` の `window.upcoming_days`）から読む。画面が 180 と
-     * 書き写していた昔の形に戻らない見張り（第 293 回）。 */
+
     const days = (
       JSON.parse(readFileSync(join(site, "catalog.json"), "utf8")) as {
         window?: { upcoming_days?: number };
       }
     ).window?.upcoming_days;
-    expect(days, "品書に品の窓の申告が無い").toBeTypeOf("number");
+    expect(days, "品書に品の窓の申告がない").toBeTypeOf("number");
     const out = runInNode(
       [
         `const countJa = ${jsFunction(app, "countJa")};`,
@@ -143,7 +130,7 @@ describe("品書の果てを伝える（第 290 回）", () => {
     expect(out).toContain("収録の全体を読み込む");
     expect(out).toContain("2028-03-30");
     expect(out).toContain("カレンダー");
-    // 品の窓の日数を知らない品書では、数を作らない（第 293 回）。
+    // 品の窓の日数を知らない品書では、数を作らない。
     const noDays = runInNode(
       [
         `const countJa = ${jsFunction(app, "countJa")};`,

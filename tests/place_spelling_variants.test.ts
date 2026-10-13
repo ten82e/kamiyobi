@@ -1,9 +1,3 @@
-/**
- * 都市・国の和名の検査（SPEC §4・§7・第 312 回）。
- * 同じ読みを表記の違う二通りで書く人が居るので、片方だけ通る形を作らない。
- * ビルド済みサイトは `tests/built_site.ts` 経由で共有する。
- */
-
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { expect, it } from "vitest";
@@ -14,9 +8,7 @@ import { REPO_ROOT } from "./helpers.ts";
 type Row = { hay: string; ed?: { place?: string }; conf?: { acronym?: string } };
 
 const ACCENTS = /[\u0300-\u036f]/g;
-/** 上流の表記はアクセント記号付き（`Valparaíso` `Kraków`）で、表の英文字側は畳んだ形
- * （`valparaiso` `krakow`）。照合は両側アクセントを畳んでから行う（第 312 回で実測 –
- * 畳まないと 7 語が「収録に現れない死語」という偽の欠陥になった）。 */
+
 function fold(value: string): string {
   return value
     .toLowerCase()
@@ -146,7 +138,7 @@ it("表の英文字側が品書の開催地に現れる語は、和名で打つ�
 });
 
 it("表の英文字側は、収録・品書・保存した更新データの開催地に一度は現れる（第 312 回）", () => {
-  /* 収録に現れない表記を寄せ先にしない（第 309 回からの不変条件）。品書（ビルド済みハーネス）は
+  /* 収録に現れない表記を寄せ先にしない。品書（ビルド済みハーネス）は
    * 検査用のデータなので、収録 `data/snapshot.json` も見る。 */
   const 収録 = fold(readFileSync(join(REPO_ROOT, "data", "snapshot.json"), "utf8"));
   const 品書 = fold(readFileSync(join(builtSite(), "catalog.json"), "utf8"));

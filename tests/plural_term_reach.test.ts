@@ -1,12 +1,3 @@
-/**
- * 英字語を複数形で打った人の検査（SPEC §4・§7・第 314 回）。
- * 語頭一致の規則は「打たれた語が原文の語の左端に並ぶ」ときだけ通すので、語尾に `s` を
- * 足した瞬間に単数形で当たる行が外れていた（実測 – `abstracts` 5 行 / `abstract` 146 行、
- * `deadlines` 0 行 / `deadline` 231 行）。検査は品書（ビルド成果の catalog.json）と
- * 収録（`data/snapshot.json`）の両方に行う – ビルドに使う品書は収録の一部で、無い語の方が
- * 普通なので、片側だけだと語が集まらず空振りする（第 306 回以降と同じ工夫）。
- */
-
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -83,7 +74,7 @@ describe("英字語の複数形で打った人", () => {
       for (const plural of plurals) {
         const 複数形 = reaching(rows, plural);
         /* 単数形も行に現れる語だけを照らす – 現れない語の当たり集合は空で、
-         * 検査は何も言わない（其の語で全行を走らせる無駄も減らす）。 */
+         * 検査は何も言わない（その語で全行を走らせる無駄も減らす）。 */
         for (const stem of pluralStems(plural).filter((stem) => 語.has(stem))) {
           for (const row of reaching(rows, stem)) {
             expect(
@@ -92,7 +83,7 @@ describe("英字語の複数形で打った人", () => {
             ).toBe(true);
           }
         }
-        /* 畳み方が効いていること – 其の綴りで行に当たる行だけでは足りない
+        /* 畳み方が効いていること – その綴りで行に当たる行だけでは足りない
            （畳まなかった rows を数えて、寄せが実際に働いている語を確認する）。 */
         const 原綴り = writing(rows, plural);
         if (複数形.size > 原綴り.size) 救われた行 += 複数形.size - 原綴り.size;

@@ -15,9 +15,7 @@ export function booleanValue(value: unknown, fallback = true): boolean {
   if (["true", "1", "yes", "on", "false", "0", "no", "off"].includes(語)) {
     return !["false", "0", "no", "off"].includes(語);
   }
-  /* **默つて true にしない**（第 1019 回 – 實測 2026-11-19: `--offline xyz` は默つて
-   * **true**（上流に取りに行かない）に成つて居た。打ち間違ひで網路を切るのは、
-   * 收錄が古いままで氣付かない最も惡い失敗 – 第 878 回と同じ決まり）。*/
+
   process.stderr.write(
     `warning: ${JSON.stringify(String(value))} は true / false として讀めないので ${fallback ? "既定のまま" : "false"} にします（讀める組: true・1・yes・on・false・0・no・off。${語} は其の中に在りません）\n`,
   );
@@ -31,9 +29,7 @@ export function stringValue(value: unknown): string | undefined {
 export function positiveIntegerValue(raw: string | undefined, fallback: number): number {
   const value = Number(raw);
   if (Number.isInteger(value) && value > 0) return value;
-  /* **默つて既定に戾さない**（第 1018 回 – 實測 2026-11-19: `review --limit 0` は默つて
-   * 60 件を出し、「0 件だけ見たい」と打つた人は 60 行を讀まされた。`/tmp` の CLI と同じ
-   * 決まりに揃へる – 第 993 回の `days: 0`・第 1017 回の上限と同じ）。 */
+
   if (raw !== undefined && String(raw).trim() !== "") {
     process.stderr.write(
       `warning: ${JSON.stringify(raw)} は 1 以上の整數ではないので、既定の ${fallback} を使います\n`,

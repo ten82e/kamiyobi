@@ -1,14 +1,3 @@
-/**
- * 電話で打つ人が、検索欄を押されただけで画面を拡大されないための検査（SPEC §7・第 259 回）。
- *
- * iOS の Safari は、**文字の大きさが 16 px 未満の入力欄**に焦点が当たると画面を自動で
- * 拡大する（拡大すると表が見えなくなり、もどす操作が追加される）。入力の文字を大きく
- * するのが直し方で、`viewport` に `maximum-scale` を足して拡大自体を止めるのは
- * 拡大したい人の操作も奪うので使わない。
- * 根拠（実装の言い合わせとして残す）:
- *   - https://github.com/saadeghi/daisyui/issues/3871
- *   - https://github.com/heroui-inc/heroui/issues/5326
- */
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { expect, it } from "vitest";
@@ -45,7 +34,7 @@ function toPx(declared: string): number | null {
   return null;
 }
 
-/* 直接入力欄を構えるセレクタ（画面に実際に在るものだけ）。 */
+/* 直接入力欄を構えるセレクタ（画面に実際にあるものだけ）。 */
 const EDITABLE_SELECTORS = ["input[type=search]", "input[type=text]", "select", "textarea"];
 
 /* `input[type="search"]` と `input[type=search]` は同じものなので、引用符を落として比べる。 */

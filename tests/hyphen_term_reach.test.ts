@@ -1,13 +1,3 @@
-/**
- * ハイフン打ち（`paper-submission`）をした人の検査（SPEC §4・§7・第 317 回）。
- * CFP を写す語と URL のスラッグは語をハイフンで繋ぐので、其の形で打つ人は其の並びを行うに
- * 書く行にしか当たらなかった（2026-09-25 実測 – 品書に頻出の 171 並びのうち 166 並びで件数が
- * 違い、減った行の延べ 5,007 行 – `paper-submission` 0 行 / `paper submission` 245 行、
- * `international-conference` 3 行 / 341 行、`CCF-B` 0 行 / `ccf b` と隣り合わせに書く 159 行）。
- * 検査は品書（ビルド成果の catalog.json）と収録（`data/snapshot.json`）の両方に行う –
- * ビルドに使う品書は収録の一部で、片側だけだと並びが集まらず空振りする。
- */
-
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -55,9 +45,6 @@ function writing(row: Row, phrase: string): boolean {
 function adjacentPairs(rows: Row[], 最低回数: number, 上限: number): string[] {
   const freq = new Map<string, number>();
   rows.forEach((row) => {
-    /* 2 文字以下の語は両側の境界を要求する規則（第 252 回）があるので、並びの抽出は
-     * 3 文字以上で行う（`17th international` の `th` のような語頭は、規則どおり寄せても
-     * 境界が通らない – 其れは欠陥ではない）。 */
     for (const hit of fold(String(row.hay)).matchAll(/([a-z]{3,}) ([a-z]{3,})/g)) {
       const pair = `${hit[1]} ${hit[2]}`;
       freq.set(pair, (freq.get(pair) || 0) + 1);
@@ -131,7 +118,7 @@ describe("ハイフンで繋いで打った人", () => {
   });
 
   it("短い語の境界規則を壊さない", () => {
-    /* 1 文字の語は両側の境界を要求する規則（第 252 回）が、寄せた形にもそのまま効くこと。 */
+    /* 1 文字の語は両側の境界を要求する規則が、寄せた形にもそのまま効くこと。 */
     expect(Recommender.searchMatcher("a-b", AT)("ab cd")).toBe(false);
     expect(Recommender.searchMatcher("a-b", AT)("a b c")).toBe(true);
   });

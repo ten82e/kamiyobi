@@ -1,23 +1,9 @@
-import { queryReferenceSnapshotPath } from "./query_reference.ts";
-/**
- * 費用・配信・發表の形・受理を**其の方の語で短く**打った人（第 644 回）。
- * 實測（品書 3,250 行・固定時刻 2026-08-09T00:00:00Z – 2026-08-09 生成）で、
- * `受理` `通知結果` `配信` `ライブ配信` `差し替え` `再提出` `投稿料` `審査料`
- * `発表形態` `特別発表` `学生論文` は **0 行で案内も無し**だった。同じ意味の neighbouring な
- * 打ち手（`合否` `受理通知` `結果通知` `録画配信` `オンライン配信` `参加費` `登録費`
- * `発表形式` `口頭発表` `招待発表`）は通るので、語を短くした・語順を逆にしたといふ
- * だけの穴だった。此處では
- *  ① 十二語が默らず、それゝ歸屬先の families の答えを受け取る事、
- *  ② 寄せた語（`受理` 等）が實際に同じ行集合を出す事、
- *  ③ 噓の門を開けん – 寄せも羣も 0 件を 0 件の侬敎える物と行が出る物を取り違へん事
- * を張る。
- */
-
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import Recommender from "../site/recommender.ts";
 import { REPO_ROOT } from "./helpers.ts";
+import { queryReferenceSnapshotPath } from "./query_reference.ts";
 
 type Row = { hay: string };
 
@@ -45,9 +31,9 @@ function 案内(語: string): string {
     .trim();
 }
 
-/** 採否通知に寄せる語（行が出る – 内譯は件數欄に出る）。 */
+/** 採否通知に寄せる語（行が出る – 内訳は件数欄に出る）。 */
 const 寄せ = ["受理", "通知結果"];
-/** 收錄に無い物だと告げる羣に載せた語（0 件の侬 – 打ち直しを敎える）。 */
+/** 収録に無い物だと告げる羣に載せた語（0 件の侬 – 打ち直しを敎える）。 */
 const 斷り: Array<[string, string]> = [
   ["投稿料", "費用"],
   ["審査料", "費用"],
@@ -61,7 +47,7 @@ const 斷り: Array<[string, string]> = [
 ];
 
 describe("費用・配信・發表の形・受理を短く打つ人（第 644 回）", () => {
-  it("寄せた語が同じ行集合を出す – 件數欄が寄せ先を名乘る", () => {
+  it("寄せた語が同じ行集合を出す – 件数欄が寄せ先を名乘る", () => {
     const rows = 收錄();
     const 本家 = 当たり(rows, "合否");
     expect(本家.length, "前提 – 種別『採否通知』の行が減つた").toBe(240);
@@ -72,7 +58,7 @@ describe("費用・配信・發表の形・受理を短く打つ人（第 644 �
     }
   });
 
-  it("九語が默らず、歸屬先の families の斷りを受け取る", () => {
+  it("九語が黙らず、帰屬先の families の斷りを受け取る", () => {
     for (const [語, 筋] of 斷り) {
       const 案 = 案内(語);
       expect(案, `"${語}" が無言に逆戻りした`).not.toBe("");
@@ -93,14 +79,13 @@ describe("費用・配信・發表の形・受理を短く打つ人（第 644 �
     for (const [語] of 斷り) {
       expect(当たり(rows, 語).length, `"${語}" に行が届いた（羣の斷りが噓になつた）`).toBe(0);
     }
-    /* `学生論文` を `student`（4 行）に寄せたくなるが、其の 4 行は原文に student と書く
-     * 會の總て – 學生の論文とは限らんので讓した（第 337 回の中身を見る決まり）。*/
-    expect(当たり(rows, "student").length, "student の行數が變はつたら寄せ直す価値を測り直す").toBe(
+
+    expect(当たり(rows, "student").length, "student の行数が変はつたら寄せ直す価値を測り直す").toBe(
       4,
     );
   });
 
-  it("磁石は狹まつて居らん – 通つて居る打ち手の行數は舊來の侬", () => {
+  it("磁石は狹まつて居らん – 通つている打ち手の行数は旧來の侬", () => {
     const rows = 收錄();
     for (const [語, 見當] of [
       ["オンライン", 109],

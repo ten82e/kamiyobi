@@ -15,7 +15,7 @@ type ScoreBreakdown = ReturnType<typeof Recommender.breakdown>;
 type ConferenceRecord = CandidateRow["conf"] & {
   link?: string;
   /* 収録の締切の日（品書が申告 – 第 295 回・第 949 回）。窓の外の「一番遠い日」と
-   * 「推定なら其の日に締切がある」。 */
+   * 「推定ならその日に締切がある」。 */
   record_deadline_last?: string | null;
   record_deadline_next?: string;
   record_deadline_next_kind?: string;
@@ -25,9 +25,6 @@ type ConferenceRecord = CandidateRow["conf"] & {
   dblp?: string | null;
   sources?: string[];
   legacy_keys?: string[];
-  /* `recommendation_axes` は `CandidateRow["conf"]` に入る（推薦の核が正本のまま –
-   * 第 901 回。此處で `RecommendationAxes` ともう一度書くと、兩方の型の交差になり
-   * `CandidateRow[]` が `AppRow[]` に當たらなかつた）。 */
 };
 type EditionRecord = CandidateRow["ed"] & {
   id?: string;
@@ -112,7 +109,7 @@ interface SourceRecord {
 }
 
 /* カレンダー配信（`deadlines.ics`）の中身の実測。ビルドが行から導いた値で、画面は数え直さない
- * – ここで数え直すと、配信物と違う数を画面が言い出す（第 289 回）。 */
+ * – ここで数え直すと、配信物と違う数を画面が言い出す。 */
 interface CalendarSpan {
   event_count: number;
   /** 内、日付の欄が「締切」の件数（無いビルドもある – 第 300 回）。 */
@@ -121,8 +118,6 @@ interface CalendarSpan {
   last_day: string;
 }
 
-/* 品書が「何日先までを一覧に出すために切ったか」を宣言する欄（`catalog.json` の `window`）。
- * 画面が日数を書き写すと、設定を変えたビルドで嘘を言い続ける（第 293 回）。 */
 interface CatalogWindow {
   lookback_days: number;
   upcoming_days: number;
@@ -144,7 +139,7 @@ interface Catalog {
   conferences: ConferenceRecord[];
   history_ref?: string;
   /** 「収録の全体」（`history_ref`）のバイト数。押す前に読める量を知らせる為 –
-   *  第 905 回（畫面は今も「大きめのデータ」だけで，更有實際は約 9.1 MB）。 */
+   *  第 905 回（画面は今も「大きめのデータ」だけで，更有実際は約 9.1 MB）。 */
   history_bytes?: number;
   reranker?: Record<string, unknown>;
 }
@@ -305,8 +300,7 @@ function isConferenceRecord(value: unknown): value is ConferenceRecord {
       typeof value.record_deadline_last === "string") &&
     hasOptionalString(value, "record_deadline_next") &&
     hasOptionalString(value, "record_deadline_next_kind") &&
-    /* 推定の未來の締切（第 949 回 – 品書が申告する。推定の行は `utc` しかないので
-     * `recordDeadlineNext` は數へない）。 */
+    /* 推定の未來の締切。 */
     hasOptionalString(value, "record_estimated_next") &&
     (value.record_deadline_count === undefined ||
       (typeof value.record_deadline_count === "number" &&
@@ -556,10 +550,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
    * （変更前は 5 件 fixed で、残りの候補に到達する手段が無かった）。 */
   const RECOMMENDATION_PAGE = 20;
   let selectedIndex = -1;
-  /* いま開いている行の詳細（ドロワー）の行。URL に載せる対象として持つ。
-   * 「この画面を見る？」で送った人は、送った人が開いていた行の詳細も一緒に開いていて
-   * ほしい（2026-09-23 実測: 絞り込みと並び順、てびきの開閉（第 140 回）は URL に残るが、
-   * 行の詳細を開いた状態はどこにも残っておらず、送られた側は表の一覧だけを受け取った）。 */
+
   let drawerRow: AppRow | null = null;
   let drawerOriginKey = "";
   let pendingDrawerReturnKey = "";
@@ -606,13 +597,10 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   // 種別の日本語表記は recommender の正典と同じ表を使う（表示している語で検索できない、
   // という状態を作らないため）。
   const KIND_LABEL: Record<string, string> = Recommender.kindLabelTable();
-  /* 推薦で**省いた論文の行數**（第 954 回 – 長い論文は最初の 20 行だけを見る）。件數欄に
-   * 書くので filter の外に置く（描畫が讀む）。 */
+  /* 推薦で**省いた論文の行数**。件数欄に
+   * 書くので filter の外に置く（描画が読む）。 */
   let 截つた行 = 0;
-  /* 検証状態の語も recommender の正本から取る（上の KIND_LABEL と同じ理由）。
-   * 関数の中で `Recommender.…` を参照しないこと – 行の詳細を作る関数は検査が
-   * ビルド成果物から単独で抜き出して動かすので、依存を増やすと抜き出した先に
-   * `Recommender` が居なくなる（第 212 回で実際に踏んだ）。 */
+
   const VERIFICATION_STATUS_LABELS: Record<string, string> =
     Recommender.verificationStatusLabelTable();
 
@@ -622,13 +610,6 @@ function semanticOutput(value: unknown): value is SemanticOutput {
    * それらを追うのは `upcoming.html`（SPEC §4・§7）。 */
   const SELECTABLE_KINDS = ["abstract", "paper", "journal"];
 
-  /* 収録元がその締切に付けた名前（`dl.label`）の出し方。既定画面 478 行はすべて原語の名称を
-   * 持ち、無印で並べていた（2026-09-23 実測: いちばん多いのは「Submission deadline」の 129 行、
-   * ほか「Paper submission」56 行、「Submission」34 行…。国内分は「発表申込締切」など日本語）。
-   * 種別欄の本筋（概要締切・論文締切）と同じ列に、印の無い別の分類が並んで見えるため、
-   * 「画面の種別とは別物で、収録元の呼び方その物」であることを語で書く。会期の項で既に
-   * 使っている「原表記」の語をここでも使う。
-   * 表のセルと行の詳細で同じ式を使う（式が二つあると、片方だけ直してズレる – 第 128 回）。 */
   function kindDetailJa(round: unknown, label: unknown): string {
     const parts: string[] = [];
     const r = Number(round);
@@ -713,7 +694,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   let recommendationError = false;
   let historyStatus: LoadStatus = "idle";
   // 「収録の全体を読む」ボタンで立つ旗。既定（この旗が下がったまま）は品書だけで開く –
-  // 9 MB 強を毎回読みに行くと開くのが遅くなる（第 905 回で數を更新）。
+  // 9 MB 強を毎回読みに行くと開くのが遅くなる。
   let fullRecordRequested = false;
 
   /* 画面に差し込んだ品書（`catalog.json`）の外を読む必要があるか。
@@ -867,9 +848,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     if (s.past) out.push("過去の締切も表示");
     // 何も絞っていないときは「全件」と書く。空欄だと、絞ったのに漏れたのか読めない。
     const condition = out.length ? out.join(" ／ ") : "絞り込みなし（収録全体の一覧）";
-    /* 並び順は絞り込みではないが、紙には必要 – 同じ一覧を並べ替えて配ることもある
-     * （第 126 回で会期順が増えたので、「会期順で印刷した」が紙で分からないと
-     * 読み手は日付の順がなぜ違うのかを確かめられない）。既定の並びでも書く。 */
+
     const order = sortLabel(sort.key);
     if (!order) return condition;
     return `${condition} ／ 並び順: ${order} ${sort.asc ? "昇順" : "降順"}`;
@@ -911,9 +890,6 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     );
   }
 
-  /* 時刻未確認の三狀態は **recommender.js の正本**（第 1055 囮で MCP と共有 –
-   * 畫面と AI が同じ規則を見るやうに）。MCP の行は此れで「（時刻未確認。すでに終了して
-   * 居る可能性があります）」を出す。 */
   function rowDateOnlyState(r: AppRow | DrawerRow, now: number) {
     return Recommender.dateOnlyStateJa(r, now);
   }
@@ -928,11 +904,6 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     return !rowIsPast(r, now);
   }
 
-  /* 行が「表示している暦日」の時刻。締切欄・残り欄・CSV の残り列はここを見ているので、
-   * 期間の窓もここを見る。`row.t` で比べると締切欄に書いた日付より 1 日早く窓から出る
-   * （2026-08-09 生成ビルドで実測: `t` が JST 2026-09-09 19:00 なのに締切欄は 9/10 と出る行が
-   * 10 件あり、「30 日以内」に並びながら「あと 31 日」と出ていた）。第 202 回に一覧を、
-   * 第 228 回に画面上部の数を、ここへ揃えた。 */
   function rowShownDayMs(r: AppRow) {
     return Number.isFinite(r.tShown) ? r.tShown : r.t;
   }
@@ -1149,11 +1120,6 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     return asc ? "↑" : "↓";
   }
 
-  /* 並び替えの状態は、見出しの語尾の矢印にしか出ていなかった（2026-09-23 実測）。
-   * キーボードでヘッダーを押して並びが変わっても読み上げは何も言わない。「並びを
-   * 変えたら黙らない」方針（過ぎた締切を下にまとめた件数を件数欄に書くのと同じ）に
-   * 従っていない。画面は混むので、読み上げ専用の短い欄にだけ足す（第 89 回で分けた仕組み）。
-   * 列の語は見出し自身から取る（テストにもソートバーにも書き写さない）。 */
   /** 並びの基準にしている列の画面での語。見出しから取る（書き写すと、列の名前を
    * 変えたときに案内だけ古くなる）。見出しは目印の矢印まで書き換えるので、そこは落とす。 */
   function sortColumnLabel(key: string): string {
@@ -1697,10 +1663,6 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     }
   }
 
-  /* 一覧の「データの行」だけを出す。月見出し（`.month-row`）と行内展開（`.detail-row`）は
-   * `shown[]` と 1:1 にならないので、行の選択・フォーカス・1:1 対応を見る所では常に除く。
-   * 同じ式を 2 か所に書いていた（第 273 回: フォーカスの面倒を見る場所を足したときに
-   * 3 か所目になるのを避け、ここへ集めた）。 */
   function dataRows(): HTMLTableRowElement[] {
     return [...$("tbody").querySelectorAll<HTMLTableRowElement>("tr")].filter(
       (row) => !(row.classList.contains("detail-row") || row.classList.contains("month-row")),
@@ -1740,14 +1702,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   }
 
   // ---- CATEGORIES ----
-  /* 分野チップの並びは、チップに出る日本語名の五十音順（第 230 回）。上は上流の分野表の
-   * 項目順のままで、実測の並びは 高性能計算 / ネットワーク / システム / 人工知能 /
-   * セキュリティ / データベース / グラフィックス / 人間情報処理 / 計算理論 – 9 個の中に
-   * 探している語を探し出す形だった。同じ画面の「会議」列は `localeCompare(..., "ja")` で
-   * 五十音順に並ぶので、日本語の並びの約束が画面の中に二つあったことになる。上流の項目順が
-   * 変わると画面の並びも変わる問題も、ここで止める。
-   * 比較するのは画面に出る語そのもの（英表記を併記した形）。行に付くタグの順序は収録の
-   * 分野順のまま変えない（チップは探すための欄で、タグは行の情報なので役割が違う）。 */
+
   function categoryChipKeys(categories: Record<string, string>): string[] {
     return Object.keys(categories || {}).sort((a, b) => {
       const la = Recommender.categoryChipLabelJa(a, String(categories[a] || ""));
@@ -1767,7 +1722,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     const span = document.createElement("span");
     // 日本語名を主、英表記は併記（現場では分野の英語名で覚えている人もいるため）。
     // 組み立ては recommender の 1 本だけ使う – 以前はここで式を書いていて、検索索引が
-    // 同じ語を持っておらず、チップの語をコピーして貼った人が 0 件に落ちた（第 219 回）。
+    // 同じ語を持っておらず、チップの語をコピーして貼った人が 0 件に落ちた。
     const en = String(DATA.categories?.[k] || "");
     span.textContent = Recommender.categoryChipLabelJa(k, en);
     span.title = `${k}: ${en}`;
@@ -1864,11 +1819,6 @@ function semanticOutput(value: unknown): value is SemanticOutput {
 
   const historyLoader = createHistoryLoader(fetchHistoryJson, syncHistoryState);
 
-  /* 画面上部の四つの数。絞り込み前の収録全体の数を出す（検索やチェックボックスでは動かない）
-   * が、「これからの30日間の締切」だけは一覧の窓と同じ目盛りで見ないと画面が自己矛盾する
-   * （第 228 回: 2026-08-09T21:00Z 見立てで上部 176 件・「30 日以内」の一覧 177 件。一覧が
-   * 「あと 30 日」と出す `pacificvis` が上の数だけに入っていなかった）。描画ごとに数えるので、
-   * 日をまたいで開いたタブでも一覧とズレない。 */
   function renderSummaryStats() {
     $("statConfs").textContent = String((DATA.conferences || []).length);
     const nowMs = Date.now();
@@ -1902,12 +1852,6 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     const now = Date.now();
     const diff = ms - now;
     if (diff < 0) {
-      /* 「本日終了」は経過時間ではなく **JST の暦日**で決める。経過日数の floor だと
-       * 23 時間 59 分前（JST では昨日）まで「本日終了」になり、いつ締切ったかが読め
-       * なかった（2026-09-23 実測: JST で前日に終わった締切が「本日終了」出る。一覧は
-       * JST を単位にしているので、ここも揃える）。
-       * JST のオフセットは monthKey と同じ理由でインラインに置く（この関数はビルド
-       * 成果物から抜き出して検査するので、依存を増やさない。第 91 回）。 */
       const jstDay = (t: number) => Math.floor((t + 9 * 3600000) / DAY);
       const days = jstDay(now) - jstDay(ms);
       return { text: days <= 0 ? "本日終了" : `${days} 日前に終了`, cls: "past" };
@@ -2154,16 +2098,13 @@ function semanticOutput(value: unknown): value is SemanticOutput {
    * 例をこのコメントに日付で書かなかった – てびきの側で同じ例を「来月 = 再来月の値」と
    * 取り違えて書いていた（SPEC §7）ので、固定の日付は書かない。 */
   function relativeMonthNote(query: string, now: number): string {
-    /* 展開前後の文字列を番号で突き合わせると、助詞で繋がれた形で対応がずれる
-     * （`来月の締切` は 1 語のまま展開されて 2 語になり、`来月の締切 = 2026年9月` と
-     * 読めてしまう – 第 251 回）。解決の内側でできた組をそのまま出す。 */
     const pairs = Recommender.relativeMonthPairs(query, now)
       .concat(Recommender.monthRangePairs(query, now) as unknown as Array<[string, string]>)
-      // 季節の語も「どの月へ展開したか」を同じ形で出す（第 254 回）。
+      // 季節の語も「どの月へ展開したか」を同じ形で出す。
       .concat(Recommender.seasonPairs(query, now) as unknown as Array<[string, string]>)
-      // 「今月末」「年内」も同じ形でどこへ展開したか出す（第 327 回）。
+      // 「今月末」「年内」も同じ形でどこへ展開したか出す。
       .concat(Recommender.periodMonthPairs(query, now) as unknown as Array<[string, string]>)
-      // 暦日を二つ並べた幅（`8月10日から8月20日`）も同じ形でどこへ展開したか出す（第 371 回）。
+      // 暦日を二つ並べた幅（`8月10日から8月20日`）も同じ形でどこへ展開したか出す。
       .concat(Recommender.dayRangePairs(query, now) as unknown as Array<[string, string]>);
     return pairs.length ? ` ｜ ${pairs.map((pair) => `${pair[0]} = ${pair[1]}`).join("、")}` : "";
   }
@@ -2185,10 +2126,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
    * います…」で、チェックした直後に 2 つの語が同時に出て、別々の読み込みが始まったように
    * 読めた（2026-08-09 実測）。状態欄の語には「表示中のカタログ」という画面のどこにも出て
    *こない語も混ざっていた。短い形は件数欄用だが、名詞は揃える。 */
-  /* 品書（画面に差し込む速く開くためのデータ）の外を読むときの語。かつては「過去の締切」だっ
-   * たが、読んでくる物は過去だけでは無い – 品書は生成から 180 日先でも切れているので、同じ
-   * 1 回の読み込みが「過去の行」と「品書の果てより先の締切」を一緒に連れてくる。どちらかに
-   * 寄いた語は噓になる（第 290 回）。 */
+
   const HISTORY_NOUN_JA = "収録の全体の締切";
   const HISTORY_LOADING_SHORT_JA = `${HISTORY_NOUN_JA}を読み込み中…`;
   const HISTORY_ERROR_SHORT_JA = `${HISTORY_NOUN_JA}の読み込みに失敗`;
@@ -2201,11 +2139,6 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     rank: "CCF・CORE の一覧でこの会議の評価が確認できていません。".trim(),
   };
 
-  /* 「未確認」「該当なし」「評価なし」を出した場に添える理由の語を一か所で決める。
-   * 表のセルは `title` の注記に、行の詳細は本文に出す（第 233 回で内訳の説明を画面に
-   * 出したのと同じ判断 – 2026-08-09 生成ビルドで実測: ドロワーは 会期 未確認 186 行・
-   * 開催地 未確認 186 行・評価なしを含む 144 行を、理由もなく語だけ出していた。
-   * 注記はタッチ操作の端末と読み上げに届かない）。 */
   /** 理由の語を出すのに必要な形。一覧の行（`AppRow`）も行の詳細が受ける `DrawerRow` も
    * 入る（両方の形で同じ語を出したくて、必要な物だけ受ける型にした）。 */
   type ReasonRow = {
@@ -2213,14 +2146,6 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     rankPairs?: readonly string[] | null;
   };
 
-  /* 「未確認」「該当なし」「評価なし」を出した場に添える理由の語を、一か所で決める。
-   * 表のセルは `title` の注記に、行の詳細は本文に出す（同じ式を両方から見せるための入口）。
-   * 2026-08-09 生成ビルドで実測: 行の詳細は 会期 未確認 186 行・開催地 未確認 186 行・
-   * 「評価なし」を含む 144 行を、理由もなく語だけ出していた。理由の語は `title` の注記に
-   * しか無く、タッチ操作の端末と読み上げに届かなかった（第 233 回で内訳の説明を画面に
-   * 出したのと同じ判断）。
-   * 関数を 1 つの塊にしてあるのは、行の詳細の組み立てを単体で動かす検査が、この塊だけを
-   * 注入すれば済むようにするため（語の組み立てを検査側に書き写さない）。 */
   const fieldReasonsJa = {
     /** 理由の語。説明が要らない（値が出ている）ときは空文字。 */
     event: (r: ReasonRow): string =>
@@ -2268,7 +2193,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     // 「評価でしぼる」で落ちた行数（選択した等級を持たない行）。
     rank: 0,
     // 検索語でのぞいた行数。0 のときは検索語が 1 行も絞れていないので、件数欄で
-    // 打ち直し方を示す（第 227 回）。
+    // 打ち直し方を示す。
     query: 0,
     // 分野チップで落ちた行数（選んだ分野を持たない行）。
     cats: 0,
@@ -2281,11 +2206,6 @@ function semanticOutput(value: unknown): value is SemanticOutput {
    * 種別だけ特別扱いしていたのは、他の値でも同じ問題が起きるのに気づけていなかったから。 */
   let urlNotices: string[] = [];
 
-  /* 共有リンクのチェック欄の値を読む。空・0・false は入りなし、1・true は入り、
-   * それ以外は「読めない」として扱い、理由を出す。第 130 回でランク・締切まで・分野・
-   * 並び順は直したが、チェック欄は `=== "1"` のまま残っていて、`?past=true` も
-   * `?past=maybe` も黙って入りなしになっていた（2026-09-23 実測: 4 つのチェック欄いずれも、
-   * 1 以外の値で画面になんの説明も出さない）。 */
   function urlFlagJa(raw: unknown): { on: boolean; readable: boolean } {
     const value = String(raw == null ? "" : raw)
       .trim()
@@ -2298,7 +2218,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   /** 受け付けられなかった値を、条件の書き下ろしとは別の文で伝える。 */
   function urlValueNoticeJa(label: string, value: string, behavior: string): string {
     if (!value) return "";
-    return `リンクの${label}「${value}」はこの一覧で使えない值なので、${behavior}`;
+    return `リンクの${label}「${value}」はこの一覧で使えない値なので、${behavior}`;
   }
 
   function hiddenDeadlineCounts(): {
@@ -2338,10 +2258,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     return { catalog, journal };
   }
 
-  /* 欄の名前が接頭辞に成つた連結形（`分野セキュリティ`）を案内するかを決める問答（第 508 回）。
-   * 正典 `site/recommender.ts` は品書を持たないので、**其れだけで行が出る語か**を畫面の方が答へる
-   *（検索の道で時計を讀まないのと同じ筋 – 第 464 回・第 495 回）。*/
-  /* 語を分けて打った時に何件当たるか（第 532 回 – `splitHintJa` に渡す）。 */
+  /* 語を分けて打った時に何件当たるか。 */
   function splitCountJa(文: string): number {
     const c = queryMatchCounts(文);
     return c.catalog + c.journal;
@@ -2359,17 +2276,17 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   function zeroResultLiveNote(filter: {
     hiddenKindWords: string[];
     termCounts: Array<{ term: string; count: number }>;
-    /* 欄の名前の連結形（`分野セキュリティ`）を案内するかを決める問答（第 508 回）。
-       品書を持つこの側で答え、正典は渡されて動く（第 464 回・第 495 回と同じ筋）。*/
+    /* 欄の名前の連結形（`分野セキュリティ`）を案内するかを決める問答。
+       品書を持つこの側で答え、正典は渡されて動く。*/
     columnValueHits?: (語: string) => boolean;
     splitCount?: (文: string) => number;
-    // 打ち直しの見当（第 256 回 – 0 件案内と同じ判断を読み上げでも言う）。
+    // 打ち直しの見当。
     shorterHits?: Array<{ word: string; count: number; how: string; pair?: string }>;
     // 検索語が公式ページの URL の形か（URL で引いた人は「語が無い」話では済まない）。
     urlQuery: boolean;
     queryMatch: { catalog: number; journal: number };
     catalogConferences: number;
-    // この表その物を指す語（「締め切り」など）を打ったかを見る（第 239 回）。
+    // この表その物を指す語（「締め切り」など）を打ったかを見る。
     query: string;
     // 下に並ぶ「外せる条件」が 1 つ以上あるか（0 件案内と数え上げを同じにする）。
     clearable: boolean;
@@ -2388,18 +2305,14 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       Boolean(filter.hidden?.past) ||
       Boolean(filter.hidden?.est);
     const pointer = loosenable ? "。下に外せる条件も書いてあります" : "";
-    /* 案内の文が既に句點で終つて居るとき、pointer が「。」を二つ並べる（實測 –
-       「公式ページをご覧ください。。下に外せる条件も」）。聲で聽くと間が空くので、
-       句點を一つに揃へる（第 632 回）。 */
+
     const 聲 = (文: string): string =>
       pointer && /[。！？]$/.test(文) ? `${文.slice(0, -1)}${pointer}` : `${文}${pointer}`;
     // 外せる条件が 1 つも無いなら、その旨を言う（「下に案内がある」「緩めると出る」は
     // いずれも噓になる）。2026-09-23 の収録では踏めない（今後より後の締切が多数ある）
     // ので、収録が古くなった日に効く形の防御である。
     if (!loosenable) return " ｜ 収録にいま以降の締切が残っていません。データ更新をお待ちください";
-    /* URL を貼った人（メーリングリストの CFP リンクで収録確認をしている – 第 153 回）には、
-     * 打った文字列を「語が無い」と言っても収録の範囲が伝わらない。何を引いたのかを名指しして、
-     * 収録の中心を言う。会議名でも引けるので、その案内も添える。 */
+
     const matchedRows = filter.queryMatch.catalog + filter.queryMatch.journal;
     if (filter.urlQuery && matchedRows === 0)
       return (
@@ -2413,41 +2326,30 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       const wholeWord = Recommender.wholeTableQueryWordJa(filter.query);
       if (wholeWord)
         return ` ｜ 「${wholeWord}」はこの表の全行に当たる語なので、検索では絞れません${pointer}`;
-      /* 欄の名前その物を打たれた人（第 244 回）。`分野` は 1 行も減らないが、収録に無い
-       * 語ではない（実測: `分野` 0 件で「語「分野」は収録データにありません」と言っていた –
-       * 値の `セキュリティ` は 152 件当たる）。値の例を言って打ち直させる。 */
+
       const columnNote = Recommender.columnQueryLiveNoteJa(filter.query, filter.columnValueHits);
       if (columnNote) return ` ｜ ${聲(columnNote)}`;
-      /* 画面自身の操作・説明・出典の語を打たれた人（第 248 回）。同じ表から短い文を作る。 */
-      /* 同じ讓りの判斷 – 畫面と讀み上げが別のことを言はん（第 392 回）。 */
+      /* 画面自身の操作・説明・出典の語を打たれた人。同じ表から短い文を作る。 */
+      /* 同じ讓りの判斷 – 画面と読み上げが別のことを言はん。 */
       const 打ち替えが在るか = (filter.shorterHits || []).length > 0;
       const uiNote = Recommender.uiWordLiveNoteJa(filter.query, 打ち替えが在るか);
       if (uiNote) return ` ｜ ${聲(uiNote)}`;
-      /* 日数の範囲の言い方（`1か月以内` `1週間以内` など）を打たれた人（第 253 回）。
-       * 実測: `1か月以内` 0 行・`1週間以内` 0 行・`3日以内` 0 行で、読み上げは
-       * 「語がありません」としか言っていなかった。同じ判断を短い文で言う。 */
+
       const dayRange = Recommender.dayRangeLiveNoteJa(filter.query);
       if (dayRange) return ` ｜ ${聲(dayRange)}`;
     }
-    /* 「その語が収録に無い」は、語の数え上げ（表の行だけを見る）ではなく全体の当たり数で決める
-     * （第 240 回）。`常時受付` は表 0 件・常時受付ジャーナル 22 件なのに、読み上げは
-     * 「語「常時受付」は収録データにありません」と言っていた（2026-08-09 生成ビルドで実測）。
-     * 同じ画面の案内は「収録済みの行 22 件に当たります」と出していて、目の字と読み上げが
-     * 逆のことを並べていた。全体で 1 件も当たらないときだけ、語を名指す。 */
+
     const dead =
       matchedRows === 0 ? filter.termCounts.filter((t) => t.count === 0).map((t) => t.term) : [];
     if (dead.length) {
-      /* 「語が無い」で止める読み上げは、打ち直しを知らない人に打ち切らせる（第 256 回）。
+      /* 「語が無い」で止める読み上げは、打ち直しを知らない人に打ち切らせる。
        * 同じ 0 件画面で効く打ち直しを数えているので、それを先に言う（画面と同じ判断）。 */
       const alt = (filter.shorterHits || []).filter((h) => String(h.word || "").trim())[0];
       if (alt) {
         const note = ` ｜ 「${dead[0]}」は無くて「${alt.word}」なら ${countJa(alt.count)} 件当たります${pointer}`;
         // aria-live に長い文を流さない約束（SPEC §7 – 60 字）。収まらないなら短いほうに落ちる。
         if (note.length <= 60) return note;
-        /* 60 字に収まらん時、下の「収録データにありません」へ落ちるのは噓になる（第 680 回 –
-         * `camera-redy` の讀み上げが 63 字に溢れて「ありません」と言つた。打ち手の語が
-         * 見えただけ惡い）。外せる条件への導き（`pointer`）を落してでも打ち手を殘す。
-         * 欧文の語は 1 字が幅を食ふので、この落ち方は和語より頻繁に踏まれる。*/
+
         const 短 = ` ｜ 「${dead[0]}」は無くて「${alt.word}」なら ${countJa(alt.count)} 件当たります`;
         if (短.length <= 60) return 短;
         // 語その物が長い時は、導きを落とした一層短い形で打ち手だけを說ふ。
@@ -2491,13 +2393,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     const trimmed = query.trim();
     if (!trimmed) return [];
     const now = Date.now();
-    /* 数える行は `queryMatchCounts` と**同じ集合**にする（候補行 + 常時受付のジャーナル行）。
-     * ここは候補行だけ数えていたため、ジャーナル側にだけ出る語を収録に無い語と呼んでいた
-     * （2026-08-09 生成ビルドで実測: 「常時受付」は候補行 0 件なのに、常時受付の行 22 件が
-     * その語を書いている。読み上げは「語「常時受付」は収録データにありません」と言い、
-     * 画面は「検索語を短くする」としか言わなかった）。同じ数の数え上げが 2 か所にあり
-     * 片方だけが新しい、という形で（同じ語彙に表を 2 つ持つと必ず片方が古くなる – 第 215 回など
-     * と同じ判断）。プールには既に入っている行があるので、行の hay で寄せる。 */
+
     const seen: Record<string, boolean> = {};
     const hays: string[] = [];
     (rows as AppRow[])
@@ -2511,9 +2407,6 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     return Recommender.queryTermCounts(Recommender.expandRelativeMonths(trimmed, now), hays, now);
   }
 
-  /* 死語を外した殘りで何件出るか（第 623 回）–「その語を外すと増えます」と言い切る前に測る。
-   * 打たれた語が總て死語なら外した殘りは空（= 全行）になるので數へん（null）。語を分けない
-   * 打ち方（語の一つしかない打ち方）は他の家が既に數へて居る（第 256 回）ので同じく null。 */
   function deadTermRemainderCount(query: string): number | null {
     const counts = queryTermNotes(query);
     if (counts.length < 2) return null;
@@ -2526,7 +2419,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     return queryMatchCounts(殘).catalog;
   }
 
-  /* 問ひを外した時に見える行を渡して、打ち直しの見當を數へる（第 761 回）。 */
+  /* 問ひを外した時に見える行を渡して、打ち直しの見当を数へる。 */
   function shorterWordsForZero(
     query: string,
   ): Array<{ word: string; count: number; how: string; pair?: string }> {
@@ -2536,11 +2429,9 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     return shorterWordNotes(query, 基準の行);
   }
 
-  /* 假名だけの語を見分ける目（第 623 回 – `shorterWordNotes` の屑除けにだけ使う）。 */
+  /* 假名だけの語を見分ける目。 */
   const HIRAGANA_ONLY_JA = /^[\u3041-\u309f]+$/;
 
-  /* 0 件のとき、打ち直しの見当まで数える（第 256 回）。数える集合は `queryTermNotes` と
-   * 同じにする – 同じ表を 2 か所で違う範囲で数えると、案内だけが古くなる（第 215 回など）。 */
   function shorterWordNotes(
     query: string,
     基準の行?: AppRow[],
@@ -2550,7 +2441,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     const now = Date.now();
     const seen: Record<string, boolean> = {};
     const hays: string[] = [];
-    /* 數へる集合は、呼び出し側が渡した行（打ち直した時に見える行）を優先する（第 761 回）。 */
+    /* 数へる集合は、呼び出し側が渡した行（打ち直した時に見える行）を優先する。 */
     ((基準の行 ?? (rows as AppRow[])) as AppRow[])
       .concat(Recommender.journalRows(activeData.conferences, now) as unknown as AppRow[])
       .forEach((row) => {
@@ -2559,11 +2450,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         seen[hay] = true;
         hays.push(hay);
       });
-    /* 假名だけの短い語は打ち替えに出さん（第 623 回）。實測 – 0 件の 396 文が出す打ち替え
-     * 候選 266 件のうち 48 件（18%）が `ある` `たい` `いつ` `する` `える` 等の二文字の假名語で、
-     * 內譯は動詞の活用切れ端（見たい→たい）か疑問の助數（ある）だった。「『たい』だけに絞る
-     * （収録で 6 件当たります）」は次の打ち手を教へる樣で何も教へて居らん。假名だけ三字以下で
-     * 落とすと屑は 48/48 消え、內容語（発表・参加・登録・日本…）は殘つた侬殘る。 */
+
     return Recommender.shorterHitWordsJa(trimmed, hays, now).filter((hit) => {
       const 語 = String(hit.word || "").trim();
       return !(HIRAGANA_ONLY_JA.test(語) && 語.length <= 3);
@@ -2598,8 +2485,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
 
   /** 分野チップの件数（`filter()` が分野以外の条件を通った行について数え直す）。 */
   let catFacetCounts: Record<string, number> = {};
-  /* 掲載先欄に入れた語が、いま並んでいる行の会議に見当たらなかった語（第 200 回）。
-   * `filter()` の中で数え、件数欄で言う（分野の件数 `catFacetCounts` と同じ置き方）。 */
+
   let venueLookupMiss: string[] = [];
 
   function categoryCounts(): Record<string, number> {
@@ -2615,13 +2501,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     if (win === "all") return Number.POSITIVE_INFINITY;
     const n = Number.parseInt(win, 10);
     if (!Number.isFinite(n)) return Number.POSITIVE_INFINITY;
-    /* 窓の上側は **JST の暦日**で切る（「n 日後の暦日まで」の終わり際）。経過 24 時間で
-     * 区切ると、同じ画面が「あと n 日」と出す行が窓の外に落ちて消える（「残り」と締切欄は
-     * JST の暦日が正本で、第 202 回にそこへ揃えた）。2026-08-09 生成ビルドで実測:
-     * 「締切まで 7 日」で JST 09:00 の眺め 10 件・20:00 で 8 件・翌朝 06:00 で 5 件が、
-     * 「あと 7 日」と出ているのに並ばなかった（30 日で 5 件、90 日で 2 件）。
-     * JST のオフセットはインラインに置く（`remain`・`monthKey` と同じ理由で、この関数は
-     * ビルド成果物から抜き出して検査する）。 */
+
     return (Math.floor((now + 9 * 3600000) / DAY) + n + 1) * DAY - 9 * 3600000;
   }
 
@@ -2643,9 +2523,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     // `来月` などの相対月を検索語として受け付ける。展開式の一覧への反映は recommender が
     // 持つ（`来月` がどの月を指すかの判断を UI 側に二重化しない）。
     searchQuery = Recommender.expandRelativeMonths(state.q, now);
-    /* 引數を渡すと、其の語で引いた時の行を返す（第 761 回 – 「打ち直すなら」の件數を、打ち直した
-     * 時に實際に見える行で數へる爲）。上の行は檢查が文字で張つて居るので其の侭殘し、此處で
-     * 上書きする。*/
+
     if (問ひ !== undefined) searchQuery = Recommender.expandRelativeMonths(問ひ, now);
     // 検索語の分解は 1 描画に 1 回で足りる。行ごとに `hayMatches` を呼ぶと、そのたびに
     // 語を分解し直す（3234 行で 1 打鍵あたり約 83 ms かかっていた）。
@@ -2663,11 +2541,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         : "";
     // 単体抽出テスト（node probe）でも動くよう、filter 内では window 経由で解決する
     const Rec = Recommender;
-    /* **行の數を截る**（第 954 回 – 實測 2026-11-13: 39 KB の論文を貼ると推薦が
-     * **120 秒逾** answer しなかつた。推薦は會議のまとまり（696）ごとに論文の行を見るので、
-     * 行が增えると掛け算で膨らむ）。切るのは信號のない部分 – 題名と概要（最初の 20 行）が
-     * 候補を決め、1000 行の本文は何も增やさない。MCP と同じ 20 行（兩方で同じ結果）。
-     * 切つたことは件數欄の注で言ふ（默つて切ると「參考にして居ない」がばれる）。 */
+
     const 行の截 = 20;
     const 全部の行 = Rec
       ? Rec.parsePaperLines(pText)
@@ -2931,18 +2805,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   /* SPEC §7: 絞り込み後の全行を表計算へ持ち出せるようにする。ページング後の表示分だけ
    * ではなく `shown` 全体を書き出す。Excel は BOM の無い UTF-8 を日本語として読めないため
    * BOM を付けて渡す（本文の区切りは recommender の deadlinesToCsv が単一正典）。 */
-  /* ボタンのラベル。数字は件数欄と同じ `shown.length` を見せるが、「表示中の」とは書かない
-   * （第 229 回）。一覧は一度に先頭 40 件（`PAGE = 40`）しか並べず、残りはずっと下にある
-   * 「さらに表示」のボタンで足す。既定の 478 件の一覧でラベルは
-   * 「表示中の 478 件を CSV でダウンロード」と言っていた – 画面に並んでいるのは 40 件なので、
-   * 438 件について噓になる。書き出しの中身（絞り込み後の全行）は正しく、語が誤っていた。
-   * てびきと README に「ページ送りで画面に出ている分ではなく」という言い訳を添えて
-   * ごまかしていたが、原因は語なので語を直す。`countJa` を呼ぶので検査は両方を抜き出す。 */
-  /* カレンダーのリンクのそばに、ファイルに入る物の実測を添える（第 289 回）。
-   * 収録の実期間は 2026-08-09 生成のビルドで **2026-08-09 〜 2028-03-30 の 928 件**で、
-   * この一覧に並べる期間（既定は生成から 180 日）よりずっと長い – 同じ物を想像して
-   * 取り込むと、カレンダーアプリの方が 2 年分になる（2026-09-24 実測: 件数も範囲も、押す前に
-   * 読める場所がどこにも無かった）。数字はこの一覧の件数と同じ数え方で区切りを入れる。 */
+
   /* 一覧に並ぶ物の中で一番遠い締切日（JST の暦日）。品書の果てを、ハードコードせずに実測で
    * 出す（ビルドごとに違う – 品書は生成からの日数で切れている）。 */
   function farthestRowDayJa(list: AppRow[]): string {
@@ -2952,7 +2815,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       const shown =
         typeof row.tShown === "number" && Number.isFinite(row.tShown) ? row.tShown : row.t;
       if (typeof shown !== "number" || !Number.isFinite(shown)) return;
-      // 時刻 0（1970 年）でも「無い」とは取り違えない – 有る物の中で一番遠い物を見る。
+      // 時刻 0（1970 年）でも「無い」とは取り違えない – ある物の中で一番遠い物を見る。
       if (!found || shown > best) {
         best = shown;
         found = true;
@@ -2986,7 +2849,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         : "速く開くためのデータが生成からの期限で切れているためで、") +
       "収録その物にはこれより先の締切もあります。先まで見るにはこの欄の" +
       /* **容量を数字で**言う（理不尽 – 押す前に読める量を知る）。品書が実測値を
-       * 持って居ない古い差し込みでは「大きめのデータ」になる（第 905 回）。 */
+       * 持って居ない古い差し込みでは「大きめのデータ」になる。 */
       `「収録の全体を読み込む」を押してください（${
         容量 ? `読み込む量は${容量}です` : "一覧より大きめのデータを読みます"
       }）。` +
@@ -2995,16 +2858,12 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   }
 
   function icsScopeNoteJa(span: CalendarSpan): string {
-    /* 第 299 回まで、カレンダーに入る物は全部「締切」と呼んでいた。実測（2026-08-09 生成ビルド）
-       で 928 件のうち 167 件は採否通知・査読結果公開・反論期間の開始で、その日までに何かを
-       出す必要は無い – 購読する人に「何が入るか」を押す前に伝える（第 289 回の方針と同じ）。
-       内訳の申告が無いビルドでは、日を数えるだけにして締切の数は言わない。 */
     const dead = span.deadline_count;
     const mix =
       dead === undefined || dead >= span.event_count
         ? ""
         : `うち締切が ${countJa(dead)} 件で、残りの ${countJa(span.event_count - dead)} 件は` +
-          `採否通知・査読結果公開・反論期間の開始のように、その日までに何かを出す必要の無い日です。`;
+          `採否通知・査読結果公開・反論期間の開始のように、その日までに何かを出す必要のない日です。`;
     return (
       `カレンダーに追加（.ics）に入る日は ${countJa(span.event_count)} 件` +
       `（${span.first_day} 〜 ${span.last_day}）。` +
@@ -3021,12 +2880,6 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       : `この一覧の ${countJa(total)} 件を CSV でダウンロード`;
   }
 
-  /* 購読（カレンダーに URL で入れておく形）には、このファイルの場所をカレンダーアプリに
-   * 打ち込む必要がある。画面は「購読先に指定すると毎日置き換わる」と教えていたのに、その
-   * 場所を取り出す手段が無かった（リンクを右クリックしてコピーするしかない – 2026-09-23 実測:
-   * クリップボードに触るコードはビルド前の `app.ts` に 1 行も無い）。
-   * URL はこのページの場所から組み立てる。配信先を代码に書くと、サブパス配信と自前ホストで
-   * 噓になる（公開物に特定ホスト名を 1 度も書かない方針は第 242 回から）。 */
   const ICS_FILE_NAME = "deadlines.ics";
 
   function icsSubscribeUrl(): string {
@@ -3079,20 +2932,12 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     }
   }
 
-  /* いま画面に出ている一覧が、論文の語と重ねた「候補」かどうか（書き出しの別の正本）。
-   * 推薦の画面でも、論文情報が空なら候補は 1 件も出ず、カードは入力を促すだけ – その時に
-   * 候補の名で書き出すと、**画面に出ていない締切の一覧**を候補として渡すことになる
-   * （第 870 回に気付いた。第 864 回の .ics も同じ條件だった）。
-   * `render` の `paperMode`（カードを出すかの判断）と同じ規則 – 書き出しの別もそこで揃える。 */
   function candidateScopeOnScreen(): boolean {
     if (state.mode !== "recommend") return false;
     const paper = document.getElementById("paperText") as HTMLTextAreaElement | null;
     return Boolean(paper && String(paper.value || "").trim());
   }
 
-  /* 推薦の候補にも CSV の出口を作る（第 870 回）。候補は絞り込みの結果ではないので、欄も
-   * 別の物を出す – 前に「一致評価・一致の点・言葉の一致・意味の近さ」を足した 1 本で、
-   * 表計算に並べて点で並べ替え、締切の近さと突き合わせるのが実際の使い方（.ics と同じ理由）。 */
   function exportShownCsv() {
     const recMode = candidateScopeOnScreen();
     const rows = shown as unknown as Record<string, unknown>[];
@@ -3122,11 +2967,6 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     if (URL.revokeObjectURL) URL.revokeObjectURL(url);
   }
 
-  /* いまの絞り込みのままカレンダーへ持ち出せるようにする（第 856 回）。配付する
-   * `deadlines.ics` は収録の全部で、購読すると毎日入れ替わるが**絞り込みは効かない** –
-   * 「国内研究会だけ」「自分の分野だけ」をカレンダーに入れたい人は、CSV と同じ一覧から
-   * 同じ 1 本を作れるようにする。器と折り方は `site/ics.ts` の共通の物を使う
-   * （配付物と同じ形になる – 書き写すと、片方だけ直したときにずれる）。 */
   /* 締切の一覧では「この一覧の N 件」、推薦の候補では「この候補 N 件」と言う（同じ物を
    * 指す語を画面ごとに変へない – 押す前に、何が入るかが分かる樣に）。 */
   function exportIcsLabelJa(total: number, recMode = false): string {
@@ -3159,7 +2999,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         title: Recommender.titleWithYearJa(conf.title || conf.key || "", ed.year),
         kind: String(r.kind ?? ""),
         kindWord: String(Recommender.kindLabelJa(r.kind) ?? r.kind ?? "").trim(),
-        /* 計畫の計畫（第 1082 囮）– CLOSER の 2 つは別の募集なのに摘要が同じだつた。 */
+        /* 計画の計画– CLOSER の 2 つは別の募集なのに摘要が同じだつた。 */
         kindNote: String((r.dl as { track?: unknown }).track ?? "").trim(),
         dateField: String(Recommender.kindDateFieldJa(r.dl?.kind) ?? "").trim(),
         day,
@@ -3173,7 +3013,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         link: ed.link || conf.link,
         session: Recommender.eventCellJa(r),
         /* 締切の記録その物も渡す（確認の状態と延長の札を、配付する ICS と同じ語で本文に
-         * 書くため – 語は共通の `statusMarksJa` が畫面の正本から取る）。 */
+         * 書くため – 語は共通の `statusMarksJa` が画面の正本から取る）。 */
         dl: r.dl,
       });
     }
@@ -3210,13 +3050,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   /* SPEC §7: 0 件のとき、原因になりやすい条件をそのまま並べる。
    * 期間窓・過去非表示・「開催行は表に出さない」が重なると、収録が無いのだと
    * 誤解して離脱するため、いま外せる条件を実名で示す。*/
-  /* 名前は品書の名簿に見えるのに、いま読み込んでいるデータに締切の行が 1 本も無い会議を数える
-   * （第 294 回）。実測（2026-08-09 生成ビルド）で品書の会議 687 件のうち 248 件が締切行を 1 本も
-   * 持たない – NETYS・FORTE・CoNLL など、締切がデータの切れ目より先にある会議たちで、名前で引くと
-   * 0 件になる。行を持つ会議はここから除く（収録の全体を読んだあとは行が出るので、この話が消える）。
-   * 打ち方に日付が混ざるときは、名前の語だけで引く（第 296 回） – 実測で `NETYS 2027` に
-   * 「似た名前の会議が 35 件」と出ていたが、35 の内訳は key に年を持つ別々の会議で、名前一つで
-   * 引けた人が自分を疑う形になっていた。件数も例も、名前の語すべてに当たる物だけを数える。 */
+
   function nameOnlyConferenceMatch(
     query: string,
     list: AppRow[],
@@ -3237,13 +3071,11 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       .map((t) => t.trim())
       .filter((t) => t.length >= 2);
     if (!terms.length) return null;
-    /* 数字と日付の言い方の部品（`年` `月` `日` `/` `-` など）だけで出来ている語は、締切の日の
-       指定として打ち足された物と見る – 品書の key は年を含む物が多いので、年の語を名前の語と
-       一緒に数えると、別々の会議がまとまって「似た名前」として出てしまう（第 296 回）。 */
+
     const looksLikeDate = (t: string): boolean =>
       /\d/u.test(t) && /^[\d\s./\-年月日時分秒週周]+$/u.test(t);
     const nameTerms = terms.filter((t) => !looksLikeDate(t));
-    // 日付だけで引いたときは、名簿の話をしない（第 293 回の範囲の案内が言う番）。
+    // 日付だけで引いたときは、名簿の話をしない。
     if (!nameTerms.length) return null;
     const withRows: Record<string, boolean> = {};
     list.forEach((row) => {
@@ -3271,17 +3103,11 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     let example = "";
     let recordDay = "";
     let recordNull = false;
-    /* その会のこれからの開催日（第 297 回）。実測で、過ぎた締切しか持たない会議 174 件のうち
-       118 件・収録に締切の無い会議 74 件のうち 31 件は、品書にこれからの開催日が在る –
-       締切が過ぎただけの会と、まだ開かれるだけの会を分けないと、人は「終わった会議の話を
-       見た」と誤解する。推定の会期は数えない。 */
+
     let eventNext = "";
-    /* 推定の未來の締切（第 949 回 – 品書が申告する。推定は確約ではないので、畫面は
-     * 「推定なら」と添えて出す）。 */
+    /* 推定の未來の締切。 */
     let 推定の次の手がかり = "";
-    /* 収録の側に残っている締切の、一番近い日と種別と本数（第 298 回）。実測で、収録に
-       これからの締切が在る会議 42 件のうち 19 件は、一番近い締切が品書の申告（一番遠い日）より
-       前に在る – 遠い日だけ教えると、人は間違った日に間に合うと思う。 */
+
     let nextDay = "";
     let nextKind = "";
     let nextCount = 0;
@@ -3295,9 +3121,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         if (hitTerms.indexOf(term) < 0) hitTerms.push(term);
       });
       if (!hits.length) return;
-      /* 件数と例に数えるのは、打った名前の語すべてに当たる会議だけにする（第 296 回）。
-         いずれかに当たる物まで数えると `distributed systems` で 103 件になる（実測） – 名前の語を
-         二つ打った人に 103 件と言われても、打ち直しようがない。 */
+
       if (hits.length !== nameTerms.length) return;
       count += 1;
       /* 名簿の例として挙げるのは、1 件に絞れたときだけにする – `CoNLL 2027` に別の会議の名前を
@@ -3309,18 +3133,18 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         if (Recommender.jstNoonMs(day, Number.NaN) < nowMs) return;
         if (!eventNext || day < eventNext) eventNext = day;
       });
-      // 収録の側に残っている締切の話（第 298 回 – 品書が申告している）。
+      // 収録の側に残っている締切の話。
       if (typeof conf.record_deadline_count === "number" && conf.record_deadline_count > 0) {
         nextCount = conf.record_deadline_count;
         nextDay = typeof conf.record_deadline_next === "string" ? conf.record_deadline_next : "";
         nextKind =
           typeof conf.record_deadline_next_kind === "string" ? conf.record_deadline_next_kind : "";
       }
-      // 推定の未來の締切（第 949 回 – 品書が申告している）。
+      // 推定の未來の締切。
       const 推定の次 =
         typeof conf.record_estimated_next === "string" ? conf.record_estimated_next : "";
       if (推定の次) 推定の次の手がかり = 推定の次;
-      // 収録の側にその会の締切が在るか（第 295 回 – 品書が申告している）。
+      // 収録の側にその会の締切があるか。
       const recordLast = conf.record_deadline_last;
       if (recordLast === null) recordNull = true;
       else if (typeof recordLast === "string" && /^\d{4}-\d{2}-\d{2}$/.test(recordLast)) {
@@ -3328,17 +3152,17 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       }
     });
     // 名前の語が名簿に見えたのに 0 件のときは、件数を作らないで語だけを返す（第 294 回の
-    // 「無い」の列から外す話はここでも生きる – 全ての語に当たる会議が無くても語は名簿に在る）。
+    // 「無い」の列から外す話はここでも生きる – 全ての語に当たる会議が無くても語は名簿にある）。
     if (!count && !hitTerms.length) return null;
     return {
       example: count === 1 ? example : "",
       count,
       terms: hitTerms,
-      // 例を 1 件に絞れたときだけ、収録側の締切日の話をできる（第 295 回）。
+      // 例を 1 件に絞れたときだけ、収録側の締切日の話をできる。
       recordLast: count === 1 ? (recordNull ? null : recordDay) : "",
-      // 開催日も同じ理屈で、1 件に絞れたときだけ言う（第 297 回）。
+      // 開催日も同じ理屈で、1 件に絞れたときだけ言う。
       eventNext: count === 1 ? eventNext : "",
-      // 締切の日も同じ – 曖昧な会議に「一番近い日」を教えない（第 298 回）。
+      // 締切の日も同じ – 曖昧な会議に「一番近い日」を教えない。
       nextDay: count === 1 ? nextDay : "",
       nextKind: count === 1 ? nextKind : "",
       nextCount: count === 1 ? nextCount : 0,
@@ -3346,7 +3170,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     };
   }
 
-  /* 名簿の案内に添える、収録側の締切日の向き（第 295 回）。読み方が分からない日は、数を
+  /* 名簿の案内に添える、収録側の締切日の向き。読み方が分からない日は、数を
      言わない方（""）に寄せる。 */
   function nameOnlyRecordInfo(
     found: {
@@ -3433,34 +3257,33 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     hiddenKindWords: string[];
     queryMatch: { catalog: number; journal: number };
     termCounts: Array<{ term: string; count: number }>;
-    /* 欄の名前の連結形（`分野セキュリティ`）を案内するかを決める問答（第 508 回）。
-       品書を持つこの側で答え、正典は渡されて動く（第 464 回・第 495 回と同じ筋）。*/
+    /* 欄の名前の連結形（`分野セキュリティ`）を案内するかを決める問答。
+       品書を持つこの側で答え、正典は渡されて動く。*/
     columnValueHits?: (語: string) => boolean;
     splitCount?: (文: string) => number;
-    // 打ち直しの見当（第 256 回）。0 件のときだけ数える – 通常描画では走らせない。
+    // 打ち直しの見当。0 件のときだけ数える – 通常描画では走らせない。
     shorterHits?: Array<{ word: string; count: number; how: string; pair?: string }>;
     termRemainder?: number | null;
     urlQuery: boolean;
     catalogConferences: number;
-    /* 分野の欄に並ぶ語（第 679 回 – 受皿の案内が邊界を名指す為に渡す。畫面のチップと同じ順・
-     * 同じ日本語名。渡さんなら其の文は出ん – 別の呼び出し口が空で呼んでも壊れん）。 */
+
     categoryNames?: string[];
-    // 打った日付と、いま読み込んでいるデータの果て（第 293 回）。
+    // 打った日付と、いま読み込んでいるデータの果て。
     queryDaySpan?: { first: string; last: string; label: string } | null;
-    // 名簿に在るのに締切の行が無い会議（第 294 回 – 収録側の締切は第 295 回）。
+    // 名簿にあるのに締切の行が無い会議。
     nameOnly?: {
       example: string;
       count: number;
       terms: string[];
       recordLast?: string | null | "";
       recordFuture?: boolean;
-      /** その会のこれからの開催日（いま読み込んでいる名簿に在る分だけ – 第 297 回）。 */
+      /** その会のこれからの開催日（いま読み込んでいる名簿にある分だけ – 第 297 回）。 */
       eventNext?: string;
-      /** 収録の側に残っている一番近い締切（第 298 回）。 */
+      /** 収録の側に残っている一番近い締切。 */
       nextDay?: string;
       nextLabel?: string;
       nextCount?: number;
-      /** 推定ならその会の締切が収録に在る日（確約ではない – 第 949 回）。 */
+      /** 推定ならその会の締切が収録にある日（確約ではない – 第 949 回）。 */
       estimatedNext?: string;
     } | null;
     loadedLastDay?: string;
@@ -3487,10 +3310,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       : "";
     /* 検索語が収録データ全体では行に当たっているのに 0 件のとき（既定で出す行が
      * 投稿締切・未来だけなので起こる）。「 kamiyobi に無い」と誤解させない。 */
-    /* URL を貼った人に、アドレスを「語」と呼んではいけない（読み上げでは数十文字の URL が
-     * 語として読まれ、収録の範囲の話も伝わらない – 第 153 回で URL 検索を通した続き）。
-     * 読み上げ側の `zeroResultLiveNote` と同じことを書く（画面と読み上げで噓が違うと
-     * どちらも信じられなくなる）。 */
+
     // ドメインが収録に当たっている場合は「収録にあるが条件で消えている」が正しいので、
     // その場合はこの文を立てない（上の catalogNote が受け持つ）。
     const urlNote =
@@ -3530,30 +3350,22 @@ function semanticOutput(value: unknown): value is SemanticOutput {
      * 0 件で、収録 863 行はすべて締切だった）。当たり数が 0 のときだけ立てる –
      * 当たっているときに「絞れません」と言うのは噓になる。 */
     const wholeNote = matchedRows === 0 ? Recommender.wholeTableQueryNoteJa(trimmedQuery) : "";
-    /* 欄の名前（`分野` `種別` `参加形式` など）を打たれた人は、語を外しても増えない –
-       値を打たないと直らないので、語ごとの件数案内の代わりにこれを立てる（第 244 回）。 */
+
     const columnNote =
       matchedRows === 0 ? Recommender.columnQueryNoteJa(trimmedQuery, filter.columnValueHits) : "";
-    /* 画面自身の操作・説明・出典の語（`使い方` `並び替え` `出典` `カテゴリ` など）を打たれた人
-       （第 248 回）。値の語ではないので語を短くしても増えない – 場所を言ってそっちへ送る。 */
-    /* 實に絞れる語の打ち替え（第 256 回）が並んで居れば、長い文の打ち直し（第 621 回）は讓る。 */
+
+    /* 実に絞れる語の打ち替えが並んで居れば、長い文の打ち直しは讓る。 */
     const 打ち替えが在るか = (filter.shorterHits || []).length > 0;
     const uiNote =
       matchedRows === 0 ? Recommender.uiWordNoteJa(trimmedQuery, 打ち替えが在るか) : "";
-    /* 日数の範囲の言い方（`1か月以内` など）（第 253 回）。これは検索語としては当たらないが
-       収録に無い語でもない – 締切日からの日数で絞る「締切まで」の選択欄が同じ話をする欄なので、
-       そこへ送る。「語を外すと増えます」を同時に立てないため、下の条件にも入れる。 */
+
     const dayRangeNote = matchedRows === 0 ? Recommender.dayRangeNoteJa(trimmedQuery) : "";
-    /* 二つの語を「と」「や」で繋いだ打ち方（第 612 回）。語に割れて群 1 つになる為、語ごとの
-       件數案内（第 256 回）も割つて直す案内（第 532 回）も通らん。數へる側は `filter.splitCount` –
-       抜き出す檢査は之を渡さんので、其處では默る（同じ形の `columnValueHits` に學ぶ）。*/
+
     const conjunctionNote =
       matchedRows === 0 && !columnNote && !uiNote && !dayRangeNote && filter.splitCount
         ? Recommender.conjunctionQueryNoteJa(trimmedQuery, filter.splitCount)
         : "";
-    /* 打った日付が、いま読み込んでいるデータの果てより先（第 293 回）。「締切まで」の窓も
-       狭いときは、そっちも外す価値があるので、この場合だけ他の案内に重ねる（窓を広げずに
-       全体を読み込んでも増えないので、原因を一つに絞れない）。 */
+
     const horizonDay = filter.loadedLastDay || "";
     let horizonNote = "";
     if (matchedRows === 0) {
@@ -3563,9 +3375,9 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         const recordLast = filter.recordLastDay || "";
         horizonNote =
           recordLast && span.first > recordLast
-            ? // 収録その物より先。在るかどうかを kamiyobi が知らないので、無いとは言い切らない。
+            ? // 収録その物より先。あるかどうかを kamiyobi が知らないので、無いとは言い切らない。
               ` 打った日付「${span.label}」は、収録している中で一番遠い締切 ${recordLast} より先です。` +
-              "その日付に締切が在るかどうかも、まだ確認できていません。"
+              "その日付に締切があるかどうかも、まだ確認できていません。"
             : ` 打った日付「${span.label}」は、いま読み込んでいるデータ（${horizonDay} まで）より先です。` +
               (filter.horizonDays
                 ? `速く開くためのデータが生成から ${countJa(filter.horizonDays)} 日先で切れているためで、`
@@ -3574,22 +3386,17 @@ function semanticOutput(value: unknown): value is SemanticOutput {
               (recordLast ? `（収録の中で一番遠い締切は ${recordLast} です）。` : "。");
       }
     }
-    /* 名前は名簿に在るのに締切が行に無い会議（第 294 回）。「別の語で試す」も「過去の締切も
+    /* 名前は名簿にあるのに締切が行に無い会議。「別の語で試す」も「過去の締切も
        表示」も、この人には効かない – 締切がデータの切れ目より先にしかない。 */
     let nameNote = "";
-    /* 名簿に似た名前が見える語が 1 つでもあれば話す（第 296 回）。件数が 0 の打ち方 – 語を
-       並べたいっしょに含む会議が名簿に無い形（`ACL international` など）– では、従来
-       「いずれかの語を外すと増えます」だけが出て、引いた会議の締切がそもそも読み込めていない
-       ことが伝わらなかった。 */
+
     if (filter.nameOnly?.count || filter.nameOnly?.terms.length) {
       const named = filter.nameOnly.example
         ? `打った語に似た名前の会議（${filter.nameOnly.example}）は、収録の名簿に見えます。`
         : (filter.nameOnly.count || 0) > 1
           ? `打った語に似た名前の会議が、収録の名簿に ${countJa(filter.nameOnly.count)} 件見えます。`
           : "打った語に似た名前の会議は、収録の名簿に見えます。";
-      /* 収録の側に何が待っているかで言い分ける（第 295 回）。実測で品書に締切行の無い会議
-         248 件のうち 74 件は収録にも締切が 1 本も無い – そこへ「収録の全体を読み込む」を勧げるのは、
-         9 MB 強を読ませて 1 件も増えない人にボタンを押させることになる。 */
+
       const record = filter.nameOnly.recordLast;
       const named_only = Boolean(filter.nameOnly.example);
       const beyond = horizonDay
@@ -3603,13 +3410,13 @@ function semanticOutput(value: unknown): value is SemanticOutput {
           // 締切の無い会でも、開かる日が決まっていることがある（実測 74 件のうち 31 件 –
           // 締切の無い会議は一覧に出ないので、行き先を添える）。
           (filter.nameOnly.eventNext
-            ? ` その会の開催日（${filter.nameOnly.eventNext}）は決まっています。締切の無い会議は一覧に出ないので、upcoming.html に載せています。`
+            ? ` その会の開催日（${filter.nameOnly.eventNext}）は決まっています。締切のない会議は一覧に出ないので、upcoming.html に載せています。`
             : "");
       } else if (
         named_only &&
         typeof record === "string" &&
         record &&
-        // 向きを渡されなければ、これからだとも過ぎたのだと教えない（第 295 回）。
+        // 向きを渡されなければ、これからだとも過ぎたのだと教えない。
         typeof filter.nameOnly.recordFuture === "boolean"
       ) {
         tail = filter.nameOnly.recordFuture
@@ -3635,13 +3442,12 @@ function semanticOutput(value: unknown): value is SemanticOutput {
             })()
           : `収録にあるのは過ぎた締切（${record}）だけで、${beyond}` +
             "読み込まれるときは「過去の締切も表示」もいっしょにオンにしてください。" +
-            /* 推定の未來の締切も品書が申告して居るなら添える（第 949 回 – MCP と同じ事実を
-             * 同じ言葉で言ふ。斷り: 推定は確約ではない）。 */
+            /* 推定の未來の締切も品書が申告しているなら添える。 */
             (filter.nameOnly.estimatedNext
               ? ` ただし推定なら ${filter.nameOnly.estimatedNext} の締切が収録にあります（「推定の締切も表示」で一覧に出せます – 確約ではありません）。`
               : "") +
             // 締切が過ぎただけで、会議が終わったわけではない（実測 – 過ぎた締切だけの会議
-            // 174 件のうち 118 件は、品書にこれからの開催日が在る）。
+            // 174 件のうち 118 件は、品書にこれからの開催日がある）。
             (filter.nameOnly.eventNext
               ? ` なお、その会の開催日（${filter.nameOnly.eventNext}）はこれからです。締切が過ぎたというだけで、会議が終わったわけではありません。`
               : "");
@@ -3651,7 +3457,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
           (horizonDay
             ? `（一覧に出せる締切は ${horizonDay} まで – 締切がそれより先の会議は、名簿だけが残っています）。`
             : "（締切がデータの切れ目より先の会議は、名簿だけが残っています）。") +
-          // 収録の側に締切が在るか分からないときは、「出る」とは言わない。
+          // 収録の側に締切があるか分からないときは、「出る」とは言わない。
           "この欄の「収録の全体を読み込む」を押すと、収録の全体の締切から同じ語を引き直します。";
       }
       nameNote = ` ${named}${tail}`;
@@ -3663,11 +3469,6 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     const terms =
       matchedRows === 0 &&
       !filter.urlQuery &&
-      /* 表その物を指す語の案内（`会議一覧` のやうに全行の語を繋げた形 – 第 694 回）が立つ時は、
-         語ごとの件數を重ねない – 同じ畫面で「全行にあてはまる」と「収録に見當たりません」の
-         二つを言ふと、どちらを信じれば良いか讀めなくなる（第 530・531 回と同じ決まり）。
-         實測 2026-10-06 – `会議一覧` に「「会議」・「一覧」は収録データにも見當たりません。
-         その語を外すと增へます」が重なつて居た（どちらの語も全行にあたるので外しても增へん）。 */
       !wholeNote &&
       !columnNote &&
       !uiNote &&
@@ -3677,9 +3478,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         ? filter.termCounts
         : [];
     const deadAll = terms.filter((t) => t.count === 0).map((t) => t.term);
-    /* 名簿に在る語を「収録データにも見当たりません」と言うのは噓（第 294 回 – 実測で
-       `NETYS 2027` に「NETYS」をその語として挙げていた – NETYS は品書の名簿に在り、収録には
-       2028-03-30 の締切が在る）。名簿に在る語は上の案内が引き取る。 */
+
     const nameTerms = filter.nameOnly ? filter.nameOnly.terms : [];
     const deadTerms = deadAll.filter((t) => nameTerms.indexOf(t) < 0);
     let termNote = "";
@@ -3691,7 +3490,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
           .map((w) => `「${w}」`)
           .join("・")}は` +
         "収録データにも見当たりません。" +
-        (外しても零件 ? "其れを外しても残りの語では 0 件の侭です。" : "その語を外すと増えます。");
+        (外しても零件 ? "それを外しても残りの語では 0 件のままです。" : "その語を外すと増えます。");
     } else if (terms.length > 1) {
       termNote =
         " 語をすべて含む行はありません（" +
@@ -3701,10 +3500,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
           .join("・") +
         "）。いずれかの語を外すと増えます。";
     }
-    /* 語を繋げて打つと 0 件で、分けると届く打ち方（第 532 回）。**他の案内が何も當たらん時だけ**立てる –
-       原因が他に分かつて居る時に重ねると、畫面が二つの話をして「どうすれば良い」が読めん（第 530 回・
-       第 531 回の実測 – 緩い門で四十本の檢査を落とした）。數へる側は `filter.splitCount` – 抜き出す檢査
-       （`tests/runtime_extract.ts`）は之を渡さんので、其處では默る（同じ形の `columnValueHits` に學ぶ）。*/
+
     const splitNote =
       matchedRows === 0 &&
       !filter.urlQuery &&
@@ -3725,9 +3521,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     /* 原因を特定できたときは、他の説明文を足さない。考えられる理由を全部並べると
      * 「結局どうすればいい」が読めなくなる。検索語を短くする助言も、原因が分かっていれば
      * 的外れなので出さない。 */
-    /* 打ち替えの案内まで門で閉め出さない為の判断（第 623 回）: `specific` は死語の有無でも真に
-     * なる（第 258 回）が、死語だけの時には次に打つ語を誰も教へて居なかつた（實測 –
-     * `スマホでも見られる` `再審査をお願いできる` 等 58 文が「その語を外すと増えます」で打ち止め）。 */
+
     const 語が死んだだけ =
       deadTerms.length > 0 &&
       !(
@@ -3801,22 +3595,15 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       tip("ランクを「すべて」に変更", "rank", rankDropWordsJa(filter.rank));
     // 種別も絞り込みである。これを数えないと、案内どおりに他を外しても 0 件のままになる。
     if (filter.kind) tip(`「種別」を「${KIND_ALL_LABEL_JA}」に変更`, "kind", "投稿締切以外の種別");
-    // 欄の名前や画面自身の語を打たれた人に「検索語を短くする」と言っても直らない（第 248 回）。
-    /* 同じ穴がもう 1 本あった（第 256 回）: 2026-08-09 生成ビルドで自然な打ち方 93 語を
-     * 調べると 47 語が 0 件で、案内はどれにも「検索語を短くする」を出していた。短くしても
-     * 0 件の語（`高速計算` `採択率` `博士前期` など）にその助言は直らない – 短くした語が
-     * 収録に無いので、打ち直しても 0 件のまま画面が動かないだけ。効く打ち直しは収録の上で
-     * 数えているので、あるときはそれを名指し、無いときは「別の語を試す」に切り替える。 */
+    // 欄の名前や画面自身の語を打たれた人に「検索語を短くする」と言っても直らない。
+
     const altTips: string[] = [];
-    /* 打ち替えの列は「外せる条件」でも「多いのは（外すと效く条件）」でもない – 同じ袋に入れると
-     * `高速計算` が「多いのは 検索語を『計算』に打ち替える」という意味の通らん文になつた（第 623 回）。
-     * 別の袋にして、出口で「打ち直すなら」で受ける。 */
+
     const retypeTips: string[] = [];
     (filter.shorterHits || []).slice(0, 2).forEach((hit) => {
       const word = String(hit.word || "").trim();
       if (!word) return;
-      /* 件数は `countJa` を通した式をその場で書く（変数に抜くと、件数の数え上げを
-       * 3 桁区切りにしている検査が「素の数字を出している」と見て落ちる – 第 256 回）。 */
+
       if (hit.how === "split") {
         altTips.push(
           `検索語を「${word}」に分けて打つ（両方を書く行がいまの絞り込みで ${countJa(hit.count)} 件）`,
@@ -3846,19 +3633,16 @@ function semanticOutput(value: unknown): value is SemanticOutput {
           retypeTips.push(t);
         });
       } else {
-        /* 案内の當たらん打ち手は、此處に落ちる（實測 – 2026-08-09 生成の実ビルドで 0 件の
-           打ち手 844 本の內 273 本が此の受皿に居た）。受皿の文は「過去の締切も表示」等を
-           數へるだけで、**この表が何を出す画面なのか**を一言も言はなんだ – 分野で引ける事
-           だけが伝わつて、締切の日と催し物しか載らん事は伝わらん。其方を此處に一筆置く。 */
-        /* 分野の名前を並べる（第 679 回）。實測 – 2026-08-09 生成の実ビルドで「別の語で試す」に
-         * 落ちる打ち手の內、`脳科学` `ソナー` `ケルビン` `車座` のやうな**情報処理の九分野外の語**
-         * を打つ人に、今の文は「分野名でも引けます」とだけ言って居た（邊界が分かつて居らん人が
-         * 分野名を並べ直して空振りする – 收錄の品書 3,250 行で搜 0 行を確かめてある）。 */
+        /* 案内の当たらん打ち手は、ここに落ちる（実測 – 2026-08-09 生成の実ビルドで 0 件の
+           打ち手 844 本の内 273 本がこの受皿にいた）。受皿の文は「過去の締切も表示」等を
+           数へるだけで、**この表が何を出す画面なのか**を一言も言はなんだ – 分野で引ける事
+           だけが伝わつて、締切の日と催し物しか載らん事は伝わらん。そちらをここに一筆置く。 */
+
         const 分野 = (filter.categoryNames || []).filter((x) => String(x || "").trim());
         retypeTips.push(
           "別の語で試す（分野名・主題・開催地の日本語でも引けます）。" +
             (分野.length
-              ? `分野の欄は${分野.join("・")}の${countJa(分野.length)}種だけで、他の分野の言葉でも其の語を行に持つ締切なら当たります。`
+              ? `分野の欄は${分野.join("・")}の${countJa(分野.length)}種だけで、他の分野の言葉でもその語を行に持つ締切なら当たります。`
               : "") +
             "この表が出すのは催し物の名前・締切の日・分野・種別・開催地・参加形式で、" +
             "くわしくはページ下の『見方のてびき』に書いています",
@@ -3866,10 +3650,6 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       }
     }
 
-    /* 名簿の案内が原因と押し先を言い切ったときは、「外せる条件」を並べない（第 295 回）。
-       過去の締切をオンにしても推定を足しても、その会は 1 件も増えない – 実測で品書に締切行の
-       無い会議 248 件のうち 74 件は収録に締切が 1 本も無い。効かない条件を「外せる条件」として
-       並べるのは、空振りへの誘いになる（第 247 回と同じ判断）。 */
     if (nameOnlyOnly) tips.length = 0;
 
     const meetingNote = "開催日だけが確定している会議は表に出さず、upcoming.html に載せています。";
@@ -3975,7 +3755,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       }
     });
     /* 「upcoming.html に載せます」と言うだけだと、画面を読む人にはファイル名が打てない
-     * （このファイルはこのサイトの同じ場所に有るので、押せば届く）。文章の中も押せる形に
+     * （このファイルはこのサイトの同じ場所にあるので、押せば届く）。文章の中も押せる形に
      * する（外側の文章はそのまま – 読み上げで同じ語を二度読ませない）。 */
     box.appendChild(document.createTextNode(" 締切が未定の会は表に載せません（会期は"));
     const upcoming = document.createElement("a");
@@ -4042,12 +3822,6 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     return `${jst.getUTCFullYear()}-${pad(jst.getUTCMonth() + 1)}`;
   }
 
-  /* 月の見出しは「何の月」かを書く（第 231 回）。表には締切の日時列と会期列の両方があり、
-   * 区切っているのは締切の日付なのに、見出しが「2026年11月（N 件）」だけだと会期の月だと
-   * 読める。2026-08-09 生成ビルドの実測で、会期が分かる投稿締切の行 94 件のうち 89 件
-   * （94.7%）は見出しの月と会期の月が違い、30 件は年まで違った（例: `aila2027` は
-   * 締切 2026-11-15 / 会期 2027-04）。読み間違いが出やすい側に語を足す。
-   * 並びの単位は変えていない – 区切る月は `monthKey`（表示している暦日）のまま。 */
   function monthHeading(key: string, count: number): string {
     const parts = key.split("-");
     return `締切 ${parts[0]}年${Number(parts[1])}月（${countJa(count)} 件）`;
@@ -4123,10 +3897,6 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     return d;
   }
 
-  /* 検証状態の語は recommender の正本から取る。以前はここに語を書き写していて、
-   * 検索用の語を作る側はまた別の比較（`verification === "unverified"`）を見ていたため、
-   * 画面が 375 行に出している「複数候補のため要確認」が検索で 0 件だった
-   * （2026-08-09 生成ビルドで実測・第 212 回）。 */
   function verificationAlert(status: string | undefined): string | null {
     if (!status || status === "verified") return null;
     return VERIFICATION_STATUS_LABELS[status] || "再確認待ち";
@@ -4305,9 +4075,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     } else if (rowIsPast(r, Date.now())) {
       const pp = document.createElement("span");
       pp.className = "tag past";
-      /* 「締切済み（次回予定）」を固定の文字列にしていた間、過去行 77 件のうち 76 件が
-       * 次回を出せる根拠のないままその語を出していた（第 225 回）。会期の状態に合わせた
-       * 三つの形を recommender.js が返す。 */
+
       pp.textContent = Recommender.pastDeadlineTagJa(r, Date.now());
       tags.appendChild(pp);
     }
@@ -4351,10 +4119,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     // 会期の式は一覧・行の詳細・CSV で `eventCellJa` を共有する。ここで別の式を持つと
     // 行の詳細だけ公式ページの原文（英語）になった（SPEC §7）。
     const span = Recommender.eventCellJa(r) || (eventNa ? NOT_APPLICABLE_JA : UNCONFIRMED_JA);
-    /* 會期の範圍（`2027-05-03(月) 〜 2027-05-06(木)`）は、**日付其々を折らない塊**にして
-     * 入れる（第 704 回）。紙では副の行の折り返しを許して居るので、其の侭だと
-     * 「2027-」「05-」の樣に**日付の途中で割れて**讀めなくなる – 割れ目は「 〜 」の
-     * 一箇所だけにする。範圍で無い時（`未確認` 等）は今まで通り素の行。 */
+
     const spanCell = (() => {
       const 部 = span.split(/\s*〜\s*/);
       if (部.length !== 2 || !部[0] || !部[1]) return line(c5, span, "sub nowrap");
@@ -4408,12 +4173,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
      * 中身を推測して書くほうが悪いので、そのまま出す。
      * （下の語彙表はこの関数の内側にある。検査が関数ごと抜き出して実行できる形に
      * 保っておくため – 外に出すと抜き出した側で参照が切れる）。 */
-    /* 「分からない」を出す語は 未確認 / 該当なし / 評価なし に揃える画面の約束がある
-     * （`recommendationAvailability` の comment と、てびきの「未確認」の項）。
-     * 第 159 回ではここに `不明` を入れてしまった（2026-08-09 実測: ビルド後の app.js で
-     * 利用者に出る 「不明」 はこの 1 箇所だけで、てびきに無い語だった – 同じ種の欠陥が
-     * 2026-09-23 にも記録されている: カードだけが「受付状況不明」と出て直している）。
-     * てびきの語に寄せる。 */
+
     const VERIFY_SOURCE_LABELS_JA: Record<string, string> = {
       "official-cfp": "公式CFP",
       publisher: "出版社ページ",
@@ -4456,22 +4216,9 @@ function semanticOutput(value: unknown): value is SemanticOutput {
 
     const verification = dl?.verification;
     if (!verification) return "";
-    /* 語彙は一覧の印・検索用の語と同じ正本（第 212 回。書き写した三箇所がズレて、
-     * 画面に出る語が検索で引けない状態になっていた）。 */
+    /* 語彙は一覧の印・検索用の語と同じ正本。 */
     const statusLabels: Record<string, string> = VERIFICATION_STATUS_LABELS;
-    /* 日時はこの画面の他の場所と同じ JST で出す。表のヘッダーは「日時は JST で出しています」
-     * と書いてあり、一覧の日時は `fmtJst` が +09:00 固定で計算している。一方ここは
-     * `toLocaleString("ja-JP")` だった – これは**利用者の端末の時刻合わせ**で変わる
-     * （2026-08-09 実測: `2026-08-01T18:30:00Z` が TZ=UTC では `2026/8/1 18:30:00`、
-     * TZ=Asia/Tokyo では `2026/8/2 3:30:00`、TZ=America/Los_Angeles では
-     * `2026/8/1 11:30:00` になり、次回確認予定は日付その物が一日ずれる
-     * `2026/8/9 21:00` と `2026/8/10 6:00` の差になった）。会議への出張先で端末の時計を
-     * 現地に合わせる人は珍しくなく、そのとき行の表と行の詳細が同じ会議について違う
-     * 日時を書くことになる。`toLocaleString` は区切りの実装差でも既に避けることにして
-     * ある（上の `countJa` の comment と同じ理由）。
-     * 下の計算は `fmtJst` と同じ式をこの関数の内側に置いたもの – 検査がこの関数だけを
-     * `new Function` で抜き出して実行できる形を保つため（語彙表と同じ理由で、第 159 回で
-     * 実際に検査が切れた）。上の検査が `fmtJst` との結果の一致を見ている。 */
+
     const jstStamp = (value: string): string => {
       const d = new Date(value);
       if (!Number.isFinite(d.getTime())) return `読み取り不能（原文: ${value}）`;
@@ -4664,8 +4411,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       }
       html += "</div>";
     }
-    /* 上流が締切を差し替えた行は、前に出ていた日付を行の詳細に出す（第 224 回）。
-     * 文組みは recommender.js の正本を使う – 表示と検索の語が別々にならないようにする。 */
+
     const shiftLineJa = Recommender.deadlineShiftLineJa(r.dl);
     if (shiftLineJa) {
       html += `<p style="margin-bottom: 8px;">${esc(shiftLineJa)}</p>`;
@@ -5060,11 +4806,6 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     });
   }
 
-  /* 641〜879 px の幅では締切の一覧が横幅を越える（`table { min-width: 880px }` で 7 列 –
-     2026-08-09 生成ビルドの収録 687 会議で実測）。越えたことが画面に出ず、`overflow-x: auto`
-     の箱は既定でフォーカスされないためキーボードでも動かせなかった（WCAG 2.1.1 – 第 265 回）。
-     越えているときだけ、その箱を Tab で受けられるようにして、案内の文を出す。
-     640 px 以下は行がカードになるので越えない（下の `@media (max-width: 640px)`）。 */
   const TABLE_SCROLL_LABEL_JA =
     "締切の一覧（この表は画面の幅を越えています。ここで Tab を受けると ← → キーで横に動かせます）";
   const TABLE_SCROLL_HINT_JA =
@@ -5199,7 +4940,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     const paperText = valueElement("paperText").value;
     const paperMode = recMode && Boolean(paperText.trim());
     // 掲載先に入れた語が行に見当たらないときは、候補の数だけ出して黙っていない。
-    // 例を使った人は「掲載先が消えた」と読む（第 200 回）。文は recommender の正本。
+    // 例を使った人は「掲載先が消えた」と読む。文は recommender の正本。
     const venueMissNotice = Recommender.venueLookupNoticeJa(venueLookupMiss);
     let cnt = paperMode
       ? `あなたの論文に合う投稿先 ${countJa(shown.length)} 件${
@@ -5207,15 +4948,13 @@ function semanticOutput(value: unknown): value is SemanticOutput {
             ? `（まず上位 ${countJa(RECOMMENDATION_PAGE)} 件を表示）`
             : ""
         }${venueMissNotice ? ` ｜ ${venueMissNotice}` : ""}${
-          /* 長い論文は最初の 20 行だけを見る（第 954 回 – 39 KB を貼ると 120 秒逾も
-             固まつて居た）。切つたことを此處で言ふ（默つて切ると「參考にして居ない」）。 */
           截つた行 > 0 ? ` ｜ ${countJa(截つた行)} 行を省いて調べました（最初の 20 行だけ）` : ""
         }`
       : recMode
         ? "投稿先を探すには論文情報を入力してください"
         : `${countJa(shown.length)} 件 / 全 ${countJa(rows.length)} 件`;
     // 読み上げ用の一行。`#count` は「のぞく」の内訳まで載せる長い欄なので、そこを
-    // そのまま aria-live にすると 1 打鍵ごとに数十語が流れる（第 88 回で付けて実測）。
+    // そのまま aria-live にすると 1 打鍵ごとに数十語が流れる。
     // 件数と、解決結果・取得状態の短い通知だけをこちらに出す。
     let cntLive = cnt;
     // 前の描画で出した理由が残り続けないよう、状態を組み直すたびに消す。
@@ -5284,9 +5023,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         // 「明日」「今週」を暦日へ解決したことも同じ欄に寄せる（相対月と同じ方針で、
         // 黙って条件が変わったように見せない）。
         Recommender.relativeDayNotes(searchQuery, Date.now()),
-        /* 打った語に行が当たるかに関わらず言う案内（`ics` – この画面が配るファイルの名前でも
-         * あり、会議名の語の途中でもある。当たりが行に有るので 0 件案内は立たない – 第 323 回）。
-         * 一覧が 0 件のときは 0 件案内が同じことを言うので、ここでは出さない。 */
+
         shown.length
           ? [Recommender.uiWordAlwaysNoteJa(searchQuery)].filter((note) => note !== "")
           : [],
@@ -5295,10 +5032,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         cnt += ` ｜ ${synonymNotes.join("・")}`;
         cntLive += ` ｜ ${synonymNotes.join("・")}`;
       }
-      /* 検索語を打っても 1 行も減らなかったとき、打ち直し方を出す（第 227 回）。
-       * 2026-08-09 生成ビルドで実測: `月`・`日`・`年` は各 863 / 863 行に当たり、件数欄の
-       * 数字が 1 も動かないまま画面はどこにも理由を書かなかった。一覧が数行しか出ていない
-       * 画面で「絞れていません」と言うのは誤解なので、一覧が出ているときだけ書く。 */
+
       if (state.q.trim() && !hidden.query && shown.length >= 5) {
         const hint = Recommender.queryNarrowHintJa(state.q);
         if (hint) {
@@ -5392,26 +5126,25 @@ function semanticOutput(value: unknown): value is SemanticOutput {
             termCounts: queryTermNotes(searchQuery),
             columnValueHits: columnValueHitsJa,
             splitCount: splitCountJa,
-            /* 提案の件數は、打ち直した時に實際に見える行で數へる（第 761 回）。素の全部で
-             * 數へると、提案の件數と、其の語で引いた結果が食ひ違ふ（第 756・757 回の實測）。 */
+
             shorterHits: shorterWordsForZero(searchQuery),
             termRemainder: deadTermRemainderCount(searchQuery),
             // データその物が無い場合と、絞り込みで 0 件の場合を区別する材料。
             catalogConferences: DATA.conferences.length,
-            // 打った日付がいま読み込んだデータの果てより先か（第 293 回）。`rows` は絞り込み
+            // 打った日付がいま読み込んだデータの果てより先か。`rows` は絞り込み
             // 前の行なので、一覧に出せるデータの範囲が出る（0 件で空になった行数ではない）。
             // 日付の幅は、一覧の検索と同じ入口で検索語から取る（第 293 回 – 案内が自分で
             // 呼ばないのは、この関数の検査ハーネスが `Recommender` の一部分しか持たないため）。
             queryDaySpan: Recommender.queryDaySpanJa(searchQuery),
             loadedLastDay: farthestRowDayJa(rows),
-            // 名簿に在るのに締切の行が 1 本も無い会議（第 294 回）。`rows` は絞り込み前なので、
-            // 「読み込めているデータに行が在るか」で判断できる（読み込んだあとは行が出る）。
+            // 名簿にあるのに締切の行が 1 本も無い会議。`rows` は絞り込み前なので、
+            // 「読み込めているデータに行があるか」で判断できる（読み込んだあとは行が出る）。
             nameOnly: nameOnlyRecordInfo(
               nameOnlyConferenceMatch(searchQuery, rows, Date.now()),
               Date.now(),
               KIND_LABEL,
             ),
-            // 受皿の案内が分野の欄の名前を數へる語（チップと同じ順 – 第 679 回）。
+            // 受皿の案内が分野の欄の名前を数へる語（チップと同じ順 – 第 679 回）。
             categoryNames: categoryChipKeys(DATA.categories || {}).map((k) =>
               Recommender.categoryLabelJa(k),
             ),
@@ -5448,11 +5181,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     if (sharedChoices) sharedChoices.hidden = true;
     const choiceButtons = $("sharedRowChoiceButtons");
     if (choiceButtons) choiceButtons.textContent = "";
-    /* 推薦の候補も CSV で書き出せる（第 870 回）。候補を表計算に並べ、一致の点で並べ替えて
-     * 締切と突き合わせるのが実際の使い方 – 絞り込みの結果ではないので、欄の先頭 4 本
-     *（一致評価・一致の点・言葉の一致・意味の近さ）とファイル名を候補の物に替える。
-     * 別の正本は `candidateScopeOnScreen()`（推薦の画面でも、論文情報が空なら候補は出ていない –
-     * その時は此のボタンも隠す – 表にもカードにも出ていない行を書き出さない）。 */
+
     const 候補を書き出す = candidateScopeOnScreen();
     const exportBtn = $("exportCsv");
     if (exportBtn) {
@@ -5466,14 +5195,14 @@ function semanticOutput(value: unknown): value is SemanticOutput {
           "意味検索が使えない環境では「意味の近さ」は空になります（0 とは書きません）。" +
           "候補は絞り込みではなく、論文の語との重なりで選ばれています（画面のカードと同じ順・同じ件数）。"
         : "いまの絞り込みで残った行を、表計算で読める形（BOM 付き CSV）にしたファイルです。" +
-          "「残り日数」は数值なので、並べ替えや絞り込みに使えます。日時は JST、日付だけ分かっている行は「時刻未確認」と書きます。" +
+          "「残り日数」は数値なので、並べ替えや絞り込みに使えます。日時は JST、日付だけ分かっている行は「時刻未確認」と書きます。" +
           "この一覧に出ていない行（過ぎた締切や、期間より先の締切）は入りません。";
     }
     // カレンダーへの書き出しも同じ条件（候補が出ていない時は出さない・0 件でも出さない）。
     const exportIcsBtn = $("exportIcs");
     if (exportIcsBtn) {
       exportIcsBtn.textContent = exportIcsLabelJa(shown.length, 候補を書き出す);
-      /* 推薦の候補も書き出せる（第 864 回）。候補の締切をカレンダーに入れて比べるのが、
+      /* 推薦の候補も書き出せる。候補の締切をカレンダーに入れて比べるのが、
        * 投稿先を決める時の実際の動作 – 候補に出口が無かつた。 */
       exportIcsBtn.hidden = !shown.length || (recMode && !候補を書き出す);
       exportIcsBtn.title = 候補を書き出す
@@ -5710,7 +5439,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     // 件数欄に「チェックは入りませんでした」を並べると、本当に外れた条件の案内が
     // 埋もれる（チェック欄と同じ案内文もそこでは不通）。
     // `<details>` の開閉なので型を落とす（`$` は HTMLElement を返す）。見出しは
-    // `site/template.html` に常に有るので存在チェックはしない（他の欄と同じ）。
+    // `site/template.html` に常にあるので存在チェックはしない（他の欄と同じ）。
     const helpPanel = $("helpPanel") as HTMLDetailsElement;
     helpPanel.open = helpFlag.on;
     const rawCats = (p.get("cats") || "").split(",").filter((category) => Boolean(category));
@@ -5724,8 +5453,8 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       const names = unknownCats.join("・");
       urlNotices.push(
         state.cats.length
-          ? `リンクの分野「${names}」はこの一覧に無いので、その部分だけ外しました`
-          : `リンクの分野「${names}」はこの一覧に無いので、分野の絞り込みは外れています`,
+          ? `リンクの分野「${names}」はこの一覧にないので、その部分だけ外しました`
+          : `リンクの分野「${names}」はこの一覧にないので、分野の絞り込みは外れています`,
       );
     }
     const rawSort = p.get("sort");
@@ -6062,11 +5791,6 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     paperPrimaryVenue = input.venue;
   }
 
-  /* 論文の入力（タイトル・概要・キーワード・参考論文）は DOM の中にしか無く、画面を刷新すると
-   * 消えた。長い概要を貼って並びを変えたり、うっかり更新したりすると貼り直しになる –
-   * 「投稿先を探す」は概要を何百文字も貼る画面なので、失う量が大きい（第 222 回）。
-   * 同じタブのセッション中だけ sessionStorage に覚えておく。アドレスバーには載せない –
-   * 未発表の原稿をリンクや閲覧履歴に残さない方針（上の注意書き）はそのまま保つ。 */
   const PAPER_DRAFT_KEY = "kamiyobi.paperDraft.v1";
 
   function savePaperDraft(input: PaperInputJa): void {
@@ -6101,7 +5825,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     }
   }
 
-  /** 画面を開いたとき、欄が空なら下書きを戻す。打ち込み中の物が有るなら上書きしない。 */
+  /** 画面を開いたとき、欄が空なら下書きを戻す。打ち込み中の物があるなら上書きしない。 */
   function restorePaperDraft(): boolean {
     if (paperInputHasText(readPaperInput())) return false;
     const draft = loadPaperDraft();
@@ -6606,14 +6330,13 @@ function semanticOutput(value: unknown): value is SemanticOutput {
             r.conf.legacy_keys?.some((alias) => rowShareKeyJa(r, alias) === pendingDrawerKey),
         );
       idx = keyAt();
-      /* 過ぎた締切・推定を外しただけで出てくる行には、これ以上触らない（第 156 回の
-       * 扱いのまま）。それでも無い行だけ、リンクについていた条件を緩めに行く。 */
+      /* 過ぎた締切・推定を外しただけで出てくる行には、これ以上触らない。それでも無い行だけ、リンクについていた条件を緩めに行く。 */
       const loosened = idx < 0 ? loosenSharedRowConditions(keyAt) : [];
       idx = keyAt();
       if (idx < 0) {
         /* 収録に見当っても、いまの一覧に出さない行（会期だけの研究会など）がある。
          * ここまで条件を緩めても出ない行を「見当たりません」とは言わない – 行は
-         * 有るので、開いて中身を出す。 */
+         * あるので、開いて中身を出す。 */
         sharedRowNotice(
           loosened.length
             ? `その行はいまの一覧に出さない行なので、リンクについていた条件（${loosened.join("・")}）を外したうえで、行を開いて中身を出します。`
@@ -6710,7 +6433,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       const cards = $("recommendationCards");
       const drawn = cards?.children?.length ?? 0;
       /* 用紙に載るのは描画済みのカードだけなので、候補の総数と違うときは両方書く。
-       * 「候補 20 件」とだけ刷ると、この先にも候補が有ることが紙で分からない
+       * 「候補 20 件」とだけ刷ると、この先にも候補があることが紙で分からない
        * （2026-08-09 生成ビルドで実測: サンプル論文の候補 114 件、画面は
        * 「まず上位 20 件を表示」と言うのに、用紙は「候補 20 件」と刷れていた –
        * 印刷前にカードを足す処理が表の枝にしか無かった。上の `beforeprint` で直す）。
@@ -6812,7 +6535,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     render();
   });
 
-  /* カレンダーに入る件数と範囲（`catalog.json` の申告）を一覧の上に出す（第 289 回）。 */
+  /* カレンダーに入る件数と範囲（`catalog.json` の申告）を一覧の上に出す。 */
   const icsScopeNode = $("icsScope");
   const icsSpan = DATA.calendar;
   if (icsScopeNode && icsSpan) {
@@ -6871,7 +6594,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     return (sources || []).map((source) => {
       const url = safeExternalUrl(source.url);
       if (source.name === "local") {
-        return { label: "このサイトで収録した分（上流に無いもの）", url };
+        return { label: "このサイトで収録した分（上流にないもの）", url };
       }
       const where = source.repo
         ? `（${source.repo}${source.license ? `、${source.license}` : ""}）`

@@ -1,14 +1,3 @@
-/**
- * 英語の正式名称（長い分野名）で打った人の検査（SPEC §4・§7・第 316 回）。
- * 検索語は語に割って AND を取るため、分野の正式名称をそのまま打つと其の語の並びを行うに
- * しか当たらなかった（2026-09-25 実測・2026-08-09 生成の実ビルドの品書 872 行 –
- * `情報セキュリティ` 152 行 / "information security" 13 行、`人工知能` 314 / "artificial
- * intelligence" 61、`データベース` 118 / "database systems" 2、`音声認識` 3 /
- * "speech recognition" 0）。検査は品書（ビルド成果の catalog.json）と収録
- * （`data/snapshot.json`）の両方に行う – 品書は収録の一部で、無い語の方が普通なので
- * 片側だけだと空振りする（第 306 回以降と同じ工夫）。
- */
-
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -95,10 +84,7 @@ describe("英語の正式名称で打った人", () => {
         和名.forEach((row) => {
           expect(英語.has(row), `${label}: "${phrase}" が「${ja}」の行を落としている`).toBe(true);
         });
-        /* 増えて当たる分は、其の綴りを行うに持つ行だけ（別語の寄せ込みを許さない）。
-         * 第 675 回 – 搜しは並べた語の寄せ先を**語ごとに**數えるので、判定も語ごとに
-         * 持つ（收錄が `big spatial data` のやうに語を離して書く行を正しい当たりとして
-         * 受け取る為 – 連なりを持つ行だけを許すと、其の直しを検出側が弹いて了ふ）。*/
+
         英語.forEach((row) => {
           if (和名.has(row)) return;
           expect(
@@ -112,7 +98,7 @@ describe("英語の正式名称で打った人", () => {
     expect(当たった行数).toBeGreaterThan(200);
   });
 
-  it("其の綴りを行うに持つ行を、打ち直し前より落とさない", () => {
+  it("その綴りを行うに持つ行を、打ち直し前より落とさない", () => {
     let 調べた行数 = 0;
     corpora().forEach(({ label, rows }) => {
       ALIASES.forEach(([words]) => {
@@ -159,7 +145,7 @@ describe("英語の正式名称で打った人", () => {
     });
   });
 
-  it("表に無い語は今までどおり語を割った当たり（寄せを一般化しない）", () => {
+  it("表にない語は今までどおり語を割った当たり（寄せを一般化しない）", () => {
     corpora().forEach(({ label, rows }) => {
       ["quantum computing", "machine learning", "network monitoring"].forEach((phrase) => {
         const 熟的 = reaching(rows, phrase);

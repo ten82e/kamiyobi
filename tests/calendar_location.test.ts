@@ -1,17 +1,3 @@
-/**
- * カレンダー（`deadlines.ics`）の各行が開催地を持つかの検査（SPEC §7・第 288 回）。
- *
- * 実測（2026-09-24・2026-08-09 生成ビルド）: 928 個の `VEVENT` に `LOCATION` は **1 個も無く**、
- * `DESCRIPTION` も 会議・種別・締切・詳細・収録 だけで開催地を書かなかった。出張の段取りは
- * カレンダーの側で読むので、国内か海外かを確かめにサイトを再び開くしかなかった。
- * ここでは (a) 場所が判っている行に `LOCATION` が有り、判らない行には無いこと、
- * (b) RFC 5545 の転義・折り返しを元に戻すと `upcoming.md` の開催地欄と同じ語になること、
- * (c) 行の並び（締切の瞬間順）が変わっていないことを見る。
- *
- * `deadlines.ics` は CRLF（RFC 5545 §3.1）。JavaScript の `.` は `\r` にも効くので、
- * プロパティの値を拾うときは `\r` を落としてから比べる（第 288 回に自分で踏んだ）。
- */
-
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -65,13 +51,13 @@ function mdRows(): string[][] {
 }
 
 describe("カレンダーの各行に開催地（第 288 回）", () => {
-  it("場所が判っている行には `LOCATION` が有り、無い行には無い", () => {
+  it("場所が判っている行には `LOCATION` があり、ない行にはない", () => {
     const evs = events();
     // 実測: 検査用ビルドで 430 件、`repo/.cache` 付きの生成で 928 件。
     expect(evs.length, "VEVENT が数え上げられていない").toBeGreaterThan(250);
     const withPlace = evs.filter((e) => prop(e, "LOCATION") !== "");
     // 実測: 検査用ビルドで 3 割強、`repo/.cache` 付きで 686 / 928 件。
-    expect(withPlace.length, "LOCATION が 1 個も無い（かつての実測そのもの）").toBeGreaterThan(150);
+    expect(withPlace.length, "LOCATION が 1 個もない（かつての実測そのもの）").toBeGreaterThan(150);
     const ratio = withPlace.length / evs.length;
     expect(ratio, "LOCATION の付き方が異常に少ない（収録の偏り疑い）").toBeGreaterThan(0.5);
     // 無い行は噓のない形で「判らない」を持っている（場所欄に語を置かない代わりに説明へ書く）。
@@ -79,7 +65,7 @@ describe("カレンダーの各行に開催地（第 288 回）", () => {
     const unlabeled = without.filter(
       (e) => !unescapeText(prop(e, "DESCRIPTION")).includes("開催地: "),
     );
-    expect(unlabeled.slice(0, 2), "場所が無い行なのに何も書いていない").toEqual([]);
+    expect(unlabeled.slice(0, 2), "場所がない行なのに何も書いていない").toEqual([]);
     if (without.length > 0) {
       // 無い行の書き方は 1 通りに揃える（ばらばらだと grep で探せない）。
       const labels = new Set(
@@ -87,8 +73,8 @@ describe("カレンダーの各行に開催地（第 288 回）", () => {
           (e) => /開催地: ([^\n]*)/.exec(unescapeText(prop(e, "DESCRIPTION")))?.[1] ?? "",
         ),
       );
-      expect(labels.size, "場所が無い行の書き方が揃っていない").toBe(1);
-      expect([...labels][0], "場所が無い行の書き方が『未確認』になっていない").toContain("未確認");
+      expect(labels.size, "場所がない行の書き方が揃っていない").toBe(1);
+      expect([...labels][0], "場所がない行の書き方が『未確認』になっていない").toContain("未確認");
     }
     // 中身の無い LOCATION（空・「-」など）を混ぜない。
     const weak = withPlace.filter((e) =>
@@ -125,7 +111,7 @@ describe("カレンダーの各行に開催地（第 288 回）", () => {
       if (!places.has(location))
         wrong.push(`${prop(e, "URL")}: md「${[...places][0]}」/ ics「${location}」`);
     }
-    expect(checked, "照合できた行が 1 行も無い（組み立て方が変わった疑い）").toBeGreaterThan(150);
+    expect(checked, "照合できた行が 1 行もない（組み立て方が変わった疑い）").toBeGreaterThan(150);
     expect(
       noLinkRow / (checked + noLinkRow),
       "照合できない行が多すぎる（検査が空振りしている疑い）",
@@ -142,11 +128,11 @@ describe("カレンダーの各行に開催地（第 288 回）", () => {
     const rawSemi = values.filter((v) => /(?<!\\);/.test(v));
     expect(rawSemi.slice(0, 2), "護っていないセミコロンを含む値").toEqual([]);
     const lone = values.filter((v) => /\\(?![\\;,n])/.test(v));
-    expect(lone.slice(0, 2), "意味の無い転義が残っている").toEqual([]);
-    // 護る対象が実際に有る（無ければ上の転義検査は空振り）。
+    expect(lone.slice(0, 2), "意味のない転義が残っている").toEqual([]);
+    // 護る対象が実際にある（無ければ上の転義検査は空振り）。
     expect(
       values.filter((v) => v.includes("\\,")),
-      "カンマを含む開催地が 1 件も無い（転義の検査が空振りになる）",
+      "カンマを含む開催地が 1 件もない（転義の検査が空振りになる）",
     ).not.toHaveLength(0);
     // 二重に護していない（`\,` が `\\,` に見えない）。
     const double = values.filter((v) => v.includes("\\\\,"));

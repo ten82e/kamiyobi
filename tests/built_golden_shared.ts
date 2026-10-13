@@ -80,9 +80,6 @@ export function upcomingRows(dir: string): string[][] {
 
 // --- the site's meeting rows run to the end of the meeting (SPEC.md 7) -----
 
-/* `onKeydown` を抜き出して叩く検査は、第 135 回で増えたキーの振り分け関数も一緒に渡す
- * （抜き出した関数は独立していないと `ReferenceError` になる – 同じ穴に二度落ちないため、
- * 生の抜き出しではなくこの helper を使う）。 */
 export function keydownWithBlockers(src: string): string {
   // 第 152 回: `j` は選択が行の描画範囲を越えないか確認するので、抜き出した関数に
   // その関数も必要（独立していないと `ReferenceError` – 同じ helper の趣旨と同じ）。
@@ -95,9 +92,7 @@ export function keydownWithBlockers(src: string): string {
 export const SEARCH_CANON = (() => {
   // 検索照合の規則は recommender.js の正本をそのまま注入する（書き写すと正本とズレるため、
   // スタブでの再現は避ける）。
-  /* 検索照合の規則は recommender.js の正本をそのまま注入する（書き写すと正本とズレるため、
-   * スタブでの再現は避ける）。國名・都市名の表は別の產出物に移したので、その讀點も繋ぐ
-   * （第 583 回 – 1 MiB の上限を守る為の分け）。 */
+
   const rec = `${siteRuntime("recommender.js")}\n${siteRuntime("place-aliases.js")}\n${siteRuntime(
     "topic-aliases.js",
   )}`;
@@ -109,11 +104,10 @@ export const SEARCH_CANON = (() => {
     ["DIACRITIC_FOLD_CHARS", /const DIACRITIC_FOLD_CHARS = [^\n]*;/],
     ["LATIN_DIACRITIC_CHARS", /const LATIN_DIACRITIC_CHARS = [^\n]*;/],
     ["COMBINING_MARKS", /const COMBINING_MARKS = [^\n]*;/],
-    // 漢字の略字を折る表（第 241 回）。同じく `searchNormalize` が読むので先に置く。
+    // 漢字の略字を折る表。同じく `searchNormalize` が読むので先に置く。
     ["KANJI_VARIANT_FOLD_JA", /const KANJI_VARIANT_FOLD_JA[\s\S]*?\};/],
     ["KANJI_VARIANT_FOLD_CHARS", /const KANJI_VARIANT_FOLD_CHARS = [^\n]*;/],
-    /* 長音の打ち違ひを折る字（第 639 回）。同じく `searchNormalize` が読むので、漢字の表の
-     * 直後に置く（抜き出した関数と一緒に注入せんと `new Function` の中で未定義になる）。 */
+
     ["KATAKANA_HYPHEN_CHARS", /const KATAKANA_HYPHEN_CHARS = [^\n]*;/],
     /* 分野チップの語（`システム（Systems, Architecture and Storage）`）を打ち手で寄せる
      * ための定義。`queryTokenGroups` が読むので、抜き出した関数と一緒に注入する
@@ -121,53 +115,47 @@ export const SEARCH_CANON = (() => {
     ["CATEGORY_LABELS_JA", /const CATEGORY_LABELS_JA[\s\S]*?\};/],
     ["CATEGORY_CHIP_HEADS_JA", /const CATEGORY_CHIP_HEADS_JA[\s\S]*?\)\);/],
     ["CATEGORY_CHIP_TAIL", /const CATEGORY_CHIP_TAIL = new RegExp\([\s\S]*?\);/],
-    /* 語が 2 個以上の時の「幅の語尾」の表（`queryTokenGroups` が読む – 第 917 回の畫面 probe で
-     * 「ネットワーク GPU」が eval に落ちた）。定義 inject を忘れると `is not defined` になる。 */
+
     ["幅の語尾の語Ja", /const 幅の語尾の語Ja = [^;]*;/],
     ["PLACE_QUERY_ALIASES_JA", /const PLACE_QUERY_ALIASES_JA[\s\S]*?\];/],
     ["TOPIC_QUERY_ALIASES_JA", /const TOPIC_QUERY_ALIASES_JA[\s\S]*?\];/],
-    /* 寄せ表の和名を助詞で割らん門（第 676 回）が持つ鍵の cache。門は上の二つの表を読むので、
-     * 定義順（TDZ）を崩さん様に直後へ置く（書かなければ `寄せ表の和名の鍵cache is not defined`
-     * で抜き出し評価が静かに 1 行落とす – 第 675 回の `latinFoldedHit` と同じ穴）。*/
+
     ["寄せ表の和名の鍵cache", /let 寄せ表の和名の鍵cache[^\n]*;/],
-    /* 催し物の開き方を指す機能語（`開催` `実施`）の一覽（第 705 回）。`withoutFunctionGroups` が
-     * 讀むので、拔き出した関数と一緒に注入する（一覽を知らない抽出檢査が
-     * `FUNCTION_WORDS_JA is not defined` で落ちる – 第 257 回と同じ穴。實際に十四本落ちた）。 */
+
     ["FUNCTION_WORDS_JA", /const FUNCTION_WORDS_JA = \[[^\]]*\];/],
     ["TOPIC_ABBREVIATIONS_EN", /const TOPIC_ABBREVIATIONS_EN[\s\S]*?\];/],
-    /* 時刻に繋がれたタイムゾーンの語（第 412 回）。`queryTokenGroups` の内側から読むので、
-     * 抜き出す関数と一緒に注入しないと `new Function` の中で未定義になる。 */
+
     ["時刻の後ろのゾーン語Ja", /const 時刻の後ろのゾーン語Ja = new Set\([\s\S]*?\]\);/],
     ["時刻の後ろのゾーン語並びJa", /const 時刻の後ろのゾーン語並びJa =[\s\S]*?\.length\);/],
     ["RELATIVE_MONTH_OFFSETS_JA", /const RELATIVE_MONTH_OFFSETS_JA[\s\S]*?\};/],
-    // 月に数字を打った『末』の案内（第 407 回 – `periodMonthPairs` が呼ぶ）。
+    // 月に数字を打った『末』の案内。
     ["月の末の案内Ja", /function 月の末の案内Ja\([\s\S]*?\n {4}\}/],
-    // 助詞を付きただけの暦日・暦月・年・曜日を寄せる形（第 408 回 – 語の頭が呼ぶ）。
+    // 助詞を付きただけの暦日・暦月・年・曜日を寄せる形。
     ["暦日の語に寄せるJa", /function 暦日の語に寄せるJa\([\s\S]*?\n {4}\}/],
     ["暦日と暦月の形Ja", /const 暦日と暦月の形Ja =[\s\S]*?;/],
     ["曜日の形Ja", /const 曜日の形Ja =[\s\S]*?;/],
     ["同じ聞き方の助詞Ja", /const 同じ聞き方の助詞Ja = [^\n]*;/],
-    // 「今月末」「年内」の語の表（第 327 回）。`queryTokenGroups` が呼ぶ関数と一緒に注入する。
+    // 「今月末」「年内」の語の表。`queryTokenGroups` が呼ぶ関数と一緒に注入する。
     ["PERIOD_MONTH_WORDS_JA", /const PERIOD_MONTH_WORDS_JA[\s\S]*?\};/],
-    /* 年度・期間の語（第 330 回）。 */
+    /* 年度・期間の語。 */
     ["FISCAL_YEAR_OFFSETS_JA", /const FISCAL_YEAR_OFFSETS_JA[\s\S]*?\};/],
     ["FISCAL_YEAR_TAIL_JA", /const FISCAL_YEAR_TAIL_JA = [^\n]*;/],
     ["YEAR_SPAN_TAIL_JA", /const YEAR_SPAN_TAIL_JA = [^\n]*;/],
     ["HALF_YEAR_JA", /const HALF_YEAR_JA = [^\n]*;/],
     ["HALF_YEAR_DAYS_JA", /const HALF_YEAR_DAYS_JA = [^\n]*;/],
-    /* 上旬・中旬・下旬（第 332 回）。 */
+    /* 上旬・中旬・下旬。 */
     ["MONTH_PART_DAYS_JA", /const MONTH_PART_DAYS_JA[\s\S]*?\};/],
     ["MONTH_PART_TAIL_JA", /const MONTH_PART_TAIL_JA = [^\n]*;/],
-    /* 時刻の打ち方（第 333 回）。 */
+    /* 時刻の打ち方。 */
     ["CLOCK_JA", /const CLOCK_JA =\s*\n?\s*\/[^\n]*;/],
-    // 助詞・期日の言い回しの表と「今日から N 日」の単位（第 328 回）。
+    // 助詞・期日の言い回しの表と「今日から N 日」の単位。
     ["DATE_TOKEN_TAILS_JA", /const DATE_TOKEN_TAILS_JA[\s\S]*?\];/],
-    /* 日を並べると書く区切り（第 406 回）。 */
+    /* 日を並べると書く区切り。 */
     ["列挙の区切りJa", /const 列挙の区切りJa = [^\n]*;/],
-    /* 並べた語の助詞の表（第 457 回 – 空格で離った列挙を寄せる機械が読む）。 */
+    /* 並べた語の助詞の表。 */
     ["列挙の助詞Ja", /const 列挙の助詞Ja = [^\n]*;/],
     ["列挙の助詞の尾Ja", /const 列挙の助詞の尾Ja = [^\n]*;/],
-    /* 数値で書く相対日の形（第 405 回 – 列挙の目印が読む）。 */
+    /* 数値で書く相対日の形。 */
     ["数値の相対日の形Ja", /const 数値の相対日の形Ja = [^\n]*;/],
     ["FROM_TODAY_UNIT", /const FROM_TODAY_UNIT[\s\S]*?\};/],
     ["FROM_TODAY_HEAD", /const FROM_TODAY_HEAD = [^\n]*;/],
@@ -197,12 +185,12 @@ export const SEARCH_CANON = (() => {
     ["OVERSEAS_COVERAGE_NOTE_TAIL_JA", /const OVERSEAS_COVERAGE_NOTE_TAIL_JA =[\s\S]*?;/],
     // 地方名 → 都道府県 + 開催市（`関東` で `Tokyo, Japan` を引く）の定義。
     ["DAY_RANGE", /const DAY_RANGE = new RegExp\([\s\S]*?\);/],
-    // 相対語を二つ並べて打つ幅（第 373 回）が使う定義 – 其の方の語を暦日に解く関数は
-    // 其の側の語（明日・来週・来週金曜・3日後）を上の表から読むので、表は既に注入済み。
+    // 相対語を二つ並べて打つ幅が使う定義 – その方の語を暦日に解く関数は
+    // その側の語（明日・来週・来週金曜・3日後）を上の表から読むので、表は既に注入済み。
     ["幅の区切りJa", /const 幅の区切りJa =[\s\S]*?;/],
     ["日の数の後Ja", /const 日の数の後Ja = [^\n]*;/],
     ["日の数の前Ja", /const 日の数の前Ja = [^\n]*;/],
-    // 「8月10日頃」の位で打つ形（第 377 回）が読む定義 – 其の日が決まる語の形を見る表。
+    // 「8月10日頃」の位で打つ形が読む定義 – その日が決まる語の形を見る表。
     ["頃の尾Ja", /const 頃の尾Ja = [^\n]*;/],
     ["和暦の日Ja", /const 和暦の日Ja =[\s\S]*?;/],
     ["週の曜日Ja", /const 週の曜日Ja = [^\n]*;/],
@@ -215,9 +203,9 @@ export const SEARCH_CANON = (() => {
     ["ONLINE_VENUE_FALSE_POSITIVES", /const ONLINE_VENUE_FALSE_POSITIVES = [^\n]*;/],
     ["QUERY_SYNONYMS_JA", /const QUERY_SYNONYMS_JA[\s\S]*?\];/],
     ["ABBREV_YEAR_TOKEN", /const ABBREV_YEAR_TOKEN = [^\n]*;/],
-    // 分野の語を繋げて打った名詞を割る規則（第 372 回）が読む三つの正本の内、画面に分野語として
-    // 出す表と検索語の英訳表（寄せ表は上にある）。其の方の語を割った結果を入れる変数も同じで、
-    // 定義順（TDZ）を崩さない様に其の表の直後に置く。
+    // 分野の語を繋げて打った名詞を割る規則が読む三つの正本の内、画面に分野語として
+    // 出す表と検索語の英訳表（寄せ表は上にある）。その方の語を割った結果を入れる変数も同じで、
+    // 定義順（TDZ）を崩さない様にその表の直後に置く。
     ["TAG_LABELS_JA", /const TAG_LABELS_JA[\s\S]*?\};/],
     ["JP_EN", /const JP_EN[\s\S]*?\};/],
     ["分野語彙Ja", /let 分野語彙Ja[^\n]*;/],
@@ -232,25 +220,22 @@ export const SEARCH_CANON = (() => {
     ["wholeWordLatinTerms", /let wholeWordLatinTerms[^\n]*;/],
     ["RELATIVE_DAY_OFFSETS_JA", /const RELATIVE_DAY_OFFSETS_JA[\s\S]*?\};/],
     ["RELATIVE_WEEK_OFFSETS_JA", /const RELATIVE_WEEK_OFFSETS_JA[\s\S]*?\};/],
-    /* 画面の残り欄の語（`あと 51 日`）を 1 語に寄せる表（第 223 回）。`queryTokenGroups` が
-     * 読むので、抜き出した関数と一緒に注入する（書き写すと正本とズレる）。 */
+
     ["RELATIVE_DAY_PHRASES_JA", /const RELATIVE_DAY_PHRASES_JA[\s\S]*?\];/],
     ["RELATIVE_YEAR_OFFSETS_JA", /const RELATIVE_YEAR_OFFSETS_JA[\s\S]*?\};/],
-    /* 表の全行にあてはまる語（第 245 回）。照合でのく側と注記の側が同じ列を向くので、
+    /* 表の全行にあてはまる語。照合でのく側と注記の側が同じ列を向くので、
      * 抜き出して注入する（書き写すと正本とズレる）。 */
     ["WHOLE_TABLE_QUERY_JA", /const WHOLE_TABLE_QUERY_JA[\s\S]*?\];/],
-    /* 案内に其の方の語を書き返さない語（第 379 回）。注記の側が読むので同じ列を注入する。 */
+    /* 案内にその方の語を書き返さない語。注記の側が読むので同じ列を注入する。 */
     ["WHOLE_TABLE_COPY_OMITTED_JA", /const WHOLE_TABLE_COPY_OMITTED_JA = [^\n]*;/],
-    /* 和暦の区切りの暦日を其の方の暦日語に寄せる表（第 380 回）。`calendarDateGroups` が
-     * 読むので、抜き出した関数と一緒に注入する（書き写すと正本とズレる – 第 379 回）。 */
+
     ["和暦の暦日", /const 和暦の暦日 = [^\n]*;/],
-    /* 幅の数えの漢数字と、尾側に付く数えの幅（第 392 回）。二行に跨る宣言なので
+    /* 幅の数えの漢数字と、尾側に付く数えの幅。二行に跨る宣言なので
      * 終端のセミコロンまで抜く（書き写すと正本とズレる – 第 379 回と同じ判断）。 */
     ["幅の漢数字", /const 幅の漢数字 =[\s\S]*?;\n/],
     ["数えの幅Ja", /const 数えの幅Ja =[\s\S]*?;\n/],
     ["QUERY_PARTICLE_SPLIT_CHARS", /const QUERY_PARTICLE_SPLIT_CHARS = [^\n]*;/],
-    /* 月の範囲（第 252 回）と季節の語（第 254 回）が使う定義。連なった定義をまとめて抜く
-     * （このファイルは biome の 1 MiB 上限に近いので 1 エントリにまとめる）。 */
+
     ["MONTH_RANGE", /const MONTH_RANGE_FROM[\s\S]*?MONTH_RANGE_YEAR_PREFIX = [^\n]*;/],
     ["SEASON", /const SEASON_YEAR_PREFIX[\s\S]*?SEASON_MONTHS_JA[\s\S]*?\};/],
   ].map(([name, re]) => {
@@ -271,18 +256,14 @@ export const SEARCH_CANON = (() => {
       "monthTokenToYearMonth",
       "monthRangeTermsJa",
       "monthSpanTerms",
-      /* 暦日を二つ並べた幅の展開（第 371 回）。抜いた関数は独立ではないので `ReferenceError`
-       * になる（上の月の展開と同じ理由 – tests/built_golden.test.ts で実測）。 */
+
       "暦日に解くJa",
-      /* 幅の数えの漢数字（第 392 回）– 上の寄せと `dayRangeTermsJa` が呼ぶ。 */
+      /* 幅の数えの漢数字– 上の寄せと `dayRangeTermsJa` が呼ぶ。 */
       "幅の漢数字を寄せるJa",
-      /* 数と単位を離って打った数値の相対日を一語に寄せる手順（第 466 回）– 検索の語を割る段
-       * （`単位を数字に寄せるJa`）が呼ぶ。抜くと `new Function` のハーネスだけ ReferenceError。*/
+
       "相対日の寄せ形Ja",
-      /* 暦日を打って其れより後と書く形（第 413 回）– `dayRangeTermsJa` が呼ぶ。
-       * 第 475 回で相対の語（`明日以降` `来週以降` `下旬以降`）も同じ幅で絞るやうにした為、
-       * 其の初日を決める二本も抜く – 抜くと抜き出した品が `ReferenceError`（第 466 回）。*/
-      /* 其れより後の語を日の語から離って打つ形の寄せ（第 475 回）が呼ぶ日付の語の目。 */
+
+      /* それより後の語を日の語から離って打つ形の寄せが呼ぶ日付の語の目。 */
       "日付らしき語Ja",
       "より後を剥がす語Ja",
       "其の日以降の初日Ja",
@@ -292,7 +273,7 @@ export const SEARCH_CANON = (() => {
       "dayRangePairs",
       "暦日の語から解くJa",
       "幅の片側を暦日に解くJa",
-      // 「8月10日頃」の位で打つ形の案内（第 377 回）が呼ぶ関数。
+      // 「8月10日頃」の位で打つ形の案内が呼ぶ関数。
       "位の付いた日を暦日に解くJa",
       "分野語彙Ja取得",
       "他の規則で受ける語かJa",
@@ -303,28 +284,17 @@ export const SEARCH_CANON = (() => {
       "seasonTermsJa",
       "yearSeasonTermsJa",
       "mergeSeasonTokens",
-      /* 並べた語（列挙）の空格寄せ（第 457 回）– `queryTokenGroups` の内側が呼ぶので
-       * 同じ表に並べないと抜き出した品が `ReferenceError` になる（第 257 回・第 453 回・
-       * 第 455 回・第 456 回と同じ穴）。 */
+
       "列挙の語を寄せるJa",
-      /* 数字と単位（年・月・日）の空格寄せ（第 456 回）– `queryTokenGroups` の内側が
-       * 呼ぶので同じ表に並べないと抜き出した品が `ReferenceError` になる
-       * （第 257 回・第 341 回・第 392 回・第 453 回・第 455 回と同じ穴）。 */
-      /* 月の第何週の語を空格の位置を問はず寄せる目（第 468 回）– 検索側の
-       * `単位を数字に寄せるJa` と案内の `relativeDayNotes` が同じ目を呼ぶので、
-       * 抜き出した品が `ReferenceError` にならぬやう一緒に注入する（第 466 回の実発生）。*/
+
       "週の序数を寄せるJa",
       "単位を数字に寄せるJa",
-      /* 「Xから Yまで」を空格で離って打った幅の寄せ（第 453 回）– `queryTokenGroups` が
-       * 呼ぶので同じ表に並べないと、抜き出した品が `ReferenceError` になる
-       * （第 257 回・第 341 回・第 392 回と同じ穴）。 */
+
       "範囲の語を寄せるJa",
-      /* 暦日と境界の語の空格寄せ（第 455 回）– `queryTokenGroups` の内側が呼ぶので、
-       * 同じ表に並べないと抜き出した品が `ReferenceError` になる（第 257 回・第 341 回・
-       * 第 392 回・第 453 回と同じ穴）。 */
+
       "暦日を境界に寄せるJa",
-      /* 上の寄せが呼ぶ目印と芯割りの目（第 455 回）– 寄せの品だけ抜いて此等が
-       * 無いと `ReferenceError` になる（第 257 回と同じ穴）。 */
+      /* 上の寄せが呼ぶ目印と芯割りの目– 寄せの品だけ抜いて此等が
+       * 無いと `ReferenceError` になる。 */
       "暦日の語かJa",
       "境界の語尾Ja",
       "芯と語尾Ja",
@@ -336,13 +306,11 @@ export const SEARCH_CANON = (() => {
       "linkSearchTerms",
       "urlLikeQueryTerms",
       "queryTokens",
-      // 助詞の分割と全行の語をのく処理は `queryTokens` / `searchMatcher` が呼ぶ（第 245 回）。
+      // 助詞の分割と全行の語をのく処理は `queryTokens` / `searchMatcher` が呼ぶ。
       // 第 394 回: 助詞 `へ` を含む幅を割らない決まりと、`と` の列挙を和集合に解く枝は
       // `splitQueryToken` / `queryTokenGroups` から呼ぶので、同じ表に並べないと抜き出した
-      // 品が `ReferenceError` になる（第 257 回・第 341 回・第 392 回と同じ穴）。
-      /* 暦日に境界の語を繋げた形を割らない決まり（第 454 回）– `splitQueryToken` と
-       * `queryTokenGroups` の内側が呼ぶので、同じ表に並べないと抜き出した品が
-       * `ReferenceError` になる（第 257 回・第 341 回・第 392 回と同じ穴）。 */
+      // 品が `ReferenceError` になる。
+
       "暦日に境界を続けた形Ja",
       "解ける日語かJa",
       "幅の語を割らないかJa",
@@ -354,14 +322,12 @@ export const SEARCH_CANON = (() => {
       "断片が皆決まるかJa",
       "列挙の語に割るJa",
       "列挙の展開語Ja",
-      /* 語の末尾に繋がれた全行の語を割る手順（第 514 回）– `splitQueryToken` が呼ぶので
-       * 同じ表に並べないと、抜き出した品が `ReferenceError` になる
-       * （第 257 回・第 372 回・第 453 回と同じ穴）。*/
+
       "全行の語尾に割るJa",
-      /* 語の末尾に繋がれた締切の語を割る手順（第 517 回）– 同じく `splitQueryToken` が呼ぶ。*/
+      /* 語の末尾に繋がれた締切の語を割る手順– 同じく `splitQueryToken` が呼ぶ。*/
       "締切の語尾に割るJa",
       "訪ねの語尾に落とすいつJa",
-      // 寄せ表の和名を助詞で割らん守り（第 676 回）は `splitQueryToken` が呼ぶので、注入も一緒にする
+      // 寄せ表の和名を助詞で割らん守りは `splitQueryToken` が呼ぶので、注入も一緒にする
       // （足さんとしは eval が `寄せ表の和名か is not defined` で落ちる – 第 257 回と同じ穴）。
       "寄せ表の和名か",
       "splitQueryToken",
@@ -373,44 +339,44 @@ export const SEARCH_CANON = (() => {
       "offsetCalendarDay",
       "weekDayTermsJa",
       "yearMonthTermsJa",
-      // 月のまとまりの語（`今月末` `年内`）は暦月語へ展開する（第 327 回）– 解決の関数も
+      // 月のまとまりの語（`今月末` `年内`）は暦月語へ展開する– 解決の関数も
       // 同じ入口から注入する（一覧を知らない抽出検査が `not defined` で落ちる – 第 257 回と同じ穴）。
       "relativeMonthTerm",
       "monthTokenToYearMonth",
       "periodMonthTermsJa",
-      // 日付の語に付きだけの助詞・「まで」「今日から N 日」を剥がす部品（第 328 回）。
+      // 日付の語に付きだけの助詞・「まで」「今日から N 日」を剥がす部品。
       "isDateTableWordJa",
       "dateTokenStemJa",
       "untilDayTermsJa",
       "fromTodayTermsJa",
-      // 週と曜日を繋げた形（`今週金曜`）を 1 日に解く部品（第 329 回）。
+      // 週と曜日を繋げた形（`今週金曜`）を 1 日に解く部品。
       "pressedWeekdayJa",
       "連結の列挙Ja",
       "pressedMonthDayJa",
       "isPastJstDay",
-      // 年度・年のまとまりの語（第 330 回）。
+      // 年度・年のまとまりの語。
       "relativeYearKeyJa",
       "fiscalYearBaseJa",
-      // 年度の 12 か月語の組み立て（第 330 回）と和暦の寄せ（第 343 回）。`relativeDayGroups`
-      // と `fiscalYearTermsJa` が呼ぶので、定義順で先に置く（第 257 回と同じ穴を踏まない）。
+      // 年度の 12 か月語の組み立てと和暦の寄せ。`relativeDayGroups`
+      // と `fiscalYearTermsJa` が呼ぶので、定義順で先に置く。
       "fiscalTermsFromYearJa",
       "eraYearTermsJa",
       "fiscalYearTermsJa",
-      // 月の三日ごとの区切り（`8月下旬` `来月 下旬`）を暦日へ解く部品（第 332 回）。
+      // 月の三日ごとの区切り（`8月下旬` `来月 下旬`）を暦日へ解く部品。
       "monthPartRangeJa",
       "monthPartTermsJa",
-      // 時刻の打ち方（`20時` `午後8時59分`）を 24 時間表記へ解く部品（第 333 回）。
+      // 時刻の打ち方（`20時` `午後8時59分`）を 24 時間表記へ解く部品。
       "clockTimeTermsJa",
       "clockUntilQueryJa",
       // 数値の相対日（`あと 51 日` → `51日後` → 暦日）。`relativeDayGroups` と
-      // `queryTokenGroups` が呼ぶので、定義順で先に置く（第 223 回）。
-      // 漢数字を算用数字に直す正本（第 392 回 – 上の語の寄せが呼ぶので先に置く）。
+      // `queryTokenGroups` が呼ぶので、定義順で先に置く。
+      // 漢数字を算用数字に直す正本。
       "漢の数字に直すJa",
       "collapseRelativeDayPhrase",
       "numericRelativeDay",
-      // 「N 日以内」の範囲展開（第 315 回）: `relativeDayGroups` が呼ぶので注入も一緒にする。
+      // 「N 日以内」の範囲展開: `relativeDayGroups` が呼ぶので注入も一緒にする。
       "withinDaysTermsJa",
-      // 英語の正式名称の寄せ（第 316 回）: 表・綴りの形・判定を関数 1 本に閉じた。
+      // 英語の正式名称の寄せ: 表・綴りの形・判定を関数 1 本に閉じた。
       "collapseFieldPhraseEnglish",
       "relativeDayGroups",
       "queryTokenGroups",
@@ -419,23 +385,23 @@ export const SEARCH_CANON = (() => {
       "isShortLatinTerm",
       "foldedLetterAtWordBoundary",
       "termEndsInDigit",
-      // 複数形の寄せ（第 314 回）は `queryTokenGroups` が語の組を作るときに行うので、
-      // `pluralStems` も同じ入口から注入する（照合の側へ置くと、此の一覧を知らない
+      // 複数形の寄せは `queryTokenGroups` が語の組を作るときに行うので、
+      // `pluralStems` も同じ入口から注入する（照合の側へ置くと、この一覧を知らない
       // 抽出検査が `pluralStems is not defined` で落ちる – 第 257 回と同じ穴）。
       "pluralStems",
       "placeLatinTerms",
       "cityQueryForms",
       "regionEntryMembers",
-      // 英字語の當たり門（第 675 回）は `matchFoldedGroups` が呼ぶので、注入も一緒にする
-      // （此處へ足さんとしは `latinFoldedHit is not defined` で eval が落ちる – 第 257 回と同じ穴）。
+      // 英字語の当たり門は `matchFoldedGroups` が呼ぶので、注入も一緒にする
+      // （ここへ足さんとしは `latinFoldedHit is not defined` で eval が落ちる – 第 257 回と同じ穴）。
       "latinFoldedHit",
       "matchFoldedGroups",
       // `searchMatcher` は述語の組み立てを `searchGroups` に移したので、注入も一緒にする
       // （共有部品を 1 本足すたびに、ハーネスはそれを知らないまま古い形を組む – 第 257 回と同じ穴）。
       "searchGroups",
-      // 機能語（`開催` `実施`）を他の語があるときにのぞく目（第 705 回）は `searchGroups` が
+      // 機能語（`開催` `実施`）を他の語があるときにのぞく目は `searchGroups` が
       // 呼ぶので、注入も一緒にする（此処へ足さないと `withoutFunctionGroups is not defined`
-      // で eval が落ちる – 第 257 回と同じ穴。實際に十四本落ちた）。
+      // で eval が落ちる – 第 257 回と同じ穴。実際に十四本落ちた）。
       "withoutFunctionGroups",
       "searchMatcher",
       "hayMatches",

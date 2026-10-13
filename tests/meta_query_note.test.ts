@@ -1,11 +1,3 @@
-/**
- * データの来歴・持ち出しの語を打った人の検査（SPEC §4・§7・第 325 回）。
- * 2026-09-26 実測: 実際の打ち方 116 語と来歴まわりの語 36 語を並べたとき、`更新頻度`
- * `信頼性` `収録範囲` `印刷` `共有` など 35 語は**品書 872 行で 0 行・案内も無く**、
- * 読み上げは「語「更新頻度」は収録データにありません」とだけ言っていた。真実だが役に立たない –
- * 答えはこの画面に在る（右上の『データ生成』・画面下の『データ源』・ページ下の『見方のてびき』）。
- */
-
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -88,7 +80,7 @@ function 当たり(rows: Row[], query: string): number {
 
 /* 案内が指す場所の名前の正本。`id="genat"` の中身は実行時に書かれるので、生成時刻の
  * ラベルは `site/app.ts` に書いた物が正本になる（`id="sources"` と `<dt>データ源</dt>` は
- * 画面のMarkupに在る）。 */
+ * 画面のMarkupにある）。 */
 function 画面の正本(): { 生成: string; 源: string; てびき: string } {
   const html = readFileSync(join(REPO_ROOT, "site", "template.html"), "utf8");
   const app = readFileSync(join(REPO_ROOT, "site", "app.ts"), "utf8");
@@ -103,12 +95,12 @@ function 画面の正本(): { 生成: string; 源: string; てびき: string } {
 }
 
 describe("データの来歴と持ち出しの語を打つ人", () => {
-  it("41 語すべてに案内が有り、打った語を文に織り込む", () => {
+  it("41 語すべてに案内があり、打った語を文に織り込む", () => {
     全語.forEach((語) => {
       const 文 = Recommender.uiWordNoteJa(語);
       expect(文, `"${語}" を打った人に何も言わない`).not.toBe("");
       expect(文.includes(`「${語}」`), `"${語}": 打った語を言わない`).toBe(true);
-      /* 検索では絞れないことを毎回言う（当たりが行に在る語と混同させない）。 */
+      /* 検索では絞れないことを毎回言う（当たりが行にある語と混同させない）。 */
       expect(
         文.includes("検索では絞り込めません") || 文.includes("この画面では絞り込みで動いた"),
         `"${語}": 検索で絞れないことを言わない`,
@@ -140,7 +132,7 @@ describe("データの来歴と持ち出しの語を打つ人", () => {
     });
   });
 
-  it("読み上げも同じ場所へ送り、収録に無い語の文に落ちない", () => {
+  it("読み上げも同じ場所へ送り、収録にない語の文に落ちない", () => {
     const js = readFileSync(join(builtSite(), "app.js"), "utf8");
     /* 読み上げの文は「打った語 + live」なので、live を空にすると語だけを読み上げる
      * （空文字にはならない – 実測で検査の穴だった）。場所の名前が実際に残っているかを見る。 */
@@ -168,13 +160,13 @@ describe("データの来歴と持ち出しの語を打つ人", () => {
     /* 文字列リテラルに ${ を書くと検査器が警告になるので、正規表現で探す。 */
     const 無い語の位置 = js.search(/は収録データにありません\$\{pointer\}`/);
     expect(案内の位置, "読み上げの案内が消えた").toBeGreaterThan(-1);
-    expect(無い語の位置, "収録に無い語の文が消えた（前提的变化）").toBeGreaterThan(-1);
-    expect(案内の位置 < 無い語の位置, "収録に無い語の文が先に立つ順になった").toBe(true);
+    expect(無い語の位置, "収録にない語の文が消えた（前提的变化）").toBeGreaterThan(-1);
+    expect(案内の位置 < 無い語の位置, "収録にない語の文が先に立つ順になった").toBe(true);
     /* 0 件のときだけ画面に出す門も、壊れていないことを見る。 */
     expect(js, "0 件の門が消えた").toMatch(/matchedRows === 0 \? Recommender\.uiWordNoteJa/);
   });
 
-  it("当たりが無い語の案内であること（収録で 0 行）・当たる語は別に有る", () => {
+  it("当たりがない語の案内であること（収録で 0 行）・当たる語は別にある", () => {
     const rows = 収録();
     全語.forEach((語) => {
       const 件 = 当たり(rows, 語);

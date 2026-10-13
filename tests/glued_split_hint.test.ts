@@ -1,4 +1,4 @@
-/** 語を繋げて打った人を、分け方に導く案内の檢査（SPEC §7・第 532 回）。 */
+/** 語を繋げて打った人を、分け方に導く案内の検査（SPEC §7・第 532 回）。 */
 import { readFileSync } from "node:fs";
 import { pathToFileURL } from "node:url";
 import { beforeAll, describe, expect, it } from "vitest";
@@ -15,7 +15,7 @@ beforeAll(async () => {
 const 偽の件數 = (表: Record<string, number>) => (文: string) => 表[文] ?? 0;
 
 describe("繋げた打ち方を分ける導き", () => {
-  it("分け方の中で最も當たる形を、件數を添へて敎うる", () => {
+  it("分け方の中で最も当たる形を、件数を添えて敎うる", () => {
     const 文 = "可視化日程";
     const 案内 = R.splitHintJa(
       文,
@@ -26,18 +26,18 @@ describe("繋げた打ち方を分ける導き", () => {
     expect(案内).toContain("繋げた打ち方");
   });
 
-  it("分けても當たらん打ち方には何も言はん（噓の助言を立たん）", () => {
+  it("分けても当たらん打ち方には何も言はん（噓の助言を立たん）", () => {
     expect(R.splitHintJa("猫の名前", 偽の件數({}))).toBe("");
-    /* 既に分かつて居る打ち方・短すぎる打ち方・_URL_ の様な打たれ方は觸らん。 */
+    /* 既に分かつている打ち方・短すぎる打ち方・_URL_ の様な打たれ方は觸らん。 */
     expect(R.splitHintJa("可視化 日程", 偽の件數({ "可視化 日程": 9 }))).toBe("");
     expect(R.splitHintJa("日程", 偽の件數({ "日 程": 9 }))).toBe("");
     expect(R.splitHintJa("https://example.com/x", 偽の件數({}))).toBe("");
   });
 
-  it("數へる側を渡されん畫面では默る（代りの數へ上げを檢査側に持たん – 第 215 回）", () => {
-    /* 畫面側の配線（`filter.splitCount` を渡す所）は下の條でソース側に張る。此處では、抜き出す
-     * 檢査が `splitCount` 無しで呼んだ時に**导きが出ん事**だけを張る – 導きが出んのは「數へられん」
-     * ので、畫面上は 0 件のままの斷りになる（噓の件數を言はん）。*/
+  it("数える側を渡されん画面では黙る（代りの数え上げを検査側に持たん – 第 215 回）", () => {
+    /* 画面側の配線（`filter.splitCount` を渡す所）は下の条でソース側に張る。ここでは、抜き出す
+     * 検査が `splitCount` 無しで呼んだ時に**导きが出ん事**だけを張る – 導きが出んのは「数へられん」
+     * ので、画面上は 0 件のままの斷りになる（噓の件数を言はん）。*/
     const hint = deadlineHintFunction();
     const base = {
       window: "all",
@@ -57,8 +57,6 @@ describe("繋げた打ち方を分ける導き", () => {
     };
     expect(hint({ ...base, query: "あいう日程" })).not.toContain("語を分けて");
 
-    /* 數へる側を渡すと、畫面の案内に載る（第 533 回 – `specific` の列にを入れて萬通る）。
-       これを入れる前は、導きを計算しても「外せる条件」を並べる枝に落ちで、畫面に出んかつた。*/
     expect(
       hint({
         ...base,
@@ -68,7 +66,7 @@ describe("繋げた打ち方を分ける導き", () => {
     ).toContain("語を分けて「あいう 日程」と打つと 7 件出ます");
   });
 
-  it("他の原因が分かつて居る時は重ねん（畫面が二つの話をする為）", () => {
+  it("他の原因が分かつている時は重ねん（画面が二つの話をする為）", () => {
     const app = readFileSync(new URL("../site/app.ts", import.meta.url), "utf8");
     const i = app.indexOf("const splitNote =");
     expect(i).toBeGreaterThan(0);

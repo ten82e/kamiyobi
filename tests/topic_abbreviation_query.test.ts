@@ -1,20 +1,3 @@
-/**
- * 分野の略語を英文字で打つ形 – 第 414 回。
- *
- * 実測（2026-10-08 – 2026-08-09 生成の実ビルドの品書 872 行・固定時刻
- * 2026-08-09T00:00:00Z）: 品書が綴りしか書かない為、略語を打つ人は默つて 0 行に当たつて居た –
- * `ml` **0 行**（`machine learning` 99 行・`機械学習` 81 行）・`cv` **0 行**
- * （`computer vision` 48 行）・`nlp` 1 行（`natural language processing` 34 行）・
- * `dl` **0 行**（4 行）・`qc` **0 行**（`quantum computing` 3 行）・`kg` **0 行**
- * （`knowledge graph` 2 行）。
- *
- * 直し – 略語を其の方の綴りの組に入れる（一方向 – 綴りを打つ人側の当たりは動かさない）。
- * 広げた先は件の数欄に書く。会議名の略語（`osdi`）と、広げても行を増やさない略語
- * （`gnn` `ner` `xai` `mlops` `tee` `cdn` `p2p` `fl`）は置いていない。
- *
- * 下の検査は検査用ビルドの品書（435 行）で見る。
- */
-
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -62,7 +45,7 @@ function 案内(語: string): string {
 }
 
 describe("分野の略語を英文字で打つ形", () => {
-  it("略語は其の方の綴りと同じ行を出す（黙つて 0 行にしない）", () => {
+  it("略語はその方の綴りと同じ行を出す（黙つて 0 行にしない）", () => {
     for (const [略語, 綴り] of [
       ["ml", "machine learning"],
       ["cv", "computer vision"],
@@ -77,7 +60,7 @@ describe("分野の略語を英文字で打つ形", () => {
     }
   });
 
-  it("其の方の綴りを行に持つ略語は、二つの表記の和集合を出す", () => {
+  it("その方の綴りを行に持つ略語は、二つの表記の和集合を出す", () => {
     const 期待 = 和集合(["iot", "internet of things"]);
     expect(期待.size).toBeGreaterThan(0);
     expect(対称差(列("iot"), 期待)).toBe(0);
@@ -110,16 +93,15 @@ describe("分野の略語を英文字で打つ形", () => {
 });
 
 describe("守り", () => {
-  it("其の方の綴りを打つ人側の語の組に、略語を載せない", () => {
-    /* 逆方向に広げると、綴りを打った人の当たりが変わる（第 349 回 – 一通に決まらない語は
-     * 寄せない）。語の組に略語が混ざつて居ないことを見る。 */
+  it("その方の綴りを打つ人側の語の組に、略語を載せない", () => {
+    /* 逆方向に広げると、綴りを打った人の当たりが変わる。語の組に略語が混ざつて居ないことを見る。 */
     expect(語組("machine learning").flat()).not.toContain("ml");
     expect(語組("computer vision").flat()).not.toContain("cv");
   });
 
   it("会議名の略語は分野に広げない（名指しの収録意思を略語で膨らませない）", () => {
-    expect(列("operating systems design").size, "品書に其の表記の行が在らない").toBeGreaterThan(0);
-    expect(列("osdi").size, "会議名の略語が行を増やして居る").toBe(0);
+    expect(列("operating systems design").size, "品書にその表記の行が在らない").toBeGreaterThan(0);
+    expect(列("osdi").size, "会議名の略語が行を増やしている").toBe(0);
     expect(案内("osdi")).toBe("");
   });
 
@@ -137,14 +119,14 @@ describe("守り", () => {
       "ml 2027 が ml より広い",
     ).toBe(true);
     const 二つ = 列("ml sys");
-    expect(二つ.size, "`ml sys` が 0 行（AND が効きすぎて居る）").toBeGreaterThan(0);
+    expect(二つ.size, "`ml sys` が 0 行（AND が効きすぎている）").toBeGreaterThan(0);
     expect([...二つ].every((行) => 列("ml").has(行) && 列("sys").has(行))).toBe(true);
   });
 
   it("他の直しを変えて居ない", () => {
-    /* 暦日を打って其れより後（第 413 回）。 */
+    /* 暦日を打ってそれより後。 */
     expect(列("8月22日以降").size).toBeGreaterThan(0);
-    /* 時刻にゾーンを繋げて打つ形（第 412 回）。 */
+    /* 時刻にゾーンを繋げて打つ形。 */
     expect(対称差(列("23:59JST"), 列("23:59 JST"))).toBe(0);
     /* 裸の分野語。 */
     expect(対称差(列("データベース"), 列("db"))).toBe(0);

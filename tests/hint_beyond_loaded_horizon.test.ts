@@ -1,13 +1,3 @@
-/**
- * 0 件の案内が「打った日付は、いま読み込んでいるデータの果てより先」を言うかの検査
- * （SPEC §7・第 293 回）。
- *
- * 実測（2026-09-24・2026-08-09 生成ビルド）: `2027年3月` を検索欄に打つと 0 件で、案内は
- * 「別の語で試す（分野名・主題・開催地の日本語でも引けます）」だけだった。収録の側にはその月
- * だけで締切 40 件（会議 32 件）が在り、一覧に出る一番遠い締切 2027-02-04 で速く開くための
- * データが切れているだけ – 語を変えても増えないのに、打ち直しを勧めていた。
- */
-
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -84,13 +74,13 @@ describe("0 件の案内が品の窓の切れ目を言う（第 293 回）", () 
     }
   });
 
-  it("収録その物より先なら、在るか分からないと正直に言う（押し先を作らない）", () => {
+  it("収録その物より先なら、あるか分からないと正直に言う（押し先を作らない）", () => {
     const out = hintFor("2028年6月");
     expect(out).toContain(RECORD_LAST);
     expect(out, "収録の範囲より先の話を「全体を読み込めば出る」にしている").not.toContain(
       "収録の全体を読み込む",
     );
-    expect(out, "無いと言っている").toContain("まだ確認できていません");
+    expect(out, "ないと言っている").toContain("まだ確認できていません");
   });
 
   it("読み込んでいる範囲の中の日は、この話をしない（別が原因なのに嘘になる）", () => {
@@ -140,7 +130,7 @@ describe("0 件の案内が品の窓の切れ目を言う（第 293 回）", () 
   it("描画側が、日付の幅と品の果てを案内に渡している（渡し忘れで案内が黙らない）", () => {
     const app = siteRuntime();
     // 幅も果ても、描画側が実データから計算して案内に渡す – 案内の関数だけに有っても、
-    // 画面では空振りする（第 293 回）。
+    // 画面では空振りする。
     expect(app).toMatch(/queryDaySpan:\s*Recommender\.queryDaySpanJa\(searchQuery\)/);
     expect(app).toMatch(/loadedLastDay:\s*farthestRowDayJa\(rows\)/);
     expect(app).toMatch(/horizonDays:\s*DATA\.window\s*\?\s*DATA\.window\.upcoming_days\s*:/);
@@ -164,7 +154,7 @@ describe("0 件の案内が品の窓の切れ目を言う（第 293 回）", () 
         });
       });
     });
-    expect(farthest, "品書に締切が 1 件も無い").toBeTruthy();
+    expect(farthest, "品書に締切が 1 件もない").toBeTruthy();
     const cut = new Date(
       Date.parse(String(catalog.generated_at)) + Number(catalog.window?.upcoming_days) * 86400000,
     )
@@ -193,7 +183,7 @@ describe("0 件の案内が品の窓の切れ目を言う（第 293 回）", () 
     const catalog = JSON.parse(readFileSync(join(site, "catalog.json"), "utf8")) as {
       window?: { upcoming_days?: number };
     };
-    expect(catalog.window?.upcoming_days, "品書に品の窓の申告が無い").toBeTypeOf("number");
+    expect(catalog.window?.upcoming_days, "品書に品の窓の申告がない").toBeTypeOf("number");
     const days = Number(catalog.window?.upcoming_days);
     expect(days).toBeGreaterThan(0);
     const html = readFileSync(join(site, "index.html"), "utf8");
@@ -229,7 +219,7 @@ describe("検索語の日付の幅（第 293 回）", () => {
     expect(daySpan("2027年2月")?.last).toBe("2027-02-28");
   });
 
-  it("年を言わない形・有り得ない日付・会議名に付いた年数は幅にしない", () => {
+  it("年を言わない形・あり得ない日付・会議名に付いた年数は幅にしない", () => {
     // 年を作ると締切の推測になるので扱わない（AGENTS.md の収録の契約）。
     expect(daySpan("3月10日")).toBeNull();
     expect(daySpan("10月")).toBeNull();

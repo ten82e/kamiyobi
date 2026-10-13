@@ -1,15 +1,3 @@
-/**
- * 静的な一覧（`upcoming.html`）の head が、画面（`index.html`）と同じ入口情報を持つかの検査
- * （SPEC §7・第 286 回）。
- *
- * 2026-09-24 にビルド後で実測した形：`upcoming.html` の head は
- * `charset`・`viewport`・`title` の **3 個だけ**で、画面に有る説明・og（type / site_name /
- * locale / title / description / url）・twitter:card・アイコン・canonical・theme-color・
- * Content-Security-Policy が **1 個も無かった**。画面の head には「検索結果とチャットの
- * プレビューが入口になる」という意図が書いてあり、それは絞り込みの無いこのページにも
- * そのまま当てはまる（研究室のグループチャットに貼られるのはこっちである事も多い）。
- */
-
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -41,8 +29,6 @@ function headNames(head: string): string[] {
 }
 
 function contentOf(head: string, selector: string): string {
-  /* `Content-Security-Policy` は `http-equiv` に載る。名前と指定子だけを見ると
-   * 「規則が無い」と誤読する（第 286 回の実測: 有るのに空に読めた）。 */
   const m = new RegExp(
     `<meta[^>]+(?:name|property|http-equiv)="${selector}"[^>]+content="([^"]*)"`,
   ).exec(head);
@@ -135,7 +121,7 @@ describe("静的な一覧の入口情報（第 286 回）", () => {
   it("JavaScript を読まない頁に見合う締め方になっている", () => {
     const up = page("upcoming.html");
     const csp = contentOf(headOf(up), "Content-Security-Policy");
-    expect(csp, "静的な一覧に CSP が無い（画面には有る）").not.toBe("");
+    expect(csp, "静的な一覧に CSP がない（画面にはある）").not.toBe("");
     expect(csp, "スクリプトを読まない頁なのに script を開いている").toMatch(/script-src\s+'none'/);
     /* 声明が実態と矛盾していないこと。ページに `script` が 1 本も無い事を、ここでも見る
      * （埋め込む様式は `style-src 'unsafe-inline'` で生かす – 画面と同じ様式を運んでいる）。 */
@@ -155,18 +141,18 @@ describe("静的な一覧の入口情報（第 286 回）", () => {
       [...src.matchAll(/<meta name="theme-color"[^>]*content="([^"]+)"/g)].map((m) => m[1]);
     const fromTemplate = values(template);
     const fromStatic = values(up);
-    expect(fromTemplate.length, "画面に theme-color が 2 つ無い（空振り防止）").toBe(2);
-    expect(fromStatic, "静的な一覧に theme-color が 2 つ無い").toEqual(fromTemplate);
+    expect(fromTemplate.length, "画面に theme-color が 2 つない（空振り防止）").toBe(2);
+    expect(fromStatic, "静的な一覧に theme-color が 2 つない").toEqual(fromTemplate);
     // アイコンの実体（リンク切れだと tab が無地になる）。
-    expect(existsSync(join(site, "icon.svg")), "icon.svg が成果物に無い").toBe(true);
-    expect(up, "アイコンへのリンクが成果物に無い").toContain('href="icon.svg"');
+    expect(existsSync(join(site, "icon.svg")), "icon.svg が成果物にない").toBe(true);
+    expect(up, "アイコンへのリンクが成果物にない").toContain('href="icon.svg"');
   });
 
-  it("利用者に出る文に、日本語で無い語（支那語）を混ぜない", () => {
-    /* `upcoming.md` / `upcoming.html` の末尾が「静的な**快照**です」と書いて居た
-     *（2026-10-06 實測）。`快照` は支那語で、日本語では「写し」「スナップショット」 –
-     * 讀む人は其處で止まる。`llms.txt` の `place-aliases.js` の説明にも `檔案`（同じく支那語）が
-     * 在つた。利用者に出る文からは此の二語を除く（内部の註は別 – 此の檢べは生成物だけを見る）。*/
+  it("利用者に出る文に、日本語でない語（支那語）を混ぜない", () => {
+    /* `upcoming.md` / `upcoming.html` の末尾が「静的な**スナップショット**です」と書いていた
+     *（2026-10-06 実測）。`スナップショット` は支那語で、日本語では「写し」「スナップショット」 –
+     * 読む人はそこで止まる。`llms.txt` の `place-aliases.js` の説明にも `ファイル`（同じく支那語）が
+     * 在つた。利用者に出る文からはこの二語を除く（内部の注は別 – この検べは生成物だけを見る）。*/
     for (const [名, 文] of [
       ["upcoming.md", readFileSync(join(site, "upcoming.md"), "utf8")],
       ["upcoming.html", readFileSync(join(site, "upcoming.html"), "utf8")],
@@ -176,46 +162,46 @@ describe("静的な一覧の入口情報（第 286 回）", () => {
         expect(文, `${名} に日本語で無い語が殘つて居る: ${語}`).not.toContain(語);
       }
     }
-    /* 直した文が實際に在る事（空振り防止）。 */
+    /* 直した文が実際にある事（空振り防止）。 */
     expect(readFileSync(join(site, "upcoming.md"), "utf8")).toContain("静的な写し");
   });
 
   it("狭い画面のために、表へ飛ぶ道がある（第 725 回）", () => {
     /* 電話では冒頭の説明（列の意味と但し書き）が 1 画面近くを占めるので、表へ一 tapped で
-     * 飛べる道を置いた。**飛び先が実際に在る事**まで見る（href だけ書いて id が無い、を防ぐ）。 */
+     * 飛べる道を置いた。**飛び先が実際にある事**まで見る（href だけ書いて id が無い、を防ぐ）。 */
     const up = readFileSync(join(site, "upcoming.html"), "utf8");
-    expect(up, "表へ飛ぶ道が無い").toContain('class="skip-to-table"');
-    expect(up, "飛び先の名が違ふ").toContain('href="#upcoming-table"');
-    expect(up, "飛び先（表の id）が無い").toContain('id="upcoming-table"');
-    /* 説明は消して居ない（列の意味は表を讀むのに要る）。 */
+    expect(up, "表へ飛ぶ道がない").toContain('class="skip-to-table"');
+    expect(up, "飛び先の名が違う").toContain('href="#upcoming-table"');
+    expect(up, "飛び先（表の id）がない").toContain('id="upcoming-table"');
+    /* 説明は消して居ない（列の意味は表を読むのに要る）。 */
     expect(up, "説明を消した").toContain("列の意味");
   });
 
   it("同じ場所への行き先もリンクにする（生のマークダウンを頁に出さない）", () => {
-    /* 絕對 URL だけをリンクに直して居た爲、`[絞り込みの効く一覧（\`index.html\`）](index.html)`
+    /* 絕対 URL だけをリンクに直していた為、`[絞り込みの効く一覧（\`index.html\`）](index.html)`
      * と `[締切の一覧に戻る](index.html)` の二つが**生のマークダウンの侭** upcoming.html の
-     * 冒頭と末尾に出て居た（2026-10-06 實測 – 讀者は括弧の並びを讀まされ、行き先も押せなかつた）。*/
+     * 冒頭と末尾に出ていた（2026-10-06 実測 – 読者は括弧の並びを読まされ、行き先も押せなかつた）。*/
     const markdown =
       "# 直近 180 日の締切と開催\n\n> 同じ式を出す [絞り込みの効く一覧（`index.html`）](index.html) が早い。\n\n| 日付 |\n| --- |\n| 2026-09-01 |\n";
     const html = toUpcomingHtml(markdown, "<style>body{}</style>");
-    expect(html, "相對の行き先がリンクになって居ない").toContain('<a href="index.html"');
-    expect(html, "生のマークダウンが殘つて居る").not.toContain("](index.html)");
+    expect(html, "相対の行き先がリンクになって居ない").toContain('<a href="index.html"');
+    expect(html, "生のマークダウンが残つている").not.toContain("](index.html)");
     /* 危險な筋（`javascript:`）は素の侭にする（リンクにしない）。 */
     const bad = toUpcomingHtml("> [押す](javascript:alert(1)) と出る", "<style>body{}</style>");
     expect(bad, "javascript: をリンクにした").not.toContain('href="javascript:');
-    /* 絕對 URL は今まで通りリンクにする（此の回で緩めた門が效き過ぎて居ない事）。 */
+    /* 絕対 URL は今まで通りリンクにする（この回で緩めた門が效き過ぎて居ない事）。 */
     const absolute = toUpcomingHtml(
       "> [公式](https://example.test/a) を見る",
       "<style>body{}</style>",
     );
-    expect(absolute, "絕對 URL がリンクになつて居ない").toContain(
+    expect(absolute, "絕対 URL がリンクになって居ない").toContain(
       '<a href="https://example.test/a" rel="noopener">公式</a>',
     );
   });
 
-  /* 上の合成で變換の動きを見る。此れは**配つてある物** – 合成の表に無い形（長い會議名・
-   * URL の中の括弧・「|」を含む語）が實際の行には在る。變換が踓れて居ないかを本物で見る。 */
-  it("upcoming.html は upcoming.md と同じ行を持って居る（配つてある物）", () => {
+  /* 上の合成で変換の動きを見る。これは**配つてある物** – 合成の表に無い形（長い会議名・
+   * URL の中の括弧・「|」を含む語）が実際の行にはある。変換が踓れて居ないかを本物で見る。 */
+  it("upcoming.html は upcoming.md と同じ行を持っている（配つてある物）", () => {
     const md = join(REPO_ROOT, "public", "upcoming.md");
     const html = join(REPO_ROOT, "public", "upcoming.html");
     if (!existsSync(md) || !existsSync(html)) return; // CI が作る
@@ -225,14 +211,14 @@ describe("静的な一覧の入口情報（第 286 回）", () => {
       .slice(2); // 見出しと區切り線を外す
     const 頁 = readFileSync(html, "utf8");
     const tr = [...頁.matchAll(/<tr>([\s\S]*?)<\/tr>/g)].map((m) => m[1]).slice(1);
-    expect(行.length, "md の行が讀めない（この檢查が空振り）").toBeGreaterThan(1000);
+    expect(行.length, "md の行が読めない（この検查が空振り）").toBeGreaterThan(1000);
     expect(tr.length, `md の ${行.length} 行に対して html が ${tr.length} 行しか無い`).toBe(
       行.length,
     );
-    /* 會議名が兩方で同數（變換で落として居ない）ので、行ごとに「<a …>名前</a>」が在るかを見る。 */
+    /* 会議名が両方で同数（変換で落として居ない）ので、行ごとに「<a …>名前</a>」があるかを見る。 */
     let 落ちた = 0;
     for (const l of 行) {
-      /* 會議名は `[` や `]` を**含む**ことが在る（實測: 「CODS 2026 [14th ACM IKDD …] 2026」）
+      /* 会議名は `[` や `]` を**含む**ことがある（実測: 「CODS 2026 [14th ACM IKDD …] 2026」）
        * ので、名前は「最初の ] 」では無く**URL の前の ]**で切る（greedy）。 */
       const m = /^\|.*?\[([\s\S]*)\]\((\S+)\)/.exec(l);
       if (!m) continue;

@@ -10,44 +10,27 @@ import { expect, it } from "vitest";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 
-it("README と SPEC の回の記録に、同じ見出しが二度並んでいない（重複追記の再発防止・SPEC §7）", () => {
-  /* 第 239 回の記録を書いたとき、文書へ追記する手順を 4 度走らせて、同じ項が 4 並んだまま
-   * コミットしていた（自查で発覚・2026-08-09 実測: README の第 239 回の変更履歴が 7 行 × 4、
-   * 使い方の項も 4 重複）。人間が読む文書で同じ話を 4 回するのは使いにくいし、
-   * 「今回の話」の位置が分からなくなる。同じ見出しが並んでいないことを検査にする。 */
-  for (const name of ["README.md", "SPEC.md"]) {
-    const lines = readFileSync(join(ROOT, name), "utf8").split("\n");
-    const heads = lines.filter((line) => /^ {0,2}- \*\*/.test(line));
-    expect(heads.length, `${name} の回の記録が見当たらない（検査が空振り）`).toBeGreaterThan(5);
-    const counts = new Map<string, number>();
-    heads.forEach((line) => {
-      counts.set(line, (counts.get(line) || 0) + 1);
-    });
-    const dup = [...counts.entries()]
-      .filter(([, n]) => n > 1)
-      .map(([line, n]) => `${n} 度: ${line.slice(0, 54)}`);
-    expect(dup, `${name} に同じ見出しが並んでいる`).toEqual([]);
-  }
-  /* 回の番号でも数える（見出しの語句を言い換えて重複を隠した日にも落ちるようにする）。 */
+it("利用手順と仕様に、重複見出し・作業日記・制御文字を混ぜない", () => {
   for (const name of ["README.md", "SPEC.md"]) {
     const text = readFileSync(join(ROOT, name), "utf8");
-    const rounds = [...text.matchAll(/^- \*\*.*?（(?:[^）]*?・)?第 (\d+) 回）/gm)].map((m) => m[1]);
-    expect(rounds.length, `${name} の回番号が読めない（書式が変わった）`).toBeGreaterThan(5);
-    const counts = new Map<string, number>();
-    rounds.forEach((round) => {
-      counts.set(round, (counts.get(round) || 0) + 1);
-    });
-    const dup = [...counts.entries()]
-      .filter(([, n]) => n > 1)
-      .map(([round, n]) => `第 ${round} 回 × ${n} 度`);
-    expect(dup, `${name} に同じ回の記録が複数並んでいる`).toEqual([]);
+    expect(
+      [...text].some(
+        (char) => char.charCodeAt(0) < 32 && ![9, 10, 13].includes(char.charCodeAt(0)),
+      ),
+    ).toBe(false);
+    expect(text).not.toMatch(/第\s*\d+\s*(?:回|囮|囘)/);
+    const headings: string[] = [];
+    let inCode = false;
+    for (const line of text.split("\n")) {
+      if (/^```/.test(line)) inCode = !inCode;
+      if (!inCode && /^#{1,6} /.test(line)) headings.push(line);
+    }
+    expect(headings.length).toBeGreaterThan(5);
+    expect(new Set(headings).size, `${name} に重複見出しがあります`).toBe(headings.length);
   }
 });
 
 it("README と SPEC で、箇条書きが前の項の文末に繋がっていない（第 299 回）", () => {
-  /* 文書に項を足すとき、錨の行の後ろに改行を足さないと次の項が同じ行に潰れる
-     （第 299 回で実測: 追記した 4 箇所が繋がっていて、見出しの字下げが消えて読めた）。
-     Markdown は同じ行の「- 」を項として認めないので、目次も飛べない。 */
   for (const name of ["README.md", "SPEC.md"]) {
     const lines = readFileSync(join(ROOT, name), "utf8").split("\n");
     const glued = lines
@@ -58,34 +41,34 @@ it("README と SPEC で、箇条書きが前の項の文末に繋がっていな
   }
 });
 
-it("README が MCP サーバの入口と、實装と同じ 6 つの道具を書いて居る（第 891 回）", () => {
-  /* 實測 2026-10-22: README の「機械可読の出力」は「次の **2 つ**を見るのが早い」と書いた儘で
-   * 表には 5 つ並び、**MCP サーバに一度も觸れて居なかつた**。MCP は AI がこの收錄を使ふ時の
-   * 入口（`node src/mcp.ts`）なので、購讀手順を書く README に無いのは穴だ。 */
+it("README が MCP サーバの入口と、実装と同じ 6 つの道具を書いている（第 891 回）", () => {
+  /* 実測 2026-10-22: README の「機械可読の出力」は「次の **2 つ**を見るのが早い」と書いた儘で
+   * 表には 5 つ並び、**MCP サーバに一度も觸れて居なかつた**。MCP は AI がこの収録を使う時の
+   * 入口（`node src/mcp.ts`）なので、購読手順を書く README に無いのは穴だ。 */
   const readme = readFileSync(join(ROOT, "README.md"), "utf8");
-  expect(readme, "MCP サーバの節が無い").toContain("### MCP サーバとして使う");
-  expect(readme, "起動の命令を書いて居ん").toContain("node src/mcp.ts");
-  expect(readme, "stdio・讀み取り專用と言つて居ん").toContain("stdio");
-  expect(readme, "外部へ送らん事を書いて居ん").toContain("外部への送信は行わない");
-  /* 「2 つ」が殘つて居ると、讀む人は表の 5 つを見て齟齬を覺える。 */
+  expect(readme, "MCP サーバの節がない").toContain("### MCP サーバとして使う");
+  expect(readme, "起動の命令を書いていない").toContain("node src/mcp.ts");
+  expect(readme, "stdio・読み取り專用と言つていない").toContain("stdio");
+  expect(readme, "外部へ送らん事を書いていない").toContain("外部への送信は行わない");
+  /* 「2 つ」が残つていると、読む人は表の 5 つを見て齟齬を覺える。 */
   const 節 = readme.slice(
     readme.indexOf("## 機械可読の出力"),
     readme.indexOf("### MCP サーバとして使う"),
   );
-  expect(節, "表の立てる數が殘つて居る").not.toContain("次の 2 つ");
-  expect(節, "表の 5 つを數へて居ん").toContain("次の 5 つ");
-  /* 道具の一覽は**實装が持つ物**と突き合はせる（第 882 回の畫面のてびきと同じ決めごと）。
-   * 增えた道具が默つた儘に成らない。 */
+  expect(節, "表の立てる数が残つている").not.toContain("次の 2 つ");
+  expect(節, "表の 5 つを数えていない").toContain("次の 5 つ");
+  /* 道具の一覽は**実装が持つ物**と突き合はせる。
+   * 增えた道具が黙つた儘に成らない。 */
   const mcp = readFileSync(join(ROOT, "src", "mcp.ts"), "utf8");
   const 宣言 = [...mcp.matchAll(/^\s{4}name: "([a-z_]+)",$/gm)].map((m) => m[1]);
-  expect(宣言.length, "此の檢查の前提（道具の宣言）が崩れた").toBe(6);
+  expect(宣言.length, "この検查の前提（道具の宣言）が崩れた").toBe(6);
   const 表 = readme.slice(readme.indexOf("### MCP サーバとして使う"));
   for (const 名 of 宣言) {
     expect(表, `README の道具の表が ${名} を書いて居ん`).toContain(`\`${名}\``);
   }
-  /* 表中の cellule に逃げて居ない `|` が在ると、譯と同じ表が割れる（實測 2026-10-22 で踏んだ）。 */
+  /* 表中の cellule に逃げて居ない `|` があると、訳と同じ表が割れる（実測 2026-10-22 で踏んだ）。 */
   const 行 = 表.split("\n").filter((l) => l.startsWith("| `"));
-  expect(行.length, "README の道具の表が讀めない").toBeGreaterThan(3);
+  expect(行.length, "README の道具の表が読めない").toBeGreaterThan(3);
   for (const l of 行) {
     const cellule = l.slice(1, -1).split("|");
     for (const c of cellule)

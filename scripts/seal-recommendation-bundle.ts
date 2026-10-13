@@ -80,10 +80,6 @@ function readPassedReport(
   };
 }
 
-/* 埋め込みの索引は**ファイルそのまま**で讀む（第 934 回 – 此の script は型検査に
- * 入れて居なかつたので、`readFileSync` の返り値（Buffer）を其のまま `JSON.parse` に
- * 渡す不整合が在た）。digest は**バイト列**で計算したいので Buffer の儘で讀み、
- * JSON の解読にだけ文字列を見る – 上の `readJson` と同じ形にする。 */
 const bytes = readFileSync(embeddingsPath);
 const embedding = JSON.parse(bytes.toString("utf8")) as {
   manifest?: {

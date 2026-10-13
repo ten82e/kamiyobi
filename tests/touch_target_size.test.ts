@@ -1,13 +1,3 @@
-/**
- * 指で押す端末で、操作できるものが十分に大きいための検査（SPEC §7・第 260 回）。
- *
- * ビルド済み画面のスタイルから高さを測ると、チェック欄が約 19.7 px、主題の絞り込みボタンが
- * 約 17.8 px しかなかった（上余白 + 下余白 + 文字の高さ + 枠）。WCAG 2.5.8 は
- * **24 × 24 CSS px 以上**を要求するので、この 2 つは届いていなかった
- * （https://www.w3.org/WAI/WCAG22/Understanding/target-size-minimum.html）。
- * 広げるのは `@media (hover: none), (pointer: coarse)` の中だけ – 幅ではなく操作手段で
- * 分ける（パソコンの見た目を太くしない。第 85 回と同じ分け方）。
- */
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { expect, it } from "vitest";

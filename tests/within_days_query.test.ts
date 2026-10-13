@@ -1,12 +1,3 @@
-/**
- * 「7 日以内」のように打った人の検査（SPEC §4・§7・第 315 回）。
- * 画面には同じ文言の絞り込み（`7 日以内` `30 日以内` `90 日以内` `180 日以内`）が有るのに、
- * 検索欄に打つと 0 行だった（2026-09-25 実測・2026-08-09 生成の実ビルドの品書 872 行 –
- * 実際に 30 日以内に締切を持つ行は 210 行ある）。検査はビルド済み品の行と、
- * 画面の select のラベル（`site/template.html` から取る – 画面の語をテスト側に写すと
- * 画面だけが変わって黙る。第 313 回と同じ工夫）の両方で行う。
- */
-
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -54,7 +45,7 @@ function writesAny(row: Row, words: string[]): boolean {
 describe("「N 日以内」と打った人", () => {
   it("画面の絞り込みと同じ文言で、同じ行に会える", () => {
     const labels = filterLabels();
-    /* 画面に 4 通りの選択肢が有ること（減ったら検査が空振りになる） */
+    /* 画面に 4 通りの選択肢があること（減ったら検査が空振りになる） */
     expect(labels.length).toBeGreaterThanOrEqual(4);
     const rs = rows();
     let 当たった行数 = 0;
@@ -80,7 +71,7 @@ describe("「N 日以内」と打った人", () => {
       const now = reaching(rs, `${days}日以内`);
       expect(now.size, `${days}日以内 が ${前}行 以下に縮んだ`).toBeGreaterThanOrEqual(前);
       前 = now.size;
-      /* 「N 日後」が当たる行（其の暦日を書く行）は「N 日以内」にも入る */
+      /* 「N 日後」が当たる行（その暦日を書く行）は「N 日以内」にも入る */
       reaching(rs, `${days}日後`).forEach((row) => {
         expect(now.has(row), `${days}日後 の行が ${days}日以内 から落ちている`).toBe(true);
       });
@@ -116,9 +107,9 @@ describe("「N 日以内」と打った人", () => {
     const 述語 = (query: string) => Recommender.searchMatcher(query, AT);
     expect(述語("7日以内")(近い.hay)).toBe(true);
     expect(述語("30日以内")(遠い.hay)).toBe(true);
-    /* 週は 1 週 = 7 日という暦の定義なので寄せる（第 318 回 – 同じ 7 日後の行に会う） */
+    /* 週は 1 週 = 7 日という暦の定義なので寄せる */
     expect(述語("1週間以内")(近い.hay), "「1週間以内」が 7 日後の行に会えない").toBe(true);
-    /* 月の長さは月によって違う（28〜31 日）ので、換算を發明しない（第 315 回の方針のまま） */
+    /* 月の長さは月によって違う（28〜31 日）ので、換算を發明しない */
     expect(述語("1か月以内")(遠い.hay), "「1か月以内」が展開されている").toBe(false);
     /* 上限（1 年）を超えた打ちも展開しない */
     expect(述語("366日以内")(遠い.hay), "上限を超えた打ちが展開されている").toBe(false);

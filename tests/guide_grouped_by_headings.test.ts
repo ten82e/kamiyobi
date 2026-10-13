@@ -1,15 +1,3 @@
-/**
- * 「見方のてびき」が見出しで群れているかの検査（SPEC §7・第 285 回）。
- *
- * てびきは締切一覧の語 39 個をその場で説明する欄だが、**見出しが 1 個も無く**、
- * 39 語が 1 個の `<dl>` に並んでいた（2026-09-24 実測: 画面の静的な見出しは `h1` 1 個と
- * `h2` 2 個だけで、てびきを開いても見出し一覧には何も増えない）。見出し辿りや
- * 「見出しだけを読む」操作では、てびきはひと塊の文章にしか見えない。
- *
- * 直し方は **語の並びと説明文を動かさず**、連なりの先頭に `<h3>` を置いて `<dl>` を
- * 割っただけ。だから検査の中心は「本文が一字も減っていないこと」になる。
- */
-
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -86,7 +74,7 @@ describe("てびきが見出しで群れている", () => {
     }
   });
 
-  it("見出しは、ページに既に有る語だけを使って書かれている", () => {
+  it("見出しは、ページに既にある語だけを使って書かれている", () => {
     /* 画面のよそで使っていない語だけの見出しを増やすと、用語集の語と見出しが
      * 二重になって検索・読み上げで紛れる。見出しの語が本文に現れることを確かめる。 */
     const guide = guideOf(page("index.html"));
@@ -120,7 +108,7 @@ describe("てびきが見出しで群れている", () => {
     expect(h1.length, `h1 が ${String(h1.length)} 個有る`).toBe(1);
     expect(
       statics.some((h) => h.level === 2),
-      "h2 が無い",
+      "h2 がない",
     ).toBe(true);
     // 静的な画面に h4 以降は無い（てびきの見出しは h3 まで）。
     expect(
@@ -147,7 +135,7 @@ describe("てびきが見出しで群れている", () => {
       .join("\n");
     const blocks = cssBlocks(css);
     const head = blocks.filter((b) => b.selector === ".help h3");
-    expect(head.length, "てびきの見出しの規則が無い").toBeGreaterThan(0);
+    expect(head.length, "てびきの見出しの規則がない").toBeGreaterThan(0);
     const body = head.map((b) => b.body).join(";");
     expect(body, "見出しの字の大きさが決まっていない").toMatch(/font-size:/);
     expect(body, "見出しの太さが決まっていない").toMatch(/font-weight:\s*(700|bold)/);

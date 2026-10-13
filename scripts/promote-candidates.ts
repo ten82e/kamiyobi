@@ -30,7 +30,7 @@ if (!observations) {
   const outdir =
     outIndex >= 0 ? (process.argv[outIndex + 1] ?? dirname(observations)) : dirname(observations);
   // 判定の現在時刻。ビルドと同じ `--now` を受け、バッチの判定を実行時の時計から切り離す
-  // （第 254 回 – 引けないと、同じ入力でも日付が過ぎれば判定が promote から hold へ変わる）。
+  // 。
   const nowIndex = process.argv.indexOf("--now");
   const nowValue = nowIndex >= 0 ? process.argv[nowIndex + 1] : undefined;
   if (nowValue && Number.isNaN(Date.parse(nowValue))) {

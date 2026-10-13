@@ -1,16 +1,3 @@
-/**
- * 静的な一覧（`upcoming.md` / `upcoming.html`）の日付欄が、日本時間での読みを持っているかの検査
- * （SPEC §7・第 287 回）。
- *
- * 実測（2026-09-24・2026-08-09 生成ビルド）: 日付欄は締切の公式表記だけで、
- * 1,126 行のうち **497 行は日本時間に直すと「日」が変わった**（AoE 23:59 は日本では翌日 20:59、
- * UTC 23:59 は日本では翌朝 08:59）。画面（`index.html`）は「投稿作業は日本の時刻で回る」と
- * JST を主表記にしているのに、印刷・貼り込み・JavaScript なしで読むこの表だけ、換算を
- * `index.html` に投げていた（但し書きが「換算はそちらが早い」と書いていた）。
- * ここでは (a) 公式表記の後読みが全行に有ること、(b) その値が**算術として正しい**こと、
- * (c) 但し書きが読み方と行の並び順を同時に語っていることを見る。
- */
-
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -81,7 +68,7 @@ describe("静的な一覧の日付欄に日本時間の読み（第 287 回）",
     expect(rows.length, "データ行が数え上げられていない").toBeGreaterThan(400);
     const official = rows.map((r) => r[0]).filter((c) => /(AoE|UTC)(（|$)/.test(c));
     // 実測: 検査用ビルドで 224 行、`repo/.cache` 付きで 524 行。
-    expect(official.length, "AoE / UTC 表記の行が 1 行も無い（空振り防止）").toBeGreaterThan(150);
+    expect(official.length, "AoE / UTC 表記の行が 1 行もない（空振り防止）").toBeGreaterThan(150);
     const missing = official.filter((c) => !READING.test(c));
     expect(missing.slice(0, 3), `読みが添えてない行: ${missing.length} 件`).toEqual([]);
     // HTML 版も同じ（`upcoming.md` から組み立てている）。
@@ -107,11 +94,11 @@ describe("静的な一覧の日付欄に日本時間の読み（第 287 回）",
       const got = `${reading[1]}-${reading[2]}-${reading[3]}(${reading[4]}) ${reading[5]}:${reading[6]}`;
       if (got !== want) wrong.push(`${cell} → 期待 ${want} / 実際 ${got}`);
     }
-    expect(seen, "照合できる行が 1 行も無い（正規表現が壊れている）").toBeGreaterThan(150);
+    expect(seen, "照合できる行が 1 行もない（正規表現が壊れている）").toBeGreaterThan(150);
     expect(wrong.slice(0, 3), `換算の値が合っていない行: ${wrong.length} 件`).toEqual([]);
   });
 
-  it("表示の暦日と日本時間の日が違う行が実際に有る（読みが飾りでないこと）", () => {
+  it("表示の暦日と日本時間の日が違う行が実際にある（読みが飾りでないこと）", () => {
     let shifted = 0;
     for (const row of mdRows()) {
       const cell = row[0];
@@ -130,7 +117,7 @@ describe("静的な一覧の日付欄に日本時間の読み（第 287 回）",
   it("JST 宣言の行はそのまま（単位を二度書かない）", () => {
     const cells = mdRows().map((r) => r[0]);
     const jstDeclared = cells.filter((c) => c.endsWith("JST"));
-    expect(jstDeclared.length, "JST 宣言の締切が 1 件も無い（空振り防止）").toBeGreaterThan(0);
+    expect(jstDeclared.length, "JST 宣言の締切が 1 件もない（空振り防止）").toBeGreaterThan(0);
     const doubled = jstDeclared.filter((c) => c.includes("JST では"));
     expect(doubled.slice(0, 3), "JST を言い直している行").toEqual([]);
     const anywhere = cells.filter((c) => /JST では[^）]*JST/.test(c));
@@ -147,14 +134,11 @@ describe("静的な一覧の日付欄に日本時間の読み（第 287 回）",
       "締切の瞬間の古い順",
     );
     const html = text("upcoming.html");
-    expect(html, "HTML 版の表のうえに同じ但し書きが無い").toContain("日本時間での読み");
+    expect(html, "HTML 版の表のうえに同じ但し書きがない").toContain("日本時間での読み");
     expect(html).toContain("締切の瞬間の古い順");
   });
 
   it("head の説明が呟いた『日本時間』を、本文が本当に出している", () => {
-    /* 第 286 回で書いた説明文は「日時は日本時間（JST）と曜日で出します」と言う。
-     * その頃の本文は公式表記だけで、説明文が噓を書いていた（第 287 回の実測）。
-     * 声明と本文をここで突き合わせる。*/
     const html = text("upcoming.html");
     const description = /<meta name="description" content="([^"]*)"/.exec(html)?.[1] ?? "";
     expect(description).toContain("日本時間（JST）");

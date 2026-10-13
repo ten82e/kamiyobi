@@ -1,12 +1,3 @@
-/**
- * 分野の日本語の別の言い方の検査。SPEC §4・§7・第 359 回。
- * 実測（2026-10-17 – 2026-08-09 生成の実ビルドの品書 872 行・固定時刻 2026-08-09T00:00:00Z）:
- * `AI` 331 行・`機械学習` 81 行・`computer architecture` 7 行・`reliability` 1 行が通るのに、
- * `生成AI` `生成的人工知能` `生成モデル` `コンピュータアーキテクチャ` `耐障害性`
- * `フォールトトレランス` `耐故障` はいずれも **0 行で案内も無し**、`プロセッサ` `半導体`
- * `集積回路` `VLSI` `チップ` も **0 行で案内も無し**（其の内半導体は催し物が収録に無い）。
- */
-
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -57,12 +48,12 @@ const 収録に無い分野 = [
 ];
 
 describe("分野の日本語の別の言い方", () => {
-  it("其の方の原文の語と一字も違わない行集合になる（新しい幅を作らない）", () => {
+  it("その方の原文の語と一字も違わない行集合になる（新しい幅を作らない）", () => {
     for (const [日本語, 原文] of 分野の寄せ) {
       expect(対称差(日本語, 原文), `\`${日本語}\` が \`${原文}\` と違う行を出した`).toBe(0);
     }
     /* 品書の載り方に依るので絶対値を張らない（第 344・355・357 回） – 寄せ先で行が出る組が
-     * 在る事を見る（実品書では 生成AI 1 行・コンピュータアーキテクチャ 7 行・耐障害性 1 行）。 */
+     * ある事を見る（実品書では 生成AI 1 行・コンピュータアーキテクチャ 7 行・耐障害性 1 行）。 */
     const 原文々 = [...new Set(分野の寄せ.map(([, 原文]) => 原文))];
     const 出る = 原文々.filter((原文) => 行列表(原文).length > 0);
     expect(
@@ -80,17 +71,17 @@ describe("分野の日本語の別の言い方", () => {
     expect(Recommender.querySynonymNotes("生成AI").join(" ")).toContain("『AI』");
   });
 
-  it("無い語を在る様に寄せない – 案内が其の事を言う", () => {
+  it("ない語をある様に寄せない – 案内がその事を言う", () => {
     const 案内 = Recommender.querySynonymNotes("耐障害性").join(" ");
     expect(案内, "寄せ先の語を言っていない").toContain("reliability");
-    expect(案内, "収録に fault tolerance が無い事を言っていない").toContain("fault tolerance");
+    expect(案内, "収録に fault tolerance がない事を言っていない").toContain("fault tolerance");
     expect(Recommender.querySynonymNotes("フォールトトレランス").join(" ")).toContain(
       "fault tolerance",
     );
   });
 });
 
-describe("収録に無い分野（半導体・チップ）", () => {
+describe("収録にない分野（半導体・チップ）", () => {
   it("0 行の侭、近い道を教える案内と読み上げが出る", () => {
     for (const 語 of 収録に無い分野) {
       expect(行列表(語).length, `\`${語}\` に行が出てしまった`).toBe(0);
@@ -127,7 +118,7 @@ describe("収録に無い分野（半導体・チップ）", () => {
 });
 
 describe("壊していない物", () => {
-  it("其の方の分野の語・画面の印・其れ以外の案内は其侭", () => {
+  it("その方の分野の語・画面の印・それ以外の案内は其侭", () => {
     for (const 語 of [
       "AI",
       "機械学習",
@@ -146,16 +137,16 @@ describe("壊していない物", () => {
       "microarchitecture",
     );
     expect(Recommender.uiWordNoteJa("主要会議")).toContain("『ランク』");
-    /* 当たりを「収録に無い」と言い出さない見張り（第 358 回）– `アーキテクチャ` は実測 2 行
+    /* 当たりを「収録に無い」と言い出さない見張り– `アーキテクチャ` は実測 2 行
      * 当たるので案内の対象ではない（案内は 0 件の時だけ出る物）。 */
     expect(
       Recommender.uiWordNoteJa("アーキテクチャ"),
-      "`アーキテクチャ` を収録に無い語にしてしまった",
+      "`アーキテクチャ` を収録にない語にしてしまった",
     ).toBe("");
     expect(Recommender.uiWordNoteJa("旅費")).toContain("この表が持っていません");
     expect(Recommender.uiWordNoteJa("月前半")).toContain("『上旬』");
     expect(Recommender.uiWordNoteJa("祝日 締切")).toContain("「祝日」");
-    /* `A*` を対照にしない – 検査の品書には等級の付いた行が載らない（第 357 回）。 */
+    /* `A*` を対照にしない – 検査の品書には等級の付いた行が載らない。 */
     for (const 語 of ["穴場", "土日", "上旬"]) {
       expect(行列表(語).length, `\`${語}\` が落ちた`).toBeGreaterThan(0);
     }

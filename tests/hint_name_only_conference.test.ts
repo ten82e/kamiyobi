@@ -1,18 +1,3 @@
-/**
- * 名前は収録の名簿に在るのに締切の行が 1 本も無い会議を、0 件の案内が言うかの検査
- * （SPEC §7・第 294 回）。
- *
- * 実測（2026-09-24・2026-08-09 生成ビルド）: 品書の会議 687 件のうち 248 件が、一覧に差し込む
- * データに締切行を 1 本も持たない（NETYS・FORTE・CADE・CoNLL など – 締切がデータの切れ目より
- * 先にある会議たち）。`NETYS` を引くと 0 件で「過去の締切も表示 / 推定を含める / 別の語で試す」
- * だけ – どれを勧めても 1 件も増えない。`NETYS 2027` は「検索語のうち「NETYS」・「2027」は
- * 収録データにも見当たりません」と言い、これは噓だった（NETYS は名簿に在り、収録には
- * 2028-03-30 の締切が在る）。
- *
- * 第 296 回では、同じ案内が打ち方に日付を添えると壊れていたことを扱う（実測で `NETYS 2027` に
- * 「似た名前の会議が 35 件」– 35 の内訳は品書の key に年を持つ別々の会議だった）。
- */
-
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
@@ -29,7 +14,7 @@ type Conf = {
   full_name?: string;
   key?: string;
   editions?: unknown[];
-  /** 品の窓に締切が入らない会議にだけ、品書が載せる収録側の締切日（第 295 回）。 */
+  /** 品の窓に締切が入らない会議にだけ、品書が載せる収録側の締切日。 */
   record_deadline_last?: string | null;
   record_deadline_next?: string;
   record_deadline_next_kind?: string;
@@ -40,9 +25,9 @@ type NameOnly = {
   count: number;
   terms: string[];
   recordLast?: string | null | "";
-  /** その会のこれからの開催日（第 297 回）。 */
+  /** その会のこれからの開催日。 */
   eventNext?: string;
-  /** 収録の側に残っている一番近い締切（第 298 回）。 */
+  /** 収録の側に残っている一番近い締切。 */
   nextDay?: string;
   nextKind?: string;
   nextCount?: number;
@@ -110,7 +95,7 @@ function noteFor(name: string, over: Record<string, unknown>): string {
 function fullRecordButton(): string {
   const html = readFileSync(join(site, "index.html"), "utf8");
   const m = /id="fullRecordButton"[^>]*>([^<]+)</.exec(html);
-  expect(m, "「収録の全体を読み込む」のボタンが画面に無い").not.toBeNull();
+  expect(m, "「収録の全体を読み込む」のボタンが画面にない").not.toBeNull();
   return String(m?.[1]);
 }
 
@@ -138,14 +123,14 @@ function hintFor(query: string, over: Record<string, unknown> = {}): string {
   });
 }
 
-describe("名簿に在る会議の話を 0 件の案内が言う（第 294 回）", () => {
-  it("品書には、締切行を 1 本も持たない会議が本当に在る", () => {
+describe("名簿にある会議の話を 0 件の案内が言う（第 294 回）", () => {
+  it("品書には、締切行を 1 本も持たない会議が本当にある", () => {
     // ここが 0 件だと下の検査は空振りになる – 実測で守る。
-    expect(noRow().length, "品書に行の無い会議が見つからない").toBeGreaterThan(0);
+    expect(noRow().length, "品書に行のない会議が見つからない").toBeGreaterThan(0);
     expect(example().name).toBeTruthy();
   });
 
-  it("名簿に在る語を「収録データにも見当たりません」と言わない", () => {
+  it("名簿にある語を「収録データにも見当たりません」と言わない", () => {
     const name = example().name;
     const found = nameOnly(name);
     expect(found, `${name} が名簿から引けない`).not.toBeNull();
@@ -157,50 +142,50 @@ describe("名簿に在る会議の話を 0 件の案内が言う（第 294 回�
         { term: "2027", count: 0 },
       ],
     });
-    // 「検索語のうち…」の文その物を見て、名簿に在る語が並んでいないことを確かめる。
+    // 「検索語のうち…」の文その物を見て、名簿にある語が並んでいないことを確かめる。
     const at = out.indexOf("検索語のうち");
     expect(at, "語が外せる案内が消えた").toBeGreaterThan(-1);
     const seg = out.slice(at, out.indexOf("。", at) + 1);
-    expect(seg, "名簿に在る語を収録に無いと言った").not.toContain(name);
-    expect(seg, "本当に無い語まで消した").toContain("2027");
+    expect(seg, "名簿にある語を収録にないと言った").not.toContain(name);
+    expect(seg, "本当にない語まで消した").toContain("2027");
   });
 
-  it("締切が行に無いことを切れ目の日数といっしょに言い、全体を読み込むへ送る", () => {
+  it("締切が行にないことを切れ目の日数といっしょに言い、全体を読み込むへ送る", () => {
     // 品書に申告が無い（古いビルド・日付の読めない物）ときは、出る約束を言わない。
     const found = nameOnly(example().name);
     const out = hintFor(example().name, {
       nameOnly: found ? { ...found, example: "", recordLast: "" } : undefined,
     });
     expect(out).toContain("収録の名簿");
-    expect(out, "データの切れ目の日数が無い").toContain("2027-02-04");
+    expect(out, "データの切れ目の日数がない").toContain("2027-02-04");
     expect(out, "押し先を送っていない").toContain("収録の全体を読み込む");
-    // 収録の側にも締切が 1 本も無い会（実測 248 件中 74 件）が在るので、出る約束をしない。
+    // 収録の側にも締切が 1 本も無い会（実測 248 件中 74 件）があるので、出る約束をしない。
     expect(out, "出ると約束した").not.toContain("その会議の締切も探します");
     expect(out, "引き直すと言っていない").toContain("同じ語を引き直します");
     expect(out, "効かない打ち直しを並べた").not.toContain("別の語で試す");
   });
 
   it("収録にあるのが過ぎた締切だけの時、推定ならその日を添える（第 949 回）", () => {
-    /* 品書の申告に推定の未來の締切が在るとき（MCP と同じ事実を同じ言葉で – 第 930 回の
-     * MCP 側と揃へる）。推定は確約ではないので、其の旨も書く。 */
+    /* 品書の申告に推定の未來の締切があるとき（MCP と同じ事実を同じ言葉で – 第 930 回の
+     * MCP 側と揃へる）。推定は確約ではないので、その旨も書く。 */
     const found = nameOnly(example().name);
-    expect(found, "名簿の注が立てない（この檢查の前提が崩れた）").not.toBeNull();
+    expect(found, "名簿の注が立てない（この検查の前提が崩れた）").not.toBeNull();
     const 推定 = "2027-03-19";
     const out = hintFor(example().name, {
       nameOnly: found
         ? { ...found, recordLast: "2026-04-02", recordFuture: false, estimatedNext: 推定 }
         : undefined,
     });
-    expect(out, "過ぎた締切の話が無い").toContain("収録にあるのは過ぎた締切");
-    expect(out, "推定ならの話が出て居ん").toContain(
+    expect(out, "過ぎた締切の話がない").toContain("収録にあるのは過ぎた締切");
+    expect(out, "推定ならの話が出ていない").toContain(
       `ただし推定なら ${推定} の締切が収録にあります`,
     );
-    expect(out, "確约ではない事を言つて居ん").toContain("確約ではありません");
+    expect(out, "確约ではない事を言つていない").toContain("確約ではありません");
     /* 申告が無い時は足さない（MCP と同じ – 第 941 回と同じ決まり）。 */
     const 無 = hintFor(example().name, {
       nameOnly: found ? { ...found, recordLast: "2026-04-02", recordFuture: false } : undefined,
     });
-    expect(無, "推定の申告が無いのに足した").not.toContain("ただし推定なら");
+    expect(無, "推定の申告がないのに足した").not.toContain("ただし推定なら");
   });
 
   it("例に挙げるのは、打った語すべてに当たる会議が 1 件だけるとき", () => {
@@ -208,7 +193,7 @@ describe("名簿に在る会議の話を 0 件の案内が言う（第 294 回�
     expect(nameOnly(name)?.example, "1 件に絞れる例を挙げていない").toBe(name);
     // 多くの会議の名前に含まれる語では、先頭を例に挙げない（件数だけを出す）。
     const many = nameOnly("international");
-    expect(many?.count, "検証に使えるだけの当たり数が無い").toBeGreaterThan(1);
+    expect(many?.count, "検証に使えるだけの当たり数がない").toBeGreaterThan(1);
     expect(many?.example, "曖昧なのに例を挙げた").toBe("");
   });
 
@@ -237,12 +222,12 @@ describe("名簿に在る会議の話を 0 件の案内が言う（第 294 回�
 
   it("収録の全体を読んだあとは黙る（行が出るので名簿の話は要らない）", () => {
     const name = example().name;
-    expect(nameOnly(name, [example().key]), "行が在る会議を名簿の話に立てた").toBeNull();
+    expect(nameOnly(name, [example().key]), "行がある会議を名簿の話に立てた").toBeNull();
     const out = hintFor(name, { nameOnly: nameOnly(name, [example().key]) || undefined });
     expect(out).not.toContain("収録の名簿");
   });
 
-  it("名簿に在る語のときは「別の語で試す」を勧めない（窓が狭くても）", () => {
+  it("名簿にある語のときは「別の語で試す」を勧めない（窓が狭くても）", () => {
     const out = hintFor(example().name, {
       nameOnly: nameOnly(example().name) || undefined,
       window: "7",
@@ -285,7 +270,7 @@ describe("名簿に在る会議の話を 0 件の案内が言う（第 294 回�
     const label = (/id="fullRecordButton"[^>]*>([^<]+)</.exec(html)?.[1] || "").trim();
     expect(label).toBeTruthy();
     const base = nameOnly(example().name) || { example: "", count: 1, terms: [] };
-    // 収録の側が不明 / 締切ゼロ / これからの締切が在る – ボタンにふれる三つの形で同じ語を使う。
+    // 収録の側が不明 / 締切ゼロ / これからの締切がある – ボタンにふれる三つの形で同じ語を使う。
     for (const recordLast of ["", null, "2028-03-30"] as const) {
       const out = hintFor(example().name, {
         nameOnly: { ...base, example: "", recordLast, recordFuture: true },
@@ -299,7 +284,7 @@ describe("名簿に在る会議の話を 0 件の案内が言う（第 294 回�
     expect(app).toMatch(
       /nameOnly:\s*nameOnlyRecordInfo\(\s*nameOnlyConferenceMatch\(\s*searchQuery,\s*rows,\s*Date\.now\(\)\s*\),\s*Date\.now\(\),\s*KIND_LABEL\s*\)/,
     );
-    // 読み込めている行を照合して「行が在るか」で判断している。
+    // 読み込めている行を照合して「行があるか」で判断している。
     expect(jsFunction(app, "nameOnlyConferenceMatch")).toContain("withRows");
   });
 });
@@ -309,15 +294,15 @@ describe("収録の側に何が待っているかで、0 件の案内が言い�
     const list = marked();
     expect(list.length, "品書が収録側の締切を申告していない").toBeGreaterThan(0);
     const wrong = list.filter((c) => deadlineDays(c).length > 0);
-    expect(wrong, "締切の在る会議に申告が混じっている").toEqual([]);
-    // 締切の在る会議には付いていない（品書の側で既に読める – 二重に数えさせない）。
+    expect(wrong, "締切のある会議に申告が混じっている").toEqual([]);
+    // 締切のある会議には付いていない（品書の側で既に読める – 二重に数えさせない）。
     const unmarked = conferences().filter(
       (c) => deadlineDays(c).length > 0 && marked().includes(c),
     );
     expect(unmarked, "締切の読める会議まで申告した").toEqual([]);
   });
 
-  it("申告の形は、収録に締切が 1 本も無い（null）か暦日か", () => {
+  it("申告の形は、収録に締切が 1 本もない（null）か暦日か", () => {
     const list = marked();
     const bad = list.filter(
       (c) =>
@@ -326,13 +311,13 @@ describe("収録の側に何が待っているかで、0 件の案内が言い�
     );
     expect(bad, "読み方の分からない申告が混じっている").toEqual([]);
     const nulls = list.filter((c) => c.record_deadline_last === null);
-    expect(nulls.length, "収録に締切の無い会が 1 件も申告されていない").toBeGreaterThan(0);
+    expect(nulls.length, "収録に締切のない会が 1 件も申告されていない").toBeGreaterThan(0);
     expect(nulls[0]?.key, "締切ゼロの例が特定できない").toBeTruthy();
   });
 
-  it("収録に締切が 1 本も無い会は、読んでも増えないと言う", () => {
+  it("収録に締切が 1 本もない会は、読んでも増えないと言う", () => {
     const out = noteFor(example().name, { recordLast: null, recordFuture: false });
-    expect(out, "収録に締切が無いと言っていない").toContain("締切を 1 本も持っていません");
+    expect(out, "収録に締切がないと言っていない").toContain("締切を 1 本も持っていません");
     expect(out, "空振りを送っている").toContain("押しても 1 件も増えません");
     expect(out, "出る約束をした").not.toContain("載せられます");
     expect(out, "日付を作った").not.toMatch(/その会には \d{4}-\d{2}-\d{2}/);
@@ -341,11 +326,11 @@ describe("収録の側に何が待っているかで、0 件の案内が言い�
     expect(out, "ボタン名が書き写し").toContain(fullRecordButton());
   });
 
-  it("収録にこれからの締切が在る会は、その日を言って読み込むへ送る", () => {
+  it("収録にこれからの締切がある会は、その日を言って読み込むへ送る", () => {
     const out = noteFor(example().name, { recordLast: "2028-03-30", recordFuture: true });
     expect(out, "収録の締切日を言っていない").toContain("2028-03-30");
     expect(out, "読み込めば出ると言っていない").toContain("その締切も一覧に載せられます");
-    expect(out, "切れ目の日数が無い").toContain("2027-02-04");
+    expect(out, "切れ目の日数がない").toContain("2027-02-04");
     expect(out, "過ぎた締切と言った").not.toContain("過ぎた締切");
     expect(out, "ボタン名が書き写し").toContain(fullRecordButton());
     // 収録の側の日と、一覧に出せる日を、それぞれ別々に言わせている。
@@ -414,7 +399,7 @@ describe("収録の側に何が待っているかで、0 件の案内が言い�
       run({ ...base, recordLast: null }, now)?.recordLast,
       "締切ゼロを不明に潰した",
     ).toBeNull();
-    expect(run(null, now), "名簿に何も無いときに数を作った").toBeNull();
+    expect(run(null, now), "名簿に何もないときに数を作った").toBeNull();
   });
 
   it("画面の品選びが、品書の申告を読んでいる", () => {
@@ -437,7 +422,7 @@ it("品選びは、品書の申告をそのまま案内に渡している", () =
       return { name, key: String(c.key || ""), declared: c.record_deadline_last, found };
     })
     .filter((x) => x.found?.example === x.name);
-  expect(list.length, "例に絞れる申告済みの会議が 1 件も無い").toBeGreaterThan(0);
+  expect(list.length, "例に絞れる申告済みの会議が 1 件もない").toBeGreaterThan(0);
   for (const x of list) {
     expect(x.found?.recordLast, `${x.key} の申告を画面が読み違えている`).toBe(
       x.declared === undefined ? "" : x.declared,
@@ -449,7 +434,7 @@ it("品選びは、品書の申告をそのまま案内に渡している", () =
     nulls.length + dated.length,
     "null と暦日の両方を読めているか確かめられない",
   ).toBeGreaterThan(0);
-  expect(nulls.length, "締切ゼロの申告を読めている例が無い").toBeGreaterThan(0);
+  expect(nulls.length, "締切ゼロの申告を読めている例がない").toBeGreaterThan(0);
 });
 
 it("名簿の案内が原因を言い切った 0 件案内に、効かない条件を並べない", () => {
@@ -516,7 +501,7 @@ describe("打ち方に日付を添えても、名前一つと同じ答えにな�
   });
 
   it("語が名前の途中に隠れる打ち方は、日付としても数えない", () => {
-    // `netys-2027` の語は名前の語 – 品書の key にこの形が在るなら別物として扱う。
+    // `netys-2027` の語は名前の語 – 品書の key にこの形があるなら別物として扱う。
     expect(nameOnly("netys-2027"), "語の形を曲げて名簿に立てた").toBeNull();
     expect(nameOnly("sc2027"), "語の形を曲げて名簿に立てた").toBeNull();
   });
@@ -533,7 +518,7 @@ describe("打ち方に日付を添えても、名前一つと同じ答えにな�
     }
   });
 
-  it("全ての語に当たる会議が無くても、名簿に在る語は「無い」の列から外れる", () => {
+  it("全ての語に当たる会議が無くても、名簿にある語は「ない」の列から外れる", () => {
     // Two known names with no joint match, independent of which live venue sorts first.
     const name = "NETYS";
     const both = nameOnly(
@@ -545,8 +530,8 @@ describe("打ち方に日付を添えても、名前一つと同じ答えにな�
       ],
     );
     expect(both, "語が名簿に見えるのに案内が黙った").not.toBeNull();
-    expect(both?.count, "該当する会議が無いのに件数を作った").toBe(0);
-    expect(both?.terms, "名簿に在る語を返していない").toContain(name);
+    expect(both?.count, "該当する会議がないのに件数を作った").toBe(0);
+    expect(both?.terms, "名簿にある語を返していない").toContain(name);
     const out = hintFor(`${name} international`, {
       nameOnly: both || undefined,
       termCounts: [
@@ -554,9 +539,9 @@ describe("打ち方に日付を添えても、名前一つと同じ答えにな�
         { term: "international", count: 0 },
       ],
     });
-    expect(out, "名簿に在ると言っていない").toContain("収録の名簿");
+    expect(out, "名簿にあると言っていない").toContain("収録の名簿");
     expect(out, "切れ目の話をしていない").toContain("2027-02-04");
-    expect(out, "名簿に在る語を収録に無いと言った").not.toContain("検索語のうち");
+    expect(out, "名簿にある語を収録にないと言った").not.toContain("検索語のうち");
     expect(out, "語を変えれば増えると言った").not.toContain("別の語で試す");
   });
 
@@ -564,7 +549,7 @@ describe("打ち方に日付を添えても、名前一つと同じ答えにな�
     const name = example().name;
     const found = nameOnly(`${name} 2027`);
     const out = hintFor(`${name} 2027`, { nameOnly: found || undefined });
-    expect(out, "名簿に在ると言っていない").toContain("収録の名簿");
+    expect(out, "名簿にあると言っていない").toContain("収録の名簿");
     expect(out, "ボタン名が書き写し").toContain(fullRecordButton());
     expect(out, "効かない条件を並べた").not.toContain("外せる条件");
   });
@@ -572,7 +557,7 @@ describe("打ち方に日付を添えても、名前一つと同じ答えにな�
 
 describe("0 件の案内が、その会のこれからの開催日を添える（第 297 回）", () => {
   /* 実測（2026-09-24・2026-08-09 生成ビルド）で、過ぎた締切しか持たない会議 174 件のうち 118 件・
-     収録に締切の無い会議 74 件のうち 31 件は、品書にこれからの開催日が在る。締切が過ぎただけの
+     収録に締切の無い会議 74 件のうち 31 件は、品書にこれからの開催日がある。締切が過ぎただけの
      会と、まだ開かれるだけの会を分けないと、人は「終わった会議の話をした」と誤解する。 */
 
   function one(name: string, editions: unknown[]): Conf[] {
@@ -741,9 +726,9 @@ async function recordRuntime() {
   return { run, table };
 }
 
-describe("収録の側に締切が在るとき、案内は一番近い日を言う（第 298 回）", () => {
-  /* 実測（2026-09-24・2026-08-09 生成ビルド）: 収録にこれからの締切が在る会議 42 件のうち **19 件**は、
-     一番近い締切が品書の申告（一番遠い日）より前に在る。例: CADE は申告 2027-06-01 で、一番近い
+describe("収録の側に締切があるとき、案内は一番近い日を言う（第 298 回）", () => {
+  /* 実測（2026-09-24・2026-08-09 生成ビルド）: 収録にこれからの締切がある会議 42 件のうち **19 件**は、
+     一番近い締切が品書の申告（一番遠い日）より前にある。例: CADE は申告 2027-06-01 で、一番近い
      のは 2027-02-16 の概要締切（全 4 本）。遠い日だけを教えても、人は間の締切に間に合うと思う。 */
 
   it("品書の申告から、近い日・種別・本数を読んでいる", () => {
@@ -894,8 +879,8 @@ describe("収録の側に締切が在るとき、案内は一番近い日を言�
       expect(deadlineDays(c).length, `${c.key}: 品の窓に締切の在る会議に申告が付いた`).toBe(0);
       if (next !== last) apart += 1;
     });
-    expect(marked2.length, "近い日の申告が 1 件も無い").toBeGreaterThan(0);
-    expect(apart, "近い日と遠い日が違う会議が 1 件も無い – 検査が無意味").toBeGreaterThan(0);
+    expect(marked2.length, "近い日の申告が 1 件もない").toBeGreaterThan(0);
+    expect(apart, "近い日と遠い日が違う会議が 1 件もない – 検査が無意味").toBeGreaterThan(0);
   });
 
   it("品書が言う本数は、収録の締切の数え上げとずれていない", () => {

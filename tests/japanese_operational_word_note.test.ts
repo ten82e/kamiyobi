@@ -1,10 +1,3 @@
-/** 出欠・原稿・合否を**和語や道具の名で**打つ人の讓りの檢査（SPEC §7・第 670 回）。
- *
- * 事實（2026-08-09 生成の実ビルド・品書 3,250 行）– 「キャンセル」「返金」「録画」「ページ数」
- * 「不採択」「何時」は羣の斷りを受けるのに、同じ事を和語や道具の名で打つ人は搜 0 行・打ち替え
- * 無し・讓り無しで面の三つが皆默つて居た（`欠席` `不参加` `払い戻し` `取り消し` `レシート`
- * `zoom` `ズーム` `見逃し` `何分` `書式` `フォーマット` `最大ページ` `原稿の長さ` `スコア`
- * `却下` `落ちた` `タイムゾーン` `索引` `Invoice`）。 */
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import Recommender from "../site/recommender.ts";
@@ -14,7 +7,7 @@ import { queryReferenceSnapshotPath } from "./query_reference.ts";
 const AT = Date.parse("2026-08-09T00:00:00Z");
 type Row = { hay: string };
 function 品書(): Row[] {
-  /* 搜の土臺は實際の品書（3,250 行）で張る – fixtures の品書だと讓りの当たりが別物になる為。*/
+  /* 検索の土臺は実際の品書（3,250 行）で張る – fixtures の品書だと讓りの当たりが別物になる為。*/
   return Recommender.candidateRows(
     JSON.parse(readFileSync(queryReferenceSnapshotPath(), "utf8")),
   ) as Row[];
@@ -25,7 +18,7 @@ function 當(文: string): number {
   const m = Recommender.searchMatcher(Recommender.expandRelativeMonths(文, AT), AT);
   return rows.filter((r) => m(String(r.hay)) === true).length;
 }
-/** 畫麵と同じ順で讓りを再現する（site/app.ts – 欄の名前 → 語の斷り → 日の幅 → 寄せ表 → 助詞）。 */
+/** 画麵と同じ順で讓りを再現する（site/app.ts – 欄の名前 → 語の斷り → 日の幅 → 寄せ表 → 助詞）。 */
 function 讓り(文: string): string {
   return String(
     Recommender.columnQueryNoteJa(文, (語) => 當(語) > 0) ||
@@ -42,7 +35,7 @@ function 後尾(文: string): string {
   return x.slice(x.indexOf("」") + 1);
 }
 
-/** 此の回に羣へ载せた打ち手（搜 0 行で讓りも無かつた語 – 十九語）。 */
+/** この回に羣へ载せた打ち手（検索 0 行で讓りも無かつた語 – 十九語）。 */
 const 载せた = [
   "欠席",
   "不参加",
@@ -65,7 +58,7 @@ const 载せた = [
   "索引",
 ];
 
-/** 其の方が既に持つ物の隣（和語 ↔ 英語・略し方）で、同じ羣の斷りを受けたい組。 */
+/** その方が既に持つ物の隣（和語 ↔ 英語・略し方）で、同じ羣の斷りを受けたい組。 */
 const 對 = [
   ["返金", "払い戻し"],
   ["領収書", "レシート"],
@@ -82,7 +75,7 @@ const 對 = [
 ] as const;
 
 describe("出欠・原稿・合否を和語で打つ人", () => {
-  it("载せた語は搜 0 行の侬で斷りを受ける（噓の案内を立たん – 第 337 回）", () => {
+  it("载せた語は検索 0 行の侬で斷りを受ける（噓の案内を立たん – 第 337 回）", () => {
     for (const 語 of 载せた) {
       expect(當(語), `"${語}" が行を持つやうに廣がつた`).toBe(0);
       expect(讓り(語).length, `"${語}" が無言に逆戻りした`).toBeGreaterThan(0);
@@ -99,8 +92,8 @@ describe("出欠・原稿・合否を和語で打つ人", () => {
   it("斷りが噓を言はん – 収録する物の名を每個に書く", () => {
     for (const 語 of 载せた) {
       const 文 = 讓り(語);
-      /* 羣の斷りは「収録するのは…」で始まる家（第 332 回 – 默つても噓でもいかん）。
-       * 聞く事への答えなので、收錄の欄の名前を一つは必ず持つ。*/
+      /* 羣の斷りは「収録するのは…」で始まる家。
+       * 聞く事への答えなので、収録の欄の名前を一つは必ず持つ。*/
       expect(
         ["締切", "日", "分野", "種別", "開催地", "参加形式", "公式ページ", "会議"].some((欄) =>
           文.includes(欄),
@@ -110,24 +103,24 @@ describe("出欠・原稿・合否を和語で打つ人", () => {
     }
   });
 
-  it("打ち替えと同じ語に喋らん（默つて二つの話をするな – 第 330 回）", () => {
+  it("打ち替えと同じ語に喋らん（黙つて二つの話をするな – 第 330 回）", () => {
     for (const 語 of ["欠席", "zoom", "書式", "スコア", "索引", "却下"]) {
       const chip = Recommender.shorterHitWordsJa(語, hays, AT) || [];
       expect(chip.length, `"${語}" は打ち替えと讓りの両方が出て居る`).toBe(0);
     }
   });
 
-  it("搜れる語は羣に混ぜん – `データベース登録` は行が在る（第 670 回）", () => {
-    /* 载せ樣としたが事實は 1 行出た（行に其のまま書かれて居る）。搜れる打ち手に「持って
-     * 居らん」と書くと噓になるので引いた（第 337 回）。*/
+  it("検索れる語は羣に混ぜん – `データベース登録` は行がある（第 670 回）", () => {
+    /* 载せ樣としたが事実は 1 行出た（行にそのまま書かれている）。検索れる打ち手に「持って
+     * 居らん」と書くと噓になるので引いた。*/
     expect(當("データベース登録")).toBeGreaterThan(0);
     expect(讓り("データベース登録")).toBe("");
     const 源 = readFileSync(`${REPO_ROOT}/site/recommender.ts`, "utf8");
     const 群 = 源.slice(0, 源.indexOf("const UI_WORD_TAILS_JA"));
-    expect(群.includes('"データベース登録"'), "搜れる語を羣に載せた").toBe(false);
+    expect(群.includes('"データベース登録"'), "検索れる語を羣に載せた").toBe(false);
   });
 
-  it("搜の当たり數は此の回、一つも減つて居らん（第 669 回の実測金庫）", () => {
+  it("検索の当たり数はこの回、一つも減つて居らん（第 669 回の実測金庫）", () => {
     const 金庫: Record<string, number> = {
       ハイブリッド: 109,
       オンライン参加: 109,
@@ -166,7 +159,7 @@ describe("出欠・原稿・合否を和語で打つ人", () => {
     }
   });
 
-  it("品書は 3,250 行 – 搜の土臺を壞して居ん", () => {
+  it("品書は 3,250 行 – 検索の土台を壊していない", () => {
     expect(rows.length).toBe(3250);
   });
 });

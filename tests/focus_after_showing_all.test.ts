@@ -1,15 +1,3 @@
-/**
- * 続きを最後まで足した人のフォーカスを消さない検査（SPEC §7・第 273 回）。
- *
- * 2026-08-09 生成ビルドで実測した形：
- *   - 「さらに表示」「すべて表示」は、足す物が無くなると `updateMoreButton` が `hidden` にする。
- *     **押した人自身のフォーカスが消えた物に乗ったまま**になるため、その後の Tab は画面の
- *     先頭からやり直しになり、読み上げも居場所を失う。マウスならスクロールバーで済むが、
- *     キーボードだけで操作する人には一番こたえる。
- *   - 読み上げ欄（`#countLive`）にも、最後まで出したことは伝わっていなかった
- *     （件数欄の総数は押す前と同じなので、流れない）。
- */
-
 import { describe, expect, it } from "vitest";
 import { jsFunction, siteRuntime } from "./runtime_extract.ts";
 
@@ -135,7 +123,7 @@ describe("続きを最後まで足した人のフォーカスが消えない（�
     expect(got.live).toBe("");
   });
 
-  it("条件の欄にフォーカスが有るとき（絞り込みの作り直し）は、動かさない", () => {
+  it("条件の欄にフォーカスがあるとき（絞り込みの作り直し）は、動かさない", () => {
     const got = runKeepFocus({
       active: "q",
       moreHidden: true,
@@ -158,7 +146,7 @@ describe("続きを最後まで足した人のフォーカスが消えない（�
     expect(got.live).toContain("候補 200 件");
   });
 
-  it("行が 1 件も無いときに落ちない（0 件の画面で押せるわけではないが、念のため）", () => {
+  it("行が 1 件もないときに落ちない（0 件の画面で押せるわけではないが、念のため）", () => {
     const got = runKeepFocus({
       active: "more",
       moreHidden: true,
@@ -174,14 +162,14 @@ describe("続きを最後まで足した人のフォーカスが消えない（�
     const body = jsFunction(rt, "dataRows");
     expect(body).toContain("detail-row");
     expect(body).toContain("month-row");
-    // 呼び出し元が行を組み直す式を持ったら、この関数を使う形に寄せる（第 273 回）。
+    // 呼び出し元が行を組み直す式を持ったら、この関数を使う形に寄せる。
     // 1 要素を確かめる所（行の詳細のとなりを見る `next.classList.contains(…)` など）は
     // 別の規則なので、行を並べ替える式（`row.classList.contains(…)`）だけを数える。
     const inlined = (rt.match(/row\.classList\.contains\("detail-row"\)/g) || []).length;
     expect(inlined, "行の選び方の式が関数以外に書き写されている").toBe(1);
     expect(
       (rt.match(/dataRows\(\)/g) || []).length,
-      "関数にまとめた意味が無い（呼び出し元が少ない）",
+      "関数にまとめた意味がない（呼び出し元が少ない）",
     ).toBeGreaterThanOrEqual(3);
   });
 

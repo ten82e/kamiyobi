@@ -1,13 +1,3 @@
-/**
- * `ics` を打った人の検査（SPEC §4・§7・第 323 回）。
- * `ics` はこの画面が配るファイルの名前でもあり、会議名の語の途中でもある。
- * 実測（2026-08-09 生成の実ビルドの品書 872 行・固定時刻 2026-08-09T00:00:00Z）:
- * `ics` は 14 行に当たり、**10 行は会議名の語の途中に貼り付いた物**（"ICSOC" `@icsa2027`）、
- * `ical` は 2 行で同じ形。当たりが行に在るので 0 件案内は立たず、画面は黙って 14 件を
- * 並べていた。探している物（カレンダーに入れるファイル）は一覧の下に在る –
- * 件数欄に常に出す案内（`always`）を new に追加した。
- */
-
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -20,7 +10,7 @@ type Row = { hay: string };
 const AT = Date.parse("2026-08-09T00:00:00Z");
 
 describe("`ics` を打った人", () => {
-  it("当たりが行に在っても、件数欄に出す案内が有る", () => {
+  it("当たりが行に在っても、件数欄に出す案内がある", () => {
     ["ics", "ical"].forEach((語) => {
       const 文 = Recommender.uiWordAlwaysNoteJa(語);
       expect(文, `"${語}" を打った人に件数欄で何も言わない`).not.toBe("");

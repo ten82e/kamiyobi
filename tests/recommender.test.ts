@@ -992,9 +992,6 @@ describe("分野の日本語表示名と検索語 (SPEC §7)", () => {
     });
 
     it("助詞で繋がれた相対月も同じ暦月に解決する", () => {
-      /* 研究計画の立て方でいちばん言う形（第 251 回）。日本語は助詞のまわりに空白を
-       * 書かないので、空白で区切られた語だけを見ていては `来月の締切` が展開を通り越す
-       * （2026-08-09 生成ビルドの実測: `来月` 343 行 / `来月の締切` 0 行）。 */
       expect(R.expandRelativeMonths("来月の締切", now)).toBe("2026年10月 締切");
       expect(R.expandRelativeMonths("今月中の締切", now)).toBe("2026年9月 締切");
       const hay = `研究会 論文提出 締切 ${R.monthTermsJa("2026-10-07")}`;
@@ -1050,7 +1047,7 @@ describe("分野の日本語表示名と検索語 (SPEC §7)", () => {
       for (const word of ["秋田", "秋日", "9月", "来月", "秋の", ""]) {
         expect(R.seasonTermsJa(word, now), `「${word}」を季節として扱った`)?.toEqual([]);
       }
-      // 助詞で繋がれた形も同じグループに解決する（第 251 回の相対月と同じ）。
+      // 助詞で繋がれた形も同じグループに解決する。
       expect(R.queryTokenGroups("秋の会議", now)).toEqual([
         ["2026年9月", "2026年10月", "2026年11月"],
         ["会議"],
@@ -1066,10 +1063,6 @@ describe("分野の日本語表示名と検索語 (SPEC §7)", () => {
     });
 
     it("日数の範囲の言い方は、締切日からの日数で絞る欄の選択肢へ送る", () => {
-      /* 締切切り出しでいちばん言う言い方（第 253 回）。検索語としては当たらないので
-       * （実測: `1か月以内` 0 行）、画面にある同じ話の欄へ連れていく。暦日のグループへ
-       * 展開しないのは、表の暦日語が会期の日時も含むため – 「3 日以内に締切がある行」の
-       * つもりで会期が 3 日以内の行が混じる。 */
       expect(R.dayRangeWindowJa("7日以内")).toEqual([7, "7 日以内", "same"]);
       expect(R.dayRangeWindowJa("1週間以内")).toEqual([7, "7 日以内", "same"]);
       expect(R.dayRangeWindowJa("1か月以内")).toEqual([30, "30 日以内", "same"]);
@@ -1286,7 +1279,7 @@ describe("分野の日本語表示名と検索語 (SPEC §7)", () => {
       expect(groups("実時間")).toContain("real-time");
       expect(groups("プログラミング言語")).toContain("programming language");
       expect(groups("計算機アーキテクチャ")).toContain("computer architecture");
-      // 寄せ先は語を分けた `intrusion`（第 324 回）。かたまり `intrusion detection` のままだと、
+      // 寄せ先は語を分けた `intrusion`。かたまり `intrusion detection` のままだと、
       // 寄せは連続した書き方にしか当たらず、画面に出る品書 872 行では**追加 0 行**だった
       // （実測: 品書 0 行 / 収録 5 行）。語を分けて品書 1 行・収録 15 行になり、見つかる行は
       // 従来と同じ "Intrusion Detection …" の会議なので、この語を打った人への約束は強くなった。
@@ -1310,7 +1303,7 @@ describe("分野の日本語表示名と検索語 (SPEC §7)", () => {
       expect(R.queryTokenGroups("ユーザインタフェース")[0]).toContain("user interface");
     });
 
-    it("収録に無い語順の寄せは作らない（死んだ寄せを置かない）", () => {
+    it("収録にない語順の寄せは作らない（死んだ寄せを置かない）", () => {
       /* `画像認識` は英文字側が `image recognition` の語順で収録に現れないので入れていない
        * （当たった 3 行は `graphics, patterns and images` + 別箇所の `recognition`）。
        * 別表記は「打てば行が増える」ためだけに置く、という表の約束を守る。 */
@@ -1373,7 +1366,7 @@ describe("分野の日本語表示名と検索語 (SPEC §7)", () => {
     });
   });
 
-  describe("分野の言い方を書く（第 3 群: 英語表記しか収録に無い語）", () => {
+  describe("分野の言い方を書く（第 3 群: 英語表記しか収録にない語）", () => {
     /* 同じ型の調べものを続けた群（2026-09-23 実測: `プライバシー` は日本語 0 件で
      * `privacy` は 116 行、`データマイニング` は 162/183 行、`プロトコル` は 0/22 行）。 */
     it("漢字・カタカナの分野語が英文字表記と同じ組になる", () => {
@@ -1411,7 +1404,7 @@ describe("分野の日本語表示名と検索語 (SPEC §7)", () => {
       expect(group("未来館")).toContain("miraikan");
     });
 
-    it("寄せ済みは公式の表記どおりで、行の無い地名は置かない", () => {
+    it("寄せ済みは公式の表記どおりで、行のない地名は置かない", () => {
       // `Miyakojima`（FC の回）は既に寄せてある。公式の表記は "Miyakojima, Japan"
       // （fc25.ifca.ai）なので、日本語は `宮古島` が対応する。
       expect(group("宮古島")).toContain("miyakojima");
@@ -1708,7 +1701,7 @@ describe("分野の日本語表示名と検索語 (SPEC §7)", () => {
         now,
       );
       /* 状態の列は語を中黒で並べるので、推定のうしろに未確認の項目が続く形も許す
-       * （第 133 回で、画面が「未確認」「該当なし」と出す項目もこの列が引き受けた）。 */
+       * 。 */
       expect(estimated).toMatch(/,推定(?:・[^,]*)?,/);
     });
 
@@ -1722,7 +1715,7 @@ describe("分野の日本語表示名と検索語 (SPEC §7)", () => {
         now,
       );
       // 引用符は二重に、セル全体を引用符で囲む（RFC4180）。会議名には開催年が添えられる
-      // ので、引用符の中まで含めて年までが 1 セルだと分かる形で見る（第 170 回）。
+      // ので、引用符の中まで含めて年までが 1 セルだと分かる形で見る。
       expect(csv).toContain('"Workshop, ""Edge"" Cases ');
       expect(csv).toMatch(/"Workshop, ""Edge"" Cases \d{4}"/);
     });
@@ -2046,7 +2039,7 @@ describe("score labels and transient UI state", () => {
     expect(app).toContain("Recommender.setPaperVecs(null)");
     // 失敗理由を併記する (#711: 8+通りの失敗が1文言に潰れて原因追跡不能だった)。
     // 識別子は捨てないが、画面には日本語を出す – 英字の符号は利用者に読めないため、
-    // 識別子はこの要素の属性で残す（第 125 回）。
+    // 識別子はこの要素の属性で残す。
     expect(app).toContain("意味検索は利用不可（語彙検索のみ・原因: ");
     expect(app).toMatch(
       /意味検索は利用不可（語彙検索のみ・原因: \$\{Recommender\.semanticReasonJa\(semCode\)\}）/,
@@ -4594,7 +4587,7 @@ describe("会期だけ確定している回（締切未定）の一覧", () => {
   };
   const editions = recommender.scheduleOnlyEditions(catalog);
 
-  it("締切の無い回だけを返す", () => {
+  it("締切のない回だけを返す", () => {
     expect(editions.map((e) => e.eventStart)).toEqual(["2026-11-12"]);
     expect(editions[0].name).toBe("情報処理学会 AL 研究会");
     expect(editions[0].cats).toEqual(["theory"]);
@@ -4778,7 +4771,7 @@ describe("会場表記からオンライン参加かを見る", () => {
     }
   });
 
-  it("記述の無い行を対面と判定しない（＝書かれた語だけを見る）", () => {
+  it("記述のない行を対面と判定しない（＝書かれた語だけを見る）", () => {
     for (const place of [
       "京都大学 楽友会館（京都府）",
       "未定",
@@ -5834,7 +5827,7 @@ describe("ランク順は体系名ではなく等級で並ぶ", () => {
     expect(key(["ccf:A"]) === key(["core:A"])).toBe(true);
   });
 
-  it("評価の無い行は最も低い扱い（昇順で先頭、降順で末尾）", () => {
+  it("評価のない行は最も低い扱い（昇順で先頭、降順で末尾）", () => {
     expect(key([]) < key(["ccf:N"])).toBe(true);
     expect(key(null as unknown as string[]) < key(["ccf:N"])).toBe(true);
     expect(key(undefined as unknown as string[]) < key(["core:C"])).toBe(true);
@@ -5903,18 +5896,7 @@ describe("開催地の翻訳が複合地名を壊さない", () => {
 });
 
 describe("venue recommendation boost gate", () => {
-  /* 第 1088 囮 – 分類の boost（`venueCats` による +10）が、會議名が合はず話題も
-   * 合はない venue にも拂はれて居た。證據が 0 の venue が 0 → 10 に膨らんで
-   * 順位表に入つて居た。實測: 日本語の論文 4 件（正解は全て jip・題名は
-   * フィッシング・ゲームコントローラ・視覺效果と無關係）で、1 件あたり
-   * 182 件・5 件の「おすすめ」を返して居た。醉點 96〜98 で、譽の高い間違ひ。
-   * 不正解の推薦の 36%（579 件中 211 件）がブーストのみで浮上し、
-   * 1 位がブーストのみだつた件は 25/80（31%）。
-   *
-   *  boost は「實質の一致が既に有る」順位付けに限る。證據が 0 の venue は
-   *  0 の儘にする。 */
-
-  /** 論文と相手の會議の間に**話題の手がかりが何も無い**壇を作る。 */
+  /** 論文と相手の会議の間に**話題の手がかりが何も無い**壇を作る。 */
   const 無關係な壇 = [
     {
       conf: { key: "venue-alpha", title: "Alpha Workshop", full_name: "Alpha Workshop" },
@@ -5944,7 +5926,7 @@ describe("venue recommendation boost gate", () => {
       const 欄の一致 = Object.values(
         (item as unknown as { match: { fieldScores: Record<string, number> } }).match.fieldScores,
       ).some((score) => score > 0);
-      /* 欄の一致が在る venue だけが順位表に入る。boost だけで入つた物は弾く。 */
+      /* 欄の一致がある venue だけが順位表に入る。boost だけで入つた物は弾く。 */
       if (!fused.venueHit && !欄の一致) {
         expect(item.fit.score, `證據が無い ${item.venueKey} が順位表に入つた`).toBe(0);
       }
@@ -5952,7 +5934,7 @@ describe("venue recommendation boost gate", () => {
   });
 
   it("keeps boosting venues that already have real evidence", () => {
-    /* 實質の一致が在る venue は boost を受け續ける（順位付けの為の boost は殘す）。 */
+    /* 実質の一致がある venue は boost を受け續ける（順位付けの為の boost は残す）。 */
     const 壇 = [
       {
         conf: {
@@ -5970,8 +5952,8 @@ describe("venue recommendation boost gate", () => {
       Date.UTC(2026, 0, 1),
       { fieldedLexical: true, venueCats: ["security"] },
     );
-    expect(ranked.length, "實質の一致が在る venue が順位表から落ちた").toBeGreaterThan(0);
-    expect(ranked[0].fit.score, "實質の一致が在る venue の得點が 0 に成つた").toBeGreaterThan(0);
+    expect(ranked.length, "実質の一致がある venue が順位表から落ちた").toBeGreaterThan(0);
+    expect(ranked[0].fit.score, "実質の一致がある venue の得点が 0 に成つた").toBeGreaterThan(0);
   });
 
   it("still abstains on a paper with no venue signal", () => {
@@ -5984,6 +5966,6 @@ describe("venue recommendation boost gate", () => {
       Date.UTC(2026, 0, 1),
       { fieldedLexical: true, venueCats: ["hpc", "security"] },
     );
-    expect(ranked.length, "話題の手がかりが無い論文に投稿先を薦めた").toBe(0);
+    expect(ranked.length, "話題の手がかりがない論文に投稿先を薦めた").toBe(0);
   });
 });

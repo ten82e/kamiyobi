@@ -1,13 +1,3 @@
-/**
- * 締切の回（ラウンド）の言い方の検査（SPEC §4・§7・第 334 回）。
- * 実測（2026-09-28 – 2026-08-09 生成の実ビルドの品書 872 行・固定時刻 2026-08-09T00:00:00Z）:
- * 画面が行に「第1ラウンド」の語を出していて（`第1ラウンド` 767 行・`第2ラウンド` 71 行・
- * `第3ラウンド` 15 行・`第4ラウンド` 3 行）、それ以外の打ち方は黙っていた –
- * `第1回` `第2回` `1回目` `初回` `1次締切` `ラウンド2` `1ラウンド目` `第1回締切` いずれも **0 行**。
- * 検査ハーネスの品書（435 行）には 3 回目以降のラウンドが無いので（実測 `第3回` 0 行）、
- * 3 回目以降は「案内は出るが 0 件」側で pins する – 土俵を混ぜない（第 331 回の教訓）。
- */
-
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -76,14 +66,14 @@ describe("締切の回（ラウンド）", () => {
     expect(Recommender.querySynonymNotes("初回")[0]).toContain("締切の回「第1ラウンド」");
   });
 
-  it("収録に無い回は案内だけ出て、行は出さない（3 回目以降はハーネスの品書に無い）", () => {
+  it("収録にない回は案内だけ出て、行は出さない（3 回目以降はハーネスの品書にない）", () => {
     expect(行集合("第3回").size, "ハーネスの品書に 3 回目が現れた（前提が変わった）").toBe(0);
     const 案内 = Recommender.querySynonymNotes("第3回");
     expect(案内.length, "案内を立てていない").toBe(1);
     expect(案内[0]).toContain("第3ラウンド");
   });
 
-  it("表の外（6 回目以降）は寄せない – 黙った 0 件にしないためではなく、無い語を發明しないため", () => {
+  it("表の外（6 回目以降）は寄せない – 黙った 0 件にしないためではなく、ない語を發明しないため", () => {
     ["第6回", "第12回", "七回目"].forEach((語) => {
       expect(行集合(語).size, `"${語}" を受けてしまった`).toBe(0);
       expect(Recommender.querySynonymNotes(語).join(""), `"${語}" の案内を立てた`).toBe("");
@@ -100,14 +90,13 @@ describe("締切の回（ラウンド）", () => {
 
   it("画面が出す回の語が表として成果物に残る（寄せ先の語が画面の語である根拠 – 第 334 回）", () => {
     const rec = readFileSync(join(builtSite(), "recommender.js"), "utf8");
-    /* 表その物を取り出して見る – 回の語は検索の寄せ先の説明文にも同じ語で出るため、
-     * 成果物全体を眺めるだけでは表が壊れた事に気づかない（第 334 回の改ざん検査で実測した穴）。 */
+
     const 表 = /const ROUND_LABELS_JA = \[([\s\S]*?)\];/.exec(rec);
     expect(表, "画面が出す締切の回の語の表が成果物から見えない").not.toBeNull();
     const 中身 = (表 as unknown as RegExpExecArray)[1];
     for (let n = 1; n <= 5; n += 1) {
       expect(中身.includes(`"第${n}ラウンド"`), `回の表から 第${n}ラウンド が消えた`).toBe(true);
     }
-    expect(表 as unknown as RegExpExecArray, "回の語の表が無い").not.toBeNull();
+    expect(表 as unknown as RegExpExecArray, "回の語の表がない").not.toBeNull();
   });
 });

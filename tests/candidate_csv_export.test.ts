@@ -1,17 +1,3 @@
-/**
- * 推薦の候補を CSV で持ち出す検査（第 870 回）。
- *
- * 「投稿先を探す」の候補には**出口が無かった**（第 856 回は締切の一覧の .ics、第 864 回に
- * 候補の .ics、第 863 回に配付する `data.csv` の状態列まで来て、候補の表計算だけが残っていた）。
- * 候補を表計算に並べ、一致の点で並べ替えて締切と突き合わせるのが投稿先を決めるときの実際の動作。
- *
- * ここでは次を見張る：
- *   - 締切の欄は一覧の CSV と**同じ関数**から作る（同じ行が 2 つの書き方に割れない）
- *   - 先頭の 4 列が一致評価・一致の点・言葉の一致・意味の近さで、意味の近さは 0 を書かない
- *   - 画面の繋ぎ（押せる物・押したときの動き・ファイル名）が在る
- *   - 索引（llms.txt）が候補の欄の意味を書いている
- */
-
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -68,7 +54,7 @@ function 欄(line: string): string[] {
   return out;
 }
 
-/** `candidateScopeOnScreen` を、最小の DOM で使える形で組み立てる（畫面の正本を其のまま使ふ）。 */
+/** `candidateScopeOnScreen` を、最小の DOM で使える形で組み立てる（画面の正本をそのまま使う）。 */
 function 候補の別(document: unknown, mode: string): () => boolean {
   const src = jsFunction(siteRuntime(), "candidateScopeOnScreen");
   return new Function("state", "document", vmSafeSource(`${src}\nreturn candidateScopeOnScreen;`))(
@@ -95,14 +81,14 @@ describe("推薦の候補を CSV で持ち出す（第 870 回）", () => {
     /* 5 列目から後ろは一覧の CSV と同じ見出し（同じ語を 2 つの書き方に割らない）。 */
     const 一覧 = 行々(Recommender.deadlinesToCsv([候補()], NOW));
     expect(見出し.slice(4), "締切の欄の見出しが一覧と違う").toEqual(一覧.見出し);
-    /* 行も同じ – 締切の欄は同じ関数から作る（值の写し間違いをここで止める）。 */
+    /* 行も同じ – 締切の欄は同じ関数から作る（値の写し間違いをここで止める）。 */
     expect(行.length, "1 行になっていない").toBe(1);
-    expect(行[0].slice(4), "締切の欄の值が一覧と違う").toEqual(一覧.行[0]);
+    expect(行[0].slice(4), "締切の欄の値が一覧と違う").toEqual(一覧.行[0]);
     /* 見出しと行の数が合う（欄を足して見出しを忘れる、を止める）。 */
     expect(行[0].length, "見出しと行の欄数が違う").toBe(見出し.length);
   });
 
-  it("一致の 4 列は、画面の札と行の詳細が出す值をそのまま書く", () => {
+  it("一致の 4 列は、画面の札と行の詳細が出す値をそのまま書く", () => {
     const { 行 } = 行々(Recommender.candidateRowsToCsv([候補()], NOW));
     const [評価, 点, 言葉, 意味] = 行[0];
     expect(評価, "一致評価の語が違う").toBe("候補");
@@ -116,7 +102,7 @@ describe("推薦の候補を CSV で持ち出す（第 870 回）", () => {
     ]);
   });
 
-  it("実際の候補（収録の品書から推薦を回す）でも、4 列が fit の值と一致する", () => {
+  it("実際の候補（収録の品書から推薦を回す）でも、4 列が fit の値と一致する", () => {
     /* 手で作った行ではなく、**本物の推薦の出力**で見る（欄の名前と `fit` の対応がずれても、
      * 見本の行なら気付かない）。品書はテスト用のビルドが作る `catalog.json` を使う。 */
     const catalog = JSON.parse(readFileSync(join(builtSite(), "catalog.json"), "utf8"));
@@ -151,7 +137,7 @@ describe("推薦の候補を CSV で持ち出す（第 870 回）", () => {
         String(r.fit.lexicalScore),
       );
     }
-    /* 画面が付ける印の対応（`site/app.ts`）が変わっていない – 変わったら此の寫しも直す。 */
+    /* 画面が付ける印の対応（`site/app.ts`）が変わっていない – 変わったらこの寫しも直す。 */
     const app = siteRuntime();
     for (const [印, 元] of [
       ["_matchScore", "score"],
@@ -165,56 +151,56 @@ describe("推薦の候補を CSV で持ち出す（第 870 回）", () => {
     }
   });
 
-  it("意味の近さは 0 を書かない（測って居ないのと、測って 0 を同じ數字にしない）", () => {
+  it("意味の近さは 0 を書かない（測って居ないのと、測って 0 を同じ数字にしない）", () => {
     /* 画面も「意味の近さ 0点」とは出さない（札の内訳は 0 より大きいときだけ並ぶ）。意味検索を
-     * 使えない環境では全行が 0 になるので、其れを「近さ 0」と書くと表計算の人が別の意味に読む。 */
+     * 使えない環境では全行が 0 になるので、それを「近さ 0」と書くと表計算の人が別の意味に読む。 */
     const 意味無し = 行々(
       Recommender.candidateRowsToCsv([候補({ _semScore: 0 }), 候補({ _semScore: undefined })], NOW),
     );
     expect(意味無し.行[0][3], "意味の近さ 0 を書いた").toBe("");
-    expect(意味無し.行[1][3], "值の無い行に何か書いた").toBe("");
-    /* 言葉の一致は逆に 0 も書く（行の詳細が「言葉の一致スコア 0点」と出す值）。 */
+    expect(意味無し.行[1][3], "値のない行に何か書いた").toBe("");
+    /* 言葉の一致は逆に 0 も書く（行の詳細が「言葉の一致スコア 0点」と出す値）。 */
     const 語彙ゼロ = 行々(Recommender.candidateRowsToCsv([候補({ _vocabScore: 0 })], NOW));
     expect(語彙ゼロ.行[0][2], "言葉の一致の 0 を落とした").toBe("0");
   });
 
-  it("值が無い候補でも欄は崩れない（印の無い行・空の入力）", () => {
+  it("値がない候補でも欄は崩れない（印のない行・空の入力）", () => {
     /* 印は推薦の経路だけが付ける。素の締切の行を渡しても欄の数は変わらない（呼び出し側の
      * 取り違えで CSV の欄がずれると、表計算の列が全部ひとつずつずれる）。 */
     const 印無し = 行々(Recommender.candidateRowsToCsv([{ t: NOW, kind: "paper", dl: {} }], NOW));
     expect(印無し.行.length, "行が出ていない").toBe(1);
-    expect(印無し.行[0].slice(0, 4), "印の無い行に何か書いた").toEqual(["", "", "", ""]);
+    expect(印無し.行[0].slice(0, 4), "印のない行に何か書いた").toEqual(["", "", "", ""]);
     expect(印無し.行[0].length, "欄の数が変わった").toBe(印無し.見出し.length);
     /* 空の入力でも見出しだけは出る（表計算に貼る先が無くなるのを防ぐ）。 */
     expect(Recommender.candidateRowsToCsv([], NOW).split("\r\n").filter(Boolean).length).toBe(1);
     expect(Recommender.candidateRowsToCsv(null, NOW)).toBe(Recommender.candidateRowsToCsv([], NOW));
   });
 
-  it("コンマや引用符を含む值も、欄として壊れない", () => {
+  it("コンマや引用符を含む値も、欄として壊れない", () => {
     const csv = Recommender.candidateRowsToCsv(
       [候補({ conf: { key: "x", title: 'A,B "C"', categories: [] } })],
       NOW,
     );
     const { 見出し, 行 } = 行々(csv);
-    expect(行[0].length, "引用した值で欄が割れた").toBe(見出し.length);
+    expect(行[0].length, "引用した値で欄が割れた").toBe(見出し.length);
     /* 欄の番号は見出しから引く（前に 4 列を足したときに番号を書き写さない）。 */
     expect(行[0][見出し.indexOf("会議")], "会議名が壊れた").toContain('A,B "C"');
   });
 
-  it("画面の繋ぎが在る（押せる物・押したときの動き・ラベル・ファイル名）", () => {
+  it("画面の繋ぎがある（押せる物・押したときの動き・ラベル・ファイル名）", () => {
     const dir = builtSite();
     const html = readFileSync(join(dir, "index.html"), "utf8");
-    expect(html, "押せる物が無い").toContain('id="exportCsv"');
+    expect(html, "押せる物がない").toContain('id="exportCsv"');
     const app = siteRuntime();
     /* 推薦の候補の時は候補の欄で書く（画面の別を渡している）。 */
     expect(app, "推薦の別を渡していない").toContain("Recommender.candidateRowsToCsv(");
-    expect(app, "押したときの繋ぎが無い").toContain('addEventListener("click", exportShownCsv)');
-    /* 候補が空なら出さない（隠す條件から推薦の別を外した）。 */
+    expect(app, "押したときの繋ぎがない").toContain('addEventListener("click", exportShownCsv)');
+    /* 候補が空なら出さない（隠す条件から推薦の別を外した）。 */
     expect(app, "推薦では出さないままになっている").not.toContain(
       "exportBtn.hidden = recMode || !shown.length;",
     );
     /* 推薦の画面でも、論文情報が空なら候補は 1 件も出ていない – その時に候補の名で書き出すと、
-     * 画面に出ていない締切の一覧を候補として渡すことになる（隠す條件で止める）。 */
+     * 画面に出ていない締切の一覧を候補として渡すことになる（隠す条件で止める）。 */
     expect(app, "候補が出ていない時に候補の名で出している").toContain(
       "exportBtn.hidden = !shown.length || (recMode && !候補を書き出す);",
     );
@@ -235,11 +221,7 @@ describe("推薦の候補を CSV で持ち出す（第 870 回）", () => {
     expect(文言(12, true), "候補の文言が違う").toBe("この候補 12 件を CSV でダウンロード");
   });
 
-  it("候補の別は、推薦の画面で論文情報が在る時だけ（画面に出ていない行を候補と呼ばない）", () => {
-    /* 推薦の画面でも、論文情報が空なら候補は 1 件も出ず、カードは入力を促すだけ。その時に
-     * 「この候補 N 件」と言って締切の一覧を書き出すと、**画面に出ていない行**を候補として
-     * 渡すことになる（第 870 回に気付いた。第 864 回の .ics も同じ條件だった）。規則は
-     * `candidateScopeOnScreen()` 一本で持ち、書き出しと隠す條件の両方がそれを見る。 */
+  it("候補の別は、推薦の画面で論文情報がある時だけ（画面に出ていない行を候補と呼ばない）", () => {
     const src = jsFunction(siteRuntime(), "candidateScopeOnScreen");
     const 見る = (mode: string, paper: string): boolean =>
       (
@@ -251,7 +233,7 @@ describe("推薦の候補を CSV で持ち出す（第 870 回）", () => {
     expect(見る("recommend", "合意形成とフォールトトレランス"), "候補が出ている時に false").toBe(
       true,
     );
-    /* 空白だけの入力は「空」と同じ（畫面のカードも出ない）。 */
+    /* 空白だけの入力は「空」と同じ（画面のカードも出ない）。 */
     expect(見る("recommend", "   \n "), "空白だけの入力で候補にした").toBe(false);
     expect(見る("recommend", ""), "論文情報が空なのに候補にした").toBe(false);
     expect(見る("deadlines", "合意形成"), "締切の一覧を候補にした").toBe(false);
@@ -261,7 +243,7 @@ describe("推薦の候補を CSV で持ち出す（第 870 回）", () => {
       "document",
       vmSafeSource(`${src}\nreturn candidateScopeOnScreen;`),
     )({ mode: "recommend" }, { getElementById: () => null }) as () => boolean;
-    expect(欄無し(), "欄が無い時に落ちるか、候補にした").toBe(false);
+    expect(欄無し(), "欄がない時に落ちるか、候補にした").toBe(false);
   });
 
   it("押すと、候補の 1 本が落ちて来る（DOM を真似する）", () => {
@@ -278,7 +260,7 @@ describe("推薦の候補を CSV で持ち出す（第 870 回）", () => {
       createElement: () => anchor,
       body: { appendChild: () => {}, removeChild: () => {} },
       /* 候補の別は `candidateScopeOnScreen()` が論文の欄を読んで決める（推薦の画面で論文情報が
-       * 在る時だけ候補 – 下の検査が其の規則を持つ）。 */
+       * ある時だけ候補 – 下の検査がその規則を持つ）。 */
       getElementById: () => ({ value: "合意形成とフォールトトレランス" }),
     };
     class Blob {
@@ -309,9 +291,9 @@ describe("推薦の候補を CSV で持ち出す（第 870 回）", () => {
     expect(落ちた.length, "1 本も落ちて来ない").toBe(1);
     expect(落ちた[0], "名前が違う").toMatch(/^kamiyobi-candidates-\d{8}\.csv$/);
     /* BOM 付きで、先頭の見出しが候補の物（Excel が日本語として読める形）。 */
-    expect(本文.startsWith("\ufeff"), "BOM が無い").toBe(true);
+    expect(本文.startsWith("\ufeff"), "BOM がない").toBe(true);
     expect(本文, "候補の見出しでない").toContain("一致評価,一致の点,言葉の一致,意味の近さ");
-    /* 一覧の時は一覧の名前と欄（同じ関数が畫面の別で書き分ける）。 */
+    /* 一覧の時は一覧の名前と欄（同じ関数が画面の別で書き分ける）。 */
     落ちた.length = 0;
     本文 = "";
     const 一覧で走らせる = new Function(
@@ -341,7 +323,9 @@ describe("推薦の候補を CSV で持ち出す（第 870 回）", () => {
     const llms = readFileSync(join(builtSite(), "llms.txt"), "utf8");
     expect(llms, "候補の書き出しを書いていない").toContain("投稿先を探す");
     expect(llms, "候補の欄を書いていない").toContain("一致評価・一致の点・言葉の一致・意味の近さ");
-    expect(llms, "一致の点と札の違いを書いていない").toContain("当たった証拠の強さで決まる別の值");
+    expect(llms, "一致の点と札の違いを書いていない").toContain(
+      "一致評価は証拠の強さを表す区分で、点とは別",
+    );
   });
 
   it("てびきが、候補の CSV を画面と同じ語で書いている", () => {
@@ -350,21 +334,14 @@ describe("推薦の候補を CSV で持ち出す（第 870 回）", () => {
       "この候補 N 件を CSV でダウンロード",
     );
     expect(html, "てびきがファイル名を書いていない").toContain("kamiyobi-candidates-");
-    /* 直す前の斷りが殘っていない（候補の CSV は出す – てびきと畫面が食い違わない）。 */
+    /* 直す前の斷りが残っていない（候補の CSV は出す – てびきと画面が食い違わない）。 */
     expect(html, "候補では CSV を出さないと書いたまま").not.toContain(
       "投稿先を探す画面では CSV は出しません",
     );
   });
 });
 
-it("候補の CSV は順位表と同じ行を書く（第 1095 囘）", () => {
-  /* 第 1088 囘で分類の boost に門を付けた（證據が在る投稿先だけ順位表に入る）。
-   * 候補の CSV は `shown`（＝順位表）を書き出すので、其の變更が其の儘效いて居る筈。
-   * **同じ筈**を固定化する – CSV は「絞り込み後の全行」を書く（てびきの言之）ので、
-   * 畫面が 20 件でも CSV には全部出る。雜音が除かれた分、行數も減つて居る。
-   *
-   * 實測 2026-11-19: 話題の手がかりが無い論文は順位表 0 行（＝CSV も 0 行）。
-   * 1 件だけ當たる論文は順位表 1 行（＝CSV も 1 行の見出し + 1 行の本文）。 */
+it("候補の CSV は順位表と同じ行を書く（第 1095 回）", () => {
   const src = jsFunction(siteRuntime(), "exportShownCsv");
   const 落ちた: string[] = [];
   let 本文 = "";
@@ -394,11 +371,11 @@ it("候補の CSV は順位表と同じ行を書く（第 1095 囘）", () => {
   走らせる();
   expect(落ちた.length, "1 本も落ちて來ない").toBe(1);
   expect(落ちた[0], "候補の名前が違う").toMatch(/^kamiyobi-candidates-\d{8}\.csv$/);
-  /* **順位表の行數だけ**書く – 雜音を足さない（第 1088 囘の門が CSV にも效いて居る）。
+  /* **順位表の行数だけ**書く – 雜音を足さない。
    * 見出し 1 行 + 渡した行 1 行。 */
   const 行 = 本文.split("\n").filter((l) => l.length > 0);
-  expect(行.length, "順位表の行數と違ふ（餘計な行を書いた）").toBe(2);
+  expect(行.length, "順位表の行数と違う（餘計な行を書いた）").toBe(2);
   expect(行[0], "候補の見出しでない").toContain("一致評価");
-  /* BOM 付きで、Excel が日本語として読める形（第 1095 囘の既存の決まり）。 */
-  expect(本文.startsWith("\ufeff"), "BOM が無い").toBe(true);
+  /* BOM 付きで、Excel が日本語として読める形。 */
+  expect(本文.startsWith("\ufeff"), "BOM がない").toBe(true);
 });

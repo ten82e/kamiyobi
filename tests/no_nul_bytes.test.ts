@@ -1,18 +1,3 @@
-/**
- * 正本とビルド成果物に、文字 NUL（U+0000）が混ざっていないかの検査（SPEC §7・第 281 回）。
- *
- * 2026-09-24 に実測した形:
- *   - `site/recommender.ts` の地名の盾（都市名を国名の置き換えから守る目印）が、
- *     **ソースに生の NUL バイトを 4 個**書いていた（同じファイルの別の所では `\u0000` の
- *     書き表しを使っていて、書き方が割れていた）。
- *   - 画面に出る値は正しくても、**ビルド後の `recommender.js`（利用者every人に配る物）に
- *     NUL が 4 個入る**。テキストとして扱う筈のファイルが、一部の仕組みで連続した文章として
- *     開けなくなる（このセッションで実際に編集機能が「バイナリ」と拒否した）。
- *   - 直し方は生ではなく `\u0000` の書き表しで書く（同じ意味・同じ動き）。置き換え前後で
- *     `placeJa` の結果が 343 行すべて一致すること、他の成果物が 1 バイトも変わらないことを
- *     実測で確かめた。
- */
-
 import { spawnSync } from "node:child_process";
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
@@ -43,7 +28,7 @@ function nulCount(path: string): number {
 }
 
 describe("正本にも配る成果物にも、文字 NUL が混ざっていない（第 281 回）", () => {
-  it("ビルド成果物のどれにも 0x00 が無い", () => {
+  it("ビルド成果物のどれにも 0x00 がない", () => {
     const files = builtFiles();
     expect(files.length, "ビルド成果物が見つからない（空振り検査の防止）").toBeGreaterThan(8);
     const bad = files
@@ -52,7 +37,7 @@ describe("正本にも配る成果物にも、文字 NUL が混ざっていな�
     expect(bad, `NUL を含む成果物がある: ${bad.join(", ")}`).toEqual([]);
   });
 
-  it("正本のソースにも 0x00 が無い", () => {
+  it("正本のソースにも 0x00 がない", () => {
     const files = [...sourceFiles("site"), ...sourceFiles("src"), ...sourceFiles("tests")];
     expect(files.length, "正本が見つからない（空振り検査の防止）").toBeGreaterThan(10);
     const bad = files.filter((p) => nulCount(p) > 0).map((p) => `${p}（${nulCount(p)} 個）`);
@@ -64,7 +49,7 @@ describe("正本にも配る成果物にも、文字 NUL が混ざっていな�
      * ここで見つける。盾の関数（都市名を退避する所）の本体に、書き表しの目印が有り、
      * 且つその本体に生が無いことまで見る。 */
     const body = jsFunction(siteRuntime("recommender.js"), "placeTermJa");
-    expect(body, "盾の関数に目印の書き表しが無い（退避する作りが消えた）").toMatch(
+    expect(body, "盾の関数に目印の書き表しがない（退避する作りが消えた）").toMatch(
       /\\u00[0-9A-Fa-f]{2}/,
     );
     expect(

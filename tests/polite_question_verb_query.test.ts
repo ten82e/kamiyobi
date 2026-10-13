@@ -1,4 +1,4 @@
-/** 訪ねの動詞で打たれた打ち方の檢査（SPEC §7・第 523 回）。 */
+/** 訪ねの動詞で打たれた打ち方の検査（SPEC §7・第 523 回）。 */
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -34,7 +34,7 @@ function 案内(語: string): string {
     .join(" ∥ ");
 }
 
-/** 訪ねの語を落としたら、其れ無しの打ち方と全く同じ行が出るべき物。 */
+/** 訪ねの語を落としたら、それ無しの打ち方と全く同じ行が出るべき物。 */
 const 組み: Array<[string, string]> = [
   ["採否が知りたい", "採否"],
   ["査読について知りたい", "査読"],
@@ -44,7 +44,7 @@ const 組み: Array<[string, string]> = [
 ];
 
 describe("訪ねの動詞で打つ人", () => {
-  it("其の方の打ち方と同じ行集合になる（品書）", () => {
+  it("その方の打ち方と同じ行集合になる（品書）", () => {
     const rows = 品書();
     組み.forEach(([訪ね, 正]) => {
       expect(当たり(rows, 訪ね).sort(), `"${訪ね}" が "${正}" と違う行を出している`).toEqual(
@@ -53,7 +53,7 @@ describe("訪ねの動詞で打つ人", () => {
     });
   });
 
-  it("収録でも同じ件數で、0 件では無い", () => {
+  it("収録でも同じ件数で、0 件ではない", () => {
     const rows = 収録();
     組み.forEach(([訪ね, 正]) => {
       expect(当たり(rows, 訪ね).length, `"${訪ね}" が 0 件`).toBeGreaterThan(0);
@@ -61,7 +61,7 @@ describe("訪ねの動詞で打つ人", () => {
     });
   });
 
-  it("表に無い事を訪ねた打ち方は、其の名を名乘つて斷る（第 388 回）", () => {
+  it("表にない事を訪ねた打ち方は、その名を名乘つて斷る（第 388 回）", () => {
     (
       [
         ["ビザは知りたい", "ビザ"],
@@ -83,7 +83,7 @@ describe("訪ねの動詞で打つ人", () => {
     });
   });
 
-  it("內容語になり得る語は落とさない（彈いた語尾 – 實測で行を持つ）", () => {
+  it("内容語になり得る語は落とさない（彈いた語尾 – 実測で行を持つ）", () => {
     const b = readFileSync(join(REPO_ROOT, "site", "recommender.ts"), "utf8");
     const i = b.indexOf("const 訪ねの語かJa");
     expect(i, "落とす語の表が見つからない").toBeGreaterThan(0);

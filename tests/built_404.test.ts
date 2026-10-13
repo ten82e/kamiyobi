@@ -22,10 +22,10 @@ function bodyText(): string {
     .replace(/\s+/g, " ");
 }
 
-it("無い場所に開いた人を、日本語で締切の場所に帰す（第 307 回）", () => {
+it("ない場所に開いた人を、日本語で締切の場所に帰す（第 307 回）", () => {
   const html = page();
   expect(html).toContain('<html lang="ja">');
-  expect(html, "見出しが日本語で無い").toContain("そのページは見つかりません");
+  expect(html, "見出しが日本語でない").toContain("そのページは見つかりません");
   /* 無い場所の応答を検索エンジンに本文として拾わせない。 */
   expect(html).toContain('name="robots" content="noindex"');
   /* 帰す先は画面・直近の一覧・カレンダー・機械可読のデータの 4 口。 */
@@ -49,7 +49,7 @@ it("404 ページの口はサイトの絶対 URL で、サイトの直下で間�
   const canonical = /<link rel="canonical" href="([^"]+)\/upcoming\.html">/.exec(
     readFileSync(join(builtSite(), "upcoming.html"), "utf8"),
   );
-  expect(canonical, "canonical が読めない（基準が無い）").not.toBeNull();
+  expect(canonical, "canonical が読めない（基準がない）").not.toBeNull();
   const base = canonical![1];
   const links = [...page().matchAll(/<a href="([^"]+)"/g)].map((m) => m[1]);
   expect(links.length).toBeGreaterThanOrEqual(4);
@@ -76,10 +76,10 @@ it("404 ページは締切も会期も載せない – 日付を推測しない�
 });
 
 it("出口の索引（llms.txt）が 404 ページを隠さない（第 307 回）", () => {
-  expect(existsSync(join(builtSite(), "404.html")), "404.html が無い").toBe(true);
+  expect(existsSync(join(builtSite(), "404.html")), "404.html がない").toBe(true);
   const llms = readFileSync(join(builtSite(), "llms.txt"), "utf8");
   const line = llms.split("\n").find((l) => l.startsWith("- 404.html"));
-  expect(line, "llms.txt に 404.html の項が無い").toBeTruthy();
+  expect(line, "llms.txt に 404.html の項がない").toBeTruthy();
   /* 名前の行だけでも出てくるので、出口の用事まで書かれていることを見る（説明の項が別名に
      なって空振りする改ざんを捕まえる – 第 307 回）。 */
   for (const 語 of ["絶対 URL", "日付は載せない"]) {
@@ -99,6 +99,6 @@ it("出口に、表計算と文字だけの表も並んでいる（第 737 回�
     expect(html, `${file} への出口が無い`).toContain(`${file}"`);
     expect(html, `${file} の説明が無い`).toContain(語);
   }
-  /* 出口の數（足した分だけ増えている）。 */
-  expect((html.match(/<li><a href/g) || []).length, "出口の數が合わない").toBe(7);
+  /* 出口の数（足した分だけ増えている）。 */
+  expect((html.match(/<li><a href/g) || []).length, "出口の数が合わない").toBe(7);
 });

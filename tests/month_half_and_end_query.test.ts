@@ -1,12 +1,3 @@
-/**
- * 月の後半・半ば・終わりという打ち方の検査。SPEC §4・§7・第 356 回。
- * 実測（2026-10-14 – 2026-08-09 生成の実ビルドの品書 872 行・固定時刻 2026-08-09T00:00:00Z）:
- * `8月下旬` 91 行・`来月下旬` 85 行・`中旬` 74 行・`月末` 189 行・`週末` 268 行が通るのに、
- * 同じ幅の別の言い方 `8月後半` `来月後半` `9月の後半` `月後半` `月中盤` `月半ば` `月終わり`
- * `月の終わり` `週末頃` はいずれも **0 行**だった（其の方の幅の表に語が抜けただけ – 第 348 回）。
- * 逆に `月前半` は公用の区切りが無いので **寄せない侭、案内を出す**（第 355 回の決まり）。
- */
-
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -31,7 +22,7 @@ function 対称差(a: string, b: string): number {
   return [...x].filter((k) => !y.has(k)).length + [...y].filter((k) => !x.has(k)).length;
 }
 
-/** 同じ幅の別の言い方 → 其の方の幅の語。 */
+/** 同じ幅の別の言い方 → その方の幅の語。 */
 const 寄せの組: Array<[string, string]> = [
   ["8月後半", "8月下旬"],
   ["来月後半", "来月下旬"],
@@ -57,21 +48,21 @@ const 寄せの組: Array<[string, string]> = [
 ];
 
 describe("月の後半・半ば・終わり", () => {
-  it("其の方の幅と一字も違わない行集合になる（勝手に幅を作らない）", () => {
+  it("その方の幅と一字も違わない行集合になる（勝手に幅を作らない）", () => {
     for (const [打ち方, 幅] of 寄せの組) {
       expect(行列表(幅).length, `其の方の \`${幅}\` が 0 行（対照が空）`).toBeGreaterThan(0);
       expect(対称差(打ち方, 幅), `\`${打ち方}\` が \`${幅}\` と違う行を出した`).toBe(0);
     }
   });
 
-  it("寄せた形も幅の日付を案内に書く（其の方の表をそのまま通る証拠）", () => {
+  it("寄せた形も幅の日付を案内に書く（その方の表をそのまま通る証拠）", () => {
     expect(Recommender.relativeDayNotes("8月後半", 基準).join(" ")).toContain("2026年8月21日");
     expect(Recommender.relativeDayNotes("月半ば", 基準).join(" ")).toContain("2026年8月11日");
   });
 
   it("週の時合を壊さない（『今週後半』を『今下旬』に化けさせない）", () => {
-    /* 裸の幅の規則は月の語にだけ効く – 前の文字が 数字・他の月の語・週の語の時は其の方の規則に
-     * 譲る（其れを崩すと `8月中盤` は `8中旬` に化けて 0 行に落ちた – 実測で検出した）。 */
+    /* 裸の幅の規則は月の語にだけ効く – 前の文字が 数字・他の月の語・週の語の時はその方の規則に
+     * 譲る（それを崩すと `8月中盤` は `8中旬` に化けて 0 行に落ちた – 実測で検出した）。 */
     expect(行列表("今週").length, "対照の `今週` が 0 行").toBeGreaterThan(0);
     expect(行列表("今週後半").length, "『今週後半』が幅に寄せられて行が増えた").toBe(0);
     expect(対称差("8月中盤", "8月中旬"), "`8月中盤` が壊れた").toBe(0);
@@ -80,22 +71,22 @@ describe("月の後半・半ば・終わり", () => {
 });
 
 describe("月前半は寄せない", () => {
-  it("公用の区切りが無いので 0 行の侭、其の方の打ち方を教える", () => {
+  it("公用の区切りがないので 0 行の侭、その方の打ち方を教える", () => {
     expect(行列表("月前半").length, "`月前半` を上旬に寄せてしまった").toBe(0);
     expect(行列表("上旬").length, "対照の `上旬` が 0 行").toBeGreaterThan(0);
     const 案内 = Recommender.uiWordNoteJa("月前半");
     expect(案内).toContain("「月前半」");
-    expect(案内, "公用の決まりが無い事を言っていない").toContain("公用の決まりが無い");
-    expect(案内, "其の方の打ち方を教えない").toContain("『上旬』");
+    expect(案内, "公用の決まりがない事を言っていない").toContain("公用の決まりが無い");
+    expect(案内, "その方の打ち方を教えない").toContain("『上旬』");
     expect(案内).toContain("『中旬』");
     expect(Recommender.uiWordLiveNoteJa("月前半")).toContain("『上旬』");
-    /* 語を並べて打たれた形にも届く（第 354 回の合図）。 */
+    /* 語を並べて打たれた形にも届く。 */
     expect(Recommender.uiWordNoteJa("月前半 オンライン")).toContain("「月前半」");
   });
 });
 
 describe("壊していない物", () => {
-  it("其の方の幅・休日の案内・月の末の形は其侭", () => {
+  it("その方の幅・休日の案内・月の末の形は其侭", () => {
     for (const 語 of ["上旬", "中旬", "下旬", "8月上旬", "来月下旬", "8月中旬"]) {
       expect(行列表(語).length, `\`${語}\` が落ちた`).toBeGreaterThan(0);
     }
@@ -112,7 +103,7 @@ describe("壊していない物", () => {
 });
 
 describe("成果物", () => {
-  it("三つの寄せが成果物の関数に一度ずつ在る", () => {
+  it("三つの寄せが成果物の関数に一度ずつある", () => {
     const rec = readFileSync(join(builtSite(), "recommender.js"), "utf8");
     const 本文 = jsFunction(rec, "collapseRelativeDayPhrase");
     expect(本文.length, "`collapseRelativeDayPhrase` が見つからない").toBeGreaterThan(0);

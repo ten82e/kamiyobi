@@ -1,8 +1,3 @@
-/**
- * 画面のてびきから収録の裏取りの報告（`health.md`）へ行けることの検査（SPEC §4・§7・第 308 回）。
- * ビルド済みサイトは `tests/built_site.ts` 経由で共有する。
- */
-
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { expect, it } from "vitest";
@@ -18,18 +13,18 @@ function helpEntry(html: string, term: string): string {
   return html.slice(start, end);
 }
 
-it("てびきに、収録の裏取りの報告（health.md）への口が在る（第 308 回）", () => {
+it("てびきに、収録の裏取りの報告（health.md）への口がある（第 308 回）", () => {
   const html = readFileSync(join(builtSite(), "index.html"), "utf8");
   const entry = helpEntry(html, "データの健全性（health.md）");
   /* 口が実際のファイルを指している（存在しない物を教えない）。 */
-  expect(entry, "health.md へのリンクが無い").toContain('<a href="health.md"');
-  expect(existsSync(join(builtSite(), "health.md")), "指している health.md が無い").toBe(true);
+  expect(entry, "health.md へのリンクがない").toContain('<a href="health.md"');
+  expect(existsSync(join(builtSite(), "health.md")), "指している health.md がない").toBe(true);
   /* 何のファイルか分からないと押せない – title に中身を書いてある。 */
-  expect(entry, "リンクの説明（title）が無い").toContain("title=");
+  expect(entry, "リンクの説明（title）がない").toContain("title=");
   /* 「データ源」「データ更新」と同じまとまりに置く – 更新の話の隣に無いと見付からない。 */
   expect(
     html.indexOf("<dt>データ源</dt>") < html.indexOf("<dt>データの健全性（health.md）</dt>"),
-    "データ源より前に置いてある（更新の話の隣に無い）",
+    "データ源より前に置いてある（更新の話の隣にない）",
   ).toBe(true);
   expect(
     html.indexOf("<dt>データの健全性（health.md）</dt>") <
@@ -39,9 +34,6 @@ it("てびきに、収録の裏取りの報告（health.md）への口が在る�
 });
 
 it("てびきが.health.md の中身として書いたことを、報告が実際に載せている（第 308 回）", () => {
-  /* 口の説明で「何が書いてあるか」を書くなら、報告の側に其れが在ることを見る。
-   * 報告の側だけ直して、画面の言い回しが噓を言い始めるのを止めたい（第 299 回の
-   * 「言い回しは 1 箇所の正本から」と同じ約束）。 */
   const html = readFileSync(join(builtSite(), "index.html"), "utf8");
   const entry = helpEntry(html, "データの健全性（health.md）");
   const report = readFileSync(join(builtSite(), "health.md"), "utf8");
@@ -58,7 +50,7 @@ it("てびきが.health.md の中身として書いたことを、報告が実�
   }
   /* 機械が読む形の名前も画面から教える（報告の名前を実在する物だけ書く）。 */
   expect(entry).toContain("health.json");
-  expect(existsSync(join(builtSite(), "health.json")), "health.json が無い").toBe(true);
+  expect(existsSync(join(builtSite(), "health.json")), "health.json がない").toBe(true);
 });
 
 it("正本の実測メモが 2 度書いていない – 一方だけ直し忘れると噓が始まる（第 308 回）", () => {

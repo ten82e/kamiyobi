@@ -1,9 +1,9 @@
-/** 会場を別の言い方・訪ね方で打った人の檢査（SPEC §7・第 524 回）。 */
+/** 会場を別の言い方・訪ね方で打った人の検査（SPEC §7・第 524 回）。 */
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import Recommender from "../site/recommender.ts";
 
-/** 打ち込むと品書 0 件になる訪ね方（畫面は 0 件の時だけ案内を出す – 第 337 回）。 */
+/** 打ち込むと品書 0 件になる訪ね方（画面は 0 件の時だけ案内を出す – 第 337 回）。 */
 const 訪ね: Array<[string, string]> = [
   ["会場はどこ", "会場"],
   ["会場はどこですか", "会場"],
@@ -43,9 +43,11 @@ describe("会場を別の言い方で訪ねる人", () => {
     });
   });
 
-  it("其の方で 0 件の訪ね形が斷りに就いた（無言の殘りを增やさない）", () => {
+  it("その方で 0 件の訪ね形が斷りに就いた（無言の残りを增やさない）", () => {
     (["会場はどこ", "場所", "開催場所", "会議場", "種別はどれ"] as string[]).forEach((文) => {
-      expect(案内(文).includes("值で打ってください"), `"${文}" が値の語を促して居ない`).toBe(true);
+      expect(案内(文).includes("値で検索してください"), `"${文}" が値の語を促して居ない`).toBe(
+        true,
+      );
     });
   });
 
@@ -54,8 +56,8 @@ describe("会場を別の言い方で訪ねる人", () => {
     const b = readFileSync("site/recommender.ts", "utf8");
     const i = b.indexOf("const 剥ぐ語尾 = [");
     const 域 = b.slice(i, b.indexOf("\n    ];", i));
-    expect(域.includes('"いつ"'), "`いつ` を剥ぐやうになつた – 幅の語を落とす事になる").toBe(false);
-    expect(域.includes('"あります"'), "`あります` を剥ぐやうになつた – 品書 2 行の內容語").toBe(
+    expect(域.includes('"いつ"'), "`いつ` を剥ぐやうになった – 幅の語を落とす事になる").toBe(false);
+    expect(域.includes('"あります"'), "`あります` を剥ぐやうになった – 品書 2 行の内容語").toBe(
       false,
     );
     expect(Recommender.queryTokens("締切はいつ", Date.parse("2026-08-09T00:00:00Z"))).toEqual([

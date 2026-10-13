@@ -52,7 +52,7 @@ it("同じ国を指す二つの言い方が、同じ行に出会う（第 311 �
   }
 });
 
-it("合衆国・USA は、開催地に其の国の表記を書く行をこぼさない（第 311 回）", () => {
+it("合衆国・USA は、開催地にその国の表記を書く行をこぼさない（第 311 回）", () => {
   /* `合衆国` は `米国` より 26 行少なかった（実測 182 行 / 208 行）。届かなかったのは開催地に
    * `United States` と書く行で、寄せ先に `usa` と `america` しか無かったため – 表記を足して
    * 塞いだ（残る差は州名だけで書かれた行で、地域まとめの構成員である `米国` 側にだけ効く –
@@ -74,7 +74,7 @@ it("合衆国・USA は、開催地に其の国の表記を書く行をこぼさ
   const us = reached("米国");
   const gasshuukoku = reached("合衆国");
   /* 正式名と郵便略記の両方で見る – 実測で差の 5 行のうち 1 行は `San Jose, CA` のように
-   * 略記だけを書く行だった（第 310 回で略記を寄せ先に足した州）。 */
+   * 略記だけを書く行だった。 */
   const 州 =
     /(^|[^a-z])(ak|az|ca|co|fl|ga|hi|il|in|md|ma|mi|nv|ny|nc|oh|or|pa|tx|ut|va|wa)([^a-z]|$)|\b(alaska|arizona|california|colorado|florida|georgia|hawaii|illinois|indiana|maryland|massachusetts|michigan|nevada|new york|north carolina|ohio|oregon|pennsylvania|texas|utah|virginia|washington)\b/i;
   const 差 = [...us].filter((r) => !gasshuukoku.has(r));
@@ -104,19 +104,15 @@ it("同じ国を指す言い方の寄せ先は、正本の表で等しい（第 
   for (const word of ["英国", "イギリス", "米国", "合衆国"]) {
     expect(sort(寄せ先(word)).length, `「${word}」の寄せ先が空`).toBeGreaterThan(0);
   }
-  /* `合衆国` に `united states` を足した根拠（開催地に其の表記を書く行が 12 種あった – §7）。
+  /* `合衆国` に `united states` を足した根拠（開催地にその表記を書く行が 12 種あった – §7）。
    * 表から落ちると、その行への道が閉じる（当たりの検査は検査用データでは見えない）。 */
   expect(寄せ先("合衆国"), "合衆国 の寄せ先から united states が消えた").toContain("united states");
   expect(寄せ先("英国"), "英国 の寄せ先から united kingdom が消えた").toContain("united kingdom");
-  /* 収録に現れない表記を寄せ先にしない（第 309 回からの不変条件）。今回の 4 語について、
-   * 言い方の組に挙がる語を漏れなく見る – 列挙を自分で絞ると、検査がその語しか見ずに
-   * 新しい死語を通す（対称性を保ったまま死語を足す改ざんが通った実測 → 見ていた語を
-   * 表の語すべてに広げた）。品書（ビルド済み）には検査用のデータしか入っていないので、
-   * 収録の側にも在ることを見る（第 306 回と同じ基準）。 */
+
   const 品書 = readFileSync(join(builtSite(), "catalog.json"), "utf8").toLowerCase();
   const 収録 = readFileSync(join(REPO_ROOT, "data", "snapshot.json"), "utf8").toLowerCase();
   const 対象語 = [...new Set(["英国", "イギリス", "米国", "合衆国"].flatMap((w) => 寄せ先(w)))];
-  expect(対象語.length, "見るべき寄せ先が 1 も無い（表の読み取りが壊れている）").toBeGreaterThan(0);
+  expect(対象語.length, "見るべき寄せ先が 1 もない（表の読み取りが壊れている）").toBeGreaterThan(0);
   const 死語 = 対象語.filter((t) => !品書.includes(t) && !収録.includes(t));
   expect(死語, "品書にも収録にも一度も出ない語を寄せ先にしている").toEqual([]);
 });

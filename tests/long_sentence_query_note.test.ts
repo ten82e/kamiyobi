@@ -1,20 +1,9 @@
-import { queryReferenceSnapshotPath } from "./query_reference.ts";
-/**
- * 敬體の長い文をそのまま打つた人への打ち直し（第 621 回）。
- *
- * 實測（2026-08-09 生成の実ビルド・固定時刻 2026-08-09T00:00:00Z・品書 868 行）で、
- * 十七〜卅字の自然な問ひ文 16 本の内 **14 本が 0 件かつ畫面の導線が何も立たない**だつた。
- * 語の門（`uiWordContain`）が十六字で切れ、其の先は形の家的な導線も無かつた為 –
- * 門を廿四字に上げても（語尾の門が續き十五字までしか受けん）殘つたので、
- * `uiWordShapeNoteJa`（第 615 回の家）に「長い文の打ち直し」の形を増やした。
- * 語の門が先に走る故、斷れる語を持つ文は舊來の精しき斷りが勝つ – 其を下の檢査で張る。
- */
-
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import Recommender from "../site/recommender.ts";
 import { REPO_ROOT } from "./helpers.ts";
+import { queryReferenceSnapshotPath } from "./query_reference.ts";
 
 const 基準 = Date.parse("2026-08-09T00:00:00Z");
 
@@ -44,25 +33,25 @@ describe("第 621 回 – 長い文のまま打つた人へ、語を並べ直す
       expect([...q].length >= 17, `"${q}" は十七字に屆かん`).toBe(true);
       const 注 = String(Recommender.uiWordNoteJa(q) || "");
       expect(注, `"${q}" が默つたまま`).not.toBe("");
-      /* 案内は打ち方を名指す（第 388 回） – 短い斷りの時も打たれた文其のままを書く。 */
+      /* 案内は打ち方を名指す – 短い斷りの時も打たれた文そのままを書く。 */
       expect(注, `"${q}" の斷りが打ち方を名指して居らん`).toContain(q.slice(0, 6));
     }
   });
 
-  it("斷れない文は舊來の精しき斷りが勝つ（形の文に讓らん）", () => {
-    /* 十七字 – 羣の語と既知の語尾が揃ふので語の門が受ける（第 620 回で廿四字に上げた効き）。 */
+  it("斷れない文は旧來の精しき斷りが勝つ（形の文に讓らん）", () => {
+    /* 十七字 – 羣の語と既知の語尾が揃ふので語の門が受ける。 */
     const 精 = "プレプリントを出しても大丈夫ですか";
     const 注 = String(Recommender.uiWordNoteJa(精) || "");
     expect(注).not.toBe("");
     expect(注, "形の方の文が先に立つた").not.toContain(打ち直しJa);
     expect(注).toContain("プレプリント");
-    /* 十三字 – 舊來から語の門が受けて居た形。 */
+    /* 十三字 – 旧來から語の門が受けていた形。 */
     expect(String(Recommender.uiWordNoteJa("招待状は発行してもらえますか") || "")).toContain(
       "招待状",
     );
   });
 
-  it("打ち直しの形は、値の並び・問ひで無い文・ひらがなの無い文を彈く", () => {
+  it("打ち直しの形は、値の並び・問ひでない文・ひらがなのない文を彈く", () => {
     for (const q of [
       "過去の締切 関西", // 値を並べた打ち手（第 250・354 回）
       "会場 京都 オンライン参加可 のやつ一覧", // 同上
@@ -75,7 +64,7 @@ describe("第 621 回 – 長い文のまま打つた人へ、語を並べ直す
     }
   });
 
-  it("長い文の導線は讀み上げの短さを越えん（第 247 回 – 六十字）", () => {
+  it("長い文の導線は読み上げの短さを越えん（第 247 回 – 六十字）", () => {
     const q = "ベストペーパー賞はあるんですか、そういう情報は載っていますか";
     const 短 = String(Recommender.uiWordLiveNoteJa(q) || "");
     expect(短).not.toBe("");
@@ -83,8 +72,8 @@ describe("第 621 回 – 長い文のまま打つた人へ、語を並べ直す
     expect(短).toContain("長い文");
   });
 
-  it("檢索の側は一字も廣げて居らん（第 362 回 – 案内だけ直した）", () => {
-    expect(収録().length, "収録の行總數が動いた").toBe(3250);
+  it("検索の側は一字も広げて居らん（第 362 回 – 案内だけ直した）", () => {
+    expect(収録().length, "収録の行總数が動いた").toBe(3250);
     for (const [語, 行] of [
       ["査読", 32],
       ["採択", 240],

@@ -202,7 +202,7 @@ interface SiteRecommenderApi {
     rows: readonly Record<string, unknown>[] | null | undefined,
     nowMs: number,
   ): string;
-  /** 「締切まで N 日」の窓の端（畫面の `windowLimitMs`・`windowFloorMs` と同じ式。第 872 回）。 */
+  /** 「締切まで N 日」の窓の端（画面の `windowLimitMs`・`windowFloorMs` と同じ式。第 872 回）。 */
   withinDaysLimitMs(days: number, nowMs: number): number;
   withinDaysFloorMs(days: number, nowMs: number): number;
   /** 推薦の候補の CSV（一致評価・一致の点・言葉の一致・意味の近さ＋締切の欄。第 870 回）。 */

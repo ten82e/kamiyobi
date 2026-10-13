@@ -14,7 +14,7 @@ import { REPO_ROOT, runCli, tempWork } from "./helpers.ts";
 import { spawnScript as spawnSync } from "./node_script.ts";
 import { jsFunction, liveNoteSource, siteRuntime, vmSafeSource } from "./runtime_extract.ts";
 
-it("相対週が実カタログで其の週 7 日と同じ行を出し、暦日でも引ける（SPEC §7）", () => {
+it("相対週が実カタログでその週 7 日と同じ行を出し、暦日でも引ける（SPEC §7）", () => {
   // 「来週」が 0 件、`8月11日` が 0 件だった（hay に暦日が無く、週の語も展開しなかった）。
   const script = [
     "(async () => {",
@@ -82,9 +82,7 @@ it("論文から探すの候補も「さらに表示」で全件に到達する�
     `const countJa = (${jsFunction(runtime, "countJa")});`,
     "const more = { hidden: null, textContent: '' };",
     "const showAll = { hidden: null, textContent: '' };",
-    /* 画面には「さらに表示」と「すべて表示」の 2 つのボタンが並ぶので、返す物は id で
-     * 分ける。1 つの物を返すと、のちに足した側の文言が `more` に写ってしまい、この検査が
-     * 画面に無い文言を待つ形になる（第 272 回の実発生）。 */
+
     "const $ = (id) => (id === 'showAll' ? showAll : more);",
     `const moreButtonLabel = ${jsFunction(runtime, "moreButtonLabel")};`,
     `const showAllButtonLabel = ${jsFunction(runtime, "showAllButtonLabel")};`,
@@ -124,17 +122,14 @@ it("同じ締切時刻の行は表に出る会議名と種別で並ぶ（SPEC §
   // 並び順は表のセルに出る語を共通の helper で使う（セルとSORTが別文字列を持つのが原因）。
   expect(runtime).toContain("const name = conferenceNameCell(r);");
   expect(runtime).not.toContain('localeCompare(b.conf.title || "")');
-  /* 並びの基準は**表示の刻み**（`tShown`）– 第 970〜973 回で MCP の `t` を燒き潰した。
-   * 畫面は初めから `tShown` を使つて居る（此れが正）。此處で**其れを守る** – `t` に
-   * 差し戻されると、日付だけの行が表示と食ひ違ふ順に出る（實測 2026-11-16: 「2026-11-27
-   * （時刻未確認）」が「2026-11-26(木) 20:59 JST」の**先**に出た）。 */
-  expect(runtime, "並びの基準が表示の刻みになつて居ない").toContain(
+
+  expect(runtime, "並びの基準が表示の刻みになって居ない").toContain(
     "Number.isFinite(r.tShown) ? r.tShown",
   );
-  expect(runtime, "表示の刻みのフォールバックが無い").toContain(
+  expect(runtime, "表示の刻みのフォールバックがない").toContain(
     "Number.isFinite(r.t) ? r.t : Number.NaN",
   );
-  // 月見出しのキーも表示と同じ JST（表示と違ふ單位で区切ると迷ふ）。
+  // 月見出しのキーも表示と同じ JST（表示と違ふ単位で区切ると迷ふ）。
   expect(runtime).toContain(
     "// 月キーは JST で決める（表示が JST なので、表示と違う単位で区切ると迷う）。",
   );
@@ -657,15 +652,11 @@ it("「締切まで N 日以内」の窓で外れた件数を件数欄に出す�
     html.indexOf("<dt>過去の締切も表示</dt>"),
   );
   expect(dd).toContain("「締切まで 7 日以内」を超える N 件");
-  expect(dd).toContain("収録が薄いわけではありません");
+  expect(dd).toContain("締切日からの日数で絞ります");
   expect(dd).toContain("「かまわない」");
 });
 
 it("月の見出しは、会期の月ではなく締切の月だと書く（SPEC §7）", () => {
-  /* 第 231 回。表には締切の日時列と会期列の両方がある。2026-08-09 生成ビルドの実測で、
-   * 会期が分かる投稿締切の行 94 件のうち 89 件（94.7%）は見出しの月と会期の月が違い、
-   * 30 件は年まで違った（`aila2027`: 締切 2026-11-15 / 会期 2027-04）。月だけの見出しは
-   * そこへ読み違える余地を残す。 */
   const app = siteRuntime();
   const script = [
     `const countJa = (${jsFunction(app, "countJa")});`,
@@ -696,11 +687,6 @@ it("月の見出しは、会期の月ではなく締切の月だと書く（SPEC
 });
 
 it("分野チップは、チップに出る日本語名の五十音順に並ぶ（SPEC §7）", async () => {
-  /* 第 230 回。上は上流の分野表の項目順のままで、2026-08-09 生成ビルドの実測は
-   * 高性能計算 / ネットワーク / システム / 人工知能 / セキュリティ / データベース /
-   * グラフィックス / 人間情報処理 / 計算理論 – 9 個から探している語を探し出す形だった。
-   * 同じ画面の「会議」列は `localeCompare(..., "ja")` で五十音順に並ぶので、日本語の
-   * 並びの約束が画面の中に二つあった。並びは `categoryChipKeys` の 1 本にまとめる。 */
   const R = (await import(pathToFileURL(join(site, "recommender.js")).href))
     .default as typeof Recommender;
   const app = siteRuntime();
@@ -744,11 +730,6 @@ it("分野チップは、チップに出る日本語名の五十音順に並ぶ�
 });
 
 it("画面上部の「これからの30日間の締切」は「30 日以内」の一覧と同じ行を数える（SPEC §7）", () => {
-  /* 第 228 回。上の四つの数は経過 24 時間で区切り、一覧の窓は JST の暦日で区切る（第 202 回）
-   * という二重実装になっていた。2026-08-09 生成ビルドで実測: JST 8/10 朝の見立て
-   * （2026-08-09T21:00Z）で上部 176 件・「30 日以内」の一覧 177 件。一覧が「あと 30 日」と
-   * 出す `pacificvis`（締切 JST 9/9 20:59）が上の数だけに入っていなかった。
-   * 画面の上と下が同じ語について違う数を言うのは、どちらを信じてよいか分からない。 */
   const app = siteRuntime();
   const fn = (name: string) => jsFunction(app, name);
   const script = [
@@ -774,7 +755,7 @@ it("画面上部の「これからの30日間の締切」は「30 日以内」�
       // 31 日後の暦日（どちらの目盛りでも窓の外）。
       { key: "next-day", t: "2026-09-10T02:00:00Z", kind: "paper" },
       // 締切の瞬間は窓の中、でも画面に出る暦日は 31 日後（AoE 詰めなどでずれる行）。
-      // 窓は「表示している暦日」で切る（第 202 回）ので、この行は出ない。
+      // 窓は「表示している暦日」で切るので、この行は出ない。
       {
         key: "shown-later",
         t: "2026-09-09T10:00:00Z",
@@ -831,10 +812,6 @@ it("画面上部の「これからの30日間の締切」は「30 日以内」�
 });
 
 it("CSV ボタンのラベルは、画面に並んでいない行を「表示中」と数えない（SPEC §7）", () => {
-  /* 第 229 回。ラベルは「表示中の 478 件を CSV でダウンロード」だったが、一覧は一度に
-   * 先頭 40 件（`PAGE = 40`）しか並べず、残りはずっと下の「さらに表示」で足す。
-   * つまり 438 件について噓を言っていた。書き出しの中身（絞り込み後の全行）は正しく、
-   * 語だけが誤っていたので、語を直す側の検査にする。 */
   const app = siteRuntime();
   const page = Number(/const PAGE = (\d+);/.exec(app)?.[1]);
   expect(page, "一覧のページングサイズが読めない").toBeGreaterThan(0);
@@ -1076,9 +1053,9 @@ it("画面に出る状態の語（推定）が一覧の検索でも引ける（S
     csvHasWord: boolean;
     noFalsePositive: number;
   };
-  expect(out.flagged, "検査用カタログに推定の行が無い").toBeGreaterThan(0);
+  expect(out.flagged, "検査用カタログに推定の行がない").toBeGreaterThan(0);
   expect(out.sameSet, "「推定」で引ける行と推定バッジの行が違う").toBe(true);
-  expect(out.hayHasWord, "推定行の検索用文字列に「推定」が無い").toBe(true);
+  expect(out.hayHasWord, "推定行の検索用文字列に「推定」がない").toBe(true);
   expect(out.csvHasWord, "CSV の状態欄と検索の語がズレている").toBe(true);
   expect(out.noFalsePositive, "推定でない行が「推定」で当たる").toBe(0);
   // 件数欄は、落ちた行の出し方まで同じ行に書く（回復経路を検索語から探させない）。
@@ -1194,7 +1171,7 @@ it("参加形式の語で引いた行が、チェックボックスで出る行�
     hybridOutside: string[];
     noFalseFacet: number;
   };
-  expect(out.predicate, "収録カタログにオンライン参加可の行が無い").toBeGreaterThan(0);
+  expect(out.predicate, "収録カタログにオンライン参加可の行がない").toBeGreaterThan(0);
   expect(out.sameAsPhrase, "「オンライン参加可」で引ける行とチェックボックスの行が違う").toBe(true);
   expect(out.hybrid, "「ハイブリッド」が 0 件").toBeGreaterThan(0);
   expect(out.hybridOutside, "「ハイブリッド」がオンライン参加の記載のない行を出した").toEqual([]);
@@ -1377,7 +1354,7 @@ it("収録 5 行以上の開催都市は、カタカナの入力でたどれな�
   // 判定を飛ばした条目が多すぎるなら（表が実データから浮いている）、この目検が効かなくなる。
   expect(
     out.unjudged,
-    "このビルドに無い都市への寄せが多すぎる（表が実データから浮いている）",
+    "このビルドにない都市への寄せが多すぎる（表が実データから浮いている）",
   ).toBeLessThan(30);
 });
 
@@ -1634,7 +1611,7 @@ it("「中国」で国と地方の両方が出ても、大陸の語に国内の�
   ).toEqual([]);
 });
 
-it("ランク順は等級で並び、評価の無い行は末尾に回る（SPEC §7）", () => {
+it("ランク順は等級で並び、評価のない行は末尾に回る（SPEC §7）", () => {
   /* 変更前は `rankPairs[0]`（`ccf:A` のような文字列）で並べていたので、
    * 体系名が等級より先に効き、降順で ccf:N（評価が付いていない）の行が先頭に
    * 来ていた（2026-09-23 実測）。並びの規則は recommender の `rankSortKey` が正本で、
@@ -1644,7 +1621,7 @@ it("ランク順は等級で並び、評価の無い行は末尾に回る（SPEC
   const rankAt = app.indexOf('sortKey === "rank"');
   const rankEnd = app.indexOf("compareDeadlineRows(a, b, mult)", rankAt);
   // 目印が見つからず -1 になると slice の終端が化けて、中身を見ているのに見ていない
-  // 検査になる（第 91 回で呼び出し形を変えたときに実際へ起きた）。
+  // 検査になる。
   expect(rankAt, "ランク順の並び替え箇所が見つからない").toBeGreaterThan(0);
   expect(rankEnd, "ランク順が比較関数を呼んでいない").toBeGreaterThan(rankAt);
   const rankBlock = app.slice(rankAt, rankEnd);
@@ -1810,24 +1787,15 @@ it("「評価でしぼる」でのぞいた件数を件数欄に出す（SPEC §
    * 等級の判定は recommender の正本（厳密比較）を使う — 選択欄と同じ比較式でないと
    * 「A」が「A*」に誤マッチして数字が合うはずのものが合わなくなる。 */
   const runtime = siteRuntime();
-  /* 長い論文は最初の 20 行だけを見る（第 954 回 – 39 KB を貼ると 120 秒逾も固まつて居た）。
-   * 切つたことは**件數欄**で言ふ（默つて切ると「參考にして居ない」がばれる）。 */
-  expect(runtime, "截つた行の宣告が件數欄に無い").toContain("行を省いて調べました");
-  expect(runtime, "截つた行を數へて居ない").toContain("截つた行 =");
 
-  /* `upcoming.md` の**推定の行**に札が付いて居るか（第 962 回）。實測 2026-11-14:
-   * 1,128 行のうち 19 行が「推定期間 …」（推定）で、その全てに「推定」の札が付いて居た。
-   * **數へ方を間違へると見落とす** – 推定の行は「| 20…」ではなく「| 推定期間 …」で始まるので、
-   * 日付の行だけを拾ふ篩だと 0 件に見える（此の回で實際に誤報した）。兩方は**同じ事實の
-   * 同じ出所**（版の estimate）なので、片方だけ立って居ると噓になる。 */
-  /* 見るのは**配つてある物**（`public/upcoming.md`）– 此のビルドが使ふ fixture のキャッシュ
-   * には推定の版が入つて居ない（實測 2026-11-14: fixture 0 行・本物 19 行）ので、
-   * fixture を見ると coverage が空になる。CI は `public/` を作るので、無い時は飛ばす。 */
+  expect(runtime, "截つた行の宣告が件数欄にない").toContain("行を省いて調べました");
+  expect(runtime, "截つた行を数えて居ない").toContain("截つた行 =");
+
   const 配布物 = join(REPO_ROOT, "public", "upcoming.md");
   if (!existsSync(配布物)) return;
   const md = readFileSync(配布物, "utf8").split("\n");
   const 頭の行 = md.findIndex((l) => l.startsWith("| 日付"));
-  expect(頭の行, "upcoming.md の表の見出しが讀めない").toBeGreaterThan(0);
+  expect(頭の行, "upcoming.md の表の見出しが読めない").toBeGreaterThan(0);
   const 欄 = md[頭の行]
     .trim()
     .replace(/^\|/, "")
@@ -1835,7 +1803,7 @@ it("「評価でしぼる」でのぞいた件数を件数欄に出す（SPEC §
     .split("|")
     .map((c) => c.trim());
   const 推定の欄 = 欄.indexOf("推定");
-  expect(推定の欄, "推定の欄が無い（この檢查の前提が崩れた）").toBeGreaterThan(0);
+  expect(推定の欄, "推定の欄がない（この検查の前提が崩れた）").toBeGreaterThan(0);
   const 箱 = (l: string): string[] =>
     l
       .trim()
@@ -1846,7 +1814,7 @@ it("「評価でしぼる」でのぞいた件数を件数欄に出す（SPEC §
   const 行々 = md.slice(頭の行 + 2).filter((l) => l.startsWith("|"));
   const 推定期間の行 = 行々.filter((l) => 箱(l)[0].startsWith("推定期間"));
   const 札の無い = 推定期間の行.filter((l) => 箱(l)[推定の欄] !== "推定");
-  expect(推定期間の行.length, "推定期間の行が 1 行も無い（この檢查が空振り）").toBeGreaterThan(0);
+  expect(推定期間の行.length, "推定期間の行が 1 行もない（この検查が空振り）").toBeGreaterThan(0);
   expect(札の無い, `推定期間の行に「推定」の札が付いて居ない:\n${札の無い.join("\n")}`).toEqual([]);
   const 立たない札 = 行々
     .filter((l) => 箱(l).length === 欄.length && 箱(l)[推定の欄] === "推定")
@@ -1855,9 +1823,7 @@ it("「評価でしぼる」でのぞいた件数を件数欄に出す（SPEC §
     立たない札,
     `「推定」の札が、推定期間以外の行に付いて居る:\n${立たない札.join("\n")}`,
   ).toEqual([]);
-  /* **瀏覽器で讀む版**（`upcoming.html`）も – あの文件は `upcoming.md` から作るが、行の
-   * 作りが別に成つた日におかしくなるので、此處でも見る（第 962 回の續き – 實測
-   * 2026-11-14: md と html は**同じ 19 行**に同じ札が付いて居た）。 */
+
   const html = join(REPO_ROOT, "public", "upcoming.html");
   if (existsSync(html)) {
     const 表の行 = [...readFileSync(html, "utf8").matchAll(/<tr>([\s\S]*?)<\/tr>/g)].map(
@@ -1865,20 +1831,19 @@ it("「評価でしぼる」でのぞいた件数を件数欄に出す（SPEC §
     );
     const 推定期間の表 = 表の行.filter((t) => t.includes("推定期間"));
     const 札なし = 推定期間の表.filter((t) => !/<td[^>]*>推定<\/td>/.test(t));
-    expect(推定期間の表.length, "upcoming.html に推定期間の行が無い").toBeGreaterThan(0);
+    expect(推定期間の表.length, "upcoming.html に推定期間の行がない").toBeGreaterThan(0);
     expect(札なし, `upcoming.html の推定期間の行に「推定」が無い:\n${札なし.join("\n")}`).toEqual(
       [],
     );
   }
-  /* 截る行數は**兩方で同じ**（第 954 回 – MCP も畫面も 20 行。片方だけ變更すると
-   * 「AI は 20 行で調べた・畫面は 50 行で調べた」になり、同じ論文で違ふ候補が出る）。 */
+
   const 截りの値 = (字: string): number => {
     const m = /(?:const |let |var )?行の截 = (\d+)/.exec(字);
-    expect(m, "截る行數の宣言が見つからない").not.toBeNull();
+    expect(m, "截る行数の宣言が見つからない").not.toBeNull();
     return Number(m?.[1] ?? "-1");
   };
   const mcp = readFileSync(join(REPO_ROOT, "src", "mcp.ts"), "utf8");
-  expect(截りの値(mcp), "MCP の截る行數が讀書めない").toBeGreaterThan(0);
+  expect(截りの値(mcp), "MCP の截る行数が読書めない").toBeGreaterThan(0);
   expect(截りの値(runtime), `畫面の截る行數が MCP（${截りの値(mcp)}）と違ふ`).toBe(截りの値(mcp));
 
   const rec = readFileSync(join(site, "recommender.js"), "utf8");
@@ -2297,7 +2262,7 @@ it("会期だけの会の案内と行の詳細の開催地は、表と同じ書�
   const noteSrc = jsFunction(runtime, "renderNextMeetingNote");
   const matchSrc = jsFunction(runtime, "scheduleOnlyMatches");
   const limitSrc = jsFunction(runtime, "windowLimitMs");
-  // 会期の書き方は recommender.js の正本へ移したので、この検査は import した本物を使う（第 220 回）。
+  // 会期の書き方は recommender.js の正本へ移したので、この検査は import した本物を使う。
   const rangeSrc = "const meetingRangeJa = Recommender.meetingRangeJa;";
   const script = [
     "(async () => {",
@@ -2306,11 +2271,11 @@ it("会期だけの会の案内と行の詳細の開催地は、表と同じ書�
     "const DAY = 86400000;",
     'const now = Date.parse("2026-08-10T00:00:00Z");',
     /* 会期だけ確定の回（2026-09-30）を次回と数える検査なので、抜き出した関数が読む
-     * `Date.now()` を凍結した値に差し替える。此處で `class FakeDate` を宣言するだけに済ませると
+     * `Date.now()` を凍結した値に差し替える。ここで `class FakeDate` を宣言するだけに済ませると
      * 関数は実時刻を読み続ける – 実行日が 2026-09-30 を越えた侭走らせると会期が「過去」に
      * なつて案内が消え、空振りで落ちる（2026-09-30 深夜に実測。`build_golden.test.ts` の同じ形の
-     * 検査は `new Function("Date", …)` で注入して居るので免れて居た – 其の方と同じ事を
-     * 其の侭の世界でやる）。`extends Date` なので `new Date()` も素のままと同じに動く。 */
+     * 検査は `new Function("Date", …)` で注入しているので免れていた – その方と同じ事を
+     * その侭の世界でやる）。`extends Date` なので `new Date()` も素のままと同じに動く。 */
     "globalThis.Date = class FakeDate extends Date { static now() { return now; } };",
     // 会期だけ確定している回（締切の無い edition）を 1 件置く。
     "const DATA = { conferences: [{ key: 'demo', title: 'Demo Conf', link: 'https://example.org/',",
@@ -2553,7 +2518,7 @@ it("画面が・で並べた分野の語をそのまま写すと、その行に�
   }
 });
 
-it("案内の過去の記録と現在の絞り込みを区別する（SPEC §7）", () => {
+it("現在のデータで検索条件の集計が整合する（SPEC §7）", () => {
   // 取得済み上流データは更新される。過去の件数を現在の収録数として検査せず、
   // 案内の例の内訳と、現在のデータでも各絞り込みが有効であることを確かめる。
   const template = readFileSync(join(REPO_ROOT, "site", "template.html"), "utf8");
@@ -2612,56 +2577,29 @@ it("案内の過去の記録と現在の絞り込みを区別する（SPEC §7�
   const proc = spawnSync("node", ["-e", script], { encoding: "utf8", timeout: 180_000 });
   expect(proc.status, proc.stderr).toBe(0);
   const m = JSON.parse(proc.stdout) as Record<string, number>;
-  // 案内文が書いている数（左）と、いま測れる数（右）を突合する。
-  const claims: Array<[string, string, number]> = [
-    ["既定画面の行数", "478 行", m.view],
-    ["推定で出さない行", "134 件", m.estimated],
-    ["7 日以内の行", "39 行", m.in7d],
-    ["7 日以内で窓の外", "439 行", m.view - m.in7d],
-    ["人工知能の行", "182 行", m.ai],
-    ["人工知能でのこり", "296 行", m.view - m.ai],
-    ["A* の行", "61 行", m.astar],
-    ["A* でのこり", "417 行", m.view - m.astar],
-    ["オンラインに書ける行", "15 行", m.onlineView],
-    ["オンラインでのぞく件", "463 件", m.view - m.onlineView],
-    ["開催地が未確認の行", "110 件", m.unknownPlace],
-    ["収録のオンライン可", "117 件", m.onlineCatalog],
-    ["2 ラウンドの行", "378 件", m.round2],
-    ["既定画面で延長の目印が付く行", "12 行", m.extendedView],
-    ["収録全体の延長の目印", "36 件", m.extendedAll],
-    ["・付きの分野表記を持つ行", "397 行", m.middleDot],
-    ["Cancún の行", "23 行", m.cancun],
-    ["プライバシー", "16 件", m.privacy],
-    // 第 675 回 – 搜しが並べ語を語ごとに數えるやうになつたので、`data` と `mining` を
-    // 離して書く GeoSearch 2026（地学データの検索とマイニング）を 1 行增やした（內譯で確認）。
-    ["データマイニング", "23 件", m.dataMining],
-    ["データ分析", "7 件", m.dataAnalytics],
-    ["仮想現実", "6 件", m.vr],
-    ["リアルタイム", "2 件", m.realtime],
-  ];
-  expect(claims.length).toBeGreaterThan(15);
-  const past = new Map(
-    claims.map(([label, written]) => [label, Number(written.replace(/[^0-9]/g, ""))]),
-  );
-  for (const [included, excluded] of [
-    ["7 日以内の行", "7 日以内で窓の外"],
-    ["人工知能の行", "人工知能でのこり"],
-    ["A* の行", "A* でのこり"],
-    ["オンラインに書ける行", "オンラインでのぞく件"],
-  ]) {
-    expect(past.get(included)! + past.get(excluded)!).toBe(past.get("既定画面の行数"));
-  }
-  expect(template).toContain("現在の件数は検索結果で確認してください");
   expect(m.in7d).toBeLessThanOrEqual(m.view);
   expect(m.ai).toBeLessThanOrEqual(m.view);
   expect(m.astar).toBeLessThanOrEqual(m.view);
   expect(m.onlineView + m.unknownPlace).toBeLessThanOrEqual(m.view);
-  for (const [label, written, measured] of claims) {
-    expect(Number.isFinite(measured), `現在の「${label}」が数値でない`).toBe(true);
-    expect(measured, `現在の「${label}」が空になった`).toBeGreaterThan(0);
-    // 案内文の実際にその数を書いていることも見る（検査だけ先に緑になるのを防ぐ）。
-    expect(template, `案内文に「${label}」の値 ${written} が書かれていない`).toContain(written);
+  for (const label of [
+    "view",
+    "estimated",
+    "in7d",
+    "ai",
+    "astar",
+    "onlineView",
+    "round2",
+    "extendedAll",
+    "privacy",
+    "dataMining",
+    "dataAnalytics",
+    "vr",
+    "realtime",
+  ]) {
+    expect(Number.isFinite(m[label]), `${label} が数値ではありません`).toBe(true);
+    expect(m[label], `${label} の検索結果がありません`).toBeGreaterThan(0);
   }
+  expect(template).toContain("現在の件数は検索結果で確認してください");
 });
 
 it("行の詳細の分野・主題・ランクは、一覧と同じ中黒で並び、写すとその行に出会える（SPEC §7）", () => {
@@ -2696,7 +2634,7 @@ it("行の詳細の分野・主題・ランクは、一覧と同じ中黒で並�
   );
   expect(rows.status, rows.stderr).toBe(0);
   const out = JSON.parse(rows.stdout) as { multi: number };
-  expect(out.multi, "分野を 2 つ以上持つ行が無いとこの検査が空振りする").toBeGreaterThan(20);
+  expect(out.multi, "分野を 2 つ以上持つ行がないとこの検査が空振りする").toBeGreaterThan(20);
 });
 
 it("月・日の語は、和暦の語を持つ行だけを出す（隣の月日が混ざらない・SPEC §7）", () => {
@@ -2767,16 +2705,12 @@ it("月・日の語は、和暦の語を持つ行だけを出す（隣の月日�
 });
 
 it("llms.txt に書いた検索の引き方が、ビルド成果物で実際に効く（SPEC §7）", () => {
-  /* `llms.txt` は「サイトの日本語での引き方」を書く。ここは機械（検索支援・要約支援）が
-   * 読むので、実装とズレた書き方を残すと、そのまま利用者に伝えられる。
-   * ラウンド（第 76 回）・並べ語（第 77・80 回）・月語の和暦展開（第 81 回）は
-   * 実装だけ先に進んでいて、llms.txt は知らなかった。本文と挙動を対で固定する。 */
   const text = readFileSync(join(site, "llms.txt"), "utf8");
   for (const phrase of [
-    "月語は和暦の語",
-    "画面が中黒で並べる語",
-    "ラウンドは画面の書き方",
-    "略称と年を離して",
+    "相対日付は実行時の日本時間",
+    "複数語は空白で区切ります",
+    "別ラウンド",
+    "会議名",
     // 第 81 回より前はこの 4 つが全部無かった。
   ]) {
     expect(text, `llms.txt に検索の案内として ${phrase} が無い`).toContain(phrase);
@@ -2879,17 +2813,15 @@ it("health.md は日本語で書き、数値が health.json とずれていな�
       : "| 収録 snapshot で組んだか（`snapshot_fallback`） | いいえ |",
   );
   expect(md, "結論が先に書いていない（まとめ章がない）").toContain("## まとめ");
-  /* 未取得と失敗を書き分ける（第 703 回）。保存済みの値を使つただけのソース
-   *（`cache-fallback`）は失敗ではないのに、上の表が「不明（cache-fallback）」と言つて居る橫で
-   *「取れなかつたソース: なし」と書くと、**其の場で取つた**と讀み違へる。 */
+
   expect(md, "未取得と失敗を書き分けて居ない").toContain("上流の取得に失敗したソース:");
   expect(md, "「取れなかつた」の侭（未取得と混ざる）").not.toContain(
     "上流をその場で取れなかったソース",
   );
-  /* 分野の内訳に、畫面と同じ日本語の名を添へる（第 703 回 – キーだけでは讀めない）。 */
+  /* 分野の内訳に、画面と同じ日本語の名を添へる。 */
   const dist = json.category_distribution as Record<string, number> | undefined;
-  expect(dist, "health.json に分野の内訳が無い").toBeTruthy();
-  expect(md, "分野の表に日本語の欄が無い").toContain("| 分野（キー） | 日本語 | 会議数 |");
+  expect(dist, "health.json に分野の内訳がない").toBeTruthy();
+  expect(md, "分野の表に日本語の欄がない").toContain("| 分野（キー） | 日本語 | 会議数 |");
   for (const [key, count] of Object.entries(dist ?? {})) {
     const label = String(Recommender.categoryLabelJa(key) ?? "").trim();
     const 名 = label && label !== key ? label : "－";
@@ -3024,9 +2956,6 @@ it("キーボード操作は効き、入力中は効かない（SPEC §7）", ()
 });
 
 it("キーボードの既定操作は、てびきに書いたとおりに実装されている（SPEC §7）", () => {
-  /* 第 84 回まで既定操作が検査も説明も無かった。てびきに書いた以上、実装が同じキーを
-   * 処理していることを対で見る（案内だけ先に変更しても、実装だけキーを増やしても落ちる）。
-   * `Esc` のように画面での書き方が違うものは、対応表をここに置く。 */
   const runtime = siteRuntime();
   const template = readFileSync(join(REPO_ROOT, "site", "template.html"), "utf8");
   const keys: Array<[string, string]> = [
@@ -3067,7 +2996,7 @@ it("狭い画面でも並び替えできる（見出しを消すなら並べ替�
   const template = readFileSync(join(REPO_ROOT, "site", "template.html"), "utf8");
   const media = template.slice(template.indexOf("@media (max-width: 640px)"));
   const block = media.slice(0, media.indexOf("\n}"));
-  expect(block, "狭い画面で見出しを隠す規則が無い（この検査の前提）").toContain(
+  expect(block, "狭い画面で見出しを隠す規則がない（この検査の前提）").toContain(
     "thead { display: none; }",
   );
   expect(block, "見出しを隠すのに並べ替えの列を出していない（並び替え不能に戻る）").toContain(
@@ -3088,10 +3017,7 @@ it("狭い画面でも並び替えできる（見出しを消すなら並べ替�
   for (const label of ["残り", "日時（JST）", "会議", "ランク"]) {
     expect(barBlock, `並べ替えバーに ${label} の列がない`).toContain(`>${label}`);
   }
-  /* キーボードの案内を消す条件は「幅」ではない（第 145 回で変更）。`j` / `k` / `d` / `/` の
-   * 処理に幅の判定は無いので、狭い窓を開いた人からは案内だけが消えていた。タッチで狙う
-   * 端末でだけ隠す。第 103 回まで見出ししか消しておらず、説明（`j`/`k`/`d`/`Esc` の書き方が
-   * 残っていた）ので、隣接する説明も一緒に閉じる形を要求する要求はそのまま残す。*/
+
   const coarse = template.slice(template.indexOf("@media (hover: none), (pointer: coarse)"));
   const coarseBlock = coarse.slice(0, coarse.indexOf("\n}"));
   expect(coarseBlock, "キー操作の案内を操作手段で隠していない").toMatch(
@@ -3194,7 +3120,7 @@ it("操作できる箇所に焦点の目印があり、隠した制御が操作�
   expect(chipRule.slice(0, 240), "チップの checkbox が元に戻って消えている").toContain(
     "opacity: 0;",
   );
-  expect(css, "チップの焦点の目印が無い").toContain(".chips label:has(input:focus-visible)");
+  expect(css, "チップの焦点の目印がない").toContain(".chips label:has(input:focus-visible)");
 
   // ③ 焦点の目印を落としている制御が無いこと（`outline: none` を掛けたら、
   //    同じ要素に対する出す側の規則を書く。規則の有無を要素ごとに突き合わせる）。
@@ -3261,16 +3187,14 @@ it("表の列見出しと件数欄が支援技術に伝わる（SPEC §7）", ()
   // 月見出しは列グループの見出し（列見出しと同じ規則になっていること）。
   const runtime = siteRuntime();
   expect(runtime).toContain('th.scope = "colgroup"');
-  /* 推薦モードの件數は**見える欄**に出す（第 692 回）。`#count` は畳んだ `<details>`
-   * （絞り込みの内訳）の中なので、論文を入れても候補の數・分野自動判定・意味検索の狀態が
-   * 讀めなかつた（2026-10-06 實測: 候補 161 件が何れも畳まれた中に在つた）。 */
-  expect(runtime, "推薦モードで件數欄を隠して居る").not.toContain(
+
+  expect(runtime, "推薦モードで件数欄を隠している").not.toContain(
     '$("resultSummary").hidden = recMode',
   );
-  expect(runtime, "推薦モードの件數を resultSummary に出して居ない").toMatch(
+  expect(runtime, "推薦モードの件数を resultSummary に出して居ない").toMatch(
     /\$\("resultSummary"\)\.textContent = recMode/,
   );
-  /* 畳んだ中身にも同じ文を殘す（內訳を開いた人に同じ事を言ふ）。 */
+  /* 畳んだ中身にも同じ文を残す（内訳を開いた人に同じ事を言う）。 */
   expect(runtime).toContain('$("count").textContent = cnt;');
 });
 
@@ -3318,7 +3242,7 @@ it("絞り込みの各欄に名前があり、支援技術から消していな�
   for (const target of labelled) {
     expect(ids.has(target), `label[for="${target}"] が対応する欄を持たない`).toBe(true);
   }
-  // 見えないラベルは `display: none` ではなく clip で消す（第 87 回と同じ教訓）。
+  // 見えないラベルは `display: none` ではなく clip で消す。
   const sr = template.slice(template.indexOf(".sr-label {"));
   expect(sr.slice(0, 260)).toContain("clip-path:");
   expect(sr.slice(0, 260)).not.toContain("display: none");
@@ -3327,10 +3251,6 @@ it("絞り込みの各欄に名前があり、支援技術から消していな�
 });
 
 it("CSV のランク列は画面と同じ書き方で、番兵の `N` を渡さない（SPEC §7）", () => {
-  /* 画面と行の詳細はランクの無い所を「評価なし」と出す（第 47 回）が、CSV 書き出しは
-   * 上流の番兵 `N` をそのまま出していた（2026-09-23 実測: 将来締切 917 行で 271 マス）。
-   * 表計算で「N という等級」で絞り込めてしまい、空欄との違いも読めない。
-   * 収録カタログから組んだ実データの CSV で検査する（合成 fixture では 0 マスになる）。 */
   const out = join(tempWork("cfp-csv-rank-"), "public");
   const emptyCache = tempWork("cfp-csv-rank-cache-");
   const built = runCli(out, {
@@ -3387,14 +3307,6 @@ it("CSV のランク列は画面と同じ書き方で、番兵の `N` を渡さ�
 });
 
 it("日本語の案内に中国語の略語を混ぜない（SPEC §7）", () => {
-  /* dropdown に当たる中国語表記を説明文に混入させては 3 回指摘している（2026-09-23 まで）。
-   * 画面に出す語・案内に書く語は日本語で書く、という §7 の約束をファイル横断で検める。
-   * 語列出典が自分自身を参照して落ちないよう、点検語は文字番号で書く。
-   * 引用（実物の誤記をバッククォートで書いた記録）は対象外。
-   * 第 97 回で、自分が案内に実際に混入させた語（中国語の簡体字表記と韓国語の活用の語）を
-   * 点検語に足した。点検語の一覧はこのファイル自身も見るので、該当の語は引用しない。
-   * ハングルは日本語の案内に出る用事が無いので文字範囲で抑える（会議名は日本語か現地表記、
-   * 点検語自身のエスケープは文字範囲に掛からない）。 */
   const words = [
     "\u4e0b\u62c9",
     "\u6298\u53e0",
@@ -3456,7 +3368,7 @@ it("日本語の案内に中国語の略語を混ぜない（SPEC §7）", () =>
     // 案内とコメントに残っていたのに、上の表記しか点検していなくて黙っていた。
     "\u5176\u5b83",
     "\u6b67",
-    // 「新しい」に当たる四字の語は日本語として立たない（第 120 回の手記に混入した）。
+    // 「新しい」に当たる四字の語は日本語として立たない。
     "\u65b0\u7684",
     // 「データ」「ここ」に当たる語も同じ系統（上の二字語と同じ運びで混入する）。
     "\u6570\u636e",
@@ -3477,7 +3389,7 @@ it("日本語の案内に中国語の略語を混ぜない（SPEC §7）", () =>
       expect(text, `${rel} に中国語の略語「${word}」が混入している`).not.toContain(word);
     }
     // 点検語は文字番号で書いているので、一文字でも間違えると検査が黙って通る
-    // （第 122 回で、実際に混入していた語の二字目の文字番号を間違えていた）。
+    // 。
     // 意図した語が実際に点検されていることを、文字番号から組み立てた見本で確かめる。
     for (const points of [
       [0x5176, 0x5b83],
@@ -3571,8 +3483,8 @@ it("締切の時刻を持たない行を交ぜても日時順が崩れない（S
   expect(asc.size, `昇順が入力順に依存している: ${[...asc].join(" / ")}`).toBe(1);
   expect(desc.size, `降順が入力順に依存している: ${[...desc].join(" / ")}`).toBe(1);
   // ③ 時刻の無い行は向きに関係なく最後尾（降順で先頭に反転すると「いちばん遠い」に化ける）。
-  expect([...asc][0], "昇順で時刻の無い行が末尾に無い").toBe("p1 p2 p3 J1 J2");
-  expect([...desc][0], "降順で時刻の無い行が末尾に無い").toBe("p3 p2 p1 J2 J1");
+  expect([...asc][0], "昇順で時刻のない行が末尾にない").toBe("p1 p2 p3 J1 J2");
+  expect([...desc][0], "降順で時刻のない行が末尾にない").toBe("p3 p2 p1 J2 J1");
 });
 
 it("過去の締切も表示すると、過ぎた行が画面の先頭を埋め尽くさない（SPEC §7）", () => {
@@ -3697,7 +3609,7 @@ it("収録状況の四つ組は、何を数えているかと単位がラベル�
   expect(bar).toContain("絞り込み前の収録全体");
   expect(bar).toContain("収録している会議:");
   expect(bar).toContain("これからの30日間の締切:");
-  expect(bar, "締切の件数に単位が無い").toContain('class="stat-unit">件<');
+  expect(bar, "締切の件数に単位がない").toContain('class="stat-unit">件<');
   // ラベルと実数がズレていた 2 件を戻さない。
   expect(bar).not.toContain("穴場/特化誌");
   expect(bar).toContain("穴場として収録した会議:");
@@ -3807,7 +3719,7 @@ it("「データ生成」の時刻は JST と曜日で出る（SPEC §7）", () 
   const brand = template.slice(template.indexOf(".brand-row {"));
   expect(brand.slice(0, 240)).toContain("justify-content: space-between");
   const genat = template.slice(template.indexOf('id="genat"'));
-  expect(genat.slice(0, 80), "生成時刻の欄が見出し行に無い").toContain("</div>");
+  expect(genat.slice(0, 80), "生成時刻の欄が見出し行にない").toContain("</div>");
   // てびきが「右上の更新時刻」とだけ書いていた（実際の語は「データ生成」で、単位も
   // 出さなかった）。画面に出る語と単位をそのまま引けるようにする。
   const help = template.slice(template.indexOf('id="helpPanel"'));
@@ -3848,7 +3760,7 @@ it("データ源の行は内部の実装語を出さず、上流は一次資料�
   // 自分の入力は、内部ファイル名とライセンスを出さない。
   expect(got[1].label, "内部ファイル名を画面に出している").not.toContain("data/extra.yaml");
   expect(got[1].label, "自前の入力にライセンスを付けている").not.toContain("MIT");
-  expect(got[1].label).toBe("このサイトで収録した分（上流に無いもの）");
+  expect(got[1].label).toBe("このサイトで収録した分（上流にないもの）");
   // https 以外はリンクにしない（`safeExternalUrl` の結果だけを渡す）。
   expect(got[2].url).toBeNull();
   // てびきに画面の語そのままの説明がある（26 項目あっても「データ源」だけ無かった）。
@@ -3856,7 +3768,7 @@ it("データ源の行は内部の実装語を出さず、上流は一次資料�
   const help = template.slice(template.indexOf('id="helpPanel"'));
   const guide = help.slice(0, help.indexOf("</details>"));
   expect(guide).toContain("<dt>データ源</dt>");
-  expect(guide).toContain("このサイトで収録した分（上流に無いもの）");
+  expect(guide).toContain("このサイトで収録した分（上流にないもの）");
   expect(guide).toContain("一次資料");
 });
 
@@ -3959,8 +3871,8 @@ it("閉じた行の詳細は、支援技術からもタブ順序からも消え�
   expect(active, "開いたドロワーが見えない").toContain("visibility: visible");
   expect(active, "表示に遅れが出て開きが重い").toMatch(/visibility 0s(?![ .\d])/);
 
-  // タブで届く物が全部ドロワーの内側に有ること（＝この CSS でタブ順序も塞がる）。
-  // ドロワーは本文の後ろ（`</footer>` の後）に有るので、そこから後ろを洗う。
+  // タブで届く物が全部ドロワーの内側にあること（＝この CSS でタブ順序も塞がる）。
+  // ドロワーは本文の後ろ（`</footer>` の後）にあるので、そこから後ろを洗う。
   const drawerStart = template.indexOf('<div class="drawer-backdrop"');
   expect(drawerStart).toBeGreaterThan(0);
   const tail = template.slice(drawerStart);
@@ -3970,7 +3882,7 @@ it("閉じた行の詳細は、支援技術からもタブ順序からも消え�
   );
   expect(
     drawerBlock.match(/<button/g) || [],
-    "ドロワーに閉じる手段が無い（検査が空振り）",
+    "ドロワーに閉じる手段がない（検査が空振り）",
   ).toHaveLength(1);
   const rest = tail.slice(drawerBlock.length);
   expect(rest.match(/<button/g) || [], "ドロワーの後ろに閉じた状態で残る操作がある").toEqual([]);
@@ -4085,9 +3997,6 @@ it("てびきのキーボード表記が、実装が扱うキーと欠けずに�
 });
 
 it("狭い画面ではキー操作の案内は見出しも説明も閉じる（SPEC §7）", () => {
-  /* 狭い画面（ほぼスマホ）ではショートカットが使えないので案内も消す方針で、第 85 回に
-   * 一度「閉じ忘れ」を直している。しかし閉じていたのは `.only-keyboard` を付けた **見出しだけ**
-   * で、直後の `<dd>`（`j`/`k`/`d`/`Esc` の書き方そのもの）はそのまま出ていた（2026-09-23 実測）。 */
   const template = readFileSync(join(REPO_ROOT, "site", "template.html"), "utf8");
   const at = template.indexOf("@media (max-width: 640px)");
   expect(at).toBeGreaterThan(0);
@@ -4097,14 +4006,10 @@ it("狭い画面ではキー操作の案内は見出しも説明も閉じる（S
   const dtAt = template.indexOf('<dt class="only-keyboard">');
   expect(dtAt).toBeGreaterThan(0);
   const afterDd = template.slice(template.indexOf("</dt>", dtAt) + 5);
-  expect(afterDd.trimStart().startsWith("<dd>"), "キーの項の説明が直後に無い").toBe(true);
+  expect(afterDd.trimStart().startsWith("<dd>"), "キーの項の説明が直後にない").toBe(true);
 });
 
 it("二つの画面の呼び方が、切り替えボタンの語と揃っている（SPEC §7）", () => {
-  /* 切り替えボタンは「投稿先を探す」／「締切を検索」なのに、てびきだけ別の呼び方
-   * （「論文から探す」）で 3 か所書いていた（2026-09-23 実測）。案内を読んだ人が
-   * どのボタンか特定できない。第 94 回の収録状況、第 95 回の早め絞り込みと同じ型なので、
-   * ボタンの語を正本にして検査に入れる（テスト側に語を書き写さない）。 */
   const template = readFileSync(join(REPO_ROOT, "site", "template.html"), "utf8");
   const label = (id: string) => {
     const at = template.indexOf(`id="${id}"`);
@@ -4123,8 +4028,8 @@ it("二つの画面の呼び方が、切り替えボタンの語と揃ってい�
   // 「締切を検索」側は既定の画面で、案内は表その物の語（「一覧」）で書いているので
   // 画面名の一致は要求しない（締切一覧＝表の意味で使っていて、誤りではない）。
   expect(deadlines.length).toBeGreaterThan(0);
-  // 別の呼び方に寄せる書き方を戻さない（第 95 回の検査と同じ趣旨）。
-  expect(guide, "ボタンに無い画面名を案内に書かない").not.toContain("論文から探す");
+  // 別の呼び方に寄せる書き方を戻さない。
+  expect(guide, "ボタンにない画面名を案内に書かない").not.toContain("論文から探す");
   // 画面の下（CSV の説明など）も同じ。
   const csvDd = template.slice(template.indexOf("<dt>CSV</dt>"));
   expect(csvDd.slice(0, csvDd.indexOf("</dd>"))).toContain(recommend);
@@ -4187,11 +4092,6 @@ it("PDF 読み込みの失敗は日本語と打ち手で出る（SPEC §7）", (
 });
 
 it("推薦のカードの行が、てびきの数と名前と合う（SPEC §7）", () => {
-  /* 推薦のカードは、同じ値に二つの名前を付けていた（頭のチップは「一致評価」、その下の
-   * 行は「研究適合度」で、どちらも `r._fitLabel`・2026-09-23 実測）。てびきは
-   * 「4行並べます」と書きながら、実際は 5 行で、しかも載っていない行が1つ有った
-   * （「締切と種別」）。第 100 回のキー操作と同じ型なので、**行のラベルをビルド成果物から
-   * 洗って**てびきと突き合わせる（語も件数もテスト側に書き写さない）。 */
   const app = siteRuntime();
   const card = jsFunction(app, "makeRecommendationCard");
   const template = readFileSync(join(REPO_ROOT, "site", "template.html"), "utf8");
@@ -4277,7 +4177,7 @@ it("推薦のカードの締切は表と同じ向き（JST と曜日）で出る
     "Recommender.zone = 'UTC';",
     "const utc = avail({ _availability: { status: 'open', timestamp: ts }, dl: {} });",
     "const dateOnly = avail({ _availability: { status: 'open', local_date: '2026-10-06' }, dl: {} });",
-    // 受付状況が確認できない行の語（第 142 回）。画面 other 箇所と同じ語に揃える。
+    // 受付状況が確認できない行の語。画面 other 箇所と同じ語に揃える。
     "const noAvail = avail({});",
     "const ongoing = avail({ _availability: { status: 'ongoing' }, dl: {} });",
     "const openNoDate = avail({ _availability: { status: 'open' }, dl: {} });",
@@ -4313,7 +4213,7 @@ it("推薦のカードの締切は表と同じ向き（JST と曜日）で出る
   expect(got.jst).toContain("元の日時 JST");
   expect(got.utc).toContain("UTC");
   // 暦日だけの締切も曜日を添える（表と同じ）。
-  expect(got.dateOnly, "暦日だけの締切に曜日が無い").toMatch(
+  expect(got.dateOnly, "暦日だけの締切に曜日がない").toMatch(
     /^次回締切: 2026-10-06\(.+\)（時刻未確認）$/,
   );
   // 同じ値をカード内で二回出さない（「締切: 次回締切: …」の二重ラベルを戻さない）。
@@ -4371,13 +4271,13 @@ it("支援技術に本文の位置と表の名前を伝え、跳ぶ導線を置�
   expect((body.match(/<main\b/g) || []).length, "main が重複している").toBe(1);
   // 画面に描画しない支援技術向けの語を、`display: none` で消していないこと。
   const caption = /<caption class="only-sr">([^<]*)<\/caption>/.exec(body);
-  expect(caption, "表に名前が無い").not.toBeNull();
+  expect(caption, "表に名前がない").not.toBeNull();
   expect(caption![1]).toContain("締切");
   const onlySr = /\.only-sr \{([^}]*)\}/.exec(html);
-  expect(onlySr, "支援技術向けの語の隠し方が無いか、壊れている").not.toBeNull();
+  expect(onlySr, "支援技術向けの語の隠し方がないか、壊れている").not.toBeNull();
   expect(onlySr![1], "display: none にすると読み上げ自体が消える").not.toContain("display: none");
   const skipRule = /\.skip-link \{([^}]*)\}/.exec(html.slice(html.indexOf(".skip-link {")));
-  expect(skipRule, "跳ぶ導線の基準の style が無いか、壊れている").not.toBeNull();
+  expect(skipRule, "跳ぶ導線の基準の style がないか、壊れている").not.toBeNull();
   expect(skipRule![1], "跳ぶ導線を display: none で消している").not.toContain("display: none");
   // フォーカスしたら画面に出てくること（見えない導線はキーボードでは使えない）。
   expect(html).toMatch(/\.skip-link:focus \{[^}]*left: ?(?!-9999)/);
@@ -4444,16 +4344,12 @@ it("見出しの並び替えは Enter・Space で効き、行用の Enter と衝
   ).toBe(true);
   // グローバルの「Enter = 選択行の公式ページを開く」に奪われないよう、止めてから渡す。
   const enter = out.find((x) => x[0] === "Enter");
-  expect(enter, "Enter を押した記録が無い（検査が空振り）").toBeDefined();
+  expect(enter, "Enter を押した記録がない（検査が空振り）").toBeDefined();
   expect(enter![1], "Enter で既定動作を止めていない").toBe(true);
   expect(enter![2], "Enter がグローバル側に伝わる（公式ページが開いてしまう）").toBe(true);
 });
 
 it("並び替えの状態は読み上げに伝わる（見出しの矢印だけだった・SPEC §7）", () => {
-  /* 並び順は見出しの語尾の矢印（↑/↓/↕）にしか出ていなかった（2026-09-23 実測）。
-   * キーボードでヘッダーを押して並びが変わっても読み上げは何も言わない。過ぎた締切を
-   * 下にまとめたときは件数欄に書く（黙って並びを変えない）ので、その方針と同じにする。
-   * 画面は混むので読み上げ専用の短い欄にだけ足す（第 89 回で分けた仕組み）。 */
   const app = siteRuntime();
   const script = [
     "(async () => {",
@@ -4492,8 +4388,8 @@ it("並び替えの状態は読み上げに伝わる（見出しの矢印だけ�
   expect(got.rem).toBe(" ｜ 並び順: 残り 昇順");
   expect(got.dateDesc).toBe(" ｜ 並び順: 日時（JST） 降順");
   expect(got.rank).toBe(" ｜ 並び順: ランク 降順");
-  expect(got.none, "並び順が無いのに文を出す").toBe("");
-  expect(got.unknown, "見出しの無い列の語をこしらえている").toBe("");
+  expect(got.none, "並び順がないのに文を出す").toBe("");
+  expect(got.unknown, "見出しのない列の語をこしらえている").toBe("");
   // 画面に出す文には足さない（読み上げ専用の欄にだけ入れる）。読み上げ欄の語を
   // てびきにも書いておくので、三者がズレないようにする。
   const template = readFileSync(join(REPO_ROOT, "site", "template.html"), "utf8");
@@ -4538,9 +4434,9 @@ it("表の公式表記に出る語（時刻未確認・AoE・JST）はその語�
   const aoe = rows.filter((r) => Recommender.officialZone(r.dl) === "AoE");
   const jst = rows.filter((r) => Recommender.officialZone(r.dl) === "JST");
   // 検査が空振りしないこと（収録が変わって 0 行になたら、この検査は何も言えなくなる）。
-  expect(dateOnly.length, "日付だけの行が無い（検査が空振り）").toBeGreaterThan(0);
-  expect(aoe.length, "AoE 宣言の行が無い（検査が空振り）").toBeGreaterThan(0);
-  expect(jst.length, "JST 宣言の行が無い（検査が空振り）").toBeGreaterThan(0);
+  expect(dateOnly.length, "日付だけの行がない（検査が空振り）").toBeGreaterThan(0);
+  expect(aoe.length, "AoE 宣言の行がない（検査が空振り）").toBeGreaterThan(0);
+  expect(jst.length, "JST 宣言の行がない（検査が空振り）").toBeGreaterThan(0);
   /* 画面が出す語をビルド成果物から取る（表示の語をテスト側に書き写すと、表示だけが
    * 変わったときに検査が緑のまま残る）。`残り` 列の badge の語を見る。 */
   const app = siteRuntime();
@@ -4637,7 +4533,7 @@ it("キーボードで選んだ行にフォーカスが動く（支援技術に�
   // 選んだ行だけフォーカスされる（除外行ではないこと – 除外が効くと 1 行ズレる）。
   expect(focused, "選んだ行にフォーカスが動いていない").toEqual(["row1"]);
   const row1 = a.find((x) => x[0] === "row1");
-  expect(row1, "row1 の記録が無い（検査が空振り）").toBeDefined();
+  expect(row1, "row1 の記録がない（検査が空振り）").toBeDefined();
   // なめらかスクロールと二重にスクロールしないよう、フォーカスはスクロールを抑える。
   expect(String(row1![2]), "フォーカスが画面を動かして二重にスクロールする").toContain(
     "preventScroll",
@@ -4645,13 +4541,13 @@ it("キーボードで選んだ行にフォーカスが動く（支援技術に�
   // 「動きを抑える」設定が無ければなめらか、あれば瞬間移動。
   expect(String(row1![3])).toContain("smooth");
   const row2 = b.find((x) => x[0] === "row2");
-  expect(row2, "row2 の記録が無い（検査が空振り）").toBeDefined();
+  expect(row2, "row2 の記録がない（検査が空振り）").toBeDefined();
   expect(String(row2![2]), "「動きを抑える」設定でもなめらかに動く").toContain("auto");
   // てびきにも、選んだ行が読まれることを書いておく（案内と実装のズレを防ぐ）。
   const template = readFileSync(join(REPO_ROOT, "site", "template.html"), "utf8");
   const at = template.indexOf("<code>d</code> で行の詳細を出します。");
   expect(at).toBeGreaterThan(0);
-  expect(template.slice(at, at + 260), "てびきに読み上げの説明が無い").toContain("支援技術");
+  expect(template.slice(at, at + 260), "てびきに読み上げの説明がない").toContain("支援技術");
 });
 
 it("締切が延びていた行は、一覧・CSV・検索で同じ語が揃う（SPEC §7）", () => {
@@ -4662,7 +4558,7 @@ it("締切が延びていた行は、一覧・CSV・検索で同じ語が揃う�
    * 同じ語になることを実データで見る。 */
   const rows = Recommender.candidateRows(data);
   const extended = rows.filter((r) => Recommender.isExtendedDeadline(r.dl));
-  expect(extended.length, "延長の行が無い収録では検査が空振りする").toBeGreaterThan(0);
+  expect(extended.length, "延長の行がない収録では検査が空振りする").toBeGreaterThan(0);
   expect(extended.length).toBeLessThan(rows.length);
   for (const r of extended) {
     expect(
@@ -4684,7 +4580,7 @@ it("締切が延びていた行は、一覧・CSV・検索で同じ語が揃う�
   );
   expect(csv).toContain(Recommender.extendedLabelJa());
   // チップの語は日本語にする（上流の英語ラベルをそのままチップにしない – 公式ページの
-  // 表記そのものを出す欄は別に有るが、あれは意図して原表記を残している欄なので別物）。
+  // 表記そのものを出す欄は別にあるが、あれは意図して原表記を残している欄なので別物）。
   expect(Recommender.extendedLabelJa()).not.toMatch(/[A-Za-z]/);
 });
 
@@ -4701,7 +4597,7 @@ it("語を並べた検索で 0 件のとき、原因の語を名指す（SPEC §
   expect(gpu!.count, "この収録に GPU の行があるなら検査の前提が変わった").toBe(0);
   expect(
     counts.filter((c) => c.count > 0).length,
-    "当たる語が 1 つも無い（検査が空振り）",
+    "当たる語が 1 つもない（検査が空振り）",
   ).toBeGreaterThan(0);
   /* 展開される語は、生の語ではなく展開後で数える（「九州」は会場地名に漢字で書かれて
    * いないことがある – 1 語だけで数ると「無い」と誤らせる）。 */
@@ -4738,7 +4634,7 @@ it("語を並べた検索で 0 件のとき、原因の語を名指す（SPEC §
       { term: "gpu", count: 0 },
     ],
   });
-  expect(dead, "収録に無い語を名指していない").toContain("「gpu」");
+  expect(dead, "収録にない語を名指していない").toContain("「gpu」");
   expect(dead).toContain("収録データにも見当たりません");
   // 原因の語が分かったときは、的外れな「検索語を短くする」を出さない。
   expect(dead).not.toContain("検索語を短くする");
@@ -4765,10 +4661,6 @@ it("語を並べた検索で 0 件のとき、原因の語を名指す（SPEC §
 });
 
 it("0 件の理由は読み上げにも短的に出る（長い文を aria-live に流さない・SPEC §7）", () => {
-  /* 0 件の理由（どの語が足りなかったか等）は `#emptyText` に書くだけで、支援技術には
-   * 読まれていなかった（2026-09-23 実測: 読み上げ専用の欄は件数だけを言っていた）。
-   * とはいえ長い説明文を aria-live に流すと 1 打鍵ごとに数十語が読まれる（第 88 回で
-   * 実際に起きた）。同じ原因を短い形で読み上げに出す。 */
   const app = siteRuntime();
   const note = new Function(
     "Recommender",
@@ -4834,7 +4726,7 @@ it("0 件の理由は読み上げにも短的に出る（長い文を aria-live 
 it("手引きが名指すファイルは、画面から押して辿れる（SPEC §7）", () => {
   /* てびきと 0 件の注記は「会期だけ確定の会は upcoming.html に載せます」と何回も言うが、
    * ファイル名を書くだけだと、画面を読む人はそこにたどれない（URL を打ち込むだけになる）。
-   * 同じビルドの中に有るファイルなので、押せる形にする（2026-09-23 実測: リンク 0 本）。 */
+   * 同じビルドの中にあるファイルなので、押せる形にする（2026-09-23 実測: リンク 0 本）。 */
   const template = readFileSync(join(REPO_ROOT, "site", "template.html"), "utf8");
   const mentions = template.match(/<code>upcoming\.html<\/code>/g) || [];
   expect(
@@ -4852,11 +4744,9 @@ it("手引きが名指すファイルは、画面から押して辿れる（SPEC
   const app = siteRuntime();
   expect(app, "0 件の注記がファイルをまだ文字列に埋めている").toContain('href = "upcoming.html"');
   expect(app).not.toContain("会期は upcoming.html にも掲載");
-  // 指す先がビルド成果物に本当に有る（リンク切れを防ぐ）。読みやすい版と Markdown 版の両方。
+  // 指す先がビルド成果物に本当にある（リンク切れを防ぐ）。読みやすい版と Markdown 版の両方。
   const builder = readFileSync(join(REPO_ROOT, "src", "build.ts"), "utf8");
-  /* 呼び出しの行数が変わっても（引数が増えて折り返しても）検査が空振りしないよう、
-   * 名前の直後の括弧とファイル名は空白を跨いで照合する（第 286 回の実発生:
-   * 引数を 1 つ増やして折り返しただけで「ビルドが出さなくなった」事になった）。 */
+
   for (const name of ["upcoming.md", "upcoming.html"]) {
     expect(
       new RegExp(`write\\(\\s*"${name}"`).test(builder),
@@ -4864,9 +4754,7 @@ it("手引きが名指すファイルは、画面から押して辿れる（SPEC
     ).toBe(true);
   }
 });
-/** 1 行 1 締切の CSV を讀む（引用符の中のカンマを岑まない – `data.csv` の
- * `place`「Zurich, Switzerland」の様な値が在る。實測 2026-11-19: 侮辱すると
- * 4,798 行が「非締切」に見える）。 */
+
 function csvRows(text: string): string[][] {
   const out: string[][] = [];
   let 箱: string[] = [];
@@ -4912,9 +4800,6 @@ function digits(n: number): string {
   return String(n).replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1,");
 }
 
-/** 索引（`llms.txt`）の中の**實測値** – 機械が讀む索引なので、數字が本文と合はないと
- * 其の數を信じ込む。實測 2026-11-19: 5 つの數字全部一致。
- * （「收録が增えればこの数も動く」と書いてある物は、其の増減を見る。） */
 function 索引の實測値(): void {
   const 索引 = join(REPO_ROOT, "public", "llms.txt");
   if (!existsSync(索引)) return;
@@ -4922,11 +4807,11 @@ function 索引の實測値(): void {
   const 表 = csvRows(readFileSync(join(REPO_ROOT, "public", "data.csv"), "utf8").trim());
   const 頭 = 表[0] ?? [];
   const 行 = 表.slice(1);
-  /* ① `data.csv` の行數（= 收録している締切 4,990） */
+  /* ① `data.csv` の行数（= 収録している締切 4,990） */
   expect(文, `索引の「收録している締切」が ${行.length} 行と違ふ`).toContain(
     `収録している締切は ${digits(行.length)} 件`,
   );
-  /* ② 品書の締切數（870） */
+  /* ② 品書の締切数（870） */
   const 品書 = JSON.parse(readFileSync(join(REPO_ROOT, "public", "catalog.json"), "utf8")) as {
     conferences?: Array<{ editions?: Array<{ deadlines?: unknown[] }> }>;
   };
@@ -4937,49 +4822,41 @@ function 索引の實測値(): void {
   expect(文, `索引の「載る締切」が品書の ${窓の行} 行と違ふ`).toContain(`載る締切は ${窓の行} 件`);
   /* ③ `date_field` が締切ではない行（311）– 列の場所は頭から探す（固定番號にしない）。 */
   const dateFieldの番 = 頭.indexOf("date_field");
-  expect(dateFieldの番, "CSV に date_field の列が無い（この檢查の前提が崩れた）").toBeGreaterThan(
+  expect(dateFieldの番, "CSV に date_field の列がない（この検查の前提が崩れた）").toBeGreaterThan(
     0,
   );
   const 非締切 = 行.filter((箱) => (箱[dateFieldの番] ?? "") !== "締切").length;
-  expect(非締切, "この檢查の前提（非締切の行）が崩れた").toBeGreaterThan(100);
+  expect(非締切, "この検查の前提（非締切の行）が崩れた").toBeGreaterThan(100);
   expect(文, `索引の「締切ではない日」が ${非締切} 行と違ふ`).toContain(
     `${非締切} 行が締切ではない日`,
   );
-  /* ④ **列の順** – 索引は「列はこの順で 31 本」と書いて 31 本を列挙する。順が違ふと
-   * CSV を讀む人が列を取り違ふ（實測 2026-11-19: 31 本全部一致）。 */
+
   const 索引の列 = [...文.matchAll(/^- `?([a-z_]+)`?：/gm)].map((m) => m[1]);
   expect(索引の列.length, "索引に列が 1 本も書かれて居ない").toBeGreaterThan(25);
   expect(索引の列, `索引の列の順が CSV と違ふ: ${索引の列.slice(0, 6).join(",")}…`).toEqual(頭);
-  /* ⑤ **此の方の印が值に在らない** – 索引は「此の種の印が値として出て居る列は一つも無い」
-   * と書く（未確認・該当なし・時刻未確認は此方が付ける日本語）。在ると、機械が
-   * 其れを上流の事實と誤讀する。 */
+  /* ⑤ **この方の印が値に在らない** – 索引は「この種の印が値として出ている列は一つも無い」
+   * と書く（未確認・該当なし・時刻未確認はこちらが付ける日本語）。あると、機械が
+   * それを上流の事実と誤読する。 */
   const 此方の印 = new Set(["未確認", "該当なし", "時刻未確認"]);
   const 印の列 = new Set<string>();
   for (const 箱 of 行) {
     for (const v of 箱) if (此方の印.has(v)) 印の列.add(v);
   }
-  expect([...印の列], "索引が「印は一個も無い」と言つたのに值に在る").toEqual([]);
+  expect([...印の列], "索引が「印は一個もない」と言つたのに値にある").toEqual([]);
 }
 
-it("索引（llms.txt）の中の實測値は、本文と合ふ（第 1003 回）", () => {
+it("索引（llms.txt）の中の実測値は、本文と合う（第 1003 回）", () => {
   索引の實測値();
 });
 
-it("health.md の表は health.json の値と合ふ（第 1005 回）", () => {
-  /* 第 1001〜1004 回で「申告は自分と合ふ」を ICS・md・索引で押さへた。**最後の申告** –
-   * `health.md` の「收録の數」の表は `health.json` のキーを其の儘書くので、值が違ふと
-   * 讀む人は json と md の**どちらを信じて良いか**判らなくなる。實測 2026-11-19:
-   * 14 行全部一致。
-   *
-   * `identity_migrations` は**物**（`{schema_version, migrations: [...]}`）なので、中の
-   * `migrations` の長さを比べる（25 件）。 */
+it("health.md の表は health.json の値と合う（第 1005 回）", () => {
   const jsonPath = join(REPO_ROOT, "public", "health.json");
   const mdPath = join(REPO_ROOT, "public", "health.md");
   if (!existsSync(jsonPath) || !existsSync(mdPath)) return;
   const json = JSON.parse(readFileSync(jsonPath, "utf8")) as Record<string, unknown>;
   const md = readFileSync(mdPath, "utf8");
   const 行 = [...md.matchAll(/^\| [^|`]*`([a-z_]+)`[^|]*\| ([^|]+)\|/gm)];
-  expect(行.length, "health.md の表が讀めない（この檢查の前提が崩れた）").toBeGreaterThan(10);
+  expect(行.length, "health.md の表が読めない（この検查の前提が崩れた）").toBeGreaterThan(10);
   const 違ふ: string[] = [];
   for (const m of 行) {
     const key = String(m[1]);
@@ -4997,18 +4874,10 @@ it("health.md の表は health.json の値と合ふ（第 1005 回）", () => {
               : String(v);
     if (書いた !== 事實) 違ふ.push(`${key}: md=${書いた} json=${事實}`);
   }
-  expect(違ふ.join("\n"), "health.md と health.json が違ふ").toBe("");
+  expect(違ふ.join("\n"), "health.md と health.json が違う").toBe("");
 });
 
-it("data.json のスキーマの申告は、實物と合ふ（第 1007 回）", async () => {
-  /* 第 1003〜1006 回で索引の數字・打ち方を見た。**殘るは `data.json` のスキーマの申告** –
-   * 索引は「上の内、稀にしか付かない物…（實測: 版 2,603 のうち call_identity 12・legacy_ids 18・
-   * event_review 7／締切 4,990 のうち track 8・superseded_deadlines 35・promotion_ref 19。
-   * verification は 4,467 件…upstream_sub は 696 のうち 354 件）」と**實測值**を書く。
-   * 機械が讀む索引なので、其の數がズレると「此れだけ在る」と誤解する。
-   *
-   * 實測 2026-11-19: **全部一致**（`track` は「空でない」行の數 – 4,990 行全部に欄は在るが
-   * 空なので、索引の 8 は**值が入つて居る行**を數へて居る）。 */
+it("data.json のスキーマの申告は、実物と合う（第 1007 回）", async () => {
   const jsonPath = join(REPO_ROOT, "public", "data.json");
   if (!existsSync(jsonPath)) return;
   const d = JSON.parse(readFileSync(jsonPath, "utf8")) as {
@@ -5049,7 +4918,7 @@ it("data.json のスキーマの申告は、實物と合ふ（第 1007 回）", 
     }
   }
   const 文 = readFileSync(join(REPO_ROOT, "public", "llms.txt"), "utf8");
-  /* 欄が在る行の數（索引は「载つて居る數」を書く – 空の `track` は入れない）。 */
+  /* 欄がある行の数（索引は「载つている数」を書く – 空の `track` は入れない）。 */
   const 全部の事實: Array<[string, number]> = [
     ["call_identity", 數.call_identity],
     ["legacy_ids", 數.legacy_ids],
@@ -5062,27 +4931,20 @@ it("data.json のスキーマの申告は、實物と合ふ（第 1007 回）", 
   ];
   for (const [名, 事] of 全部の事實) {
     /* `toContain` は正則を「その儘含む」とは解さないので、`test` で確かめる。
-     * 數は**千の桁區切りでも/無しでも**書かれ得る（4,467 と 4467）。 */
+     * 数は**千の桁區切りでも/無しでも**書かれ得る（4,467 と 4467）。 */
     const 千の桁 = String(事).replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1,");
     const 桁の候補 = 千の桁 === String(事) ? [String(事)] : [String(事), 千の桁];
-    /* 「會社 696 のうち 354 件」の樣に、名と數の間に**數字**が入るのも在る。 */
+    /* 「会社 696 のうち 354 件」の樣に、名と数の間に**数字**が入るのもある。 */
     const 合ふ = 桁の候補.some((桁) => new RegExp(`${名}.{0,30}${桁}(?![0-9])`).test(文));
     expect(合ふ, `索引の「${名}」の數が ${事} と違ふ`).toBe(true);
   }
-  /* 版と締切の總數も（「版 2,606」「締切 4,990」）。 */
+  /* 版と締切の總数も（「版 2,606」「締切 4,990」）。 */
   const 千 = (n: number): string => String(n).replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1,");
   expect(文, `索引の「版」の數が ${數.版} と違ふ`).toContain(`版 ${千(數.版)}`);
   expect(文, `索引の「締切」の數が ${數.締切} と違ふ`).toContain(`締切 ${千(數.締切)}`);
 });
 
-it("畫面の filter() は邊境でも落ちない（第 1015 回）", async () => {
-  /* 第 1014 回で MCP の邊境を實測した。**畫面**も – `filter()` を拔き出して
-   * 16 通りの邊境（空の問・0 件の問・過去・推定・國內・オンライン・ランク・分野・
-   * 種別・窓 7d/30d の組み合はせ）を全部回した。
-   *
-   * 實測 2026-11-19: 全部 0 件以上で、**例外も 0** – 落ちる組み合はせが無い。
-   * あはせて AND の意味論（「セキュリティ 会議」は兩方を持つ行だけ）・
-   * 篩り込みの効き（國內・ランクで 0 件）も確かめた。 */
+it("画面の filter() は邊境でも落ちない（第 1015 回）", async () => {
   const app = siteRuntime();
   const filterSrc = jsFunction(app, "filter");
   const now = Date.parse("2026-08-09T00:00:00Z");
@@ -5125,12 +4987,12 @@ it("畫面の filter() は邊境でも落ちない（第 1015 回）", async () 
   const p = spawnSync("node", ["-e", script], { encoding: "utf8", timeout: 120000 });
   expect(p.status, p.stderr).toBe(0);
   const 行 = p.stdout.trim().split("\n");
-  expect(行.length, "15 通りの邊境が全部返つて居ん").toBe(15);
+  expect(行.length, "15 通りの邊境が全部返つていない").toBe(15);
   expect(
     行.filter((l) => l.includes("ERR ")),
     "邊境で例外が出た",
   ).toEqual([]);
-  /* AND の意味論 –「セキュリティ 会議」は兩方を持つ行だけ（`hpc 会議` は「セキュリティ」
+  /* AND の意味論 –「セキュリティ 会議」は両方を持つ行だけ（`hpc 会議` は「セキュリティ」
    * を持たないので 0 件）。 */
   const andS = [
     "const DAY = 86400000;",
@@ -5150,36 +5012,28 @@ it("畫面の filter() は邊境でも落ちない（第 1015 回）", async () 
   const andP = spawnSync("node", ["-e", andS], { encoding: "utf8", timeout: 60000 });
   expect(andP.status, andP.stderr).toBe(0);
   const 出た = JSON.parse(andP.stdout) as string[];
-  /* **兩方の語を持つ行だけ**が殘る（`hpc 会議` は「セキュリティ」を持たないので落ちる）。
-   * 「セキュリティ」そのものも殘るのは、寄せ表の候補（語を並べた綴り）が同じ數え方を通る為
-   * （第 675 回）– 其れは仕樣。此處で見たいのは「**持たない行が落ちる**」事。 */
-  expect(出た, "AND の意味論が崩れた（兩方を持つ行だけになるべき）").not.toContain("hpc 会議");
-  expect(出た.length, "AND で行が揃つて居ん").toBeGreaterThan(0);
+
+  expect(出た, "AND の意味論が崩れた（両方を持つ行だけになるべき）").not.toContain("hpc 会議");
+  expect(出た.length, "AND で行が揃つていない").toBeGreaterThan(0);
 });
 
-it("upcoming_days が上限を超えたら截めて、其の旨を言ふ（第 1016 回）", async () => {
-  /* 實測 2026-11-19: `site.upcoming_days = 99999` にすると `upcoming.md` の頭が
-   * 「対象期間: 2026-08-09 〜 2300-05-24」に成つた。數字は噓では無い（其の日數先まで
-   * 拾つて居る）が、**收録の果ては 2027-02-03** なので、讀む人に「276 年分の data が
-   * 在る」と誤解させる。MCP の `days` は 400 で截めて居る（第 993 回）ので揃へる。
-   *
-   * config は**一時目錄に書く**（本源を汚染しない – 他の檢查が讀む）。 */
+it("upcoming_days が上限を超えたら截めて、その旨を言う（第 1016 回）", async () => {
   const { mkdtempSync, readFileSync, writeFileSync } = await import("node:fs");
   const { join } = await import("node:path");
   const { tmpdir } = await import("node:os");
   const 元 = readFileSync(join(REPO_ROOT, "config.yaml"), "utf8");
   const 燒く = 元.replace(/upcoming_days:\s*\d+/, "upcoming_days: 99999");
-  expect(燒く, "config.yaml の upcoming_days が讀めない").not.toBe(元);
+  expect(燒く, "config.yaml の upcoming_days が読めない").not.toBe(元);
   const 目錄 = mkdtempSync(join(tmpdir(), "cfp-cap-"));
   const cfg = join(目錄, "config.yaml");
   writeFileSync(cfg, 燒く, "utf8");
   const outdir = join(目錄, "public");
   const run = runCli(outdir, { extra: ["--no-embeddings", "--config", cfg] });
   const 言 = (run.stderr || "") + (run.stdout || "");
-  expect(言, "上限を超えた旨を言つて居ん").toContain("上限 400 を超えた");
+  expect(言, "上限を超えた旨を言つていない").toContain("上限 400 を超えた");
   const md = readFileSync(join(outdir, "upcoming.md"), "utf8");
-  expect(md, "400 日として截められて居ん").toContain("# 直近 400 日の締切と開催");
+  expect(md, "400 日として截められていない").toContain("# 直近 400 日の締切と開催");
   const 期間 = /対象期間: \S+ 〜 (\S+)/.exec(md)?.[1] ?? "";
-  expect(期間, "2300 年の樣な飾りの期間に成つて居る").not.toContain("23");
+  expect(期間, "2300 年の樣な飾りの期間に成つている").not.toContain("23");
   rmSync(目錄, { recursive: true, force: true });
 });

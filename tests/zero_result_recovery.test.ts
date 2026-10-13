@@ -1,13 +1,3 @@
-/**
- * 0 件案内の「打ち直しの見当」（第 256 回）。
- *
- * 2026-08-09 生成ビルドで自然な打ち方 93 語を調べると 47 語が 0 件で、案内はどれにも
- * 同じ「検索語を短くする」を出していた。短くしても 0 件の語（`高速計算` `採択率`
- * `博士前期`）にその助言は直らない – 短くした語が収録に無いので、打ち直しても 0 件の
- * まま画面が動かない。逆に効く打ち直し（`機械学習国際会議` → `機械学習` – 第 359 回で `生成AI` は 1 件通る語になった為、見本の語を移した）には、その語と件数を出せる。
- * ここでは「効く見当だけを、打たれた形で、正しい件数で出す」を見る（SPEC §7）。
- */
-
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
@@ -34,7 +24,7 @@ const NOW = Date.parse("2026-08-09T00:00:00Z");
 beforeAll(async () => {
   const mod = await import(pathToFileURL(`${site}/recommender.js`).href);
   Rec = mod.default as unknown as Reco & { searchMatcher: (q: string, n: number) => MatchFn };
-  expect(existsSync(`${site}/recommender.js`), "ビルド済み recommender が無い").toBe(true);
+  expect(existsSync(`${site}/recommender.js`), "ビルド済み recommender がない").toBe(true);
 });
 
 /* 合成の収録（数の期待値を独立に数えられるようにするため – 実データの件数はデータの
@@ -57,9 +47,6 @@ it("効く打ち直しを、打たれた形と件数で出す（ビルド済み 
 });
 
 it("収録の表記が全角でも、見当の件数は画面と同じに数える", () => {
-  /* 見当は行の畳み込み（`kanaFold` – 全角・半角・仮名のゆらぎを寄せる）を行側にも掛ける。
-   * ここを省くと全角表記の行が数えられず、同じ画面の検索と見当の件数が食い違う
-   * （2026-08-09 生成ビルドの実データでも `学生` は畳み込み無しで 0 行になる – 第 257 回）。 */
   const fullWidth = ["ＡＩ 国際会議 提案募集", "ほかに何も無い行 提案募集"];
   const hits = Rec.shorterHitWordsJa("生成AI", fullWidth, NOW);
   expect(hits.length, "全角表記の行を見当から落としている").toBeGreaterThan(0);
@@ -171,10 +158,7 @@ it("実データのビルドで、打ち直しの見当が実際の収録から�
     seen[hay] = true;
     hays.push(hay);
   });
-  /* 短くした語が収録にある形だけを見る – `機械学習国際会議` は 0 件で、短くした `機械学習` は
-   * 出る（2026-08-09 生成ビルドの実測で 81 件）。`生成AI` は第 359 回で『原文に generative と
-   * 書かれた行』に寄せて 1 件通る語になったので、此処の見本からは外した（其の方は
-   * `tests/field_word_synonyms.test.ts` で見る）。 */
+
   const hits = Rec.shorterHitWordsJa("機械学習国際会議", hays, NOW);
   expect(hits.length, "実データで見当が出ていない").toBeGreaterThan(0);
   const named = hits.map((h) => h.word);

@@ -1,18 +1,3 @@
-/**
- * 案内が画面の実物の語を使っているかの検査（SPEC §7・第 271 回）。
- *
- * 2026-08-09 生成ビルドで実測した形：
- *   - てびきは CSV の項目で「残りは**表の下に出るボタン**で足します」と言っていたが、
- *     そのボタンは画面上 **さらに表示 (残り N 件)** と出る。ボタン名はどこにも書かれて
- *     おらず、てびきを読んだ人は目の前のボタンと対応づけられなかった。
- *   - 「締切まで」の項目も「締切日からの日数で絞ります」とだけ言い、実際の選択肢
- *     （かまわない・7 日以内・30 日以内・90 日以内・180 日以内）を一つも挙げていなかった。
- *   - `upcoming.md`（1,126 行）は前置きで「`index.html` の表が同じ式で出すので…そちらが早い」
- *     と**名指しするだけ**で、リンクが 1 本も無かった（ビルド実測: index.html へのリンク 0 本）。
- *     GitHub の生的な表示ではコードspan になるだけで辿れない。
- *   - 表の最後まで読むと出口も無く、そこで終わりだった。
- */
-
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -34,12 +19,6 @@ function guideText(): string {
   return stripTags(panel![0]);
 }
 
-/**
- * てびきの特定の項目（`<dt>` と、それに続く `<dd>`）だけを、タグを落として返す。
- * 項目を問わずガイド全体を見ると、他の項目の例文が語を拾ってしまうので、
- * 「その項目が言っている」まで見るために使う（第 271 回の改ざんで実発生:
- * 「締切まで 7 日以内」を項目から消しても、別の項目の例文に残って通ってしまった）。
- */
 function guideEntry(term: string): string {
   const mk = page("index.html").replace(/<style>[\s\S]*?<\/style>|<script>[\s\S]*?<\/script>/g, "");
   const m = new RegExp(`<dt>${term}</dt>\\s*<dd>([\\s\\S]*?)</dd>`).exec(mk);
@@ -49,7 +28,7 @@ function guideEntry(term: string): string {
 
 /** 画面に実際に並ぶ「締切まで」の選択肢（検査側に書き写さない）。 */ function windowChoices(): string[] {
   const m = /<select\b[^>]*\bid="win"[^>]*>([\s\S]*?)<\/select>/.exec(page("index.html"));
-  expect(m, "「締切まで」の選択欄が無い").toBeTruthy();
+  expect(m, "「締切まで」の選択欄がない").toBeTruthy();
   const opts = [...m![1].matchAll(/<option value="[^"]*"[^>]*>([^<]*)<\/option>/g)].map((x) =>
     x[1].trim(),
   );
@@ -64,7 +43,7 @@ describe("案内は画面の実物の語を使っている（第 271 回）", ()
       "",
     );
     const btn = /<button id="more"[^>]*>([^<]*)<\/button>/.exec(mk);
-    expect(btn, "表の下のボタンが無い").toBeTruthy();
+    expect(btn, "表の下のボタンがない").toBeTruthy();
     const label = btn![1].trim();
     expect(label, "ボタンの語が空").not.toBe("");
     expect(guideText(), `てびきが画面のボタン「${label}」を名指していない`).toContain(label);
@@ -99,7 +78,7 @@ describe("案内は画面の実物の語を使っている（第 271 回）", ()
       /<style>[\s\S]*?<\/style>|<script>[\s\S]*?<\/script>/g,
       "",
     );
-    expect(mk.indexOf('<button id="more"'), "ボタンが表より前に有る").toBeGreaterThan(
+    expect(mk.indexOf('<button id="more"'), "ボタンが表より前にある").toBeGreaterThan(
       mk.lastIndexOf("</table>"),
     );
   });
@@ -111,17 +90,17 @@ describe("案内は画面の実物の語を使っている（第 271 回）", ()
     expect(link, "前置きの指し先がリンクになっていない（生的な表示で辿れない）").toBeTruthy();
     expect(link![1], "何がもらえるのか言わないリンク文").toContain("index.html");
     expect(head, "前置きが画面の利点を言わなくなった").toContain("早い");
-    expect(existsSync(join(site, "index.html")), "指す先がビルド先に無い").toBe(true);
+    expect(existsSync(join(site, "index.html")), "指す先がビルド先にない").toBe(true);
   });
 
-  it("マークダウンの終端にも出口が有り、言い回しは `upcoming.html` と同じ正本", () => {
+  it("マークダウンの終端にも出口があり、言い回しは `upcoming.html` と同じ正本", () => {
     const md = page("upcoming.md");
     const lastRow = md.lastIndexOf("\n| ");
     const exit = md.slice(lastRow);
     const link = /\[([^\]]+)\]\(index\.html\)/.exec(exit);
     expect(
       link,
-      "最後の行のうしろに出口が無い（1,000 行超の表の最後まで来て打ち切り）",
+      "最後の行のうしろに出口がない（1,000 行超の表の最後まで来て打ち切り）",
     ).toBeTruthy();
     // 同じ語を 2 か所に持たない方針: HTML 側は矢印を足すので、同じ正本から組まれている
     // ことは「終端のリンク文言がこの語で終わっている」ことで確かめる。

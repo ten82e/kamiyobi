@@ -1,21 +1,3 @@
-/**
- * 表の「行ヘッダー」と、幅せま画面で各マスに付く列名の検査（SPEC §7・第 284 回）。
- *
- * 2 つの実測した欠陥を、同時に直している。
- *
- *   1. **行ヘッダーが 1 個も無かった**。`upcoming.html` の 1,126 行は全て `<td>`、
- *      一覧（`index.html`）の行も全マスが `td` だった。列の名前（`scope="col"`）は
- *      出ていたので、一マスずつ読むと「種別」「推定」とは読めるが、
- *      **どの会議の行か**が分からない。
- *   2. **幅せま画面で列名が消え、置き換わる筈の列名が空だった**。`@media (max-width: 640px)`
- *      では `thead` を消し、各マスの前に `content: attr(data-label) "："` を出す作り。
- *      ところが `upcoming.html` のマス 6,756 個に `data-label` が **1 個も無く**
- *      （2026-09-24 実測）、その幅では各行が「：論文締切」のように記号だけ先頭に付いて、
- *      何が何列か読めなかった。
- *
- * 見た目は変えない（行ヘッダーは `td` と同じ見え方にし、カード化でも同じ積方にしている）。
- */
-
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -61,13 +43,13 @@ describe("表の行が、どの行かを自分でおぼえている", () => {
     const columns = upcomingColumns();
     const src = page("upcoming.html");
     const rows = bodyRows(src).filter((r) => r.includes("<td"));
-    expect(rows.length, "行が無い（組み立てが壊れた）").toBeGreaterThan(100);
+    expect(rows.length, "行がない（組み立てが壊れた）").toBeGreaterThan(100);
     const missing = rows.filter((r) => !r.includes('<th scope="row"'));
     expect(
       missing.slice(0, 2).map((r) => r.slice(0, 80)),
       `${missing.length} 行に行ヘッダーが無い`,
     ).toEqual([]);
-    // 行ヘッダーは「会議」の列に有る（番号でなく、列ヘッダーから割り出した位置で見る）。
+    // 行ヘッダーは「会議」の列にある（番号でなく、列ヘッダーから割り出した位置で見る）。
     const misplaced = rows.filter((r) => {
       const cells = [...r.matchAll(/<(t[hd])\b([^>]*)>/g)];
       const at = cells.findIndex((m) => m[1] === "th");
@@ -96,7 +78,7 @@ describe("表の行が、どの行かを自分でおぼえている", () => {
         cells.push({ tag: m[1], attrs: m[2], index: i });
       }
     }
-    expect(cells.length, "マスが無い").toBeGreaterThan(100);
+    expect(cells.length, "マスがない").toBeGreaterThan(100);
     const missing = cells.filter((c) => !c.attrs.includes("data-label"));
     expect(
       missing.slice(0, 3).map((c) => `<${c.tag}${c.attrs}>`),
@@ -124,9 +106,9 @@ describe("表の行が、どの行かを自分でおぼえている", () => {
     );
     expect(stacked.length, "幅せま画面でマスを積む規則が見つからない").toBeGreaterThan(0);
     const labelRule = blocks.filter((b) => /attr\(data-label\)/.test(b.body));
-    expect(labelRule.length, "列名を出す規則が無い").toBeGreaterThan(0);
+    expect(labelRule.length, "列名を出す規則がない").toBeGreaterThan(0);
     /* `,` で並べた規則は `cssBlocks` が個別の規則に割るので、「同じセレクタに含んで
-     * いるか」では測れない。対応する行ヘッダーの規則が同じ幅に有るかで見ます。 */
+     * いるか」では測れない。対応する行ヘッダーの規則が同じ幅にあるかで見ます。 */
     const orphan = (list: typeof blocks) =>
       list
         .filter((b) => {
@@ -145,12 +127,6 @@ describe("表の行が、どの行かを自分でおぼえている", () => {
     ).toBe(true);
   });
 
-  /* 列ヘッダーの見た目（灰色の地・小さな字・大文字化・押せそうに見えるカーソル）が
-   行ヘッダーに漏れないこと（第 284 回）。直前は `th` だけを狙った規則で、行の中の
-   会議名が灰色の小さな大文字になり、押せる物と誤解される見た目になっていた。
-   打ち消し規則を後から並べるのではなく、**規則を `thead th` に限定**しているため、
-   判定は「素の `th` を狙う規則が残っていないか」でできる（打ち消しを忘れた追加も
-   これなら捕まる）。 */
   it("行ヘッダーが、列ヘッダーの見た目を引き継がない", () => {
     for (const pageName of ["index.html", "upcoming.html"]) {
       const blocks = cssBlocks(cssOf(pageName));
@@ -205,7 +181,7 @@ describe("表の行が、どの行かを自分でおぼえている", () => {
           /^(tr:(hover|selected)|tr\.selected|tr:last-child)/.test(b.selector),
       );
       expect(withTd.length, `${pageName} に行の状態の規則が無い`).toBeGreaterThanOrEqual(3);
-      /* `,` で並べた規則は個別に割れるので、行ヘッダー側の規則が同じ幅に有るかで見る。 */
+      /* `,` で並べた規則は個別に割れるので、行ヘッダー側の規則が同じ幅にあるかで見る。 */
       const orphan = withTd
         .filter((b) => {
           const twin = b.selector.replace(/(^|[\s>+~])td\b/, '$1th[scope="row"]');
@@ -232,7 +208,7 @@ describe("一覧側（JavaScript が作る行）も同じ形", () => {
     const calls = [...app.matchAll(/td\(\s*(?:tr|row)\s*,\s*"([^"]+)"[^)]*\)/g)].map((m) => m[0]);
     expect(calls.length, "セルを作る呼び出しが見つからない").toBeGreaterThan(3);
     const headers = calls.filter((c) => /true\s*\)/.test(c));
-    expect(headers.length, "行ヘッダーにしている列が 1 つも無い").toBeGreaterThan(0);
+    expect(headers.length, "行ヘッダーにしている列が 1 つもない").toBeGreaterThan(0);
     expect(headers.length, `行ヘッダーにしすぎている: ${headers.join(" / ")}`).toBeLessThan(3);
     expect(headers.join(" ")).toMatch(/"会議"/);
   });

@@ -1,17 +1,3 @@
-/**
- * 一覧の表の組み立てが、閉じ要素まで揃った HTML になっているかの検査（SPEC §7・第 279 回）。
- *
- * 2026-09-24 にビルド成果物で実測した形（`index.html`）:
- *   - `<th` が 7 個開いているのに `</th>` は **3 個**。並び順を切り替えられる 5 列のうち
- *     「残り」「日時（JST）」「会議」「ランク」の 4 列が閉じられていなかった
- *     （閉じていたのは「種別」「会期」「開催地」だけ）。
- *   - 画面を表示する仕組みは次の `<th>` で前のセルを勝手に閉じるので、画面では壊れて見えない。
- *     しかしこれは不正な HTML で、検証器は落ちるし、表を組み直して扱う処理系
- *     （紙への書き出し・他サービスへの貼り付け・読み上げ側の HTML 補正）では
- *     セルの区別が潰れることがある。`upcoming.html` は同じ表を組み立てているのに閉じていた
- *     （`src/build.ts` 側は閉じを書いていた – 静的な側だけ抜けていた）。
- */
-
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -58,7 +44,7 @@ describe("一覧の表が閉じ要素まで揃った HTML で出る（第 279 �
   it("既定画面の見出しは 7 個の列で、1 個ずつ閉じている", () => {
     const src = body("index.html");
     const head = rows(src)[0];
-    expect(head, "先頭の行（見出し）が無い").toBeTruthy();
+    expect(head, "先頭の行（見出し）がない").toBeTruthy();
     const cells = [...head.matchAll(/<th\b[\s\S]*?<\/th>/g)].map((m) => cellText(m[0]));
     expect(cells, "見出しの列が 7 個に読めない（閉じ忘れで中身が混ざった可能性がある）").toEqual([
       "残り",
@@ -85,7 +71,7 @@ describe("一覧の表が閉じ要素まで揃った HTML で出る（第 279 �
     const sortable = [...head.matchAll(/<th\b[^>]*data-sort="([a-z]+)"[^>]*>/g)].map((m) => m[1]);
     expect(sortable).toEqual(["rem", "date", "conf", "rank", "event"]);
     // 押せる列には読み上げ向けの状態（aria-sort）が必ず付いている（閉じ忘れの修正で消えていない）。
-    // 押せない列（種別・開催地）は状態を出さないのが正しい（第 258 回で揃えた並び）。
+    // 押せない列（種別・開催地）は状態を出さないのが正しい。
     expect((head.match(/aria-sort="/g) || []).length, "aria-sort が揃っていない").toBe(5);
     for (const th of [...head.matchAll(/<th\b[^>]*>/g)].map((m) => m[0])) {
       if (th.includes("data-sort=")) {
@@ -97,18 +83,17 @@ describe("一覧の表が閉じ要素まで揃った HTML で出る（第 279 �
   it("直近の締切と会期の表は、すべての行が 9 列持っている", () => {
     const src = body("upcoming.html");
     const list = rows(src);
-    expect(list.length, "行が無い（組み立てが壊れた）").toBeGreaterThan(100);
+    expect(list.length, "行がない（組み立てが壊れた）").toBeGreaterThan(100);
     // 見出しの行（`scope="col"` を持つ行）は別扱いで、そちらも 9 個であることを見る。
     const headRow = list.find((r) => r.includes('scope="col"'));
-    expect(headRow, "見出しの行が無い").toBeTruthy();
+    expect(headRow, "見出しの行がない").toBeTruthy();
     expect(
       [...String(headRow).matchAll(/<th\b[\s\S]*?<\/th>/g)].map((m) => cellText(m[0])),
       "列の名が変わった",
     ).toEqual(["日付", "残り", "会議", "種別", "ラウンド", "推定", "開催地", "会期", "状態"]);
     const data = list.filter((r) => r.includes("<td"));
-    expect(data.length, "データの行が無い").toBeGreaterThan(100);
-    /* 第 284 回から行の先頭（「どの会議か」）が行ヘッダー（`<th scope="row">`）なので、
-     * マスの数は `td` だけで数えると足りなく見える。両方合わせて数える。 */
+    expect(data.length, "データの行がない").toBeGreaterThan(100);
+
     const bad = data.filter((r) => (r.match(/<t[hd]\b/g) || []).length !== 9);
     expect(bad.slice(0, 2), `${bad.length} 行が 9 列でない`).toEqual([]);
   });

@@ -1,20 +1,9 @@
-/**
- * 画面自身の語（使い方・並び替え・出典・カテゴリなど）を検索欄に打った人への案内の検査
- * （SPEC §7）。ビルド済みの `emptyDeadlineHint`（0 件案内）と `zeroResultLiveNote`（読み上げ）を
- * そのまま動かす（第 248 回）。
- *
- * tests/build_golden.test.ts は biome の 1 MiB 上限（tests/lint_budget.test.ts）に近いので、
- * 新しい検査はここに置く（同じ抜き出しハーネスは tests/runtime_extract.ts に共有した）。
- */
-
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { expect, it } from "vitest";
 import { builtSite } from "./built_site.ts";
 import { deadlineHintFunction, zeroResultLiveFunction } from "./runtime_extract.ts";
 
-/* 条件をすべて外した 0 件の見立て（案内は「いまその条件で何行が隠れているか」を添えるので、
- * 外していない条件の内訳も渡す – 呼び出し側の実装と同じ形にしないと別の話になる – 第 136 回）。 */
 const clear = {
   window: "all",
   past: true,
@@ -63,8 +52,7 @@ it("画面自身の語を打った人に、0 件の案内が行き先を言う�
   expect(uiHits, "直らない打ち直し方（語を短くする）を出している").not.toContain(
     "検索語を短くする",
   );
-  /* 操作の語は、操作する場所を言う – ただし並び替えと絞り込みでは場所が違う（第 338 回:
-   * 並び替えは列の見出しを押す操作で、『並び順』という欄は在らない）。 */
+  /* 操作の語は、操作する場所を言う – ただし並び替えと絞り込みでは場所が違う。 */
   const uiSort = hint({ ...clear, query: "並び替え" });
   expect(uiSort, "並び替えが見出しの操作を言っていない").toContain("列の見出し");
   const uiFilter = hint({ ...clear, query: "絞り込み" });
@@ -84,11 +72,11 @@ it("画面自身の語を打った人に、0 件の案内が行き先を言う�
 
 it("画面自身の語を打った人に、読み上げでも行き先を言う（SPEC §7）", () => {
   /* 実測: HEAD のビルドでは「使い方」に対して「語「使い方」は収録データにありません」だけを
-   * 読んでいた – 収録に無いのは確かだが、打ち直し方が分からない（第 248 回）。 */
+   * 読んでいた – 収録に無いのは確かだが、打ち直し方が分からない。 */
   const note = zeroResultLiveFunction();
   const uiWord = note({ ...empty, query: "使い方", termCounts: [{ term: "使い方", count: 0 }] });
   expect(uiWord, "てびきの場所をよみ上げていない").toContain("見方のてびき");
-  expect(uiWord, "収録に無い語と言ったままになっている").not.toContain("収録データにありません");
+  expect(uiWord, "収録にない語と言ったままになっている").not.toContain("収録データにありません");
   /* 「対面」の読み上げも同じことを言う（行に出る語ではないので、絞れない理由を言う –
    * 実測: HEAD のビルドでは読み上げが空だった）。 */
   const offline = note({ ...empty, query: "対面", termCounts: [{ term: "対面", count: 0 }] });

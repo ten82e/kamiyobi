@@ -1,15 +1,3 @@
-/**
- * 幅の狭い画面で締切の一覧が横幅を越えたときの案内と、キーボードでの動き方の検査（SPEC §7・第 265 回）。
- *
- * 2026-08-09 生成ビルドで実測した形：
- *   - `table { min-width: 880px }` / 7 列（収録 687 会議）
- *   - 640 px 以下は行がカードになるので越えない（`@media (max-width: 640px)`）
- *   - **641〜879 px だけ**横スクロールが起きる（iPad 縦持ち 768・810・834、画面を半分に割った窓、
- *     拡大表示）。この幅が、右に続きがあると気づけないまま左端だけ読む状態だった
- *   - `overflow-x: auto` の箱は既定でフォーカスされないので、キーボードでは動かせなかった
- *     （WCAG 2.1.1 操作可能性）
- */
-
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -30,16 +18,16 @@ describe("横幅を越えた表の案内（第 265 回）", () => {
   it("案内の場はスクロール面の外にあり、既定では隠れている", () => {
     const page = pageHtml();
     const hint = /<p class="scrollhint" id="tableScrollHint" hidden><\/p>/.exec(page);
-    expect(hint, "案内の <p> が無い").toBeTruthy();
+    expect(hint, "案内の <p> がない").toBeTruthy();
     // 中に置き直す改ざん（外に残したまま中にも置く）を検めるため、同じ id は 1 個だけを見る。
     expect(
       page.match(/id="tableScrollHint"/g)?.length,
-      "案内の場が 2 つ有る（同じ id は HTML として誤り。中に置き直した可能性）",
+      "案内の場が 2 つある（同じ id は HTML として誤り。中に置き直した可能性）",
     ).toBe(1);
     const wrap = page.indexOf('<div class="tablewrap" id="deadlineTableWrap">');
     expect(wrap, "スクロール面の箱が見つからない").toBeGreaterThan(-1);
     // 中に入れると自分でスクロールして消えるので、箱の外（直前）に置く。
-    expect(hint!.index, "案内がスクロール面より後に有る").toBeLessThan(wrap);
+    expect(hint!.index, "案内がスクロール面より後にある").toBeLessThan(wrap);
     expect(page.slice(hint!.index, wrap), "案内が箱の直後に置いていない").toContain("</p>");
     // 紙には出さない（紙は横に越えない）。
     const print = /@media print\s*\{[\s\S]*?\n\}/.exec(cssText())?.[0] ?? "";
@@ -51,17 +39,17 @@ describe("横幅を越えた表の案内（第 265 回）", () => {
     const cssMatch = cssText();
     const wrapRule = /\.tablewrap\s*\{([^}]*)\}/.exec(cssMatch)?.[1] ?? "";
     expect(wrapRule, "スクロール面が横に動かせる規則を失っている").toContain("overflow-x: auto");
-    expect(cssMatch, "焦点の目印が無い（Tab で受けても場所が分からない）").toMatch(
+    expect(cssMatch, "焦点の目印がない（Tab で受けても場所が分からない）").toMatch(
       /\.tablewrap:focus-visible\s*\{[^}]*outline:/,
     );
-    expect(cssMatch, "案内の文字色の規則が無い").toMatch(/\.scrollhint\s*\{[^}]*color:/);
+    expect(cssMatch, "案内の文字色の規則がない").toMatch(/\.scrollhint\s*\{[^}]*color:/);
   });
 
   it("案内の文字は明るい面でも暗い面でも読める（WCAG 1.4.3）", () => {
-    // :root は明るい色と暗い色で 2 塊あるので、それぞれ別に見る（第 261 回）。
+    // :root は明るい色と暗い色で 2 塊あるので、それぞれ別に見る。
     const cssMatch = cssText();
     const blocks = [...cssMatch.matchAll(/:root[^{]*\{([^}]*)\}/g)].map((m) => m[1]);
-    expect(blocks.length, "配色の塊が 2 つ無い").toBeGreaterThanOrEqual(2);
+    expect(blocks.length, "配色の塊が 2 つない").toBeGreaterThanOrEqual(2);
     const vars = (body: string): Record<string, string> => {
       const out: Record<string, string> = {};
       for (const m of body.matchAll(/(--[a-z-]+)\s*:\s*([^;]+);/g)) out[m[1]] = m[2].trim();
@@ -193,9 +181,6 @@ describe("越えているときだけスクロール面を Tab で受けられ�
   });
 
   it("越えていないときは差し込まない（空の焦点点を増やさない）", () => {
-    /* 狭い窓から広い窓へ戻した場面その物で検める（前に越えていた要素に attributes が
-       残ったまま）。からっぽの要素で始めると、消す物が無いので後始末を忘れても通る –
-       改ざん実測で気づいた空振り（第 265 回）。 */
     const wrap = fakeEl({
       scrollWidth: 768,
       clientWidth: 768,
@@ -236,7 +221,7 @@ describe("越えているときだけスクロール面を Tab で受けられ�
   });
 
   it("窓の幅が変わりても揃え直す（拡大表示・画面分割を追いかけられる）", () => {
-    expect(app, "幅が変わったときの揃え直しが無い").toContain(
+    expect(app, "幅が変わったときの揃え直しがない").toContain(
       'window.addEventListener("resize", syncTableScroll)',
     );
     expect(app, "一覧を組み直したときに揃え直していない（幅が変わっても同じ画面になる）").toMatch(

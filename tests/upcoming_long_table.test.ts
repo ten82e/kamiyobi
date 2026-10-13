@@ -1,14 +1,3 @@
-/**
- * 縦に長い静的な一覧（`upcoming.html`）を読み通せるかの検査（SPEC §7・第 269 回）。
- *
- * 2026-08-09 生成ビルドで実測した形：
- *   - 本文 250 KB・`<tr>` 1,127 行・7 欄・月まとめの見出しは無し（1 枚の長い表）
- *   - 「締切の一覧に戻る」は文書全体で **1 個だけ**（先頭）。`</table>` のうしろには
- *     何も無く、最後の行まで読んだ人は約 50 画面ぶん上に戻らなければならなかった
- *   - スタイルシートに `sticky` は 1 度も無く、少しスクロールすると欄の名前が消える
- *     （800 行目の数字が「残り」なのか「会期」なのかが分からない）
- */
-
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -40,19 +29,19 @@ describe("縦に長い静的な一覧（第 269 回）", () => {
     expect(up.match(/<th scope="col">/g)?.length, "欄の数が変わった").toBe(9);
   });
 
-  it("終端に出口が有る（最後の行よりうしろに、先頭と画面へ戻る物を出す）", () => {
+  it("終端に出口がある（最後の行よりうしろに、先頭と画面へ戻る物を出す）", () => {
     const up = page("upcoming.html");
     const lastRow = up.lastIndexOf("</tr>");
     const top = up.indexOf('href="#top"');
     const back = up.indexOf('href="index.html"', lastRow);
-    expect(top, "先頭に戻るリンクが無い").toBeGreaterThan(lastRow);
-    expect(back, "画面に戻るリンクが終端に無い（`</table>` のうしろが空だった）").toBeGreaterThan(
+    expect(top, "先頭に戻るリンクがない").toBeGreaterThan(lastRow);
+    expect(back, "画面に戻るリンクが終端にない（`</table>` のうしろが空だった）").toBeGreaterThan(
       lastRow,
     );
     // 指す先が実在すること（噓のリンクを置かない）。
     const id = /<p id="top">/.exec(up);
-    expect(id, "#top の受け手が無い（押しても動かないリンク）").toBeTruthy();
-    expect(existsSync(join(site, "index.html")), "index.html がビルド先に無い").toBe(true);
+    expect(id, "#top の受け手がない（押しても動かないリンク）").toBeTruthy();
+    expect(existsSync(join(site, "index.html")), "index.html がビルド先にない").toBe(true);
   });
 
   it("入口と終端で同じ言い回しを使う（同じ語を 2 か所に持たない）", () => {
@@ -103,13 +92,13 @@ describe("縦に長い静的な一覧（第 269 回）", () => {
     // 当たる。本文に `data-sort` という語が現れるのはスタイルシートの中だけなので、
     // 見出しの形その物を見て区別する（スタイルシートには語が出る）。
     const thead = /<thead>[\s\S]*?<\/thead>/.exec(up);
-    expect(thead, "列見出しの塊が無い").toBeTruthy();
+    expect(thead, "列見出しの塊がない").toBeTruthy();
     expect(thead![0].includes("data-sort"), "静的な一覧の見出しが並び替えを持つ想定になった").toBe(
       false,
     );
     expect(
       effectiveCss(css, ".tablewrap thead th:not([data-sort])", "background-color", 1200),
-      "粘着中の見出しに不透明な下地が無い（行の文字が透ける）",
+      "粘着中の見出しに不透明な下地がない（行の文字が透ける）",
     ).toBe("var(--panel)");
   });
 
@@ -137,10 +126,10 @@ describe("縦に長い静的な一覧（第 269 回）", () => {
   });
 });
 
-it("状態の列が、畫面の一覧の札と同じ語を持つ（第 862 回）", () => {
-  /* 畫面の行には札が付き、カレンダーの本文にも書く樣に成つたが、**此の表だけを讀む人**
+it("状態の列が、画面の一覧の札と同じ語を持つ（第 862 回）", () => {
+  /* 画面の行には札が付き、カレンダーの本文にも書く樣に成つたが、**この表だけを読む人**
    * （印刷する人・grep する人）には何も無かつた – 確かめて居ない締切を、確かめた物として
-   * 使はせない爲に、同じ語を此處にも出す。 */
+   * 使はせない為に、同じ語をここにも出す。 */
   const rows = page("upcoming.html");
   const head = /<thead>([\s\S]*?)<\/thead>/.exec(rows)?.[1] ?? "";
   const 見出し = [...head.matchAll(/<th\b[\s\S]*?<\/th>/g)].map((m) =>
@@ -148,14 +137,14 @@ it("状態の列が、畫面の一覧の札と同じ語を持つ（第 862 回�
       .replace(/<[^>]*>/g, "")
       .trim(),
   );
-  expect(見出し[見出し.length - 1], "狀態の列が末尾に無い").toBe("状態");
+  expect(見出し[見出し.length - 1], "状態の列が末尾にない").toBe("状態");
   const md = readFileSync(join(site, "upcoming.md"), "utf8");
   const 表 = md.split("\n").filter((l) => l.startsWith("|"));
   const 幅 = [...new Set(表.map((l) => l.slice(1, -1).split("|").length))];
-  expect(幅, "列數が揃つて居ない").toEqual([9]);
-  /* 語は畫面と同じ正本（`statusMarksJa`）から取る。 */
+  expect(幅, "列数が揃つて居ない").toEqual([9]);
+  /* 語は画面と同じ正本（`statusMarksJa`）から取る。 */
   const 札の行 = 表.filter((l) => l.includes("複数候補のため要確認") || l.includes("延長後"));
-  expect(札の行.length, "札を持つ行が無い（此の檢査の前提）").toBeGreaterThan(0);
+  expect(札の行.length, "札を持つ行がない（この検査の前提）").toBeGreaterThan(0);
   for (const l of 札の行) {
     const セル = l
       .slice(1, -1)
@@ -165,6 +154,8 @@ it("状態の列が、畫面の一覧の札と同じ語を持つ（第 862 回�
       /^(複数候補のため要確認|延長後)(・(複数候補のため要確認|延長後))*$/,
     );
   }
-  /* 表の凡例（md を單體で讀む人）にも、列の意味を書く。 */
-  expect(md, "凡例が狀態の列を説明して居ん").toContain("「状態」は、公式ページに候補が複数あって");
+  /* 表の凡例（md を単体で読む人）にも、列の意味を書く。 */
+  expect(md, "凡例が状態の列を説明していない").toContain(
+    "「状態」は、公式ページに候補が複数あって",
+  );
 });

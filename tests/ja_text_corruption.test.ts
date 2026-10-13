@@ -1,15 +1,3 @@
-/**
- * 日本語の文字化けを検査する（第 903 回）。
- *
- * 2026-10-31 に実測した形: 注釈に日本語を書く段で、1 語だけが置換文字（U+FFFD）に
- * 成った。ビルドでブラウザへ出るファイルに残るため、画面に出る説明と同じだけ
- * 読まれる。しかも「壊れた字が 1 語だけ混じった注釈」は lint も旧字体の検査
- * （`scripts/ja-text-audit.ts`）も引っかからないので、気づくのは次にその注釈を
- * 読む時だけになる。実に 2 箇所の注釈がその形で残っていた。
- *
- * ここは機械が確かめる。旧字体の検査とは別に、「読めない字が混入していない」事だけを見る。
- */
-
 import { spawnSync } from "node:child_process";
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { extname, join, relative } from "node:path";
@@ -76,14 +64,7 @@ describe("日本語の文字化け", () => {
   });
 });
 
-describe("配つてある物（public/）にも破損が無い（第 976 回）", () => {
-  /* 上の走査は `src`・`site`・`scripts`・`tests`・`data`（`public/` は CI が作る生成物で
-   * .gitignore）。**讀む人の手に屆く物**はこつち – 實測 2026-11-17（6 つの配布物）:
-   * `llms.txt`・`upcoming.md`・`data.csv`・`upcoming.html`・`index.html`・`404.html` の
-   * **全部**で置換文字 0・簡体字 0。此れを守る（次に變な字が混ざつたら鳴る）。
-   *
-   * 第 950 回で誤檢知を掃いたので、今は監査の出す候補が本物だけになる – 此の檢查は
-   * **機械が確實に譯る物**（置換文字・簡体字の表）だけを見る。 */
+describe("配つてある物（public/）にも破損がない（第 976 回）", () => {
   const 配布物 = [
     "llms.txt",
     "upcoming.md",
@@ -94,7 +75,7 @@ describe("配つてある物（public/）にも破損が無い（第 976 回）"
     "data.json",
     "health.json",
   ] as const;
-  it("置換文字が 1 つも無い", () => {
+  it("置換文字が 1 つもない", () => {
     for (const name of 配布物) {
       const path = join(ROOT, "public", name);
       if (!existsSync(path)) continue; // CI が作る
@@ -102,11 +83,11 @@ describe("配つてある物（public/）にも破損が無い（第 976 回）"
       expect(text.includes("\ufffd"), `${name} に置換文字が在る`).toBe(false);
     }
   });
-  it("中國語の簡体字が 1 つも無い", () => {
-    /* 表は**監査スクリプトの正本**から讀む（書き寫すとズレる – 第 915 回と同じ決まり）。 */
+  it("中国語の簡体字が 1 つもない", () => {
+    /* 表は**監査スクリプトの正本**から読む（書き寫すとズレる – 第 915 回と同じ決まり）。 */
     const audits = readFileSync(join(ROOT, "scripts", "ja-text-audit.ts"), "utf8");
     const 簡体字 = /const 簡体字 =\s*"([^"]+)";/.exec(audits)?.[1] ?? "";
-    expect(簡体字.length, "簡体字の表が空（この檢查の前提が崩れた）").toBeGreaterThan(0);
+    expect(簡体字.length, "簡体字の表が空（この検查の前提が崩れた）").toBeGreaterThan(0);
     for (const name of 配布物) {
       const path = join(ROOT, "public", name);
       if (!existsSync(path)) continue;
@@ -118,22 +99,17 @@ describe("配つてある物（public/）にも破損が無い（第 976 回）"
 });
 
 describe("中国語の簡体字", () => {
-  it("檢査の表と、書き放入れた語が一致する（第 915 回）", async () => {
-    /* 實測 2026-11-04: `tests/mcp_server.test.ts` に `選定理由` と書いた處が `选定理由`
-     * （U+9009）に成って居た。`includes()` が落ちるのは字が違ふだけで、typecheck も
-     * lint も通る – **機械が氣づく**唯一的道はこの檢査。 */
+  it("検査の表と、書き放入れた語が一致する（第 915 回）", async () => {
     const script = readFileSync(join(ROOT, "scripts", "ja-text-audit.ts"), "utf8");
-    /* 表は**實測で 1 つでも當たった字だけ**に入れる（日本語と同じ符號位置の字を足すと偽檢査が
-     * 大量に出る – 實測 2026-11-04 に 493 待たせて 37 字が偽検出になった）。中國語をわざと
-     * 受ける 2 行（正規表現と打鍵表）は行の內容で外す。 */
+
     /* 定義が 1 行か 2 行かを問は無い形に読む（整形で́ 替わる – 第 932 回）。 */
     const 表 = /const 簡体字 =\s*"([^"]+)";/.exec(script)?.[1] ?? "";
-    expect(表.length, "簡体字の表が空（此の檢査の前提が崩れた）").toBeGreaterThan(0);
-    /* 實測で當たった字と、第 915 回の最初の滑り（`选定理由`）が入つて居る。 */
+    expect(表.length, "簡体字の表が空（この検査の前提が崩れた）").toBeGreaterThan(0);
+    /* 実測で当たった字と、第 915 回の最初の滑り（`选定理由`）が入つている。 */
     for (const 字 of ["选", "载", "云", "记"]) {
       expect(表, `簡体字「${字}」が表に無い`).toContain(字);
     }
-    /* 日本語でも使う字は**入れない** – 入れると偽檢査になる（實測 2026-11-04 に 493 待たせて
+    /* 日本語でも使う字は**入れない** – 入れると偽検査になる（実測 2026-11-04 に 493 待たせて
      * 37 字が偽検出になった）。 */
     for (const 字 of ["国", "学", "会", "実", "画", "声", "残", "点", "猫"]) {
       expect(表, `日本語でも使う「${字}」が表に在る（偽檢査になる）`).not.toContain(字);
@@ -141,12 +117,8 @@ describe("中国語の簡体字", () => {
   });
 });
 
-describe("舊字體の監査が動く", () => {
+describe("旧字体の監査が動く", () => {
   it("スクリプトがsyntax error で止まらない（第 933 回）", () => {
-    /* 實測 2026-11-16: 第 915 回の編集で `scripts/ja-text-audit.ts` の**文字列リテラル**が
-     * 崩れて、監査が `SyntaxError` で止まっていた – **10 団のあいだ氣づかなかった**。
-     * typecheck は通る（壊れたのは文字列の中だから）で、この検査も読み出しだけだった。
-     * ここで**実行まで**して確かめる – 検査が壊れて居たら氣づく様に。 */
     const proc = spawnSync(
       process.execPath,
       [join(ROOT, "scripts", "ja-text-audit.ts"), join(ROOT, "site", "template.html")],

@@ -1,15 +1,3 @@
-/**
- * 画面の領域が見出しとランドマークで飛べるかの検査（SPEC §7・第 274 回）。
- *
- * 2026-08-09 生成ビルドで実測した形：
- *   - 静的な HTML の見出しは `h1 kamiyobi 投稿締切` と、実行時に埋まるドロワーの `h2` の
- *     **2 つだけ**だった。支援技術は見出しとランドマークで画面を飛ぶので、VoiceOver の
- *     ローターや NVDA の見出し一覧を開いても、この画面には移動先が 1 件しか並ばない。
- *   - `<main>` より前に Tab で止まる物は **44 個**有り、「締切の一覧へ進む」で跳んだ先が
- *     何なのか、跳んだ本人にも名乗りが無かった（表の `caption` は見出し一覧に出ない）。
- *   - 推薦モードの欄は 4 つの入力欄と見本のボタンが並ぶだけで、塊としての名前が無かった。
- */
-
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -37,7 +25,7 @@ describe("画面の領域が見出しで飛べる（第 274 回）", () => {
   it("見出し一覧に、結果欄と論文の入力の塊が並ぶ", () => {
     const hs = headings(page("index.html"));
     const words = hs.map((h) => h.text);
-    expect(words, "跳んだ先と論文の入力が、見出し一覧に無い").toEqual(
+    expect(words, "跳んだ先と論文の入力が、見出し一覧にない").toEqual(
       expect.arrayContaining(["締切の一覧", "論文の入力"]),
     );
     // h1 を 1 個に保つ（支援技術は h1 をページの顔として読む）。
@@ -48,7 +36,7 @@ describe("画面の領域が見出しで飛べる（第 274 回）", () => {
     const html = page("index.html");
     const css = [...html.matchAll(/<style>([\s\S]*?)<\/style>/g)].map((m) => m[1]).join("\n");
     const hiddenRule = /\.only-sr\s*\{[^}]*\}/;
-    expect(css, "画面に出さないための規則が無い").toMatch(hiddenRule);
+    expect(css, "画面に出さないための規則がない").toMatch(hiddenRule);
     expect(hiddenRule.exec(css)?.[0]).toMatch(/clip-path|position:\s*absolute/);
     // 印刷 CSS がsr-only を元に戻すと、紙に「締切の一覧」が並ぶ（紙の見出しは別に出している）。
     const print = css.match(/@media print \{([\s\S]*?)\n\}/)?.[1] ?? "";
@@ -108,11 +96,11 @@ describe("画面の領域が見出しで飛べる（第 274 回）", () => {
       "",
     );
     const skip = /<a class="skip-link" href="#([^"]+)">([^<]*)<\/a>/.exec(body);
-    expect(skip, "スキップリンクその物が無い").not.toBeNull();
+    expect(skip, "スキップリンクその物がない").not.toBeNull();
     expect(skip?.[2], "スキップリンクが何処へ行くかを書いていない").toContain("締切の一覧");
     const main = new RegExp(`<main\\b[^>]*id="${skip?.[1]}"[^>]*>([\\s\\S]{0,600})`).exec(body);
     expect(main, `スキップリンクの到達先 #${skip?.[1]} が main で無い`).not.toBeNull();
-    expect(main?.[1], "跳んだ先に名乗り（見出し）が無い").toMatch(
+    expect(main?.[1], "跳んだ先に名乗り（見出し）がない").toMatch(
       /<h2\b[^>]*>\s*締切の一覧\s*<\/h2>/,
     );
   });
@@ -130,7 +118,7 @@ describe("画面の領域が見出しで飛べる（第 274 回）", () => {
   it("推薦の候補は見出し（h3）を持つので、候補その物にも飛べる", () => {
     const rt = siteRuntime("app.js");
     const body = jsFunction(rt, "makeRecommendationCard");
-    expect(body, "候補のカードに見出しの組み立てが無い").toContain('createElement("h3")');
+    expect(body, "候補のカードに見出しの組み立てがない").toContain('createElement("h3")');
     // 見出しの中身は会議名（`japaneseStringLiterals` は日本語の文字列だけ拾うので、
     // ここは組み立ての形を見ている）。
     expect(body).toContain("titleWithYear");

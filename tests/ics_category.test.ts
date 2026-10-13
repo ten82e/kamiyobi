@@ -1,13 +1,3 @@
-/**
- * カレンダー（`deadlines.ics`）に分野が載っているかの検査（SPEC §7・第 292 回）。
- *
- * 実測（2026-09-24・2026-08-09 生成ビルド）: 928 個の `VEVENT` のうち `CATEGORIES` を持つ物は
- * **0 個**で、`DESCRIPTION` は 会議 / 種別 / 締切 / 開催地 / 詳細 / 収録 の 6 項目だけだった。
- * セキュリティの会議だけをカレンダーに入れたい人は 928 件を丸ごと購読するしかなく、
- * カレンダーの検索で分野の語を引く術も無かった（てびきは「画面の絞り込みは効かない」としか
- * 言っていなかった）。
- */
-
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -126,7 +116,7 @@ describe("カレンダーに分野が載る（第 292 回）", () => {
     expect(unknown, `画面に無い分野の語: ${unknown.join("・")}`).toEqual([]);
   });
 
-  it("折り畳みで分かれても CATEGORIES の値が復元し、75 バイト超の行が無い", () => {
+  it("折り畳みで分かれても CATEGORIES の値が復元し、75 バイト超の行がない", () => {
     const raw = readFileSync(join(site, "deadlines.ics"), "utf8");
     const over = raw
       .split("\n")
@@ -144,7 +134,7 @@ describe("カレンダーに分野が載る（第 292 回）", () => {
     const calendar = (
       JSON.parse(readFileSync(join(site, "catalog.json"), "utf8")) as Record<string, unknown>
     ).calendar as { event_count?: number } | undefined;
-    expect(calendar?.event_count, "品書にカレンダーの件数の申告が無い").toBeTypeOf("number");
+    expect(calendar?.event_count, "品書にカレンダーの件数の申告がない").toBeTypeOf("number");
     expect(builtEvents().length).toBe(calendar?.event_count);
   });
 
@@ -164,7 +154,7 @@ describe("カレンダーに分野が載る（第 292 回）", () => {
     expect(icsCategoryList(["a,b", "c;d", "e\\f"])).toBe("a\\,b,c\\;d,e\\\\f");
   });
 
-  it("分野の無い会議は CATEGORIES も説明の分野行も作らない（無い物を 0 件にしない）", () => {
+  it("分野のない会議は CATEGORIES も説明の分野行も作らない（ない物を 0 件にしない）", () => {
     const raw = toIcsText([rec([])], NOW);
     expect(raw).not.toContain("CATEGORIES:");
     expect(raw).not.toContain("分野:");

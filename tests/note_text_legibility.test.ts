@@ -1,17 +1,3 @@
-/**
- * 画面で読む注記の文字サイズが、日本語が潰れない床を守っているかの検査（SPEC §7・第 278 回）。
- *
- * 2026-09-24 にビルド成果物で実測した形:
- *   - 当たり方の説明 `.reason-why` が 0.7rem = **11.2px** で、サイト全体でも最も小さい部類だった。
- *     この説明は第 262 回まで `title` の注記にしか無く、「タッチ端末と読み上げで読めない」ので
- *     常に出す形へ直した物なのに、出した先が画面で一番小さい字だった。
- *   - 同じ 0.7rem が当たった要素名の列 `.perline-parts` にも乗り、当たり方のチップ
- *     `.reason-chip`（0.72rem）と「過去掲載先一致 …」（`.perline-venue` 0.72rem）が
- *     その下の階層で小さく読まれていた。
- *   - 数字だけの連番 `.perline-idx` は 0.7rem のままで足りる（仮名が潰れる問題ではないため）。
- *     その例外もここに書いて、後から同じ床に巻き込まれないようにする。
- */
-
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -31,7 +17,7 @@ function notePx(src: string): number {
       .map((b) => `${b.selector}{${b.body}}`)
       .join("\n"),
   );
-  expect(m, "注記の文字サイズの取り決め（`--fs-note`）が無い").toBeTruthy();
+  expect(m, "注記の文字サイズの取り決め（`--fs-note`）がない").toBeTruthy();
   return Number(m![1]) * 16;
 }
 
@@ -89,10 +75,10 @@ describe("注記の字が日本語で読める床を保つ（第 278 回）", ()
   it("当たり方の説明は、画面に実際に出る（隠した規則に戻していない）", () => {
     const src = css();
     const body = cssBlocks(src).find((b) => b.selector === ".reason-why")?.body || "";
-    expect(body, ".reason-why の規則が無い").toBeTruthy();
+    expect(body, ".reason-why の規則がない").toBeTruthy();
     expect(body, "当たり方の説明が画面から消えている").not.toMatch(/display:\s*none/);
     const app = readFileSync(join(site, "app.js"), "utf8");
-    expect(app, "当たり方の説明を出す組み立てが無い").toContain('class="reason-why"');
+    expect(app, "当たり方の説明を出す組み立てがない").toContain('class="reason-why"');
     // 説明の文字を CSS で画面外へ追放する手（絶対配置ではみ出す）も見る。
     expect(body, "説明が画面外へ追放されている").not.toMatch(/position:\s*absolute/);
   });

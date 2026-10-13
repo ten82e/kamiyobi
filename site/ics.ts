@@ -1,15 +1,3 @@
-/**
- * カレンダー（RFC 5545）の組み立て（第 856 回）。
- *
- * **ビルドと画面の両方から使う** – 配付する `deadlines.ics`（収録の全部）と、画面の
- * 「この一覧の N 件をカレンダー（.ics）で」が書き出す 1 本（いまの絞り込み）は、同じ器と
- * 同じ折り方でなければならない。別々に書くと、片方だけ直したときにずれる
- * （第 803 回の「同じ入口から取る」と同じ理由）。
- *
- * ここは **Node に依らない** – `Buffer` を使わず `TextEncoder` でオクテット数を数える
- * （画面でも同じ関数をそのまま動かすため）。
- */
-
 import Recommender from "./recommender.ts";
 
 /** カレンダーアプリの棚に出る名前（`X-WR-CALNAME`）。 */
@@ -32,19 +20,6 @@ export function icsEscapeText(value: unknown): string {
     .replace(/\r\n|\r|\n/g, "\\n");
 }
 
-/**
- * 1 行を 75 オクテット以内へ畳む（RFC 5545 §3.1 – 第 266 回）。
- * **文字数ではなくオクテット数**で見る。日本語の 1 文字は UTF-8 で 3 オクテットあるので、
- * 文字数で切ると相手のカレンダー側で文字化けする。続け字（surrogate pair など）の
- * 途中でも切らない – 1 文字単位で数える。
- *
- * **2 文字の転義（`\n`・`\,`・`\;`・`\\`）をまたいでも切らない**（§3.1 が禁じている）。
- * 以前は切れ目でバックスラッシュが前の行に残り、続きの行が `n…` で始まっていた
- * （2026-09-24 実測: 配信した `deadlines.ics` に 30 箇所）。開いてから解く受け手では
- * 元に戻るが、行ごとに扱う受け手では転義が解けず `\` がそのまま画面に出る。
- * 切れ目が転義の先頭になったときは **バックスラッシュを続きの行へ送る**
- * （前の行を短くする形で、75 オクテットの上限は保つ）。
- */
 export function icsFoldLine(line: string): string {
   const value = String(line ?? "");
   if (utf8Length(value) <= ICS_MAX_LINE_OCTETS) return value;
@@ -101,7 +76,7 @@ export function icsUidSafe(value: unknown): string {
     .slice(0, 96);
 }
 
-/** カレンダーに載せる分野（第 292 回）。語は画面の分野列と同じ入口から取り、書き写しでズレない。
+/** カレンダーに載せる分野。語は画面の分野列と同じ入口から取り、書き写しでズレない。
  * 未知の語は画面と同じく原文のまま – 画面に無い語をカレンダーだけ作らない。 */
 export function icsCategoryLabels(categories: readonly string[] | null | undefined): string[] {
   const raw = categories;
@@ -127,15 +102,15 @@ export type IcsRow = {
   day: string;
   at: number;
   body: string[];
-  /** 日付の欄が「締切」の行か（第 300 回）。採否通知などは False で、申告の内訳に使う。 */
+  /** 日付の欄が「締切」の行か。採否通知などは False で、申告の内訳に使う。 */
   deadline: boolean;
-  /** 計畫の計畫（第 1082 囮）。同じ計畫の計畫が 2 つ在る時、消費者は見分けられない。 */
+  /** 計画の計画。同じ計画の計画が 2 つある時、消費者は見分けられない。 */
   kindNote?: string;
 };
 
 export type IcsCalendarMeta = {
   event_count: number;
-  /** 配信行の内、日付の欄が「締切」の物（第 300 回）。採否通知などは数えない。 */
+  /** 配信行の内、日付の欄が「締切」の物。採否通知などは数えない。 */
   deadline_count: number;
   first_day: string;
   last_day: string;
@@ -149,7 +124,7 @@ function icsStampUtc(at: Date): string {
     .replace(/\.\d{3}/, "");
 }
 
-/** 1 件の `VEVENT` を組む。**器の形は此処だけに置く** – ビルドも画面も此れを呼ぶ。 */
+/** 1 件の `VEVENT` を組む。**器の形は此処だけに置く** – ビルドも画面もこれを呼ぶ。 */
 export function icsEventBody(
   input: {
     uid: string;
@@ -193,9 +168,7 @@ export function icsCalendarMeta(rows: IcsRow[] | null | undefined): IcsCalendarM
     .sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
   return {
     event_count: safe.length,
-    /* 中身の内訳を、書き出した行から数える（第 300 回）。第 299 回まで配信物は締切では無い日
-       （採否通知・査読結果公開・反論期間の開始）も含むのに、画面も索引も「締切 N 件」と言って
-       いた。欄名が「締切」の行だけを締切として数える – 数え方を 2 か所に持たない。 */
+
     deadline_count: safe.filter((r) => r.deadline).length,
     first_day: days.length ? icsDayIso(days[0]) : "",
     last_day: days.length ? icsDayIso(days[days.length - 1]) : "",
@@ -219,9 +192,7 @@ export function icsCalendarDescriptionJa(
     meta.event_count > 0
       ? `いま ${meta.event_count} 件（${meta.first_day} 〜 ${meta.last_day}）`
       : "いま 0 件";
-  /* 内訳（第 300 回）。第 299 回まで、この説明は入る物を「締切」と呼んでいたが、実測で
-     928 件のうち 167 件は採否通知・査読結果公開・反論期間の開始だった。カレンダーアプリは
-     この文をカレンダーの情報欄に出すので、購読する人が最初に読む話になる。 */
+
   const mix =
     meta.deadline_count > 0 && meta.deadline_count < meta.event_count
       ? `うち締切は ${meta.deadline_count} 件で、残りは採否通知・査読結果公開・反論期間の開始の` +
@@ -240,14 +211,14 @@ export function icsCalendarDescriptionJa(
     .join("");
 }
 
-/** 一覧の行に付く**札**（延長・確認の状態）。語は畫面と同じ正本から取る。無ければ空の配列。
+/** 一覧の行に付く**札**（延長・確認の状態）。語は画面と同じ正本から取る。無ければ空の配列。
  *
- * **カレンダー（配付物と畫面の書き出し）と、`upcoming.md` の状態の列が同じ物を使ふ** –
+ * **カレンダー（配付物と画面の書き出し）と、`upcoming.md` の状態の列が同じ物を使う** –
  * 書き寫すと、出口ごとに言ひ方がずれる。
  *
- * 畫面だけが知つて居る事にしない – 購読した人はカレンダーしか見ないので、上流に候補が複数
- * ある締切（「複数候補のため要確認」）が、其の侭では確定の締切として予定表に並ぶ。**確認済みと
- * 未設定では何も返さない**（畫面も印を出さない – 默るのが正しい）。 */
+ * 画面だけが知つている事にしない – 購読した人はカレンダーしか見ないので、上流に候補が複数
+ * ある締切（「複数候補のため要確認」）が、その侭では確定の締切として予定表に並ぶ。**確認済みと
+ * 未設定では何も返さない**（画面も印を出さない – 黙るのが正しい）。 */
 export function statusMarksJa(dl: unknown): string[] {
   return [
     Recommender.isExtendedDeadline(dl) ? String(Recommender.extendedLabelJa() ?? "").trim() : "",
@@ -311,7 +282,7 @@ export interface ScreenDeadlineInput {
   kind: string;
   /** 種別の日本語（画面と同じ語）。 */
   kindWord: string;
-  /** 計畫の計畫（第 1082 囮）。同じ計畫の計畫が 2 つ在る時、消費者は見分けられない。 */
+  /** 計画の計画。同じ計画の計画が 2 つある時、消費者は見分けられない。 */
   kindNote?: string;
   /** 日付の欄の名前（「締切」「通知日」など。画面と同じ入口から取った物）。 */
   dateField: string;
@@ -327,7 +298,7 @@ export interface ScreenDeadlineInput {
   link?: unknown;
   /** 会期の表示（画面と同じ式で組んだ物）。 */
   session?: unknown;
-  /** 締切の記録その物（確認の状態と延長の判定に使う。畫面が持つ `dl` をそのまま渡す）。 */
+  /** 締切の記録その物（確認の状態と延長の判定に使う。画面が持つ `dl` をそのまま渡す）。 */
   dl?: unknown;
 }
 
@@ -348,7 +319,7 @@ export function icsRowsFromScreen(
     if (!/^\d{8}$/.test(day)) continue;
     const title = String(item.title ?? "").trim();
     const kindWord = String(item.kindWord ?? "").trim() || "締切";
-    /* 計畫の計畫を足す（第 1082 囮）– CLOSER の 2 つは別の募集なのに摘要が同じだつた。 */
+    /* 計画の計画を足す– CLOSER の 2 つは別の募集なのに摘要が同じだつた。 */
     const kindNote = String(item.kindNote ?? "").trim();
     const kindShown = kindNote ? `${kindWord}（${kindNote}）` : kindWord;
     const summary = item.estimated ? `${title}：${kindShown}（推定）` : `${title}：${kindShown}`;
@@ -359,10 +330,7 @@ export function icsRowsFromScreen(
     const link = String(item.link ?? "").trim();
     const desc = [
       `会議: ${title}`,
-      /* **本文も計畫の計畫を出す**（第 1096 囮 – 實測 2026-11-19: 摘要は第 1082 囮で
-       * `kindShown` に直したが、此方（本文）は `kindWord` のままだつた。同じ會議の
-       * 計畫の計畫が摘要にしか出ず、**カレンダーの情報欄を讀む人には見えなかった** –
-       * 「摘要と本文が食ひ違ふ」状態。摘要と同じ `kindShown` を使ふ。 */
+
       `種別: ${kindShown}`,
       catsJa.length ? `分野: ${catsJa.join("・")}` : "",
       `${String(item.dateField ?? "").trim() || "日付"}: ${String(item.whenText ?? "")}`,
@@ -414,7 +382,7 @@ function stampHumanJa(at: Date): string {
 }
 
 /** 書き出した 1 本の説明欄（配付物の説明と違い、**画面の写し**である事を言う）。
- * `scopeJa` は何の写しか（既定は「絞り込んだ」。推薦の候補を書き出す時は其方を渡す）。 */
+ * `scopeJa` は何の写しか（既定は「絞り込んだ」。推薦の候補を書き出す時はそちらを渡す）。 */
 export function icsViewDescriptionJa(
   rows: IcsRow[],
   generatedAt: Date | null | undefined,

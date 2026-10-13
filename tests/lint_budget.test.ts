@@ -1,9 +1,3 @@
-/**
- * ビルド成果物の検査は 1 ファイルに置ける量に上限があるので、複数の検査ファイルに分けている
- * （tests/build_golden.test.ts・tests/built_golden_2〜4.test.ts・共有部品は
- * tests/built_golden_shared.ts – 第 255 回）。その形が崩れないように、ここで番をする（SPEC §8）。
- */
-
 import { readdirSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -52,18 +46,18 @@ it("検査ファイルは作業上限（400 KB）の内側に保つ（1 MiB ま�
 });
 
 it("案内の群に同じ注を寫し並べない（反復が 1 MiB の壁を食ふ – 第 520 回）", () => {
-  /* 2026-09-30 実測: `UI_WORD_GROUPS_JA` の群に付く注のうち、同一文のまま二つ以上並んで居る物が
-   * 三種類三十一箇所あり、其れだけで 18,001 バイト（`site/recommender.ts` は 1,048,152 バイトで
-   * biome の 1 MiB まで 424 バイト只剩かつて居た）。理由は同じなのに群の数だけ寫して居るので、
+  /* 2026-09-30 実測: `UI_WORD_GROUPS_JA` の群に付く注のうち、同一文のまま二つ以上並んでいる物が
+   * 三種類三十一箇所あり、それだけで 18,001 バイト（`site/recommender.ts` は 1,048,152 バイトで
+   * biome の 1 MiB まで 424 バイト只剩かつていた）。理由は同じなのに群の数だけ寫しているので、
    * 初出の一箇所に置いて其后は指針にする事にした。之を戻すと、理由が無くとも語を足せなくなる。 */
   const src = readFileSync(join(ROOT, "site", "recommender.ts"), "utf8");
   const 頭 = src.indexOf("const UI_WORD_GROUPS_JA");
   const 末 = src.indexOf("type UIWordGroup");
-  expect(頭 >= 0 && 末 > 頭, "群の表の読み方が変わった（此處の切り出しを直す）").toBe(true);
+  expect(頭 >= 0 && 末 > 頭, "群の表の読み方が変わった（ここの切り出しを直す）").toBe(true);
   const 域 = src.slice(頭, 末);
   const counts = new Map<string, number>();
   for (const m of 域.matchAll(/ {4,8}\/\*[^*]*(?:\*(?!\/)[^*]*)*\*\/\n/g)) {
-    // バイト數で測る（日本語の語は 1 字 3 バイト – 第 520 回の壁はバイト數で決まる）。
+    // バイト数で測る（日本語の語は 1 字 3 バイト – 第 520 回の壁はバイト数で決まる）。
     if (Buffer.byteLength(m[0], "utf8") < 200) continue;
     counts.set(m[0], (counts.get(m[0]) || 0) + 1);
   }
@@ -72,6 +66,6 @@ it("案内の群に同じ注を寫し並べない（反復が 1 MiB の壁を食
     .map(([t, n]) => `${n} 度: ${t.trim().slice(0, 44)}`);
   expect(
     並んだ,
-    "同じ注を二つ以上寫んで居る（初出の一箇所に置いて、其處には指針だけ置く – 第 520 回）",
+    "同じ注を二つ以上寫んでいる（初出の一箇所に置いて、そこには指針だけ置く – 第 520 回）",
   ).toEqual([]);
 });

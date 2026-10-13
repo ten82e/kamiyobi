@@ -1,16 +1,3 @@
-/**
- * 「見方のてびき」の入口（`<summary>`）が約束する語を、中に実際に項目として見つける検査
- * （SPEC §7・第 277 回）。
- *
- * 2026-08-09 生成ビルドで実測した形:
- *   - 入口の文字は「見方のてびき（「推定」「未確認」「該当なし」の意味・過去の締切の見方・
- *     CSV と印刷）」。この 3 つのうち「推定」「未確認」には項目（`<dt>`）が有るのに、
- *     **「該当なし」の項目は 0 個** だった。意味は「会期のみ・締切未定」の項目の末尾に
- *     1 文混じっているだけで、37 項目を流し読みしないと辿り着けない。
- *   - 「該当なし」は常時受付の期刊行の会期・開催地列に実際に出る語なので、画面でその語を
- *     見た人が説明に辿れる形にした（入口が名乗る語は必ず自分の項目を持つ、という約束にまとめる）。
- */
-
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -28,7 +15,7 @@ function page(): string {
 function guide(): string {
   const html = page();
   const at = html.indexOf('id="helpPanel"');
-  expect(at, "てびきの欄が無い").toBeGreaterThan(0);
+  expect(at, "てびきの欄がない").toBeGreaterThan(0);
   const end = html.indexOf("</details>", at);
   expect(end, "てびきが閉じていない").toBeGreaterThan(at);
   return html.slice(at, end);
@@ -56,12 +43,12 @@ describe("見方のてびきの入口と中身が食い違っていない（第 
   it("「該当なし」を「未確認」と別の意味だと、その項目で説明している", () => {
     const g = guide();
     const m = /<dt>該当なし<\/dt>\s*<dd>([\s\S]*?)<\/dd>/.exec(g);
-    expect(m, "「該当なし」の項目が無い").toBeTruthy();
+    expect(m, "「該当なし」の項目がない").toBeTruthy();
     const dd = strip(m![1]);
     expect(dd, "常時受付の期刊行だと書いていない").toContain("常時受付");
     // 「未確認」という語が一度出ていれば良い、では足りない – その項目の中で
     // 「 kamiyobi が裏取りできていないだけ」という向こう側の意味に触れていなければ、
-    // 読み手は 2 つの語の向きを確定できない（第 277 回の改ざんで実発生）。
+    // 読み手は 2 つの語の向きを確定できない。
     expect(dd, "「未確認」が何を意味するのか書いていない").toMatch(/ kamiyobi .*裏/);
     expect(dd, "別の意味だと区別していない").toMatch(/別/);
     // 画面でその語を見た人が実際に引けることも書く（実測で確かめた事実だけを書く）。
@@ -74,7 +61,7 @@ describe("見方のてびきの入口と中身が食い違っていない（第 
     expect(page().split(sentence).length - 1, "説明文が書き写されている").toBe(1);
   });
 
-  it("てびきの項目が重複しておらず、空の項目が無い", () => {
+  it("てびきの項目が重複しておらず、空の項目がない", () => {
     const own = items(guide());
     expect(own.length, "項目が少なすぎる（組み立てが壊れた）").toBeGreaterThanOrEqual(36);
     expect(
