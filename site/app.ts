@@ -5833,6 +5833,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     if (!(target instanceof HTMLInputElement)) return;
     const files = Array.from(target.files ?? []);
     if (!files.length) return;
+    if (pdfAbortController) pdfAbortController.abort();
     const label = $("paperFileLabel");
     label.textContent = "読み込み中…";
     cancelPdf.hidden = false;
@@ -5877,6 +5878,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         scheduleSemantic();
       })
       .catch((error: unknown) => {
+        if (job !== pdfJob) return;
         label.textContent = pdfFailureMessageJa(error);
       })
       .finally(() => {
