@@ -17608,7 +17608,7 @@ eurosys / ppopp。
 rtss・usenix-security は論文個別ベクトル（paperVecs）も使用する。
 paperVecs 適用条件は「1 分野に収まる + 語彙非衝突」の 2 条件であり、対象は usenix-security・rtss のみである。
 
-### 10.4 分類ブーストは証拠が在る時に限る（未実装・第 1085 囘の診斷）
+### 10.4 分類ブーストは証拠が在る時に限る（第 1085 囘の診斷・第 1088 囘に実装濟み）
 
 `venueRecommendations` の `venueCats`（論文から推測した分野）による +10 ブーストは、
 **会議名が合はず話題も合はない venue にも拂はれて居た**。實測 2026-11-19
@@ -17624,11 +17624,26 @@ paperVecs 適用条件は「1 分野に収まる + 語彙非衝突」の 2 条�
 つまり 3 割の確率で「証拠が無いのに會議を薦めて居る」。研究者には
 「合ふ投稿先は見つかりませんでした」の方が、間違つた會議を 98 點で薦められるより良い。
 
-**直し方（次囘以降）**: ブーストを `fused > 0`（欄の何れかに實質の一致が在る）時に
-限る。證據が 0 の venue は 0 の儘にする。試作は此の一行の變更で、
-同條件のベンチ（凍結ストアを外した計測）で heldout の fused が
-MRR 0.4040→0.4135・recall@5 0.5375→0.5625・recall@10 0.5875→0.600 と改善し、
-top1 は 0.30 で不變（退化無し）。
+**直し方（第 1088 囘に實裝濟み）**: ブーストを `fused > 0`（欄の何れかに實質の一致が
+在る）時に限る。證據が 0 の venue は 0 の儘にする。正式なベンチ（`npm run bench`・
+`passed: true`・品質の下限も滿たす）で:
+
+| 指標 | 修正前 | 修正後 |
+| dev fused MRR | 0.3067 | 0.3126 |
+| dev fused recall@5 | 0.4375 | 0.4500 |
+| dev fused recall@10 | 0.5500 | 0.5625 |
+| heldout fused MRR | 0.4031 | 0.4158 |
+| heldout fused recall@5 | 0.5375 | 0.5625 |
+| heldout fused recall@10 | 0.5875 | 0.600 |
+| top1（兩 split） | 不變 | 不變（退化無し） |
+
+利用者の目に見える效果（第 1088 囘の實測）: 日本語の論文 2 件が
+182 件 → 59 件・5 件 → **0 件**（「この題名の語と重なる投稿先は見付かりませんで
+した。題名に加へて、分野の語やキーワード…」と正直に答へる）。
+
+**說明にも書いた**: 第 1090 囘で MCP の說明・第 1091 囗で畫面の說明に「順位表に入るの
+は、欄のどれかに実質の一致が在る投稿先だけ」と條件と直した理由を書いた。行を變へたら
+**全部の面の說明も變へる**（第 1041 囘と同じ鐵則）。
 
 **やねばならぬ事**: `data/benchmarks/real-paper-features.jsonl` が
 `base_score`・`rerankerFeatures` を固定して居るので、この變更は pin に觸れる。
@@ -17652,24 +17667,29 @@ pin は「本番の機能が變はつた」を意識的に決斷させるため�
 **74 件**が差異し、其れは**候補數の減少**（162→123・236→155・279→167）と殘つた候補の
 得點上昇 – 雜音が除かれた效果で、池が同じなので差分はスコア變更だけに歸屬できる。
 
-**reranker の再學習は單獨では成立しない**（第 1087 囮で實測）:
-`scripts/train-reranker.ts` を其の儘叩くと `production_trainer_revision`・
-`candidate_trainer_revision`・`candidate_rejected_reason` が `null` に成り、
-`tests/recommender.test.ts` の `toMatchObject` で落ちる。コミットされたモデルは
-**昇格フロー**（`data/benchmarks/reranker-comparison.json` を作る方）の中で
-生成されて居るもので、單獨実行では職務の一部が埋まらない。
-
-從つて**凍結ストアの更新と reranker の再學習は一つの作業**で、reranker を作る
-昇格フローまで再現する必要が在る。其れをやるまで變更は殘さない。
+**reranker の再學習**（第 1088 囘でやった）: **既定の本番パスで叩く**。
+`node --experimental-strip-types scripts/train-reranker.ts`（引數無し・出力は
+`data/recommender-reranker.json`）で、凍結ストアの更新が正しければ
+`production_trainer_revision` 等の來歴も入り檢証に通る。
+途中のパス（`--out /tmp/x.json``）だと `isDefaultProduction` が false に成り、
+來歷が入らず `tests/recommender.test.ts` の `toMatchObject` で落ちる（第 1087 囮で實測）。
 （ハッシュを手で書き換へて測試を通すのは**しない** – 其れは「この特徴で學習した」
 と云う虛偽の主張を固定する事になる。）
+
+**三つで一組の變更の順序**（第 1088 囘の實績）:
+1. スコアの變更（`site/recommender.ts`）
+2. `--data data/benchmarks/real-paper-feature-baseline.json` を渡して凍結池で
+   凍結ストアを書き出す（**生データで書くと池が違ふ**）
+3. `scripts/train-reranker.ts` を既定パスで叩いて reranker を再學習する
+此の三つを揃へて `npm run bench`（`passed: true`）と `npm test` を通してから
+コミットする。
 
 **正しい直し方**: 凍結メタデータ（`real-paper-feature-baseline.json`）を池にして
 スコアだけを計算し直すか、pin を「スコアが變はつた時に落ちる」物として
 敢えて外して二つの變更を別囘に分ける。**生データで書き出すのは不可** –
 其れは二つの變更を一つに纏めて仕舞ふ。
 
-### 10.4 推薦結果の一覧（`site/app.ts` の卡片）
+### 10.5 推薦結果の一覧（`site/app.ts` の卡片）
 
 - **件数欄は候補の総数、卡片は `RECOMMENDATION_PAGE`（20）件から段階的に出す**。
   変更前は卡片を 5 件で打ち切り、`#more` を推薦モードで常に隠していた。件数欄は総数を
