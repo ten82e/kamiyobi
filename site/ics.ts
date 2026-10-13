@@ -359,7 +359,11 @@ export function icsRowsFromScreen(
     const link = String(item.link ?? "").trim();
     const desc = [
       `会議: ${title}`,
-      `種別: ${kindWord}`,
+      /* **本文も計畫の計畫を出す**（第 1096 囮 – 實測 2026-11-19: 摘要は第 1082 囮で
+       * `kindShown` に直したが、此方（本文）は `kindWord` のままだつた。同じ會議の
+       * 計畫の計畫が摘要にしか出ず、**カレンダーの情報欄を讀む人には見えなかった** –
+       * 「摘要と本文が食ひ違ふ」状態。摘要と同じ `kindShown` を使ふ。 */
+      `種別: ${kindShown}`,
       catsJa.length ? `分野: ${catsJa.join("・")}` : "",
       `${String(item.dateField ?? "").trim() || "日付"}: ${String(item.whenText ?? "")}`,
       `会期: ${String(item.session ?? "").trim() || Recommender.unconfirmedLabelJa()}`,

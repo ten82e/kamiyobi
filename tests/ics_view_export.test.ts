@@ -396,3 +396,23 @@ describe("畫面の一覧をカレンダーに書き出す（第 856 回）", ()
     );
   });
 });
+
+it("推薦の候補の ICS も、計畫の計畫を書き出す（第 1096 囘）", () => {
+  /* 第 1082 囮で計畫の計畫（`track`）を `IcsRow`・`ScreenDeadlineInput` に入れ、
+   * 摘要と本文の兩方に出すやうにした（CLOSER の 2 つは別の募集なのに摘要が同じだつた）。
+   * 推薦の候補の ICS は `shownIcsInput()` を通るので、其の變更が伝はつて居る筈。
+   * **同じ筈**を固定化する – 推薦の出口も締切の一覧の出口も同じ器を使ふ。 */
+  const raw = icsViewText([材料({ kindNote: "regular" })], NOW, 生成, {
+    scopeJa: "「投稿先を探す」が挙げた候補",
+  });
+  const 摘要 = 開く(raw).find((l) => l.startsWith("SUMMARY:")) ?? "";
+  expect(摘要, "推薦の候補に計畫の計畫が出て居ん").toContain("論文締切（regular）");
+  /* 本文（DESCRIPTION）の計畫の計畫の欄にも出る。 */
+  const 本文 = 開く(raw).find((l) => l.startsWith("DESCRIPTION:")) ?? "";
+  expect(本文, "推薦の候補の本文に計畫の計畫が出て居ん").toContain("種別: 論文締切（regular）");
+  /* 計畫の計畫が無い時は默る（第 1082 囮と同じ決まり – 空の括弧を出さない）。 */
+  const 無し = icsViewText([材料()], NOW, 生成, { scopeJa: "「投稿先を探す」が挙げた候補" });
+  const 摘要無し = 開く(無し).find((l) => l.startsWith("SUMMARY:")) ?? "";
+  expect(摘要無し, "計畫の計畫が無い時に空の括弧を出した").not.toContain("（）");
+  expect(摘要無し, "計畫の計畫が無い時に計畫の計畫を書いた").toBe("SUMMARY:SIGCOMM 2027：論文締切");
+});
