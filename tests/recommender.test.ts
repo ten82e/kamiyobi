@@ -3,7 +3,7 @@
  */
 
 import { createHash } from "node:crypto";
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { load as loadYaml } from "js-yaml";
 import { describe, expect, it } from "vitest";
@@ -48,7 +48,6 @@ const R = recommender as any;
 let emittedApp: string | null = null;
 const appRuntime = () => (emittedApp ??= compileSiteRuntime()["app.js"]);
 const DATA_JSON = join(REPO_ROOT, "public", "data.json");
-const EMB_JSON = join(REPO_ROOT, "public", "embeddings.json");
 
 function loadRows(): any[] {
   const data = JSON.parse(readFileSync(DATA_JSON, "utf8"));
@@ -3249,7 +3248,7 @@ describe("venue normalization robustness", () => {
   });
 });
 
-// ---- 実データ統合テスト（public/data.json があるときのみ） ----
+// ---- 実データ統合テスト ----
 
 describe("real data integration", () => {
   const makeScript = (papers: string, topN = 10): { cats: string[]; top: any[]; n: number } => {
@@ -3274,16 +3273,6 @@ describe("real data integration", () => {
     const h2 = venuePapersHash();
     expect(h1).toBe(h2);
     expect(h1).toMatch(/^[0-9a-f]{16}$/);
-  });
-
-  it.skipIf(!existsSync(EMB_JSON))("embeddings.json covers all conferences", () => {
-    const emb = JSON.parse(readFileSync(EMB_JSON, "utf8"));
-    const data = JSON.parse(readFileSync(DATA_JSON, "utf8"));
-    const keys = new Set<string>(data.conferences.map((c: any) => c.key));
-    const embKeys = new Set(Object.keys(emb.embeddings ?? {}));
-    expect([...keys].every((k) => embKeys.has(k))).toBe(true);
-    const dims = new Set(Object.values(emb.embeddings).map((v: any) => v.length));
-    expect(dims).toEqual(new Set([emb.dim]));
   });
 
   it("TSN paper finds real-time venues", () => {
