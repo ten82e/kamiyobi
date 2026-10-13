@@ -2243,13 +2243,44 @@ function send(message: Record<string, unknown>): void {
 }
 
 function handle(raw: string, now: number): void {
-  let request: { id?: unknown; method?: unknown; params?: unknown };
+  let value: unknown;
   try {
-    request = JSON.parse(raw) as typeof request;
+    value = JSON.parse(raw);
   } catch {
-    return; // 読めない行は黙つて捨てる（MCP の決まり – 返事の形が作れない）
+    send({ jsonrpc: "2.0", id: null, error: { code: -32700, message: "JSONを読み取れません。" } });
+    return;
   }
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    send({
+      jsonrpc: "2.0",
+      id: null,
+      error: { code: -32600, message: "要求はJSONオブジェクトで指定してください。" },
+    });
+    return;
+  }
+  const request = value as Record<string, unknown>;
   const { id, method } = request;
+  const validId = typeof id === "string" || (typeof id === "number" && Number.isSafeInteger(id));
+  if (request.jsonrpc !== "2.0" || typeof method !== "string" || (id !== undefined && !validId)) {
+    send({
+      jsonrpc: "2.0",
+      id: validId ? id : null,
+      error: { code: -32600, message: "jsonrpc、method、id の形式を確認してください。" },
+    });
+    return;
+  }
+  if (id === undefined) return;
+  if (
+    request.params !== undefined &&
+    (!request.params || typeof request.params !== "object" || Array.isArray(request.params))
+  ) {
+    send({
+      jsonrpc: "2.0",
+      id,
+      error: { code: -32602, message: "params はJSONオブジェクトで指定してください。" },
+    });
+    return;
+  }
   const params = (request.params ?? {}) as Record<string, unknown>;
   const reply = (result: unknown): void => send({ jsonrpc: "2.0", id, result });
   const fail = (code: number, message: string): void =>
@@ -2265,8 +2296,6 @@ function handle(raw: string, now: number): void {
     });
     return;
   }
-  /* 通知（`notifications/*`）には返事を書かない（書くと相手が誤解する）。 */
-  if (typeof method === "string" && method.startsWith("notifications/")) return;
   if (method === "ping") {
     reply({});
     return;
@@ -2332,6 +2361,11 @@ export function runStdio(now = Date.now()): void {
       if (raw) handle(raw, now);
       at = buffer.indexOf("\n");
     }
+  });
+  process.stdin.on("end", () => {
+    const raw = buffer.trim();
+    buffer = "";
+    if (raw) handle(raw, now);
   });
 }
 
