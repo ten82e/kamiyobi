@@ -14971,7 +14971,7 @@ const Recommender = (() => {
    * 多言語モデルは日本語論文を埋め込めるが、語彙スコア（会議名の英単語との一致）は
    * 日本語テキストには全く効かない。そこで日本語の分野語を英語に展開してから
    * 分野シグナル・会議名・タグの一致判定に使う（例: 「低遅延」→ latency real-time）。
-   * ブラウザの表示テキストや埋め込み入力は変更しない（語彙一致の内部処理のみ）。
+   * 表示用の論文テキストは保つ。埋め込み用クエリには英語の補助語を添える。
    */
   const JP_EN: Record<string, string> = {
     // システム・分散
@@ -15112,6 +15112,25 @@ const Recommender = (() => {
 
   /* 日本語テキストに含まれる分野語を英語に展開する（無ければ ""）。 */
   const RETRIEVAL_TOPIC_ALIASES: Record<string, string> = {
+    訓練データ: "training data machine learning",
+    特徴選択: "feature selection machine learning",
+    特徴表現: "feature representation learning",
+    注意機構: "attention neural network",
+    関連度伝播: "relevance propagation explainable machine learning",
+    逆伝播: "backpropagation neural network",
+    サンプリング: "sampling probabilistic statistical",
+    標本: "sample statistical",
+    勾配: "gradient optimization",
+    確率分布: "probability distribution",
+    分布検定: "distribution testing statistical inference",
+    仮説検定: "hypothesis testing statistical inference",
+    分位点: "quantile statistical inference",
+    ベイズ: "bayesian probabilistic",
+    回帰: "regression statistical learning",
+    最適化: "optimization",
+    汎化: "generalization learning theory",
+    標本計算量: "sample complexity statistical learning",
+    乱択: "randomized algorithms",
     clustering: "unsupervised machine learning",
     "k-means": "unsupervised machine learning",
     "a/b testing": "statistical inference causal inference",
@@ -15130,14 +15149,14 @@ const Recommender = (() => {
           : t.indexOf(jp.toLowerCase()) !== -1;
       if (matches) out += ` ${aliases[jp]}`;
     });
+    if (forRetrieval && /特徴/.test(t) && /ラベル/.test(t)) {
+      out += " feature label supervised learning";
+    }
     return out.trim();
   }
 
-  /* 論文テキスト（全行連結）を埋め込み用の単一クエリ文にする。
-   * 先頭行は「自分の投稿予定論文」とみなし強調する（参考論文のノイズに埋没させない）。
-   * 短い入力（タイトル+キーワード）は従来の全体2回反復を維持しつつ、
-   * 長いアブストラクト（512トークン超）時はタイトル・キーワードを優先強調し
-   * 全体を約1800文字（~350トークン）以内に収めてモデル側の切り捨て・前方偏重を防ぐ。
+  /* 先頭論文の題名とキーワードを優先した、1800文字以内の埋め込み用クエリ。
+   * 日本語は原文に専門語の英語表記を添え、英語の会議プロファイルとも照合する。
    */
   function queryText(lines: readonly PaperRecord[]): string {
     if (!lines?.length) return "";
@@ -15150,6 +15169,13 @@ const Recommender = (() => {
     const p0Full = paperText(p0).replace(/\s+/g, " ").trim();
     const all = lines.map((paper) => paperText(paper).replace(/\s+/g, " ").trim());
     const joined = all.filter(Boolean).join(" ").trim();
+    if (/[\u3040-\u30ff\u4e00-\u9fff]/.test(joined)) {
+      const hints = expandJp(p0Full, true);
+      if (hints) {
+        const shortHints = hints.length > 400 ? hints.slice(0, 400).replace(/\s+\S*$/, "") : hints;
+        return [p0TitleKw, shortHints, joined].filter(Boolean).join(" ").slice(0, 1800);
+      }
+    }
     if (joined.length <= 1800) {
       const primary = p0Full;
       return (primary ? `${primary} ` : "") + joined;
