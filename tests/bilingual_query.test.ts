@@ -1,6 +1,29 @@
 import { expect, it } from "vitest";
 import R from "../site/recommender.ts";
 
+it("bounds an abstract-only query even when repeating its primary content would exceed the budget", () => {
+  const abstract = Array.from({ length: 140 }, (_, i) => `specimen${i}`).join(" ");
+  const paper = { title: "", abstract, keywords: "", venue: "" };
+  const before = structuredClone(paper);
+  expect(abstract.length).toBeGreaterThan(900);
+  expect(abstract.length).toBeLessThan(1800);
+  const text = R.queryText([paper]);
+  expect(text.length).toBeLessThanOrEqual(1800);
+  expect(text.startsWith(abstract)).toBe(true);
+  expect(paper).toEqual(before);
+});
+
+it("bounds an oversized title while retaining its beginning ahead of other papers", () => {
+  const title = Array.from({ length: 260 }, (_, i) => `inscription${i}`).join(" ");
+  const paper = { title, abstract: "", keywords: "", venue: "" };
+  const reference = { title: "Bronze chronology", abstract: "", keywords: "", venue: "" };
+  expect(title.length).toBeGreaterThan(1800);
+  const text = R.queryText([paper, reference]);
+  expect(text.length).toBeLessThanOrEqual(1800);
+  expect(text).toBe(title.slice(0, 1800));
+  expect(paper.title).toBe(title);
+});
+
 it("keeps Japanese research content and adds scientific terminology for cross-language retrieval", () => {
   const papers = [
     {

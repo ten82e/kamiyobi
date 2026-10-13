@@ -15235,16 +15235,16 @@ const Recommender = (() => {
     }
     if (joined.length <= 1800) {
       const primary = p0Full;
-      return (primary ? `${primary} ` : "") + joined;
+      return ((primary ? `${primary} ` : "") + joined).slice(0, 1800);
     }
-    const emphasis = p0TitleKw || p0Full.slice(0, 240);
+    const emphasis = (p0TitleKw || p0Full.slice(0, 240)).slice(0, 1800);
     const budgetRemaining = Math.max(0, 1800 - (emphasis ? emphasis.length + 1 : 0));
     let truncatedJoined = joined.slice(0, budgetRemaining).trim();
     const lastSpace = truncatedJoined.lastIndexOf(" ");
     if (lastSpace > budgetRemaining * 0.8) {
       truncatedJoined = truncatedJoined.slice(0, lastSpace).trim();
     }
-    return (emphasis ? `${emphasis} ` : "") + truncatedJoined;
+    return [emphasis, truncatedJoined].filter(Boolean).join(" ");
   }
 
   function safeExternalUrl(value: unknown): string {
