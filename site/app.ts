@@ -1959,14 +1959,16 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       });
   }
 
-  // 論文テキストが変わったら埋め込みを再計算し、完了後に render する。
-  // 言語適応: 日本語を含む論文は多言語モデル、それ以外は英語モデルで埋め込む
-  // （実測: EN は英語モデル 80.1% > 多言語 76.2%、JP は多言語 42.9% > 英語 19.0%）。
+  // 復号済みの論文からモデルを選び、入力の変更後に埋め込みを再計算する。
+  // 掲載先タグの言語は、論文本文の言語判定に含めない。
   function scheduleSemantic() {
     const generation = ++semGeneration;
     const text = currentPaperText();
     clearSemantic("idle");
     if (!text.trim() || !Recommender) return;
+    const lines = Recommender.parsePaperLines(text);
+    const q = Recommender.queryText(lines);
+    if (!q.trim()) return;
     semState = "loading";
     loadEmbeddings(() => {
       if (!semanticIsCurrent(generation, text)) return;
@@ -1976,8 +1978,8 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         return;
       }
       const bundle = EMBEDDINGS;
-      const isJp = Recommender.hasJapanese(text);
-      const language = isJp && bundle.multi ? "multi" : "en";
+      const isJp = Recommender.queryHasJapanese(lines);
+      const language = isJp ? "multi" : "en";
       const embSet = language === "multi" ? bundle.multi : bundle;
       if (!embSet || !Recommender.embeddingSetCompatible(bundle, language)) {
         semanticReason = "embedding set incompatible";
@@ -2008,8 +2010,6 @@ function semanticOutput(value: unknown): value is SemanticOutput {
             render();
             return;
           }
-          const lines = Recommender.parsePaperLines(text);
-          const q = Recommender.queryText(lines);
           const model = semModel;
           if (!model) {
             semanticReason = "model unavailable";

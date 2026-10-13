@@ -14981,6 +14981,10 @@ const Recommender = (() => {
     return /[\u3040-\u9fff]/.test(String(text || ""));
   }
 
+  function queryHasJapanese(lines: readonly PaperRecord[]): boolean {
+    return lines.some((paper) => hasJapanese(paperText(paper).normalize("NFKC")));
+  }
+
   /* 日本語キーワード → 英語の展開（語彙スコア用）。
    * 多言語モデルは日本語論文を埋め込めるが、語彙スコア（会議名の英単語との一致）は
    * 日本語テキストには全く効かない。そこで日本語の分野語を英語に展開してから
@@ -15124,8 +15128,17 @@ const Recommender = (() => {
     expandEnabled = !!v;
   }
 
-  /* 日本語テキストに含まれる分野語を英語に展開する（無ければ ""）。 */
+  /* 検索用の専門語・表記を補う。 */
   const RETRIEVAL_TOPIC_ALIASES: Record<string, string> = {
+    オイラー巡回: "Euler tours",
+    行列式点過程: "determinantal point processes",
+    不等式: "inequality",
+    上界: "upper bound",
+    疎化: "sparsification",
+    加法誤差: "additive error",
+    等周性: "isoperimetry",
+    対数ソボレフ: "log Sobolev",
+    ランジュバン: "Langevin",
     エクスパンダー: "expander graph",
     オンライン意思決定: "online decision making",
     リグレット: "regret",
@@ -15196,7 +15209,7 @@ const Recommender = (() => {
   }
 
   /* 先頭論文の題名とキーワードを優先した、1800文字以内の埋め込み用クエリ。
-   * 日本語は原文に専門語の英語表記を添え、英語の会議プロファイルとも照合する。
+   * 題名の主題と日本語の専門語を補い、会議プロファイルと照合する。
    */
   function queryText(lines: readonly PaperRecord[]): string {
     if (!lines?.length) return "";
@@ -15209,14 +15222,16 @@ const Recommender = (() => {
     const p0Full = paperText(p0).replace(/\s+/g, " ").trim();
     const all = lines.map((paper) => paperText(paper).replace(/\s+/g, " ").trim());
     const joined = all.filter(Boolean).join(" ").trim();
-    if (/[\u3040-\u30ff\u4e00-\u9fff]/.test(joined)) {
-      const hints = [
-        ...new Set([...expansionTerms(p0TitleKw, true), ...expansionTerms(p0Full, true)]),
-      ].join(" ");
-      if (hints) {
-        const shortHints = hints.length > 400 ? hints.slice(0, 400).replace(/\s+\S*$/, "") : hints;
-        return [p0TitleKw, shortHints, joined].filter(Boolean).join(" ").slice(0, 1800);
-      }
+    const japanese = queryHasJapanese(lines);
+    const hints = [
+      ...new Set([
+        ...expansionTerms(p0TitleKw, true),
+        ...expansionTerms(japanese || !p0TitleKw ? p0Full : p0TitleKw, true),
+      ]),
+    ].join(" ");
+    if (hints) {
+      const shortHints = hints.length > 400 ? hints.slice(0, 400).replace(/\s+\S*$/, "") : hints;
+      return [p0TitleKw, shortHints, joined].filter(Boolean).join(" ").slice(0, 1800);
     }
     if (joined.length <= 1800) {
       const primary = p0Full;
@@ -15408,6 +15423,7 @@ const Recommender = (() => {
     setSigWeights: setSigWeights,
     GENERIC_PAPER_WORDS: GENERIC_PAPER_WORDS,
     hasJapanese: hasJapanese,
+    queryHasJapanese: queryHasJapanese,
     expandJp: expandJp,
     setExpandEnabled: setExpandEnabled,
     queryText: queryText,

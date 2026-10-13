@@ -98,6 +98,8 @@ const contracts: Array<{
   queryCount: number;
   profileCosine: number;
   queryCosine: number;
+  encodedModel: string;
+  encodedQueryCosine: number;
   inputs: Array<{
     actual: ReturnType<typeof Recommender.parsePaperLines>;
     title: string;
@@ -239,7 +241,27 @@ beforeAll(async () => {
         normalize: true,
       });
       const expected = output.tolist() as number[][];
+      const escaped = JSON.stringify(lines[0])
+        .split("")
+        .map((character) =>
+          character.charCodeAt(0) > 127
+            ? `\\u${character.charCodeAt(0).toString(16).padStart(4, "0")}`
+            : character,
+        )
+        .join("");
+      const decoded = Recommender.parsePaperLines(escaped);
+      expect(decoded).toEqual(lines[0]);
+      const encodedJapanese = Recommender.queryHasJapanese(decoded);
+      const encodedModel = encodedJapanese ? EMBEDDING_MULTI_MODEL : EMBEDDING_MODEL;
+      const encodedRevision = encodedJapanese ? EMBEDDING_MULTI_REVISION : EMBEDDING_REVISION;
+      const encodedVectors = await embedEach(
+        encodedModel,
+        [Recommender.queryText(decoded)],
+        encodedRevision,
+      );
       contracts.push({
+        encodedModel,
+        encodedQueryCosine: Recommender.cosine(vectors[0], encodedVectors[0]),
         language,
         profiles: profiles.texts,
         unrelatedCosine: Recommender.cosine(embeddings.sc, embeddings.css),
@@ -577,5 +599,24 @@ it("keeps every confirmation recommendation within the top five", () => {
     expect(
       rank(item.recommendation, item.acceptable),
       `${item.id}/${item.mode}: ${item.recommendation.join(", ")}`,
+    ).toBeLessThanOrEqual(5);
+});
+
+it("routes escaped paper content through the correct actual model", () => {
+  expect(contracts).toHaveLength(2);
+  for (const contract of contracts) {
+    expect(contract.encodedModel).toBe(
+      contract.language === "ja" ? EMBEDDING_MULTI_MODEL : EMBEDDING_MODEL,
+    );
+    expect(contract.encodedQueryCosine).toBeGreaterThan(0.99999);
+  }
+});
+
+it("keeps suitable venues in the top five of raw semantic retrieval for every paper input", () => {
+  expect(results).toHaveLength(210);
+  for (const item of results)
+    expect(
+      rank(item.search, item.acceptable),
+      `${item.id}/${item.mode}: ${item.search.join(", ")}`,
     ).toBeLessThanOrEqual(5);
 });
