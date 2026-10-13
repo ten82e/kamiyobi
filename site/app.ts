@@ -3986,6 +3986,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       head.textContent = name.trim();
     }
     c2.appendChild(head);
+    if (r.submission) line(c2, r.submission.language, "sub");
     const detailButton = document.createElement("button");
     detailButton.type = "button";
     detailButton.className = "row-detail";

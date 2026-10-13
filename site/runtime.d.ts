@@ -191,7 +191,9 @@ interface SiteRecommenderApi {
     },
     nowMs: number,
   ): string;
-  deadlineShiftsOf(dl: unknown): Array<{ fromJa: string; toJa: string; later: boolean }>;
+  deadlineShiftsOf(
+    dl: unknown,
+  ): Array<{ fromJa: string; toJa: string; later: boolean; precisionChangeLabelJa?: string }>;
   deadlineShiftLineJa(dl: unknown): string;
   deadlineShiftSearchWords(dl: unknown): string;
   /** 延長を示すチップの語（画面・CSV・検索で同じ語を使う）。 */

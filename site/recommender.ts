@@ -1,3 +1,5 @@
+import type { SubmissionDisplay } from "./submission-identity.ts";
+
 /*
  * recommender.js — 論文タイトル/キーワード → 会議マッチングの純粋ロジック
  *
@@ -118,6 +120,7 @@ interface ConferenceRecord {
 }
 
 interface CandidateRow {
+  submission?: SubmissionDisplay;
   conf: ConferenceRecord;
   ed: EditionRecord;
   dl: DeadlineRecord;
@@ -463,6 +466,14 @@ function normalizeCandidateLike(value: unknown): CandidateRow | null {
     tags: normalizedStrings(value.tags ?? conf.tags),
     rankPairs: normalizedStrings(value.rankPairs),
     hay: typeof value.hay === "string" ? value.hay : "",
+    submission:
+      isRecord(value.submission) &&
+      typeof value.submission.issueLabel === "string" &&
+      typeof value.submission.language === "string" &&
+      Array.isArray(value.submission.shareAliases) &&
+      Array.isArray(value.submission.sourceRecords)
+        ? (value.submission as unknown as SubmissionDisplay)
+        : undefined,
     dupLabel: typeof value.dupLabel === "string" ? value.dupLabel : undefined,
     name: typeof value.name === "string" ? value.name : undefined,
     year: typeof value.year === "number" || value.year === null ? value.year : undefined,
@@ -7705,6 +7716,7 @@ const Recommender = (() => {
     toDayJa: string;
     toJa: string;
     later: boolean;
+    precisionChangeLabelJa?: string;
   };
 
   /** 締切の値（差し替え前後のどちら側でも）を、画面に出す暦日 + 時刻に直す。 */
@@ -7724,7 +7736,7 @@ const Recommender = (() => {
       const jst = new Date(instant + 9 * 3_600_000);
       clock = ` ${String(jst.getUTCHours()).padStart(2, "0")}:${String(jst.getUTCMinutes()).padStart(2, "0")}`;
     }
-    return { iso, ja: weekday ? `${iso}(${weekday})` : iso, clock, instant };
+    return { iso, ja: weekday ? `${iso}(${weekday})` : iso, clock, instant, dateOnly };
   }
 
   /** いま出している締切の値（行の基準と同じ欄を見る）。 */
@@ -7744,7 +7756,13 @@ const Recommender = (() => {
     list.forEach((entry) => {
       const e = entry as Record<string, unknown>;
       const from = deadlineValuePartsJa(e.value, e.precision);
-      if (!from || from.instant === to.instant) return;
+      if (!from || (from.instant === to.instant && from.dateOnly === to.dateOnly)) return;
+      const precisionChangeLabelJa =
+        from.dateOnly === to.dateOnly
+          ? undefined
+          : to.dateOnly
+            ? "時刻未確認へ訂正"
+            : "時刻表記へ更新";
       out.push({
         fromIso: from.iso,
         fromDayJa: from.ja,
@@ -7752,7 +7770,8 @@ const Recommender = (() => {
         toIso: to.iso,
         toDayJa: to.ja,
         toJa: `${to.ja}${to.clock}`,
-        later: from.instant < to.instant,
+        later: !precisionChangeLabelJa && from.instant < to.instant,
+        ...(precisionChangeLabelJa ? { precisionChangeLabelJa } : {}),
       });
     });
     return out;
@@ -7762,7 +7781,10 @@ const Recommender = (() => {
     const shifts = deadlineShiftsOf(dl);
     if (!shifts.length) return "";
     return `前に出ていた締切: ${shifts
-      .map((s) => `${s.fromJa} → ${s.toJa}（${s.later ? "延長" : PULL_FORWARD_LABEL_JA}）`)
+      .map(
+        (s) =>
+          `${s.fromJa} → ${s.toJa}（${s.precisionChangeLabelJa ?? (s.later ? "延長" : PULL_FORWARD_LABEL_JA)}）`,
+      )
       .join(" ／ ")}`;
   }
 
@@ -7777,7 +7799,7 @@ const Recommender = (() => {
         s.fromDayJa,
         s.toIso,
         s.toDayJa,
-        s.later ? "延長" : PULL_FORWARD_LABEL_JA,
+        s.precisionChangeLabelJa ? "精度訂正" : s.later ? "延長" : PULL_FORWARD_LABEL_JA,
       );
     });
     return words.join(" ");

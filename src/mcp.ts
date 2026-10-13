@@ -5,6 +5,10 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { recommendationAxes } from "../site/recommendation-core.ts";
 import Recommender from "../site/recommender.ts";
+import {
+  consolidateReviewedSubmissions,
+  type SubmissionDisplay,
+} from "../site/submission-identity.ts";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 /* 画面が最初に読む窓（180 日）と、収録の全体。**数字を画面と一致させる**のが肝なので、
@@ -57,6 +61,7 @@ interface Row {
     /** 確認の状態（上流が付けた印。オブジェクトの事と文字列の事がある – 語は画面と同じ正本）。 */
     verification?: { status?: string } | string;
   };
+  submission?: SubmissionDisplay;
   kind: string;
   est: boolean;
   t: number;
@@ -155,6 +160,13 @@ function scopeValue(scope: unknown): string {
 /** 直前の `pick` が「知らない scope」を見た時の文（次の返り値の頭に付ける）。 */
 let scopeErr = "";
 
+function displayRows(list: Row[]): Row[] {
+  return consolidateReviewedSubmissions(
+    list,
+    (row) => `${row.conf.key}|${row.ed.year ?? ""}|${row.kind}|${Math.trunc(row.t)}`,
+  );
+}
+
 function pick(scope: unknown): { list: Row[]; 名: string; 生成: unknown; 窓が無い: boolean } {
   scopeErr = "";
 
@@ -164,16 +176,21 @@ function pick(scope: unknown): { list: Row[]; 名: string; 生成: unknown; 窓�
       "collection・full・window・catalog も受ける）。そのままの窓で出しました。";
   if (scopeValue(scope) === "all")
     return {
-      list: allRows(),
+      list: displayRows(allRows()),
       名: "収録の全体",
       生成: snapshot().snapshot_metadata?.generated_at,
       窓が無い: false,
     };
   const 窓 = screenRows();
   return 窓
-    ? { list: 窓, 名: "画面が最初に読む窓", 生成: catalog()?.generated_at, 窓が無い: false }
+    ? {
+        list: displayRows(窓),
+        名: "画面が最初に読む窓",
+        生成: catalog()?.generated_at,
+        窓が無い: false,
+      }
     : {
-        list: allRows(),
+        list: displayRows(allRows()),
         名: "収録の全体",
         生成: snapshot().snapshot_metadata?.generated_at,
         窓が無い: true,
@@ -348,6 +365,7 @@ function line(r: Row, now: number): string {
 
   const 幅の但し = 幅 ? "（残りは点推定点の分）" : "";
   const 出典 = r.ed.link ? ` ${r.ed.link}` : "";
+  const 募集言語 = r.submission ? `（募集言語: ${r.submission.language}）` : "";
   /* 画面の日時欄は「日本時間の読み」と「元の日時」の二段で出す。**日本時間で無い宣言**の行は、
    * 宣言した時間帯と瞬間（UTC）を添へる（実測 2026-10-06: `dl.tz_raw` は AoE・UTC-7・PDT・
    * JST など。`dl.aoe` は**何れの行にもある派生値**なので、宣言を言うには使へない）。*/
@@ -357,7 +375,7 @@ function line(r: Row, now: number): string {
     tz && utc && !/^JST$/i.test(tz)
       ? `（元の宣言 ${tz}／${utc.replace("T", " ").replace("Z", " UTC")}）`
       : "";
-  return `${幅 ? 幅 : 日}${幅の但し}${殘り文}${元} | ${種別}${回}${推定}${印.length ? ` | ${印.join("・")}` : ""} | ${r.conf.title}（${r.ed.id}）| ${ランク} | 会期 ${會期の文} | ${場所}${出典}`;
+  return `${幅 ? 幅 : 日}${幅の但し}${殘り文}${元} | ${種別}${回}${推定}${募集言語}${印.length ? ` | ${印.join("・")}` : ""} | ${r.conf.title}（${r.ed.id}）| ${ランク} | 会期 ${會期の文} | ${場所}${出典}`;
 }
 
 function retypeTips(query: string, list: Row[], now: number): string[] {
@@ -926,6 +944,13 @@ export function structuredDeadline(r: Row, now: number): Record<string, unknown>
     verification: r.dl.verification ?? null,
     event_start: r.ed.event_start ?? null,
     event_end: r.ed.event_end ?? null,
+    submission: r.submission
+      ? {
+          issue_label: r.submission.issueLabel,
+          language: r.submission.language,
+          source_records: r.submission.sourceRecords,
+        }
+      : null,
     display: line(r, now),
   };
 }
@@ -1358,7 +1383,18 @@ function venueInfo(args: { key?: unknown; name?: unknown; scope?: unknown }, now
           .toLowerCase()
           .includes(求) ||
         r.conf.key.toLowerCase().includes(求);
-  const hit = list.filter(的);
+  const hit = list.filter((row) => {
+    if (的(row)) return true;
+    return (
+      row.submission?.sourceRecords.some((record) => {
+        if (key) return record.venueKey.toLowerCase() === key.toLowerCase();
+        const source = snapshot().conferences?.find((conf) => conf.key === record.venueKey);
+        return [source?.title, source?.acronym, source?.full_name, record.venueKey].some(
+          (value) => typeof value === "string" && value.toLowerCase().includes(求),
+        );
+      }) ?? false
+    );
+  });
   if (!hit.length) {
     const 求 = name.toLowerCase();
     const 收錄の會議 = snapshot().conferences ?? [];
@@ -1756,7 +1792,7 @@ function recommendation(): { rows: Row[]; conferences: unknown[] } | null {
     Recommender.setNameIdf(Recommender.buildNameIdf(conferences));
     Recommender.setReranker(品書.reranker ?? null);
     recommendationCache = {
-      rows: Recommender.candidateRows(品書 as never) as unknown as Row[],
+      rows: displayRows(Recommender.candidateRows(品書 as never) as unknown as Row[]),
       conferences,
     };
   } catch {
@@ -1832,7 +1868,7 @@ function recommendVenues(
     return "論文の題名を読み取れませんでした。題名を 1 行でください（`|` でキーワードと投稿先を添えられます）。";
 
   const 品書の行 = screenRows();
-  const 行 = 品書の行 ?? 索引.rows;
+  const 行 = 品書の行 ? displayRows(品書の行) : 索引.rows;
   const 會議 = 品書の行 ? ((catalog()?.conferences as unknown[]) ?? []) : 索引.conferences;
   const pool = 行
     .filter((r) => !Recommender.deadlineRowIsPast(r, now))

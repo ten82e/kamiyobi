@@ -2379,7 +2379,7 @@ it("締切が差し替わった行は、前に出ていた日付が行の詳細�
   差し替え.forEach(({ row, shifts }) => {
     const later = shifts.some((s) => s.later);
     if (later) 延び += 1;
-    if (shifts.some((s) => !s.later)) 前へ += 1;
+    if (shifts.some((s) => !s.later && !s.precisionChangeLabelJa)) 前へ += 1;
     if (later) {
       expect(R.isExtendedDeadline(row.dl), "延びた行に「延長後」の印が出ていない").toBe(true);
       expect(hitRows("延長後").has(key(row)), "「延長後」でその行が引けない").toBe(true);
@@ -2393,7 +2393,11 @@ it("締切が差し替わった行は、前に出ていた日付が行の詳細�
           false,
         );
       }
-      expect(hitRows("前倒し").has(key(row)), "前へ動いた行が「前倒し」で引けない").toBe(true);
+      if (shifts.some((s) => !s.precisionChangeLabelJa)) {
+        expect(hitRows("前倒し").has(key(row)), "前へ動いた行が「前倒し」で引けない").toBe(true);
+      } else {
+        expect(hitRows("精度訂正").has(key(row)), "精度の訂正を検索できない").toBe(true);
+      }
     }
   });
   expect(延び, "延びた行が無く、印の検査が空振りしている").toBeGreaterThanOrEqual(1);

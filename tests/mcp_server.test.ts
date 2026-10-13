@@ -5,9 +5,17 @@ import { join } from "node:path";
 import { afterAll, describe, expect, it } from "vitest";
 import { recommendationAxes } from "../site/recommendation-core.ts";
 import Recommender from "../site/recommender.ts";
+import { consolidateReviewedSubmissions } from "../site/submission-identity.ts";
 import { FILTER_RUNTIME_STUBS, site } from "./built_golden_shared.ts";
 import { REPO_ROOT } from "./helpers.ts";
 import { jsFunction, siteRuntime, vmSafeSource } from "./runtime_extract.ts";
+
+function displayCandidates(data: Parameters<typeof Recommender.candidateRows>[0]) {
+  return consolidateReviewedSubmissions(
+    Recommender.candidateRows(data),
+    (row) => `${row.conf.key}|${row.ed.year ?? ""}|${row.kind}|${Math.trunc(row.t)}`,
+  );
+}
 
 /** MCP の客户の眞似をして、行ごとの JSON-RPC をやり取りする。 */
 function mcpClient() {
@@ -180,7 +188,7 @@ describe("AI 向けの索引が、MCP の在り處を書いている（第 714 �
 
 describe("数字と案内が画面と同じ（第 714 回）", () => {
   /* 同じ検索核・同じ収録から、こちらで数えて突き合はせる（数字を検査に寫さない）。 */
-  const rows = Recommender.candidateRows(
+  const rows = displayCandidates(
     JSON.parse(readFileSync(join(REPO_ROOT, "data", "snapshot.json"), "utf8")) as never,
   ) as unknown as Array<{
     hay: string;
@@ -904,7 +912,7 @@ it("投稿先の推薦が、画面と同じ核で出る（第 857 回）", async
     ? ((JSON.parse(readFileSync(品書, "utf8")) as { conferences?: unknown[] }).conferences ?? [])
     : (索引.conferences ?? []);
   索引.conferences = 品書の會議; // 行・ジャーナルとも品書から（MCP と同じ出所）
-  const 行 = Recommender.candidateRows(索引 as never);
+  const 行 = displayCandidates(索引 as never);
   const pool = (行 as unknown as Parameters<typeof Recommender.deadlineRowIsPast>[0][])
     .filter((r) => !Recommender.deadlineRowIsPast(r as never, now))
     .concat(Recommender.journalRows(索引.conferences ?? [], now) as unknown as never[])
@@ -935,7 +943,7 @@ it("行にランクが付き、等級で厳密に絞れる（画面のランク�
   /* 画面の一覧にはランクの列が在り「A*ランク」のボタンで絞れるのに、MCP の行にはランクが
    * 無く、語で引いても厳密に絞れなかった（実測 2026-10-08: `CCF A` の語は 101 行に当たるが、
    * `ccf:A` を持つ行は 34 行 – 語の検索では等級も体系も卷き込む）。 */
-  const rows = Recommender.candidateRows(
+  const rows = displayCandidates(
     JSON.parse(readFileSync(join(REPO_ROOT, "data", "snapshot.json"), "utf8")) as never,
   );
   const now = Date.now();
@@ -982,7 +990,7 @@ it("venue_info が、分野とランクを返す（第 858 回）", async () => 
 it("行に会期が付く（画面の「会期」列と同じ入口・第 859 回）", async () => {
   /* 画面の一覧には「会期」の列があるのに、MCP の行は締切だけを言つていた – AI は
    * 「NSDI 2027 はいつ開かれる?」にこの収録で答えられなかつた（出張の段取りはこれで決める）。 */
-  const rows = Recommender.candidateRows(
+  const rows = displayCandidates(
     JSON.parse(readFileSync(join(REPO_ROOT, "data", "snapshot.json"), "utf8")) as never,
   );
   const 題 = await call("venue_info", { key: "nsdi", scope: "all" });
@@ -1006,7 +1014,7 @@ it("行に会期が付く（画面の「会期」列と同じ入口・第 859 �
 it("行に、延長と確認の状態の札が付く（画面の一覧の札と同じ語・第 860 回）", async () => {
   /* 画面の一覧の行には札が付く（延長・確認の状態）。MCP の行には無かったので、AI は
    * **上流に候補が複数ある締切**（複数候補のため要確認）を、確定した締切として答へていた。 */
-  const rows = Recommender.candidateRows(
+  const rows = displayCandidates(
     JSON.parse(readFileSync(join(REPO_ROOT, "data", "snapshot.json"), "utf8")) as never,
   );
   const 檢 = (r: (typeof rows)[number]): unknown =>
@@ -1045,7 +1053,7 @@ it("国内・オンラインの絞り込みが、画面のチェック欄と同�
    * **同じ判定**を引数にした。語（「国内」「オンライン参加可」）でも同じ集合に成る事は
    * 実測しているが、AI が魔法の語を知らないと使へない – 引数なら画面のボタンと同じ物が
    * その侭使へる。 */
-  const rows = Recommender.candidateRows(
+  const rows = displayCandidates(
     JSON.parse(readFileSync(join(REPO_ROOT, "data", "snapshot.json"), "utf8")) as never,
   );
   const now = Date.now();
@@ -1086,9 +1094,7 @@ it("締切の行が 1 本もない会議を「収録にない」と言わない�
     conferences?: Array<{ key?: string; editions?: Array<{ event_start?: string }> }>;
   };
   const 會 = snap.conferences ?? [];
-  const 行の鍵 = new Set(
-    Recommender.candidateRows(snap as never).map((r) => String(r.conf?.key ?? "")),
-  );
+  const 行の鍵 = new Set(displayCandidates(snap as never).map((r) => String(r.conf?.key ?? "")));
   const 締切なし = 會.filter((c) => c.key && !行の鍵.has(String(c.key)));
   expect(締切なし.length, "この検査の前提（締切の行がない会議）が崩れた").toBeGreaterThan(0);
   const 會期あり = 締切なし.find((c) => (c.editions ?? []).some((e) => e.event_start));
@@ -1112,9 +1118,7 @@ it("0 件の時、収録の会議の名前に当たっていればその旨を�
     conferences?: Array<{ key?: string; editions?: Array<{ event_start?: string }> }>;
   };
   const 會 = snap.conferences ?? [];
-  const 行の鍵 = new Set(
-    Recommender.candidateRows(snap as never).map((r) => String(r.conf?.key ?? "")),
-  );
+  const 行の鍵 = new Set(displayCandidates(snap as never).map((r) => String(r.conf?.key ?? "")));
   const 締切なし = 會.find(
     (c) =>
       c.key &&
@@ -1180,8 +1184,8 @@ it("窓の外にだけある締切を「ない」と言わない（第 869 回�
   const 品書 = join(REPO_ROOT, "public", "catalog.json");
   if (!existsSync(品書)) return;
   const snap = JSON.parse(readFileSync(join(REPO_ROOT, "data", "snapshot.json"), "utf8")) as never;
-  const 全行 = Recommender.candidateRows(snap);
-  const 窓行 = Recommender.candidateRows(JSON.parse(readFileSync(品書, "utf8")) as never);
+  const 全行 = displayCandidates(snap);
+  const 窓行 = displayCandidates(JSON.parse(readFileSync(品書, "utf8")) as never);
   const now = Date.now();
   /* 窓の果てより後の年を探す（収録の全体にだけある語）。 */
   const 最晚年 = Math.max(...全行.map((r) => new Date(r.t).getUTCFullYear()));
@@ -1244,7 +1248,7 @@ it("日数の幅は、同じ幅を引ける検索語に置き換へて敎へる�
 
 it("収録の果てより先の日付を「ない」と言はない（第 871 回）", async () => {
   const snap = JSON.parse(readFileSync(join(REPO_ROOT, "data", "snapshot.json"), "utf8")) as never;
-  const 全行 = Recommender.candidateRows(snap);
+  const 全行 = displayCandidates(snap);
   /* 果ての数へ方は画面と同じ（表示している暦日 = `tShown`。無ければ `t`。JST の暦日で出す）。 */
   let 一番遠い = Number.NEGATIVE_INFINITY;
   for (const r of 全行) {
@@ -1325,7 +1329,7 @@ it("「締切まで N 日」の窓の式が、画面と一致する（第 872 �
 
 it("within_days は、画面の「締切まで N 日」と同じ行を返す（第 872 回）", async () => {
   const snap = JSON.parse(readFileSync(join(REPO_ROOT, "data", "snapshot.json"), "utf8")) as never;
-  const 全行 = Recommender.candidateRows(snap);
+  const 全行 = displayCandidates(snap);
   const 畫面 = 畫面の窓();
   /* 画面の既定（今後・投稿締切の種別・推定を除く）と同じ土俵で数へる。 */
   const 期待 = (日: number, now: number, 過去も: boolean): number =>
@@ -1413,7 +1417,7 @@ it("欄の名前を打たれたら、値で打ち直す案内を返す（第 873
 
 it("「と」「や」で繋いだ打ち方に、どちらかだけで打つ案内を返す（第 873 回）", async () => {
   const snap = JSON.parse(readFileSync(join(REPO_ROOT, "data", "snapshot.json"), "utf8")) as never;
-  const 全行 = Recommender.candidateRows(snap);
+  const 全行 = displayCandidates(snap);
   const now = Date.now();
   const 素 = (語: string): number => {
     const m = Recommender.searchMatcher(Recommender.expandRelativeMonths(語, now), now);
@@ -1630,7 +1634,7 @@ it("語を並べて打つた時、収録にない語を名指す（第 880 回�
   expect(text, "収録にない語を名指していない").toContain("は収録データにも見当たりません");
   expect(text, "外すと増える事を言つていない").toContain("その語を外すと増えます");
   /* 語ごとの件数も、画面と同じ正典（`queryTermCounts`）で数へた物と一致する。 */
-  const 窓 = Recommender.candidateRows(
+  const 窓 = displayCandidates(
     JSON.parse(readFileSync(join(REPO_ROOT, "public", "catalog.json"), "utf8")) as never,
   ) as Array<{ hay: string }>;
   const now = Date.now();
@@ -1756,7 +1760,7 @@ function 畫面の受皿(query: string): string {
     categories?: Record<string, string>;
     conferences?: unknown[];
   };
-  const rows = Recommender.candidateRows(品書 as never) as Array<{ hay: string }>;
+  const rows = displayCandidates(品書 as never) as Array<{ hay: string }>;
   return fn({
     window: "all",
     past: false,
@@ -1938,7 +1942,7 @@ it("venue_info は正式名で引き、版の識別子を会議に敿へる（�
     "締切の行が 1 本もありません",
   );
   /* 検索检索が行を出す語は、こちらでも会議を見付ける（同じ評價を持つ – 第 726 回の延長）。 */
-  const rows = Recommender.candidateRows(
+  const rows = displayCandidates(
     JSON.parse(readFileSync(join(REPO_ROOT, "data", "snapshot.json"), "utf8")) as never,
   );
   const now = Date.now();
@@ -2151,7 +2155,7 @@ it("推薦の pool は画面と同じ組み立て（第 894 回）", async () =>
   Recommender.setNameIdf(Recommender.buildNameIdf(索引.conferences ?? []));
   Recommender.setReranker(索引.reranker ?? null);
   const catalog = JSON.parse(readFileSync(品書, "utf8"));
-  const rows = Recommender.candidateRows(catalog) as unknown as Array<Record<string, unknown>>;
+  const rows = displayCandidates(catalog) as unknown as Array<Record<string, unknown>>;
   const now = Date.now();
   /* 画面の pool をこちらで組み立てる（`site/app.ts` の `pool` と同じ 3 つ）。 */
   const pool = (rows as unknown as Parameters<typeof Recommender.deadlineRowIsPast>[0][])
@@ -2191,7 +2195,7 @@ it("品書が再学習の重みを持つ – 画面の推薦が MCP と同じ順
   const paper =
     "Time-Sensitive Networking Scheduling for Deterministic Industrial Networks | tsn, real-time, scheduling, deterministic";
   const now = Date.now();
-  const rows = Recommender.candidateRows(catalog as never);
+  const rows = displayCandidates(catalog as never);
   const pool = (rows as unknown as Parameters<typeof Recommender.deadlineRowIsPast>[0][])
     .filter((r) => !Recommender.deadlineRowIsPast(r as never, now))
     .concat(Recommender.journalRows(catalog.conferences ?? [], now) as unknown as never[])
@@ -2254,7 +2258,7 @@ it("推薦の行に、画面と同じ選定理由が付く（第 897 回）", as
     "Time-Sensitive Networking Scheduling for Deterministic Industrial Networks | tsn, real-time, scheduling";
   /* 画面が表示する札と同じ理由をこちらで組む。 */
   const now = Date.now();
-  const rows = Recommender.candidateRows(catalog as never);
+  const rows = displayCandidates(catalog as never);
   const pool = (rows as unknown as Parameters<typeof Recommender.deadlineRowIsPast>[0][])
     .filter((r) => !Recommender.deadlineRowIsPast(r as never, now))
     .concat(Recommender.journalRows(catalog.conferences ?? [], now) as unknown as never[])
@@ -2414,7 +2418,7 @@ it("推薦の軸が画面の行まで届く（第 901 回）", async () => {
   const 品書 = join(REPO_ROOT, "public", "catalog.json");
   if (!existsSync(品書)) return;
   const catalog = JSON.parse(readFileSync(品書, "utf8"));
-  const rows = Recommender.candidateRows(catalog as never) as unknown as Array<{
+  const rows = displayCandidates(catalog as never) as unknown as Array<{
     conf?: {
       key?: string;
       recommendation_axes?: {
@@ -2825,7 +2829,7 @@ it("画面と MCP が、同じ問に同じ行を出す（第 917 回）", async 
   const rowsFile = join(tmpdir(), `kamiyobi-screen-rows-${process.pid}.json`);
   writeFileSync(
     rowsFile,
-    JSON.stringify(Recommender.candidateRows(JSON.parse(readFileSync(品書, "utf8")))),
+    JSON.stringify(displayCandidates(JSON.parse(readFileSync(品書, "utf8")))),
   );
   afterAll(() => {
     rmSync(rowsFile, { force: true });
@@ -3180,7 +3184,7 @@ describe("list_upcoming の行が画面と同じ（第 944 回）", () => {
     const rowsFile = join(tmpdir(), `kamiyobi-screen-upcoming-${process.pid}.json`);
     writeFileSync(
       rowsFile,
-      JSON.stringify(Recommender.candidateRows(JSON.parse(readFileSync(品書, "utf8")))),
+      JSON.stringify(displayCandidates(JSON.parse(readFileSync(品書, "utf8")))),
     );
     afterAll(() => rmSync(rowsFile, { force: true }));
     const 畫面の行 = (win: string): string[] => {
@@ -3627,7 +3631,7 @@ it("検索の頭の「当たる件数」と「絞る前」は、両方事実と�
   const 品書 = JSON.parse(readFileSync(join(REPO_ROOT, "public", "catalog.json"), "utf8")) as {
     conferences?: unknown[];
   };
-  const 行々 = Recommender.candidateRows(品書 as never);
+  const 行々 = displayCandidates(品書 as never);
   const 今 = Date.now();
   const 投稿の種別 = new Set(["abstract", "paper", "journal"]);
   const 問 = ["セキュリティ", "今月", "締切", "3月", "ICDE", "国内", "オンライン", "来月"];
@@ -3660,7 +3664,7 @@ it("list_upcoming の件数は、その窓の事实と合う（第 990 回）", 
   const 收錄 = JSON.parse(readFileSync(join(REPO_ROOT, "data", "snapshot.json"), "utf8")) as {
     conferences?: unknown[];
   };
-  const 行々 = Recommender.candidateRows(收錄 as never);
+  const 行々 = displayCandidates(收錄 as never);
   const 今 = Date.now();
   const 窓 = [7, 30, 90, 180, 400];
   for (const days of 窓) {
@@ -3738,7 +3742,7 @@ it("推薦の「候補の件数」と「過ぎた件数」は事実と合う（�
   const 事實 = (題: string): { 候補: number; 過去: number } => {
     Recommender.setNameIdf(Recommender.buildNameIdf(品書.conferences ?? []));
     Recommender.setReranker(品書.reranker ?? null);
-    const 行 = Recommender.candidateRows(品書 as never);
+    const 行 = displayCandidates(品書 as never);
     const pool = 行
       .filter((r) => !Recommender.deadlineRowIsPast(r, 今))
       .concat(
