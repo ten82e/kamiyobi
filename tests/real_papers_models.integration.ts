@@ -60,10 +60,19 @@ const holdoutText = readFileSync(
   "utf8",
 );
 const holdout = JSON.parse(holdoutText) as Pick<Fixture, "sampling" | "profile_policy" | "papers">;
+const confirmationText = readFileSync(
+  new URL("./fixtures/real-model-confirmation-2025.json", import.meta.url),
+  "utf8",
+);
+const confirmation = JSON.parse(confirmationText) as Pick<
+  Fixture,
+  "sampling" | "profile_policy" | "papers"
+>;
 const papers = [
   ...fixture.papers.map((paper) => ({ ...paper, corpus: "initial" as const })),
   ...independent.papers.map((paper) => ({ ...paper, corpus: "independent" as const })),
   ...holdout.papers.map((paper) => ({ ...paper, corpus: "holdout" as const })),
+  ...confirmation.papers.map((paper) => ({ ...paper, corpus: "confirmation" as const })),
 ];
 const modes = ["title", "abstract", "title+abstract"] as const;
 type Mode = (typeof modes)[number];
@@ -97,7 +106,7 @@ const contracts: Array<{
 }> = [];
 const results: Array<{
   id: string;
-  corpus: "initial" | "independent" | "holdout";
+  corpus: "initial" | "independent" | "holdout" | "confirmation";
   language: "en" | "ja";
   mode: Mode;
   source: string;
@@ -150,6 +159,15 @@ beforeAll(async () => {
   expect(holdout.papers.filter((p) => p.language === "en")).toHaveLength(6);
   expect(holdout.papers.filter((p) => p.language === "ja")).toHaveLength(6);
   for (const paper of holdout.papers) expect(priorSources.has(paper.source)).toBe(false);
+  expect(createHash("sha256").update(confirmationText).digest("hex")).toBe(
+    "406736515612efbdc519b4d15e914cf34e1c8be7590bb01df6b2cf8dde5b775d",
+  );
+  const developmentSources = new Set(
+    [...fixture.papers, ...independent.papers, ...holdout.papers].map((p) => p.source),
+  );
+  expect(confirmation.papers.filter((p) => p.language === "en")).toHaveLength(6);
+  expect(confirmation.papers.filter((p) => p.language === "ja")).toHaveLength(6);
+  for (const paper of confirmation.papers) expect(developmentSources.has(paper.source)).toBe(false);
   expect(new Set(papers.map((p) => p.id)).size).toBe(papers.length);
   const initialSources = new Set(fixture.papers.map((p) => p.source));
   for (const paper of independent.papers) expect(initialSources.has(paper.source)).toBe(false);
@@ -279,7 +297,7 @@ beforeAll(async () => {
     }
   }
   const metrics = Object.fromEntries(
-    ["initial", "independent", "holdout"].flatMap((corpus) =>
+    ["initial", "independent", "holdout", "confirmation"].flatMap((corpus) =>
       ["en", "ja"].flatMap((language) =>
         modes.map((mode) => {
           const group = results.filter(
@@ -309,7 +327,9 @@ beforeAll(async () => {
           initial: fixture.sampling,
           independent: independent.sampling,
           holdout: holdout.sampling,
+          confirmation: confirmation.sampling,
         },
+        confirmation_sha256: createHash("sha256").update(confirmationText).digest("hex"),
         holdout_sha256: createHash("sha256").update(holdoutText).digest("hex"),
         independent_sha256: createHash("sha256").update(independentText).digest("hex"),
         profile_policy: fixture.profile_policy,
@@ -496,4 +516,66 @@ it("improves Japanese recommendations on the separately selected 2025 papers", (
     expect(group).toHaveLength(6);
     expect(summarize(group, "recommendation").acceptable_mrr, mode).toBeGreaterThan(baseline[mode]);
   }
+});
+
+for (const language of ["en", "ja"] as const)
+  for (const mode of modes) {
+    it(`2025 confirmation ${language}/${mode}: keeps the original quality floors`, () => {
+      const group = results.filter(
+        (r) => r.corpus === "confirmation" && r.language === language && r.mode === mode,
+      );
+      expect(group).toHaveLength(6);
+      for (const method of ["search", "recommendation"] as const) {
+        const summary = summarize(group, method);
+        expect(
+          summary.acceptable_at_5,
+          JSON.stringify({ method, ...summary }),
+        ).toBeGreaterThanOrEqual(0.75);
+        expect(
+          summary.acceptable_mrr,
+          JSON.stringify({ method, ...summary }),
+        ).toBeGreaterThanOrEqual(0.35);
+      }
+    });
+  }
+
+it("every separately selected 2025 recommendation has a suitable venue in the top five", () => {
+  const group = results.filter((r) => r.corpus === "holdout");
+  expect(group).toHaveLength(36);
+  for (const item of group)
+    expect(
+      rank(item.recommendation, item.acceptable),
+      `${item.id}/${item.mode}: ${item.recommendation.join(", ")}`,
+    ).toBeLessThanOrEqual(5);
+});
+
+it("preserves the recovered native-Japanese title-and-abstract ranking", () => {
+  const group = results.filter(
+    (r) => r.corpus === "initial" && r.language === "ja" && r.mode === "title+abstract",
+  );
+  expect(group).toHaveLength(8);
+  expect(summarize(group, "recommendation").acceptable_mrr).toBeGreaterThanOrEqual(15 / 16);
+});
+
+it("improves title recommendations on the additional confirmation papers in both languages", () => {
+  const baseline = { en: 11 / 12, ja: 0.736111111111111 };
+  for (const language of ["en", "ja"] as const) {
+    const group = results.filter(
+      (r) => r.corpus === "confirmation" && r.language === language && r.mode === "title",
+    );
+    expect(group).toHaveLength(6);
+    expect(summarize(group, "recommendation").acceptable_mrr, language).toBeGreaterThan(
+      baseline[language],
+    );
+  }
+});
+
+it("keeps every confirmation recommendation within the top five", () => {
+  const group = results.filter((r) => r.corpus === "confirmation");
+  expect(group).toHaveLength(36);
+  for (const item of group)
+    expect(
+      rank(item.recommendation, item.acceptable),
+      `${item.id}/${item.mode}: ${item.recommendation.join(", ")}`,
+    ).toBeLessThanOrEqual(5);
 });

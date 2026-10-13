@@ -14522,8 +14522,8 @@ const Recommender = (() => {
           b.lexicalScore - a.lexicalScore ||
           a.key.localeCompare(b.key),
       );
-    const categoryRank = (entry: RecommendationEntry) => {
-      const rank = opts.venueCats?.findIndex((category) => entry.row.cats.includes(category)) ?? -1;
+    const categoryRank = (row: CandidateRow) => {
+      const rank = opts.venueCats?.findIndex((category) => row.cats.includes(category)) ?? -1;
       return rank < 0 ? Number.MAX_SAFE_INTEGER : rank;
     };
     const semantic = entries
@@ -14531,7 +14531,7 @@ const Recommender = (() => {
       .sort(
         (a, b) =>
           b.similarity - a.similarity ||
-          categoryRank(a) - categoryRank(b) ||
+          categoryRank(a.row) - categoryRank(b.row) ||
           b.lexicalScore - a.lexicalScore ||
           a.key.localeCompare(b.key),
       );
@@ -14544,7 +14544,11 @@ const Recommender = (() => {
         lexicalRanks[entry.key] = index + 1;
       });
     semantic.slice(0, topN).forEach((entry, index) => {
-      semanticRanks[entry.key] = index + 1;
+      const previous = semantic[index - 1];
+      semanticRanks[entry.key] =
+        opts.semanticSimilarities && previous?.similarity === entry.similarity
+          ? semanticRanks[previous.key]
+          : index + 1;
     });
     const hasSemantic = Object.keys(semanticRanks).length > 0;
     const keys = Object.keys(lexicalRanks);
@@ -14609,9 +14613,14 @@ const Recommender = (() => {
         // 近い候補を落とさず、既存の表示スコア・学習特徴量は保つ。
         const lexicalRrfWeight = opts.semanticSimilarities ? 0.4 : opts.fieldedLexical ? 1.6 : 1;
         const semanticRrfWeight = opts.semanticSimilarities ? 1.6 : opts.fieldedLexical ? 0.4 : 1;
+        // 語彙の欠落は不一致ではない。意味検索にある候補には、語彙一覧の
+        // 末尾より下の中立値を使い、語彙の一致があったとは表示しない。
         const rrf =
-          (lexicalRank ? lexicalRrfWeight / (k + lexicalRank) : 0) +
-          (semanticRank ? semanticRrfWeight / (k + semanticRank) : 0);
+          (lexicalRank
+            ? lexicalRrfWeight / (k + lexicalRank)
+            : opts.semanticSimilarities && semanticRank
+              ? lexicalRrfWeight / (k + entries.length + 1)
+              : 0) + (semanticRank ? semanticRrfWeight / (k + semanticRank) : 0);
         const score = hasSemantic
           ? Math.round(Math.min(100, (rrf * 100 * (k + 1)) / 2))
           : entry.lexicalScore;
@@ -14679,7 +14688,12 @@ const Recommender = (() => {
         const baseB = hasSemantic ? b.fit.rrf * (k + 1) * 50 : b.fit.baseScore;
         const rawA = baseA * (1 - blend) + a.fit.probability * 100 * blend;
         const rawB = baseB * (1 - blend) + b.fit.probability * 100 * blend;
-        return rawB - rawA || b.fit.score - a.fit.score || a.venueKey.localeCompare(b.venueKey);
+        return (
+          rawB - rawA ||
+          b.fit.score - a.fit.score ||
+          (opts.semanticSimilarities ? categoryRank(a.row) - categoryRank(b.row) : 0) ||
+          a.venueKey.localeCompare(b.venueKey)
+        );
       });
   }
 
@@ -15112,6 +15126,20 @@ const Recommender = (() => {
 
   /* 日本語テキストに含まれる分野語を英語に展開する（無ければ ""）。 */
   const RETRIEVAL_TOPIC_ALIASES: Record<string, string> = {
+    エクスパンダー: "expander graph",
+    オンライン意思決定: "online decision making",
+    リグレット: "regret",
+    頑健: "robust",
+    実物体: "physical objects",
+    展示: "exhibition",
+    芸術: "art",
+    エンタテインメント: "entertainment",
+    標的型メール: "spear phishing",
+    差分プライバシー: "differential privacy",
+    ソーシャルエンジニアリング: "social engineering",
+    フィッシング: "phishing social engineering",
+    視覚効果: "visual effects",
+    生成: "generation",
     訓練データ: "training data machine learning",
     特徴選択: "feature selection machine learning",
     特徴表現: "feature representation learning",
@@ -15137,22 +15165,34 @@ const Recommender = (() => {
     "treatment effect": "causal inference statistical learning",
   };
 
-  function expandJp(text: unknown, forRetrieval = false): string {
-    if (!expandEnabled) return "";
+  function expansionTerms(text: unknown, forRetrieval = false): string[] {
+    if (!expandEnabled) return [];
     const t = String(text || "").toLowerCase();
-    let out = "";
     const aliases = forRetrieval ? { ...JP_EN, ...RETRIEVAL_TOPIC_ALIASES } : JP_EN;
-    Object.keys(aliases).forEach((jp) => {
-      const matches =
-        forRetrieval && /^[a-z0-9/ -]+$/i.test(jp)
-          ? signalInText(t, jp)
-          : t.indexOf(jp.toLowerCase()) !== -1;
-      if (matches) out += ` ${aliases[jp]}`;
-    });
-    if (forRetrieval && /特徴/.test(t) && /ラベル/.test(t)) {
-      out += " feature label supervised learning";
+    const keys = Object.keys(aliases).filter((jp) =>
+      forRetrieval && /^[a-z0-9/ -]+$/i.test(jp)
+        ? signalInText(t, jp)
+        : t.includes(jp.toLowerCase()),
+    );
+    if (forRetrieval) {
+      keys.sort(
+        (a, b) => t.indexOf(a.toLowerCase()) - t.indexOf(b.toLowerCase()) || b.length - a.length,
+      );
     }
-    return out.trim();
+    const terms = keys.map((jp) => aliases[jp]);
+    if (
+      forRetrieval &&
+      /特徴/.test(t) &&
+      /ラベル/.test(t) &&
+      /訓練|分類|標本|データ選択|データセット/.test(t)
+    ) {
+      terms.push("feature label supervised learning");
+    }
+    return terms;
+  }
+
+  function expandJp(text: unknown, forRetrieval = false): string {
+    return expansionTerms(text, forRetrieval).join(" ");
   }
 
   /* 先頭論文の題名とキーワードを優先した、1800文字以内の埋め込み用クエリ。
@@ -15170,7 +15210,9 @@ const Recommender = (() => {
     const all = lines.map((paper) => paperText(paper).replace(/\s+/g, " ").trim());
     const joined = all.filter(Boolean).join(" ").trim();
     if (/[\u3040-\u30ff\u4e00-\u9fff]/.test(joined)) {
-      const hints = expandJp(p0Full, true);
+      const hints = [
+        ...new Set([...expansionTerms(p0TitleKw, true), ...expansionTerms(p0Full, true)]),
+      ].join(" ");
       if (hints) {
         const shortHints = hints.length > 400 ? hints.slice(0, 400).replace(/\s+\S*$/, "") : hints;
         return [p0TitleKw, shortHints, joined].filter(Boolean).join(" ").slice(0, 1800);

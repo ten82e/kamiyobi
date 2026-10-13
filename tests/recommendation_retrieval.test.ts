@@ -96,5 +96,47 @@ describe("recommendation retrieval without generated data", () => {
     );
     expect(result[0].venueKey).toBe("learning");
     expect(result[0].fit.lexicalRank).toBe(1);
+    expect(result.map((r) => r.fit.semanticRank)).toEqual([1, 1]);
   });
+});
+
+it("does not treat missing lexical overlap as disagreement with a semantic match", () => {
+  const result = R.venueRecommendations(
+    [
+      {
+        conf: { key: "meaning", title: "Probability forum", scope: "statistical inference" },
+        cats: [],
+      },
+      { conf: { key: "word", title: "Operations forum", scope: "data testing" }, cats: [] },
+    ],
+    R.parsePaperLines("data testing"),
+    { meaning: 90, word: 10 },
+    NOW,
+    { fieldedLexical: true, semanticSimilarities: { meaning: 0.9, word: 0.1 } },
+  );
+  expect(result.map((r) => r.venueKey)).toEqual(["meaning", "word"]);
+  expect(result[0].fit.lexicalRank).toBeNull();
+  expect(result[0].fit.lexicalScore).toBe(0);
+  expect(result[0].fit.semanticRank).toBe(1);
+});
+
+it("respects requested categories when semantic similarity and fused scores tie", () => {
+  const result = R.venueRecommendations(
+    [
+      { conf: { key: "aaa-other", title: "Neutral one", scope: "" }, cats: ["systems"] },
+      { conf: { key: "zzz-requested", title: "Neutral two", scope: "" }, cats: ["ai"] },
+    ],
+    R.parsePaperLines("unmatched material"),
+    { "aaa-other": 50, "zzz-requested": 50 },
+    NOW,
+    {
+      fieldedLexical: true,
+      semanticSimilarities: { "aaa-other": 0.7, "zzz-requested": 0.7 },
+      venueCats: ["ai"],
+    },
+  );
+  expect(result.map((r) => r.venueKey)).toEqual(["zzz-requested", "aaa-other"]);
+  expect(result.map((r) => r.fit.semanticRank)).toEqual([1, 1]);
+  expect(result.map((r) => r.fit.lexicalRank)).toEqual([null, null]);
+  expect(result[0].fit.score).toBe(result[1].fit.score);
 });

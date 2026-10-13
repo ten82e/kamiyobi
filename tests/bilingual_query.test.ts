@@ -63,3 +63,40 @@ it("derives supplemental terminology from the submitted paper rather than unrela
   expect(text).not.toContain("privacy");
   expect(text).not.toContain("cryptography");
 });
+
+it("prioritizes the title's subject over incidental abstract terminology", () => {
+  const text = R.queryText([
+    {
+      title: "視覚効果を用いた展示",
+      abstract: "生成した画像を比較する。",
+      keywords: "",
+      venue: "",
+    },
+  ]);
+  expect(text).toContain("visual effects");
+  expect(text).toContain("generation");
+  expect(text.indexOf("visual effects")).toBeLessThan(text.indexOf("generation"));
+  expect(text).not.toContain("generative generation");
+});
+
+it("does not turn interface features and labels into supervised learning", () => {
+  const text = R.queryText([
+    {
+      title: "表示ラベルの特徴と読みやすさ",
+      abstract: "画面上の文字の配置を調査する。",
+      keywords: "",
+      venue: "",
+    },
+  ]);
+  expect(text).not.toContain("supervised learning");
+  expect(text).toContain("表示ラベルの特徴と読みやすさ");
+});
+
+it("keeps the order of subjects within a title", () => {
+  const text = R.queryText([
+    { title: "視覚効果と芸術を用いた展示", abstract: "", keywords: "", venue: "" },
+  ]);
+  for (const term of ["visual effects", "art", "exhibition"]) expect(text).toContain(term);
+  expect(text.indexOf("visual effects")).toBeLessThan(text.indexOf("art"));
+  expect(text.indexOf("art")).toBeLessThan(text.indexOf("exhibition"));
+});
