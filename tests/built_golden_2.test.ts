@@ -1792,7 +1792,10 @@ it("「評価でしぼる」でのぞいた件数を件数欄に出す（SPEC §
   expect(runtime, "截つた行を数えて居ない").toContain("截つた行 =");
 
   const 配布物 = join(REPO_ROOT, "public", "upcoming.md");
-  if (!existsSync(配布物)) return;
+  expect(
+    existsSync(配布物),
+    "検証に必要な生成物がありません。オフラインビルドを実行してください",
+  ).toBe(true);
   const md = readFileSync(配布物, "utf8").split("\n");
   const 頭の行 = md.findIndex((l) => l.startsWith("| 日付"));
   expect(頭の行, "upcoming.md の表の見出しが読めない").toBeGreaterThan(0);
@@ -4802,7 +4805,10 @@ function digits(n: number): string {
 
 function 索引の實測値(): void {
   const 索引 = join(REPO_ROOT, "public", "llms.txt");
-  if (!existsSync(索引)) return;
+  expect(
+    existsSync(索引),
+    "検証に必要な生成物がありません。オフラインビルドを実行してください",
+  ).toBe(true);
   const 文 = readFileSync(索引, "utf8");
   const 表 = csvRows(readFileSync(join(REPO_ROOT, "public", "data.csv"), "utf8").trim());
   const 頭 = 表[0] ?? [];
@@ -4852,7 +4858,10 @@ it("索引（llms.txt）の中の実測値は、本文と合う（第 1003 回�
 it("health.md の表は health.json の値と合う（第 1005 回）", () => {
   const jsonPath = join(REPO_ROOT, "public", "health.json");
   const mdPath = join(REPO_ROOT, "public", "health.md");
-  if (!existsSync(jsonPath) || !existsSync(mdPath)) return;
+  expect(
+    existsSync(jsonPath) && existsSync(mdPath),
+    "検証に必要な生成物がありません。オフラインビルドを実行してください",
+  ).toBe(true);
   const json = JSON.parse(readFileSync(jsonPath, "utf8")) as Record<string, unknown>;
   const md = readFileSync(mdPath, "utf8");
   const 行 = [...md.matchAll(/^\| [^|`]*`([a-z_]+)`[^|]*\| ([^|]+)\|/gm)];
@@ -4879,7 +4888,10 @@ it("health.md の表は health.json の値と合う（第 1005 回）", () => {
 
 it("data.json のスキーマの申告は、実物と合う（第 1007 回）", async () => {
   const jsonPath = join(REPO_ROOT, "public", "data.json");
-  if (!existsSync(jsonPath)) return;
+  expect(
+    existsSync(jsonPath),
+    "検証に必要な生成物がありません。オフラインビルドを実行してください",
+  ).toBe(true);
   const d = JSON.parse(readFileSync(jsonPath, "utf8")) as {
     conferences?: Array<Record<string, unknown>>;
     site?: Record<string, unknown>;

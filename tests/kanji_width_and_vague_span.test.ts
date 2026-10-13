@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import Recommender from "../site/recommender.ts";
 import { builtSite } from "./built_site.ts";
+import { queryGuidanceTexts } from "./query_guidance.ts";
 
 const 基準 = Date.parse("2026-08-09T00:00:00Z");
 
@@ -30,21 +31,9 @@ function 対称差(甲: Set<string>, 乙: Set<string>): number {
 
 /** 件の数欄に出る案内（一覧が 5 件以上のときだけ出る「絞れていません」は除く – app.ts 実測）。 */
 function 案内(語: string): string {
-  const 出口 = Object.keys(Recommender).filter((名) => /Note|Hint/.test(名));
-  return 出口
-    .map((名) => {
-      const fn = (Recommender as unknown as Record<string, (...args: unknown[]) => unknown>)[名];
-      let 文 = "";
-      try {
-        const 値 = fn(語, 基準);
-        文 = Array.isArray(値) ? 値.join(" ") : String(値 ?? "");
-      } catch {
-        文 = "";
-      }
-      return 文.includes("どの行にも当たっていて") ? "" : 文;
-    })
-    .filter((文) => 文 !== "")
-    .join(" ｜ ");
+  return queryGuidanceTexts(語, 基準, (word) => 列(word).size)
+    .join(" ｜ ")
+    .replace(/\s+/g, " ");
 }
 
 describe("相対日を漢数字で打つ形", () => {
@@ -64,7 +53,9 @@ describe("相対日を漢数字で打つ形", () => {
 
   it("広げた日は件の数欄にその日で書く（行を作つていない事の証拠は出さない）", () => {
     expect(案内("一か月後"), "解けた日を書いていない").toContain("2026年9月9日");
-    expect(案内("一か月後"), "算用数字で打った時と違う案内になった").toBe(案内("1か月後"));
+    for (const query of ["一か月後", "1か月後"]) {
+      expect(Recommender.relativeDayNotes(query, 基準)).toEqual(["1か月後 = 2026年9月9日(水)"]);
+    }
   });
 
   it("日・週・年の漢数字は以前から通つている（今回の寄せで変わつて居ない）", () => {

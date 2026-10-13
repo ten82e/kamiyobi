@@ -192,7 +192,10 @@ describe("data.csv の値の書き方", () => {
   it("状態の列は、値の意味が索引（llms.txt）に書いてある（第 926 回）", () => {
     const csv = join(REPO_ROOT, "public", "data.csv");
     const llmsPath = join(REPO_ROOT, "public", "llms.txt");
-    if (!existsSync(csv) || !existsSync(llmsPath)) return; // 生成物は CI が作る
+    expect(
+      existsSync(csv) && existsSync(llmsPath),
+      "検証に必要な生成物がありません。オフラインビルドを実行してください",
+    ).toBe(true);
     /* 値の**意味**が要る列だけを見る（会議名・URL・日付は列に依らないので対象外）。 */
     const 対象 = [
       "verification_status",

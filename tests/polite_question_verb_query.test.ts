@@ -20,7 +20,7 @@ function 収録(): Row[] {
 }
 function 当たり(rows: Row[], 文: string): string[] {
   const m = Recommender.searchMatcher(文, AT);
-  return rows.filter((r) => m(r.hay) === true).map((r) => String(r.hay).slice(0, 24));
+  return rows.filter((r) => m(r.hay) === true).map((r) => String(r.hay));
 }
 function 案内(語: string): string {
   return [

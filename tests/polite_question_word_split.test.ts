@@ -20,7 +20,7 @@ function 品書(): Row[] {
 }
 function 当たり(rows: Row[], 文: string): string[] {
   const m = Recommender.searchMatcher(文, AT);
-  return rows.filter((r) => m(r.hay) === true).map((r) => String(r.hay).slice(0, 24));
+  return rows.filter((r) => m(r.hay) === true).map((r) => String(r.hay));
 }
 
 /** 訪ねの語を続けた打ち方 → その方の plain な打ち方と同じ行が出るべき物。 */
@@ -57,8 +57,9 @@ describe("敬体で訪ねる打ち方", () => {
   it("彈いた語尾は落とさない – `あります` と `なる` は品書に行を持つ（第 362 回）", () => {
     const rows = 品書();
     // その方の語が行に書かれている（実測 – 実ビルドで `あります` 2 行・`なる` 1 行）ので、
-    // 照合から落とすと靜かに広がる。`明日締切はありますか` は 0 件で案内が出る侭が正しい。
-    expect(当たり(rows, "明日締切はありますか")).toEqual(当たり(rows, "明日締切はありますか"));
+    // 単独の「あります」「なる」は残し、疑問形の「ありますか」だけを落とす。
+    expect(当たり(rows, "明日締切").length).toBeGreaterThan(0);
+    expect(当たり(rows, "明日締切はありますか").sort()).toEqual(当たり(rows, "明日締切").sort());
     const b = readFileSync("site/recommender.ts", "utf8");
     const i = b.indexOf("function 訪ねの語尾に落とすいつJa");
     const 域 = b.slice(i, b.indexOf("\n  }", i));

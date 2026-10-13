@@ -106,7 +106,10 @@ describe("deadlines.ics の形（RFC 5545）", () => {
    * 75 オクテット超の行を切る・落とすことがある。 */
   it("配つてある deadlines.ics も 75 オクテット以内・CRLF だけで閉じている", () => {
     const path = join(REPO_ROOT, "public", "deadlines.ics");
-    if (!existsSync(path)) return; // CI が作る
+    expect(
+      existsSync(path),
+      "検証に必要な生成物がありません。オフラインビルドを実行してください",
+    ).toBe(true);
     const raw = readFileSync(path);
     const lines = raw.toString("utf8").split("\r\n");
     expect(lines.length, "行事が 1 つもない（この検查が空振り）").toBeGreaterThan(1000);
@@ -1138,7 +1141,10 @@ it("確認の状態と延長の札が、カレンダーの本文にも入る（�
 });
 it("配つてある ICS の「いま N 件」の申告は、本文と合う（第 1001 回）", async () => {
   const path = join(REPO_ROOT, "public", "deadlines.ics");
-  if (!existsSync(path)) return;
+  expect(
+    existsSync(path),
+    "検証に必要な生成物がありません。オフラインビルドを実行してください",
+  ).toBe(true);
   const raw = readFileSync(path, "utf8").replace(/\r\n(?: |\t)/g, "");
   const 説明 = /X-WR-CALDESC:(?:[^\n]*\n )?([\s\S]*?)(?:\r?\n[A-Z])/.exec(raw)?.[1] ?? "";
   const folds = 説明.replace(/\r\n(?: |\t)/g, "");

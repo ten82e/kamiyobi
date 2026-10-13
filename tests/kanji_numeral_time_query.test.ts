@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import Recommender from "../site/recommender.ts";
 import { builtSite } from "./built_site.ts";
+import { queryGuidanceTexts } from "./query_guidance.ts";
 
 const 基準 = Date.parse("2026-08-09T00:00:00Z");
 
@@ -31,19 +32,7 @@ function 対称差(甲: string, 乙: string): number {
 }
 
 function 案内(語: string): string {
-  const 庫 = Recommender as unknown as Record<string, unknown>;
-  return Object.keys(庫)
-    .filter((鍵) => /Note|Hint/.test(鍵))
-    .map((鍵) => {
-      try {
-        const 値 = (庫[鍵] as (q: string, n: number) => unknown)(語, 基準);
-        const 字 = Array.isArray(値) ? 値.join(" ") : String(値 ?? "");
-        return /当たっていて/.test(字) ? "" : 字;
-      } catch {
-        return "";
-      }
-    })
-    .filter((字) => 字.length > 0)
+  return queryGuidanceTexts(語, 基準, (word) => 列(word).size)
     .join(" ｜ ")
     .replace(/\s+/g, " ");
 }

@@ -49,13 +49,6 @@ let emittedApp: string | null = null;
 const appRuntime = () => (emittedApp ??= compileSiteRuntime()["app.js"]);
 const DATA_JSON = join(REPO_ROOT, "public", "data.json");
 const EMB_JSON = join(REPO_ROOT, "public", "embeddings.json");
-const hasData = (() => {
-  try {
-    return readFileSync(DATA_JSON, "utf8").length > 0;
-  } catch {
-    return false;
-  }
-})();
 
 function loadRows(): any[] {
   const data = JSON.parse(readFileSync(DATA_JSON, "utf8"));
@@ -3258,7 +3251,7 @@ describe("venue normalization robustness", () => {
 
 // ---- 実データ統合テスト（public/data.json があるときのみ） ----
 
-describe.skipIf(!hasData)("real data integration", () => {
+describe("real data integration", () => {
   const makeScript = (papers: string, topN = 10): { cats: string[]; top: any[]; n: number } => {
     const rows = loadRows();
     const lines = R.parsePaperLines(papers);
@@ -3283,8 +3276,7 @@ describe.skipIf(!hasData)("real data integration", () => {
     expect(h1).toMatch(/^[0-9a-f]{16}$/);
   });
 
-  it("embeddings.json covers all conferences", () => {
-    if (!existsSync(EMB_JSON)) return;
+  it.skipIf(!existsSync(EMB_JSON))("embeddings.json covers all conferences", () => {
     const emb = JSON.parse(readFileSync(EMB_JSON, "utf8"));
     const data = JSON.parse(readFileSync(DATA_JSON, "utf8"));
     const keys = new Set<string>(data.conferences.map((c: any) => c.key));

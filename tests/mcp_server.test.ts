@@ -1,5 +1,15 @@
 import { spawn, spawnSync } from "node:child_process";
-import { copyFileSync, existsSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
+import {
+  copyFileSync,
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  realpathSync,
+  rmSync,
+  statSync,
+  symlinkSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, describe, expect, it } from "vitest";
@@ -7,7 +17,7 @@ import { recommendationAxes } from "../site/recommendation-core.ts";
 import Recommender from "../site/recommender.ts";
 import { consolidateReviewedSubmissions } from "../site/submission-identity.ts";
 import { FILTER_RUNTIME_STUBS, site } from "./built_golden_shared.ts";
-import { REPO_ROOT } from "./helpers.ts";
+import { REPO_ROOT, tempWork } from "./helpers.ts";
 import { jsFunction, siteRuntime, vmSafeSource } from "./runtime_extract.ts";
 
 function displayCandidates(data: Parameters<typeof Recommender.candidateRows>[0]) {
@@ -15,6 +25,17 @@ function displayCandidates(data: Parameters<typeof Recommender.candidateRows>[0]
     Recommender.candidateRows(data),
     (row) => `${row.conf.key}|${row.ed.year ?? ""}|${row.kind}|${Math.trunc(row.t)}`,
   );
+}
+
+/** Run missing/corrupt catalog scenarios without changing shared production fixtures. */
+function mcpSandbox(): string {
+  const root = realpathSync(tempWork("kamiyobi-mcp-isolated-"));
+  mkdirSync(join(root, "src"));
+  mkdirSync(join(root, "public"));
+  copyFileSync(join(REPO_ROOT, "src", "mcp.ts"), join(root, "src", "mcp.ts"));
+  for (const name of ["data", "site", "node_modules", "package.json"])
+    symlinkSync(join(REPO_ROOT, name), join(root, name));
+  return root;
 }
 
 /** MCP の客户の眞似をして、行ごとの JSON-RPC をやり取りする。 */
@@ -828,7 +849,10 @@ it("収録が古ければ、画面と同じ斷りを付ける（第 854 回）",
   else expect(全體, "新しいのに斷りを付けた").not.toContain("日前に生成された");
   /* 窓を見る時は、窓の生成時刻で数へる（出所のファイルが違ふ）。 */
   const 品書 = join(REPO_ROOT, "public", "catalog.json");
-  if (!existsSync(品書)) return;
+  expect(
+    existsSync(品書),
+    "検証に必要な生成物がありません。オフラインビルドを実行してください",
+  ).toBe(true);
   const catalog = JSON.parse(readFileSync(品書, "utf8")) as { generated_at?: string };
   const 窓の斷り = String(Recommender.dataAgeNoteJa(catalog.generated_at, 今) ?? "").trim();
   const 窓 = await call("search_deadlines", { query: "セキュリティ", scope: "screen", limit: 1 });
@@ -854,7 +878,10 @@ it("MCP が返す文に、旧字体を混ぜない（第 854 回）", () => {
 });
 
 it("建造物（画面が読む JS）の文にも、旧字体を混ぜない（第 952 回）", async () => {
-  if (!existsSync(join(REPO_ROOT, "public", "app.js"))) return; // 建造物は CI が作る
+  expect(
+    existsSync(join(REPO_ROOT, "public", "app.js")),
+    "検証に必要な生成物がありません。オフラインビルドを実行してください",
+  ).toBe(true);
   for (const 相 of ["public/app.js", "public/recommender.js"]) {
     const 本文 = readFileSync(join(REPO_ROOT, 相), "utf8");
     const 文々 = 文を集める(本文);
@@ -1182,7 +1209,10 @@ it("窓の外にだけある締切を「ない」と言わない（第 869 回�
    * 成る（このファイルの約束 – 配付物を持たない手元で落とさない）。窓が無い時は最初から収録の
    * 全体を見るので、この案内は出ない（それで正しい）。 */
   const 品書 = join(REPO_ROOT, "public", "catalog.json");
-  if (!existsSync(品書)) return;
+  expect(
+    existsSync(品書),
+    "検証に必要な生成物がありません。オフラインビルドを実行してください",
+  ).toBe(true);
   const snap = JSON.parse(readFileSync(join(REPO_ROOT, "data", "snapshot.json"), "utf8")) as never;
   const 全行 = displayCandidates(snap);
   const 窓行 = displayCandidates(JSON.parse(readFileSync(品書, "utf8")) as never);
@@ -1486,7 +1516,10 @@ it("list_upcoming と search_deadlines は、同じ条件なら同じ件数を�
 
 it("名簿の案内が、画面と同じ規則で名を探す（第 875 回）", async () => {
   const 品書 = join(REPO_ROOT, "public", "catalog.json");
-  if (!existsSync(品書)) return; // 画面側の名簿は建てた時だけある（このファイルの約束）。
+  expect(
+    existsSync(品書),
+    "検証に必要な生成物がありません。オフラインビルドを実行してください",
+  ).toBe(true);
   const 品書の會議 = (
     JSON.parse(readFileSync(品書, "utf8")) as { conferences?: unknown[] }
   ).conferences?.filter((c) => c && typeof c === "object" && !Array.isArray(c));
@@ -2069,50 +2102,42 @@ it("窓がない手元では、何を読んでいるかを言う（第 892 回�
    * 読み込みは起動時に一度だけなので、この検查は**別の手順を起こして**試す（長生きのサーバは
    * 既に品書を読んで仕舞ふ – 実測 2026-10-23 に踏んだ）。 */
   const 品書 = join(REPO_ROOT, "public", "catalog.json");
-  if (!existsSync(品書)) return; // 品書が無い時は threshold の確認なので空振り。
-  const 控え = `${品書}.bak-test`;
-  copyFileSync(品書, 控え);
-  try {
-    rmSync(品書);
-    const 聞く = (call: Record<string, unknown>): string => {
-      const 返事 = spawnSync(process.execPath, [join(REPO_ROOT, "src", "mcp.ts")], {
-        input: `${JSON.stringify({
-          jsonrpc: "2.0",
-          id: 1,
-          method: "initialize",
-          params: { protocolVersion: "2025-06-18", clientInfo: { name: "t", version: "0" } },
-        })}\n${JSON.stringify({ jsonrpc: "2.0", id: 2, method: "tools/call", params: call })}\n`,
-        encoding: "utf8",
-        timeout: 180_000,
-      });
-      const 行 = (返事.stdout || "")
-        .trim()
-        .split("\n")
-        .map((l) => {
-          try {
-            return JSON.parse(l) as Record<string, unknown>;
-          } catch {
-            return null;
-          }
-        })
-        .find((m) => m && m.id === 2);
-      return String(
-        (行?.result as { content?: Array<{ text?: string }> } | undefined)?.content?.[0]?.text ??
-          "",
-      );
-    };
-    const 斷り = "public/catalog.json）がこの手元にない";
-    const 檢索 = 聞く({ name: "search_deadlines", arguments: { query: "セキュリティ", limit: 1 } });
-    expect(檢索, "窓がない事を言つていない").toContain(斷り);
-    expect(檢索, "どうすればよいか言つていない").toContain("npm run build");
-    const 一覽 = 聞く({ name: "list_upcoming", arguments: { days: 30, scope: "screen" } });
-    expect(一覽, "一覽が窓がない事を言つていない").toContain(斷り);
-    const 語 = 聞く({ name: "explain_word", arguments: { word: "ネットワーク GPU" } });
-    expect(語, "語の案内が窓がない事を言つていない").toContain(斷り);
-  } finally {
-    copyFileSync(控え, 品書);
-    rmSync(控え);
-  }
+  expect(
+    existsSync(品書),
+    "検証に必要な生成物がありません。オフラインビルドを実行してください",
+  ).toBe(true);
+  const isolatedRoot = mcpSandbox();
+  const 聞く = (call: Record<string, unknown>): string => {
+    const 返事 = spawnSync(process.execPath, [join(isolatedRoot, "src", "mcp.ts")], {
+      input: `${JSON.stringify({
+        jsonrpc: "2.0",
+        id: 1,
+        method: "initialize",
+        params: { protocolVersion: "2025-06-18", clientInfo: { name: "t", version: "0" } },
+      })}\n${JSON.stringify({ jsonrpc: "2.0", id: 2, method: "tools/call", params: call })}\n`,
+      encoding: "utf8",
+      timeout: 180_000,
+    });
+    expect(返事.status, 返事.stderr).toBe(0);
+    const 行 = (返事.stdout || "")
+      .trim()
+      .split("\n")
+      .map((l) => {
+        return JSON.parse(l) as Record<string, unknown>;
+      })
+      .find((m) => m && m.id === 2);
+    return String(
+      (行?.result as { content?: Array<{ text?: string }> } | undefined)?.content?.[0]?.text ?? "",
+    );
+  };
+  const 斷り = "public/catalog.json）がこの手元にない";
+  const 檢索 = 聞く({ name: "search_deadlines", arguments: { query: "セキュリティ", limit: 1 } });
+  expect(檢索, "窓がない事を言つていない").toContain(斷り);
+  expect(檢索, "どうすればよいか言つていない").toContain("npm run build");
+  const 一覽 = 聞く({ name: "list_upcoming", arguments: { days: 30, scope: "screen" } });
+  expect(一覽, "一覽が窓がない事を言つていない").toContain(斷り);
+  const 語 = 聞く({ name: "explain_word", arguments: { word: "ネットワーク GPU" } });
+  expect(語, "語の案内が窓がない事を言つていない").toContain(斷り);
   /* 品書がある時は斷りを出さない（騷音を増やさない）。 */
   const 在る = await call("search_deadlines", { query: "セキュリティ", limit: 1 });
   expect(在る, "品書がある時に斷りを付けた").not.toContain("この手元にない");
@@ -2148,7 +2173,10 @@ it("推薦の pool は画面と同じ組み立て（第 894 回）", async () =>
    * 擧がり、AI は「來年でなく今出せる」と誤つて勧めてしまふ。画面は「これからの締切 +
    * 常時受付のジャーナル + これからの締切が無い会議の過去代表 1 行」で選ぶので、それに揃へる。 */
   const 品書 = join(REPO_ROOT, "public", "catalog.json");
-  if (!existsSync(品書)) return; // 品書は建てた時だけある（このファイルの約束）。
+  expect(
+    existsSync(品書),
+    "検証に必要な生成物がありません。オフラインビルドを実行してください",
+  ).toBe(true);
   const 索引 = JSON.parse(
     readFileSync(join(REPO_ROOT, "public", "recommendation-index.json"), "utf8"),
   ) as { conferences?: unknown[]; reranker?: unknown };
@@ -2185,7 +2213,10 @@ it("推薦の pool は画面と同じ組み立て（第 894 回）", async () =>
 
 it("品書が再学習の重みを持つ – 画面の推薦が MCP と同じ順に成る（第 895 回）", async () => {
   const 品書 = join(REPO_ROOT, "public", "catalog.json");
-  if (!existsSync(品書)) return; // 品書は建てた時だけある（このファイルの約束）。
+  expect(
+    existsSync(品書),
+    "検証に必要な生成物がありません。オフラインビルドを実行してください",
+  ).toBe(true);
   const catalog = JSON.parse(readFileSync(品書, "utf8")) as {
     reranker?: unknown;
     conferences?: unknown[];
@@ -2249,7 +2280,10 @@ it("推薦の行に、画面と同じ選定理由が付く（第 897 回）", as
    * `reasonSignals` – 同じ 5 つ + 過去掲載先。重みは書かない – 画面が「スコアと合はない」
    * 実測で削つた）。黙つて落とすと、AI は根拠を言へず「おすすめです」に成る。 */
   const 品書 = join(REPO_ROOT, "public", "catalog.json");
-  if (!existsSync(品書)) return;
+  expect(
+    existsSync(品書),
+    "検証に必要な生成物がありません。オフラインビルドを実行してください",
+  ).toBe(true);
   const catalog = JSON.parse(readFileSync(品書, "utf8")) as {
     reranker?: unknown;
     conferences?: unknown[];
@@ -2377,7 +2411,10 @@ it("品書の推薦の軸は全版で数えている – 新規の会議を新�
    * と出ていた（実物は「成長中・確認した年 7 年」）。会議 696 件の内 627 件が「新規」になつて
    * いた – 選擇の材料を壊していた。索引には全版で数へた軸が在つたが、画面は索引を読まない。 */
   const 品書 = join(REPO_ROOT, "public", "catalog.json");
-  if (!existsSync(品書)) return;
+  expect(
+    existsSync(品書),
+    "検証に必要な生成物がありません。オフラインビルドを実行してください",
+  ).toBe(true);
   const catalog = JSON.parse(readFileSync(品書, "utf8")) as {
     conferences?: Array<{
       key?: string;
@@ -2416,7 +2453,10 @@ it("品書の推薦の軸は全版で数えている – 新規の会議を新�
 
 it("推薦の軸が画面の行まで届く（第 901 回）", async () => {
   const 品書 = join(REPO_ROOT, "public", "catalog.json");
-  if (!existsSync(品書)) return;
+  expect(
+    existsSync(品書),
+    "検証に必要な生成物がありません。オフラインビルドを実行してください",
+  ).toBe(true);
   const catalog = JSON.parse(readFileSync(品書, "utf8"));
   const rows = displayCandidates(catalog as never) as unknown as Array<{
     conf?: {
@@ -2490,7 +2530,10 @@ it("「収録の全体」を押す前に、読み込む容量を数字で示す�
    * `data.json` は 9,490,437 バイト（約 9.1 MB）。内部の注釋は今も 6 MB 強と書いていた。
    * 押す前に**読める量**を知らせ無いと、読む人は自分の通信量で選べるのにそれが分から無い。 */
   const 品書 = join(REPO_ROOT, "public", "catalog.json");
-  if (!existsSync(品書)) return;
+  expect(
+    existsSync(品書),
+    "検証に必要な生成物がありません。オフラインビルドを実行してください",
+  ).toBe(true);
   const catalog = JSON.parse(readFileSync(品書, "utf8")) as {
     history_ref?: string;
     history_bytes?: number;
@@ -2657,7 +2700,10 @@ it("collection_stats が分野別の会議数を出す – health.json と同じ
   /* 数へるものは収録の会議から – 公開している `health.json` の数と**一つも違わない**。 */
   const 品書 = join(REPO_ROOT, "public", "catalog.json");
   const health = join(REPO_ROOT, "public", "health.json");
-  if (!existsSync(品書) || !existsSync(health)) return;
+  expect(
+    existsSync(品書) && existsSync(health),
+    "検証に必要な生成物がありません。オフラインビルドを実行してください",
+  ).toBe(true);
   const healthJson = JSON.parse(readFileSync(health, "utf8")) as {
     category_counts?: Record<string, number>;
   };
@@ -2689,7 +2735,10 @@ it("collection_stats が分野別の会議数を出す – health.json と同じ
 
 it("collection_stats が上流のソースの状態を出す – 品書と同じ（第 912 回）", async () => {
   const 品書 = join(REPO_ROOT, "public", "catalog.json");
-  if (!existsSync(品書)) return; // 品書は建てた時だけある。
+  expect(
+    existsSync(品書),
+    "検証に必要な生成物がありません。オフラインビルドを実行してください",
+  ).toBe(true);
   const catalog = JSON.parse(readFileSync(品書, "utf8")) as {
     source_updates?: Array<{ name?: string; status?: string }>;
   };
@@ -2719,34 +2768,29 @@ it("collection_stats が上流のソースの状態を出す – 品書と同じ
     ["snapshot-fallback", "確定済みの収録データ（今回は上流にあたらず）"],
     ["failed", "上流から取得できませんでした"],
   ] as const;
-  const 控え = `${品書}.bak-status`;
-  copyFileSync(品書, 控え);
-  try {
-    const 品 = JSON.parse(readFileSync(品書, "utf8")) as { source_updates?: unknown[] };
-    品.source_updates = 狀態の語.map(([status]) => ({
-      name: `t${status}`,
-      status,
-      fetched_at: null,
-    }));
-    writeFileSync(品書, `${JSON.stringify(品, null, 2)}\n`);
-    /* 読み込みは起動時に一度だけ – 別の手順を起こして試す。 */
-    const 答 = (() => {
-      const 手順 = spawnSync(process.execPath, [join(REPO_ROOT, "src", "mcp.ts"), "stats"], {
-        encoding: "utf8",
-        timeout: 180_000,
-      });
-      return `${手順.stdout ?? ""}${手順.stderr ?? ""}`;
-    })();
-    for (const [status, 日本語] of 狀態の語) {
-      expect(答, `狀態 ${status} を日本語で言つて居ん`).toContain(`t${status}: ${日本語}`);
-    }
-    expect(答, "内部の語をそのまま出した").not.toMatch(
-      /(failed|success|cache-fallback|snapshot-fallback)\*\//u,
-    );
-  } finally {
-    copyFileSync(控え, 品書);
-    rmSync(控え);
+  const isolatedRoot = mcpSandbox();
+  const 品 = JSON.parse(readFileSync(品書, "utf8")) as { source_updates?: unknown[] };
+  品.source_updates = 狀態の語.map(([status]) => ({
+    name: `t${status}`,
+    status,
+    fetched_at: null,
+  }));
+  writeFileSync(join(isolatedRoot, "public", "catalog.json"), `${JSON.stringify(品, null, 2)}\n`);
+  /* 読み込みは起動時に一度だけ – 別の手順を起こして試す。 */
+  const 答 = (() => {
+    const 手順 = spawnSync(process.execPath, [join(isolatedRoot, "src", "mcp.ts"), "stats"], {
+      encoding: "utf8",
+      timeout: 180_000,
+    });
+    expect(手順.status, 手順.stderr).toBe(0);
+    return `${手順.stdout ?? ""}${手順.stderr ?? ""}`;
+  })();
+  for (const [status, 日本語] of 狀態の語) {
+    expect(答, `狀態 ${status} を日本語で言つて居ん`).toContain(`t${status}: ${日本語}`);
   }
+  expect(答, "内部の語をそのまま出した").not.toMatch(
+    /(failed|success|cache-fallback|snapshot-fallback)\*\//u,
+  );
 });
 
 it("道具の說明が、実際に出ているものを名指す（第 914 回）", async () => {
@@ -2824,7 +2868,10 @@ it("画面と MCP が、同じ問に同じ行を出す（第 917 回）", async 
    * 居なかつた – AI が「載せる」と-entry 人や 画面と別の会報を答えても、中の件数は同じで
    * 氣づかれない。画面の絞り込みを**正本から**拔いて、同じ問の束で両方の行を突き合はせる。 */
   const 品書 = join(REPO_ROOT, "public", "catalog.json");
-  if (!existsSync(品書)) return;
+  expect(
+    existsSync(品書),
+    "検証に必要な生成物がありません。オフラインビルドを実行してください",
+  ).toBe(true);
   const html = siteRuntime();
   const rowsFile = join(tmpdir(), `kamiyobi-screen-rows-${process.pid}.json`);
   writeFileSync(
@@ -3179,7 +3226,10 @@ describe("list_upcoming の行が画面と同じ（第 944 回）", () => {
    * `kind: ""`（篩）・同じ窓にして突き合はせる。 */
   const 品書 = join(REPO_ROOT, "public", "catalog.json");
   it("同じ窓で、同じ行を返す", async () => {
-    if (!existsSync(品書)) return;
+    expect(
+      existsSync(品書),
+      "検証に必要な生成物がありません。オフラインビルドを実行してください",
+    ).toBe(true);
     const html = siteRuntime();
     const rowsFile = join(tmpdir(), `kamiyobi-screen-upcoming-${process.pid}.json`);
     writeFileSync(
@@ -3917,7 +3967,10 @@ it("list_upcoming も種別の空配列を黙らない（第 1000 回）", async
 });
 it("直近の一覽の「対象期間」の申告は、本文と合う（第 1002 回）", async () => {
   const path = join(REPO_ROOT, "public", "upcoming.md");
-  if (!existsSync(path)) return;
+  expect(
+    existsSync(path),
+    "検証に必要な生成物がありません。オフラインビルドを実行してください",
+  ).toBe(true);
   const md = readFileSync(path, "utf8");
   const m = /対象期間: (\d{4}-\d{2}-\d{2}) 〜 (\d{4}-\d{2}-\d{2})/.exec(md);
   expect(m, "期間の申告が読めない").not.toBeNull();

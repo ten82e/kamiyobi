@@ -29,7 +29,10 @@ describe("出來上がりに、日本語でない語を混ぜない（第 740 �
     let 見た = 0;
     for (const name of 見る物) {
       const path = join(site, name);
-      if (!existsSync(path)) continue;
+      expect(
+        existsSync(path),
+        "検証に必要な生成物がありません。オフラインビルドを実行してください",
+      ).toBe(true);
       見た += 1;
       /* 引用（`` `…` `` で括つた実物の記録）は外してから見る – 説明の為に引用する事がある。 */
       let 本文 = readFileSync(path, "utf8").replace(/`[^`\n]*`/g, "");
@@ -60,7 +63,10 @@ it("生成した散文に、旧字体を混ぜない（第 848 回）", () => {
   let 見た = 0;
   for (const 名 of ["llms.txt"]) {
     const path = join(site, 名);
-    if (!existsSync(path)) continue;
+    expect(
+      existsSync(path),
+      "検証に必要な生成物がありません。オフラインビルドを実行してください",
+    ).toBe(true);
     見た += 1;
     const 本文 = readFileSync(path, "utf8");
     for (const 字 of 舊字體) {

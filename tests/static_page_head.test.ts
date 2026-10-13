@@ -204,7 +204,10 @@ describe("静的な一覧の入口情報（第 286 回）", () => {
   it("upcoming.html は upcoming.md と同じ行を持っている（配つてある物）", () => {
     const md = join(REPO_ROOT, "public", "upcoming.md");
     const html = join(REPO_ROOT, "public", "upcoming.html");
-    if (!existsSync(md) || !existsSync(html)) return; // CI が作る
+    expect(
+      existsSync(md) && existsSync(html),
+      "検証に必要な生成物がありません。オフラインビルドを実行してください",
+    ).toBe(true);
     const 行 = readFileSync(md, "utf8")
       .split("\n")
       .filter((l) => l.startsWith("|"))

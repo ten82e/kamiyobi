@@ -78,7 +78,10 @@ describe("配つてある物（public/）にも破損がない（第 976 回）"
   it("置換文字が 1 つもない", () => {
     for (const name of 配布物) {
       const path = join(ROOT, "public", name);
-      if (!existsSync(path)) continue; // CI が作る
+      expect(
+        existsSync(path),
+        "検証に必要な生成物がありません。オフラインビルドを実行してください",
+      ).toBe(true);
       const text = readFileSync(path, "utf8");
       expect(text.includes("\ufffd"), `${name} に置換文字が在る`).toBe(false);
     }
@@ -90,7 +93,10 @@ describe("配つてある物（public/）にも破損がない（第 976 回）"
     expect(簡体字.length, "簡体字の表が空（この検查の前提が崩れた）").toBeGreaterThan(0);
     for (const name of 配布物) {
       const path = join(ROOT, "public", name);
-      if (!existsSync(path)) continue;
+      expect(
+        existsSync(path),
+        "検証に必要な生成物がありません。オフラインビルドを実行してください",
+      ).toBe(true);
       const text = readFileSync(path, "utf8");
       const 混ざり = [...new Set([...text].filter((c) => 簡体字.includes(c)))];
       expect(混ざり.join(""), `${name} に簡体字が混ざつて居る: ${混ざり.join("")}`).toBe("");

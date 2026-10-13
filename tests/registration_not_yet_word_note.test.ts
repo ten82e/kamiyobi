@@ -30,8 +30,9 @@ describe("參加登録がまだ、を登録の締切へ渡す（第 722 回）",
     /* `參加登録` は 72 行を持つ語。打ち方の正規化がそちらへ及んで居らん事を見る。 */
     const 素 = 行列表("参加登録");
     expect(素.length, "前提が崩れた（参加登録に行が出る）").toBeGreaterThan(0);
-    expect(行列表("参加登録しています"), "関係ない形まで正規化した").toEqual(
-      行列表("参加登録しています"),
+    expect(行列表("参加登録しています"), "関係ない形まで登録締切に正規化した").toEqual([]);
+    expect(Recommender.queryTokenGroups("参加登録しています", 基準)).not.toEqual(
+      Recommender.queryTokenGroups("登録締切", 基準),
     );
   });
 });

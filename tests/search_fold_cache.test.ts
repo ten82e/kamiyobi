@@ -80,11 +80,8 @@ describe("検索の畳み込みを憶える（第 258 回）", () => {
     expect(counter.sets - firstSets, "2 回目で同じ行を畳み直している").toBe(0);
     expect(counter.size, "2 回目で憶えた量が増えた").toBe(400);
 
-    /* 憶えた結果は、その場で畳んだ結果と同じ（速さのために意味を変えていない）。 */
-    const fresh = Rec.kanaFoldMemo!();
-    expect(fold!("ｾｷｭﾘﾃｨ 特集"), "憶えた値がその場の畳み込みと違う").toBe(
-      fresh("セキュリティ 特集"),
-    );
+    /* 正規化結果を固定値と比較し、誤った値をキャッシュしていても検出する。 */
+    expect(fold!("ｾｷｭﾘﾃｨ 特集"), "キャッシュに保存した正規化結果が違う").toBe("せきゆりてい 特集");
 
     /* 画面と同じ経路（`searchMatcher`）でも、同じ表を 2 回掛けて畳み直しは起きない。 */
     const counter2 = new CountingMap();
@@ -100,10 +97,12 @@ describe("検索の畳み込みを憶える（第 258 回）", () => {
     const fold = Rec.kanaFoldMemo!();
     const counter = new CountingMap();
     fold.kanaFoldCache = counter;
-    for (let i = 0; i < 12_001; i++) fold(`溢れ ${i} の性能評価`);
+    for (let i = 0; i < 12_001; i++) fold(`ｾｷｭﾘﾃｨ ${i} 特集`);
     expect(counter.clears, "上限で捨てていない（表が育ち続ける）").toBeGreaterThanOrEqual(1);
     /* 捨てた後も畳み込みの結果は同じ。 */
-    expect(fold("溢れ 0 の性能評価")).toBe(fold("溢れ 0 の性能評価"));
+    expect(counter.has("ｾｷｭﾘﾃｨ 0 特集"), "古い結果が破棄されていない").toBe(false);
+    expect(fold("ｾｷｭﾘﾃｨ 0 特集")).toBe("せきゆりてい 0 特集");
+    expect(counter.has("ｾｷｭﾘﾃｨ 0 特集"), "結果を再計算して保存していない").toBe(true);
     expect(counter.size, "捨てた後に憶え直していない").toBeLessThanOrEqual(12_000);
   });
 

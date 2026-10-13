@@ -47,6 +47,7 @@ import {
   profileTexts,
   venuePapersHash,
 } from "../src/embeddings.ts";
+import { parseTree as parseCcfddlTree } from "../src/sources/ccfddl.ts";
 import {
   conf,
   data,
@@ -63,6 +64,7 @@ import {
   verificationLabelsSource,
 } from "./built_golden_shared.ts";
 import {
+  FIXTURES,
   makeConference,
   makeDeadline,
   makeEdition,
@@ -1114,14 +1116,21 @@ it("multiple rounds are preserved", () => {
   expect(rounds.has("paper:2")).toBe(true);
 });
 
-it("unparseable deadline is skipped not fatal", () => {
-  const keys = new Set(data.conferences.map((c: any) => c.key));
-  if (!keys.has("acl")) return;
-  const editions: Record<string, any> = {};
-  for (const e of conf("acl").editions) editions[e.id] = e;
-  if ("acl27" in editions) {
-    expect(editions.acl27.deadlines).toEqual([]);
-  }
+it("unpublished deadlines keep the edition without inventing a deadline", async () => {
+  const acl = parseCcfddlTree(join(FIXTURES, "ccfddl/conference")).find((c) => c.key === "acl");
+  expect(acl, "ACL の入力が検査から抜けています").toBeDefined();
+  const upcoming = acl?.editions.find((edition) => edition.edition_id === "acl27");
+  expect(upcoming, "未発表締切の版が検査から抜けています").toBeDefined();
+  expect(upcoming?.deadlines).toEqual([]);
+  expect(acl?.editions.find((edition) => edition.year === 2026)?.deadlines.length).toBeGreaterThan(
+    0,
+  );
+  const outdir = join(tempWork("cfp-unpublished-"), "public");
+  await buildAll([acl!], {}, outdir, NOW, { noEmbeddings: true });
+  const output = JSON.parse(readFileSync(join(outdir, "data.json"), "utf8"));
+  const edition = output.conferences[0].editions.find((e: { id: string }) => e.id === "acl27");
+  expect(edition).toBeDefined();
+  expect(edition.deadlines).toEqual([]);
 });
 
 it("no deadline is in the far future by accident", () => {

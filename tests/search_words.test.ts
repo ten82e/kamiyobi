@@ -763,7 +763,12 @@ it("季節の語（秋・春・来年の秋）で、計画の立て方そのま�
   expect(hits("秋").length).toBeGreaterThanOrEqual(hits("9月").length);
 
   // 季節の語でないものを割らない（地名を守る検査 – 第 251 回と同じ危険）。
-  expect(hits("ながさき").length, "ひらがなの地名が割れて落ちた").toBe(hits("ながさき").length);
+  const places = ["長崎 nagasaki 2026年9月", "秋田 akita 2026年9月", "京都 kyoto 2026年9月"];
+  for (const query of ["ながさき", "長崎", "nagasaki"]) {
+    expect(places.filter(Recommender.searchMatcher(query, NOW)), "地名が季節に分解された").toEqual([
+      places[0],
+    ]);
+  }
   expect(Recommender.queryTokenGroups("ながさき", NOW)[0], "地名が割れた").toContain("長崎");
   expect(Recommender.queryTokenGroups("秋田", NOW), "地名の語を季節に寄せるな").toEqual([["秋田"]]);
 

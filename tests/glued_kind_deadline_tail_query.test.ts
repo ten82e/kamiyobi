@@ -287,11 +287,7 @@ describe("語の末尾に繋がれた締切の語（第 517 回）", () => {
     const 群 = 繋がれた打ち方の群();
     const 原 = ["manual.yaml", "extra.yaml", "overrides.yaml", "curated.generated.yaml"]
       .map((名) => {
-        try {
-          return readFileSync(join("data", 名), "utf8");
-        } catch {
-          return "";
-        }
+        return readFileSync(join("data", 名), "utf8");
       })
 
       .join("\n")
