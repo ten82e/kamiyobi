@@ -3942,7 +3942,12 @@ export function toUpcomingMd(
          * 其れ迄は此れと `src/mcp.ts` の兩方がべた書きで持つて居た）。 */
         when = Recommender.estimateWindowJa(ed) || deadlineWhenText(dl.at_utc, dl.tz_raw);
       }
-      const kindText = escapeMdCell(rec.kind_label);
+      // 投稿トラックを補い、種別ラベルに含まれる注記は重ねない。
+      const kindText = escapeMdCell(
+        rec.kind_note && !rec.kind_label.endsWith(`: ${rec.kind_note}`)
+          ? `${rec.kind_label}（${rec.kind_note}）`
+          : rec.kind_label,
+      );
       const roundText = `R${dl.round}`;
       /* 会期列（第 305 回）。実測（2026-08-09 生成ビルド）で、この表の 1,126 行のうち 795 行は
        * 締切・採否通知などで、日付列に会議が開かれている日が入らない – カレンダー（第 304 回）と

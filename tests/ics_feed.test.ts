@@ -352,7 +352,7 @@ describe("ビルド成果物に出るカレンダーのファイル", () => {
       if (!l.trim().startsWith("|")) continue;
       const v = (cellsOf(l)[i] ?? "").trim();
       // 会期（開催）の行はカレンダーに入れないので照合しない。
-      if (v !== "" && v !== "開催") mdKinds.add(v);
+      if (v !== "" && v !== "開催") mdKinds.add(v.replace(/（([^（）]*)）$/u, ": $1"));
     }
     expect(mdKinds.size, "upcoming.md から種別が読めない").toBeGreaterThan(0);
     const icsKinds = new Set<string>();

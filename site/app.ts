@@ -6212,6 +6212,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     };
     element.addEventListener("compositionstart", () => {
       composing = true;
+      clearTimeout(timer);
       if (onType) onType();
     });
     element.addEventListener("compositionend", () => {

@@ -285,7 +285,12 @@ describe("生の CSV の日本語の種別欄（第 270 回）", () => {
     const md = readFileSync(join(site, "upcoming.md"), "utf8");
     const mdWords = new Set(
       markdownColumn(md, "種別")
-        .map((v) => v.split(":")[0].trim())
+        .map((v) =>
+          v
+            .replace(/（[^（）]*）$/u, "")
+            .split(":")[0]
+            .trim(),
+        )
         .filter((w) => w && w !== "種別"),
     );
     expect(mdWords.size, "マークダウンの種別が読めない").toBeGreaterThanOrEqual(2);

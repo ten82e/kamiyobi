@@ -5843,6 +5843,17 @@ it("日本語 IME の変換中は再計算せず、確定後に一度だけ適�
   // 変換中もキャッシュは無効化しておく（その隙に分野チップ等を押すことがある）。
   expect(ime.typed).toBeGreaterThanOrEqual(4);
 
+  // 直前の入力で予約した再計算も、変換開始時に止める。
+  const pending = fake();
+  wire(pending, 20, () => (pending.applied += 1));
+  pending.fire("input");
+  pending.fire("compositionstart");
+  await wait();
+  expect(pending.applied, "予約済みの再計算が変換中に走っている").toBe(0);
+  pending.fire("compositionend");
+  await wait();
+  expect(pending.applied).toBe(1);
+
   // compositionstart を飛ばして compositionend だけ来る入力経路でも取りこぼさない。
   const only = fake();
   wire(only, 20, () => (only.applied += 1));
