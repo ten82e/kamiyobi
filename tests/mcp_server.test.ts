@@ -1602,7 +1602,7 @@ it("key で問はれた時は、その会議の事を言う（第 876 回）", a
 it("使えない数の引数は黙つて既定に戻さない（第 878 回）", async () => {
   const 檢索 = await call("search_deadlines", { query: "セキュリティ", within_days: 0 });
   expect(檢索, "使ひ切れない値を黙つた").toContain("within_days は 1 以上の数で指定してください");
-  expect(檢索, "その値を使つた事にしている").toContain("その値は使わないので、既定の儘引きます");
+  expect(檢索, "その値を使つた事にしている").toContain("その値は使わず、未指定として扱います");
   expect(檢索, "窓を書いた").not.toContain("／締切まで");
   /* 負の値・数でない値も（`Number("abc")` は NaN になる）。 */
   const 負 = await call("search_deadlines", { query: "セキュリティ", within_days: -5 });
@@ -1937,7 +1937,7 @@ it("list_upcoming の種別はどれかで選び、知らない種別を名指�
   const 複数 = await call("list_upcoming", { kinds: ["paper", "zzz"] });
   expect(複数, "どれかで選べていない").toMatch(/締切: [1-9]\d* 件/);
   expect(複数, "知らない種別を名指していない").toContain(
-    "知らない種別（その侭では 0 件に成ります）: zzz",
+    "知らない種別（指定したままでは 0 件になります）: zzz",
   );
   /* 大文字でも受け付ける（AI は `PAPER` を送る）。 */
   const 大文字 = await call("list_upcoming", { kind: "PAPER" });
@@ -2009,7 +2009,7 @@ it("explain_word も search_deadlines と同じ案内を出す（第 888 回）"
    * 次の行に名簿の案内を出していた（「無し」と言之ながらある物を出すのは噓）。 */
   /* ① 素の照合で行があるのに、画面の既定で 0 件に成る語 – その**理由**を言う。 */
   const 種別 = await call("explain_word", { word: "カメラレディ" });
-  expect(種別, "0 件に成る理由を言つていない").toContain("画面の既定の絞り込みで 0 件に成る理由");
+  expect(種別, "0 件に成る理由を言つていない").toContain("画面の既定の絞り込みで 0 件になる理由");
   expect(種別, "種別の選び方を言つていない").toContain('kinds: ["camera_ready"]');
   /* 検索が言う件数と同じ（その指定で実際に引いた数 – 第 762 回）。 */
   const 檢索 = await call("search_deadlines", { query: "カメラレディ" });
@@ -2954,13 +2954,15 @@ it("recommend_venues の見出しは、題名の最初の一行だけを出す�
     "時間スケジューリング手法を用いた協調型edge computing",
   );
   expect(頭, "2 行目以降を繋いでいる（目的が覆ふ）").not.toContain("分散したIoT機器群");
-  expect(頭, "その他の行も見ていることを言つていない").toContain("ほか 2 行の語も見て居ます");
+  expect(頭, "その他の行も見ていることを言つていない").toContain("ほか 2 行の入力も使っています");
   /* 1 行だけなら「ほか」の文は出さない（騒音を増やさない）。 */
   const 一行 = await call("recommend_venues", {
     paper: "Time-Sensitive Networking | tsn",
     limit: 2,
   });
-  expect(一行.split("\n")[0] ?? "", "1 行で「ほか」を出した").not.toContain("行の語も見て居ます");
+  expect(一行.split("\n")[0] ?? "", "1 行で「ほか」を出した").not.toContain(
+    "行の入力も使っています",
+  );
   /* 長い題名は 40 字で切る（1 行でも見出しが壁にならない）。 */
   const 長い = await call("recommend_venues", { paper: `${"A".repeat(80)} | tsn`, limit: 1 });
   const 長い頭 = 長い.split("\n")[0] ?? "";
@@ -3396,7 +3398,7 @@ it("名簿の注は、窓に行がある会議でも推定の日を言う（第 
   const 答 = await call("search_deadlines", { query: "TrustCom", limit: 1 });
   const 注 = 答.split("\\n").find((l) => l.includes("key: trustcom")) ?? "";
   expect(注, "名簿の注が出ていない").not.toBe("");
-  expect(注, "窓の分の話が出ていない").toContain("締切の行は在りますが");
+  expect(注, "窓の分の話が出ていない").toContain("締切の行はありますが");
   expect(注, "推定の日を名指していない").toContain("推定なら");
   expect(注, "確約ではない事を言つていない").toContain("確約ではない");
   expect(注, "include_estimated を教へていない").toContain("include_estimated");
@@ -3444,7 +3446,7 @@ describe("名簿の注は、全部の会議で事実と合う（第 968 回）",
       const 注 = 答.split("\n").find((l) => l.startsWith("- ") && l.includes(`key: ${c.key}`));
       if (!注) continue;
       /* 1. 「行は在ります」は行が無い会議に言はない */
-      if (注.includes("締切の行は在りますが")) {
+      if (注.includes("締切の行はありますが")) {
         expect(c.行, `「${c.key}」に行が無いのに「行は在ります」と言つた`).toBeGreaterThan(0);
       }
       /* 2. 「1 本もありません」は行がある会議に言はない */
@@ -5051,14 +5053,14 @@ it("型の違う数の引数は黙つて読み替へない（第 1063 回）", a
   /* 文字列の「5」は読めるが、**変へた事を言う**。 */
   const 文字 = await call("search_deadlines", { query: "セキュリティ", limit: "5" });
   expect(文字, "型を黙つて読み替へた").toContain(
-    '／limit は数で指定してください（いま "5" – その字を数として読みました）',
+    '／limit は数で指定してください（いま "5" – 数値に変換しました）',
   );
   /* その値はそのまま使う（5 件の表示に成る – 既定に戾さない）。 */
   expect(文字.split("\n").filter((line) => /^2\d{3}-/.test(line))).toHaveLength(5);
 
   /* **整数**は黙る（そのまま使う）。 */
   const 整數 = await call("search_deadlines", { query: "セキュリティ", limit: 5 });
-  expect(整數, "整数に斷りを付けた").not.toContain("その字を数として読みました");
+  expect(整數, "整数に斷りを付けた").not.toContain("数値に変換しました");
 
   /* 読めない形（`"abc"`）は第 878 囮の文（変はない）。 */
   const abc = await call("search_deadlines", { query: "セキュリティ", limit: "abc" });
@@ -5068,11 +5070,11 @@ it("型の違う数の引数は黙つて読み替へない（第 1063 回）", a
   /* **他の数の引数**も同じ（`days`・`within_days`）。 */
   const days = await call("list_upcoming", { days: "30" });
   expect(days, "days の型を黙つて読み替へた").toContain(
-    '／days は数で指定してください（いま "30" – その字を数として読みました）',
+    '／days は数で指定してください（いま "30" – 数値に変換しました）',
   );
   const 窓 = await call("search_deadlines", { query: "セキュリティ", within_days: "30" });
   expect(窓, "within_days の型を黙つて読み替へた").toContain(
-    '／within_days は数で指定してください（いま "30" – その字を数として読みました）',
+    '／within_days は数で指定してください（いま "30" – 数値に変換しました）',
   );
 });
 

@@ -530,7 +530,7 @@ function 數の引數(
   if (!Number.isFinite(n) || n < 最小)
     return {
       使ふ: null,
-      斷り: `／${名} は ${最小} 以上の数で指定してください（いま ${JSON.stringify(値)}）。その値は使わないので、既定の儘引きます`,
+      斷り: `／${名} は ${最小} 以上の数で指定してください（いま ${JSON.stringify(値)}）。その値は使わず、未指定として扱います`,
       省かれた: false,
     };
 
@@ -538,7 +538,7 @@ function 數の引數(
   return {
     使ふ: n,
     斷り: 讀み替へ
-      ? `／${名} は数で指定してください（いま ${JSON.stringify(値)} – その字を数として読みました）`
+      ? `／${名} は数で指定してください（いま ${JSON.stringify(値)} – 数値に変換しました）`
       : "",
     省かれた: false,
   };
@@ -554,7 +554,7 @@ function 真偽の引數(名: string, 値: unknown): { 使ふ: boolean; 斷り: 
   if (語 === "偽") return { 使ふ: false, 斷り: "" };
   return {
     使ふ: false,
-    斷り: `／${名} は true か false で指定してください（いま ${JSON.stringify(値)}）。その値は使わないので、既定の儘扱います`,
+    斷り: `／${名} は true か false で指定してください（いま ${JSON.stringify(値)}）。その値は使わず、既定の設定を使います`,
   };
 }
 
@@ -846,7 +846,7 @@ function 名乘りの案内(query: string, list: Row[], now: number): string[] {
       : "";
     /* 三段で書く: 絞り込みの内 → **収録の全体** → 会期だけ / 何も無い。 */
     const 狀態 = 行の鍵.has(key)
-      ? `締切の行は在りますが、いまの絞り込みで 0 件に成つて居ます（絞り込みを外すと出ます）${推定の文 ? `。${推定の文}` : ""}`
+      ? `締切の行はありますが、現在の絞り込みで 0 件になっています（絞り込みを外すと出ます）${推定の文 ? `。${推定の文}` : ""}`
       : 收錄の鍵.has(key)
         ? (() => {
             /* 収録にあるのは**何の日か**まで言う（画面の同じ言葉 – 第 929 回）。 */
@@ -1011,7 +1011,7 @@ function searchDeadlines(
       args.online !== undefined ||
       args.within_days !== undefined);
   if (!query && !絞り込みだけ)
-    return "検索語が空です。会議名・分野・開催地・締切の語をください（語を省くなら kind / kinds / rank / domestic / online / within_days の何れかを添えてください）。";
+    return "検索語が空です。会議名・分野・開催地・締切の語をください（語を省くなら kind / kinds / rank / domestic / online / within_days のいずれかを指定してください）。";
   const 限り = 數の引數("limit", args.limit, 1);
 
   const limit = Math.max(1, Math.floor(Math.min(限り.使ふ ?? 20, 100)));
@@ -1051,7 +1051,7 @@ function searchDeadlines(
   const 記号だけの文 =
     絞り込みが効く || 絞り込みだけ
       ? ""
-      : `絞り込みとして効く語がありません（「${query}」は記号だけなので、全部の行を示して居ます）。会社名・分野・開催地・日付の語を足してください`;
+      : `絞り込みとして効く語がありません（「${query}」は記号だけなので、すべての行を表示しています）。会議名・分野・開催地・日付を指定してください`;
   const hit = sortRows(畫面の既定(素の, now, args));
   const page = hit.slice(offset, offset + limit);
   const nextOffset = offset + page.length < hit.length ? offset + page.length : null;
@@ -1106,7 +1106,7 @@ function searchDeadlines(
 
   /* 行が見えている時に出す注（類語・曖昧さ – 第 942・948 回）。 */
   const 見えて居る文 = 見えて居る注(query, hit.length);
-  const 頭 = `${絞り込みだけ ? "語を指定せず、絞り込みだけ" : `検索語「${query}」に当たる締切`}: ${hit.length} 件（${名} ${list.length} 行・画面の既定と同じ絞り込み。絞る前は ${素の.length} 行${ランク ? `／ランク ${ランク}` : ""}${args.domestic === true ? "／国内のみ" : ""}${args.online === true ? "／オンライン参加可のみ" : ""}${窓あり ? `／締切まで ${窓の日數} 日以内${窓の端数の斷り}` : ""}${讀めない引數}）${limit端數}${檢索語を切つた ? `（${打たれた検索語.length} 字のうち、最初の ${檢索語の截} 字で調べました – 残りの語は参考にしていません）` : ""}${知らん.length ? `／知らない種別（その侭では 0 件に成ります）: ${知らない値の文("", 知らん)}` : ""}${空の種別 ? `／kinds が空なので種別で絞していません（0 件にしたいなら kind を 1 つ）` : ""}${種別一種 ? `／kind は kinds と共に与えられたので見ていません` : ""}${知らんランク ? `／知らないランク（等級は ${Recommender.rankGradeOrderJa().join("・")}）: ${知らんランク}${limit端數}` : ""}${日付の語 ? "\n日付は日本時間（JST）。月や日付の語は、締切の日付と「会期」の日付の両方に当たる（画面のてびきと同じ約束）ので、月で引いた時に見出しの月と違う日が出る行がある。" : ""}${窓が無い ? `\n${窓が無いの斷り(true)}` : ""}${scopeErr ? `\n${scopeErr}` : ""}${解決の文}${記号だけの文 ? `\n${記号だけの文}` : ""}${見えて居る文}`;
+  const 頭 = `${絞り込みだけ ? "語を指定せず、絞り込みだけ" : `検索語「${query}」に当たる締切`}: ${hit.length} 件（${名} ${list.length} 行・画面の既定と同じ絞り込み。絞る前は ${素の.length} 行${ランク ? `／ランク ${ランク}` : ""}${args.domestic === true ? "／国内のみ" : ""}${args.online === true ? "／オンライン参加可のみ" : ""}${窓あり ? `／締切まで ${窓の日數} 日以内${窓の端数の斷り}` : ""}${讀めない引數}）${limit端數}${檢索語を切つた ? `（${打たれた検索語.length} 字のうち、最初の ${檢索語の截} 字で調べました – 残りの語は参考にしていません）` : ""}${知らん.length ? `／知らない種別（指定したままでは 0 件になります）: ${知らない値の文("", 知らん)}` : ""}${空の種別 ? `／kinds が空なので種別で絞していません（0 件にしたいなら kind を 1 つ）` : ""}${種別一種 ? `／kind は kinds と共に与えられたので見ていません` : ""}${知らんランク ? `／知らないランク（等級は ${Recommender.rankGradeOrderJa().join("・")}）: ${知らんランク}${limit端數}` : ""}${日付の語 ? "\n日付は日本時間（JST）。月や日付の語は、締切の日付と「会期」の日付の両方に当たる（画面のてびきと同じ約束）ので、月で引いた時に見出しの月と違う日が出る行がある。" : ""}${窓が無い ? `\n${窓が無いの斷り(true)}` : ""}${scopeErr ? `\n${scopeErr}` : ""}${解決の文}${記号だけの文 ? `\n${記号だけの文}` : ""}${見えて居る文}`;
   if (!hit.length) {
     /* 画面と同じ約束 – 案内は「素の当たりが 0」の時に出る物なので、絞り込みで 0 に成つた時は
      * その旨を書く（絞り込みを外せば出る事がある）。 */
@@ -1118,7 +1118,7 @@ function searchDeadlines(
       頭,
       "",
       素の.length
-        ? `語は当たりますが、既定の絞り込み（今後の投稿締切・推定を除く）で 0 件に成りました。include_past / include_estimated / kinds${ランク ? ` / rank（いま ${ランク}）` : ""} を試してください。`
+        ? `語は当たりますが、既定の絞り込み（今後の投稿締切・推定を除く）で 0 件になりました。include_past / include_estimated / kinds${ランク ? ` / rank（いま ${ランク}）` : ""} を試してください。`
         : 窓の外
           ? `この語は画面が最初に読む窓（${list.length} 行）には 1 行もありませんが、**収録の全体には ${窓の外} 行あります**（scope: "all" で引けます）。`
           : (果て ?? "この語では 1 行も出ません。"),
@@ -1330,7 +1330,7 @@ function listUpcoming(
     ),
   );
   const 知らんの斷り = 知らん.length
-    ? `／知らない種別（その侭では 0 件に成ります）: ${知らない値の文("", 知らん)}`
+    ? `／知らない種別（指定したままでは 0 件になります）: ${知らない値の文("", 知らん)}`
     : "";
   return [
     `今日から ${日數の表現}（JST の暦日で数える）の締切: ${hit.length} 件（${名}・日本時間の早い順）${讀めない引數}${知らんの斷り}${端数の斷り}${上限の斷り}${空の種別 ? `／kinds が空なので種別で絞していません（0 件にしたいなら kind を 1 つ）` : ""}`,
@@ -1414,8 +1414,8 @@ function venueInfo(args: { key?: unknown; name?: unknown; scope?: unknown }, now
     const 問はた候補 = key && 問はた全部.length > 1 ? 問はた全部 : [];
     if (問はた候補.length > 1) {
       return [
-        `「${String(key).trim()}」は ${問はた候補.length} つの会議の古い key です（改名・統合の前に使つていた物）。` +
-          `どちらかを key で引き直してください:`,
+        `「${String(key).trim()}」は ${問はた候補.length} つの会議の古い key です（改名・統合前の識別子）。` +
+          `一覧から選び、key を指定して検索し直してください:`,
         ...問はた候補.map(
           (c) =>
             `- ${String(c.acronym || c.title || c.key)}（key: ${String(c.key)}）` +
@@ -1550,7 +1550,7 @@ function venueInfo(args: { key?: unknown; name?: unknown; scope?: unknown }, now
     .map((r) => line(r, now));
   /* 今後の締切が無い会議では、**その事を先に言う**が「次はこれ」と取り違へる）。 */
   const 今後 = hit.filter((r) => !Recommender.deadlineRowIsPast(r, now)).length;
-  const 斷り = 今後 ? "" : "※ この会議の今後の締切は収録にありません（下の行は過ぎた物です）。\n";
+  const 斷り = 今後 ? "" : "※ この会議の今後の締切は収録にありません（以下は過去の締切です）。\n";
 
   const 投稿の行 = hit
     .filter((r) => 投稿の種別.includes(r.kind))
@@ -1650,7 +1650,7 @@ function explainWord(args: { word?: unknown; scope?: unknown }, now: number): st
 
     /* 番兵（分離子だけの文）に一致する = 語が 1 つも無い = 絞り込みが效いて居ない。 */
     const 記号だけの文 = Recommender.searchMatcher(word, now)("・ー()")
-      ? `この語は記号だけなので、絞り込みとして効く語がありません（行は全部を示して居ます）。`
+      ? `この語は記号だけなので、絞り込みとして効く語がありません（すべての行を表示しています）。`
       : "";
     return [
       `「${word}」は素の照合で ${件數} 行・画面の既定の絞り込み（今後・投稿締切の種別・推定を除く）を通すと ${畫面の行.length} 行です（${名}${切替}${語の截りの文}）。`,
@@ -1662,7 +1662,7 @@ function explainWord(args: { word?: unknown; scope?: unknown }, now: number): st
         : []),
       /* 画面の既定で 0 件に成る時は、その**理由**を添える。 */
       ...(畫面の行.length === 0 && (指南.length || 受皿.length)
-        ? ["画面の既定の絞り込みで 0 件に成る理由:", ...指南, ...受皿].map((n) =>
+        ? ["画面の既定の絞り込みで 0 件になる理由:", ...指南, ...受皿].map((n) =>
             n === "" ? "" : `- ${n}`,
           )
         : []),
@@ -1740,7 +1740,7 @@ function collectionStats(args: Record<string, unknown> = {}, now: number): strin
           `注: 無視した絞り込み ${無視した引數.join("・")} はこの道具では効きません – 収録の全体を数えます`,
         ]
       : []),
-    `収録（${DATA_PATH.replace(`${ROOT}/`, "")}）: 会議 ${会議} 件 / 版 ${版} 件（生の収録。建てる時は同じ物を束ねるので、建てた表示とは少し違い得る）/ 締切の行 ${千の桁の文(list.length)} 行（日付の幅 ${日[0]} 〜 ${日[日.length - 1]}）`,
+    `収録（${DATA_PATH.replace(`${ROOT}/`, "")}）: 会議 ${会議} 件 / 版 ${版} 件（元の収録データ。生成時に重複をまとめるため、表示件数と異なる場合があります）/ 締切の行 ${千の桁の文(list.length)} 行（日付の幅 ${日[0]} 〜 ${日[日.length - 1]}）`,
     `データ生成: ${生成の表示(元の生成)}（上の行と同じ出所。画面の右上と同じ書き方）`,
     ...(窓の生成 ? [`画面が最初に読む窓（public/catalog.json）のデータ生成: ${窓の生成}`] : []),
     `うち今後の締切: ${千の桁の文(今後)} 行（${new Date(now).toISOString().slice(0, 10)} 以降）`,
@@ -1809,11 +1809,11 @@ function recommendVenues(
   if (!paper)
     return [
       "論文の題名か概要をください。",
-      "画面の入力と同じ形（`題名 | キーワード, キーワード | 投稿先`）が一番よく当たります（1 行だけでも構ひません）。",
+      "画面の入力と同じ形（`題名 | キーワード, キーワード | 投稿先`）が一番よく当たります（1 行だけでも構いません）。",
     ].join("\n");
   const 索引 = recommendation();
   if (!索引)
-    return `推薦の索引（${RECOMMENDATION_PATH.replace(`${ROOT}/`, "")}）が読めません。建てた物（\`npm run build\`）と同じ場所に置いてから使つてください。`;
+    return `推薦の索引（${RECOMMENDATION_PATH.replace(`${ROOT}/`, "")}）が読めません。このリポジトリで \`npm run build\` を実行してからお試しください。`;
 
   const 無視した = [
     "scope",
@@ -1881,7 +1881,7 @@ function recommendVenues(
 
   const 題々 = 論文ごとの行.map((l) => String(l.title ?? "").trim()).filter(Boolean);
   const 題 = 題々[0] ?? "";
-  const 餘 = 題々.length > 1 ? `（ほか ${題々.length - 1} 行の語も見て居ます）` : "";
+  const 餘 = 題々.length > 1 ? `（ほか ${題々.length - 1} 行の入力も使っています）` : "";
 
   const 題の切り詰め =
     題.length > 40 ? `（見出しは 40 字に切り詰めた物です。調べたのは全文です）` : "";
@@ -1900,7 +1900,7 @@ function recommendVenues(
     return [
       頭,
       "",
-      "この題名の語と重なる投稿先は見付かりませんでした。題名に加へて、分野の語やキーワード（`tsn, real-time, scheduling` の様に）を添えると当たりやすくなります。",
+      "この題名の語と重なる投稿先は見つかりませんでした。題名に加えて、分野の語やキーワード（`tsn, real-time, scheduling` のように）を添えると当たりやすくなります。",
     ].join("\n");
   const 見本 = 候補.slice(0, limit);
   /* pool に過去の代表が入っていることを黙らない（AI が「これから締め切る会報」として
@@ -1908,7 +1908,7 @@ function recommendVenues(
   return [
     頭,
 
-    "札は「候補」＝いちばん近い会議との差が小さい、「重なりうすい」＝言葉の重なりが弱い、です（画面の『見方のてびき』と同じ）。数値は並べるための目安で、採択の予測ではありません。",
+    "評価の「候補」はいちばん近い会議との差が小さいこと、「重なりうすい」は言葉の重なりが弱いことを示します（画面の『見方のてびき』と同じ）。数値は並べるための目安で、採択の予測ではありません。",
     `（一致評価の高い順${候補.length > limit ? `。${limit} 件まで表示・残り ${候補.length - limit} 件` : ""}）`,
     "",
     ...見本.map((r, i) => {
@@ -2159,7 +2159,7 @@ function callTool(
   if (name === "explain_word") return explainWord(args, now);
   if (name === "recommend_venues") return recommendVenues(args, now);
   if (name === "collection_stats") return collectionStats(args, now);
-  throw new Error(`知らない道具: ${name}`);
+  throw new Error(`知らないツール: ${name}`);
 }
 
 /* ---- stdio の MCP（1 行 = 1 つの JSON-RPC）---- */
@@ -2261,9 +2261,9 @@ function main(): void {
     process.stdout.write(
       `${[
         "kamiyobi の MCP サーバ（読み取り専用・stdio）。",
-        "  AI から: MCP の客户としてこのファイルを起動する（`node src/mcp.ts`）。",
-        "  人から: 道具の名を引数に書くと 1 回だけ走らせて文字を出す。",
-        `  道具: ${TOOLS.map((t) => t.name).join(" / ")}`,
+        "  AI から: MCP クライアントからこのファイルを起動します（`node src/mcp.ts`）。",
+        "  手元で確認: ツール名と引数を指定すると、1 回分の結果を表示します。",
+        `  ツール: ${TOOLS.map((t) => t.name).join(" / ")}`,
         '  例: node src/mcp.ts search "セキュリティ" 5',
         '  例: node src/mcp.ts explain_word "学生でも投稿できる"',
         "  例: node src/mcp.ts list_upcoming 30",
