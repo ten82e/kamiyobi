@@ -1826,6 +1826,10 @@ function recommendVenues(
   const offset = args.offset === undefined ? 0 : args.offset;
   if (typeof offset !== "number" || !Number.isSafeInteger(offset) || offset < 0)
     throw new Error("offset は 0 以上の整数で指定してください。");
+  if (args.paper !== undefined && typeof args.paper !== "string")
+    throw new Error(
+      "paper は文字列で指定してください。論文のJSONも、文字列にして paper に指定してください。",
+    );
   const paper = 文字として讀む(args.paper);
   if (!paper)
     return [
@@ -2273,13 +2277,20 @@ function handle(raw: string, now: number): void {
   }
   if (method === "tools/call") {
     const name = String(params.name ?? "");
-    const args = (params.arguments ?? {}) as Record<string, unknown>;
-
-    const 此の道具 = TOOLS.find((t) => t.name === name);
-    const 未宣言 = Object.keys(args).filter(
-      (k) => !Object.keys(此の道具?.inputSchema?.properties ?? {}).includes(k),
-    );
     try {
+      const supplied = params.arguments;
+      if (
+        supplied !== undefined &&
+        (supplied === null || typeof supplied !== "object" || Array.isArray(supplied))
+      )
+        throw new Error(
+          'arguments はオブジェクトで指定してください（例: {"paper":"論文の題名"}）。',
+        );
+      const args = (supplied ?? {}) as Record<string, unknown>;
+      const 此の道具 = TOOLS.find((t) => t.name === name);
+      const 未宣言 = Object.keys(args).filter(
+        (k) => !Object.keys(此の道具?.inputSchema?.properties ?? {}).includes(k),
+      );
       let structuredContent: Record<string, unknown> | undefined;
       const text = callTool(name, args, now, (value) => {
         structuredContent = value;

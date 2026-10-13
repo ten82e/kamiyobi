@@ -96,19 +96,29 @@ interface Reply {
     };
   };
 }
-function call(root: string, args: Record<string, unknown>): Reply {
+function callSequence(root: string, argumentsList: unknown[]): Reply[] {
   const result = spawnSync(process.execPath, [join(root, "run.ts")], {
     encoding: "utf8",
     timeout: 20000,
-    input: `${JSON.stringify({
-      jsonrpc: "2.0",
-      id: 1,
-      method: "tools/call",
-      params: { name: "recommend_venues", arguments: args },
-    })}\n`,
+    input: `${argumentsList
+      .map((args, i) =>
+        JSON.stringify({
+          jsonrpc: "2.0",
+          id: i + 1,
+          method: "tools/call",
+          params: { name: "recommend_venues", arguments: args },
+        }),
+      )
+      .join("\n")}\n`,
   });
   expect(result.status, result.stderr).toBe(0);
-  return JSON.parse(result.stdout.trim()) as Reply;
+  return result.stdout
+    .trim()
+    .split("\n")
+    .map((line) => JSON.parse(line) as Reply);
+}
+function call(root: string, args: Record<string, unknown>): Reply {
+  return callSequence(root, [args])[0];
 }
 const input = [
   venue("gpu-programming", "GPU programming", "gpu parallel programming"),
@@ -378,6 +388,36 @@ describe("MCP recommendation results with independent raw fixtures", () => {
     expect(result?.isError).toBe(true);
     expect(result?.content[0].text).toContain("offset は 0 以上の整数");
   });
+
+  it.each([null, [], "GPU programming", 42, false])(
+    "rejects a non-object arguments value and permits recovery on the same connection: %j",
+    (args) => {
+      const [invalid, recovered] = callSequence(sandbox(input), [
+        args,
+        { paper: "GPU programming" },
+      ]);
+      expect(invalid.result?.isError).toBe(true);
+      expect(invalid.result?.content[0].text).toContain("arguments はオブジェクト");
+      expect(invalid.result?.structuredContent).toBeUndefined();
+      expect(recovered.result?.isError).not.toBe(true);
+      expect(recovered.result?.structuredContent?.rows[0].venue_key).toBe("gpu-programming");
+    },
+  );
+
+  it.each([null, { title: "GPU programming" }, ["GPU programming"], true, 99])(
+    "rejects a non-string paper value and accepts JSON encoded as a string: %j",
+    (paper) => {
+      const [invalid, recovered] = callSequence(sandbox(input), [
+        { paper },
+        { paper: JSON.stringify({ title: "GPU programming" }) },
+      ]);
+      expect(invalid.result?.isError).toBe(true);
+      expect(invalid.result?.content[0].text).toContain("paper は文字列");
+      expect(invalid.result?.structuredContent).toBeUndefined();
+      expect(recovered.result?.isError).not.toBe(true);
+      expect(recovered.result?.structuredContent?.rows[0].venue_key).toBe("gpu-programming");
+    },
+  );
 
   it("enforces the documented 30-result limit and exposes the next page", () => {
     const root = sandbox(
