@@ -118,8 +118,8 @@ beforeAll(async () => {
     ["en", EMBEDDING_MODEL, EMBEDDING_REVISION],
     ["ja", EMBEDDING_MULTI_MODEL, EMBEDDING_MULTI_REVISION],
   ] as const) {
-    const extractor = (await pipeline("feature-extraction", model, {
-      revision,
+    const extractor = (await pipeline("feature-extraction", join(env.cacheDir!, model, revision), {
+      local_files_only: true,
       device: "cpu",
       dtype: "fp32",
     })) as FeatureExtractionPipeline;

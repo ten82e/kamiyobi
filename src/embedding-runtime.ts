@@ -1,5 +1,13 @@
+import { existsSync, mkdtempSync, rmSync } from "node:fs";
+import { mkdir, rename, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { env, type FeatureExtractionPipeline, pipeline } from "@huggingface/transformers";
+import {
+  AutoModel,
+  AutoTokenizer,
+  env,
+  FeatureExtractionPipeline,
+} from "@huggingface/transformers";
 
 export const EMBEDDING_MODEL = "Xenova/all-MiniLM-L6-v2";
 export const EMBEDDING_MULTI_MODEL = "Xenova/paraphrase-multilingual-MiniLM-L12-v2";
@@ -13,6 +21,43 @@ export const PAPER_VEC_KEYS: readonly string[] = ["usenix-security", "rtss"];
 
 const extractorPromises = new Map<string, Promise<FeatureExtractionPipeline>>();
 
+async function loadPinnedTokenizer(model: string, revision: string, localFilesOnly: boolean) {
+  if (localFilesOnly) {
+    const directory = join(env.cacheDir!, model, revision);
+    try {
+      return await AutoTokenizer.from_pretrained(directory, { local_files_only: true });
+    } catch (cause) {
+      throw new Error(`local_files_only tokenizer unavailable at ${directory}`, { cause });
+    }
+  }
+  const temporary = !env.cacheDir;
+  const directory = temporary
+    ? mkdtempSync(join(tmpdir(), "kamiyobi-tokenizer-"))
+    : join(env.cacheDir!, model, revision);
+  try {
+    await mkdir(directory, { recursive: true });
+    for (const name of ["tokenizer.json", "tokenizer_config.json"]) {
+      const target = join(directory, name);
+      if (existsSync(target)) continue;
+      if (!env.allowRemoteModels)
+        throw new Error(`pinned tokenizer ${name} is unavailable while remote models are disabled`);
+      const response = await env.fetch(
+        `https://huggingface.co/${model}/resolve/${encodeURIComponent(revision)}/${name}`,
+      );
+      if (!response.ok)
+        throw new Error(`cannot load pinned tokenizer ${name}: HTTP ${response.status}`);
+      const text = await response.text();
+      JSON.parse(text);
+      const pending = `${target}.tmp.${process.pid}.${Date.now()}`;
+      await writeFile(pending, text);
+      await rename(pending, target);
+    }
+    return await AutoTokenizer.from_pretrained(directory, { local_files_only: true });
+  } finally {
+    if (temporary) rmSync(directory, { recursive: true, force: true });
+  }
+}
+
 function getExtractor(
   model: string,
   revision: string,
@@ -24,11 +69,22 @@ function getExtractor(
   const cacheKey = `${modelPath}@${revision}:${localFilesOnly ? "local" : "remote"}`;
   let p = extractorPromises.get(cacheKey);
   if (!p) {
-    p = pipeline(
-      "feature-extraction",
-      modelPath,
-      localFilesOnly ? { local_files_only: true } : { revision },
-    ) as Promise<FeatureExtractionPipeline>;
+    const options = {
+      ...(localFilesOnly ? { local_files_only: true } : { revision }),
+      device: "cpu" as const,
+      dtype: "fp32" as const,
+    };
+    p = Promise.all([
+      loadPinnedTokenizer(model, revision, localFilesOnly),
+      AutoModel.from_pretrained(modelPath, options),
+    ]).then(
+      ([tokenizer, loadedModel]) =>
+        new FeatureExtractionPipeline({
+          task: "feature-extraction",
+          tokenizer,
+          model: loadedModel,
+        }),
+    );
     extractorPromises.set(cacheKey, p);
     void p.catch(() => extractorPromises.delete(cacheKey));
   }

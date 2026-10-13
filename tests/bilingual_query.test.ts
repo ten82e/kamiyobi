@@ -1,6 +1,24 @@
 import { expect, it } from "vitest";
 import R from "../site/recommender.ts";
 
+it("retains the statistical meaning of privacy estimators and additive boosting", () => {
+  const privacy = R.queryText([
+    {
+      title: "局所差分プライバシーの推定",
+      abstract: "シャッフル差分プライバシーも扱う。",
+      keywords: "",
+      venue: "",
+    },
+  ]);
+  expect(privacy).toContain("local differential privacy statistical estimation");
+  expect(privacy).toContain("shuffle differential privacy statistical estimation");
+  const boosting = R.queryText([
+    { title: "加法モデルのブースティング", abstract: "", keywords: "", venue: "" },
+  ]);
+  expect(boosting).toContain("additive models statistical learning");
+  expect(boosting).toContain("boosting statistical learning");
+});
+
 it("bounds an abstract-only query even when repeating its primary content would exceed the budget", () => {
   const abstract = Array.from({ length: 140 }, (_, i) => `specimen${i}`).join(" ");
   const paper = { title: "", abstract, keywords: "", venue: "" };

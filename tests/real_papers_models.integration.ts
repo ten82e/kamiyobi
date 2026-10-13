@@ -1,7 +1,13 @@
 import { createHash } from "node:crypto";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
-import { env, type FeatureExtractionPipeline, pipeline } from "@huggingface/transformers";
+import {
+  AutoModel,
+  AutoTokenizer,
+  env,
+  FeatureExtractionPipeline,
+  pipeline,
+} from "@huggingface/transformers";
 import { afterAll, beforeAll, expect, it } from "vitest";
 import Recommender from "../site/recommender.ts";
 import { profileTexts } from "../src/embedding-profiles.ts";
@@ -68,11 +74,20 @@ const confirmation = JSON.parse(confirmationText) as Pick<
   Fixture,
   "sampling" | "profile_policy" | "papers"
 >;
+const precisionText = readFileSync(
+  new URL("./fixtures/real-model-precision-confirmation.json", import.meta.url),
+  "utf8",
+);
+const precision = JSON.parse(precisionText) as Pick<
+  Fixture,
+  "sampling" | "profile_policy" | "papers"
+>;
 const papers = [
   ...fixture.papers.map((paper) => ({ ...paper, corpus: "initial" as const })),
   ...independent.papers.map((paper) => ({ ...paper, corpus: "independent" as const })),
   ...holdout.papers.map((paper) => ({ ...paper, corpus: "holdout" as const })),
   ...confirmation.papers.map((paper) => ({ ...paper, corpus: "confirmation" as const })),
+  ...precision.papers.map((paper) => ({ ...paper, corpus: "precision" as const })),
 ];
 const modes = ["title", "abstract", "title+abstract"] as const;
 type Mode = (typeof modes)[number];
@@ -108,7 +123,7 @@ const contracts: Array<{
 }> = [];
 const results: Array<{
   id: string;
-  corpus: "initial" | "independent" | "holdout" | "confirmation";
+  corpus: "initial" | "independent" | "holdout" | "confirmation" | "precision";
   language: "en" | "ja";
   mode: Mode;
   source: string;
@@ -120,6 +135,9 @@ const results: Array<{
   scores: Record<string, number>;
   similarities: Record<string, number>;
 }> = [];
+
+const quantizedResults: typeof results = [];
+const quantizedProbeCosines: number[] = [];
 
 const normalized = (text: string) =>
   text.normalize("NFKC").toLowerCase().replace(/\s+/g, " ").trim();
@@ -145,7 +163,65 @@ function summarize(group: typeof results, method: "search" | "recommendation") {
   };
 }
 
+function recordResult(
+  target: typeof results,
+  paper: (typeof papers)[number],
+  mode: Mode,
+  lines: ReturnType<typeof Recommender.parsePaperLines>,
+  vector: number[],
+  embeddings: Record<string, number[]>,
+  keys: string[],
+) {
+  const scores = Object.fromEntries(
+    keys.map((key) => [key, Recommender.semanticScore(key, vector, embeddings, null)]),
+  );
+  const similarities = Object.fromEntries(
+    keys.map((key) => [key, Recommender.semanticSimilarity(key, vector, embeddings, null)]),
+  );
+  const search = keys
+    .filter((key) => similarities[key] > 0)
+    .sort((a, b) => similarities[b] - similarities[a] || a.localeCompare(b));
+  const recommendation = Recommender.venueRecommendations(
+    rows,
+    lines,
+    scores,
+    Date.UTC(2026, 0, 1),
+    {
+      fieldedLexical: true,
+      semanticSimilarities: similarities,
+      venueCats: Recommender.autoDetectCats(lines),
+      topN: rows.length,
+    },
+  ).map((result) => result.venueKey);
+  expect(new Set(recommendation).size).toBe(recommendation.length);
+  for (const key of recommendation) expect(keys).toContain(key);
+  target.push({
+    id: paper.id,
+    corpus: paper.corpus,
+    language: paper.language,
+    mode,
+    source: paper.source,
+    abstract_kind: paper.abstract_kind ?? "author abstract",
+    primary: paper.primary_venue,
+    acceptable: paper.acceptable_venues,
+    search,
+    recommendation,
+    scores,
+    similarities,
+  });
+}
+
 beforeAll(async () => {
+  expect(createHash("sha256").update(precisionText).digest("hex")).toBe(
+    "29be714f32361db5153a0c9083d77c85f1fa4fe232862146997c59dfd4b7f5f2",
+  );
+  expect(precision.papers).toHaveLength(6);
+  const existingSources = new Set(
+    [...fixture.papers, ...independent.papers, ...holdout.papers, ...confirmation.papers].map(
+      (paper) => paper.source,
+    ),
+  );
+  for (const paper of precision.papers) expect(existingSources.has(paper.source)).toBe(false);
   expect(createHash("sha256").update(inputText).digest("hex")).toBe(
     "367f8940d5f2083d929af2ad45c64daf82cd976a3bcb3f8968e896f2e037b033",
   );
@@ -230,8 +306,8 @@ beforeAll(async () => {
     const vectors = await embedEach(model, texts, revision);
     expect(vectors).toHaveLength(group.length);
     // Check routing independently of the shared generator's extractor cache.
-    const direct = (await pipeline("feature-extraction", model, {
-      revision,
+    const direct = (await pipeline("feature-extraction", join(env.cacheDir!, model, revision), {
+      local_files_only: true,
       device: "cpu",
       dtype: "fp32",
     })) as FeatureExtractionPipeline;
@@ -279,47 +355,42 @@ beforeAll(async () => {
       await direct.dispose();
     }
     for (const [i, { paper, mode }] of group.entries()) {
-      const scores = Object.fromEntries(
-        keys.map((key) => [key, Recommender.semanticScore(key, vectors[i], embeddings, null)]),
+      recordResult(results, paper, mode, lines[i], vectors[i], embeddings, keys);
+    }
+    const options = { revision, device: "cpu" as const, dtype: "q8" as const };
+    const [tokenizer, quantizedModel] = await Promise.all([
+      AutoTokenizer.from_pretrained(join(env.cacheDir!, model, revision), {
+        local_files_only: true,
+      }),
+      AutoModel.from_pretrained(model, options),
+    ]);
+    const quantized = new FeatureExtractionPipeline({
+      task: "feature-extraction",
+      tokenizer,
+      model: quantizedModel,
+    });
+    try {
+      const probeText = "kamiyobi embedding compatibility probe";
+      const [fpProbe] = await embedEach(model, [probeText], revision);
+      const probe = await quantized(probeText, { pooling: "mean", normalize: true });
+      quantizedProbeCosines.push(
+        Recommender.cosine(fpProbe, Array.from(probe.data as Float32Array)),
       );
-      const similarities = Object.fromEntries(
-        keys.map((key) => [key, Recommender.semanticSimilarity(key, vectors[i], embeddings, null)]),
-      );
-      const search = keys
-        .filter((key) => similarities[key] > 0)
-        .sort((a, b) => similarities[b] - similarities[a] || a.localeCompare(b));
-      const recommendation = Recommender.venueRecommendations(
-        rows,
-        lines[i],
-        scores,
-        Date.UTC(2026, 0, 1),
-        {
-          fieldedLexical: true,
-          semanticSimilarities: similarities,
-          venueCats: Recommender.autoDetectCats(lines[i]),
-          topN: rows.length,
-        },
-      ).map((result) => result.venueKey);
-      expect(new Set(recommendation).size).toBe(recommendation.length);
-      for (const key of recommendation) expect(keys).toContain(key);
-      results.push({
-        id: paper.id,
-        corpus: paper.corpus,
-        language,
-        mode,
-        source: paper.source,
-        abstract_kind: paper.abstract_kind ?? "author abstract",
-        primary: paper.primary_venue,
-        acceptable: paper.acceptable_venues,
-        search,
-        recommendation,
-        scores,
-        similarities,
-      });
+      for (const [i, { paper, mode }] of group.entries()) {
+        const output = await quantized(texts[i], { pooling: "mean", normalize: true });
+        const vector = Array.from(output.data as Float32Array);
+        expect(vector).toHaveLength(EMBEDDING_DIM);
+        expect(vector.every(Number.isFinite)).toBe(true);
+        expect(Math.hypot(...vector)).toBeCloseTo(1, 4);
+        recordResult(quantizedResults, paper, mode, lines[i], vector, embeddings, keys);
+      }
+    } finally {
+      await quantized.dispose();
     }
   }
+
   const metrics = Object.fromEntries(
-    ["initial", "independent", "holdout", "confirmation"].flatMap((corpus) =>
+    ["initial", "independent", "holdout", "confirmation", "precision"].flatMap((corpus) =>
       ["en", "ja"].flatMap((language) =>
         modes.map((mode) => {
           const group = results.filter(
@@ -350,6 +421,7 @@ beforeAll(async () => {
           independent: independent.sampling,
           holdout: holdout.sampling,
           confirmation: confirmation.sampling,
+          precision: precision.sampling,
         },
         confirmation_sha256: createHash("sha256").update(confirmationText).digest("hex"),
         holdout_sha256: createHash("sha256").update(holdoutText).digest("hex"),
@@ -363,6 +435,8 @@ beforeAll(async () => {
         },
         metrics,
         results,
+        quantized_results: quantizedResults,
+        precision_sha256: createHash("sha256").update(precisionText).digest("hex"),
       },
       null,
       2,
@@ -613,10 +687,40 @@ it("routes escaped paper content through the correct actual model", () => {
 });
 
 it("keeps suitable venues in the top five of raw semantic retrieval for every paper input", () => {
-  expect(results).toHaveLength(210);
+  expect(results).toHaveLength(228);
   for (const item of results)
     expect(
       rank(item.search, item.acceptable),
       `${item.id}/${item.mode}: ${item.search.join(", ")}`,
     ).toBeLessThanOrEqual(5);
+});
+
+for (const language of ["en", "ja"] as const) {
+  it(`quantized real queries ${language}: keep every suitable candidate in the top five`, () => {
+    const group = quantizedResults.filter((item) => item.language === language);
+    expect(group).toHaveLength(language === "en" ? 123 : 105);
+    for (const item of group)
+      for (const method of ["search", "recommendation"] as const)
+        expect(
+          rank(item[method], item.acceptable),
+          `${item.id}/${item.mode}/${method}: ${item[method].join(", ")}`,
+        ).toBeLessThanOrEqual(5);
+  });
+}
+it("quantized queries retain the production compatibility-probe threshold", () => {
+  expect(quantizedProbeCosines).toHaveLength(2);
+  for (const cosine of quantizedProbeCosines) expect(cosine).toBeGreaterThanOrEqual(0.97);
+});
+it("independent precision-confirmation papers meet the unchanged FP32 quality floors", () => {
+  const group = results.filter((item) => item.corpus === "precision");
+  expect(group).toHaveLength(18);
+  for (const language of ["en", "ja"] as const)
+    for (const mode of modes)
+      for (const method of ["search", "recommendation"] as const) {
+        const selected = group.filter((item) => item.language === language && item.mode === mode);
+        expect(selected).toHaveLength(3);
+        const summary = summarize(selected, method);
+        expect(summary.acceptable_at_5, JSON.stringify(summary)).toBeGreaterThanOrEqual(0.75);
+        expect(summary.acceptable_mrr, JSON.stringify(summary)).toBeGreaterThanOrEqual(0.35);
+      }
 });

@@ -8,11 +8,24 @@ import { tempWork } from "./helpers.ts";
 const { pipeline } = vi.hoisted(() => ({ pipeline: vi.fn() }));
 vi.mock("@huggingface/transformers", () => ({
   env: { cacheDir: "/offline-embedding-fixture" },
-  pipeline,
+  AutoTokenizer: {
+    from_pretrained: async (model: string, options: unknown) => ({ model, options }),
+  },
+  AutoModel: { from_pretrained: async (model: string, options: unknown) => ({ model, options }) },
+  FeatureExtractionPipeline: function (input: {
+    task: string;
+    tokenizer: { model: string; options: unknown };
+    model: { model: string; options: unknown };
+  }) {
+    if (!new.target) throw new Error("model pipeline must be constructed");
+    expect(input.tokenizer.model).toBe(input.model.model);
+    expect(input.tokenizer.options).toEqual({ local_files_only: true });
+    return pipeline(input.task, input.model.model, input.model.options);
+  },
 }));
-pipeline.mockImplementation(async (task: string, model: string, options: unknown) => {
+pipeline.mockImplementation((task: string, model: string, options: unknown) => {
   expect(task).toBe("feature-extraction");
-  expect(options).toEqual({ local_files_only: true });
+  expect(options).toEqual({ local_files_only: true, device: "cpu", dtype: "fp32" });
   const multi = model.includes("paraphrase-multilingual-MiniLM-L12-v2");
   expect(model).toContain(multi ? "paraphrase-multilingual-MiniLM-L12-v2" : "all-MiniLM-L6-v2");
   return async (texts: string[], extraction: unknown) => {

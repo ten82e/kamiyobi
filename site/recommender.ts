@@ -15149,6 +15149,10 @@ const Recommender = (() => {
     エンタテインメント: "entertainment",
     標的型メール: "spear phishing",
     差分プライバシー: "differential privacy",
+    局所差分プライバシー: "local differential privacy statistical estimation",
+    シャッフル差分プライバシー: "shuffle differential privacy statistical estimation",
+    加法モデル: "additive models statistical learning",
+    ブースティング: "boosting statistical learning",
     ソーシャルエンジニアリング: "social engineering",
     フィッシング: "phishing social engineering",
     視覚効果: "visual effects",
@@ -15176,6 +15180,7 @@ const Recommender = (() => {
     "k-means": "unsupervised machine learning",
     "a/b testing": "statistical inference causal inference",
     "treatment effect": "causal inference statistical learning",
+    "large language model": "neural machine learning language modeling",
   };
 
   function expansionTerms(text: unknown, forRetrieval = false): string[] {
