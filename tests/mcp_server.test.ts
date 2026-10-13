@@ -98,7 +98,11 @@ describe("MCP の手順が話せる（第 714 回）", () => {
       jsonrpc: "2.0",
       id: 1,
       method: "initialize",
-      params: { protocolVersion: "2025-06-18", clientInfo: { name: "test", version: "0" } },
+      params: {
+        protocolVersion: "2025-06-18",
+        capabilities: {},
+        clientInfo: { name: "test", version: "0" },
+      },
     })) as {
       result?: {
         protocolVersion?: string;
@@ -2112,7 +2116,11 @@ it("窓がない手元では、何を読んでいるかを言う（第 892 回�
         jsonrpc: "2.0",
         id: 1,
         method: "initialize",
-        params: { protocolVersion: "2025-06-18", clientInfo: { name: "t", version: "0" } },
+        params: {
+          protocolVersion: "2025-06-18",
+          capabilities: {},
+          clientInfo: { name: "t", version: "0" },
+        },
       })}\n${JSON.stringify({ jsonrpc: "2.0", id: 2, method: "tools/call", params: call })}\n`,
       encoding: "utf8",
       timeout: 180_000,

@@ -80,3 +80,71 @@ it("preserves zero IDs and processes a final request without a newline at EOF", 
     { jsonrpc: "2.0", id: "正常な要求", result: {} },
   ]);
 });
+
+const initialization = {
+  protocolVersion: "2025-06-18",
+  capabilities: {},
+  clientInfo: { name: "research-client", version: "1" },
+};
+
+it.each(["2025-06-18", "2024-11-05", "2099-01-01"])(
+  "negotiates a supported version for %s and allows tool discovery",
+  (protocolVersion) => {
+    const messages = [
+      {
+        jsonrpc: "2.0",
+        id: 1,
+        method: "initialize",
+        params: { ...initialization, protocolVersion },
+      },
+      { jsonrpc: "2.0", method: "notifications/initialized" },
+      { jsonrpc: "2.0", id: 2, method: "tools/list" },
+    ];
+    const replies = run(`${messages.map((message) => JSON.stringify(message)).join("\n")}\n`);
+    expect(replies).toHaveLength(2);
+    expect(replies[0]).toEqual({
+      jsonrpc: "2.0",
+      id: 1,
+      result: {
+        protocolVersion: "2025-06-18",
+        capabilities: { tools: {} },
+        serverInfo: { name: "kamiyobi", version: "1.0.0" },
+      },
+    });
+    expect(replies[1].id).toBe(2);
+    expect(replies[1].result.tools.map((tool: { name: string }) => tool.name).sort()).toEqual([
+      "collection_stats",
+      "explain_word",
+      "list_upcoming",
+      "recommend_venues",
+      "search_deadlines",
+      "venue_info",
+    ]);
+  },
+);
+
+it.each([
+  ["protocolVersion", { protocolVersion: undefined }],
+  ["protocolVersion", { protocolVersion: 20250618 }],
+  ["capabilities", { capabilities: undefined }],
+  ["capabilities", { capabilities: null }],
+  ["capabilities", { capabilities: [] }],
+  ["clientInfo", { clientInfo: undefined }],
+  ["clientInfo", { clientInfo: { name: "client", version: 1 } }],
+  ["clientInfo", { clientInfo: { version: "1" } }],
+])("rejects invalid initialization %s and accepts a corrected request", (field, invalid) => {
+  const messages = [
+    { jsonrpc: "2.0", id: 1, method: "initialize", params: { ...initialization, ...invalid } },
+    { jsonrpc: "2.0", id: 2, method: "initialize", params: initialization },
+  ];
+  const replies = run(`${messages.map((message) => JSON.stringify(message)).join("\n")}\n`);
+  expect(replies).toHaveLength(2);
+  expect(replies[0]).toMatchObject({ jsonrpc: "2.0", id: 1, error: { code: -32602 } });
+  expect(replies[0].error.message).toContain(field);
+  expect(replies[0]).not.toHaveProperty("result");
+  expect(replies[1]).toMatchObject({
+    jsonrpc: "2.0",
+    id: 2,
+    result: { protocolVersion: "2025-06-18" },
+  });
+});

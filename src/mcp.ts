@@ -2287,10 +2287,28 @@ function handle(raw: string, now: number): void {
     send({ jsonrpc: "2.0", id, error: { code, message } });
 
   if (method === "initialize") {
-    const 求め =
-      typeof params.protocolVersion === "string" ? params.protocolVersion : DEFAULT_PROTOCOL;
+    if (typeof params.protocolVersion !== "string") {
+      fail(-32602, "protocolVersion は対応する通信版の文字列で指定してください。");
+      return;
+    }
+    const capabilities = params.capabilities;
+    if (!capabilities || typeof capabilities !== "object" || Array.isArray(capabilities)) {
+      fail(-32602, "capabilities はクライアントの機能を示すJSONオブジェクトで指定してください。");
+      return;
+    }
+    const clientInfo = params.clientInfo as Record<string, unknown> | null | undefined;
+    if (
+      !clientInfo ||
+      typeof clientInfo !== "object" ||
+      Array.isArray(clientInfo) ||
+      typeof clientInfo.name !== "string" ||
+      typeof clientInfo.version !== "string"
+    ) {
+      fail(-32602, "clientInfo には name と version を文字列で指定してください。");
+      return;
+    }
     reply({
-      protocolVersion: 求め,
+      protocolVersion: DEFAULT_PROTOCOL,
       capabilities: { tools: {} },
       serverInfo: { name: SERVER_NAME, version: SERVER_VERSION },
     });
