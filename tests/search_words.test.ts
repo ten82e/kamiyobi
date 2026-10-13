@@ -63,7 +63,7 @@ it("「〆切」で引いた人が「締切」で引いた人と同じ行に出�
   expect(
     readFileSync(join(builtSite(), "index.html"), "utf8"),
     "てびきに折込む語の組を書いていない",
-  ).toContain("<code>〆</code> → <code>締</code>");
+  ).toContain("<code>〆</code> は <code>締</code> と同じ扱い");
 });
 
 it("「投稿締切」「論文提出」で引いた人が種別「論文締切」の行に出会える", () => {
@@ -272,9 +272,11 @@ it("「セキュリティの会議」のように助詞で繋いだ検索語が�
   expect(note, "代わりに使った語を書いていない").toContain("「セキュリティ」");
   /* てびき: built の index.html に当てる。 */
   const html = readFileSync(join(builtSite(), "index.html"), "utf8");
-  expect(html, "てびきに助詞の読み方を書いていない").toContain("助詞で繋いだ文のままでも引けます");
+  expect(html, "てびきに助詞の読み方を書いていない").toContain(
+    "助詞を含む文や「海外で開催される会議」のような表現も使え",
+  );
   expect(html, "てびきに表じゅうの語の話を書いていない").toContain(
-    "表の全行にあてはまる語なので、他の語を一緒に打ったときは絞り込みに使いません",
+    "他の語と一緒に入力した場合は絞り込みに使いません",
   );
 });
 

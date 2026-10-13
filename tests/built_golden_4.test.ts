@@ -259,8 +259,10 @@ it("印刷した紙が、紙に出る語を紙の説明だけで読ませる（S
   const ai項 = html.slice(aiAt, html.indexOf("</dd>", aiAt)).replace(/<[^>]+>/g, "");
   expect(ai項, "llms.txt を指していない").toContain("llms.txt");
   expect(ai項, "MCP サーバの在り處を書いていない").toContain("src/mcp.ts");
-  expect(ai項, "同じ数字で引けると言つていない").toContain("同じ数字");
-  expect(ai項, "外へ送る物がないと言つていない").toContain("外へ送る物は無く");
+  expect(ai項, "画面と共通の検索処理を使うと説明していない").toContain("画面と共通の検索処理");
+  expect(ai項, "MCPサーバーの外部通信と書き込みの扱いがない").toContain(
+    "MCPサーバーは外部通信やデータの書き込みを行いません",
+  );
   for (const m of items) {
     const text = m[1].replace(/<[^>]+>/g, "");
     const open = text.split("（").length - 1;

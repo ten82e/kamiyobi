@@ -1734,12 +1734,12 @@ it("画面のてびきが、MCP の全ての道具を名指す（第 882 回）"
     return 頁.slice(i, 頁.indexOf("</dd>", i));
   })();
   const 道具の言ひ方: Record<string, string> = {
-    search_deadlines: "締切の検索",
-    list_upcoming: "直近の一覧",
-    venue_info: "会議ごとの版",
-    explain_word: "語の案内",
-    collection_stats: "収録の数",
-    recommend_venues: "論文に合う投稿先",
+    search_deadlines: "締切検索",
+    list_upcoming: "直近の締切と会期",
+    venue_info: "会議ごとの開催回",
+    explain_word: "用語の案内",
+    collection_stats: "収録件数",
+    recommend_venues: "投稿先推薦",
   };
   /* 実装が持つ道具の一覽（`tools/list`）と、てびきが名指す文を突き合はせる。 */
   const res = (await client.ask({ jsonrpc: "2.0", id: 98, method: "tools/list" })) as {

@@ -109,6 +109,6 @@ describe("開かれる日の近さを聞く人（第 712 回）", () => {
     expect(i, "てびきに並び順の項がない").toBeGreaterThan(-1);
     const 項 = html.slice(i, html.indexOf("</dd>", i)).replace(/<[^>]+>/g, "");
     expect(項, "てびきが会期の順を書いて居ない").toContain("会期の順は出張の計画に向きます");
-    expect(項, "てびきが未確認の行の置き方を書いて居ない").toContain("末尾に置きます");
+    expect(項, "てびきが未確認の行の置き方を書いて居ない").toContain("末尾です");
   });
 });

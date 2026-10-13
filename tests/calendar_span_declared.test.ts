@@ -153,7 +153,7 @@ describe("カレンダー配信の収録範囲の申告", () => {
     expect(note).toContain(String(span.event_count).replace(/\B(?=(\d{3})+(?!\d))/g, ","));
     expect(note).toContain(span.first_day);
     expect(note).toContain(span.last_day);
-    expect(note).toContain("絞り込みは引き継がれません");
+    expect(note).toContain("期間や絞り込みは、カレンダーには引き継がれません");
     // 大きな数の区切り（1,234 の形）も同じ数え方であること。
     expect(
       runtimeNote({ event_count: 12345, first_day: "2026-01-01", last_day: "2027-01-01" }),
@@ -198,8 +198,7 @@ describe("カレンダー配信の収録範囲の申告", () => {
     const html = readFileSync(join(site, "index.html"), "utf8");
     const guide = html.slice(html.indexOf("<dt>カレンダーに追加（.ics）</dt>"));
     const item = guide.slice(0, guide.indexOf("</dd>"));
-    expect(item).toContain("収録の期間は");
-    expect(item).toContain("この一覧に並べる期間より長い");
+    expect(item).toContain("画面の一覧より先の締切も収録しています");
     expect(item).toContain("一覧の上");
     // 数字をてびきに写すと、配信物とズレる（数字は 1 か所 – 品書から出る）。
     expect(item).not.toMatch(/\d{4}-\d{2}-\d{2}/);

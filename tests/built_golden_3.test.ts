@@ -146,7 +146,7 @@ it("画面に出る曜日が検索の語になり、週末・平日も寄せた�
   }
   // 手引きが曜日の引き方を説明している（語の形も実装と同じものを使う）。
   const template = readFileSync(join(REPO_ROOT, "site", "template.html"), "utf8");
-  expect(template, "てびきが曜日の検索を説明していない").toContain("曜日も引けます");
+  expect(template, "てびきが曜日の検索を説明していない").toContain("曜日は締切の日を対象に");
   expect(template).toContain("「週末」（土曜日・日曜日）");
 });
 
@@ -2328,7 +2328,7 @@ it("開いていた行の詳細まで共有し、てびきの説明と実際の�
   // 情報が無い行でも例外にはせず、空の欄を残す（照合にしか使わない）。
   expect(got.sparse).toBe("|||");
   // 案内にも同じ事実を書く（画面の語を引けるようにする）。
-  expect(html, "?row= のことがてびきにない").toContain("<code>?row=</code>");
+  expect(html, "?row= のことがてびきにない").toContain("<code>?row=…</code>");
 });
 
 it("読めない形式のファイルを PDF のせいにしない（SPEC §7）", () => {
@@ -2671,7 +2671,7 @@ it("公式ページの URL を検索欄に貼るとその会議が見つかる�
   }
   // 案内にも同じ操作が書いてある（画面だけで増えて、てびきが古い状態を残さない）。
   const html = readFileSync(join(site, "index.html"), "utf8");
-  expect(html).toContain("URL をそのまま貼っても引けます");
+  expect(html).toContain("URLをそのまま貼り付けても検索できます");
 });
 
 it("URL で引いて 0 件のときは「語がない」とは言わず収録の範囲を言う（SPEC §7）", () => {
@@ -2739,7 +2739,7 @@ it("URL で引いて 0 件のときは「語がない」とは言わず収録の
   expect(app).toContain("urlQuery: Recommender.looksLikeUrlQuery(searchQuery)");
   // てびきにも収録の範囲を書く（画面だけが増えて、案内が古いままにならないようにする）。
   const html = readFileSync(join(site, "index.html"), "utf8");
-  expect(html).toContain("URL で引いて出てこないときは、その会議は収録していません");
+  expect(html).toContain("収録の範囲、足りない語、適用中の条件による除外を区別して表示します");
 });
 
 it("0 件案内の画面側も URL を「語」と呼ばず、読み上げと同じことを言う（SPEC §7）", () => {
@@ -2938,9 +2938,7 @@ it("既定に出ていない行の共有リンクを踏んだら、条件を外�
   expect(got.missing.live).toContain("この収録に見当たりません");
   // てびきにも同じ振る舞いを書く。
   const html = readFileSync(join(site, "index.html"), "utf8");
-  expect(html, "共有リンクの振る舞いがてびきにない").toContain(
-    "その行のために条件を自分から外して",
-  );
+  expect(html, "共有リンクの振る舞いがてびきにない").toContain("必要な条件を外して行を開き");
 });
 
 it("投稿先を探す画面に切り替えると行の詳細を閉じ、その URL を受け取っても噓を言わない（SPEC §7）", () => {
@@ -4386,7 +4384,7 @@ it("相対月の展開を、てびきは固定の日付で約束していない�
    * 「再来月」の値だった（ビルドした recommender.js で実測: 今月 2026年8月 / 来月 2026年9月 /
    * 再来月 2026年10月 / 先月 2026年7月）。静的な文に固定の日付で例を書くと、その月を離れた
    * 読者には画面と食い違う語になる – 「来月」が 2 ヶ月先だと受け取った人は出張の月を
-   * 間違える。項からは日付の例を外し、「打った語 = 解決した西暦月」という形の記述に替えた。 */
+   * 間違える。項からは日付の例を外し、「件数欄で解決した年・月・日を確認できます」という形の記述に替えた。 */
   const html = readFileSync(join(site, "index.html"), "utf8");
   const helpStart = html.indexOf('id="helpPanel"');
   expect(helpStart, "てびきの欄が見つからない（検査が空振り）").toBeGreaterThan(-1);
@@ -4400,7 +4398,9 @@ it("相対月の展開を、てびきは固定の日付で約束していない�
     );
   }
   // 展開結果の形だけは教えてくれないと、件数欄の語が何かわからない。
-  expect(visible, "展開結果の形を書いていない").toContain("打った語 = 解決した西暦月");
+  expect(visible, "展開結果の形を書いていない").toContain(
+    "件数欄で解決した年・月・日を確認できます",
+  );
 
   // 規則そのものは実測で守られている（期待値は実装から写さず、この検査が固定した
   // 時計から導く。ずらす月数はてびきに書いた意味そのもの）。

@@ -347,8 +347,8 @@ it("論文の入力は同じタブなら刷新を耐え、リンクには乗ら�
   expect(boot).toContain("restorePaperDraft()");
   /* 覚えておくことは、気づかないと「相手の原稿が来た」と誤読される。欄の下に書く。 */
   const html = siteHtmlRuntime();
-  expect(html).toContain("このタブの間は覚えておきます");
-  expect(html).toContain("相手の原稿ではなく自分の下書き");
+  expect(html).toContain("入力はこのタブに下書きとして保存します");
+  expect(html).toContain("他の人の共有リンクを開いても、表示されるのは自分の下書きです");
   // 上の不変条件（URL に本文を載せない）を、記憶の導入でも崩していないこと。
   expect(jsFunction(app, "writeUrl").toLowerCase()).not.toMatch(/paper|abstract|keyword|draft/);
 });
@@ -688,7 +688,7 @@ it("月の見出しは、会期の月ではなく締切の月だと書く（SPEC
     "textContent = monthHeading(key, count)",
   );
   // てびきも同じ読み方をしているか（画面の語を文書で言い換えない）。
-  expect(siteHtmlRuntime(), "てびきに月の基準を書いていない").toContain("締切 2026年11月（N 件）");
+  expect(siteHtmlRuntime(), "てびきに月の基準を書いていない").toContain("締切 YYYY年M月（N 件）");
 });
 
 it("分野チップは、チップに出る日本語名の五十音順に並ぶ（SPEC §7）", async () => {

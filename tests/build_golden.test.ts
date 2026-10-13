@@ -2405,7 +2405,7 @@ it("the shared URL keeps the sort order the sender was looking at (SPEC §7)", (
   // てびきが画面を共有する話と案内の文言の形を説明している（実装と案内がズレない形で）。
   const guideHtml = readFileSync(join(site, "index.html"), "utf8");
   expect(guideHtml, "てびきに画面共有の項がない").toContain("<dt>画面を共有する</dt>");
-  expect(guideHtml).toContain("はこの一覧で使えない値なので、");
+  expect(guideHtml).toContain("未対応の値を含むURLでは、選択肢にある値へ戻し");
   // チェック欄とモードも同じ扱いにした（第 130 回の直し方を広げただけなので、
   // 「1 以外を黙って切り捨てる」実装に戻っていないことをここで止める）。
   expect(trueFlags, "true と書いたチェックが効いていない").toEqual([true, true, ""]);
@@ -2862,9 +2862,9 @@ it("site UI is readable for Japanese researchers: field names, JST header, help 
   expect(template).toContain("会議名・分野・開催地で検索");
 
   expect(template, "てびきが開き方を指す語の扱ひを書いて居ない").toContain(
-    "開き方を指す <code>開催</code>・<code>実施</code> も同じで、他の語と一緒のときは絞り込みに使いません",
+    "<code>開催</code>・<code>実施</code>など一覧全体に当たる語",
   );
-  expect(template, "てびきが同じ行に出る例を書いて居ない").toContain("海外開催</code> と同じ行");
+  expect(template, "てびきが同じ行に出る例を書いて居ない").toContain("海外で開催される会議");
   // スマホではキーボード案内を出さず、タップで詳細が見られることだけ伝える。
   expect(template).toContain("「詳細・投稿日程」で概要登録・論文提出");
   expect(template).toMatch(/\.count-kbd \{ display: none; \}/);

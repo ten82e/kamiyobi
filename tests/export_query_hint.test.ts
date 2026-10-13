@@ -182,15 +182,13 @@ describe("持ち出し・購読の語を打った人", () => {
     /* 押す前に範囲と重さを知る。*/
     const 説明 = /<a id="jsonLink"[^>]*title="([^"]*)"/.exec(ページ);
     expect(説明, "出口の説明がない").toBeTruthy();
-    expect(説明![1]).toContain("大きめ");
+    expect(説明![1]).toContain("画面の一覧より大きく");
     expect(説明![1]).toContain("CSV");
     /* 紙に押せない導線を刷らん（印刷の目 – 第 354 回と同じ決まり）。*/
     const i = ページ.indexOf("@media print");
     expect(ページ.slice(i, i + 2400), "印刷時に #jsonLink を消さない").toContain("#jsonLink,");
     /* 物を足したらてびきも直す。*/
-    expect(ページ.includes("「全データ（JSON）」のリンク"), "てびきが出口を書いていない").toBe(
-      true,
-    );
+    expect(ページ.includes("「全データ（JSON）」は"), "てびきが出口を書いていない").toBe(true);
     expect(ページ.includes("<dt>JSON</dt>"), "てびきに JSON の項目がない").toBe(true);
     /* JavaScript が動かん人にも同じ口を – noscript の一覧に JSON がある。*/
     const 落とし穴 = /<noscript>([\s\S]*?)<\/noscript>/.exec(ページ);

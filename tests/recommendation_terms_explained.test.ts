@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import Recommender from "../site/recommender.ts";
 import { site } from "./built_golden_shared.ts";
 
 function page(): string {
@@ -100,12 +101,43 @@ describe("当たった要素の名前が、てびきで意味を引ける（第 
   });
 });
 
-describe("順位表に入る条件（第 1091 囮）", () => {
+describe("順位表に入る条件", () => {
   it("画面は順位表に入る条件を言う", () => {
     const html = page();
     expect(html, "順位表に入る条件が書かれていない").toContain("順位表に入る");
-    expect(html, "実質の一致が条件だと書かれていない").toContain("実質の一致が在る投稿先だけ");
-    /* 何を直したかも添へる – それが読めると理由を說明できる。 */
-    expect(html, "何を直したかが書かれていない").toContain("証拠が無い会議");
+    expect(html, "実質的な一致が条件だと書かれていない").toContain("実質的な一致がある投稿先");
+  });
+
+  it("分野だけの一致では候補にせず、会議名の一致があれば候補になる", () => {
+    const rows = Recommender.candidateRows({
+      conferences: [
+        {
+          key: "compute",
+          title: "Compute Venue",
+          categories: ["hpc"],
+          editions: [
+            {
+              id: "compute-2027",
+              year: 2027,
+              deadlines: [{ kind: "paper", precision: "exact", utc: "2027-01-01T00:00:00Z" }],
+            },
+          ],
+        },
+      ],
+    });
+    expect(rows).toHaveLength(1);
+    const recommend = (title: string) =>
+      Recommender.venueRecommendations(
+        rows,
+        Recommender.parsePaperLines(title),
+        null,
+        Date.parse("2026-10-13T00:00:00Z"),
+        { fieldedLexical: true, venueCats: ["hpc"] },
+      );
+    expect(recommend("unknownterm98765")).toEqual([]);
+    const matched = recommend("Compute Venue");
+    expect(matched).toHaveLength(1);
+    expect(matched[0].venueKey).toBe("compute");
+    expect(matched[0].fit.score).toBeGreaterThan(0);
   });
 });
