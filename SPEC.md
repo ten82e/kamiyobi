@@ -17689,6 +17689,31 @@ pin は「本番の機能が變はつた」を意識的に決斷させるため�
 敢えて外して二つの變更を別囘に分ける。**生データで書き出すのは不可** –
 其れは二つの變更を一つに纏めて仕舞ふ。
 
+### 10.4 補: 推薦の pool は MCP・畫面・核の三つで同じ（第 1094 囘の實測）
+
+「食ひ違ふか」を確かめる爲に、`a5/3 make or break`（CHES の論文題名）を
+`recommend_venues` に送つて 3 つの側から測つた:
+
+| 調べた物 | 事實 |
+| `catalog.json` の `ches` | `papers` 欄が**無い**。23 會議・184 本の論文は `recommendation-index.json` に在る |
+| catalog が papers を落とす理由 | 「締切畫面向け」に分割したから（09fe819・#469）。**設計通り** |
+| MCP の `screen` 窓 | `deadlineRowIsPast` で濾して `journalRows`・`pastRepresentatives` を順に足す |
+| `pastRepresentatives` が ches を落とす | 未來の紙締切りが在る會議は「過去代表 1 行」が要らないので落とす。**正しい** |
+| 畫面（`site/app.ts`） | 同じ 3 つを同じ順で足す（第 894 囘の決まり） |
+
+同じ pool で核を廻すと、**大文字の完全な題名は 61 件**出る。しかし
+`a5/3 make or break`（小文字・短い）は **0 件** – 原因は 4 語全てが機能語
+（STOPWORDS・GENERIC_PAPER_WORDS）で**內容語が 0** の為。照合する語が無いので
+0 件は正しい。隣: `make or break FPGA`（5 語・內容語 1）は 55 件、
+`make or break parallel architecture`（內容語 2）は 57 件。
+
+「內容語が 0」と別に言ふ足しは**しなかった** – 0 件の時の文は既に
+「この題名の語と重なる投稿先は見付かりませんでした。題名に加へて、分野の語や
+キーワード（`tsn, real-time, scheduling` の樣に）を添へると当たりやすくなります」
+と次の手を教へて居るので、二重に言ふと slops に成る。
+
+→ **食ひ違ふは無い**。三つは同じ pool と同じ核を通す。
+
 ### 10.5 推薦結果の一覧（`site/app.ts` の卡片）
 
 - **件数欄は候補の総数、卡片は `RECOMMENDATION_PAGE`（20）件から段階的に出す**。
