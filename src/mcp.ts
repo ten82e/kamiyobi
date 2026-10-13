@@ -3,8 +3,9 @@
 import { readFileSync, statSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import Recommender from "../site/recommendation.ts";
 import { recommendationAxes } from "../site/recommendation-core.ts";
-import Recommender from "../site/recommender.ts";
+import { isValidRerankerModel } from "../site/recommender.ts";
 import {
   consolidateReviewedSubmissions,
   type SubmissionDisplay,
@@ -312,17 +313,20 @@ function 確認の內譯(rows: Row[]): string {
  * 会期・開催地）。並びはこちらの都合（日時 → 種別 → 会議 → ランク → 会期 → 開催地）で、
  * 画面の列の順その侭ではない。 */
 function line(r: Row, now: number): string {
-  const 日 = r.dateOnly ? r.localDate : jst(r.t);
+  const 常時受付 = r.kind === "journal" && !r.dl.utc && !r.dateOnly;
+  const 日 = 常時受付 ? "常時受付（締切なし）" : r.dateOnly ? r.localDate : jst(r.t);
   const 殘り = Math.floor((r.t - now) / 86400000);
 
   const 日の狀態 = Recommender.dateOnlyStateJa(r, now);
-  const 殘り文 = r.dateOnly
-    ? 日の狀態 === "definitely-past"
-      ? "（時刻未確認。締切日経過）"
-      : 日の狀態 === "uncertain-on-date"
-        ? "（時刻未確認。すでに終了している可能性があります）"
-        : ""
-    : ` 残り${殘り < 0 ? "（過ぎた）" : `${殘り}日`}`;
+  const 殘り文 = 常時受付
+    ? ""
+    : r.dateOnly
+      ? 日の狀態 === "definitely-past"
+        ? "（時刻未確認。締切日経過）"
+        : 日の狀態 === "uncertain-on-date"
+          ? "（時刻未確認。すでに終了している可能性があります）"
+          : ""
+      : ` 残り${殘り < 0 ? "（過ぎた）" : `${殘り}日`}`;
 
   const トラック = String((r.dl as { track?: unknown }).track ?? "").trim();
   const 種別 =
@@ -1777,15 +1781,22 @@ function collectionStats(args: Record<string, unknown> = {}, now: number): strin
  * **語の一致だけ**で評價する（意味検索の埋め込みは読まない – 模型を抱へるとこの道具が重く
  * 成る。画面も埋め込みが無い時は同じ道に落ちる）。その旨は返り値の頭に書く（人が見る数と
  * AI が言う数が違ふのが一番惡い – 埋め込みを使へる画面では点が少し動く）。 */
-let recommendationCache: { rows: Row[]; conferences: unknown[] } | null | undefined;
+interface RecommendationIndex {
+  rows: Row[];
+  conferences: unknown[];
+  generated_at: unknown;
+  uses_reranker: boolean;
+}
+let recommendationCache: RecommendationIndex | null | undefined;
 
 /** 推薦の索引を一度だけ読み、同じ下準備（名前の IDF と reranker）をして行を作る。 */
-function recommendation(): { rows: Row[]; conferences: unknown[] } | null {
+function recommendation(): RecommendationIndex | null {
   if (recommendationCache !== undefined) return recommendationCache;
   try {
     const 品書 = JSON.parse(readFileSync(RECOMMENDATION_PATH, "utf8")) as {
       conferences?: unknown[];
       reranker?: unknown;
+      generated_at?: unknown;
     };
     const conferences = Array.isArray(品書.conferences) ? 品書.conferences : [];
     if (!conferences.length) throw new Error("conferences が空");
@@ -1794,6 +1805,8 @@ function recommendation(): { rows: Row[]; conferences: unknown[] } | null {
     recommendationCache = {
       rows: displayRows(Recommender.candidateRows(品書 as never) as unknown as Row[]),
       conferences,
+      generated_at: 品書.generated_at ?? null,
+      uses_reranker: isValidRerankerModel(品書.reranker),
     };
   } catch {
     recommendationCache = null;
@@ -1802,9 +1815,13 @@ function recommendation(): { rows: Row[]; conferences: unknown[] } | null {
 }
 
 function recommendVenues(
-  args: Record<string, unknown> & { paper?: unknown; limit?: unknown },
+  args: Record<string, unknown> & { paper?: unknown; limit?: unknown; offset?: unknown },
   now: number,
+  receive?: (result: Record<string, unknown>) => void,
 ): string {
+  const offset = args.offset === undefined ? 0 : args.offset;
+  if (typeof offset !== "number" || !Number.isSafeInteger(offset) || offset < 0)
+    throw new Error("offset は 0 以上の整数で指定してください。");
   const paper = 文字として讀む(args.paper);
   if (!paper)
     return [
@@ -1833,7 +1850,7 @@ function recommendVenues(
   const 限り = 數の引數("limit", args.limit, 1);
 
   const limit = Math.max(1, Math.floor(Math.min(限り.使ふ ?? 10, 30)));
-  const limit端數 = 端數と上限の斷り(限り.使ふ, 100);
+  const limit端數 = 端數と上限の斷り(限り.使ふ, 30);
   const 全部の行 = Recommender.parsePaperLines(paper);
 
   const 行の截 = 20;
@@ -1879,7 +1896,13 @@ function recommendVenues(
     fieldedLexical: true,
   }).filter((r) => r.fit.score >= 10);
 
-  const 題々 = 論文ごとの行.map((l) => String(l.title ?? "").trim()).filter(Boolean);
+  const 題々 = 論文ごとの行
+    .map((l) =>
+      String(l.title || l.abstract || "")
+        .replace(/\s+/g, " ")
+        .trim(),
+    )
+    .filter(Boolean);
   const 題 = 題々[0] ?? "";
   const 餘 = 題々.length > 1 ? `（ほか ${題々.length - 1} 行の入力も使っています）` : "";
 
@@ -1889,27 +1912,73 @@ function recommendVenues(
 
   const 過ぎた件數 = 候補.filter((r) => Number(r.row.t) < now).length;
   const 頭 =
-    `${題の見出し}に合う投稿先: ${候補.length} 件（語の一致と再学習の重みで評価${無視の斷り}${截りの文}${limit端數} – ` +
+    `${題の見出し}に合う投稿先: ${候補.length} 件（語の一致を基に評価${無視の斷り}${截りの文}${limit端數} – ` +
     `意味検索の埋め込みは読まないので、埋め込みを使える画面とは点が動く事があります${限り.斷り}）` +
     /* 過ぎた候補は「次回の開催に向けた参考」として件数を分けて書く（黙っていると AI が
      * 今出せるように勧めてしまふ – 画面の「締切済み」と同じ出し分け）。 */
     (候補.length > 過ぎた件數
       ? `（うち ${過ぎた件數} 件は締切が過ぎた会議です – 次回の開催に向けた参考に載せています）`
       : "");
+  const 見本 = 候補.slice(offset, offset + limit);
+  const axesFor = (r: (typeof 候補)[number]) => {
+    const stored = 品書の軸().get(String(r.row.conf.key ?? ""));
+    return stored && typeof stored === "object"
+      ? (stored as ReturnType<typeof recommendationAxes>)
+      : recommendationAxes(r.row.conf as unknown as Record<string, unknown>, r.fit.score, now);
+  };
+  receive?.({
+    total: 候補.length,
+    offset,
+    limit,
+    returned: 見本.length,
+    next_offset: offset + 見本.length < 候補.length ? offset + 見本.length : null,
+    evaluated_at: new Date(now).toISOString(),
+    generated_at: catalog()?.generated_at ?? 索引.generated_at,
+    uses_embeddings: false,
+    uses_reranker: 索引.uses_reranker,
+    ignored_filters: 無視した,
+    input: {
+      received: 全部の行.length,
+      used: 論文ごとの行.length,
+      truncated: 全部の行.length > 行の截 || 一番長い論文 > 行數の截,
+    },
+    rows: 見本.map((r, index) => ({
+      rank: offset + index + 1,
+      venue_key: r.venueKey,
+      title: r.row.conf.title,
+      fit: {
+        score: r.fit.score,
+        confidence: r.fit.confidence,
+        label: r.fit.label,
+        lexical_score: r.fit.lexicalScore,
+        evidence: r.fit.evidence,
+      },
+      availability:
+        r.availability.status === "ongoing"
+          ? { ...r.availability, timestamp: null }
+          : r.availability,
+      deadline:
+        r.availability.status === "ongoing" || !Number.isFinite(r.row.t)
+          ? null
+          : structuredDeadline(r.row as unknown as Row, now),
+      axes: axesFor(r),
+    })),
+  });
   if (!候補.length)
     return [
       頭,
       "",
       "この題名の語と重なる投稿先は見つかりませんでした。題名に加えて、分野の語やキーワード（`tsn, real-time, scheduling` のように）を添えると当たりやすくなります。",
     ].join("\n");
-  const 見本 = 候補.slice(0, limit);
+  if (offset >= 候補.length)
+    return `${頭}\nこの位置には結果がありません（offset: ${offset}／全 ${候補.length} 件）。`;
   /* pool に過去の代表が入っていることを黙らない（AI が「これから締め切る会報」として
    * 過去の行を埋めないように – 頭で件数を分けて言う）。 */
   return [
     頭,
 
     "評価の「候補」はいちばん近い会議との差が小さいこと、「重なりうすい」は言葉の重なりが弱いことを示します（画面の『見方のてびき』と同じ）。数値は並べるための目安で、採択の予測ではありません。",
-    `（一致評価の高い順${候補.length > limit ? `。${limit} 件まで表示・残り ${候補.length - limit} 件` : ""}）`,
+    `（一致評価の高い順${offset > 0 ? `。${offset + 1} 件目から ${見本.length} 件表示・残り ${Math.max(0, 候補.length - offset - 見本.length)} 件` : 候補.length > limit ? `。${limit} 件まで表示・残り ${候補.length - limit} 件` : ""}）`,
     "",
     ...見本.map((r, i) => {
       const 評價 = `${String(r.fit.label ?? "評価保留")}（${Number(r.fit.score) || 0} 点）`;
@@ -1921,15 +1990,7 @@ function recommendVenues(
        * 2026-10-29: MCP の推薦行は日付と種別だけを出して、**その締切が公式確認できているか**
        * を言はなかつた（AI が「次は 2027-01-29 です」と言へても、推定の日付なのか分からん）。 */
 
-      const 載つて居る軸 = 品書の軸().get(String(r.row.conf.key ?? ""));
-      const 軸 =
-        載つて居る軸 && typeof 載つて居る軸 === "object"
-          ? (載つて居る軸 as ReturnType<typeof recommendationAxes>)
-          : recommendationAxes(
-              r.row.conf as unknown as Record<string, unknown>,
-              Number(r.fit.score) || null,
-              now,
-            );
+      const 軸 = axesFor(r);
       const 信賴の札: Record<string, string> = {
         official: "公式確認",
         publisher: "出版社確認",
@@ -1988,7 +2049,7 @@ function recommendVenues(
       if (意味順) 理由.push(`意味検索順位 ${意味順}`);
       if (r.boosted) 理由.push("同じ分野（掲載先から推定）");
       return (
-        `${i + 1}. 一致評価 ${評價}｜${line(r.row as unknown as Row, now)}｜${成熟の文}｜${確認狀況}` +
+        `${offset + i + 1}. 一致評価 ${評價}｜${line(r.row as unknown as Row, now)}｜${成熟の文}｜${確認狀況}` +
         `${特記.length ? `｜${特記.join("｜")}` : ""}｜選定理由: ` +
         `${理由.length ? 理由.join(" / ") : "目立つ一致はないが候補に入った"}`
       );
@@ -2022,7 +2083,7 @@ const TOOLS = [
         kinds: {
           type: "array",
           description:
-            "種別のキーで絞る（既定は画面と同じ abstract / paper / journal）。**日本語の種別名でも受けます**（論文締切＝paper・採否通知＝notification のように – 行に出す言葉と同じ。実測 2026-11-19）",
+            "種別のキーで絞る（既定は画面と同じ abstract / paper / journal）。**日本語の種別名でも受けます**（論文締切＝paper・採否通知＝notification のように – 行に出す言葉と同じ）",
         },
         kind: {
           type: "string",
@@ -2032,7 +2093,7 @@ const TOOLS = [
         rank: {
           type: "string",
           description:
-            "ランクの等級で絞る（`A*` / `A` / `B` / `C` / `N`。画面のランク欄と同じ**厳密比較**（大文字小文字も違う – `a` は効かない） – `A` は `core:A*` を巻き込まない）。**行の出し方（`CCF A`・`CORE A*`）でも受けます** – 後ろの等級だけを見ます（実测 2026-11-19）",
+            "ランクの等級で絞る（`A*` / `A` / `B` / `C` / `N`。画面のランク欄と同じ**厳密比較**（大文字小文字も違う – `a` は効かない） – `A` は `core:A*` を巻き込まない）。**行の出し方（`CCF A`・`CORE A*`）でも受けます** – 後ろの等級だけを見ます",
         },
         domestic: {
           type: "boolean",
@@ -2053,7 +2114,7 @@ const TOOLS = [
           type: "string",
           enum: ["screen", "all", "collection", "full", "window", "catalog"],
           description:
-            "見る窓。screen＝画面が最初に読む窓（180 日。catalog.json がある時だけ）／all＝収録の全体（過去と先の締切も含む）。**collection・full＝all／window・catalog＝screen**（他の三つの道具と同じエイリアス – 実测 2026-11-19）。省いた時は screen",
+            "見る窓。screen＝画面が最初に読む窓（180 日。catalog.json がある時だけ）／all＝収録の全体（過去と先の締切も含む）。**collection・full＝all／window・catalog＝screen**（他の三つの道具と同じエイリアス）。省いた時は screen",
         },
       },
     },
@@ -2069,7 +2130,7 @@ const TOOLS = [
         kind: {
           type: "string",
           description:
-            '種別のキー（例: paper / abstract / camera_ready。**日本語の種別名でも受けます** – 論文締切＝paper・採否通知＝notification のように、行に出す言葉と同じ（実測 2026-11-19）。全部なら "all"。複数を配列で渡すとどれかに当たる行を選ぶ。大文字は小文字に直して受ける）',
+            '種別のキー（例: paper / abstract / camera_ready。**日本語の種別名でも受けます** – 論文締切＝paper・採否通知＝notification のように、行に出す言葉と同じ。全部なら "all"。複数を配列で渡すとどれかに当たる行を選ぶ。大文字は小文字に直して受ける）',
         },
         kinds: {
           type: "array",
@@ -2113,16 +2174,21 @@ const TOOLS = [
   {
     name: "recommend_venues",
     description:
-      "論文情報に合う投稿先を語彙の一致と再学習の重みで一致評価を出す。意味検索の埋め込みは使わないため、画面の評価と異なる場合がある。候補の範囲は画面と共通。順位表に入るのは実質的な一致がある候補だけで、証拠がない会議を分野だけの一致で推薦しない。長い入力は最初の 20 行と各行の長さ制限で切り、切った旨を返す。返す行の形: 順位と一致評価、選定理由、締切の確認状況に続いて締切行。結果は最大30件で、残りの件数も返す。",
+      "論文情報に合う投稿先を語彙の一致で探す。学習済みの並べ替えモデルがある場合は併用する。意味検索の埋め込みは使わないため、画面の評価と異なる場合がある。候補の範囲は画面と共通。順位表に入るのは実質的な一致がある候補だけで、証拠がない会議を分野だけの一致で推薦しない。長い入力は最初の 20 行と各行の長さ制限で切り、切った旨を返す。返す行の形: 順位と一致評価、選定理由、締切の確認状況に続いて締切行。1ページ最大30件。structuredContent に順位・一致評価・受付状態・締切・確認情報を返す。続きは同じ論文情報と next_offset を offset に指定する。",
     inputSchema: {
       type: "object",
       properties: {
         paper: {
           type: "string",
           description:
-            "投稿予定の論文。`題名 | キーワード, キーワード | 投稿先` の形（1 行だけでも構わない）",
+            "投稿予定の論文。題名 | キーワード | 投稿先、Title/Abstract や タイトル/概要 の項目付きテキスト、title・abstract・keywords・venue を持つ JSON 文字列を受ける。概要のみの JSON も使える。",
         },
         limit: { type: "number", description: "返す候補の数（既定 10・最大 30）" },
+        offset: {
+          type: "integer",
+          minimum: 0,
+          description: "取得開始位置（既定0）。続きは同じ論文情報と next_offset を指定",
+        },
       },
       required: ["paper"],
     },
@@ -2157,7 +2223,7 @@ function callTool(
   if (name === "list_upcoming") return listUpcoming(args, now);
   if (name === "venue_info") return venueInfo(args, now);
   if (name === "explain_word") return explainWord(args, now);
-  if (name === "recommend_venues") return recommendVenues(args, now);
+  if (name === "recommend_venues") return recommendVenues(args, now, receive);
   if (name === "collection_stats") return collectionStats(args, now);
   throw new Error(`知らないツール: ${name}`);
 }

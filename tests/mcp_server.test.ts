@@ -783,7 +783,7 @@ it("入力の形が、道具の説明と一致する（第 854 回）", async ()
     ],
     list_upcoming: ["days", "kind", "kinds", "scope"],
     venue_info: ["key", "name", "scope"],
-    recommend_venues: ["paper", "limit"],
+    recommend_venues: ["paper", "limit", "offset"],
     explain_word: ["word", "scope"],
     collection_stats: [],
   };
@@ -957,7 +957,7 @@ it("投稿先の推薦が、画面と同じ核で出る（第 857 回）", async
   expect(text, "先頭の候補が核と違う").toContain(String(正[0].row.conf.title));
   /* **何で評價しているか**を頭で斷る（意味検索の埋め込みを読まない事・点が画面と動く事。
    * 人が見る数と AI が言う数が違ふのが一番惡い）。 */
-  expect(text, "何で評價しているか言つていない").toContain("語の一致と再学習の重みで評価");
+  expect(text, "何で評價しているか言つていない").toContain("語の一致を基に評価");
   expect(text, "埋め込みを読まない事を言つていない").toContain("埋め込みは読まない");
   expect(text, "切り詰めを黙つている").toContain("残り");
   /* 題名が空なら、打ち方を敎へる（黙らない）。 */
@@ -4748,7 +4748,7 @@ it("端数と上限は両方続けて言う（第 1044 回）", async () => {
   }
   /* 推薦も両方。 */
   const 推薦 = 帶(await call("recommend_venues", { paper: "分散", limit: 999.9 }));
-  expect(推薦, "推薦の上限を言つていない").toContain("上限 100 を超えた");
+  expect(推薦, "推薦の上限を言つていない").toContain("上限 30 を超えた");
 });
 
 it("ヘルプの例は 6 つの道具を全部覆ひ、実際に效く（第 1046 回）", async () => {
