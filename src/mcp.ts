@@ -43,6 +43,7 @@ interface Row {
      * 引けない。實測 2026-10-20: search_deadlines は 37 行出すのに、venue_info は
      * 「收錄に在りません」と答へて居た）。 */
     full_name?: string;
+    link?: string;
     categories?: string[];
     rank?: unknown;
   };
@@ -57,6 +58,7 @@ interface Row {
     link?: string;
     event_start?: string;
     event_end?: string;
+    estimate?: unknown;
   };
   dl: {
     kind: string;
@@ -65,6 +67,9 @@ interface Row {
     precision?: string;
     tz_raw?: string;
     utc?: string;
+    track?: string;
+    earliest_utc?: string;
+    latest_utc?: string;
     /** 確認の状態（上流が付けた印。オブジェクトの事と文字列の事がある – 語は畫面と同じ正本）。 */
     verification?: { status?: string } | string;
   };
@@ -1099,7 +1104,6 @@ function 名乘りの案内(query: string, list: Row[], now: number): string[] {
                   : "") +
                 '（scope: "all" と include_past で読めます）'
               );
-            return `この窓には締切の行がありませんが、**収録にあるのは過ぎた締切（${最後}）だけ**です（scope: "all" と include_past で読めます）`;
             if (推定)
               return `この窓には締切の行がありませんが、**推定なら ${推定} に締切が在ります**（include_estimated で出ます – 確約では無い）`;
             return 'この窓には締切の行がありませんが、**収録には在ります**（scope: "all" で過去の分行が出せます）';
@@ -1160,10 +1164,48 @@ function 見えて居る注(query: string, 行數: number): string {
   return `\n${全部.join("\n")}${添 ? `\n${添}` : ""}`;
 }
 
+/** Keep date-only and estimated deadlines separate from confirmed instants. */
+export function structuredDeadline(r: Row, now: number): Record<string, unknown> {
+  return {
+    venue_key: r.conf.key,
+    title: r.conf.title,
+    edition_id: r.ed.id,
+    year: r.ed.year ?? null,
+    kind: r.kind,
+    kind_label: Recommender.kindLabelJa(r.kind),
+    round: r.dl.round ?? 1,
+    track: r.dl.track ?? null,
+    label: r.dl.label ?? null,
+    official_url: r.ed.link || r.conf.link || null,
+    place: r.ed.place ?? null,
+    place_ja: Recommender.placeJa(r.ed.place) || null,
+    rank: r.conf.rank ?? null,
+    estimated: r.est,
+    estimate: r.est ? (r.ed.estimate ?? null) : null,
+    precision: r.dateOnly ? "date-only" : "exact",
+    utc: r.dateOnly ? null : (r.dl.utc ?? new Date(r.t).toISOString()),
+    jst: r.dateOnly ? null : jst(r.t),
+    local_date: r.dateOnly ? r.localDate : null,
+    timezone: r.dl.tz_raw ?? null,
+    uncertainty: r.dateOnly
+      ? {
+          earliest_utc: r.dl.earliest_utc ?? null,
+          latest_utc: r.dl.latest_utc ?? null,
+          state: Recommender.dateOnlyStateJa(r, now),
+        }
+      : null,
+    verification: r.dl.verification ?? null,
+    event_start: r.ed.event_start ?? null,
+    event_end: r.ed.event_end ?? null,
+    display: line(r, now),
+  };
+}
+
 function searchDeadlines(
   args: {
     query?: unknown;
     limit?: unknown;
+    offset?: unknown;
     include_past?: unknown;
     include_estimated?: unknown;
     kinds?: unknown;
@@ -1175,6 +1217,7 @@ function searchDeadlines(
     scope?: unknown;
   },
   now: number,
+  receive?: (result: Record<string, unknown>) => void,
 ): string {
   /* 真偽の引數を**一度だけ**読み、読める形に直す（第 909 回 – `include_past: "true"` は
    * `=== true` の比較一つで黙って外れて居た。數の引數（第 878 回）と同じ扱ひ）。 */
@@ -1197,6 +1240,9 @@ function searchDeadlines(
     ...(_ARGS.domestic !== undefined ? { domestic: 真偽.domestic.使ふ } : {}),
     ...(_ARGS.online !== undefined ? { online: 真偽.online.使ふ } : {}),
   };
+  const offset = args.offset === undefined ? 0 : args.offset;
+  if (typeof offset !== "number" || !Number.isSafeInteger(offset) || offset < 0)
+    throw new Error("offset は 0 以上の整数で指定してください。");
   const 打たれた検索語 = 文字として讀む(args.query);
   /* **檢索語が長すぎると、語の長さに比例して掛かる**（第 1077 囮 – 實測 2026-11-19:
    * 1,000 字 2.3 秒・5,000 字 24 秒・20,000 字は 60 秒逾も answer しなかつた。
@@ -1279,6 +1325,21 @@ function searchDeadlines(
       ? ""
       : `絞り込みとして効く語がありません（「${query}」は記号だけなので、全部の行を示して居ます）。会社名・分野・開催地・日付の語を足してください`;
   const hit = sortRows(畫面の既定(素の, now, args));
+  const page = hit.slice(offset, offset + limit);
+  const nextOffset = offset + page.length < hit.length ? offset + page.length : null;
+  receive?.({
+    query,
+    total: hit.length,
+    offset,
+    limit,
+    returned: page.length,
+    next_offset: nextOffset,
+    scope: 窓が無い || scopeValue(args.scope) === "all" ? "all" : "screen",
+    catalog_fallback: 窓が無い,
+    generated_at: 生成 ?? null,
+    evaluated_at: new Date(now).toISOString(),
+    rows: page.map((r) => structuredDeadline(r, now)),
+  });
   const 知って居る種別 = [
     "all",
     ...投稿の種別,
@@ -1406,14 +1467,19 @@ function searchDeadlines(
       ...(古さ ? ["", 古さ] : []),
     ].join("\n");
   }
-  const 見本 = hit.slice(0, limit).map((r) => line(r, now));
+  const 見本 = page.map((r) => line(r, now));
+  if (offset >= hit.length)
+    return `${頭}\nこの位置には結果がありません（offset: ${offset}／全 ${hit.length} 件）。`;
   return [
     頭,
     /* 打ち切って無い時は **limit を言わない**（第 924 回 – 37 件しか無い時に「50 件まで表示」と
      * 書くと、読む人は 50 行が来ると思ふ）。 */
-    `（日本時間の早い順${hit.length > limit ? `。${limit} 件まで表示・残り ${hit.length - limit} 件` : ""}）`,
+    `（日本時間の早い順${offset > 0 ? `。${offset + 1}〜${offset + page.length} 件目・残り ${Math.max(0, hit.length - offset - page.length)} 件` : hit.length > limit ? `。${limit} 件まで表示・残り ${hit.length - limit} 件` : ""}）`,
     "",
     ...見本,
+    ...(nextOffset !== null
+      ? [`次の結果: 同じ条件で offset: ${nextOffset} を指定してください。`]
+      : []),
     ...(古さ ? ["", 古さ] : []),
   ].join("\n");
 }
@@ -2349,7 +2415,7 @@ const TOOLS = [
   {
     name: "search_deadlines",
     description:
-      '**語を省いて `kind` / `kinds` / `within_days` だけでも引ける**（「登録締切を全部」「30 日以内の締切を全部」の様な聞き方）。kamiyobi の収録（国際会議・国内研究会の締切と会期）を日本語で引く。会議名・分野・開催地・締切の語・相対日付（『今月』『30日以内』『来週』など）が使へる。**0 件の時は、画面と同じ案内（その語が表に無い事）と、同じ「打ち直すなら」の次の一手を返す** – その一手の件数は、実際に引いた時に出る行数と一致する（その侭打ち直せる）。**欄の名前（`分野` `種別` `会場` など）を打たれたら、值で打ち直す事を言う**（「「種別」はこの表の欄の名前で、值その物ではありません。值で打ってください（例: 「論文締切」）」– 例で打つと行が出る）。**二つの語を「と」「や」で繋いだ打ち方には、どちらかだけで打つ事を、片方づつの件数つきで言う**（「「ネットワーク」を書く行は N 件、「セキュリティ」を書く行は N 件ありますが、『と』で繋いで打つと両方を含む行を探すため 0 件になります。どちらかだけで打ってください」）。**窓（`scope: "screen"`）で 0 件の時は、収録の全体に何行あるかを言う**（「窓には 1 行もありませんが、収録の全体には N 行あります（`scope: "all"` で引けます）」– 窓は画面が最初に読む 180 日ぶんだけなので、其れを「無い」と読ませない）。**日数の幅（「1か月以内」）は検索語に当たらないので、同じ幅を引く引数を件数つきで言ふ**（「語を省いて `within_days: 30` で引けます（N 件当たります）」– 画面の「締切まで」の選択欄と同じ物が `within_days` である。「3日前まで」の様に幅の終はりが無い言ひ方は、過去なので `include_past: true` を教へる）。**打つた日付が収録の果て（一番遠い締切）より先なら、「無い」とは言はない**（「打った日付「2029年3月」は、収録している中で一番遠い締切 <日付> より先です。その日付に締切があるかどうかも、まだ確認できていません。」– 画面の第 293 回と同じ決めごと）。**0 件の時は、収録の会議の名前に当たっていないかも見る**（「締切の行が 1 本もありません」「会期は upcoming.md に『開催』として載ります」のように、収録に在る事と、何処を見ればよいかを言う – 「収録に無い」とは言わない。**名前に年を添えて打つても受け付ける**（`ACSAC 2027` の様に、年の語は名前の要求から外す – 画面の第 296 回と同じ）。**語に当たる行が在るのに既定の絞り込みで 0 件の時も名簿を名指す**（「締切の行は在りますが、いまの絞り込みで 0 件に成つて居ます（絞り込みを外すと出ます）」）。**必須の引数は無い**。絞り込みは画面と同じ物が揃っている（`kinds`・`rank`・`domestic`・`online`・`within_days`・`include_past`・`include_estimated`）。**使い切れない数の值は黙って既定に戻さない**（`within_days: 0` `days: "abc"` `limit: -1` などは「その值は使はないので、既定の儘引きます」と頭に書く – 知らない種別・知らないランクと同じ扱ひ）**表に出さん種別の語（「採否通知」「カメラレディ」など）は、その種別を `kinds` で選ぶ事を件数つきで教える**（「検索語は『カメラレディ締切』の種別に当たります（表には投稿締切だけを出します）。kinds: ["camera_ready"] で引けます（N 件当たります）」– 画面の第 244 回と同じ話）。行にはランク（`CCF A・CORE A*` の形。無い行は「ランク未確認」）・会期・確認の状態の札（`複数候補のため要確認` など。確認済みと未設定では付かない）と `延長後` も付く。収録が古ければ、末尾に画面と同じ断りが付く。' +
+      '構造化結果（structuredContent）に total・rows・next_offset を返す。続きは同じ条件と next_offset の値を offset に指定。日付だけの締切の utc・jst は null。**語を省いて `kind` / `kinds` / `within_days` だけでも引ける**（「登録締切を全部」「30 日以内の締切を全部」の様な聞き方）。kamiyobi の収録（国際会議・国内研究会の締切と会期）を日本語で引く。会議名・分野・開催地・締切の語・相対日付（『今月』『30日以内』『来週』など）が使へる。**0 件の時は、画面と同じ案内（その語が表に無い事）と、同じ「打ち直すなら」の次の一手を返す** – その一手の件数は、実際に引いた時に出る行数と一致する（その侭打ち直せる）。**欄の名前（`分野` `種別` `会場` など）を打たれたら、值で打ち直す事を言う**（「「種別」はこの表の欄の名前で、值その物ではありません。值で打ってください（例: 「論文締切」）」– 例で打つと行が出る）。**二つの語を「と」「や」で繋いだ打ち方には、どちらかだけで打つ事を、片方づつの件数つきで言う**（「「ネットワーク」を書く行は N 件、「セキュリティ」を書く行は N 件ありますが、『と』で繋いで打つと両方を含む行を探すため 0 件になります。どちらかだけで打ってください」）。**窓（`scope: "screen"`）で 0 件の時は、収録の全体に何行あるかを言う**（「窓には 1 行もありませんが、収録の全体には N 行あります（`scope: "all"` で引けます）」– 窓は画面が最初に読む 180 日ぶんだけなので、其れを「無い」と読ませない）。**日数の幅（「1か月以内」）は検索語に当たらないので、同じ幅を引く引数を件数つきで言ふ**（「語を省いて `within_days: 30` で引けます（N 件当たります）」– 画面の「締切まで」の選択欄と同じ物が `within_days` である。「3日前まで」の様に幅の終はりが無い言ひ方は、過去なので `include_past: true` を教へる）。**打つた日付が収録の果て（一番遠い締切）より先なら、「無い」とは言はない**（「打った日付「2029年3月」は、収録している中で一番遠い締切 <日付> より先です。その日付に締切があるかどうかも、まだ確認できていません。」– 画面の第 293 回と同じ決めごと）。**0 件の時は、収録の会議の名前に当たっていないかも見る**（「締切の行が 1 本もありません」「会期は upcoming.md に『開催』として載ります」のように、収録に在る事と、何処を見ればよいかを言う – 「収録に無い」とは言わない。**名前に年を添えて打つても受け付ける**（`ACSAC 2027` の様に、年の語は名前の要求から外す – 画面の第 296 回と同じ）。**語に当たる行が在るのに既定の絞り込みで 0 件の時も名簿を名指す**（「締切の行は在りますが、いまの絞り込みで 0 件に成つて居ます（絞り込みを外すと出ます）」）。**必須の引数は無い**。絞り込みは画面と同じ物が揃っている（`kinds`・`rank`・`domestic`・`online`・`within_days`・`include_past`・`include_estimated`）。**使い切れない数の值は黙って既定に戻さない**（`within_days: 0` `days: "abc"` `limit: -1` などは「その值は使はないので、既定の儘引きます」と頭に書く – 知らない種別・知らないランクと同じ扱ひ）**表に出さん種別の語（「採否通知」「カメラレディ」など）は、その種別を `kinds` で選ぶ事を件数つきで教える**（「検索語は『カメラレディ締切』の種別に当たります（表には投稿締切だけを出します）。kinds: ["camera_ready"] で引けます（N 件当たります）」– 画面の第 244 回と同じ話）。行にはランク（`CCF A・CORE A*` の形。無い行は「ランク未確認」）・会期・確認の状態の札（`複数候補のため要確認` など。確認済みと未設定では付かない）と `延長後` も付く。収録が古ければ、末尾に画面と同じ断りが付く。' +
       "**語を並べた時は、収録に無い語を名指す**（「検索語のうち『gpu』は収録データにも見当たりません。その語を外すと増えます」・どれも在る時は語ごとの件数を並べる – 画面の第 258 回と同じ）" +
       "**URL を貼った人には、打つた文字を「語が無い」とは言はない**（ドメインの部品を語として扱はない – 「検索語の URL の会議は収録に見当かりません。収録の中心は…。会議名（「ICDE」など）で試してください」。画面の第 153 回と同じ）。" +
       "**返す行の形**: `日付（時刻未確認） | 種別 R1（推定） | 確認の札 | 会議名（版の識別子）| ランク | 会期 … | 開催地 URL` – `| ` で切り、**確認の札は在る時だけ**入るので 6 つか 7 つに分かれる（在る札は「複数候補のため要確認」・「延長後」など）。会議名は丸括弧の中が**版の識別子**（`data.csv` の `edition_id` と同值）。**種別の欄の丸括弧は別の物** – 投稿のトラックがある行は「論文締切（regular）」の形になる（第 1035 回）。**推定の行は日付の欄に幅を出す**（「推定期間 A〜B」 – 第 1034 回）。**上流が締切を差し替へた行は札で言ふ**（「前に出ていた締切: A → B（延長後／前倒し）」 – 第 1037 回）。版の識別子は「会議名（…）`| ランク`」と**ランクが続く**方、トラックは種別の欄の丸括弧で、続きが無い。**その名前が数字や記号を含む事がある**（`The 9th IEEE … (BSD 2026)` – 丸括弧は会議名の続きと版の識別子の二つ）。日付は JST、元の宣言が別の時間帯なら括弧に添へる。" +
@@ -2362,6 +2428,11 @@ const TOOLS = [
           description: "検索語（日本語。例: セキュリティ / 今月 / 海外開催）",
         },
         limit: { type: "number", description: "返す行数（既定 20・最大 100）" },
+        offset: {
+          type: "integer",
+          minimum: 0,
+          description: "取得開始位置（既定 0）。次ページは返却値 next_offset を同じ検索条件で指定",
+        },
         include_past: {
           type: "boolean",
           description: "過ぎた締切も含める（既定 false＝画面の既定と同じ）",
@@ -2505,8 +2576,13 @@ const TOOLS = [
   },
 ] as const;
 
-function callTool(name: string, args: Record<string, unknown>, now: number): string {
-  if (name === "search_deadlines") return searchDeadlines(args, now);
+function callTool(
+  name: string,
+  args: Record<string, unknown>,
+  now: number,
+  receive?: (result: Record<string, unknown>) => void,
+): string {
+  if (name === "search_deadlines") return searchDeadlines(args, now, receive);
   if (name === "list_upcoming") return listUpcoming(args, now);
   if (name === "venue_info") return venueInfo(args, now);
   if (name === "explain_word") return explainWord(args, now);
@@ -2567,7 +2643,10 @@ function handle(raw: string, now: number): void {
       (k) => !Object.keys(此の道具?.inputSchema?.properties ?? {}).includes(k),
     );
     try {
-      const text = callTool(name, args, now);
+      let structuredContent: Record<string, unknown> | undefined;
+      const text = callTool(name, args, now, (value) => {
+        structuredContent = value;
+      });
       reply({
         content: [
           {
@@ -2577,7 +2656,9 @@ function handle(raw: string, now: number): void {
                 ? `${text}\n注: 此の道具に無い引数 ${未宣言.join("・")} は効きません（schema に無い物です）`
                 : text,
           },
+          ...(structuredContent ? [{ type: "text", text: JSON.stringify(structuredContent) }] : []),
         ],
+        ...(structuredContent ? { structuredContent } : {}),
       });
     } catch (error) {
       /* 「Error: 」を外して讀める文にする（第 890 回 – 實測 2026-10-22: 知らない道具を

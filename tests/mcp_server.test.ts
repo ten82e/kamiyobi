@@ -775,6 +775,7 @@ it("入力の形が、道具の説明と一致する（第 854 回）", async ()
     search_deadlines: [
       "query",
       "limit",
+      "offset",
       "include_past",
       "include_estimated",
       "kinds",
@@ -4006,7 +4007,9 @@ it("list_upcoming の件數は、其の窓の事实と合ふ（第 990 回）", 
   const 頭 = 長い.split("\n")[0] ?? "";
   const 表示 = Number((/の締切: ([\d,]+) 件/.exec(頭) ?? [0, "0"])[1].replace(/,/g, ""));
   if (表示 > 100) {
-    const 行 = 長い.split("\n").filter((l) => /^20\d\d-/.test(l)).length;
+    const 行 = 長い
+      .split("\n")
+      .filter((l) => /^(?:20\d\d-|推定期間 )/.test(l) && l.includes(" | ")).length;
     expect(行, "切り詰めた行數が 100 を超えて居る").toBeLessThanOrEqual(100);
     const 宣告 = 長い.split("\n").find((l) => l.includes("まで表示")) ?? "";
     const 殘り = Number((/残り ([\d,]+) 件/.exec(宣告) ?? [0, "0"])[1].replace(/,/g, ""));
@@ -4167,7 +4170,7 @@ describe(" schema に無い引数は默つて捨てない（第 997 回）", () 
   };
   it("未宣言の引數を送ると、其の名を言ふ", async () => {
     for (const [名前, 未宣言] of [
-      ["search_deadlines", { offset: 5 }],
+      ["search_deadlines", { page: 5 }],
       ["list_upcoming", { page: 2 }],
       ["explain_word", { verbose: true }],
       ["collection_stats", { format: "json" }],
@@ -4427,7 +4430,7 @@ describe(" schema に無い引数は默つて捨てない（第 997 回）", () 
   };
   it("未宣言の引數を送ると、其の名を言ふ", async () => {
     for (const [名前, 未宣言] of [
-      ["search_deadlines", { offset: 5 }],
+      ["search_deadlines", { page: 5 }],
       ["list_upcoming", { page: 2 }],
       ["explain_word", { verbose: true }],
       ["collection_stats", { format: "json" }],
@@ -5536,10 +5539,17 @@ it("時刻未確認の行は「いつ終はつたか」を言ふ（第 1055 回�
   const 答 = await call("venue_info", { key: "stacs-2027-first", scope: "all" });
   const 行 = 答.split("\n").filter((l) => /^2\d{3}-/.test(l) && l.includes("時刻未確認"));
   expect(行.length, "時刻未確認の行が出て居ん").toBeGreaterThan(0);
+  const sourceRows = R.candidateRows(
+    JSON.parse(readFileSync(join(REPO_ROOT, "data/snapshot.json"), "utf8")),
+  ).filter((r) => r.conf.key === "stacs-2027-first" && r.dateOnly);
   for (const l of 行) {
-    expect(l, "終はつた可能性を默つて居る").toContain(
-      "（時刻未確認。すでに終了している可能性があります）",
-    );
+    const row = sourceRows.find((r) => l.startsWith(String(r.localDate)));
+    if (!row) throw new Error(`収録に行がありません: ${l}`);
+    const state = R.dateOnlyStateJa(row, Date.now());
+    if (state === "definitely-past") expect(l).toContain("締切日経過");
+    else if (state === "uncertain-on-date")
+      expect(l).toContain("すでに終了している可能性があります");
+    else expect(l).not.toContain("締切日経過");
     /* 二重に「（時刻未確認）」と並べない（重複は slops）。 */
     expect(l.split("（時刻未確認）").length - 1, "「（時刻未確認）」が重なつて居る").toBe(0);
   }
@@ -5726,7 +5736,7 @@ it("型の違ふ數の引數は默つて讀み替へない（第 1063 回）", a
     '／limit は数で指定してください（いま "5" – その字を数として読みました）',
   );
   /* 其の值は其の儘使ふ（5 件の表示に成る – 既定に戾さない）。 */
-  expect(文字, "默つて既定に戾した").toContain("36 件");
+  expect(文字.split("\n").filter((line) => /^2\d{3}-/.test(line))).toHaveLength(5);
 
   /* **整數**は默る（其の儘使ふ）。 */
   const 整數 = await call("search_deadlines", { query: "セキュリティ", limit: 5 });
@@ -5883,7 +5893,8 @@ it("計畫の計畫は計畫の計畫と計畫の計畫に出る（第 1082 回�
   expect(md).toContain("[CLOSER 2027]");
   /* 計畫の計畫の計畫（計畫の計畫）は計畫の計畫の計畫の計畫に計畫の計畫を計畫の計畫
    * に計畫の計畫して居る – 計畫の計畫の計畫の計畫を計畫の計畫に計畫の計畫する。 */
-  expect(md).toMatch(/CLOSER 2027\][^|]*\| 論文締切 \| R1/);
+  expect(md).toMatch(/CLOSER 2027\][^|]*\| 論文締切（regular） \| R1/);
+  expect(md).toMatch(/CLOSER 2027\][^|]*\| 論文締切（position） \| R1/);
 });
 
 it("計畫の計畫を持つ計畫の計畫の計畫の計畫は、計畫の計畫と ICS の兩方で見分けられる（第 1084 回）", async () => {
