@@ -59,19 +59,15 @@ describe("recommendation axes", () => {
     expect(app).not.toContain("研究適合度");
   });
 
-  it("returns independent research fit, established maturity evidence, and deadline trust", () => {
+  it("returns independent research fit, venue records, and deadline trust", () => {
     expect(recommendationAxes(conference(), 82, NOW)).toMatchObject({
       research_fit: { score: 82, categories: ["systems"], tags: [] },
-      venue_maturity: {
-        status: "established",
-        profile_status: "profiled",
-        evidence: {
-          yearsObserved: 4,
-          dblpIndexed: true,
-          publisherVerified: true,
-          ranked: true,
-          profileCoverage: 2,
-        },
+      venue_evidence: {
+        yearsObserved: 4,
+        dblpLinked: true,
+        publisherSource: true,
+        rankListed: true,
+        profileCoverage: 2,
       },
       deadline_precision: "exact",
       deadline_trust: {
@@ -86,7 +82,7 @@ describe("recommendation axes", () => {
     });
   });
 
-  it("does not call two editions or one paper established", () => {
+  it("reports two recorded years and one sample without inferring maturity", () => {
     const value = conference({
       dblp: null,
       rank: {},
@@ -96,9 +92,9 @@ describe("recommendation axes", () => {
         { year: 2026, estimated: false, deadlines: [] },
       ],
     });
-    expect(recommendationAxes(value, null, NOW).venue_maturity).toMatchObject({
-      status: "emerging",
-      evidence: { yearsObserved: 2, profileCoverage: 1 },
+    expect(recommendationAxes(value, null, NOW).venue_evidence).toMatchObject({
+      yearsObserved: 2,
+      profileCoverage: 1,
     });
     expect(
       recommendationAxes(
@@ -111,11 +107,11 @@ describe("recommendation axes", () => {
         }),
         null,
         NOW,
-      ).venue_maturity.evidence.publisherVerified,
+      ).venue_evidence.publisherSource,
     ).toBe(true);
   });
 
-  it("distinguishes new and unverified venues", () => {
+  it("distinguishes sparse records from absent records without assigning age", () => {
     expect(
       recommendationAxes(
         conference({
@@ -139,7 +135,7 @@ describe("recommendation axes", () => {
         NOW,
       ),
     ).toMatchObject({
-      venue_maturity: { status: "new", profile_status: "unprofiled" },
+      venue_evidence: { yearsObserved: 1, profileCoverage: 0 },
       deadline_precision: "date-only",
       deadline_trust: {
         date: "aggregator",
@@ -157,7 +153,7 @@ describe("recommendation axes", () => {
         NOW,
       ),
     ).toMatchObject({
-      venue_maturity: { status: "unverified" },
+      venue_evidence: { yearsObserved: 0, profileCoverage: 0 },
       deadline_precision: "none",
       deadline_trust: {
         date: "unverified",
@@ -339,7 +335,7 @@ describe("recommendation axes", () => {
     const published = (index.conferences as Array<Record<string, unknown>>)[0]!;
     expect(published.recommendation_axes).toMatchObject({
       research_fit: { score: null, categories: ["systems"] },
-      venue_maturity: { status: "established", evidence: { yearsObserved: 4 } },
+      venue_evidence: { yearsObserved: 4, profileCoverage: 2 },
       deadline_trust: { date: "official", sourceFreshness: "fresh" },
     });
   });
@@ -417,7 +413,7 @@ describe("recommendation axes", () => {
     );
     const published = (index.conferences as Array<Record<string, any>>)[0]!;
     expect(published.recommendation_axes).toMatchObject({
-      venue_maturity: { evidence: { ranked: false } },
+      venue_evidence: { rankListed: false },
       deadline_trust: { sourceFreshness: "snapshot-fallback" },
     });
   });
@@ -527,7 +523,7 @@ describe("recommendation axes", () => {
     });
   });
 
-  it("recognizes rankings and identity.dblpKey in venue maturity evidence", () => {
+  it("reports listed rankings and identity.dblpKey without assigning maturity", () => {
     const value = conference({
       dblp: null,
       identity: { dblpKey: "conf/test" },
@@ -537,9 +533,9 @@ describe("recommendation axes", () => {
       editions: [{ year: 2024 }, { year: 2025 }, { year: 2026 }],
     });
     const axes = recommendationAxes(value, null, NOW);
-    expect(axes.venue_maturity.evidence.dblpIndexed).toBe(true);
-    expect(axes.venue_maturity.evidence.ranked).toBe(true);
-    expect(axes.venue_maturity.status).toBe("established");
+    expect(axes.venue_evidence.dblpLinked).toBe(true);
+    expect(axes.venue_evidence.rankListed).toBe(true);
+    expect(axes).not.toHaveProperty("venue_maturity");
   });
 
   it("keeps trust axes independent for each ranked recommendation", () => {
@@ -583,7 +579,7 @@ describe("recommendation axes", () => {
     }).toMatchObject({
       venue_key: "venue",
       research_fit: { score: expect.any(Number), categories: ["systems"] },
-      venue_maturity: { status: "established" },
+      venue_evidence: { yearsObserved: 4 },
       deadline_trust: { date: "official" },
     });
     expect({
@@ -591,7 +587,7 @@ describe("recommendation axes", () => {
       venue_key: aggregator.venueKey,
     }).toMatchObject({
       venue_key: "aggregator",
-      venue_maturity: { status: "new", profile_status: "unprofiled" },
+      venue_evidence: { yearsObserved: 1, profileCoverage: 0 },
       deadline_precision: "date-only",
       deadline_trust: { date: "aggregator", time: "unverified" },
     });

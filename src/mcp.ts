@@ -4,7 +4,11 @@ import { readFileSync, statSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import Recommender from "../site/recommendation.ts";
-import { recommendationAxes } from "../site/recommendation-core.ts";
+import {
+  isRecommendationAxes,
+  recommendationAxes,
+  venueEvidenceLineJa,
+} from "../site/recommendation-core.ts";
 import { isValidRerankerModel } from "../site/recommender.ts";
 import {
   consolidateReviewedSubmissions,
@@ -1922,8 +1926,8 @@ function recommendVenues(
   const 見本 = 候補.slice(offset, offset + limit);
   const axesFor = (r: (typeof 候補)[number]) => {
     const stored = 品書の軸().get(String(r.row.conf.key ?? ""));
-    return stored && typeof stored === "object"
-      ? (stored as ReturnType<typeof recommendationAxes>)
+    return isRecommendationAxes(stored)
+      ? { ...stored, research_fit: { ...stored.research_fit, score: r.fit.score } }
       : recommendationAxes(r.row.conf as unknown as Record<string, unknown>, r.fit.score, now);
   };
   receive?.({
@@ -2000,19 +2004,7 @@ function recommendVenues(
         unverified: "未確認",
       };
       const 締切の信賴 = 軸.deadline_trust;
-      /* **会議の續いている年数** – 画面のカードと同じ言ひ回し。実測 2026-10-31: 品書に載せた
-       * 軸を読む樣にしているため、`ICDE` が「新規・確認した年 1 年」で無くて
-       * 「成長中・確認した年 7 年」になる（選擇の材料になる – 新規の会報は査読が亂暴な筈）。 */
-      const 成熟の語: Record<string, string> = {
-        established: "確立",
-        emerging: "成長中",
-        new: "新規",
-        unverified: "未確認",
-      };
-      const 成熟 = 軸.venue_maturity;
-      const 成熟の文 =
-        `会議の続いている年数: ${成熟の語[成熟.status] ?? String(成熟.status)}` +
-        `（確認した年 ${Number(成熟.evidence?.yearsObserved) || 0}年、その会議の論文サンプル ${Number(成熟.evidence?.profileCoverage) || 0}件）`;
+      const 収録情報 = venueEvidenceLineJa(軸.venue_evidence);
       const 確認狀況 =
         `締切の確認状況: 日付 ${信賴の札[締切の信賴.date] ?? String(締切の信賴.date)}` +
         ` ／ 時刻 ${信賴の札[締切の信賴.time] ?? String(締切の信賴.time)}` +
@@ -2049,7 +2041,7 @@ function recommendVenues(
       if (意味順) 理由.push(`意味検索順位 ${意味順}`);
       if (r.boosted) 理由.push("同じ分野（掲載先から推定）");
       return (
-        `${offset + i + 1}. 一致評価 ${評價}｜${line(r.row as unknown as Row, now)}｜${成熟の文}｜${確認狀況}` +
+        `${offset + i + 1}. 一致評価 ${評價}｜${line(r.row as unknown as Row, now)}｜${収録情報}｜${確認狀況}` +
         `${特記.length ? `｜${特記.join("｜")}` : ""}｜選定理由: ` +
         `${理由.length ? 理由.join(" / ") : "目立つ一致はないが候補に入った"}`
       );

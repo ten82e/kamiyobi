@@ -2405,11 +2405,8 @@ it("推薦の行は、取得状態と締切の競合が普通でない時だけ�
   }
 });
 
-it("品書の推薦の軸は全版で数えている – 新規の会議を新規と言ひ切らない（第 900 回）", async () => {
-  /* 実測 2026-10-31: 画面は `r.conf.recommendation_axes` が無いと其場で軸を求めるが、品書の
-   * 会議は**窓の版**しか持って居ないので历年が 1 年になり、`ICDE` が「新規・確認した年 1 年」
-   * と出ていた（実物は「成長中・確認した年 7 年」）。会議 696 件の内 627 件が「新規」になつて
-   * いた – 選擇の材料を壊していた。索引には全版で数へた軸が在つたが、画面は索引を読まない。 */
+it("収録開催年数を初期表示窓で切り詰めない", async () => {
+  // 初期一覧の版数ではなく、公開カタログが保持する全収録年数を使う。
   const 品書 = join(REPO_ROOT, "public", "catalog.json");
   expect(
     existsSync(品書),
@@ -2419,23 +2416,20 @@ it("品書の推薦の軸は全版で数えている – 新規の会議を新�
     conferences?: Array<{
       key?: string;
       recommendation_axes?: {
-        venue_maturity?: { status?: string; evidence?: { yearsObserved?: number } };
+        venue_evidence?: { yearsObserved?: number };
       };
     }>;
   };
   const 會議 = catalog.conferences ?? [];
-  const 軸を持つ = 會議.filter((c) => c.recommendation_axes?.venue_maturity);
+  const 軸を持つ = 會議.filter((c) => c.recommendation_axes?.venue_evidence);
   expect(軸を持つ.length, "品書に推薦の軸がない（この検査の前提が崩れた）").toBe(會議.length);
-  /* 窓の版から其場で数へると 1 年に成る会議が、少なからずある（= それ曾是「新規」だった）。 */
+  // 表示期間で絞った版だけでは、収録年数を過小に数える。
   const 直で數へた = 會議.filter((c) => {
     const 窓の版 = (c as unknown as { editions?: unknown[] }).editions ?? [];
     const 年 = new Set(
       窓の版.map((e) => Number((e as { year?: unknown }).year)).filter((y) => y > 0),
     );
-    return (
-      年.size <= 1 &&
-      Number(c.recommendation_axes?.venue_maturity?.evidence?.yearsObserved ?? 0) >= 2
-    );
+    return 年.size <= 1 && Number(c.recommendation_axes?.venue_evidence?.yearsObserved ?? 0) >= 2;
   });
   expect(
     直で數へた.length,
@@ -2446,7 +2440,7 @@ it("品書の推薦の軸は全版で数えている – 新規の会議を新�
     paper: "ICDE International Conference on Data Engineering | icde, database, data mining",
     limit: 5,
   });
-  expect(text, "成熟度の文を言つていない").toContain("会議の続いている年数: ");
+  expect(text, "収録情報を表示していない").toContain("収録データ: ");
   /* 内部の語を出さない（画面と同じ約束）。 */
   expect(text, "内部の語をそのまま出した").not.toMatch(/(established|emerging|unverified)\b/);
 });
@@ -2462,7 +2456,7 @@ it("推薦の軸が画面の行まで届く（第 901 回）", async () => {
     conf?: {
       key?: string;
       recommendation_axes?: {
-        venue_maturity?: { status?: string; evidence?: { yearsObserved?: number } };
+        venue_evidence?: { yearsObserved?: number };
       };
     };
   }>;
@@ -2472,11 +2466,11 @@ it("推薦の軸が画面の行まで届く（第 901 回）", async () => {
   /* 窓の版しか無くて其場で計算すると 1 年になる行が、2 年以上の値を持っている。 */
   const icde = rows.find((r) => r.conf?.key === "icde");
   expect(
-    icde?.conf?.recommendation_axes?.venue_maturity?.status,
-    "ICDE の成熟度が見当たらない",
+    icde?.conf?.recommendation_axes?.venue_evidence,
+    "ICDE の収録情報が見当たらない",
   ).toBeTruthy();
   expect(
-    Number(icde?.conf?.recommendation_axes?.venue_maturity?.evidence?.yearsObserved ?? 0),
+    Number(icde?.conf?.recommendation_axes?.venue_evidence?.yearsObserved ?? 0),
     "ICDE の観測年数が 1 年以下 – 窓の版から其場で計算している",
   ).toBeGreaterThan(1);
 });

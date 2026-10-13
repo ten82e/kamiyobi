@@ -90,7 +90,7 @@ describe("締切に間に合はなかつた人の言ひ方（第 700 回）", ()
 });
 
 describe("会の開き方を聞く人（第 700 回）", () => {
-  it("黙らず、行の詳細の『会議の續いている年数』を名指す", () => {
+  it("黙らず、行の詳細の『収録データ』を名指す", () => {
     for (const 語 of 開き方の語) {
       const 文 = 案内(語);
       expect(文, `默つた: ${語}`).not.toBe("");
@@ -98,7 +98,7 @@ describe("会の開き方を聞く人（第 700 回）", () => {
       expect(文, `欄の名前で無いと言つて居ん: ${語}`).toContain(
         "はこの表が持つ欄の名前ではありません",
       );
-      expect(文, `手がかりを名指して居ん: ${語}`).toContain("会議の続いている年数");
+      expect(文, `手がかりを名指して居ん: ${語}`).toContain("収録データ");
       /* **何處に出るか**まで書く（実測で一度間違へた – 行の詳細には出ず、『投稿先を探す』の
        * 候補カードに出る。HeadlessChrome で行の詳細を開いて文字を探し、無い事を確かめた）。*/
       expect(文, `出る場所を間違へて居る: ${語}`).toContain("候補カード");
@@ -108,11 +108,11 @@ describe("会の開き方を聞く人（第 700 回）", () => {
     }
   });
 
-  it("名指した『会議の續いている年数』は、候補カードの組み立てに実際にある", () => {
+  it("名指した『収録データ』は、候補カードの組み立てに実際にある", () => {
     const app = readFileSync(join(builtSite(), "app.js"), "utf8");
-    expect(app, "『会議の続いている年数』がない").toContain("会議の続いている年数");
-    expect(app, "『確認した年』がない").toContain("確認した年");
+    expect(app, "共通の収録情報表示がない").toContain("venueEvidenceLineJa");
+
     const 候補 = app.slice(app.indexOf("function makeRecommendationCard"));
-    expect(候補, "候補カードの外に出ている").toContain("会議の続いている年数");
+    expect(候補, "候補カードの外に出ている").toContain("venueEvidenceLineJa");
   });
 });

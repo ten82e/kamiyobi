@@ -391,10 +391,8 @@ const LLMS_OUTPUT_NOTES_JA: Record<string, string> = {
     "それより先を見るには画面で「収録の全体を読み込む」を選ぶ。画面の判断に必要な 3 つの材料も" +
     "この中に入る – `reranker`（投稿先推薦の再学習の重み）、`history_bytes`（`history_ref` の" +
     "バイト数。画面は「収録の全体」を押す前に容量を数字で示す）、" +
-    "`conferences[].recommendation_axes`（会議ごとの推薦の軸 = `venue_maturity`（確立・成長中・" +
-    "新規と観測年数）・`deadline_trust`（日付・時刻・タイムゾーン・種別それぞれの確認水位と" +
-    "取得状態・競合件数）・`research_fit`）。**画面はこの 3 つを読む** – 無ければ其場で" +
-    "計算するが、品書には窓の版しかないため観測年数が 1 年になり「新規」になる（第 901 回）。",
+    "`conferences[].recommendation_axes`（`venue_evidence`: 収録開催年数・論文サンプル数など、" +
+    "`deadline_trust`: 日付・時刻・タイムゾーン・種別の確認状況、`research_fit`: 論文との一致評価）。",
   "recommendation-index.json": "投稿先推薦の会議プロフィールと埋め込み参照。",
   "data.csv":
     "1 行 1 締切のフラット表。列の意味は下の「data.csv の列」に書く。文字コードは BOM を付けない" +

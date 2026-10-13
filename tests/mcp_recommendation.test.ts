@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process";
-import { cpSync, mkdirSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
+import { cpSync, mkdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { REPO_ROOT, tempWork } from "./helpers.ts";
@@ -91,6 +91,7 @@ interface Reply {
         fit: { score: number; confidence: string };
         availability: { status: string };
         deadline: Record<string, unknown> | null;
+        axes: Record<string, unknown>;
       }>;
     };
   };
@@ -167,6 +168,58 @@ describe("MCP recommendation results with independent raw fixtures", () => {
     expect(result?.isError).not.toBe(true);
     expect(result?.structuredContent?.generated_at).toBe(now);
     expect(result?.structuredContent?.rows.length).toBeGreaterThan(0);
+  });
+
+  it("rejects cached maturity labels and reports actual recorded counts", () => {
+    const root = sandbox([input[0]]);
+    const path = join(root, "public/catalog.json");
+    const data = JSON.parse(readFileSync(path, "utf8"));
+    data.conferences[0].recommendation_axes = {
+      venue_maturity: { status: "established", evidence: { yearsObserved: 99 } },
+    };
+    writeFileSync(path, JSON.stringify(data));
+    const result = call(root, { paper: "GPU programming" }).result;
+    expect(result?.isError).not.toBe(true);
+    expect(result?.structuredContent?.rows[0].axes).toMatchObject({
+      venue_evidence: { yearsObserved: 1, profileCoverage: 0 },
+    });
+    expect(result?.structuredContent?.rows[0].axes).not.toHaveProperty("venue_maturity");
+    expect(result?.content[0].text).toContain("収録データ: 開催年 1年分 ／ 論文サンプル 0件");
+    expect(result?.content[0].text).not.toMatch(/会議の続いている年数|確立|成長中|新規/);
+  });
+
+  it("retains published full-catalog coverage while assigning the current paper's fit score", () => {
+    const root = sandbox([input[0]]);
+    const path = join(root, "public/catalog.json");
+    const data = JSON.parse(readFileSync(path, "utf8"));
+    data.conferences[0].recommendation_axes = {
+      research_fit: { score: null, categories: ["systems"], tags: [] },
+      venue_evidence: {
+        yearsObserved: 4,
+        profileCoverage: 2,
+        dblpLinked: true,
+        publisherSource: false,
+        rankListed: true,
+      },
+      deadline_precision: "exact",
+      evidence_quality: "none",
+      deadline_trust: {
+        date: "unverified",
+        time: "unverified",
+        timezone: "unverified",
+        kind: "unverified",
+        sourceFreshness: "snapshot-fallback",
+        conflicts: 0,
+      },
+    };
+    writeFileSync(path, JSON.stringify(data));
+    const response = call(root, { paper: "GPU programming" }).result;
+    const result = response?.structuredContent;
+    expect(result?.rows[0].axes).toMatchObject({
+      venue_evidence: { yearsObserved: 4, profileCoverage: 2 },
+      research_fit: { score: result?.rows[0].fit.score },
+    });
+    expect(response?.content[0].text).toContain("収録データ: 開催年 4年分 ／ 論文サンプル 2件");
   });
 
   it("preserves abstract-only input, date-only uncertainty and a deadline-free journal", () => {

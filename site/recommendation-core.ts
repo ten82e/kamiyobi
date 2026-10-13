@@ -11,11 +11,11 @@ export type TrustLevel =
   | "unverified";
 export type SourceFreshness = "fresh" | "cache-fallback" | "snapshot-fallback";
 
-export interface VenueMaturityEvidence {
+export interface VenueEvidence {
   yearsObserved: number;
-  dblpIndexed: boolean;
-  publisherVerified: boolean;
-  ranked: boolean;
+  dblpLinked: boolean;
+  publisherSource: boolean;
+  rankListed: boolean;
   /** Number of distinct representative papers available for the venue profile. */
   profileCoverage: number;
 }
@@ -31,11 +31,7 @@ export interface DeadlineTrust {
 
 export interface RecommendationAxes {
   research_fit: { score: number | null; categories: string[]; tags: string[] };
-  venue_maturity: {
-    status: "established" | "emerging" | "new" | "unverified";
-    profile_status: "profiled" | "unprofiled";
-    evidence: VenueMaturityEvidence;
-  };
+  venue_evidence: VenueEvidence;
   deadline_precision: "exact" | "date-only" | "estimated" | "none";
   deadline_trust: DeadlineTrust;
   /** Compatibility field derived from deadline_trust, not from unscoped evidence. */
@@ -268,15 +264,16 @@ function evidenceRecords(conference: JsonRecord, editions: JsonRecord[]): JsonRe
   ];
 }
 
-function maturityEvidence(conference: JsonRecord, editions: JsonRecord[]): VenueMaturityEvidence {
+function venueEvidence(conference: JsonRecord, editions: JsonRecord[]): VenueEvidence {
   const yearsObserved = new Set(
     editions
-      .filter((edition) => edition.estimated !== true)
+      .filter((edition) => edition.estimated !== true && !edition.estimate)
+      .filter((edition) => typeof edition.year === "number" || typeof edition.year === "string")
       .map((edition) => Number(edition.year))
       .filter((year) => Number.isInteger(year) && year > 0),
   ).size;
   const evidence = evidenceRecords(conference, editions);
-  const publisherVerified =
+  const publisherSource =
     evidence.some(
       (item) =>
         trustLevel(item.sourceClass ?? item.source_class ?? item.confidence) === "publisher",
@@ -290,7 +287,11 @@ function maturityEvidence(conference: JsonRecord, editions: JsonRecord[]): Venue
     (typeof rank === "string" && rankedValue(rank)) ||
     (Array.isArray(rank) && rank.some(rankedValue)) ||
     (rank !== null && typeof rank === "object" && Object.values(rank).some(rankedValue));
-  const profileCoverage = strings(conference.papers).length;
+  const profileCoverage = new Set(
+    (Array.isArray(conference.papers) ? conference.papers : [])
+      .filter((paper): paper is string => typeof paper === "string" && paper.trim() !== "")
+      .map((paper) => paper.trim().replace(/\s+/g, " ")),
+  ).size;
   const dblp =
     conference.dblp ??
     conference.dblp_key ??
@@ -299,30 +300,64 @@ function maturityEvidence(conference: JsonRecord, editions: JsonRecord[]): Venue
       : undefined);
   return {
     yearsObserved,
-    dblpIndexed:
+    dblpLinked:
       (typeof dblp === "string" && dblp.trim() !== "" && dblp.trim().toLowerCase() !== "null") ||
       (Array.isArray(dblp) && dblp.some(nonEmpty)) ||
       (dblp !== null && typeof dblp === "object" && Object.values(dblp).some(nonEmpty)),
-    publisherVerified,
-    ranked,
+    publisherSource,
+    rankListed: ranked,
     profileCoverage,
   };
 }
 
-function maturityStatus(
-  evidence: VenueMaturityEvidence,
-): RecommendationAxes["venue_maturity"]["status"] {
-  const signals =
-    (evidence.yearsObserved >= 3 ? 1 : 0) +
-    (evidence.dblpIndexed ? 1 : 0) +
-    (evidence.publisherVerified ? 1 : 0) +
-    (evidence.ranked ? 1 : 0) +
-    (evidence.profileCoverage >= 2 ? 1 : 0);
-  // Two editions or one paper alone only supports emerging/new; established needs history plus two independent signals.
-  if (evidence.yearsObserved >= 3 && signals >= 3) return "established";
-  if (evidence.yearsObserved >= 2 || signals >= 2) return "emerging";
-  if (evidence.yearsObserved >= 1 || signals >= 1 || evidence.profileCoverage >= 1) return "new";
-  return "unverified";
+/** Counts of catalog records, not founding year, age, or review quality. */
+export function venueEvidenceLineJa(evidence: VenueEvidence): string {
+  return `収録データ: 開催年 ${evidence.yearsObserved}年分 ／ 論文サンプル ${evidence.profileCoverage}件`;
+}
+
+export function isRecommendationAxes(value: unknown): value is RecommendationAxes {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+  const axes = value as JsonRecord;
+  if (Object.hasOwn(axes, "venue_maturity")) return false;
+  const evidence = axes.venue_evidence;
+  const trust = axes.deadline_trust;
+  const fit = axes.research_fit;
+  if (
+    !evidence ||
+    typeof evidence !== "object" ||
+    !trust ||
+    typeof trust !== "object" ||
+    !fit ||
+    typeof fit !== "object"
+  )
+    return false;
+  const e = evidence as JsonRecord;
+  const t = trust as JsonRecord;
+  const f = fit as JsonRecord;
+  return (
+    [e.yearsObserved, e.profileCoverage].every(
+      (n) => typeof n === "number" && Number.isSafeInteger(n) && n >= 0,
+    ) &&
+    [e.dblpLinked, e.publisherSource, e.rankListed].every((v) => typeof v === "boolean") &&
+    (f.score === null ||
+      (typeof f.score === "number" &&
+        Number.isFinite(f.score) &&
+        f.score >= 0 &&
+        f.score <= 100)) &&
+    Array.isArray(f.categories) &&
+    f.categories.every((item) => typeof item === "string") &&
+    Array.isArray(f.tags) &&
+    f.tags.every((item) => typeof item === "string") &&
+    ["exact", "date-only", "estimated", "none"].includes(String(axes.deadline_precision)) &&
+    ["official", "publisher", "curated-manual", "aggregator", "none"].includes(
+      String(axes.evidence_quality),
+    ) &&
+    TRUST_FIELDS.every((field) => Object.hasOwn(TRUST_RANK, String(t[field]))) &&
+    ["fresh", "cache-fallback", "snapshot-fallback"].includes(String(t.sourceFreshness)) &&
+    typeof t.conflicts === "number" &&
+    Number.isSafeInteger(t.conflicts) &&
+    t.conflicts >= 0
+  );
 }
 
 export function recommendationAxes(
@@ -333,7 +368,7 @@ export function recommendationAxes(
   const deadlines = deadlineRecords(conference, now);
   const trust = deadlineTrust(conference, deadlines);
   const editions = records(conference.all_editions ?? conference.editions);
-  const maturity = maturityEvidence(conference, editions);
+  const evidence = venueEvidence(conference, editions);
   const hasExact = deadlines.some(
     ({ deadline }) =>
       deadline.precision === "exact" ||
@@ -355,11 +390,7 @@ export function recommendationAxes(
       categories: strings(conference.categories),
       tags: strings(conference.tags),
     },
-    venue_maturity: {
-      status: maturityStatus(maturity),
-      profile_status: maturity.profileCoverage > 0 ? "profiled" : "unprofiled",
-      evidence: maturity,
-    },
+    venue_evidence: evidence,
     deadline_precision: hasExact
       ? "exact"
       : hasDateOnly

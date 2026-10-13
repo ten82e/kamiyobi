@@ -1,7 +1,12 @@
 import { icsViewText, jstParts, type ScreenDeadlineInput } from "./ics.js";
 import { loadPublishedRecommendation } from "./publish.js";
 import Recommender from "./recommendation.js";
-import { type RecommendationAxes, recommendationAxes } from "./recommendation-core.js";
+import {
+  isRecommendationAxes,
+  type RecommendationAxes,
+  recommendationAxes,
+  venueEvidenceLineJa,
+} from "./recommendation-core.js";
 import {
   assignShareIdentities,
   consolidateReviewedSubmissions,
@@ -220,37 +225,6 @@ function hasOptionalString(record: Record<string, unknown>, key: string): boolea
 
 function isStringArray(value: unknown): value is string[] {
   return Array.isArray(value) && value.every((item) => typeof item === "string");
-}
-
-const TRUST_LEVELS = new Set([
-  "official",
-  "publisher",
-  "curated-manual",
-  "aggregator",
-  "assumption",
-  "unverified",
-]);
-
-function isRecommendationAxes(value: unknown): value is RecommendationAxes {
-  if (!isRecord(value) || !isRecord(value.research_fit) || !isRecord(value.venue_maturity)) {
-    return false;
-  }
-  const maturity = value.venue_maturity;
-  const maturityEvidence = maturity.evidence;
-  const trust = value.deadline_trust;
-  if (!isRecord(maturityEvidence) || !isRecord(trust)) return false;
-  return (
-    ["established", "emerging", "new", "unverified"].includes(String(maturity.status)) &&
-    ["profiled", "unprofiled"].includes(String(maturity.profile_status)) &&
-    typeof maturityEvidence.yearsObserved === "number" &&
-    typeof maturityEvidence.dblpIndexed === "boolean" &&
-    typeof maturityEvidence.publisherVerified === "boolean" &&
-    typeof maturityEvidence.ranked === "boolean" &&
-    typeof maturityEvidence.profileCoverage === "number" &&
-    ["date", "time", "timezone", "kind"].every((field) => TRUST_LEVELS.has(String(trust[field]))) &&
-    ["fresh", "cache-fallback", "snapshot-fallback"].includes(String(trust.sourceFreshness)) &&
-    typeof trust.conflicts === "number"
-  );
 }
 
 function isDeadlineRecord(value: unknown): value is DeadlineRecord {
@@ -4645,13 +4619,6 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     "cache-fallback": "前回の取得データ（今回は上流にあたらず）",
     "snapshot-fallback": "確定済みの収録データ（今回は上流にあたらず）",
   };
-  const maturityLabel: Record<string, string> = {
-    established: "確立",
-    emerging: "成長中",
-    new: "新規",
-    unverified: "未確認",
-  };
-
   function axesForRecommendation(r: AppRow, now: number): RecommendationAxes {
     const published = isRecommendationAxes(r.conf.recommendation_axes)
       ? r.conf.recommendation_axes
@@ -4702,16 +4669,9 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     card.appendChild(meta);
 
     const axes = axesForRecommendation(r, now);
-    const maturityEvidence = axes.venue_maturity.evidence;
+    const venueEvidence = axes.venue_evidence;
     const deadlineTrust = axes.deadline_trust;
-    line(
-      card,
-      // 「観測年数」「プロフィール」も実装側の語。`profileCoverage` はその会議の
-      // 論文サンプル数（`recommendation-core.ts` の `strings(conference.papers)`）なので、
-      // 数えているものを書く。
-      `会議の続いている年数: ${maturityLabel[axes.venue_maturity.status]}（確認した年 ${maturityEvidence.yearsObserved}年、その会議の論文サンプル ${maturityEvidence.profileCoverage}件）`,
-      "card-section recommendation-axes",
-    );
+    line(card, venueEvidenceLineJa(venueEvidence), "card-section recommendation-axes");
     line(
       card,
       `種別: ${KIND_LABEL[r.kind] || r.kind || "未確認"}`,

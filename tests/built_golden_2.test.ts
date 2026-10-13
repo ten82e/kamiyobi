@@ -2,6 +2,11 @@ import { existsSync, readFileSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { expect, it } from "vitest";
+import {
+  isRecommendationAxes,
+  recommendationAxes,
+  venueEvidenceLineJa,
+} from "../site/recommendation-core.ts";
 import Recommender from "../site/recommender.ts";
 import {
   data,
@@ -4098,20 +4103,86 @@ it("推薦のカードの行が、てびきの数と名前と合う（SPEC §7�
   const app = siteRuntime();
   const card = jsFunction(app, "makeRecommendationCard");
   const template = readFileSync(join(REPO_ROOT, "site", "template.html"), "utf8");
-  const labels = Array.from(
-    new Set(
-      Array.from(
-        card.matchAll(/`([^`\n$]{2,20})[^`]*`,\s*\n?\s*"card-section recommendation-axes"/g),
-        // ラベルは最初の読点・コロンまで（「締切の確認状況: 日付 …」の行がある）。
-        (m) => m[1].split(/[:：]/)[0].trim(),
-      ),
-    ),
+  // Execute the actual card renderer; helper-generated lines must count too.
+  type Element = {
+    className: string;
+    textContent: string;
+    children: Element[];
+    appendChild(child: Element): void;
+  };
+  const document = {
+    createElement: () => {
+      const element: Element = {
+        className: "",
+        textContent: "",
+        children: [],
+        appendChild(child) {
+          this.children.push(child);
+        },
+      };
+      return element;
+    },
+  };
+  const line = new Function("document", `return (${jsFunction(app, "line")});`)(document);
+  const axesFor = new Function(
+    "isRecommendationAxes",
+    "recommendationAxes",
+    `return (${jsFunction(app, "axesForRecommendation")});`,
+  )(isRecommendationAxes, recommendationAxes);
+  const table = (name: string) => {
+    const match = new RegExp(`const ${name} = (\\{[\\s\\S]*?\\});`).exec(app);
+    expect(match, `missing runtime table: ${name}`).not.toBeNull();
+    return new Function(`return (${match![1]});`)();
+  };
+  const render = new Function(
+    "document",
+    "line",
+    "axesForRecommendation",
+    "venueEvidenceLineJa",
+    "titleWithYear",
+    "safeExternalUrl",
+    "recommendationAvailability",
+    "KIND_LABEL",
+    "trustLabel",
+    "freshnessLabel",
+    `return (${card});`,
+  )(
+    document,
+    line,
+    axesFor,
+    venueEvidenceLineJa,
+    new Function(`return (${jsFunction(app, "titleWithYear")});`)(),
+    Recommender.safeExternalUrl,
+    new Function(`return (${jsFunction(app, "recommendationAvailability")});`)(),
+    Recommender.kindLabelTable(),
+    table("trustLabel"),
+    table("freshnessLabel"),
   );
-  expect(labels.length, "カードの行が見当たらない（検査が空振り）").toBeGreaterThan(2);
-  // 同じ値の言い替えを戻さない。画面に出る語はテンプレートとランタイムの文字列から出る
-  // （`public/` は CI ではテスト後にビルドするので、ビルド成果物を読まない）。
-  expect(card, "同じ評価に二つ目の名前を付けた").not.toContain("研究適合度");
-  expect(template, "画面に二つ目の名前が残っている").not.toContain("研究適合度");
+  const rendered = render(
+    {
+      conf: {
+        key: "journal",
+        title: "Journal",
+        categories: [],
+        tags: [],
+        editions: [{ year: 1980 }, { year: 2026 }],
+        papers: ["Sample"],
+      },
+      ed: {},
+      kind: "journal",
+      _availability: { status: "ongoing" },
+    },
+    Date.parse("2026-10-13T00:00:00Z"),
+  ) as Element;
+  const displayed = rendered.children
+    .filter((child) => child.className.includes("recommendation-axes"))
+    .map((child) => child.textContent);
+  expect(displayed).toHaveLength(4);
+  expect(displayed[0]).toBe("収録データ: 開催年 2年分 ／ 論文サンプル 1件");
+  expect(displayed.join("\n")).not.toMatch(/会議の続いている年数|新規|成長中|確立/);
+  const labels = displayed.map((text) => text.split(/[:：]/)[0]);
+  expect(rendered.children.map((child) => child.textContent).join(" ")).not.toContain("研究適合度");
+  expect(template).not.toContain("研究適合度");
   const at = template.indexOf("カードの頭にある<strong>一致評価</strong>");
   expect(at).toBeGreaterThan(0);
   const guide = template.slice(template.lastIndexOf("<dd>", at), template.indexOf("</dd>", at));
