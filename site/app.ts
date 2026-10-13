@@ -666,6 +666,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   let recommendationData: Catalog | null = null;
   let recommendationPromise: Promise<void> | null = null;
   let recommendationError = false;
+  let recommendationNeedsRetry = false;
   let historyStatus: LoadStatus = "idle";
   // 「収録の全体を読む」ボタンで立つ旗。既定（この旗が下がったまま）は品書だけで開く –
   // 9 MB 強を毎回読みに行くと開くのが遅くなる。
@@ -5193,6 +5194,15 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       fullRecordNeeded(state.past, state.win, fullRecordRequested) &&
       (historyStatus === "loading" || historyStatus === "error");
     $("historyStatus").hidden = !showHistoryStatus;
+    $("recommendationRetryStatus").hidden = !recMode || !recommendationNeedsRetry;
+    if (recMode && recommendationNeedsRetry) {
+      $("recommendationRetryNote").textContent = recommendationPromise
+        ? "推薦データを再読み込み中…"
+        : recommendationData
+          ? "推薦用データを取得できませんでした。取得済みのデータで表示しています。"
+          : "推薦用データを取得できませんでした。入力を残したまま再試行できます。";
+      $("recommendationRetry").toggleAttribute("disabled", Boolean(recommendationPromise));
+    }
     /* 品書を見ている間だけ、品書の果てを伝える（読んでしまったあとは件数が増えるので黙る）。
      * `history_ref` が無い品書（古い差し込み）では押せる物を出さない。 */
     const showFullRecordOffer =
@@ -5270,6 +5280,8 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         const catalog = catalogFrom(result.index);
         if (!catalog) throw new Error("invalid recommendation catalog");
         recommendationData = catalog;
+        recommendationNeedsRetry =
+          !result.state.semantic && result.state.reason !== "semantic_status lexical-only";
         EMBEDDINGS = result.embeddings ? embeddingBundle(result.embeddings) : null;
         semanticReason = result.state.reason;
         if (!result.state.semantic || !EMBEDDINGS) clearSemantic("error");
@@ -5282,10 +5294,23 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       })
       .catch(() => {
         recommendationError = true;
+        recommendationNeedsRetry = true;
         semanticReason = "recommendation data unavailable";
         clearSemantic("error");
         render();
+      })
+      .finally(() => {
+        recommendationPromise = null;
+        render();
       });
+  }
+
+  function retryRecommendationData() {
+    if (recommendationPromise) return;
+    recommendationData = null;
+    recommendationError = false;
+    loadRecommendationData();
+    render();
   }
 
   function resolveHistoryRef() {
@@ -6462,6 +6487,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   });
   $("modeRecommend").addEventListener("click", () => setMode("recommend"));
   $("modeDeadlines").addEventListener("click", () => setMode("deadlines"));
+  $("recommendationRetry").addEventListener("click", retryRecommendationData);
   $("historyRetry").addEventListener("click", () => {
     if (state.mode !== "deadlines" || !state.past) return;
     loadHistoryData();
