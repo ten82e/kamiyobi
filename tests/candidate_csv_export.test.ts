@@ -356,3 +356,49 @@ describe("推薦の候補を CSV で持ち出す（第 870 回）", () => {
     );
   });
 });
+
+it("候補の CSV は順位表と同じ行を書く（第 1095 囘）", () => {
+  /* 第 1088 囘で分類の boost に門を付けた（證據が在る投稿先だけ順位表に入る）。
+   * 候補の CSV は `shown`（＝順位表）を書き出すので、其の變更が其の儘效いて居る筈。
+   * **同じ筈**を固定化する – CSV は「絞り込み後の全行」を書く（てびきの言之）ので、
+   * 畫面が 20 件でも CSV には全部出る。雜音が除かれた分、行數も減つて居る。
+   *
+   * 實測 2026-11-19: 話題の手がかりが無い論文は順位表 0 行（＝CSV も 0 行）。
+   * 1 件だけ當たる論文は順位表 1 行（＝CSV も 1 行の見出し + 1 行の本文）。 */
+  const src = jsFunction(siteRuntime(), "exportShownCsv");
+  const 落ちた: string[] = [];
+  let 本文 = "";
+  const anchor = { href: "", download: "", click: () => 落ちた.push(anchor.download) };
+  const document = {
+    createElement: () => anchor,
+    body: { appendChild: () => {}, removeChild: () => {} },
+    getElementById: () => ({ value: "合意形成とフォールトトレランス" }),
+  };
+  class Blob {
+    constructor(parts: unknown[]) {
+      本文 = String(parts[0]);
+    }
+  }
+  const URL = { createObjectURL: () => "blob:x", revokeObjectURL: () => {} };
+  /* 走らせる。`shown` は**順位表その物**を渡す（CSV は `shown` を書く）。 */
+  const 走らせる = new Function(
+    "shown",
+    "state",
+    "Recommender",
+    "Blob",
+    "URL",
+    "document",
+    "candidateScopeOnScreen",
+    vmSafeSource(`${src}\nreturn exportShownCsv;`),
+  )([候補()], { mode: "recommend" }, Recommender, Blob, URL, document, () => true) as () => void;
+  走らせる();
+  expect(落ちた.length, "1 本も落ちて來ない").toBe(1);
+  expect(落ちた[0], "候補の名前が違う").toMatch(/^kamiyobi-candidates-\d{8}\.csv$/);
+  /* **順位表の行數だけ**書く – 雜音を足さない（第 1088 囘の門が CSV にも效いて居る）。
+   * 見出し 1 行 + 渡した行 1 行。 */
+  const 行 = 本文.split("\n").filter((l) => l.length > 0);
+  expect(行.length, "順位表の行數と違ふ（餘計な行を書いた）").toBe(2);
+  expect(行[0], "候補の見出しでない").toContain("一致評価");
+  /* BOM 付きで、Excel が日本語として読める形（第 1095 囘の既存の決まり）。 */
+  expect(本文.startsWith("\ufeff"), "BOM が無い").toBe(true);
+});
