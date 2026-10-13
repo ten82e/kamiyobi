@@ -97,7 +97,7 @@ interface SnapshotFile {
 let snapshotCache: SnapshotFile | null = null;
 let catalogCache: Record<string, unknown> | null | undefined;
 
-/** 収録の全体（`data/snapshot.json`。5,069 行・約 9MB）。 */
+/** 収録全体を保存した `data/snapshot.json`。 */
 function snapshot(): SnapshotFile {
   if (!snapshotCache) snapshotCache = JSON.parse(readFileSync(DATA_PATH, "utf8")) as SnapshotFile;
   return snapshotCache;
@@ -1793,7 +1793,29 @@ interface RecommendationIndex {
 }
 let recommendationCache: RecommendationIndex | null | undefined;
 
-/** 推薦の索引を一度だけ読み、同じ下準備（名前の IDF と reranker）をして行を作る。 */
+let dataFileVersions = "";
+function refreshDataCaches(): void {
+  const versions = [CATALOG_PATH, DATA_PATH, RECOMMENDATION_PATH]
+    .map((path) => {
+      try {
+        const stat = statSync(path, { bigint: true });
+        return `${stat.dev}:${stat.ino}:${stat.size}:${stat.mtimeNs}:${stat.ctimeNs}`;
+      } catch {
+        return "unavailable";
+      }
+    })
+    .join("|");
+  if (versions === dataFileVersions) return;
+  dataFileVersions = versions;
+  snapshotCache = null;
+  catalogCache = undefined;
+  screenCache = null;
+  allCache = null;
+  軸の索引 = undefined;
+  recommendationCache = undefined;
+}
+
+/** 索引の更新時に読み直し、名前の IDF と reranker を設定して候補行を作る。 */
 function recommendation(): RecommendationIndex | null {
   if (recommendationCache !== undefined) return recommendationCache;
   try {
@@ -1952,7 +1974,7 @@ function recommendVenues(
     returned: 見本.length,
     next_offset: offset + 見本.length < 候補.length ? offset + 見本.length : null,
     evaluated_at: new Date(now).toISOString(),
-    generated_at: catalog()?.generated_at ?? 索引.generated_at,
+    generated_at: 索引.generated_at,
     uses_embeddings: false,
     uses_reranker: 索引.uses_reranker,
     ignored_filters: 無視した,
@@ -2227,6 +2249,7 @@ function callTool(
   now: number,
   receive?: (result: Record<string, unknown>) => void,
 ): string {
+  refreshDataCaches();
   if (name === "search_deadlines") return searchDeadlines(args, now, receive);
   if (name === "list_upcoming") return listUpcoming(args, now);
   if (name === "venue_info") return venueInfo(args, now);
@@ -2367,7 +2390,7 @@ function handle(raw: string, now: number): void {
   if (id !== undefined) fail(-32601, `知らない呼び出し: ${String(method)}`);
 }
 
-export function runStdio(now = Date.now()): void {
+export function runStdio(now?: number): void {
   let buffer = "";
   process.stdin.setEncoding("utf8");
   process.stdin.on("data", (chunk: string) => {
@@ -2376,14 +2399,14 @@ export function runStdio(now = Date.now()): void {
     while (at >= 0) {
       const raw = buffer.slice(0, at).trim();
       buffer = buffer.slice(at + 1);
-      if (raw) handle(raw, now);
+      if (raw) handle(raw, now ?? Date.now());
       at = buffer.indexOf("\n");
     }
   });
   process.stdin.on("end", () => {
     const raw = buffer.trim();
     buffer = "";
-    if (raw) handle(raw, now);
+    if (raw) handle(raw, now ?? Date.now());
   });
 }
 
