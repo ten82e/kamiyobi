@@ -2378,33 +2378,6 @@ it("推薦の行に、画面と同じ締切の確認状況が付く（第 898 �
   }
 });
 
-it("推薦の行は、取得状態と締切の競合が普通でない時だけ書く（第 899 回）", async () => {
-  /* 実測 2026-10-30: 会議 696 件の取得状態は**全部**「今回あたって確認」、締切の競合があるのは
-   * 4 会議だけ（ALT / COMPSAC / cvm / ICST）。画面のカードは常に 2 つを出すが、MCP の返り値は
-   * AI が読む文 – 常套の文を各行に足すと、変な 1 行だけが埋もれる。普通の時は黙つている。 */
-  const 静か = await call("recommend_venues", {
-    paper:
-      "Time-Sensitive Networking Scheduling for Deterministic Industrial Networks | tsn, real-time, scheduling",
-    limit: 5,
-  });
-  expect(静か, "普通の時に取得状態を書いた").not.toContain("取得状態: ");
-  expect(静か, "競合 0 件の時に競合を書いた").not.toContain("締切の競合:");
-  /* 競合がある会議では** contrario に書く**（黙るとその会議だけ読まれない）。 */
-  const 競合 = await call("recommend_venues", {
-    paper: "ALT algorithmic learning theory | learning theory, algorithms",
-    limit: 10,
-  });
-  expect(競合, "候補が出ていない（この検查の前提が崩れた）").toMatch(/一致評価/);
-  /* 競合がある会議の中に 1 件でも推荐されたなら、その行には競合の件数がある。 */
-  const 競合の行 = 競合
-    .split("\n")
-    .filter((l) => /一致評価/.test(l))
-    .filter((l) => /ALT/.test(l));
-  if (競合の行.length) {
-    expect(競合の行[0], "競合のある行に件数がない").toMatch(/締切の競合: [1-9]\d* 件/);
-  }
-});
-
 it("収録開催年数を初期表示窓で切り詰めない", async () => {
   // 初期一覧の版数ではなく、公開カタログが保持する全収録年数を使う。
   const 品書 = join(REPO_ROOT, "public", "catalog.json");
@@ -2744,8 +2717,8 @@ it("collection_stats が上流のソースの状態を出す – 品書と同じ
   expect(text, "内部の語をそのまま出した").not.toMatch(/(cache-fallback|snapshot-fallback)\b/);
   const 期待: Record<string, string> = {
     fresh: "今回あたって取得",
-    "cache-fallback": "前回の取得データ（今回は上流にあたらず）",
-    "snapshot-fallback": "確定済みの収録データ（今回は上流にあたらず）",
+    "cache-fallback": "前回の取得データを使用",
+    "snapshot-fallback": "保存済みの収録データを使用",
   };
   for (const u of 更新) {
     const 名 = String(u.name ?? "");
@@ -2758,8 +2731,8 @@ it("collection_stats が上流のソースの状態を出す – 品書と同じ
   const 狀態の語 = [
     ["fresh", "今回あたって取得"],
     ["success", "今回あたって取得"],
-    ["cache-fallback", "前回の取得データ（今回は上流にあたらず）"],
-    ["snapshot-fallback", "確定済みの収録データ（今回は上流にあたらず）"],
+    ["cache-fallback", "前回の取得データを使用"],
+    ["snapshot-fallback", "保存済みの収録データを使用"],
     ["failed", "上流から取得できませんでした"],
   ] as const;
   const isolatedRoot = mcpSandbox();

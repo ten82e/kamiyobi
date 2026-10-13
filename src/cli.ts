@@ -10,6 +10,7 @@ import { fileURLToPath } from "node:url";
 import { isDeepStrictEqual, parseArgs as parseNodeArgs } from "node:util";
 import { dump as dumpYaml, load as loadYaml } from "js-yaml";
 import { generateCurated } from "../scripts/generate-curated.ts";
+import { recommendationRetrievalStatus } from "../site/recommendation-core.ts";
 import { booleanValue, normalizeShortEquals, positiveIntegerValue, stringValue } from "./args.ts";
 import { buildAll, collectPublishProvenance, type HealthSourceMetadata, toJson } from "./build.ts";
 import { gcEvidence, verifyEvidence, writeEvidenceIndex } from "./evidence.ts";
@@ -1009,13 +1010,9 @@ export async function cmdBuild(args: BuildArgs): Promise<number> {
   const recommendationSourceStatus = Object.fromEntries(
     Object.entries(sourceMetadata).map(([source, metadata]) => [
       source,
-      metadata.observationStatus === "fresh"
-        ? "fresh"
-        : metadata.status === "cache-fallback"
-          ? "cache-fallback"
-          : "snapshot-fallback",
+      recommendationRetrievalStatus(metadata as unknown as Record<string, unknown>),
     ]),
-  ) as Record<string, SourceStatus>;
+  );
   const stats = await buildAll(confs, config, outdir, now, {
     noEmbeddings: Boolean(args.noEmbeddings),
     localEmbeddingsOnly: offline,

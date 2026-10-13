@@ -257,8 +257,8 @@ function ソースの狀態(): string[] {
   const 語: Record<string, string> = {
     fresh: "今回あたって取得",
     success: "今回あたって取得",
-    "cache-fallback": "前回の取得データ（今回は上流にあたらず）",
-    "snapshot-fallback": "確定済みの収録データ（今回は上流にあたらず）",
+    "cache-fallback": "前回の取得データを使用",
+    "snapshot-fallback": "保存済みの収録データを使用",
     failed: "上流から取得できませんでした（そのソースの会議は収録にない）",
   };
   const 一覧 = (更新 as Array<{ name?: unknown; status?: unknown; fetched_at?: unknown }>)
@@ -1927,7 +1927,18 @@ function recommendVenues(
   const axesFor = (r: (typeof 候補)[number]) => {
     const stored = 品書の軸().get(String(r.row.conf.key ?? ""));
     return isRecommendationAxes(stored)
-      ? { ...stored, research_fit: { ...stored.research_fit, score: r.fit.score } }
+      ? {
+          ...stored,
+          deadline_trust: {
+            ...stored.deadline_trust,
+            sourceFreshness: recommendationAxes(
+              r.row.conf as unknown as Record<string, unknown>,
+              null,
+              now,
+            ).deadline_trust.sourceFreshness,
+          },
+          research_fit: { ...stored.research_fit, score: r.fit.score },
+        }
       : recommendationAxes(r.row.conf as unknown as Record<string, unknown>, r.fit.score, now);
   };
   receive?.({
@@ -2012,9 +2023,10 @@ function recommendVenues(
         ` ／ 種別 ${信賴の札[締切の信賴.kind] ?? String(締切の信賴.kind)}`;
 
       const 新しい狀態: Record<string, string> = {
-        fresh: "今回あたって確認",
-        "cache-fallback": "前回の取得データ（今回は上流にあたらず）",
-        "snapshot-fallback": "確定済みの収録データ（今回は上流にあたらず）",
+        fresh: "取得時に上流へアクセス",
+        unknown: "取得履歴なし",
+        "cache-fallback": "前回の取得データを使用",
+        "snapshot-fallback": "保存済みの収録データを使用",
       };
       const 特記 = [
         ...(締切の信賴.sourceFreshness !== "fresh"

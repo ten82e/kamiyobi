@@ -117,6 +117,62 @@ const input = [
 ];
 
 describe("MCP recommendation results with independent raw fixtures", () => {
+  it("reports missing retrieval history even when cached axes claim fresh", () => {
+    const item = venue("gpu", "GPU", "gpu parallel programming");
+    const root = sandbox([item]);
+    try {
+      const result = call(root, { paper: "gpu parallel programming", limit: 1 }).result!;
+      expect(result.structuredContent!.rows).toHaveLength(1);
+      expect(result.structuredContent!.rows[0].axes.deadline_trust).toMatchObject({
+        sourceFreshness: "unknown",
+      });
+      expect(result.content.map((c) => c.text).join("\n")).toContain("取得状態: 取得履歴なし");
+      const catalogPath = join(root, "public/catalog.json");
+      const catalog = JSON.parse(readFileSync(catalogPath, "utf8"));
+      catalog.conferences[0].recommendation_axes = result.structuredContent!.rows[0].axes;
+      catalog.conferences[0].recommendation_axes.deadline_trust.sourceFreshness = "fresh";
+      writeFileSync(catalogPath, JSON.stringify(catalog));
+      const cached = call(root, { paper: "gpu parallel programming", limit: 1 }).result!;
+      expect(cached.structuredContent!.rows[0].axes.deadline_trust).toMatchObject({
+        sourceFreshness: "unknown",
+      });
+      expect(cached.content.map((c) => c.text).join("\n")).toContain("取得状態: 取得履歴なし");
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it.each(["fresh", "cache-fallback", "snapshot-fallback"])(
+    "preserves explicit %s retrieval status and reports conflicts",
+    (status) => {
+      const item = venue("gpu", "GPU", "gpu parallel programming");
+      const edition = item.editions[0] as { deadlines: Array<Record<string, unknown>> };
+      edition.deadlines[0].origins = [{ sourceClass: "official-cfp", freshness: status }];
+      edition.deadlines[0].conflicts = [{ sourceClass: "aggregator" }];
+      const root = sandbox([item]);
+      try {
+        const result = call(root, { paper: "gpu parallel programming", limit: 1 }).result!;
+        expect(result.structuredContent!.rows).toHaveLength(1);
+        expect(result.structuredContent!.rows[0].axes.deadline_trust).toMatchObject({
+          sourceFreshness: status,
+          conflicts: 1,
+        });
+        const text = result.content.map((c) => c.text).join("\n");
+        expect(text).toContain("締切の競合: 1 件");
+        if (status === "fresh") expect(text).not.toContain("取得状態:");
+        else
+          expect(text).toContain(
+            status === "cache-fallback"
+              ? "取得状態: 前回の取得データを使用"
+              : "取得状態: 保存済みの収録データを使用",
+          );
+        expect(text).not.toContain("今回あたって確認");
+      } finally {
+        rmSync(root, { recursive: true, force: true });
+      }
+    },
+  );
+
   it("paginates ranked candidates without repeats and retains absolute rank", () => {
     const root = sandbox(input);
     const paper = "GPU programming memory kernels";

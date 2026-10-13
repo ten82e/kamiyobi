@@ -4617,8 +4617,9 @@ it("説明文に開発用語を残さない（SPEC §7）", () => {
   const recSrc = siteRuntime("recommender.js");
   const _runtimeOnly = [...japaneseStringLiterals(runtime), ...japaneseStringLiterals(recSrc)];
   for (const phrase of [
-    "今回あたって確認",
-    "確定済みの収録データ（今回は上流にあたらず）",
+    "取得履歴なし",
+    "取得時に上流へアクセス",
+    "保存済みの収録データを使用",
     "その会議の論文サンプル",
   ]) {
     // 抽出器は正規表現リテラルの中の引用符でずれることがあるので、ある方を見る

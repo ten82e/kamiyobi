@@ -32,7 +32,7 @@ import {
   jstParts,
   statusMarksJa,
 } from "../site/ics.ts";
-import { recommendationAxes } from "../site/recommendation-core.ts";
+import { recommendationAxes, type SourceFreshness } from "../site/recommendation-core.ts";
 
 export type { IcsCalendarMeta, IcsRow } from "../site/ics.ts";
 export {
@@ -1454,8 +1454,9 @@ export function toRecommendationIndex(
               revision:
                 typeof evidence.sourceRevision === "string" ? evidence.sourceRevision : null,
               fetchedAt: typeof evidence.retrievedAt === "string" ? evidence.retrievedAt : null,
-              freshness:
-                status === "cache-fallback" || status === "snapshot-fallback" ? status : "fresh",
+              freshness: ["fresh", "cache-fallback", "snapshot-fallback"].includes(status)
+                ? status
+                : "unknown",
             };
           })
           .filter((origin) => origin.source);
@@ -1789,7 +1790,7 @@ export interface HealthReport {
 export interface HealthReportOptions {
   sourceStatus?: Record<string, HealthSourceStatus>;
   sourceMetadata?: Record<string, HealthSourceMetadata>;
-  recommendationSourceStatus?: Record<string, HealthSourceStatus>;
+  recommendationSourceStatus?: Record<string, SourceFreshness>;
   buildInputMode?: "online-refresh" | "offline-snapshot";
   sourceFailures?: string[];
   snapshotFallback?: boolean;

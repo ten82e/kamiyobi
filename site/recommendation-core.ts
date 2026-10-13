@@ -9,7 +9,7 @@ export type TrustLevel =
   | "aggregator"
   | "assumption"
   | "unverified";
-export type SourceFreshness = "fresh" | "cache-fallback" | "snapshot-fallback";
+export type SourceFreshness = "fresh" | "cache-fallback" | "snapshot-fallback" | "unknown";
 
 export interface VenueEvidence {
   yearsObserved: number;
@@ -147,9 +147,19 @@ function fieldTrust(deadlines: Array<{ deadline: JsonRecord }>, field: TrustFiel
 
 function sourceFreshness(value: unknown): SourceFreshness | null {
   const status = String(value ?? "").trim();
-  return status === "fresh" || status === "cache-fallback" || status === "snapshot-fallback"
-    ? status
+  return ["fresh", "cache-fallback", "snapshot-fallback", "unknown"].includes(status)
+    ? (status as SourceFreshness)
     : null;
+}
+
+export function recommendationRetrievalStatus(metadata: JsonRecord): SourceFreshness {
+  const status = sourceFreshness(metadata.status);
+  if (status === "cache-fallback" || status === "snapshot-fallback") return status;
+  return status === "fresh" &&
+    typeof metadata.fetchedAt === "string" &&
+    Number.isFinite(Date.parse(metadata.fetchedAt))
+    ? "fresh"
+    : "unknown";
 }
 
 function freshnessValues(record: JsonRecord): SourceFreshness[] {
@@ -169,56 +179,36 @@ function freshnessValues(record: JsonRecord): SourceFreshness[] {
 }
 
 function sourceFreshnessOf(
-  conference: JsonRecord,
   selected: Array<{ deadline: JsonRecord; edition: JsonRecord }>,
 ): SourceFreshness {
-  // A card's freshness belongs to its displayed deadline. Venue-wide source
-  // status would incorrectly mark a fresh paper deadline stale because another
-  // deadline came from a snapshot.
-  const originValues = selected.flatMap(({ deadline }) =>
-    (() => {
-      const origins = records(deadline.origins).sort(
-        (left, right) =>
-          TRUST_RANK[trustLevel(right.sourceClass ?? right.source_class ?? right.confidence)] -
-          TRUST_RANK[trustLevel(left.sourceClass ?? left.source_class ?? left.confidence)],
-      );
-      for (const rank of [
-        ...new Set(
-          origins.map(
-            (origin) =>
-              TRUST_RANK[
-                trustLevel(origin.sourceClass ?? origin.source_class ?? origin.confidence)
-              ],
-          ),
-        ),
-      ].sort((left, right) => right - left)) {
-        const values = origins
-          .filter(
-            (origin) =>
-              TRUST_RANK[
-                trustLevel(origin.sourceClass ?? origin.source_class ?? origin.confidence)
-              ] === rank,
-          )
-          .flatMap(freshnessValues);
-        if (values.length) return values;
+  const combine = (values: SourceFreshness[]): SourceFreshness => {
+    if (values.includes("snapshot-fallback")) return "snapshot-fallback";
+    if (values.includes("cache-fallback")) return "cache-fallback";
+    if (values.includes("unknown")) return "unknown";
+    return values.includes("fresh") ? "fresh" : "unknown";
+  };
+  // Report retrieval status for each displayed deadline, without borrowing a
+  // lower-trust origin's status or an unrelated edition's retrieval history.
+  return combine(
+    selected.map(({ deadline, edition }) => {
+      const origins = records(deadline.origins);
+      if (origins.length) {
+        const rank = (origin: JsonRecord) =>
+          TRUST_RANK[trustLevel(origin.sourceClass ?? origin.source_class ?? origin.confidence)];
+        const highest = Math.max(...origins.map(rank));
+        return combine(
+          origins
+            .filter((origin) => rank(origin) === highest)
+            .map((origin) => combine(freshnessValues(origin))),
+        );
       }
-      return [];
-    })(),
-  );
-  if (originValues.includes("snapshot-fallback")) return "snapshot-fallback";
-  if (originValues.includes("cache-fallback")) return "cache-fallback";
-  if (originValues.length) return "fresh";
-  const selectedRecords = selected.length
-    ? selected.flatMap(({ deadline, edition }) => [
+      return combine([
         ...freshnessValues(edition),
         ...freshnessValues(deadline),
         ...records(deadline.evidence).flatMap(freshnessValues),
-      ])
-    : records(conference.editions).flatMap(freshnessValues);
-  const values = selectedRecords;
-  if (values.includes("snapshot-fallback")) return "snapshot-fallback";
-  if (values.includes("cache-fallback")) return "cache-fallback";
-  return "fresh";
+      ]);
+    }),
+  );
 }
 
 function conflictCount(deadlines: Array<{ deadline: JsonRecord }>): number {
@@ -231,7 +221,6 @@ function conflictCount(deadlines: Array<{ deadline: JsonRecord }>): number {
 }
 
 function deadlineTrust(
-  conference: JsonRecord,
   deadlines: Array<{ deadline: JsonRecord; edition: JsonRecord }>,
 ): DeadlineTrust {
   const trust = Object.fromEntries(
@@ -239,7 +228,7 @@ function deadlineTrust(
   ) as Pick<DeadlineTrust, TrustField>;
   return {
     ...trust,
-    sourceFreshness: sourceFreshnessOf(conference, deadlines),
+    sourceFreshness: sourceFreshnessOf(deadlines),
     conflicts: conflictCount(deadlines),
   };
 }
@@ -353,7 +342,9 @@ export function isRecommendationAxes(value: unknown): value is RecommendationAxe
       String(axes.evidence_quality),
     ) &&
     TRUST_FIELDS.every((field) => Object.hasOwn(TRUST_RANK, String(t[field]))) &&
-    ["fresh", "cache-fallback", "snapshot-fallback"].includes(String(t.sourceFreshness)) &&
+    ["fresh", "cache-fallback", "snapshot-fallback", "unknown"].includes(
+      String(t.sourceFreshness),
+    ) &&
     typeof t.conflicts === "number" &&
     Number.isSafeInteger(t.conflicts) &&
     t.conflicts >= 0
@@ -366,7 +357,7 @@ export function recommendationAxes(
   now: number = Date.now(),
 ): RecommendationAxes {
   const deadlines = deadlineRecords(conference, now);
-  const trust = deadlineTrust(conference, deadlines);
+  const trust = deadlineTrust(deadlines);
   const editions = records(conference.all_editions ?? conference.editions);
   const evidence = venueEvidence(conference, editions);
   const hasExact = deadlines.some(

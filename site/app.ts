@@ -4615,9 +4615,10 @@ function semanticOutput(value: unknown): value is SemanticOutput {
    * 実装側の語で、読者には「その締切が今日の見積もりなのか、古いデータなのか」が
    * 伝わらなかった（2026-09-23 確認）。何が違うかで書く。 */
   const freshnessLabel: Record<string, string> = {
-    fresh: "今回あたって確認",
-    "cache-fallback": "前回の取得データ（今回は上流にあたらず）",
-    "snapshot-fallback": "確定済みの収録データ（今回は上流にあたらず）",
+    fresh: "取得時に上流へアクセス",
+    unknown: "取得履歴なし",
+    "cache-fallback": "前回の取得データを使用",
+    "snapshot-fallback": "保存済みの収録データを使用",
   };
   function axesForRecommendation(r: AppRow, now: number): RecommendationAxes {
     const published = isRecommendationAxes(r.conf.recommendation_axes)
@@ -4626,6 +4627,14 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     if (published) {
       return {
         ...published,
+        deadline_trust: {
+          ...published.deadline_trust,
+          sourceFreshness: recommendationAxes(
+            r.conf as unknown as Record<string, unknown>,
+            null,
+            now,
+          ).deadline_trust.sourceFreshness,
+        },
         research_fit: { ...published.research_fit, score: r._matchScore ?? null },
       };
     }

@@ -4167,6 +4167,26 @@ it("推薦のカードの行が、てびきの数と名前と合う（SPEC §7�
         tags: [],
         editions: [{ year: 1980 }, { year: 2026 }],
         papers: ["Sample"],
+        recommendation_axes: {
+          research_fit: { score: null, categories: [], tags: [] },
+          venue_evidence: {
+            yearsObserved: 2,
+            profileCoverage: 1,
+            dblpLinked: false,
+            publisherSource: false,
+            rankListed: false,
+          },
+          deadline_precision: "none",
+          evidence_quality: "none",
+          deadline_trust: {
+            date: "unverified",
+            time: "unverified",
+            timezone: "unverified",
+            kind: "unverified",
+            sourceFreshness: "fresh",
+            conflicts: 0,
+          },
+        },
       },
       ed: {},
       kind: "journal",
@@ -4178,6 +4198,7 @@ it("推薦のカードの行が、てびきの数と名前と合う（SPEC §7�
     .filter((child) => child.className.includes("recommendation-axes"))
     .map((child) => child.textContent);
   expect(displayed).toHaveLength(4);
+  expect(displayed[3]).toContain("取得状態: 取得履歴なし");
   expect(displayed[0]).toBe("収録データ: 開催年 2年分 ／ 論文サンプル 1件");
   expect(displayed.join("\n")).not.toMatch(/会議の続いている年数|新規|成長中|確立/);
   const labels = displayed.map((text) => text.split(/[:：]/)[0]);

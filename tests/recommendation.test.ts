@@ -75,7 +75,7 @@ describe("recommendation axes", () => {
         time: "official",
         timezone: "official",
         kind: "official",
-        sourceFreshness: "fresh",
+        sourceFreshness: "unknown",
         conflicts: 0,
       },
       evidence_quality: "official",
@@ -336,7 +336,7 @@ describe("recommendation axes", () => {
     expect(published.recommendation_axes).toMatchObject({
       research_fit: { score: null, categories: ["systems"] },
       venue_evidence: { yearsObserved: 4, profileCoverage: 2 },
-      deadline_trust: { date: "official", sourceFreshness: "fresh" },
+      deadline_trust: { date: "official", sourceFreshness: "unknown" },
     });
   });
 
