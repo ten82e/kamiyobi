@@ -26,6 +26,19 @@ function displayCandidates(data: Parameters<typeof Recommender.candidateRows>[0]
   );
 }
 
+function rawSubmissionIsClosed(
+  row: ReturnType<typeof Recommender.venueRecommendations>[number]["row"],
+  now: number,
+): boolean {
+  if (row.kind === "journal") return false;
+  const boundary =
+    row.dl.precision === "date-only" ? row.dl.latest_utc : (row.dl.utc ?? row.dl.at_utc);
+  expect(boundary, "終了判定に必要な元の締切境界がない").toBeTypeOf("string");
+  const time = Date.parse(boundary as string);
+  expect(Number.isFinite(time), "元の締切境界を解釈できない").toBe(true);
+  return now > time;
+}
+
 /** Run missing/corrupt catalog scenarios without changing shared production fixtures. */
 function mcpSandbox(): string {
   const root = realpathSync(tempWork("kamiyobi-mcp-isolated-"));
@@ -2213,7 +2226,7 @@ it("推薦の pool は画面と同じ組み立て（第 894 回）", async () =>
   );
   expect(text, "先頭の候補が違う").toContain(String(正[0].row.conf.title));
   /* **過ぎた候補が幾つあるか**を頭で分けて言う（黙つていると AI が今出せる樣に勧める）。 */
-  const 過ぎた = 正.filter((r) => Number(r.row.t) < now).length;
+  const 過ぎた = 正.filter((r) => rawSubmissionIsClosed(r.row, now)).length;
   if (過ぎた > 0)
     expect(text, "過ぎた候補の件数を言つていない").toContain(`うち ${過ぎた} 件は締切が過ぎた会議`);
 });
@@ -3710,7 +3723,7 @@ it("list_upcoming の件数は、その窓の事实と合う（第 990 回）", 
   }
 });
 
-it("推薦の「候補の件数」と「過ぎた件数」は事実と合う（第 992 回）", async () => {
+it("MCPの候補件数は共有推薦処理と一致し、終了件数は元の締切データに合う", async () => {
   const 品書 = JSON.parse(readFileSync(join(REPO_ROOT, "public", "catalog.json"), "utf8")) as {
     conferences?: unknown[];
     reranker?: unknown;
@@ -3730,7 +3743,7 @@ it("推薦の「候補の件数」と「過ぎた件数」は事実と合う（�
     const 候補 = Recommender.venueRecommendations(pool, lines, null, 今, {
       fieldedLexical: true,
     }).filter((r) => r.fit.score >= 10);
-    return { 候補: 候補.length, 過去: 候補.filter((r) => Number(r.row.t) < 今).length };
+    return { 候補: 候補.length, 過去: 候補.filter((r) => rawSubmissionIsClosed(r.row, 今)).length };
   };
   for (const 題 of [
     "分散システムのスケーラビリティと耐故障性",

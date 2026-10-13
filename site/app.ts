@@ -4574,10 +4574,10 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       return weekday ? `${date}(${weekday})` : date;
     };
     if (a.status === "uncertain" && a.local_date) {
-      return `次回締切: ${dayJa(a.local_date)}（時刻未確認。終了済みの可能性があります）`;
+      return `次回締切: ${dayJa(a.local_date)}（時刻未確認。終了済みの可能性があります）${a.estimated ? "（推定）" : ""}`;
     }
     if (a.status === "open" && a.local_date) {
-      return `次回締切: ${dayJa(a.local_date)}（時刻未確認）`;
+      return `次回締切: ${dayJa(a.local_date)}（時刻未確認）${a.estimated ? "（推定）" : ""}`;
     }
     if (a.status === "open" && a.timestamp) {
       const d = new Date(a.timestamp);

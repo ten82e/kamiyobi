@@ -374,12 +374,65 @@ describe("MCP recommendation results with independent raw fixtures", () => {
     const root = sandbox([
       venue("gpu-past", "GPU programming", "gpu programming", ["systems"], "2026-01-01T00:00:00Z"),
     ]);
-    expect(
-      call(root, { paper: "GPU programming" }).result?.structuredContent?.rows[0],
-    ).toMatchObject({
+    const result = call(root, { paper: "GPU programming" }).result;
+    expect(result?.structuredContent?.rows[0]).toMatchObject({
       availability: { status: "past" },
       deadline: { utc: "2026-01-01T00:00:00Z" },
     });
+    expect(result?.content[0].text).toContain("うち 1 件は締切が過ぎた会議です");
+    expect(result?.content[0].text).toContain("次回の開催に向けた参考");
+  });
+
+  it("does not count a date-only uncertain deadline as a closed venue", () => {
+    const uncertain = venue("gpu-uncertain", "GPU uncertain", "GPU programming");
+    uncertain.editions = [
+      {
+        id: "gpu-uncertain-2026",
+        year: 2026,
+        deadlines: [
+          {
+            kind: "paper",
+            precision: "date-only",
+            local_date: "2026-10-13",
+            earliest_utc: "2026-10-12T10:00:00Z",
+            latest_utc: "2026-10-14T11:59:59Z",
+          },
+        ],
+      },
+    ];
+    const root = sandbox([uncertain, venue("gpu-open", "GPU open", "GPU programming")]);
+    const result = call(root, { paper: "GPU programming" }).result;
+    expect(result?.structuredContent?.rows).toHaveLength(2);
+    expect(
+      result?.structuredContent?.rows.find((row) => row.venue_key === "gpu-uncertain")?.availability
+        .status,
+    ).toBe("uncertain");
+    expect(result?.content[0].text).not.toContain("締切が過ぎた会議です");
+  });
+
+  it("excludes an expired prediction from recommendation candidates", () => {
+    const predicted = venue("gpu-predicted", "GPU predicted", "GPU programming");
+    predicted.editions = [
+      {
+        id: "gpu-predicted-2026",
+        year: 2026,
+        estimated: true,
+        estimate: { window_start: "2026-01-01", window_end: "2026-01-10" },
+        deadlines: [
+          {
+            kind: "paper",
+            precision: "date-only",
+            local_date: "2026-01-05",
+            earliest_utc: "2026-01-04T10:00:00Z",
+            latest_utc: "2026-01-06T11:59:59Z",
+          },
+        ],
+      },
+    ];
+    const result = call(sandbox([predicted]), { paper: "GPU programming" }).result;
+    expect(result?.structuredContent?.total).toBe(0);
+    expect(result?.structuredContent?.rows).toEqual([]);
+    expect(result?.content[0].text).not.toContain("締切が過ぎた会議です");
   });
 
   it.each([-1, 1.5, "2", Number.MAX_SAFE_INTEGER + 1])("rejects invalid offsets: %s", (offset) => {
