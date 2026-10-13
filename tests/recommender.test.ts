@@ -39,6 +39,8 @@ import {
   EMBEDDING_REVISION,
   embeddingManifest,
   main as embeddingsMain,
+  PAPER_VEC_KEYS,
+  profileTexts,
   venuePapersHash,
 } from "../src/embeddings.ts";
 import { computeSemanticContentId, recommendationGatePolicyId } from "../src/semantic-content.ts";
@@ -3642,11 +3644,21 @@ describe("regression-known と VENUE_PAPERS の分離", () => {
   });
 
   it("paperVecs は skipEmb 会議にのみ付与される", () => {
-    const embSrc = readFileSync(join(REPO_ROOT, "src", "embeddings.ts"), "utf8");
-    // usenix-security, rtss に paperVecs を付与
-    expect(embSrc).toContain("for (const key of PAPER_VEC_KEYS)");
-    // ecrts も paperVecs は持たないが埋め込み本文からは除外
-    expect(embSrc).toContain('const SKIP_EMB_KEYS = new Set([...PAPER_VEC_KEYS, "ecrts"]);');
+    expect(PAPER_VEC_KEYS).toEqual(["usenix-security", "rtss"]);
+    const keys = ["usenix-security", "rtss", "ecrts", "sosp"];
+    const profiles = profileTexts(
+      keys.map((key) => ({ key, title: key })),
+      {},
+      false,
+      Object.fromEntries(keys.map((key) => [key, [`${key} prototype-marker`]])),
+    );
+    expect(profiles.keys).toEqual(keys);
+    expect(profiles.texts).toEqual([
+      "usenix-security",
+      "rtss",
+      "ecrts",
+      "sosp sosp prototype-marker",
+    ]);
   });
 });
 

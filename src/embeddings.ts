@@ -14,75 +14,40 @@ import { dirname, join } from "node:path";
 import { parseArgs as parseNodeArgs } from "node:util";
 import { env, type FeatureExtractionPipeline, pipeline } from "@huggingface/transformers";
 import { booleanValue, normalizeShortEquals } from "./args.ts";
+import {
+  EMBEDDING_DIM,
+  EMBEDDING_MODEL,
+  EMBEDDING_MULTI_MODEL,
+  EMBEDDING_MULTI_REVISION,
+  EMBEDDING_PROBE,
+  EMBEDDING_REVISION,
+  EMBEDDING_RUNTIME_VERSION,
+  EMBEDDING_SCHEMA_VERSION,
+  embedEach,
+  embedSet,
+  PAPER_VEC_KEYS,
+  round6,
+} from "./embedding-runtime.ts";
+import { toStringArray } from "./util.ts";
 
-export const EMBEDDING_MODEL = "Xenova/all-MiniLM-L6-v2";
-export const EMBEDDING_MULTI_MODEL = "Xenova/paraphrase-multilingual-MiniLM-L12-v2";
-export const EMBEDDING_DIM = 384;
-export const EMBEDDING_REVISION = "751bff37182d3f1213fa05d7196b954e230abad9";
-export const EMBEDDING_MULTI_REVISION = "2c4055b12046f11709e9df2c122e59ffbdc2f900";
-export const EMBEDDING_RUNTIME_VERSION = "transformers-4.2.0";
-export const EMBEDDING_SCHEMA_VERSION = 1;
-export const EMBEDDING_PROBE = "kamiyobi embedding compatibility probe";
-export const PAPER_VEC_KEYS: readonly string[] = ["usenix-security", "rtss"];
+export {
+  EMBEDDING_DIM,
+  EMBEDDING_MODEL,
+  EMBEDDING_MULTI_MODEL,
+  EMBEDDING_MULTI_REVISION,
+  EMBEDDING_PROBE,
+  EMBEDDING_REVISION,
+  EMBEDDING_RUNTIME_VERSION,
+  EMBEDDING_SCHEMA_VERSION,
+  PAPER_VEC_KEYS,
+} from "./embedding-runtime.ts";
 
-const extractorPromises = new Map<string, Promise<FeatureExtractionPipeline>>();
-
-function getExtractor(
-  model: string,
-  revision: string,
-  localFilesOnly = false,
-): Promise<FeatureExtractionPipeline> {
-  if (localFilesOnly && !env.cacheDir)
-    return Promise.reject(new Error("transformers cache directory is unavailable"));
-  const modelPath = localFilesOnly ? join(env.cacheDir!, model, revision) : model;
-  const cacheKey = `${modelPath}@${revision}:${localFilesOnly ? "local" : "remote"}`;
-  let p = extractorPromises.get(cacheKey);
-  if (!p) {
-    p = pipeline(
-      "feature-extraction",
-      modelPath,
-      localFilesOnly ? { local_files_only: true } : { revision },
-    ) as Promise<FeatureExtractionPipeline>;
-    extractorPromises.set(cacheKey, p);
-    void p.catch(() => extractorPromises.delete(cacheKey));
-  }
-  return p;
-}
-
-/** Round to 6 decimal places. */
-function round6(x: number): number {
-  return Math.round(x * 1e6) / 1e6;
-}
-
-/** 日本語会議（情報処理学会・電子情報通信学会の研究会・特集号等）のプロファイルに
- * 付与する日本語の分野キーワード。多言語モデル用のみ（英語モデルには使わない）。
- * 実測比較: これらを付与すると国内研究会のセマンティック検索が
- * top1 8.3%→25.0%・top5 16.7%→50.0% に改善（クエリの日本語語彙が会議に届く）。 */
-const JP_CAT_KW: Record<string, string> = {
-  systems:
-    "カーネル スケジューリング 仮想化 オペレーティングシステム ミドルウェア ストレージ リアルタイム 組み込み メモリ",
-  networking: "ネットワーク 通信 ルーティング 無線 プロトコル トラフィック",
-  hpc: "ハイパフォーマンス スーパーコンピュータ 並列 GPU MPI",
-  ai: "機械学習 深層学習 ニューラル 生成 推論",
-  security: "セキュリティ プライバシー 暗号 認証",
-  db: "データベース データマイニング 検索",
-  graphics: "グラフィックス 可視化 映像 画像 レンダリング",
-  hci: "ヒューマン ユーザインタフェース ユーザビリティ インタラクション",
-  theory: "アルゴリズム 計算量 複雑性 グラフ",
-};
-
-const ATTRIBUTE_TAGS = new Set([
-  "niche",
-  "workshop",
-  "domestic-jp",
-  "journal",
-  "special-issue",
-  "niche-jp",
-]);
-
-function hasJapanese(text: string): boolean {
-  return /[\u3040-\u9fff]/.test(text);
-}
+import {
+  ATTRIBUTE_TAGS,
+  profileTexts as cleanProfileTexts,
+  JP_CAT_KW,
+  SKIP_EMB_KEYS,
+} from "./embedding-profiles.ts";
 
 /** 会議のセマンティックプロファイルを実採択論文タイトルで強化する。
  * 会議名（International Conference on Machine Learning 等）だけでは実論文タイトル
@@ -518,162 +483,13 @@ export function benchmarkEmbeddingCacheKey(sourceYearMax: number): string {
   ].join("-");
 }
 
-import { toStringArray } from "./util.ts";
-
-function extractScopeText(c: Record<string, unknown>): string {
-  const parts: string[] = [];
-  if (typeof c.scope === "string" && c.scope.trim()) {
-    parts.push(c.scope.trim());
-  } else if (Array.isArray(c.scope)) {
-    parts.push(...toStringArray(c.scope));
-  }
-  if (typeof c.official_scope === "string" && c.official_scope.trim()) {
-    parts.push(c.official_scope.trim());
-  } else if (Array.isArray(c.official_scope)) {
-    parts.push(...toStringArray(c.official_scope));
-  }
-  return parts.filter(Boolean).join(" ").replace(/\s+/g, " ").trim();
-}
-
-/** 会議プロファイル文（カテゴリは正式名で展開）。
- * 多言語モデル用（forMulti）は、日本語名の会議にカテゴリの日本語キーワードを付与して
- * 日本語クエリから検索可能にする。英語モデルは日本語キーワードがノイズになるため
- * 付与しない（言語別の埋め込みを実測で分離した設計）。 */
 export function profileTexts(
   confs: unknown[] | null | undefined,
   catNames?: Record<string, string> | null,
   forMulti = false,
   venuePapers: Record<string, string[]> = VENUE_PAPERS,
 ): { keys: string[]; texts: string[] } {
-  const keys: string[] = [];
-  const texts: string[] = [];
-  const safeCats = catNames ?? {};
-  for (const raw of confs ?? []) {
-    const c = raw as Record<string, unknown>;
-    if (!c || typeof c !== "object") continue;
-    const key = String(c.key ?? "").trim();
-    if (!key) continue;
-    // カテゴリは短いキー（systems 等）より正式名（Systems, Architecture and Storage）で
-    // 埋め込む方がセマンティック品質が高い（ベンチマークで実測）。
-    const cats = toStringArray(c.categories);
-    const catText = cats.map((k) => safeCats[k] || k).join(" ");
-    const name = `${String(c.title ?? "")} ${String(c.full_name ?? "")}`;
-    // 多言語モデル用: 日本語名の会議に日本語の分野語を付与（クエリ側の日本語語彙と一致させる）
-    const isJpVenue =
-      hasJapanese(name) ||
-      toStringArray(c.tags).includes("domestic-jp") ||
-      toStringArray(c.tags).includes("niche-jp");
-    const jpKw = forMulti && isJpVenue ? cats.map((k) => JP_CAT_KW[k] || "").join(" ") : "";
-    // 実採択論文タイトル（あれば）でプロファイルを強化。
-    // 英語モデルにのみ付与する。
-    // multi にも付けると日本語クエリの sem ランキングを乱すため。
-    // 「タイトル個別ベクトルの平均」方式（会議名 + 各タイトルを別々に埋めて
-    // 平均）は golden top1 +2 エントリだが top5 -2・EN 合成 -3.6 で総合的に悪化した。
-    // 連結 mean pooling が最良（golden top5 73.5% / EN 合成 85.0%）。
-    // rtss/ecrts は論文が多様（scheduling/WCET/TSN/AI/FPGA）で平均重心が
-    // 汎用化し、無関係クエリ（memory safety 等）を奪う。埋め込みは会議名中心に保ち、
-    // papers は語彙一致（scoreLine）でのみ使う。
-    // usenix-security も 24 本が極めて多様（crypto/ML/web/ハードウェア/ブロックチェーン）で
-    // 重心が汎用化しやすいため vocab-only。
-    // icdcs を vocab-only にすると golden top5 65.7→62.9 に悪化するため、埋め込みは維持する。
-    const skipEmb = SKIP_EMB_KEYS.has(key);
-    const papers = !forMulti && !skipEmb ? (venuePapers[key] ?? []).slice(0, 8).join(" . ") : "";
-    const tags = toStringArray(c.tags).filter((tag) => !ATTRIBUTE_TAGS.has(tag));
-    const scopeText = extractScopeText(c);
-    const parts = [
-      String(c.title ?? ""),
-      String(c.full_name ?? ""),
-      catText,
-      scopeText,
-      jpKw,
-      tags.join(" "),
-      papers,
-    ];
-    const text = parts.filter(Boolean).join(" ").trim();
-    keys.push(key);
-    texts.push(text || key);
-  }
-  return { keys, texts };
-}
-
-/** 1 モデルぶんの埋め込み表 {key: number[]} を生成する。
- * keys に同じ key が複数回現れる場合（会議名 + 各代表論文タイトル）は、
- * その平均ベクトルを返し、会議の採択領域の重心にする。 */
-async function embedSet(
-  model: string,
-  texts: string[],
-  keys: string[],
-  revision: string,
-  localFilesOnly = false,
-): Promise<Record<string, number[]>> {
-  const extractor = await getExtractor(model, revision, localFilesOnly);
-  const sums = new Map<string, number[]>();
-  const counts = new Map<string, number>();
-  // メモリ節約のためバッチで処理
-  const batch = 128;
-  for (let start = 0; start < texts.length; start += batch) {
-    const chunk = texts.slice(start, start + batch);
-    const output = await extractor(chunk, { pooling: "mean", normalize: true });
-    const tensors = Array.isArray(output) ? output : [output];
-    let index = 0;
-    for (const tensor of tensors) {
-      const dims = tensor.dims;
-      const n = dims.length >= 1 ? dims[0] : 1;
-      const width = dims.length >= 2 ? dims[1] : EMBEDDING_DIM;
-      const arr = Array.from(tensor.data as Float32Array | ArrayLike<number>);
-      for (let i = 0; i < n; i++) {
-        const key = keys[start + index];
-        if (key !== undefined) {
-          const vec = arr.slice(i * width, (i + 1) * width);
-          const prev = sums.get(key);
-          if (!prev) {
-            sums.set(key, vec);
-          } else {
-            for (let d = 0; d < width; d++) prev[d] += vec[d];
-          }
-          counts.set(key, (counts.get(key) ?? 0) + 1);
-        }
-        index += 1;
-      }
-    }
-  }
-  const out: Record<string, number[]> = {};
-  for (const [key, sum] of sums) {
-    const c = counts.get(key) ?? 1;
-    const avg = sum.map((v) => v / c);
-    const norm = Math.sqrt(avg.reduce((a, v) => a + v * v, 0)) || 1;
-    out[key] = avg.map((v) => round6(v / norm));
-  }
-  return out;
-}
-
-/** 各テキストを個別ベクトルとして埋め込む（平均しない）。max 類似度用。 */
-async function embedEach(
-  model: string,
-  texts: string[],
-  revision: string,
-  localFilesOnly = false,
-): Promise<number[][]> {
-  const extractor = await getExtractor(model, revision, localFilesOnly);
-  const out: number[][] = [];
-  const batch = 128;
-  for (let start = 0; start < texts.length; start += batch) {
-    const chunk = texts.slice(start, start + batch);
-    const output = await extractor(chunk, { pooling: "mean", normalize: true });
-    const tensors = Array.isArray(output) ? output : [output];
-    for (const tensor of tensors) {
-      const dims = tensor.dims;
-      const n = dims.length >= 1 ? dims[0] : 1;
-      const width = dims.length >= 2 ? dims[1] : EMBEDDING_DIM;
-      const arr = Array.from(tensor.data as Float32Array | ArrayLike<number>);
-      for (let i = 0; i < n; i++) {
-        const vec = arr.slice(i * width, (i + 1) * width);
-        const norm = Math.sqrt(vec.reduce((a, v) => a + v * v, 0)) || 1;
-        out.push(vec.map((v) => round6(v / norm)));
-      }
-    }
-  }
-  return out;
+  return cleanProfileTexts(confs, catNames, forMulti, venuePapers);
 }
 
 /** Generation-only title embeddings for deterministic venue-profile medoids. */
@@ -779,8 +595,6 @@ export async function buildBenchmarkEmbeddingBundle(
     paperVecs,
   };
 }
-
-const SKIP_EMB_KEYS = new Set([...PAPER_VEC_KEYS, "ecrts"]);
 
 type EmbeddingData = {
   categories?: Record<string, unknown>;

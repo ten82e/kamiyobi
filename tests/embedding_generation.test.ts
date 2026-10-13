@@ -32,6 +32,7 @@ interface Bundle {
   dim: number;
   embeddings: Record<string, number[]>;
   multi: { dim: number; embeddings: Record<string, number[]> };
+  paperVecs: Record<string, number[][]>;
   manifest: {
     keys: string[];
     models: {
@@ -96,5 +97,16 @@ it("averages repeated conference keys and normalizes both stored vectors", async
   for (const vector of [bundle.embeddings.repeated, bundle.multi.embeddings.repeated]) {
     expect(vector.every(Number.isFinite)).toBe(true);
     expect(Math.hypot(...vector)).toBeCloseTo(1, 5);
+  }
+});
+
+it("stores individual paper vectors only for the two selected venues", async () => {
+  const bundle = await generate(
+    ["usenix-security", "rtss", "ecrts", "sosp"].map((key) => ({ key, title: key })),
+  );
+  expect(Object.keys(bundle.paperVecs).sort()).toEqual(["rtss", "usenix-security"]);
+  for (const key of ["rtss", "usenix-security"]) {
+    expect(bundle.paperVecs[key].length).toBeGreaterThan(0);
+    for (const vector of bundle.paperVecs[key]) expect(vector).toEqual(expectedVector([383]));
   }
 });

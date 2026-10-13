@@ -188,6 +188,8 @@ kamiyobi/
 │   ├── history.ts              # 公開済み過年度履歴の保持
 │   ├── semantic-content.ts     # sealed bundle の semantic_content_id 算出
 │   ├── embeddings.ts            # 埋め込み生成
+│   ├── embedding-profiles.ts    # 会議プロファイルの組み立て
+│   ├── embedding-runtime.ts     # 実モデルの推論とベクトル生成
 │   ├── bench-recommender.ts     # 推薦ベンチ
 │   ├── build.ts                 # JSON/CSV/MD/llms.txt/HTML 出力
 │   ├── mcp.ts                   # AI から引く読み取り専用の MCP サーバ（stdio）
