@@ -6036,7 +6036,7 @@ const Recommender = (() => {
   }
   function uiWordMatch文(q: string): { group: UIWordGroup; word: string } | null {
     const 訪ねの崩 = q.replace(/(?:ですか|ますか|でした|です|ます|だ|か|？|\?)$/, "");
-    const 訪ねの身 = 訪ねの崩.endsWith("り") ? 訪ねの崩.slice(0, -1) + "る" : 訪ねの崩;
+    const 訪ねの身 = 訪ねの崩.endsWith("り") ? `${訪ねの崩.slice(0, -1)}る` : 訪ねの崩;
     for (const group of UI_WORD_GROUPS_JA) {
       const word =
         group.words.find((candidate) => candidate.toLowerCase() === q) ||
@@ -6062,7 +6062,6 @@ const Recommender = (() => {
      * 其侭置く（実測 – `査読期間の締切` は前の方の斷りだけ）。*/
     const 連体 = /^(.{2,}?)(?:の|が|は|を|に|で|へ)(.+)$/.exec(q);
     if (連体) {
-      const 前 = 連体[1];
       const 後 = 連体[2];
 
       if (!uiWordContain(q)) {
@@ -11199,7 +11198,7 @@ const Recommender = (() => {
     const 暦月語の項Ja = "|[0-9]{1,2}月|今月|来月|先月|再来月|昨月|先々月|翌月|前月|来々月";
     const 列挙の頭目印Ja = 相対日の語Ja.replace("|[0-9]{1,2}日", 暦月語の項Ja);
 
-    const 列挙の語目印Ja = 相対日の語Ja.replace("|[0-9]{1,2}日", 暦月語の項Ja + "|[0-9]{1,2}日");
+    const 列挙の語目印Ja = 相対日の語Ja.replace("|[0-9]{1,2}日", `${暦月語の項Ja}|[0-9]{1,2}日`);
     const 列挙の区切り語Ja = "(と|または|もしくは|あるいは|及び|ならびに|か)";
     const 列挙の併せJa = new RegExp(`^(${列挙の頭目印Ja})${列挙の区切り語Ja}(${列挙の語目印Ja})$`);
     const 列挙の連鎖Ja = new RegExp(

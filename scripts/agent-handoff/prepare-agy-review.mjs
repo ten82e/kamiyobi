@@ -120,7 +120,7 @@ assert(
 );
 fs.writeFileSync(
   target,
-  JSON.stringify(
+  `${JSON.stringify(
     {
       encoding: "JSON string; decode payload for exact UTF-8 text",
       payload_bytes: Buffer.byteLength(payload),
@@ -128,7 +128,7 @@ fs.writeFileSync(
     },
     null,
     2,
-  ) + "\n",
+  )}\n`,
 );
 const inputDir = path.join(repo, "work/agent-verification/agy-review/payload");
 fs.mkdirSync(inputDir, { recursive: true });

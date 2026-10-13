@@ -153,11 +153,11 @@ describe("幅の語を閉じる打ち方", () => {
     for (const 助 of ["を|が"]) expect(判定![1], `判定の條の助詞『${助}』が無い`).toContain(助);
     for (const 尾 of 拔いた語尾)
       expect(
-        指し名![1].includes("|" + 尾 + "|") || 指し名![1].includes("|" + 尾 + ")"),
+        指し名![1].includes(`|${尾}|`) || 指し名![1].includes(`|${尾})`),
         `拔いた語尾『${尾}』が指し名に還つた`,
       ).toBe(false);
     for (const 頭 of ["年度内", "年度末", "土曜日", "日曜日", "平日"]) {
-      expect(new RegExp("\\|" + 頭 + "\\|").test(源), `『${頭}』が幅の頭に讀めん`).toBe(true);
+      expect(new RegExp(`\\|${頭}\\|`).test(源), `『${頭}』が幅の頭に讀めん`).toBe(true);
     }
   });
 });

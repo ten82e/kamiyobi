@@ -76,7 +76,7 @@ describe("captured hosted updater failure", () => {
       ])
         execFileSync("git", args, { cwd: root });
       const execute = () =>
-        execFileSync("bash", ["-c", block + '\nprintf "%s" "$evidence_changed"'], {
+        execFileSync("bash", ["-c", `${block}\nprintf "%s" "$evidence_changed"`], {
           cwd: root,
           encoding: "utf8",
         });
@@ -85,7 +85,7 @@ describe("captured hosted updater failure", () => {
       expect(execute()).toBe("1");
       execFileSync(
         "bash",
-        ["-c", block + '\nif [ "$evidence_changed" = 1 ]; then git add data/evidence; fi'],
+        ["-c", `${block}\nif [ "$evidence_changed" = 1 ]; then git add data/evidence; fi`],
         { cwd: root },
       );
       expect(

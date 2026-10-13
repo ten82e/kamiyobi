@@ -93,7 +93,7 @@ await cmd("Emulation.setDeviceMetricsOverride", {
 const results = [];
 async function query(q, extra = {}) {
   await cmd("Page.navigate", {
-    url: "http://127.0.0.1:8771/?" + new URLSearchParams({ q, kind: "paper", ...extra }),
+    url: `http://127.0.0.1:8771/?${new URLSearchParams({ q, kind: "paper", ...extra })}`,
   });
   await waitFor(
     "document.readyState==='complete' && document.querySelector('#q')?.value===" +
@@ -226,7 +226,7 @@ await writeFile(
 assert.deepEqual(errors, []);
 await writeFile(
   "work/agent-verification/headless-compsac.json",
-  JSON.stringify(
+  `${JSON.stringify(
     {
       passed: true,
       headless: true,
@@ -241,7 +241,7 @@ await writeFile(
     },
     null,
     2,
-  ) + "\n",
+  )}\n`,
 );
 await cmd("Fetch.disable");
 await cmd("Target.closeTarget", { targetId: target.id });

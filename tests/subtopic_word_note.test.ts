@@ -926,7 +926,7 @@ describe("公開料・目録の番号・採録・共催の後援・見方の打�
     const i = 源.indexOf("const UI_WORD_GROUPS_JA");
     const 表 = 源.slice(i, 源.indexOf("\n  ];\n", i));
     for (const [語] of 見附) {
-      const 數 = 表.split('"' + 語 + '"').length - 1;
+      const 數 = 表.split(`"${語}"`).length - 1;
       expect(數, `${語} が導きの群に ${數} 回並んで居る`).toBe(1);
     }
     /* multiword の群は語の続きの打ち方では黙つた事が、ここではその方を受け取つた。
@@ -983,7 +983,7 @@ describe("窓口の打ち方と、性別・休暇・書誌の数の内訳（第 
     const i = 源.indexOf("const UI_WORD_GROUPS_JA");
     const 表 = 源.slice(i, 源.indexOf("\n  ];\n", i));
     for (const [語] of 見附) {
-      const 數 = 表.split('"' + 語 + '"').length - 1;
+      const 數 = 表.split(`"${語}"`).length - 1;
       expect(數, `${語} が導きの群に ${數} 回並んで居る`).toBe(1);
     }
     expect(Recommender.uiWordNoteJa("傍聴")).toContain("募集対象");
@@ -1090,7 +1090,7 @@ describe("締切が近い言い方と並びの打ち方の續き（第 604 回�
     const i = 源.indexOf("const UI_WORD_GROUPS_JA");
     const 表 = 源.slice(i, 源.indexOf("\n    },\n  ];\n", i));
     for (const [語] of 見附) {
-      const 數 = 表.split('"' + 語 + '"').length - 1;
+      const 數 = 表.split(`"${語}"`).length - 1;
       expect(數, `${語} が導きの群に ${數} 回並んで居る`).toBe(1);
     }
     expect(rows.length).toBeGreaterThan(0);
@@ -1135,7 +1135,7 @@ describe("前もって・いつまでの幅と審査の期間の續き（第 606
     const i = 源.indexOf("const UI_WORD_GROUPS_JA");
     const 表 = 源.slice(i, 源.indexOf("\n    },\n  ];\n", i));
     for (const [語] of 見附) {
-      expect(表.split('"' + 語 + '"').length - 1, `${語} が導きの群に二度並んで居る`).toBe(1);
+      expect(表.split(`"${語}"`).length - 1, `${語} が導きの群に二度並んで居る`).toBe(1);
     }
     /* 他の打ち方を壊して居らん事 – その方の語の寄せと行の出は不変。 */
     expect(Recommender.queryTokenGroups("締切はいつまで", AT).length).toBeGreaterThan(0);
@@ -1207,7 +1207,7 @@ describe("訪ねの語尾を續けた形（第 607 回）", () => {
       "の発行",
       "は有りますか",
     ]) {
-      expect(語尾.split('"' + 語 + '",').length - 1, `${語} が語尾の一覧に二度並んで居る`).toBe(1);
+      expect(語尾.split(`"${語}",`).length - 1, `${語} が語尾の一覧に二度並んで居る`).toBe(1);
     }
 
     const b = 源.indexOf("const 剥ぐ語尾 = [");
@@ -1221,8 +1221,8 @@ describe("訪ねの語尾を續けた形（第 607 回）", () => {
       "のサービス",
       "が知りたいです",
     ]) {
-      expect(檢索側.includes('"' + 語 + '",'), `檢索側の語尾の表に ${語} が漏れた`).toBe(false);
-      expect(語尾.includes('"' + 語 + '",'), `導きの語尾に ${語} が無い`).toBe(true);
+      expect(檢索側.includes(`"${語}",`), `檢索側の語尾の表に ${語} が漏れた`).toBe(false);
+      expect(語尾.includes(`"${語}",`), `導きの語尾に ${語} が無い`).toBe(true);
     }
     const g = 源.indexOf("const UI_WORD_GROUPS_JA");
     const 群 = 源.slice(g, 源.indexOf("\n    },\n  ];\n", g));
@@ -1236,7 +1236,7 @@ describe("訪ねの語尾を續けた形（第 607 回）", () => {
       "審査基準",
       "採点項目",
     ]) {
-      expect(群.split('"' + 語 + '"').length - 1, `${語} が導きの群に二度並んで居る`).toBe(1);
+      expect(群.split(`"${語}"`).length - 1, `${語} が導きの群に二度並んで居る`).toBe(1);
     }
   });
 

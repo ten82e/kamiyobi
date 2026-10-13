@@ -625,7 +625,7 @@ function 畫面の既定(
       /* オンラインは会場の表記から画面と同じ関数で見る。 */
       if (オンラインだけ && !Recommender.placeOffersOnline(r.ed.place)) return false;
       if (全部) return true;
-      if (種別 && 種別.length) return 種別.includes(r.kind);
+      if (種別?.length) return 種別.includes(r.kind);
       return 投稿の種別.includes(r.kind);
     })
     .concat(知らん.length ? [] : []);
@@ -1118,7 +1118,7 @@ function searchDeadlines(
       頭,
       "",
       素の.length
-        ? `語は当たりますが、既定の絞り込み（今後の投稿締切・推定を除く）で 0 件に成りました。include_past / include_estimated / kinds${ランク ? " / rank（いま " + ランク + "）" : ""} を試してください。`
+        ? `語は当たりますが、既定の絞り込み（今後の投稿締切・推定を除く）で 0 件に成りました。include_past / include_estimated / kinds${ランク ? ` / rank（いま ${ランク}）` : ""} を試してください。`
         : 窓の外
           ? `この語は画面が最初に読む窓（${list.length} 行）には 1 行もありませんが、**収録の全体には ${窓の外} 行あります**（scope: "all" で引けます）。`
           : (果て ?? "この語では 1 行も出ません。"),
@@ -2259,7 +2259,7 @@ function main(): void {
   const [tool, ...rest] = process.argv.slice(2);
   if (!tool || tool === "--help" || tool === "-h") {
     process.stdout.write(
-      [
+      `${[
         "kamiyobi の MCP サーバ（読み取り専用・stdio）。",
         "  AI から: MCP の客户としてこのファイルを起動する（`node src/mcp.ts`）。",
         "  人から: 道具の名を引数に書くと 1 回だけ走らせて文字を出す。",
@@ -2270,7 +2270,7 @@ function main(): void {
         "  例: node src/mcp.ts venue_info kdd",
         '  例: node src/mcp.ts recommend "分散システム"',
         "  例: node src/mcp.ts stats",
-      ].join("\n") + "\n",
+      ].join("\n")}\n`,
     );
     return;
   }

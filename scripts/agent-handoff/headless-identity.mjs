@@ -92,7 +92,7 @@ await cmd("Emulation.setDeviceMetricsOverride", {
 
 async function query(q, extra = {}) {
   await cmd("Page.navigate", {
-    url: "http://127.0.0.1:8771/?" + new URLSearchParams({ q, ...extra }),
+    url: `http://127.0.0.1:8771/?${new URLSearchParams({ q, ...extra })}`,
   });
   await waitFor(
     "document.readyState==='complete' && document.querySelector('#q')?.value===" +
@@ -179,7 +179,7 @@ await writeFile(
 assert.deepEqual(errors, []);
 await writeFile(
   "work/agent-verification/headless-identity.json",
-  JSON.stringify(
+  `${JSON.stringify(
     {
       passed: true,
       headless: true,
@@ -196,7 +196,7 @@ await writeFile(
     },
     null,
     2,
-  ) + "\n",
+  )}\n`,
 );
 await cmd("Fetch.disable");
 await cmd("Target.closeTarget", { targetId: target.id });

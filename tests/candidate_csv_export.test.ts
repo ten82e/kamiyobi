@@ -206,7 +206,7 @@ describe("推薦の候補を CSV で持ち出す（第 870 回）", () => {
     );
     /* 候補と一覧でファイル名を分ける（同じ日に両方落とした人が見分けられる）。 */
     expect(app, "ファイル名を分けていない").toContain(
-      'anchor.download = `kamiyobi-${recMode ? "candidates" : "deadlines"}-${stamp}.csv`;',
+      `anchor.download = \`kamiyobi-\${recMode ? "candidates" : "deadlines"}-\${stamp}.csv\`;`,
     );
     /* 押す前に、欄の意味と「一致評価とは別の計算」を言う（点を札の点と読ませない）。 */
     const 説明 = jsFunction(app, "render");

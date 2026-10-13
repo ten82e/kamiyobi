@@ -2594,7 +2594,7 @@ it("filtered rows can be exported to a spreadsheet as BOM-prefixed CSV (SPEC §7
   expect(runtime).toContain("Recommender.deadlinesToCsv(");
   // Excel は BOM の無い UTF-8 を日本語として読めない。
   // BOM 付きで渡していること（書き方が変わっても BOM 文字 + csv の組合せを見る）。
-  expect(runtime).toContain("`\\ufeff${csv}`");
+  expect(runtime).toContain(`\`\\ufeff\${csv}\``);
 
   expect(runtime).toContain("Recommender.candidateRowsToCsv(");
   /* 候補が出ていない時（推薦の画面で論文情報が空）は出さない – 別の正本は

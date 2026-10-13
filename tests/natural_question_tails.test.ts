@@ -3,7 +3,6 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import Recommender from "../site/recommender.ts";
 import { builtSite } from "./built_site.ts";
-import { REPO_ROOT } from "./helpers.ts";
 import { queryReferenceSnapshotPath } from "./query_reference.ts";
 
 const 基準 = Date.parse("2026-08-09T00:00:00Z");

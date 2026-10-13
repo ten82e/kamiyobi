@@ -8,10 +8,8 @@ import {
 } from "../../site/submission-identity.ts";
 
 const root = fileURLToPath(new URL("../../", import.meta.url)).replace(/\/$/, "");
-fs.mkdirSync(root + "/work/agent-verification", { recursive: true });
+fs.mkdirSync(`${root}/work/agent-verification`, { recursive: true });
 const key = (r) => `${r.conf.key}|${r.ed.year}|${r.kind}|${Math.trunc(r.t)}`;
-const slot = (r) =>
-  `${r.conf.key}|${r.ed.id}|${r.ed.year}|${r.kind}|${r.dl.round}|${r.dl.track || r.dl.label || ""}|${r.localDate || r.dl.utc}`;
 const summaries = [];
 for (const file of ["data.json", "catalog.json"]) {
   const data = JSON.parse(fs.readFileSync(`${root}/public/${file}`));
@@ -20,7 +18,7 @@ for (const file of ["data.json", "catalog.json"]) {
     shown = consolidateReviewedSubmissions(rows, key);
   const shared = assignShareIdentities(shown, key);
   const canonicalKeys = shared.map(
-    (row) => key(row) + (row.shareDiscriminator ? "|slot=" + row.shareDiscriminator : ""),
+    (row) => key(row) + (row.shareDiscriminator ? `|slot=${row.shareDiscriminator}` : ""),
   );
   assert.equal(new Set(canonicalKeys).size, shared.length);
   assert.equal(shared.length, shown.length);
@@ -67,7 +65,7 @@ for (const file of ["data.json", "catalog.json"]) {
     rolling = rows.filter((r) => r.kind === "journal");
   const editions = new Map();
   for (const r of rows) {
-    const k = r.conf.key + "|" + r.ed.id;
+    const k = `${r.conf.key}|${r.ed.id}`;
     editions.set(k, [...(editions.get(k) || []), r]);
   }
   const multiple = [...editions.values()].filter(
@@ -102,8 +100,8 @@ for (const file of ["data.json", "catalog.json"]) {
   });
 }
 fs.writeFileSync(
-  root + "/work/agent-verification/identity-audit.json",
-  JSON.stringify(summaries, null, 2) + "\n",
+  `${root}/work/agent-verification/identity-audit.json`,
+  `${JSON.stringify(summaries, null, 2)}\n`,
 );
 console.log(
   JSON.stringify(
@@ -117,7 +115,7 @@ console.log(
     2,
   ),
 );
-const data = JSON.parse(fs.readFileSync(root + "/public/data.json"));
+const data = JSON.parse(fs.readFileSync(`${root}/public/data.json`));
 const pair = Recommender.candidateRows(data).filter((r) =>
   ["jip-compsac2027-si", "ipsj-27-r26"].includes(r.ed.id),
 );

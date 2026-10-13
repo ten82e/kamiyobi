@@ -7,17 +7,16 @@ import { REPO_ROOT } from "./helpers.ts";
 function searches(argumentsList: Record<string, unknown>[], name = "search_deadlines") {
   const result = spawnSync(process.execPath, [join(REPO_ROOT, "src/mcp.ts")], {
     cwd: REPO_ROOT,
-    input:
-      argumentsList
-        .map((args, id) =>
-          JSON.stringify({
-            jsonrpc: "2.0",
-            id,
-            method: "tools/call",
-            params: { name, arguments: args },
-          }),
-        )
-        .join("\n") + "\n",
+    input: `${argumentsList
+      .map((args, id) =>
+        JSON.stringify({
+          jsonrpc: "2.0",
+          id,
+          method: "tools/call",
+          params: { name, arguments: args },
+        }),
+      )
+      .join("\n")}\n`,
     encoding: "utf8",
     maxBuffer: 10 * 1024 * 1024,
   });

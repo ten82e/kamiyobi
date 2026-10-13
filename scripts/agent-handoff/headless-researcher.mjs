@@ -108,7 +108,7 @@ const cases = [
   { q: "日本時間 10月14日" },
 ];
 async function query(c) {
-  await cmd("Page.navigate", { url: "http://127.0.0.1:8771/?" + new URLSearchParams(c) });
+  await cmd("Page.navigate", { url: `http://127.0.0.1:8771/?${new URLSearchParams(c)}` });
   await waitFor(
     "document.readyState==='complete' && document.querySelector('#q')?.value===" +
       JSON.stringify(c.q) +
@@ -244,7 +244,7 @@ await writeFile(
 assert.deepEqual(errors, []);
 await writeFile(
   "work/agent-verification/headless-researcher.json",
-  JSON.stringify(
+  `${JSON.stringify(
     {
       headless: true,
       no_native_input: true,
@@ -259,7 +259,7 @@ await writeFile(
     },
     null,
     2,
-  ) + "\n",
+  )}\n`,
 );
 await cmd("Fetch.disable");
 await cmd("Target.closeTarget", { targetId: target.id });

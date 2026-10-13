@@ -1125,7 +1125,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   function sortColumnLabel(key: string): string {
     if (!key) return "";
     const th = document.querySelector<HTMLElement>(`th[data-sort="${key}"]`);
-    return String((th && th.textContent) || "")
+    return String(th?.textContent || "")
       .replace(/[↑↓↕]\s*$/, "")
       .trim();
   }
@@ -1208,7 +1208,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
 
     // 表の種別セルに出している「第 N ラウンド」「ラベル」をドロワーで落とさない。
     // 同じ会議の複数ラウンドを見分ける実務上有意のある情報で、詳細側で欠けると困る。
-    const kindDetail = kindDetailJa(r.dl && r.dl.round, r.dl && r.dl.label);
+    const kindDetail = kindDetailJa(r.dl?.round, r.dl?.label);
     // 表と同じ式で併記を出す。AoE は公式が AoE 締めの場合だけ見せる
     // （JST 宣言の国内締切に AoE を出すと、実在しない AoE 締切があると誤解させる）。
     const zone = Recommender.officialZone(r.dl);
@@ -1328,7 +1328,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         : "") +
       (r.ed.event_review?.held_year && r.ed.event_review.held_year !== r.ed.year
         ? '<p style="margin-bottom: 8px;">' +
-          esc(String(r.ed.year) + "年版・開催は" + String(r.ed.event_review.held_year) + "年") +
+          esc(`${String(r.ed.year)}年版・開催は${String(r.ed.event_review.held_year)}年`) +
           "</p>"
         : "") +
       (r.ed.event_review?.note && safeExternalUrl(r.ed.event_review.source_url)
@@ -2384,7 +2384,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     // 何も絞り込んでいないのに 0 件なら、緩める条件ではなく収録の時刻の話をする。
     if (!filter.clearable && !filter.pastShown && filter.hidden?.past)
       return " ｜ 収録の締切はすべて過ぎています。「過去の締切も表示」で出ます";
-    return " ｜ いまの条件では行がありません" + pointer;
+    return ` ｜ いまの条件では行がありません${pointer}`;
   }
 
   /* 語を並べて打った検索語を、語の組に分けて収録データの当たり数を数える
@@ -4612,7 +4612,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
             : zone && zone !== "UTC"
               ? `（元の日時 ${zone} ／ ${fmtDate(d)} UTC）`
               : `（元の日時 ${fmtDate(d)} UTC）`;
-      return "次回締切: " + fmtJst(d) + official + (a.estimated ? "（推定）" : "");
+      return `次回締切: ${fmtJst(d)}${official}${a.estimated ? "（推定）" : ""}`;
     }
     if (a.status === "past") {
       return a.timestamp || a.local_date ? "締切済み" : "締切済み（次回情報なし）";
@@ -5690,7 +5690,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       );
     }
     if (message.indexOf("timed out") >= 0 || message.indexOf("timeout") >= 0) {
-      return "PDF の読み込みが遅すぎて中断しました。" + pasteHint;
+      return `PDF の読み込みが遅すぎて中断しました。${pasteHint}`;
     }
     if (
       message.indexOf("invalid pdf") >= 0 ||
@@ -5703,7 +5703,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         pasteHint
       );
     }
-    return "PDF を読み込めませんでした。ファイルを確かめるか、" + pasteHint;
+    return `PDF を読み込めませんでした。ファイルを確かめるか、${pasteHint}`;
   }
 
   /* 対応していない文書形式（Word・一太郎・OpenDocument など）。これを PDF として読むと
@@ -6419,7 +6419,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     const genAt = typeof DATA.generated_at === "string" ? DATA.generated_at : "";
     const winSelect = valueElement("win") as HTMLSelectElement;
     const opt =
-      winSelect && winSelect.options && winSelect.selectedIndex >= 0
+      winSelect?.options && winSelect.selectedIndex >= 0
         ? winSelect.options[winSelect.selectedIndex]
         : null;
     const winText = opt ? String(opt.text || opt.textContent || "").trim() : "";

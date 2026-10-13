@@ -75,7 +75,7 @@ it("論文から探すの候補も「さらに表示」で全件に到達する�
   // 「さらに表示 (残り N 件)」の組み立ては一か所（表とカードで文言がズレないようにする）。
   expect((runtime.match(/さらに表示 \(残り/g) || []).length).toBe(1);
   // 件数欄の言い切りと画面を食い違わせない。
-  expect(runtime).toContain("まず上位 ${countJa(RECOMMENDATION_PAGE)} 件を表示");
+  expect(runtime).toContain(`まず上位 \${countJa(RECOMMENDATION_PAGE)} 件を表示`);
 
   // ラベルと表示可否は本物を実行して見る（書き写すと「残り」の対応がズレる）。
   const script = [
@@ -525,7 +525,7 @@ it("「国内研究会・国内シンポジウムのみ」で消えた行を件�
 
   const app = siteRuntime();
   // 件数欄の実装がその件数を出していること。
-  expect(app).toContain("国内研究会・国内シンポジウム以外 ${countJa(hidden.domestic)} 件");
+  expect(app).toContain(`国内研究会・国内シンポジウム以外 \${countJa(hidden.domestic)} 件`);
   // 説明は「日本の開催とは別物」と、戻し方（検索で引く）を同じ箇所に書く。
   const html = siteHtmlRuntime();
   const dd = html.slice(html.indexOf("<dt>国内</dt>"), html.indexOf("<dt>種別</dt>"));
@@ -584,8 +584,8 @@ it("「オンライン参加可のみ」で出ない理由を 2 通りに分け�
   expect(out.unknown, "開催地が未確認の行数を分けていない").toBe(1);
 
   const app = siteRuntime();
-  expect(app).toContain("オンライン参加の記載がない ${countJa(hidden.online)} 件");
-  expect(app).toContain("うち開催地が未確認 ${countJa(hidden.onlinePlaceUnknown)} 件");
+  expect(app).toContain(`オンライン参加の記載がない \${countJa(hidden.online)} 件`);
+  expect(app).toContain(`うち開催地が未確認 \${countJa(hidden.onlinePlaceUnknown)} 件`);
   // チェックボックスの tool tip にも、対面を断定していないことと確認先を書く。
   const html = siteHtmlRuntime();
   const box = html.slice(html.indexOf('id="online"'), html.indexOf('id="est"'));
@@ -644,7 +644,7 @@ it("「締切まで N 日以内」の窓で外れた件数を件数欄に出す�
   expect(out.both).toEqual(["soon"]);
   expect(out.bothWindow, "対称窓の下限側を窓に数えていない").toBe(2);
   const app = siteRuntime();
-  expect(app).toContain("`「締切まで ${Number.parseInt(state.win, 10)} 日以内」を超える");
+  expect(app).toContain(`\`「締切まで \${Number.parseInt(state.win, 10)} 日以内」を超える`);
   // 選択欄の表記（「7 日以内」）とその戻し方を選んで書く。
   const html = siteHtmlRuntime();
   const dd = html.slice(
@@ -868,7 +868,7 @@ it("地域まとめの構成員は、収録カタログの開催地に現れる�
     'const decls = (rec.match(/const [A-Z_]+_JA =\\s*\\n?\\s*(?:`[^`]*`|"[^"]*");/g) || [])',
     "  .map((d) => vmSafeSource(d))",
     "  .join('\\n');",
-    "const table = eval(`${decls}\\n${vmSafeSource(rec.slice(i + head.length, j))}\\n];`);",
+    `const table = eval(\`\${decls}\\n\${vmSafeSource(rec.slice(i + head.length, j))}\\n];\`);`,
     "const rows = Recommender.candidateRows(DATA);",
     "const now = Date.parse('2026-08-09T00:00:00Z');",
     "const norm = (s) => String(s).normalize('NFKC').toLowerCase();",
@@ -973,7 +973,7 @@ it("数字で打った日付が、暦日の日本語表記と同じ行に当た�
     "rows.forEach((r) => {",
     "  if (Number.isFinite(r.t)) {",
     "    const d = jst(r.t);",
-    "    const k = `${d.getUTCFullYear()}-${d.getUTCMonth() + 1}-${d.getUTCDate()}`;",
+    `    const k = \`\${d.getUTCFullYear()}-\${d.getUTCMonth() + 1}-\${d.getUTCDate()}\`;`,
     "    counts.set(k, (counts.get(k) || 0) + 1);",
     "  }",
     "});",
@@ -982,14 +982,14 @@ it("数字で打った日付が、暦日の日本語表記と同じ行に当た�
     "  const m = Recommender.searchMatcher(q, now);",
     "  return rows.filter((r) => m(r.hay)).map((r) => r.conf.key + '@' + r.ed.year + '@' + r.kind).sort();",
     "};",
-    "const ja = keys(`${month}月${day}日`);",
-    "const jaYear = keys(`${year}年${month}月${day}日`);",
+    `const ja = keys(\`\${month}月\${day}日\`);`,
+    `const jaYear = keys(\`\${year}年\${month}月\${day}日\`);`,
     "console.log(JSON.stringify({",
-    "  date: `${year}/${month}/${day}`,",
-    "  sameMonthDay: JSON.stringify(keys(`${month}/${day}`)) === JSON.stringify(ja),",
-    "  sameMonthDayDash: JSON.stringify(keys(`${month}-${day}`)) === JSON.stringify(ja),",
-    "  sameWithYear: JSON.stringify(keys(`${year}/${month}/${day}`)) === JSON.stringify(jaYear),",
-    "  sameYearMonth: JSON.stringify(keys(`${year}-${month}`)) === JSON.stringify(keys(`${year}年${month}月`)),",
+    `  date: \`\${year}/\${month}/\${day}\`,`,
+    `  sameMonthDay: JSON.stringify(keys(\`\${month}/\${day}\`)) === JSON.stringify(ja),`,
+    `  sameMonthDayDash: JSON.stringify(keys(\`\${month}-\${day}\`)) === JSON.stringify(ja),`,
+    `  sameWithYear: JSON.stringify(keys(\`\${year}/\${month}/\${day}\`)) === JSON.stringify(jaYear),`,
+    `  sameYearMonth: JSON.stringify(keys(\`\${year}-\${month}\`)) === JSON.stringify(keys(\`\${year}年\${month}月\`)),`,
     "  hits: ja.length,",
     "  invalidUntouched: JSON.stringify(Recommender.queryTokenGroups('13/45', now)),",
     "}));",
@@ -1105,7 +1105,7 @@ it("地方名で引くと、開催市だけ書かれた国内行も漏れない�
     "  citiesSeen.add(city);",
     "  const key = r.conf.key + '@' + r.ed.year + '@' + r.kind;",
     "  if (!regionHits[REGION_OF_CITY[city]].has(key))",
-    "    missing.push(`${city} (${String(r.ed.place)}) が ${REGION_OF_CITY[city]} で引けない`);",
+    `    missing.push(\`\${city} (\${String(r.ed.place)}) が \${REGION_OF_CITY[city]} で引けない\`);`,
     "});",
     // 表に、収録カタログで 1 件も当たらない都市を置いていないこと。
     "const dead = [];",
@@ -1315,7 +1315,7 @@ it("収録 5 行以上の開催都市は、カタカナの入力でたどれな�
     "const uncovered = [...counts.entries()]",
     "  .filter(([, n]) => n >= 5)",
     "  .filter(([city]) => !covered.has(city))",
-    "  .map(([city, n]) => `${city} (${n} 行)`)",
+    `  .map(([city, n]) => \`\${city} (\${n} 行)\`)`,
     "  .sort();",
     // 表の語が、カタログで本当に当たる語だけか（死んだ条目を置かない）。
     // ただし **寄せ先の英文字がこのカタログに 1 行も無い条目は判定しない** — それは死んだ
@@ -1458,14 +1458,14 @@ it("かな入力の地名が、漢字で引ける行を取りこぼさない（S
     "  if (!byKanji.size) return; // 収録に無い場所は比較しようがない",
     "  const byKana = keys(kana);",
     "  const missing = [...byKanji].filter((k) => !byKana.has(k)).length;",
-    "  if (missing) worse.push(`${kana} / ${kanji}: 漢字 ${byKanji.size} 件 → かな ${byKana.size} 件（${missing} 件足りない）`);",
+    `  if (missing) worse.push(\`\${kana} / \${kanji}: 漢字 \${byKanji.size} 件 → かな \${byKana.size} 件（\${missing} 件足りない）\`);`,
     "});",
     // 受け取った寄せが違う語へ漏れていないこと（`なら` が奈良以外の行を拾わない等）。
     "const leak = [];",
     "[['なら', '奈良'], ['とうきょう', '東京'], ['きょうと', '京都']].forEach(([kana, kanji]) => {",
     "  const a = keys(kana);",
     "  const b = keys(kanji);",
-    "  if (a.size !== b.size || [...a].some((k) => !b.has(k))) leak.push(`${kana} と ${kanji} の行集合が違う`);",
+    `  if (a.size !== b.size || [...a].some((k) => !b.has(k))) leak.push(\`\${kana} と \${kanji} の行集合が違う\`);`,
     "});",
     "console.log(JSON.stringify({ worse, leak }));",
     "})();",
@@ -1494,7 +1494,7 @@ it("「南米」「中米」で引けると、地域の切れ目が実データ�
     "  return new Set(rows.filter((r) => m(r.hay)).map((r) => r.conf.key + '@' + r.ed.year + '@' + r.kind));",
     "};",
     "const missing = (broad, narrowList) =>",
-    "  narrowList.flatMap((narrow) => [...keys(narrow)].filter((k) => !keys(broad).has(k)).map((k) => `${narrow}: ${k}`));",
+    `  narrowList.flatMap((narrow) => [...keys(narrow)].filter((k) => !keys(broad).has(k)).map((k) => \`\${narrow}: \${k}\`));`,
     "const intersect = (a, b) => [...keys(a)].filter((k) => keys(b).has(k)).length;",
     "console.log(JSON.stringify({",
     "  south: keys('南米').size,",
@@ -2053,7 +2053,7 @@ it("分野チップでのぞいた件数を件数欄に出す（SPEC §7）", ()
 
   const app = runtime;
   expect(app, "件数欄が分野で絞った件数を書いていない").toContain(
-    '分野「${state.cats.map((key) => catLabel(key)).join("・")}」を持たない行 ${countJa(hidden.cats)} 件',
+    `分野「\${state.cats.map((key) => catLabel(key)).join("・")}」を持たない行 \${countJa(hidden.cats)} 件`,
   );
 });
 
@@ -2252,13 +2252,13 @@ it("会期だけの会の案内と行の詳細の開催地は、表と同じ書�
    * ビルド後の `renderNextMeetingNote` を疑似 DOM で実際に動かして確かめる。 */
   const runtime = siteRuntime();
   const _recSrc = readFileSync(join(site, "recommender.js"), "utf8");
-  expect(runtime).toContain("＠${shownPlace}");
+  expect(runtime).toContain(`＠\${shownPlace}`);
   // 行の詳細の「今後の会期」の書き方は recommender.js の正本へ移した（索引と同じ 1 本）。
-  expect(siteRuntime("recommender.js")).toContain("\uff20${placeJa(place)}");
-  expect(siteRuntime("recommender.js")).not.toContain("\uff20${next.place}");
+  expect(siteRuntime("recommender.js")).toContain(`\uff20\${placeJa(place)}`);
+  expect(siteRuntime("recommender.js")).not.toContain(`\uff20\${next.place}`);
   // 原文を出しっぱなしにする形に戻っていないこと（表題の語で探す人が探せる形）。
-  expect(runtime).not.toContain("＠${m.place}");
-  expect(runtime).not.toContain("＠${next.place}");
+  expect(runtime).not.toContain(`＠\${m.place}`);
+  expect(runtime).not.toContain(`＠\${next.place}`);
   const noteSrc = jsFunction(runtime, "renderNextMeetingNote");
   const matchSrc = jsFunction(runtime, "scheduleOnlyMatches");
   const limitSrc = jsFunction(runtime, "windowLimitMs");
@@ -3537,7 +3537,7 @@ it("過去の締切も表示すると、過ぎた行が画面の先頭を埋め�
   // 支援技術に同じ扱いをさせるため。キーボード移動が飛ばすのと同じ規則でもある）。
   expect(app).toContain('tr.className = "month-row section-row"');
   expect(app).toContain('"過ぎた締切"');
-  expect(app).toContain("過ぎた締切 ${countJa(pastBlockTotal)} 件は下にまとめました");
+  expect(app).toContain(`過ぎた締切 \${countJa(pastBlockTotal)} 件は下にまとめました`);
 });
 
 it("「本日終了」は JST の暦日で決まる（SPEC §7）", () => {
@@ -4887,7 +4887,6 @@ it("data.json のスキーマの申告は、実物と合う（第 1007 回）", 
     sources?: unknown[];
   };
   const 版の欄 = ["call_identity", "legacy_ids", "event_review"];
-  const 締切の欄 = ["superseded_deadlines", "promotion_ref"];
   const 數 = {
     call_identity: 0,
     legacy_ids: 0,

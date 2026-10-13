@@ -1051,14 +1051,14 @@ export async function cmdBuild(args: BuildArgs): Promise<number> {
     mkdirSync(dirname(reportPath), { recursive: true });
     writeFileSync(
       reportPath,
-      JSON.stringify(
+      `${JSON.stringify(
         {
           baseline_sha256: createHash("sha256").update(readFileSync(historyPath)).digest("hex"),
           retained: history.retained,
         },
         null,
         2,
-      ) + "\n",
+      )}\n`,
     );
   }
   // 統合件数は出力に載った会議のぶんだけ数える。

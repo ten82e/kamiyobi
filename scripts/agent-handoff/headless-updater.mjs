@@ -92,7 +92,7 @@ await cmd("Emulation.setDeviceMetricsOverride", {
 
 async function query(q, extra = {}) {
   await cmd("Page.navigate", {
-    url: "http://127.0.0.1:8771/?" + new URLSearchParams({ q, ...extra }),
+    url: `http://127.0.0.1:8771/?${new URLSearchParams({ q, ...extra })}`,
   });
   await waitFor(
     "document.readyState==='complete' && document.querySelector('#q')?.value===" +
@@ -115,7 +115,7 @@ for (const q of ["EvoMUSART", "ECIR", "WSDM"]) {
   const visible = await evaluate(
     "[...document.querySelectorAll('.row-detail')].map(b=>b.closest('tr').innerText)",
   );
-  assert(visible.length > 0, q + " must be searchable");
+  assert(visible.length > 0, `${q} must be searchable`);
   await evaluate("document.querySelector('.row-detail').click()");
   await waitFor("document.querySelector('#drawerBackdrop.active')");
   const share = await evaluate("new URLSearchParams(location.search).get('row')");
@@ -215,11 +215,11 @@ await cmd("Page.captureScreenshot", { format: "png", captureBeyondViewport: fals
 assert.equal(errors.length, 0, JSON.stringify(errors));
 await writeFile(
   "work/agent-verification/headless-updater.json",
-  JSON.stringify(
+  `${JSON.stringify(
     { currentCases, compatibility, mobile, reducedMotion, errors, blockedRequests },
     null,
     2,
-  ) + "\n",
+  )}\n`,
 );
 await cmd("Fetch.disable");
 await cmd("Target.closeTarget", { targetId: target.id });

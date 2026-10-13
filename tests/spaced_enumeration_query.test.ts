@@ -126,7 +126,7 @@ describe("直した形がビルド成果物に残る（第 457 回）", () => {
   it("寄せた形は機械が解ける時だけ寄せる目が 1 箇所", () => {
     expect(物.split("列挙の語に割るJa(並べた形) === null").length - 1).toBe(1);
     expect(物.split("const 助詞を連れた語 = 列挙の助詞の尾Ja.test(語);").length - 1).toBe(1);
-    expect(物.split("const 継いだ形 = `${語}${助}`;").length - 1).toBe(1);
+    expect(物.split(`const 継いだ形 = \`\${語}\${助}\`;`).length - 1).toBe(1);
   });
 
   it("繋がらなかった `と` は語として残さない目が 1 箇所", () => {
