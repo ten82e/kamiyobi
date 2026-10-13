@@ -66,7 +66,7 @@ import {
   EMBEDDING_RUNTIME_VERSION,
   embeddingManifest,
   embeddingProfileHash,
-  VENUE_PAPERS,
+  getVenuePapers,
   venuePapersHash,
 } from "./embeddings.ts";
 import {
@@ -1125,7 +1125,7 @@ export function toJson(
         : {}),
       editions,
       // 代表採択論文タイトル（無い会議は空配列）。語彙一致 + IDF + 埋め込み強化に使う
-      papers: VENUE_PAPERS[conf.key] ?? [],
+      papers: getVenuePapers()[conf.key] ?? [],
     });
   }
   const data: Record<string, unknown> = {

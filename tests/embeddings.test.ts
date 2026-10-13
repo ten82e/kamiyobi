@@ -20,13 +20,13 @@ import {
   embeddingBundleKey,
   embeddingManifest,
   embeddingProfileHash,
+  getVenuePapers,
+  getVenueProfileArtifact,
   main,
   PAPER_VEC_KEYS,
   profileTexts,
   selectVenueMedoids,
   serializeVenueProfileArtifact,
-  VENUE_PAPERS,
-  VENUE_PROFILE_ARTIFACT,
   validateVenueProfileArtifact,
   venuePapersAtCutoff,
   venuePapersHash,
@@ -229,12 +229,12 @@ describe("generated venue profile artifact", () => {
     };
     expect(artifact.schema).toBe(2);
     expect(artifact.profiles_hash).toBe(venuePapersHash());
-    expect(artifact).toEqual(VENUE_PROFILE_ARTIFACT);
+    expect(artifact).toEqual(getVenueProfileArtifact());
     expect(
       Object.fromEntries(
         Object.entries(artifact.profiles).map(([key, profile]) => [key, profile.prototypes]),
       ),
-    ).toEqual(VENUE_PAPERS);
+    ).toEqual(getVenuePapers());
     expect(artifactText).toBe(serializeVenueProfileArtifact(artifact));
     expect(Object.keys(artifact.profiles)).toEqual([...Object.keys(artifact.profiles)].sort());
     expect(
@@ -279,7 +279,7 @@ describe("generated venue profile artifact", () => {
     }
     expect(benchTitles.size).toBeGreaterThan(100);
     const collisions: string[] = [];
-    for (const [key, profile] of Object.entries(VENUE_PROFILE_ARTIFACT.profiles)) {
+    for (const [key, profile] of Object.entries(getVenueProfileArtifact().profiles)) {
       for (const paper of profile.papers) {
         if (benchTitles.has(normalize(paper.title))) collisions.push(`${key}: ${paper.title}`);
       }
@@ -308,19 +308,19 @@ describe("generated venue profile artifact", () => {
   });
 
   it("accepts RFC 3339 collected_at without milliseconds and canonicalizes (#768)", () => {
-    const artifact = JSON.parse(JSON.stringify(VENUE_PROFILE_ARTIFACT));
+    const artifact = JSON.parse(JSON.stringify(getVenueProfileArtifact()));
     const key = Object.keys(artifact.profiles)[0]!;
     artifact.profiles[key].papers[0].collected_at = "2026-08-25T00:00:00Z";
     const serialized = JSON.parse(serializeVenueProfileArtifact(artifact));
     expect(serialized.profiles[key].papers[0].collected_at).toBe("2026-08-25T00:00:00.000Z");
 
-    const offset = JSON.parse(JSON.stringify(VENUE_PROFILE_ARTIFACT));
+    const offset = JSON.parse(JSON.stringify(getVenueProfileArtifact()));
     offset.profiles[key].papers[0].collected_at = "2026-08-25T09:00:00+09:00";
     expect(
       JSON.parse(serializeVenueProfileArtifact(offset)).profiles[key].papers[0].collected_at,
     ).toBe("2026-08-25T00:00:00.000Z");
 
-    const invalid = JSON.parse(JSON.stringify(VENUE_PROFILE_ARTIFACT));
+    const invalid = JSON.parse(JSON.stringify(getVenueProfileArtifact()));
     invalid.profiles[key].papers[0].collected_at = "2026-02-30T00:00:00.000Z";
     expect(() => serializeVenueProfileArtifact(invalid)).toThrow(/collected_at/);
   });
@@ -366,20 +366,20 @@ describe("venue profile medoids", () => {
   });
 
   it("keeps complete provenance while runtime consumers use only selected prototypes", () => {
-    for (const [key, profile] of Object.entries(VENUE_PROFILE_ARTIFACT.profiles)) {
+    for (const [key, profile] of Object.entries(getVenueProfileArtifact().profiles)) {
       expect(profile.papers.length).toBeGreaterThan(profile.prototypes.length);
-      expect(VENUE_PAPERS[key]).toEqual(profile.prototypes);
+      expect(getVenuePapers()[key]).toEqual(profile.prototypes);
       const nonPrototype = profile.papers.find(
         (paper) => !profile.prototypes.includes(paper.title),
       );
-      expect(nonPrototype && VENUE_PAPERS[key]).not.toContain(nonPrototype?.title);
+      expect(nonPrototype && getVenuePapers()[key]).not.toContain(nonPrototype?.title);
     }
   });
 });
 
 describe("recommendation bundle contract", () => {
   it("keeps benchmark profiles and manifest identities cutoff-bound", () => {
-    const base = JSON.parse(JSON.stringify(VENUE_PROFILE_ARTIFACT)) as any;
+    const base = JSON.parse(JSON.stringify(getVenueProfileArtifact())) as any;
     const future = JSON.parse(JSON.stringify(base)) as any;
     const profileKey = Object.keys(future.profiles)[0];
     future.profiles[profileKey].papers.push({

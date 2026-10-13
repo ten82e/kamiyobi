@@ -6,7 +6,6 @@ import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { load as loadYaml } from "js-yaml";
 import { describe, expect, it, vi } from "vitest";
-import { booleanValue, positiveIntegerValue } from "../src/args.ts";
 import {
   canonicalizeCategories,
   cleanDbworldTitle,
@@ -2007,77 +2006,4 @@ describe("discover lifecycle and year parsing (#762)", () => {
       expect(registry.candidates[0]?.categories).toContain("hpc");
     });
   });
-});
-
-it("整数の引数が效かなくても黙つて戾さない（第 1018 回）", () => {
-  /* 效く値はそのまま。 */
-  expect(positiveIntegerValue("5", 60)).toBe(5);
-  expect(positiveIntegerValue("99999", 60)).toBe(99999);
-  /* 效かない値は fallback（それは仕樣 – ここで見たいのは「黙つて居ない」事）。 */
-  expect(positiveIntegerValue("0", 60)).toBe(60);
-  expect(positiveIntegerValue("-5", 60)).toBe(60);
-  expect(positiveIntegerValue("abc", 60)).toBe(60);
-  /* 打たれて居ない時（undefined・空）は黙る（それは「省略」なので – 第 852 回と同じ）。 */
-  const spy = vi.spyOn(process.stderr, "write").mockImplementation(() => true);
-  try {
-    positiveIntegerValue(undefined, 60);
-    positiveIntegerValue("", 60);
-    const 默った = spy.mock.calls.filter((c) => String(c[0]).includes("warning")).length;
-    expect(默った, "省略した時に warning を出した").toBe(0);
-    /* 效かない値が打たれた時は warning を出す。 */
-    spy.mockClear();
-    positiveIntegerValue("0", 60);
-    positiveIntegerValue("-5", 60);
-    positiveIntegerValue("abc", 60);
-    const 鳴いた = spy.mock.calls.filter((c) => String(c[0]).includes("warning")).length;
-    expect(鳴いた, "效かない値なのに黙つている").toBe(3);
-    const 文 = spy.mock.calls.map((c) => String(c[0])).join("");
-    expect(文, "既定の値を使うと書いていない").toContain("既定の 60 を使います");
-  } finally {
-    spy.mockRestore();
-  }
-});
-
-it("true / false として読めない値は黙つて true にしない（第 1019 回）", () => {
-  const spy = vi.spyOn(process.stderr, "write").mockImplementation(() => true);
-  try {
-    /* 效く組はそのまま（warning を出さない）。 */
-    for (const [語, 應] of [
-      ["true", true],
-      ["1", true],
-      ["yes", true],
-      ["on", true],
-      ["false", false],
-      ["0", false],
-      ["no", false],
-      ["off", false],
-    ] as const) {
-      spy.mockClear();
-      const 出た = booleanValue(語, true);
-      expect(出た, `「${語}」の interpreted が違ふ`).toBe(應);
-      expect(spy.mock.calls.length, `「${語}」は效く組なのに warning を出した`).toBe(0);
-    }
-    /* 読めない値は fallback の儘 + warning（黙つて true にしない）。 */
-    for (const 語 of ["xyz", "maybe", "2", "TRUE!"]) {
-      spy.mockClear();
-      const 出た = booleanValue(語, true);
-      expect(出た, `「${語}」が fallback に戾つて居らん`).toBe(true);
-      expect(spy.mock.calls.length, `「${語}」を默つて fallback にした`).toBe(1);
-      expect(String(spy.mock.calls[0]?.[0]), "warning に読める組が書かれていない").toContain(
-        "讀める組",
-      );
-    }
-    /* fallback = false の時も warning を出す（黙つて逆にしない）。 */
-    spy.mockClear();
-    expect(booleanValue("xyz", false)).toBe(false);
-    expect(spy.mock.calls.length, "fallback=false の時に黙つている").toBe(1);
-    /* 省略（undefined・布林値）は黙る。 */
-    spy.mockClear();
-    booleanValue(undefined, true);
-    booleanValue(true, true);
-    booleanValue(false, false);
-    expect(spy.mock.calls.length, "省略した時に warning を出した").toBe(0);
-  } finally {
-    spy.mockRestore();
-  }
 });

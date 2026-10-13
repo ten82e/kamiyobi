@@ -35,8 +35,8 @@ import {
   EMBEDDING_MULTI_MODEL,
   EMBEDDING_MULTI_REVISION,
   EMBEDDING_REVISION,
-  VENUE_PAPERS,
-  VENUE_PROFILE_ARTIFACT,
+  getVenuePapers,
+  getVenueProfileArtifact,
   type VenueProfileArtifact,
 } from "./embeddings.ts";
 import { semanticContentIdForArtifacts } from "./semantic-content.ts";
@@ -1852,8 +1852,8 @@ function validateRealPaperNegativeFixture(fixture: RealPaperNegativeFixture): vo
 export function validateRealPaperFixtures(
   dev: RealPaperFixture,
   heldout: RealPaperFixture,
-  venueKeys: ReadonlySet<string> = new Set(Object.keys(VENUE_PAPERS)),
-  profiles: RealPaperProfiles = VENUE_PROFILE_ARTIFACT,
+  venueKeys: ReadonlySet<string> = new Set(Object.keys(getVenuePapers())),
+  profiles: RealPaperProfiles = getVenueProfileArtifact(),
   regressionKnown: RegressionKnownRecord[] = REGRESSION_KNOWN.records,
   negative?: RealPaperNegativeFixture,
   coverage: "full" | "required" = "full",
@@ -2641,7 +2641,7 @@ export async function runRealPaperBenchmark(
     dev,
     heldout,
     venueKeys,
-    VENUE_PROFILE_ARTIFACT,
+    getVenueProfileArtifact(),
     REGRESSION_KNOWN.records,
     negative,
     coverage,
@@ -2703,7 +2703,7 @@ export async function runRealPaperBenchmark(
 
   Recommender.setExpandEnabled(true);
   const rowsFor = (sourceYearMax: number) => {
-    const papers = profileTitlesBefore(VENUE_PROFILE_ARTIFACT, sourceYearMax);
+    const papers = profileTitlesBefore(getVenueProfileArtifact(), sourceYearMax);
     return confs.map((conference) => ({
       conf: {
         key: conference.key,
@@ -3656,7 +3656,7 @@ export async function main(
         }
       }
       const seenPaper = new Set<string>();
-      for (const w of contentWords((VENUE_PAPERS[c.key] ?? []).join(" "))) {
+      for (const w of contentWords((getVenuePapers()[c.key] ?? []).join(" "))) {
         // paper 語彙の汎用語（self/general/framework 等）はスコアリングで加点されないので df にも数えない。
         if (GEN_PAPER.has(w)) continue;
         if (!seenPaper.has(w)) {
@@ -3728,7 +3728,7 @@ export async function main(
       // 代表論文語彙（embedding 側の VENUE_PAPERS と同じ出典）— 語彙一致にも効かせる。
       // 本番ではデータパイプラインが conferences に papers を載せる。
       // 無い場合は空として扱う。
-      papers: VENUE_PAPERS[c.key] ?? [],
+      papers: getVenuePapers()[c.key] ?? [],
     },
     cats: c.categories ?? [],
   });

@@ -300,7 +300,11 @@ function loadVenueProfiles(): VenueProfileArtifact {
   return validateVenueProfileArtifact(artifact);
 }
 
-export const VENUE_PROFILE_ARTIFACT = loadVenueProfiles();
+let cachedVenueProfileArtifact: VenueProfileArtifact | undefined;
+export function getVenueProfileArtifact(): VenueProfileArtifact {
+  cachedVenueProfileArtifact ??= loadVenueProfiles();
+  return cachedVenueProfileArtifact;
+}
 
 function cosineDistance(left: number[], right: number[]): number {
   const size = Math.min(left.length, right.length);
@@ -390,22 +394,26 @@ export function selectVenueMedoids(
 }
 
 /** Derived compatibility view used by lexical and embedding consumers. */
-export const VENUE_PAPERS: Record<string, string[]> = Object.fromEntries(
-  Object.entries(VENUE_PROFILE_ARTIFACT.profiles).map(([key, profile]) => [
-    key,
-    profile.prototypes,
-  ]),
-);
+let cachedVenuePapers: Record<string, string[]> | undefined;
+export function getVenuePapers(): Record<string, string[]> {
+  cachedVenuePapers ??= Object.fromEntries(
+    Object.entries(getVenueProfileArtifact().profiles).map(([key, profile]) => [
+      key,
+      profile.prototypes,
+    ]),
+  );
+  return cachedVenuePapers;
+}
 
 /** Stable hash of the complete provenance-bearing artifact (embedding invalidation key). */
 export function venuePapersHash(): string {
-  return VENUE_PROFILE_ARTIFACT.profiles_hash;
+  return getVenueProfileArtifact().profiles_hash;
 }
 
 /** Profile titles available to a benchmark at its historical cutoff. */
 export function venuePapersAtCutoff(
   sourceYearMax: number,
-  artifact: VenueProfileArtifact = VENUE_PROFILE_ARTIFACT,
+  artifact: VenueProfileArtifact = getVenueProfileArtifact(),
 ): Record<string, string[]> {
   if (!Number.isInteger(sourceYearMax) || sourceYearMax < 1900) {
     throw new Error("benchmark profile cutoff must be a valid year");
@@ -428,7 +436,7 @@ export function venuePapersAtCutoff(
 /** Hash the exact provenance-bearing profile slice used by a historical benchmark. */
 export function benchmarkProfileHash(
   sourceYearMax: number,
-  artifact: VenueProfileArtifact = VENUE_PROFILE_ARTIFACT,
+  artifact: VenueProfileArtifact = getVenueProfileArtifact(),
 ): string {
   if (!Number.isInteger(sourceYearMax) || sourceYearMax < 1900) {
     throw new Error("benchmark profile cutoff must be a valid year");
@@ -487,7 +495,7 @@ export function profileTexts(
   confs: unknown[] | null | undefined,
   catNames?: Record<string, string> | null,
   forMulti = false,
-  venuePapers: Record<string, string[]> = VENUE_PAPERS,
+  venuePapers: Record<string, string[]> = getVenuePapers(),
 ): { keys: string[]; texts: string[] } {
   return cleanProfileTexts(confs, catNames, forMulti, venuePapers);
 }
@@ -661,7 +669,8 @@ function expectedPaperKeys(data: EmbeddingData | null | undefined): string[] {
     .map((c) => String(c.key))
     .filter(
       (key) =>
-        (PAPER_VEC_KEYS as readonly string[]).includes(key) && (VENUE_PAPERS[key]?.length ?? 0) > 0,
+        (PAPER_VEC_KEYS as readonly string[]).includes(key) &&
+        (getVenuePapers()[key]?.length ?? 0) > 0,
     )
     .sort();
 }
@@ -687,7 +696,7 @@ export function embeddingProfileHash(data: EmbeddingData | null | undefined): st
     categories: data?.categories ?? {},
     conferences: dataConferences(data).map((c) => ({
       ...c,
-      papers: VENUE_PAPERS[String(c.key)] ?? [],
+      papers: getVenuePapers()[String(c.key)] ?? [],
     })),
     profile_rules: {
       jp_category_keywords: JP_CAT_KW,
@@ -795,7 +804,7 @@ export async function buildEmbeddings(
   // CounterSEVeillance/One-Size-Fits-None を奪い新規獲得 0 のため採らない。
   // rtas は VENUE_PAPERS 語彙のみで 8 件中 6 件 top5 を達成。
   for (const key of PAPER_VEC_KEYS) {
-    const papers = VENUE_PAPERS[key] ?? [];
+    const papers = getVenuePapers()[key] ?? [];
     if (!papers.length) continue;
     // 論文タイトルを**個別に**埋め込む（平均しない — max 類似度で使うため）。
     // embedSet は key ごとに平均するので使えない。
