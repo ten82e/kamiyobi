@@ -2498,6 +2498,8 @@ async function main(): Promise<void> {
         "  AI から: MCP クライアントからこのファイルを起動します（`node src/mcp.ts`）。",
         "  手元で確認: ツール名と引数を指定すると、1 回分の結果を表示します。",
         `  ツール: ${TOOLS.map((t) => t.name).join(" / ")}`,
+        "  投稿先検索・推薦: --retrieval semantic で実モデル、lexical で語彙検索（既定）。",
+        "  検索・推薦: --json で構造化結果を出力。--offset で続きの取得位置を指定。",
         '  例: node src/mcp.ts search "セキュリティ" 5',
         '  続き: node src/mcp.ts search "セキュリティ" 5 --offset 5',
         '  推薦の続き: node src/mcp.ts recommend "分散システム" 5 --offset 5',
@@ -2527,12 +2529,44 @@ async function main(): Promise<void> {
 
   if (!TOOLS.some((t) => t.name === 名)) {
     const 一覧 = [
-      `知らない道具「${tool}」です。道具の名は下列の 6 つです（--help でもこれが出ます）。`,
+      `知らない道具「${tool}」です。道具は次の${TOOLS.length}種類です（--help でもこれが出ます）。`,
       ...TOOLS.map((t) => `  ${t.name}${別名[tool] === t.name ? `（別名 ${tool}）` : ""}`),
       "",
     ].join("\n");
-    process.stdout.write(`${一覧}\n`);
+    process.stderr.write(`${一覧}\n`);
+    process.exitCode = 1;
     return;
+  }
+  let retrieval: string | undefined;
+  const retrievalAt = rest.indexOf("--retrieval");
+  if (retrievalAt >= 0) {
+    const value = rest[retrievalAt + 1];
+    if (
+      !["search_venues", "recommend_venues"].includes(名) ||
+      rest.lastIndexOf("--retrieval") !== retrievalAt ||
+      !["lexical", "semantic"].includes(value ?? "")
+    ) {
+      process.stderr.write(
+        "--retrieval は投稿先検索・推薦で lexical または semantic を1つ指定してください。\n",
+      );
+      process.exitCode = 1;
+      return;
+    }
+    retrieval = value;
+    rest.splice(retrievalAt, 2);
+  }
+  const jsonAt = rest.indexOf("--json");
+  const json = jsonAt >= 0;
+  if (json) {
+    if (
+      !["search_deadlines", "search_venues", "recommend_venues"].includes(名) ||
+      rest.lastIndexOf("--json") !== jsonAt
+    ) {
+      process.stderr.write("--json は検索・推薦で1つ指定してください。\n");
+      process.exitCode = 1;
+      return;
+    }
+    rest.splice(jsonAt, 1);
   }
   let offset: number | undefined;
   const offsetAt = rest.indexOf("--offset");
@@ -2545,7 +2579,7 @@ async function main(): Promise<void> {
       !/^\d+$/.test(value) ||
       !Number.isSafeInteger(Number(value))
     ) {
-      process.stdout.write(
+      (json ? process.stderr : process.stdout).write(
         "--offset は検索・推薦の取得開始位置です。0 以上の整数を1つ指定してください。\n",
       );
       process.exitCode = 1;
@@ -2558,37 +2592,49 @@ async function main(): Promise<void> {
    * （題名の語に数字が混ざる事がある – 全部を件数と読むと、題名が削られる）。 */
   const 尾が數 = rest.length > 1 && /^\d+$/.test(String(rest[rest.length - 1] ?? ""));
   const args: Record<string, unknown> =
-    名 === "search_deadlines" || 名 === "search_venues" || 名 === "explain_word"
+    名 === "search_deadlines" || 名 === "explain_word"
       ? { query: rest[0], word: rest[0], limit: cliNumber(rest[1]) }
-      : 名 === "recommend_venues"
+      : 名 === "search_venues"
         ? {
-            paper: (尾が數 ? rest.slice(0, -1) : rest).join(" "),
+            query: (尾が數 ? rest.slice(0, -1) : rest).join(" "),
             limit: 尾が數 ? cliNumber(rest[rest.length - 1]) : undefined,
           }
-        : 名 === "list_upcoming"
-          ? { days: cliNumber(rest[0]), kind: rest[1] }
-          : (() => {
-              /* 打たれた語が**そのまま key** にある時は key として扱ふ。名の一部として引くと、
-               * `sc` の様に 42 件の候補に割れてしまふ（実測 2026-10-12 – その語の会議を
-               * 一意に指しているのに、候補の一覽を返していた）。 */
-              const 語 = String(rest[0] ?? "").trim();
+        : 名 === "recommend_venues"
+          ? {
+              paper: (尾が數 ? rest.slice(0, -1) : rest).join(" "),
+              limit: 尾が數 ? cliNumber(rest[rest.length - 1]) : undefined,
+            }
+          : 名 === "list_upcoming"
+            ? { days: cliNumber(rest[0]), kind: rest[1] }
+            : (() => {
+                /* 打たれた語が**そのまま key** にある時は key として扱ふ。名の一部として引くと、
+                 * `sc` の様に 42 件の候補に割れてしまふ（実測 2026-10-12 – その語の会議を
+                 * 一意に指しているのに、候補の一覽を返していた）。 */
+                const 語 = String(rest[0] ?? "").trim();
 
-              const 其の儘 =
-                Boolean(語) &&
-                (snapshot().conferences ?? []).some((c) => {
-                  if (String(c.key ?? "").toLowerCase() === 語.toLowerCase()) return true;
-                  const 古い = (c as { legacy_keys?: unknown }).legacy_keys;
-                  return (Array.isArray(古い) ? 古い : []).some(
-                    (l: unknown) => String(l ?? "").toLowerCase() === 語.toLowerCase(),
-                  );
-                });
-              return 其の儘 ? { key: 語 } : { name: 語 };
-            })();
+                const 其の儘 =
+                  Boolean(語) &&
+                  (snapshot().conferences ?? []).some((c) => {
+                    if (String(c.key ?? "").toLowerCase() === 語.toLowerCase()) return true;
+                    const 古い = (c as { legacy_keys?: unknown }).legacy_keys;
+                    return (Array.isArray(古い) ? 古い : []).some(
+                      (l: unknown) => String(l ?? "").toLowerCase() === 語.toLowerCase(),
+                    );
+                  });
+                return 其の儘 ? { key: 語 } : { name: 語 };
+              })();
   if (offset !== undefined) args.offset = offset;
+  if (retrieval !== undefined) args.retrieval = retrieval;
   let page: Record<string, unknown> | undefined;
   const result = await callTool(名, args, now, (value) => {
     page = value;
   });
+  if (json) {
+    if (!page)
+      throw new Error("構造化結果を取得できませんでした。入力と収録データを確認してください。");
+    process.stdout.write(`${JSON.stringify(page)}\n`);
+    return;
+  }
   const nextOffset = page?.next_offset;
   const text = result.replace(/次の結果: 同じ条件で offset: \d+ を指定してください。/g, "");
   process.stdout.write(`${text}\n`);

@@ -9,6 +9,7 @@ export default defineConfig({
       "tests/full_pool_models.integration.ts",
       "tests/live_consumers.integration.ts",
       "tests/mcp_semantic.integration.ts",
+      "tests/mcp_cli_models.integration.ts",
     ],
     maxWorkers: 1,
     hookTimeout: 600000,
