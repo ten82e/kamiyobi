@@ -1,14 +1,6 @@
 import { spawn, spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import {
-  constants,
-  copyFileSync,
-  existsSync,
-  mkdirSync,
-  readFileSync,
-  rmSync,
-  writeFileSync,
-} from "node:fs";
+import { existsSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { createInterface } from "node:readline";
 import { afterAll, beforeAll, expect, it } from "vitest";
@@ -152,34 +144,34 @@ beforeAll(async () => {
       ),
     ).toBe(true);
     expect((await request("ping")).result).toEqual({});
-    // Only pinned pretrained weights are reused; no profiles, vectors or generated data are copied.
-    for (const [model, revision] of [
-      [runtime.EMBEDDING_MODEL, runtime.EMBEDDING_REVISION],
-      [runtime.EMBEDDING_MULTI_MODEL, runtime.EMBEDDING_MULTI_REVISION],
-    ]) {
-      const directory = join(root, ".cache/embedding-models", model, revision);
-      mkdirSync(join(directory, "onnx"), { recursive: true });
+    const cache = join(root, ".cache/embedding-models");
+    const cachedFiles = existsSync(cache)
+      ? readdirSync(cache, { recursive: true }).filter((file) =>
+          statSync(join(cache, String(file))).isFile(),
+        )
+      : [];
+    expect(cachedFiles, "model preparation must start with no cached files").toEqual([]);
+    // The command acquires pinned weights itself while the initialized MCP connection stays open.
+    const preparation = spawnSync(process.execPath, [join(root, "src/prepare-models.ts")], {
+      cwd: root,
+      encoding: "utf8",
+      timeout: 900000,
+    });
+    expect(preparation.status, preparation.stderr).toBe(0);
+    prepared = JSON.parse(preparation.stdout);
+    expect(prepared.ready).toBe(true);
+    expect(prepared.models).toEqual([
+      { id: runtime.EMBEDDING_MODEL, revision: runtime.EMBEDDING_REVISION },
+      { id: runtime.EMBEDDING_MULTI_MODEL, revision: runtime.EMBEDDING_MULTI_REVISION },
+    ]);
+    for (const model of prepared.models)
       for (const file of [
         "config.json",
         "tokenizer.json",
         "tokenizer_config.json",
         "onnx/model.onnx",
       ])
-        copyFileSync(
-          join(repo, ".cache/embedding-models", model, revision, file),
-          join(directory, file),
-          constants.COPYFILE_FICLONE,
-        );
-    }
-    const preparation = spawnSync(
-      process.execPath,
-      [join(root, "src/prepare-models.ts"), "--offline"],
-      { cwd: root, encoding: "utf8", timeout: 180000 },
-    );
-    expect(preparation.status, preparation.stderr).toBe(0);
-    prepared = JSON.parse(preparation.stdout);
-    expect(prepared.ready).toBe(true);
-    expect(prepared.models).toHaveLength(2);
+        expect(statSync(join(cache, model.id, model.revision, file)).size).toBeGreaterThan(0);
     for (const c of cases) replies.push((await call(c)).result);
     expect((await request("ping")).result).toEqual({});
     sameProcess = child.pid === pid && child.exitCode === null && child.signalCode === null;
@@ -196,7 +188,7 @@ beforeAll(async () => {
     "data/recommender-reranker.json",
   ])
     expect(existsSync(join(root, file))).toBe(false);
-}, 600000);
+}, 1200000);
 afterAll(() => {
   if (root) rmSync(root, { recursive: true, force: true });
 });

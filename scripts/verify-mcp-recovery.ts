@@ -38,11 +38,9 @@ for (const file of ["manual.yaml", "curated.generated.yaml", "overrides.yaml"])
 for (const file of ["config.yaml", "package.json", "tsconfig.json"])
   cpSync(join(repo, file), join(root, file));
 symlinkSync(join(repo, "node_modules"), join(root, "node_modules"));
-mkdirSync(join(root, ".cache"));
-symlinkSync(join(repo, ".cache/embedding-models"), join(root, ".cache/embedding-models"));
 writeFileSync(
   join(root, "vitest.config.ts"),
-  'import {defineConfig} from "vitest/config";export default defineConfig({test:{include:["tests/mcp_recovery_models.integration.ts"],maxWorkers:1,hookTimeout:600000,testTimeout:180000}});',
+  'import {defineConfig} from "vitest/config";export default defineConfig({test:{include:["tests/mcp_recovery_models.integration.ts"],maxWorkers:1,hookTimeout:1200000,testTimeout:180000}});',
 );
 const files = ["src/semantic-profile-cache.ts", "src/embedding-runtime.ts"];
 const originals = Object.fromEntries(
@@ -66,7 +64,7 @@ function run(label: string, broken: boolean) {
       "--outputFile",
       output,
     ],
-    { cwd: root, encoding: "utf8", timeout: 600000, maxBuffer: 8 * 1024 * 1024 },
+    { cwd: root, encoding: "utf8", timeout: 1200000, maxBuffer: 8 * 1024 * 1024 },
   );
   writeFileSync(join(root, `${label}.log`), `${child.stdout ?? ""}${child.stderr ?? ""}`);
   assert(!child.error, String(child.error));
