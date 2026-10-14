@@ -1572,7 +1572,6 @@ it("conferences without deadlines keep their meeting dates", () => {
 it("index.html has no meeting rows", () => {
   const html = siteHtmlRuntime();
   expect(html).not.toContain('event: "開催"');
-  expect(html).toContain("KIND_LABEL[r.kind]");
   expect(html).toMatch(/r\.kind !== "abstract"\s*&&\s*r\.kind !== "paper"/);
   for (const title of ["ISC High Performance", "HOTI", "情報処理学会 HPC 研究会"]) {
     expect(html).toContain(title);

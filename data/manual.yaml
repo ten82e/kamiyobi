@@ -7076,6 +7076,16 @@ schema_version: 1
 
 # 公式 CFP の募集主題。開催回や締切、採択論文は含めない。
 venue_scopes:
+  fast:
+    source_url: https://www.usenix.org/conference/fast25/call-for-papers
+    topics:
+      - File system design and deployment, distributed and networked storage, database and key-value storage.
+      - RAID and erasure coding, storage reliability, availability, disaster recovery and data integrity.
+      - Caching, data replication, consistency, deduplication and compression in storage systems.
+      - Storage hardware, emerging memory hierarchies, memory-only systems and parallel I/O for HPC.
+      - Storage for artificial intelligence and artificial intelligence methods for storage systems.
+      - Cloud storage, mobile and embedded storage, energy efficiency and storage quality of service.
+      - Empirical storage evaluation, deployed system experience, auditing, provenance and storage security.
   icml:
     source_url: https://icml.cc/Conferences/2024/CallForPapers
     topics:

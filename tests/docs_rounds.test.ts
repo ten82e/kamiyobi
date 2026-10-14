@@ -41,7 +41,7 @@ it("README と SPEC で、箇条書きが前の項の文末に繋がっていな
   }
 });
 
-it("README が MCP サーバの入口と、実装と同じ 6 つの道具を書いている（第 891 回）", () => {
+it("README が MCP サーバの入口と、実装と同じ 7 つの道具を書いている（第 891 回）", () => {
   /* 実測 2026-10-22: README の「機械可読の出力」は「次の **2 つ**を見るのが早い」と書いた儘で
    * 表には 5 つ並び、**MCP サーバに一度も觸れて居なかつた**。MCP は AI がこの収録を使う時の
    * 入口（`node src/mcp.ts`）なので、購読手順を書く README に無いのは穴だ。 */
@@ -61,7 +61,7 @@ it("README が MCP サーバの入口と、実装と同じ 6 つの道具を書�
    * 增えた道具が黙つた儘に成らない。 */
   const mcp = readFileSync(join(ROOT, "src", "mcp.ts"), "utf8");
   const 宣言 = [...mcp.matchAll(/^\s{4}name: "([a-z_]+)",$/gm)].map((m) => m[1]);
-  expect(宣言.length, "この検查の前提（道具の宣言）が崩れた").toBe(6);
+  expect(宣言.length, "この検查の前提（道具の宣言）が崩れた").toBe(7);
   const 表 = readme.slice(readme.indexOf("### MCP サーバとして使う"));
   for (const 名 of 宣言) {
     expect(表, `README の道具の表が ${名} を書いて居ん`).toContain(`\`${名}\``);

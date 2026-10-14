@@ -1,0 +1,24 @@
+{
+  "candidate_count": 696,
+  "top_k": 5,
+  "papers": [
+    {
+      "id": "aliccs-en",
+      "language": "en",
+      "split": "final-confirmation",
+      "title": "Learning Production-Optimized Congestion Control Selection for Alibaba Cloud CDN",
+      "abstract": "AliCCS chooses congestion-control protocols for production content-delivery networks. It combines learning with network-specific knowledge rather than assuming one fixed protocol works equally well across regions. A year-long deployment in Alibaba Cloud CDN evaluates viewing quality, retransmissions, costs and practical lessons from operating the selector at scale.",
+      "source": "https://www.usenix.org/conference/nsdi25/presentation/zeng",
+      "acceptable_venues": ["nsdi", "sigcomm", "conext", "icnp"]
+    },
+    {
+      "id": "aliccs-ja",
+      "language": "ja",
+      "split": "final-confirmation",
+      "title": "Alibaba Cloud CDN向けに運用環境を考慮した輻輳制御方式の選択を学習する",
+      "abstract": "AliCCSは運用中のコンテンツ配信ネットワークで輻輳制御プロトコルを選ぶ。地域ごとに異なる通信状態に対し、単一の固定プロトコルを使うのではなく、ネットワークの知識と学習を組み合わせる。Alibaba Cloud CDNでの1年間の導入を通じて、視聴品質、再送、コスト、規模の大きな運用での知見を評価する。",
+      "source": "https://www.usenix.org/conference/nsdi25/presentation/zeng",
+      "acceptable_venues": ["nsdi", "sigcomm", "conext", "icnp"]
+    }
+  ]
+}

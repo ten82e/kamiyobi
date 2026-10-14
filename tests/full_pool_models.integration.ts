@@ -205,7 +205,16 @@ beforeAll(async () => {
     for (const paperLines of lines)
       expect(Recommender.queryHasJapanese(paperLines)).toBe(language === "ja");
 
-    const fp = await embedEach(model, texts, revision);
+    const plans = lines.map((line) => Recommender.semanticQueryPlan(line));
+    const inferenceTexts = [...new Set(plans.flatMap((plan) => plan.map((query) => query.text)))];
+    const inferred = await embedEach(model, inferenceTexts, revision);
+    const fpByText = new Map(inferenceTexts.map((text, index) => [text, inferred[index]]));
+    const fp = plans.map((plan, index) =>
+      Recommender.semanticQueryVector(
+        lines[index],
+        plan.map((query) => fpByText.get(query.text)!),
+      ),
+    );
     console.info(`${language}: ${texts.length} queries inferred`);
     const tokenizer = await AutoTokenizer.from_pretrained(join(env.cacheDir!, model, revision), {
       local_files_only: true,
@@ -221,8 +230,15 @@ beforeAll(async () => {
           const vector =
             dtype === "fp32"
               ? fp[i]
-              : Array.from(
-                  (await q8(texts[i], { pooling: "mean", normalize: true })).data as Float32Array,
+              : Recommender.semanticQueryVector(
+                  lines[i],
+                  await Promise.all(
+                    plans[i].map(async ({ text }) =>
+                      Array.from(
+                        (await q8(text, { pooling: "mean", normalize: true })).data as Float32Array,
+                      ),
+                    ),
+                  ),
                 );
           expect(vector).toHaveLength(384);
           expect(Math.hypot(...vector)).toBeCloseTo(1, 4);

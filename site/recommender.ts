@@ -15238,6 +15238,11 @@ const Recommender = (() => {
 
   /* 検索用の専門語・表記を補う。 */
   const RETRIEVAL_TOPIC_ALIASES: Record<string, string> = {
+    輻輳制御:
+      "network congestion control transport protocols computer communication packet networking bandwidth allocation",
+    通信状態: "network conditions",
+    ネットワーク構成: "network configuration",
+    競合フロー: "competing network flows",
     "pac learning": "probably approximately correct learning statistical learning theory",
     PAC学習: "probably approximately correct learning statistical learning theory",
     自己回帰: "autoregressive modeling",

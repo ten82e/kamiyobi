@@ -4108,6 +4108,8 @@ it("推薦のカードの行が、てびきの数と名前と合う（SPEC §7�
     className: string;
     textContent: string;
     children: Element[];
+    attributes: Record<string, string>;
+    setAttribute(name: string, value: string): void;
     appendChild(child: Element): void;
   };
   const document = {
@@ -4116,6 +4118,10 @@ it("推薦のカードの行が、てびきの数と名前と合う（SPEC §7�
         className: "",
         textContent: "",
         children: [],
+        attributes: {},
+        setAttribute(name, value) {
+          this.attributes[name] = value;
+        },
         appendChild(child) {
           this.children.push(child);
         },
@@ -4136,6 +4142,7 @@ it("推薦のカードの行が、てびきの数と名前と合う（SPEC §7�
   };
   const render = new Function(
     "document",
+    "Recommender",
     "line",
     "axesForRecommendation",
     "venueEvidenceLineJa",
@@ -4148,6 +4155,7 @@ it("推薦のカードの行が、てびきの数と名前と合う（SPEC §7�
     `return (${card});`,
   )(
     document,
+    Recommender,
     line,
     axesFor,
     venueEvidenceLineJa,

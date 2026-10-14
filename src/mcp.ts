@@ -1974,6 +1974,12 @@ function recommendVenues(
   };
   receive?.({
     total: 候補.length,
+    candidate_venues: new Set(
+      pool.flatMap((row) => [
+        row.conf.key,
+        ...(row.submission?.sourceRecords ?? []).map((record) => record.venueKey),
+      ]),
+    ).size,
     offset,
     limit,
     returned: 見本.length,
@@ -2207,6 +2213,23 @@ const TOOLS = [
     inputSchema: { type: "object", properties: {} },
   },
   {
+    name: "search_venues",
+    description:
+      "全収録の投稿先プロフィールから、研究テーマ・論文の題名・概要に合う会議や論文誌を検索する。締切不明や締切済みの会議も候補に含む。語彙の一致と公式トピックを用い、意味検索のモデルは使わない。締切日時を探す場合は search_deadlines を使う。構造化結果の candidate_venues は検索した収録会議数、total は一致した候補数。limit と offset でページ送りできる。",
+    inputSchema: {
+      type: "object",
+      properties: {
+        query: {
+          type: "string",
+          description: "研究テーマ、題名、概要、または title・abstract を持つJSON文字列",
+        },
+        limit: { type: "number", description: "返す候補の数（既定10・最大30）" },
+        offset: { type: "integer", minimum: 0, description: "取得開始位置（既定0）" },
+      },
+      required: ["query"],
+    },
+  },
+  {
     name: "recommend_venues",
     description:
       "論文情報に合う投稿先を語彙の一致で探す。学習済みの並べ替えモデルがある場合は併用する。意味検索の埋め込みは使わないため、画面の評価と異なる場合がある。候補の範囲は画面と共通。順位表に入るのは実質的な一致がある候補だけで、証拠がない会議を分野だけの一致で推薦しない。長い入力は最初の 20 行と各行の長さ制限で切り、切った旨を返す。返す行の形: 順位と一致評価、選定理由、締切の確認状況に続いて締切行。1ページ最大30件。structuredContent に順位・一致評価・受付状態・締切・確認情報を返す。続きは同じ論文情報と next_offset を offset に指定する。",
@@ -2260,6 +2283,11 @@ function callTool(
   if (name === "venue_info") return venueInfo(args, now);
   if (name === "explain_word") return explainWord(args, now);
   if (name === "recommend_venues") return recommendVenues(args, now, receive);
+  if (name === "search_venues") {
+    if (typeof args.query !== "string" || !args.query.trim())
+      throw new Error("query に研究テーマ・題名・概要を指定してください。");
+    return recommendVenues({ ...args, paper: args.query }, now, receive);
+  }
   if (name === "collection_stats") return collectionStats(args, now);
   throw new Error(`知らないツール: ${name}`);
 }
@@ -2439,6 +2467,7 @@ function main(): void {
         "  例: node src/mcp.ts list_upcoming 30",
         "  例: node src/mcp.ts venue_info kdd",
         '  例: node src/mcp.ts recommend "分散システム"',
+        '  例: node src/mcp.ts search_venues "機械学習" 5',
         "  例: node src/mcp.ts stats",
       ].join("\n")}\n`,
     );
@@ -2448,6 +2477,7 @@ function main(): void {
   /* 人の打ちやすい短い名も受ける（AI は MCP の名をそのまま使う）。 */
   const 別名: Record<string, string> = {
     search: "search_deadlines",
+    search_venues: "search_venues",
     upcoming: "list_upcoming",
     venue: "venue_info",
     explain: "explain_word",
@@ -2471,7 +2501,7 @@ function main(): void {
   if (offsetAt >= 0) {
     const value = rest[offsetAt + 1];
     if (
-      !["search_deadlines", "recommend_venues"].includes(名) ||
+      !["search_deadlines", "search_venues", "recommend_venues"].includes(名) ||
       rest.lastIndexOf("--offset") !== offsetAt ||
       value === undefined ||
       !/^\d+$/.test(value) ||
@@ -2490,7 +2520,7 @@ function main(): void {
    * （題名の語に数字が混ざる事がある – 全部を件数と読むと、題名が削られる）。 */
   const 尾が數 = rest.length > 1 && /^\d+$/.test(String(rest[rest.length - 1] ?? ""));
   const args: Record<string, unknown> =
-    名 === "search_deadlines" || 名 === "explain_word"
+    名 === "search_deadlines" || 名 === "search_venues" || 名 === "explain_word"
       ? { query: rest[0], word: rest[0], limit: cliNumber(rest[1]) }
       : 名 === "recommend_venues"
         ? {

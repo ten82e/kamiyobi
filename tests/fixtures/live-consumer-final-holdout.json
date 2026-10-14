@@ -1,0 +1,24 @@
+{
+  "candidate_count": 696,
+  "top_k": 5,
+  "papers": [
+    {
+      "id": "policycache-en",
+      "language": "en",
+      "source": "https://www.usenix.org/conference/nsdi26/presentation/tian",
+      "title": "PolicyCache: Intra-flow Learning in Congestion Control",
+      "abstract": "TCP congestion control (CC) schemes must balance fast responsiveness, adaptability to diverse network conditions, and low computational overhead. Existing approaches fall short: heuristic-based algorithms are lightweight but brittle, learning-based schemes provide high responsiveness yet struggle with generalization, and exploration-based methods adapt well but converge slowly. We present PolicyCache, the first CC algorithm based on intra-flow learning , where both training and execution of the policy are confined to a single flow. Unlike prior inter-flow learning, this paradigm avoids cross-environment generalization pitfalls while maintaining high responsiveness. PolicyCache leverages a lightweight, non-parametric tree-based model coupled with online exploration and dynamic model switching to enable rapid and robust adaptation. We provide convergence analysis of PolicyCache and have built a fully functional Linux prototype. Extensive evaluations demonstrate that PolicyCache consistently achieves high throughput, low latency, and fairness across diverse emulated and real-world networks, while incurring minimal overhead. These results establish intra-flow learning as a practical and effective new direction for congestion control.",
+      "split": "final-holdout",
+      "acceptable_venues": ["nsdi", "sigcomm", "conext", "icnp"]
+    },
+    {
+      "id": "policycache-ja",
+      "language": "ja",
+      "source": "https://www.usenix.org/conference/nsdi26/presentation/tian",
+      "title": "PolicyCache：輻輳制御におけるフロー内学習",
+      "abstract": "TCPの輻輳制御方式は、素早い応答、多様な通信状態への適応、低い計算負荷を両立する必要がある。既存方式には、ヒューリスティック方式は軽量だが脆弱、学習型は応答が速いが汎化が難しい、探索型は適応性が高いが収束が遅いという課題がある。PolicyCacheはフロー内学習を使う初の輻輳制御アルゴリズムで、方策の学習と実行を単一フローの中に限定する。従来のフロー間学習と異なり、通信環境をまたぐ汎化の問題を避けながら、速い応答を維持する。軽量でノンパラメトリックな木構造モデルに、オンライン探索とモデルの動的切り替えを組み合わせ、素早く頑健に適応する。収束解析を行い、動作するLinuxの実装を構築した。多様な実ネットワークとエミュレーションによる評価で、わずかな負荷で高いスループット、低い遅延、公平性を一貫して達成する。フロー内学習が輻輳制御の実用的で有効な新しい方向であることを示す。",
+      "split": "final-holdout",
+      "acceptable_venues": ["nsdi", "sigcomm", "conext", "icnp"]
+    }
+  ]
+}

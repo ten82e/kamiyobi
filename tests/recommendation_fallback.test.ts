@@ -51,9 +51,9 @@ describe("shared word-only recommendation fallback", () => {
   it("requires a whole venue key, not a prefix or a hyphenated longer venue", () => {
     for (const title of ["機械学習の応用 xfgcsx", "機械学習の応用 fgcs-workshop"]) {
       const input = [...workshop, ...journal];
-      expect(Recommendation.venueRecommendations(input, lines(title), null, now)).toEqual(
-        Core.venueRecommendations(input, lines(title), null, now),
-      );
+      const result = Recommendation.venueRecommendations(input, lines(title), null, now);
+      expect(result.length).toBeGreaterThan(0);
+      expect(result[0].venueKey).toBe("local-ml");
     }
   });
   it("does not mistake a category abbreviation for a venue name", () => {

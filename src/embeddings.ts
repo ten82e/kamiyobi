@@ -408,7 +408,12 @@ export function getVenuePapers(): Record<string, string[]> {
 }
 
 /** Stable hash of the complete provenance-bearing artifact (embedding invalidation key). */
-export function venuePapersHash(): string {
+export function venuePapersHash(papers?: Record<string, string[]>): string {
+  if (papers !== undefined)
+    return createHash("sha256")
+      .update(JSON.stringify(stableValue(papers)))
+      .digest("hex")
+      .slice(0, 16);
   return getVenueProfileArtifact().profiles_hash;
 }
 
@@ -666,13 +671,15 @@ function dataConferences(data: EmbeddingData | null | undefined): Array<Record<s
     .sort((a, b) => String(a.key).localeCompare(String(b.key)));
 }
 
-function expectedPaperKeys(data: EmbeddingData | null | undefined): string[] {
+function expectedPaperKeys(
+  data: EmbeddingData | null | undefined,
+  papers = getVenuePapers(),
+): string[] {
   return dataConferences(data)
     .map((c) => String(c.key))
     .filter(
       (key) =>
-        (PAPER_VEC_KEYS as readonly string[]).includes(key) &&
-        (getVenuePapers()[key]?.length ?? 0) > 0,
+        (PAPER_VEC_KEYS as readonly string[]).includes(key) && (papers[key]?.length ?? 0) > 0,
     )
     .sort();
 }
@@ -687,7 +694,10 @@ function modelManifest(model: string, revision: string, probe: number[]): Embedd
 }
 
 /** Hash every input that changes profile vectors, not only the output key set. */
-export function embeddingProfileHash(data: EmbeddingData | null | undefined): string {
+export function embeddingProfileHash(
+  data: EmbeddingData | null | undefined,
+  papers = getVenuePapers(),
+): string {
   const profile = {
     schema: EMBEDDING_SCHEMA_VERSION,
     runtime_version: EMBEDDING_RUNTIME_VERSION,
@@ -698,7 +708,7 @@ export function embeddingProfileHash(data: EmbeddingData | null | undefined): st
     categories: data?.categories ?? {},
     conferences: dataConferences(data).map((c) => ({
       ...c,
-      papers: getVenuePapers()[String(c.key)] ?? [],
+      papers: papers[String(c.key)] ?? [],
     })),
     profile_rules: {
       jp_category_keywords: JP_CAT_KW,
@@ -729,19 +739,20 @@ export function embeddingBundleKey(profileHash: string): string {
 export function embeddingManifest(
   data: EmbeddingData | null | undefined,
   probes: { en?: number[]; multi?: number[] } = {},
+  papers?: Record<string, string[]>,
 ): EmbeddingManifest {
   const keys = dataConferences(data).map((c) => String(c.key));
   return {
     schema: EMBEDDING_SCHEMA_VERSION,
     runtime_version: EMBEDDING_RUNTIME_VERSION,
-    profile_hash: embeddingProfileHash(data),
+    profile_hash: embeddingProfileHash(data, papers),
     keys,
-    venue_papers_hash: venuePapersHash(),
+    venue_papers_hash: venuePapersHash(papers),
     models: {
       en: modelManifest(EMBEDDING_MODEL, EMBEDDING_REVISION, probes.en ?? []),
       multi: modelManifest(EMBEDDING_MULTI_MODEL, EMBEDDING_MULTI_REVISION, probes.multi ?? []),
     },
-    paper_vecs: { keys: expectedPaperKeys(data), dim: EMBEDDING_DIM },
+    paper_vecs: { keys: expectedPaperKeys(data, papers), dim: EMBEDDING_DIM },
   };
 }
 
@@ -749,14 +760,16 @@ export async function buildEmbeddings(
   dataPath: string,
   outPath: string,
   localFilesOnly = false,
+  venuePapers?: Record<string, string[]>,
 ): Promise<Record<string, number[]>> {
   const data = JSON.parse(readFileSync(dataPath, "utf8")) as {
     conferences: Array<Record<string, unknown>>;
     categories?: Record<string, string>;
   };
+  const papersByVenue = venuePapers ?? getVenuePapers();
   const catNames = (data.categories ?? {}) as Record<string, string>;
-  const en = profileTexts(data.conferences, catNames, false);
-  const multiTexts = profileTexts(data.conferences, catNames, true);
+  const en = profileTexts(data.conferences, catNames, false, papersByVenue);
+  const multiTexts = profileTexts(data.conferences, catNames, true, papersByVenue);
 
   const topics = topicProfileTexts(data.conferences, catNames);
   const multiTopics = topicProfileTexts(data.conferences, catNames, true);
@@ -824,7 +837,7 @@ export async function buildEmbeddings(
   // CounterSEVeillance/One-Size-Fits-None を奪い新規獲得 0 のため採らない。
   // rtas は VENUE_PAPERS 語彙のみで 8 件中 6 件 top5 を達成。
   for (const key of PAPER_VEC_KEYS) {
-    const papers = getVenuePapers()[key] ?? [];
+    const papers = papersByVenue[key] ?? [];
     if (!papers.length) continue;
     // 論文タイトルを**個別に**埋め込む（平均しない — max 類似度で使うため）。
     // embedSet は key ごとに平均するので使えない。
@@ -837,8 +850,8 @@ export async function buildEmbeddings(
   const payload = JSON.stringify({
     model: EMBEDDING_MODEL,
     dim: EMBEDDING_DIM,
-    venuePapersHash: venuePapersHash(),
-    manifest: embeddingManifest(data, { en: enProbe, multi: multiProbe }),
+    venuePapersHash: venuePapersHash(venuePapers),
+    manifest: embeddingManifest(data, { en: enProbe, multi: multiProbe }, venuePapers),
     embeddings: out,
     topicVecs,
     multi: {

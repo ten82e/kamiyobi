@@ -139,7 +139,7 @@ describe("MCP の手順が話せる（第 714 回）", () => {
     expect(pong.result, "ping に返事がない").toEqual({});
   });
 
-  it("道具の一覽が読める（六つ・どれも入力の形を持つ）", async () => {
+  it("道具の一覽が読める（七つ・どれも入力の形を持つ）", async () => {
     const res = (await client.ask({ jsonrpc: "2.0", id: 3, method: "tools/list" })) as {
       result?: { tools?: Array<{ name?: string; description?: string; inputSchema?: unknown }> };
     };
@@ -150,6 +150,7 @@ describe("MCP の手順が話せる（第 714 回）", () => {
       "list_upcoming",
       "recommend_venues",
       "search_deadlines",
+      "search_venues",
       "venue_info",
     ]);
     for (const tool of tools) {
@@ -1736,6 +1737,7 @@ it("画面のてびきが、MCP の全ての道具を名指す（第 882 回）"
   })();
   const 道具の言ひ方: Record<string, string> = {
     search_deadlines: "締切検索",
+    search_venues: "投稿先検索",
     list_upcoming: "直近の締切と会期",
     venue_info: "会議ごとの開催回",
     explain_word: "用語の案内",
@@ -4701,12 +4703,12 @@ it("端数と上限は両方続けて言う（第 1044 回）", async () => {
   expect(推薦, "推薦の上限を言つていない").toContain("上限 30 を超えた");
 });
 
-it("ヘルプの例は 6 つの道具を全部覆ひ、実際に效く（第 1046 回）", async () => {
+it("ヘルプの例は 7 つの道具を全部覆ひ、実際に效く（第 1046 回）", async () => {
   const res = (await client.ask({ jsonrpc: "2.0", id: 1, method: "tools/list" })) as {
     result?: { tools?: Array<{ name?: string }> };
   };
   const 道具 = (res.result?.tools ?? []).map((t) => String(t.name ?? ""));
-  expect(道具.length, "道具が読めない").toBe(6);
+  expect(道具.length, "道具が読めない").toBe(7);
 
   const 手引き = spawnSync(process.execPath, [join(REPO_ROOT, "src", "mcp.ts"), "--help"], {
     encoding: "utf8",
@@ -4714,7 +4716,7 @@ it("ヘルプの例は 6 つの道具を全部覆ひ、実際に效く（第 104
   });
   expect(手引き.status, `ヘルプが落ちた: ${手引き.stderr?.slice(0, 120)}`).toBe(0);
   const 例 = 手引き.stdout.split("\n").filter((l) => l.startsWith("  例: node src/mcp.ts "));
-  expect(例.length, "例が読めない（この検查が空振り）").toBe(6);
+  expect(例.length, "例が読めない（この検查が空振り）").toBe(7);
 
   /* 全部の例が**效く**（0 件・知らない道具・落ちる、の何れでもない）。 */
   for (const l of 例) {
@@ -4736,7 +4738,7 @@ it("ヘルプの例は 6 つの道具を全部覆ひ、実際に效く（第 104
     );
   }
 
-  /* 6 つの道具全部が例にある（漏れが無い）。 */
+  /* 7 つの道具全部が例にある（漏れが無い）。 */
   for (const n of 道具) {
     /* 短い別名で例を書いている道具（ヘルプの例は人が打つので短い方が良い）。 */
     const 短い: Record<string, string> = {

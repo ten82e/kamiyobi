@@ -118,6 +118,7 @@ it.each(["2025-06-18", "2024-11-05", "2099-01-01"])(
       "list_upcoming",
       "recommend_venues",
       "search_deadlines",
+      "search_venues",
       "venue_info",
     ]);
   },

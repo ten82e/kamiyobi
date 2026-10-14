@@ -588,9 +588,10 @@ function nestedVectorMapHasDim(vectors: Record<string, unknown> | undefined, dim
 export function embeddingsStale(
   existing: EmbeddingFile | null | undefined,
   data: Parameters<typeof embeddingProfileHash>[0],
+  venuePapers?: Record<string, string[]>,
 ): boolean {
   if (!existing || typeof existing !== "object") return true;
-  const expected = embeddingManifest(data);
+  const expected = embeddingManifest(data, {}, venuePapers);
   const manifest = existing.manifest;
   const en = manifest?.models?.en;
   const multi = manifest?.models?.multi;
@@ -601,7 +602,7 @@ export function embeddingsStale(
     manifest.profile_hash !== expected.profile_hash
   )
     return true;
-  if (manifest.profile_hash !== embeddingProfileHash(data)) return true;
+  if (manifest.profile_hash !== embeddingProfileHash(data, venuePapers)) return true;
   if (
     !sameKeys(existing.embeddings, expected.keys) ||
     !sameKeys(existing.multi?.embeddings, expected.keys)
@@ -893,6 +894,7 @@ export function toJson(
   confs: Conference[] | null | undefined,
   config: Record<string, unknown> | null | undefined,
   now: Date | null | undefined,
+  venuePapers?: Record<string, string[]>,
 ): Record<string, unknown> {
   const safeNow = now instanceof Date && !Number.isNaN(now.getTime()) ? now : new Date();
   const safeConfig = config ?? {};
@@ -1125,7 +1127,7 @@ export function toJson(
         : {}),
       editions,
       // 代表採択論文タイトル（無い会議は空配列）。語彙一致 + IDF + 埋め込み強化に使う
-      papers: getVenuePapers()[conf.key] ?? [],
+      papers: (venuePapers ?? getVenuePapers())[conf.key] ?? [],
     });
   }
   const data: Record<string, unknown> = {
@@ -1325,6 +1327,7 @@ export function toCatalog(
   // カレンダー配信の実測（件数と収録の最初/最後の締切日）。画面の注記はここを読む –
   // 画面側で数え直すと、配信物と同じ数を言えなくなる。
   calendar: IcsCalendarMeta | null | undefined = undefined,
+  reranker?: Record<string, unknown> | null,
 ): Record<string, unknown> {
   const safeNow = now instanceof Date && !Number.isNaN(now.getTime()) ? now : new Date();
   const horizon = safeNow.getTime() + Math.max(1, days) * DAY_MS;
@@ -1396,7 +1399,7 @@ export function toCatalog(
     history_ref: "data.json",
     recommendation_ref: "recommendation-index.json",
 
-    reranker: readRerankerModel(),
+    reranker: readRerankerModel(reranker),
     // カレンダー配信の中身の実測（件数と収録の最初/最後の締切日）。画面の注記はここを読む –
     // 画面側で数え直すと、配信物と同じ数を言えなくなる。
     calendar: calendar ?? null,
@@ -1406,7 +1409,14 @@ export function toCatalog(
 
 /** The recommendation payload: venue profiles and one representative availability record. */
 
-function readRerankerModel(): Record<string, unknown> {
+function readRerankerModel(
+  supplied?: Record<string, unknown> | null,
+): Record<string, unknown> | null {
+  if (supplied !== undefined) {
+    if (supplied !== null && !isValidRerankerModel(supplied))
+      throw new Error("recommender reranker model contract is invalid");
+    return supplied;
+  }
   const rerankerPath = join(ROOT, "data", "recommender-reranker.json");
   try {
     const value = JSON.parse(readFileSync(rerankerPath, "utf8"));
@@ -1421,9 +1431,11 @@ export function toRecommendationIndex(
   data: Record<string, unknown>,
   now: Date | null | undefined,
   sourceStatus: Record<string, string> = {},
+  venuePapers?: Record<string, string[]>,
+  rerankerInput?: Record<string, unknown> | null,
 ): Record<string, unknown> {
   const safeNow = now instanceof Date && !Number.isNaN(now.getTime()) ? now : new Date();
-  const reranker = readRerankerModel();
+  const reranker = readRerankerModel(rerankerInput);
   const conferences = jsonRecords(data.conferences).map((conf) => {
     const editions = jsonRecords(conf.editions)
       .map((edition) => {
@@ -1481,7 +1493,11 @@ export function toRecommendationIndex(
     legacy_key_redirects: data.legacy_key_redirects,
     history_ref: "data.json",
     embedding_ref: "embeddings.json",
-    embedding_manifest: embeddingManifest(data as Parameters<typeof embeddingManifest>[0]),
+    embedding_manifest: embeddingManifest(
+      data as Parameters<typeof embeddingManifest>[0],
+      {},
+      venuePapers,
+    ),
     reranker,
     conferences,
   };
@@ -3139,6 +3155,7 @@ export function writePublishManifest(
   now: Date | null | undefined,
   semanticStatus: SemanticStatus,
   provenance?: PublishProvenance,
+  venuePapers?: Record<string, string[]>,
 ): PublishManifest {
   const artifacts = Object.fromEntries(
     [...new Set(names)]
@@ -3154,7 +3171,7 @@ export function writePublishManifest(
   );
   const safeNow = now instanceof Date && !Number.isNaN(now.getTime()) ? now : new Date();
   const profileHash = existsSync(join(outdir, "data.json"))
-    ? embeddingProfileHash(JSON.parse(readFileSync(join(outdir, "data.json"), "utf8")))
+    ? embeddingProfileHash(JSON.parse(readFileSync(join(outdir, "data.json"), "utf8")), venuePapers)
     : "";
   const resolvedProvenance =
     provenance ?? priorPublishProvenance(outdir) ?? collectPublishProvenance();
@@ -4142,6 +4159,8 @@ export async function buildAll(
   now: Date | null | undefined,
   opts: {
     noEmbeddings?: boolean;
+    venuePapers?: Record<string, string[]>;
+    reranker?: Record<string, unknown> | null;
     localEmbeddingsOnly?: boolean;
     health?: HealthReportOptions;
     publishProvenance?: PublishProvenance;
@@ -4186,14 +4205,14 @@ export async function buildAll(
     written.push(name);
   };
 
-  const data = toJson(safeConfs, safeConfig, nowUtc);
+  const data = toJson(safeConfs, safeConfig, nowUtc, opts.venuePapers);
   /* カレンダーの行は 1 回だけ作る – 件数と期間の申告（`catalog.json` 経由で画面に出す）は、
    * 同じ行から導かないと本文とズレる。 */
   const icsRows = icsEventRows(records, nowUtc);
   const icsMeta = icsCalendarMeta(icsRows);
   // 品書は 1 回だけ組む（`catalog.json` と、画面に差し込む物と、索引の申告が
   // それぞれ違う品書を指さないため。第 289 回と同じ轍を踏まない）。
-  const catalog = toCatalog(data, nowUtc, upcomingDays使ふ, icsMeta);
+  const catalog = toCatalog(data, nowUtc, upcomingDays使ふ, icsMeta, opts.reranker);
   // A new page build does not imply that upstream deadlines were checked again.
   catalog.source_updates = Object.values(opts.health?.sourceMetadata ?? {})
     .filter((source) => source.source !== "local")
@@ -4209,7 +4228,10 @@ export async function buildAll(
   write("catalog.json", `${JSON.stringify(catalog, null, 2)}\n`);
   const publishProvenance =
     opts.publishProvenance ?? collectPublishProvenance(ROOT, undefined, { now: nowUtc });
-  const contentId = publishContentId(publishProvenance, embeddingProfileHash(data));
+  const contentId = publishContentId(
+    publishProvenance,
+    embeddingProfileHash(data, opts.venuePapers),
+  );
   const buildId = publishBuildId(nowUtc, contentId);
   write(
     "recommendation-index.json",
@@ -4219,6 +4241,8 @@ export async function buildAll(
           data,
           nowUtc,
           opts.health?.recommendationSourceStatus ?? opts.health?.sourceStatus,
+          opts.venuePapers,
+          opts.reranker,
         ),
         content_id: contentId,
         build_id: buildId,
@@ -4243,7 +4267,7 @@ export async function buildAll(
         const existing = JSON.parse(readFileSync(embPath, "utf8")) as {
           embeddings?: Record<string, unknown>;
         };
-        needEmb = embeddingsStale(existing, data);
+        needEmb = embeddingsStale(existing, data, opts.venuePapers);
       } catch {
         needEmb = true;
       }
@@ -4253,6 +4277,7 @@ export async function buildAll(
           join(outdir, "data.json"),
           embPath,
           opts.localEmbeddingsOnly === true,
+          opts.venuePapers,
         );
       }
       written.push("embeddings.json");
@@ -4313,6 +4338,7 @@ export async function buildAll(
 
   const report = healthReport(data, nowUtc, {
     ...opts.health,
+    profileHash: opts.health?.profileHash ?? embeddingProfileHash(data, opts.venuePapers),
     parseWarnings: opts.health?.parseWarnings ?? warningCounts(),
     warningCodes:
       opts.health?.warningCodes ??
@@ -4333,6 +4359,7 @@ export async function buildAll(
     nowUtc,
     written.includes("embeddings.json") ? "ready" : "lexical-only",
     publishProvenance,
+    opts.venuePapers,
   );
   if (!written.includes("publish.json")) written.push("publish.json");
 

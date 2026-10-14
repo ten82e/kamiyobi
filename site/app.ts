@@ -2040,11 +2040,18 @@ function semanticOutput(value: unknown): value is SemanticOutput {
             render();
             return;
           }
-          model(q, { pooling: "mean", normalize: true })
-            .then((output: unknown) => {
-              if (!semanticOutput(output)) throw new Error("invalid embedding output");
+          Promise.all(
+            Recommender.semanticQueryPlan(lines).map(({ text }) =>
+              model(text, { pooling: "mean", normalize: true }),
+            ),
+          )
+            .then((outputs: unknown[]) => {
+              if (!outputs.every(semanticOutput)) throw new Error("invalid embedding output");
               if (!semanticIsCurrent(generation, text)) return;
-              let nextQuery = Array.from(output.data);
+              let nextQuery = Recommender.semanticQueryVector(
+                lines,
+                outputs.map((output) => Array.from(output.data)),
+              );
               // 擬似関連性フィードバック（PRF）: 掲載先タグ付き論文がある場合、
               // その会議の埋め込みを 0.3 混ぜる（「自分が載せた所と似た会議」を拾う）。
               // 実測: タグ付きクエリで正解会議 #1 が 78.9% → 92.2% に改善。
@@ -2516,6 +2523,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     return (Math.floor((now + 9 * 3600000) / DAY) - n) * DAY - 9 * 3600000;
   }
 
+  let recommendationCandidateCount = 0;
   function filter(問ひ?: string): AppRow[] {
     const now = Date.now();
     // `来月` などの相対月を検索語として受け付ける。展開式の一覧への反映は recommender が
@@ -2567,6 +2575,12 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     let pool = rows;
     if (pLines.length && Rec) {
       pool = Rec.candidatePool(rows, activeData.conferences, now);
+      recommendationCandidateCount = new Set(
+        pool.flatMap((row) => [
+          row.conf.key,
+          ...(row.submission?.sourceRecords ?? []).map((record) => record.venueKey),
+        ]),
+      ).size;
     } else if (state.kind === "journal" && Rec) {
       pool = rows.concat(Rec.journalRows(activeData.conferences, now));
     }
@@ -4676,6 +4690,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   function makeRecommendationCard(r: AppRow, now: number) {
     const card = document.createElement("article");
     card.className = "recommendation-card";
+    card.setAttribute("data-venue-key", r.conf.key);
     const isPastOnly = r._availability?.status === "past";
     const title = document.createElement("h3");
     const name = titleWithYear(r.conf.title || r.conf.key || "", isPastOnly ? null : r.ed.year);
@@ -4711,7 +4726,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     line(card, venueEvidenceLineJa(venueEvidence), "card-section recommendation-axes");
     line(
       card,
-      `種別: ${KIND_LABEL[r.kind] || r.kind || "未確認"}`,
+      `種別: ${Recommender.kindLabelJa(r.kind) || "未確認"}`,
       "card-section recommendation-axes",
     );
     line(
@@ -5173,6 +5188,10 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     $("resultNotes").toggleAttribute("open", shown.length === 0 || Boolean(state.q.trim()));
     if (shown.length === 0) ($("dataScope") as HTMLDetailsElement).open = true;
     $("count").textContent = cnt;
+    $("count").setAttribute("data-semantic-state", semState);
+    $("count").setAttribute("data-semantic-model", semLoadedModel);
+    $("count").setAttribute("data-semantic-generation", String(semGeneration));
+    $("count").setAttribute("data-candidate-venues", String(recommendationCandidateCount));
     /* 原因の識別子は画面に出さないが、捨てると調査できない（#711）。属性で残す
      * （エラーのときだけ付け、他の状態では消す – 前の理由が残り続けるのを防ぐ）。 */
     if (countSemanticReason) $("count").setAttribute("data-semantic-reason", countSemanticReason);
