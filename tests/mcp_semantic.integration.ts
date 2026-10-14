@@ -173,7 +173,8 @@ beforeAll(async () => {
     request(1, "search_venues", { query: papers[0].title, retrieval: "semantic" }),
   ])[0];
   expect(missing.result.isError).toBe(true);
-  expect(missing.result.structuredContent).toBeUndefined();
+  expect(missing.result.structuredContent.error.code).toBe("MODEL_NOT_READY");
+  expect(missing.result.structuredContent.rows).toBeUndefined();
   mkdirSync(join(root, ".cache"), { recursive: true });
   symlinkSync(join(repo, ".cache/embedding-models"), join(root, ".cache/embedding-models"));
   replies = invoke(

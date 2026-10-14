@@ -11,6 +11,7 @@ import {
   embedSet,
   embedTopics,
 } from "./embedding-runtime.ts";
+import { SemanticModelError } from "./semantic-model-error.ts";
 import { SemanticProfileCache, semanticProfileKey } from "./semantic-profile-cache.ts";
 
 const profiles = new SemanticProfileCache<{
@@ -35,14 +36,18 @@ export async function semanticVenueScores(
     embeddings: await embedSet(model, p.texts, p.keys, revision, true),
     topics: await embedTopics(model, t.texts, t.keys, revision, true),
   }));
-  const { embeddings, topics } = await pending;
+  const { embeddings, topics } = await pending.catch((cause: unknown) => {
+    throw new SemanticModelError(root, model, revision, "load", cause);
+  });
   const plan = R.semanticQueryPlan(lines);
   const vectors = await embedEach(
     model,
     plan.map((q) => q.text),
     revision,
     true,
-  );
+  ).catch((cause: unknown) => {
+    throw new SemanticModelError(root, model, revision, "query", cause);
+  });
   const vector = R.semanticQueryVector(lines, vectors);
   R.setTopicVecs(topics);
   const keys = conferences.map((c) => String((c as { key: string }).key));

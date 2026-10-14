@@ -37,6 +37,30 @@ function run(args: string[], input?: string) {
     timeout: 30000,
   });
 }
+for (const query of ["parallel computing", "並列計算"])
+  it(`returns a structured missing-model error for ${query} over MCP`, () => {
+    const child = run(
+      [],
+      `${JSON.stringify({
+        jsonrpc: "2.0",
+        id: 1,
+        method: "tools/call",
+        params: { name: "search_venues", arguments: { query, retrieval: "semantic" } },
+      })}\n`,
+    );
+    expect(child.status, child.stderr).toBe(0);
+    const result = JSON.parse(child.stdout.trim()).result;
+    expect(result.isError).toBe(true);
+    expect(result.structuredContent?.error?.code).toBe("MODEL_NOT_READY");
+    expect(result.structuredContent.error.model.id).toBe(
+      query === "並列計算"
+        ? "Xenova/paraphrase-multilingual-MiniLM-L12-v2"
+        : "Xenova/all-MiniLM-L6-v2",
+    );
+    expect(result.structuredContent.error.missing_files).toContain("onnx/model.onnx");
+    expect(result.structuredContent.rows).toBeUndefined();
+    expect(result.content[0].text).toContain("実モデルが未準備");
+  });
 it("keeps the whole unquoted English title and emits a parseable result without text mixed in", () => {
   const result = run([
     "search_venues",

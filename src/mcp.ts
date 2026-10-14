@@ -14,6 +14,7 @@ import {
   consolidateReviewedSubmissions,
   type SubmissionDisplay,
 } from "../site/submission-identity.ts";
+import type { SemanticModelError } from "./semantic-model-error.ts";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 /* 画面が最初に読む窓（180 日）と、収録の全体。**数字を画面と一致させる**のが肝なので、
@@ -2449,6 +2450,9 @@ async function handle(raw: string, now: number): Promise<void> {
       const 文 = String(error instanceof Error ? error.message : error).trim();
       reply({
         content: [{ type: "text", text: `道具の実行に失敗: ${文 || "不明な失敗"}` }],
+        ...(error instanceof Error && error.name === "SemanticModelError" && "diagnostic" in error
+          ? { structuredContent: { error: (error as SemanticModelError).diagnostic } }
+          : {}),
         isError: true,
       });
     }
