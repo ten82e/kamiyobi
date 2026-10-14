@@ -4048,7 +4048,7 @@ export function toLlmsTxt(
     "      - verification: object：公式 URL を確かめた記録（official_url・last_attempt_at・last_verified_at など）。",
     "      - superseded_deadlines: array：上書きされた古い締切の記録（value・precision・source・supersededBy・reason。reason は 'official-extension' など）。",
     "      - promotion_ref: object：{batch, resolution}。公開した締切から、それを載せた判断（昇格）への参照。",
-    `    - 上の内、稀にしか付かない物と、殆どの行に付く物とがある（ビルド時の実测: ${data ? 稀有な欄の實測(data) : "data を渡して居ないので数えられません"}）。`,
+    `    - 項目ごとに記録の有無が異なります（ビルド時の実測: ${data ? 稀有な欄の實測(data) : "データがないため集計できません"}）。`,
     "      - comment: string|null：上流の注記。",
     "      - status: 'confirmed'|'estimated'：開催回の確定/推定状態。",
     "      - selection_rule: string：採用値を選んだ決定規則。",

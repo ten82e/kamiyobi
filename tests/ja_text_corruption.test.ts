@@ -1,7 +1,8 @@
 import { spawnSync } from "node:child_process";
-import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { extname, join, relative } from "node:path";
 import { describe, expect, it } from "vitest";
+import { tempWork } from "./helpers.ts";
 
 const ROOT = join(import.meta.dirname, "..");
 /** 検査する置き場。`public/` は CI が行うビルドの生成物で .gitignore なので入れない。 */
@@ -133,12 +134,17 @@ describe("旧字体の監査が動く", () => {
     const 出 = `${proc.stdout ?? ""}${proc.stderr ?? ""}`;
     expect(proc.status, `監査が止まった:\n${出.slice(0, 300)}`).toBe(0);
     expect(出, "候補の要約が出て居ない（表の定義が読めて居ない）").toContain("候補");
-    /* 検出能力も確かめる（表の 1 字を入れれば出る – ここが空振りでないこと）。 */
-    const 當 = spawnSync(
+    const fixture = join(tempWork("kamiyobi-ja-audit-"), "sample.txt");
+    writeFileSync(fixture, "ビルド時の実测です。\nビルド時の実測です。\n");
+    const detected = spawnSync(
       process.execPath,
-      [join(ROOT, "scripts", "ja-text-audit.ts"), join(ROOT, "src", "mcp.ts")],
+      [join(ROOT, "scripts", "ja-text-audit.ts"), fixture],
       { encoding: "utf8", timeout: 120_000 },
     );
-    expect(`${當.stdout ?? ""}${當.stderr ?? ""}`).toContain("候補");
+    expect(detected.status, detected.stderr).toBe(0);
+    expect(detected.stdout, "簡体字「测」の異常行を検出していません").toContain(
+      `${fixture}:1: 簡体字「测」`,
+    );
+    expect(detected.stdout).not.toContain(`${fixture}:2:`);
   });
 });
