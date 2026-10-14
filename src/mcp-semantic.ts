@@ -1,4 +1,3 @@
-import { createHash } from "node:crypto";
 import { join } from "node:path";
 import { env } from "@huggingface/transformers";
 import R from "../site/recommendation.ts";
@@ -12,11 +11,12 @@ import {
   embedSet,
   embedTopics,
 } from "./embedding-runtime.ts";
+import { SemanticProfileCache, semanticProfileKey } from "./semantic-profile-cache.ts";
 
-const profiles = new Map<
-  string,
-  Promise<{ embeddings: Record<string, number[]>; topics: Awaited<ReturnType<typeof embedTopics>> }>
->();
+const profiles = new SemanticProfileCache<{
+  embeddings: Record<string, number[]>;
+  topics: Awaited<ReturnType<typeof embedTopics>>;
+}>(2);
 /** Infer profiles from the current index; persisted vectors and paper samples are not inputs. */
 export async function semanticVenueScores(
   root: string,
@@ -28,22 +28,13 @@ export async function semanticVenueScores(
   const multi = R.queryHasJapanese(lines);
   const model = multi ? EMBEDDING_MULTI_MODEL : EMBEDDING_MODEL;
   const revision = multi ? EMBEDDING_MULTI_REVISION : EMBEDDING_REVISION;
-  const key = createHash("sha256")
-    .update(JSON.stringify({ root, model, revision, conferences, categories }))
-    .digest("hex");
-  let pending = profiles.get(key);
-  if (!pending) {
-    pending = (async () => {
-      const p = profileTexts(conferences, categories, multi, {});
-      const t = topicProfileTexts(conferences, categories, multi);
-      return {
-        embeddings: await embedSet(model, p.texts, p.keys, revision, true),
-        topics: await embedTopics(model, t.texts, t.keys, revision, true),
-      };
-    })();
-    profiles.set(key, pending);
-    void pending.catch(() => profiles.delete(key));
-  }
+  const p = profileTexts(conferences, categories, multi, {});
+  const t = topicProfileTexts(conferences, categories, multi);
+  const key = semanticProfileKey(root, model, revision, p, t);
+  const pending = profiles.getOrCreate(key, async () => ({
+    embeddings: await embedSet(model, p.texts, p.keys, revision, true),
+    topics: await embedTopics(model, t.texts, t.keys, revision, true),
+  }));
   const { embeddings, topics } = await pending;
   const plan = R.semanticQueryPlan(lines);
   const vectors = await embedEach(
