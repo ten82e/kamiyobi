@@ -2418,7 +2418,8 @@ function cliNumber(value: string | undefined): string | number | undefined {
 }
 
 function main(): void {
-  const [tool, ...rest] = process.argv.slice(2);
+  const [tool, ...rawArgs] = process.argv.slice(2);
+  const rest = [...rawArgs];
   if (!tool || tool === "--help" || tool === "-h") {
     process.stdout.write(
       `${[
@@ -2427,6 +2428,8 @@ function main(): void {
         "  手元で確認: ツール名と引数を指定すると、1 回分の結果を表示します。",
         `  ツール: ${TOOLS.map((t) => t.name).join(" / ")}`,
         '  例: node src/mcp.ts search "セキュリティ" 5',
+        '  続き: node src/mcp.ts search "セキュリティ" 5 --offset 5',
+        '  推薦の続き: node src/mcp.ts recommend "分散システム" 5 --offset 5',
         '  例: node src/mcp.ts explain_word "学生でも投稿できる"',
         "  例: node src/mcp.ts list_upcoming 30",
         "  例: node src/mcp.ts venue_info kdd",
@@ -2458,6 +2461,26 @@ function main(): void {
     process.stdout.write(`${一覧}\n`);
     return;
   }
+  let offset: number | undefined;
+  const offsetAt = rest.indexOf("--offset");
+  if (offsetAt >= 0) {
+    const value = rest[offsetAt + 1];
+    if (
+      !["search_deadlines", "recommend_venues"].includes(名) ||
+      rest.lastIndexOf("--offset") !== offsetAt ||
+      value === undefined ||
+      !/^\d+$/.test(value) ||
+      !Number.isSafeInteger(Number(value))
+    ) {
+      process.stdout.write(
+        "--offset は検索・推薦の取得開始位置です。0 以上の整数を1つ指定してください。\n",
+      );
+      process.exitCode = 1;
+      return;
+    }
+    offset = Number(value);
+    rest.splice(offsetAt, 2);
+  }
   /* 人の道では、題名が空白で割れて渡つて來る。**末尾が数の時だけ**件数として扱ふ
    * （題名の語に数字が混ざる事がある – 全部を件数と読むと、題名が削られる）。 */
   const 尾が數 = rest.length > 1 && /^\d+$/.test(String(rest[rest.length - 1] ?? ""));
@@ -2488,7 +2511,16 @@ function main(): void {
                 });
               return 其の儘 ? { key: 語 } : { name: 語 };
             })();
-  process.stdout.write(`${callTool(名, args, now)}\n`);
+  if (offset !== undefined) args.offset = offset;
+  let page: Record<string, unknown> | undefined;
+  const result = callTool(名, args, now, (value) => {
+    page = value;
+  });
+  const nextOffset = page?.next_offset;
+  const text = result.replace(/次の結果: 同じ条件で offset: \d+ を指定してください。/g, "");
+  process.stdout.write(`${text}\n`);
+  if (typeof nextOffset === "number")
+    process.stdout.write(`続きの取得: 同じ引数に --offset ${nextOffset} を指定してください。\n`);
 }
 
 function isDirectExecution(): boolean {

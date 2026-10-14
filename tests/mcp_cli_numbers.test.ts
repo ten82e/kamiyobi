@@ -120,3 +120,52 @@ it("starts CLI and MCP through a symbolic launcher in a Japanese workspace path"
   expect(result.status, result.stderr).toBe(0);
   expect(JSON.parse(result.stdout)).toEqual({ jsonrpc: "2.0", id: "起動確認", result: {} });
 });
+
+it("retrieves distinct CLI search pages with the advertised offset", () => {
+  const root = sandbox();
+  const first = run(root, ["search", "GPU", "1"]);
+  const second = run(root, ["search", "GPU", "1", "--offset", "1"]);
+  expect(first).toContain("--offset 1");
+  expect(first).toContain("GPU Alpha");
+  expect(first).not.toContain("GPU Beta");
+  expect(second).toContain("GPU Beta");
+  expect(second).not.toContain("GPU Alpha");
+  expect(second).not.toContain("続きの取得");
+  expect(run(root, ["search", "GPU", "1", "--offset", "2"])).toContain(
+    "この位置には結果がありません",
+  );
+});
+
+it("retrieves recommendation pages without changing the paper or ranking", () => {
+  const root = sandbox();
+  const all = run(root, ["recommend", "GPU programming", "2"]);
+  const first = run(root, ["recommend", "GPU programming", "1"]);
+  const second = run(root, ["recommend", "GPU programming", "1", "--offset", "1"]);
+  const rows = (text: string) => text.split("\n").filter((line) => /^\d+\. 一致評価/.test(line));
+  expect(rows(all)).toHaveLength(2);
+  expect(second.split("\n")[0]).toBe(all.split("\n")[0]);
+  expect([...rows(first), ...rows(second)]).toEqual(rows(all));
+  expect(first).toContain("--offset 1");
+  expect(second).not.toContain("続きの取得");
+});
+
+it("rejects malformed CLI offsets instead of silently repeating the first page", () => {
+  const root = sandbox();
+  for (const args of [
+    ["search", "GPU", "1", "--offset"],
+    ["search", "GPU", "1", "--offset", "-1"],
+    ["search", "GPU", "1", "--offset", "1.5"],
+    ["search", "GPU", "1", "--offset", "9007199254740992"],
+    ["search", "GPU", "1", "--offset", "1", "--offset", "0"],
+    ["stats", "--offset", "1"],
+  ]) {
+    const result = spawnSync(process.execPath, [join(root, "src/mcp.ts"), ...args], {
+      encoding: "utf8",
+      timeout: 10000,
+    });
+    expect(result.status).toBe(1);
+    expect(result.stdout).toContain("0 以上の整数を1つ指定");
+    expect(result.stdout).not.toContain("GPU Alpha");
+    expect(result.stderr).toBe("");
+  }
+});
