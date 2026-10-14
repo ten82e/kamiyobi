@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process";
-import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { extname, join, relative } from "node:path";
 import { describe, expect, it } from "vitest";
 import { tempWork } from "./helpers.ts";
@@ -11,33 +11,34 @@ const 読む拡張子 = new Set([".ts", ".js", ".md", ".json", ".yaml", ".yml", 
 /** 走らせない置き場（依存・生成物・作業物）。 */
 const 飛ばす = new Set(["node_modules", ".git", "public", "work", ".cache", "coverage"]);
 
-function 走査(dir: string, 見つけた: string[]): void {
+function ファイルを検査(path: string, root: string, 見つけた: string[]): void {
+  readFileSync(path, "utf8")
+    .split("\n")
+    .forEach((line, i) => {
+      if (line.includes("\ufffd"))
+        見つけた.push(`${relative(root, path)}:${i + 1}: ${line.trim()}`);
+    });
+}
+
+function 走査(dir: string, root: string, 見つけた: string[]): void {
   for (const name of readdirSync(dir)) {
     if (飛ばす.has(name)) continue;
     const path = join(dir, name);
     const info = statSync(path);
     if (info.isDirectory()) {
-      走査(path, 見つけた);
+      走査(path, root, 見つけた);
       continue;
     }
     if (!読む拡張子.has(extname(name))) continue;
-    const text = readFileSync(path, "utf8");
-    text.split("\n").forEach((line, i) => {
-      if (line.includes("\ufffd"))
-        見つけた.push(`${relative(ROOT, path)}:${i + 1}: ${line.trim()}`);
-    });
+    ファイルを検査(path, root, 見つけた);
   }
 }
 
-function 混入を探す(): string[] {
+function 混入を探す(root = ROOT): string[] {
   const 見つけた: string[] = [];
-  for (const dir of 置き場) 走査(join(ROOT, dir), 見つけた);
+  for (const dir of 置き場) 走査(join(root, dir), root, 見つけた);
   for (const name of ["README.md", "SPEC.md"]) {
-    readFileSync(join(ROOT, name), "utf8")
-      .split("\n")
-      .forEach((line, i) => {
-        if (line.includes("\ufffd")) 見つけた.push(`${name}:${i + 1}: ${line.trim()}`);
-      });
+    ファイルを検査(join(root, name), root, 見つけた);
   }
   return 見つけた;
 }
@@ -57,11 +58,29 @@ describe("日本語の文字化け", () => {
     ).toEqual([]);
   });
 
-  it("混入を 1 語でも検出できる – 検査が空振りでないことを確かめる", () => {
-    /* サンプルは**検出に必要な行だけ**にする（本身的に置換文字を入れると自分の検査で落ちる）。 */
-    const 見本 = ["const x = 1;", `あ${"\ufffd"}い`].join("\n");
-    const 見つけた = 見本.split("\n").filter((l) => l.includes("\ufffd"));
-    expect(見つけた.length, "1 語だけの混入も検出できる").toBe(1);
+  it("本体の走査でネストしたソース・データとREADME・SPECの異常行を検出する", () => {
+    const root = tempWork("kamiyobi-text-scan-");
+    for (const dir of 置き場) mkdirSync(join(root, dir));
+    mkdirSync(join(root, "src/nested"));
+    mkdirSync(join(root, "src/node_modules"));
+    const broken = `説明の${"\ufffd"}文字`;
+    writeFileSync(join(root, "src/nested/sample.ts"), `正常な日本語\n  ${broken}\n`);
+    writeFileSync(join(root, "data/sample.json"), `${broken}\n${broken}\n`);
+    writeFileSync(join(root, "README.md"), `${broken}\n`);
+    writeFileSync(join(root, "SPEC.md"), `正常な日本語\n${broken}\n`);
+    writeFileSync(join(root, "site/sample.html"), "正常な日本語\n");
+    writeFileSync(join(root, "src/node_modules/ignored.ts"), broken);
+    writeFileSync(join(root, "src/ignored.bin"), broken);
+    expect(混入を探す(root)).toEqual([
+      `src/nested/sample.ts:2: ${broken}`,
+      `data/sample.json:1: ${broken}`,
+      `data/sample.json:2: ${broken}`,
+      `README.md:1: ${broken}`,
+      `SPEC.md:2: ${broken}`,
+    ]);
+    for (const file of ["src/nested/sample.ts", "data/sample.json", "README.md", "SPEC.md"])
+      writeFileSync(join(root, file), "正常な日本語\n");
+    expect(混入を探す(root)).toEqual([]);
   });
 });
 
