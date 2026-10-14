@@ -175,3 +175,23 @@ export async function embedEach(
   }
   return out;
 }
+
+/** Preserve each official topic vector instead of averaging unrelated topics. */
+export async function embedTopics(
+  model: string,
+  texts: string[],
+  keys: string[],
+  revision: string,
+  localFilesOnly = false,
+): Promise<Record<string, number[][]>> {
+  if (texts.length !== keys.length) throw new Error("topic text/key counts differ");
+  if (!texts.length) return {};
+  const vectors = await embedEach(model, texts, revision, localFilesOnly);
+  if (vectors.length !== keys.length) throw new Error("topic inference omitted vectors");
+  const out: Record<string, number[][]> = {};
+  for (const [index, key] of keys.entries()) {
+    out[key] ??= [];
+    out[key].push(vectors[index]);
+  }
+  return out;
+}

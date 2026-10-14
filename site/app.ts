@@ -180,6 +180,7 @@ interface EmbeddingSet {
   model: string;
   dim: number;
   embeddings: VectorMap;
+  topicVecs?: Record<string, Vector[]>;
 }
 
 interface EmbeddingBundle extends EmbeddingSet {
@@ -386,7 +387,10 @@ function isDrawerRow(value: unknown): value is DrawerRow {
 }
 
 function vector(value: unknown): Vector | null {
-  return Array.isArray(value) && value.every((item) => typeof item === "number") ? value : null;
+  return Array.isArray(value) &&
+    value.every((item) => typeof item === "number" && Number.isFinite(item))
+    ? value
+    : null;
 }
 
 function vectorMap(value: unknown): VectorMap | null {
@@ -413,7 +417,22 @@ function embeddingSet(value: unknown): EmbeddingSet | null {
     dim <= 0
   )
     return null;
-  return { model, dim, embeddings };
+  const topicVecs = topicVectorMap(value.topicVecs, dim);
+  if (!topicVecs) return null;
+  return { model, dim, embeddings, topicVecs };
+}
+
+function topicVectorMap(value: unknown, dim: number): Record<string, Vector[]> | null {
+  if (value === undefined) return {};
+  if (!isRecord(value)) return null;
+  const out: Record<string, Vector[]> = {};
+  for (const [key, item] of Object.entries(value)) {
+    if (!Array.isArray(item)) return null;
+    const parsed = item.map(vector);
+    if (parsed.some((entry) => !entry || entry.length !== dim)) return null;
+    out[key] = parsed as Vector[];
+  }
+  return out;
 }
 
 function embeddingModelMeta(value: unknown): EmbeddingModelMeta | null {
@@ -1879,6 +1898,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     semQuery = null;
     semEmbeddings = null;
     Recommender.setPaperVecs(null);
+    Recommender.setTopicVecs(null);
     if (nextState) semState = nextState;
   }
 
@@ -2054,6 +2074,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
               // 論文個別ベクトル（max 類似度）は英語クエリのみ。
               // 日本語クエリは多言語モデルなので英語モデルの論文ベクトルを混ぜない。
               Recommender.setPaperVecs(isJp ? null : (bundle.paperVecs ?? null));
+              Recommender.setTopicVecs(embSet.topicVecs ?? null);
               semState = "ready";
               render();
             })

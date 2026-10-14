@@ -55,7 +55,9 @@ interface Bundle {
   };
 }
 
-async function generate(conferences: Array<{ key: string; title: string }>) {
+async function generate(
+  conferences: Array<{ key: string; title: string; official_scope?: string[] }>,
+) {
   const dir = tempWork("kamiyobi-embedding-generation-");
   const input = join(dir, "input.json");
   const output = join(dir, "embeddings.json");
@@ -122,4 +124,17 @@ it("stores individual paper vectors only for the two selected venues", async () 
     expect(bundle.paperVecs[key].length).toBeGreaterThan(0);
     for (const vector of bundle.paperVecs[key]) expect(vector).toEqual(expectedVector([383]));
   }
+});
+
+it("publishes official topic vectors separately in the English and Japanese model spaces", async () => {
+  const bundle = await generate([
+    { key: "topic", title: "Fixture 000", official_scope: ["storage, scheduling"] },
+  ]);
+  const typed = bundle as Bundle & {
+    topicVecs: Record<string, number[][]>;
+    multi: Bundle["multi"] & { topicVecs: Record<string, number[][]> };
+  };
+  expect(typed.topicVecs.topic).toEqual([expectedVector([0]), expectedVector([0])]);
+  expect(typed.multi.topicVecs.topic).toEqual([expectedVector([160]), expectedVector([160])]);
+  expect(typed.topicVecs.topic).not.toEqual(typed.multi.topicVecs.topic);
 });

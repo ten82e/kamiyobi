@@ -109,3 +109,42 @@ export function profileTexts(
   }
   return { keys, texts };
 }
+
+/** Separate CFP topics preserve the coverage of venues with a broad call. */
+export function topicProfileTexts(
+  confs: unknown[],
+  catNames: Record<string, string> = {},
+  forMulti = false,
+): { keys: string[]; texts: string[] } {
+  const keys: string[] = [];
+  const texts: string[] = [];
+  for (const value of confs) {
+    if (!value || typeof value !== "object") continue;
+    const conf = value as Record<string, unknown>;
+    const key = String(conf.key ?? "").trim();
+    if (!key) continue;
+    const name = String(conf.full_name || conf.title || key);
+    const cats = toStringArray(conf.categories);
+    const categoryContext = cats.map((cat) => catNames[cat] ?? cat).join(" ");
+    const context = [
+      categoryContext,
+      forMulti && cats.length <= 2 ? cats.map((cat) => JP_CAT_KW[cat] ?? "").join(" ") : "",
+    ]
+      .filter(Boolean)
+      .join(" ");
+    const scopes = [...toStringArray(conf.scope), ...toStringArray(conf.official_scope)];
+    const topics = [
+      ...new Set(
+        scopes
+          .flatMap((scope) => scope.split(/[;,。\n]/))
+          .map((topic) => topic.replace(/\s+/g, " ").trim())
+          .filter((topic) => topic.length >= 4),
+      ),
+    ];
+    for (const topic of topics) {
+      keys.push(key);
+      texts.push(context ? `${topic}. ${context}` : `${name}. ${topic}`);
+    }
+  }
+  return { keys, texts };
+}

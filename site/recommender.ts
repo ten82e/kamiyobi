@@ -1031,6 +1031,10 @@ const Recommender = (() => {
    * null なら会議名ベクトルのみ使う。
    */
   let paperVecsState: PaperVectorMap | null = null;
+  let topicVecsState: PaperVectorMap | null = null;
+  function setTopicVecs(vectors: PaperVectorMap | null) {
+    topicVecsState = vectors;
+  }
   function setPaperVecs(pv: PaperVectorMap | null) {
     paperVecsState = pv || null;
   }
@@ -1239,9 +1243,20 @@ const Recommender = (() => {
     return [...terms];
   }
 
+  const lexicalTermCache = new Map<string, string[]>();
+  const signalTextCache = new Map<string, string>();
+  const signalPatternCache = new Map<string, RegExp>();
+  function rememberLexicalValue<T>(cache: Map<string, T>, key: string, value: T): T {
+    if (cache.size >= 1024) cache.delete(cache.keys().next().value!);
+    cache.set(key, value);
+    return value;
+  }
+
   function lexicalTerms(value: unknown): string[] {
     const raw = String(value ?? "").toLowerCase();
     if (!raw) return [];
+    const cached = lexicalTermCache.get(raw);
+    if (cached) return cached.slice();
     const terms = new Set<string>();
     const ascii = raw.match(/[a-z0-9]+/g) || [];
     ascii.forEach((term) => {
@@ -1280,7 +1295,7 @@ const Recommender = (() => {
         }
       }
     }
-    return [...terms];
+    return rememberLexicalValue(lexicalTermCache, raw, [...terms]).slice();
   }
 
   function overlapScore(query: unknown, documents: readonly string[]): number {
@@ -14611,8 +14626,21 @@ const Recommender = (() => {
         const semanticRank = semanticRanks[key] || null;
         // 類似度を取得できるときは意味を主に使う。単語の偶然の一致で
         // 近い候補を落とさず、既存の表示スコア・学習特徴量は保つ。
-        const lexicalRrfWeight = opts.semanticSimilarities ? 0.4 : opts.fieldedLexical ? 1.6 : 1;
-        const semanticRrfWeight = opts.semanticSimilarities ? 1.6 : opts.fieldedLexical ? 0.4 : 1;
+        const hasTopicEvidence = !!topicVecsState && Object.keys(topicVecsState).length > 0;
+        const lexicalRrfWeight = opts.semanticSimilarities
+          ? hasTopicEvidence
+            ? 0.2
+            : 0.4
+          : opts.fieldedLexical
+            ? 1.6
+            : 1;
+        const semanticRrfWeight = opts.semanticSimilarities
+          ? hasTopicEvidence
+            ? 1.8
+            : 1.6
+          : opts.fieldedLexical
+            ? 0.4
+            : 1;
         // 語彙の欠落は不一致ではない。意味検索にある候補には、語彙一覧の
         // 末尾より下の中立値を使い、語彙の一致があったとは表示しない。
         const rrf =
@@ -14841,6 +14869,7 @@ const Recommender = (() => {
     queryVec: Vector,
     emb: VectorMap,
     paperVecs?: PaperVectorMap | null,
+    topicVecs?: PaperVectorMap | null,
   ): number {
     if (!queryVec || !emb) return 0;
     const v = emb[confKey] || emb[(confKey || "").toLowerCase()];
@@ -14854,6 +14883,16 @@ const Recommender = (() => {
         if (pc > c) c = pc;
       }
     }
+    const topics = (topicVecs ?? topicVecsState)?.[confKey] ?? [];
+    const rankedTopics = topics
+      .map((vector) => ({ vector, similarity: cosine(queryVec, vector) }))
+      .sort((a, b) => b.similarity - a.similarity);
+    if (rankedTopics[0]) c = Math.max(c, rankedTopics[0].similarity);
+    const strongest = rankedTopics[0];
+    const support =
+      strongest && rankedTopics.find((topic) => cosine(topic.vector, strongest.vector) < 0.85);
+    // Corroborating distinct CFP topics add coverage; repeated copies add nothing.
+    if (support) c += Math.max(0, 1 - c) * Math.max(0, support.similarity);
     return c;
   }
 
@@ -14862,8 +14901,9 @@ const Recommender = (() => {
     queryVec: Vector,
     emb: VectorMap,
     vectors?: PaperVectorMap | null,
+    topicVecs?: PaperVectorMap | null,
   ): number {
-    const c = semanticSimilarity(confKey, queryVec, emb, vectors);
+    const c = semanticSimilarity(confKey, queryVec, emb, vectors, topicVecs);
     return Math.round(Math.max(0, (c - 0.2) / 0.8) * 100);
   }
 
@@ -14918,18 +14958,33 @@ const Recommender = (() => {
    * phrases; Japanese signals retain substring matching. */
   function signalInText(hay: unknown, signal: unknown): boolean {
     if (!hay || !signal) return false;
-    const normalize = (value: unknown) =>
-      String(value)
-        .toLowerCase()
-        .replace(/[\u2010-\u2015\u2212-]/g, " ")
-        .replace(/\s+/g, " ")
-        .trim();
+    const normalize = (value: unknown) => {
+      const raw = String(value);
+      const cached = signalTextCache.get(raw);
+      if (cached !== undefined) return cached;
+      return rememberLexicalValue(
+        signalTextCache,
+        raw,
+        raw
+          .toLowerCase()
+          .replace(/[\u2010-\u2015\u2212-]/g, " ")
+          .replace(/\s+/g, " ")
+          .trim(),
+      );
+    };
     const text = normalize(hay);
     const needle = normalize(signal);
     if (!text || !needle) return false;
     if (/[\u3000-\u9fff]/.test(needle)) return text.indexOf(needle) !== -1;
     const escaped = needle.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    return new RegExp(`(?:^|[^a-z0-9])${escaped}(?=$|[^a-z0-9])`, "i").test(text);
+    const pattern =
+      signalPatternCache.get(needle) ??
+      rememberLexicalValue(
+        signalPatternCache,
+        needle,
+        new RegExp(`(?:^|[^a-z0-9])${escaped}(?=$|[^a-z0-9])`, "i"),
+      );
+    return pattern.test(text);
   }
 
   /* クエリの内容語数（英語）。ブレンドの語彙重みの適応に使う。
@@ -15130,32 +15185,67 @@ const Recommender = (() => {
 
   /* 検索用の専門語・表記を補う。 */
   const RETRIEVAL_TOPIC_ALIASES: Record<string, string> = {
+    "pac learning": "probably approximately correct learning statistical learning theory",
+    PAC学習: "probably approximately correct learning statistical learning theory",
+    自己回帰: "autoregressive modeling",
+    事前学習: "pretrained models transfer learning",
+    ファインチューニング: "fine tuning neural networks transfer learning",
+    led: "light emitting diode display hardware",
+    プロジェクションマッピング: "projection mapping spatial displays",
+    アクチュエーション: "actuation interactive hardware devices",
+    java: "Java programming language software engineering program analysis",
+    プログラム理解: "program comprehension software engineering program analysis",
+    変数名: "variable naming software engineering program comprehension",
+    ファジング: "fuzzing software security vulnerability discovery",
+    メモリ重複排除: "memory deduplication operating systems virtual memory management",
+    メモリ管理: "operating systems memory management",
+    ゲームコントローラ: "human computer interaction input devices user interfaces",
+    協調的議論: "computer supported cooperative work collaborative human computer interaction",
+    協調作業: "computer supported cooperative work human computer interaction",
+    クエリ拡張: "query expansion information retrieval document search",
+    文書拡張: "document expansion information retrieval search",
+    グラフ疎化: "graph sparsification spectral graph algorithms computational complexity",
+    グラフスパース化: "graph sparsification spectral graph algorithms computational complexity",
+    分位点推定: "quantile estimation statistical learning probability distribution estimation",
+    "quantile estimation": "statistical estimation inference probability distribution learning",
+    "distribution testing":
+      "statistical learning hypothesis testing sample complexity learning theory",
+    "kernel same-page merging": "operating systems kernel memory deduplication memory management",
+    "random early detection": "network congestion control packet queue management",
+    "memory deduplication": "operating systems virtual memory management",
+    "model serving": "machine learning inference serving systems performance",
+    "serving throughput": "operating systems GPU parallel inference resource management",
+    "conformal risk control": "conformal prediction statistical machine learning risk estimation",
+    "asynchronous training": "distributed machine learning optimization neural networks",
+    isoperimetry:
+      "isoperimetric inequalities high dimensional probability sampling learning theory",
     オイラー巡回: "Euler tours",
     行列式点過程: "determinantal point processes",
     不等式: "inequality",
     上界: "upper bound",
     疎化: "sparsification",
     加法誤差: "additive error",
-    等周性: "isoperimetry",
+    等周性: "isoperimetry high dimensional probability sampling learning theory",
     対数ソボレフ: "log Sobolev",
     ランジュバン: "Langevin",
     エクスパンダー: "expander graph",
     オンライン意思決定: "online decision making",
     リグレット: "regret",
     頑健: "robust",
-    実物体: "physical objects",
+    実物体: "physical objects tangible user interfaces human computer interaction",
     展示: "exhibition",
     芸術: "art",
     エンタテインメント: "entertainment",
-    標的型メール: "spear phishing",
+    標的型メール: "spear phishing email security social engineering attacks",
     差分プライバシー: "differential privacy",
     局所差分プライバシー: "local differential privacy statistical estimation",
     シャッフル差分プライバシー: "shuffle differential privacy statistical estimation",
     加法モデル: "additive models statistical learning",
     ブースティング: "boosting statistical learning",
-    ソーシャルエンジニアリング: "social engineering",
-    フィッシング: "phishing social engineering",
-    視覚効果: "visual effects",
+    ソーシャルエンジニアリング: "social engineering security attacks",
+    フィッシング: "phishing security social engineering attacks",
+    視覚効果: "visual effects interactive displays user interfaces",
+    視覚効果生成: "visual effects creation interactive displays user interfaces",
     生成: "generation",
     訓練データ: "training data machine learning",
     特徴選択: "feature selection machine learning",
@@ -15167,9 +15257,10 @@ const Recommender = (() => {
     標本: "sample statistical",
     勾配: "gradient optimization",
     確率分布: "probability distribution",
-    分布検定: "distribution testing statistical inference",
+    分布検定:
+      "distribution testing statistical learning hypothesis testing sample complexity learning theory",
     仮説検定: "hypothesis testing statistical inference",
-    分位点: "quantile statistical inference",
+    分位点: "quantile estimation statistical learning probability distribution inference",
     ベイズ: "bayesian probabilistic",
     回帰: "regression statistical learning",
     最適化: "optimization",
@@ -15181,6 +15272,12 @@ const Recommender = (() => {
     "a/b testing": "statistical inference causal inference",
     "treatment effect": "causal inference statistical learning",
     "large language model": "neural machine learning language modeling",
+    llm: "large language models neural machine learning",
+    "uncertainty quantification":
+      "probabilistic modeling Bayesian statistical inference prediction uncertainty",
+    "distribution shift":
+      "statistical machine learning predictive uncertainty Bayesian inference out of distribution detection",
+    inla: "integrated nested Laplace approximation Bayesian statistical inference",
   };
 
   function expansionTerms(text: unknown, forRetrieval = false): string[] {
@@ -15189,7 +15286,8 @@ const Recommender = (() => {
     const aliases = forRetrieval ? { ...JP_EN, ...RETRIEVAL_TOPIC_ALIASES } : JP_EN;
     const keys = Object.keys(aliases).filter((jp) =>
       forRetrieval && /^[a-z0-9/ -]+$/i.test(jp)
-        ? signalInText(t, jp)
+        ? signalInText(t, jp) ||
+          wordInText(t.replace(/[\u2010-\u2015\u2212-]/g, " "), jp.replace(/-/g, " "))
         : t.includes(jp.toLowerCase()),
     );
     if (forRetrieval) {
@@ -15197,7 +15295,16 @@ const Recommender = (() => {
         (a, b) => t.indexOf(a.toLowerCase()) - t.indexOf(b.toLowerCase()) || b.length - a.length,
       );
     }
-    const terms = keys.map((jp) => aliases[jp]);
+    const distinctKeys = forRetrieval
+      ? keys.filter(
+          (key) =>
+            !keys.some(
+              (other) =>
+                other.length > key.length && other.toLowerCase().includes(key.toLowerCase()),
+            ),
+        )
+      : keys;
+    const terms = distinctKeys.map((jp) => aliases[jp]);
     if (
       forRetrieval &&
       /特徴/.test(t) &&
@@ -15424,6 +15531,7 @@ const Recommender = (() => {
     englishRatio: englishRatio,
     setNameIdf: setNameIdf,
     setPaperVecs: setPaperVecs,
+    setTopicVecs: setTopicVecs,
     buildNameIdf: buildNameIdf,
     setSigWeights: setSigWeights,
     GENERIC_PAPER_WORDS: GENERIC_PAPER_WORDS,

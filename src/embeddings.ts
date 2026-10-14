@@ -25,6 +25,7 @@ import {
   EMBEDDING_SCHEMA_VERSION,
   embedEach,
   embedSet,
+  embedTopics,
   PAPER_VEC_KEYS,
   round6,
 } from "./embedding-runtime.ts";
@@ -47,6 +48,7 @@ import {
   profileTexts as cleanProfileTexts,
   JP_CAT_KW,
   SKIP_EMB_KEYS,
+  topicProfileTexts,
 } from "./embedding-profiles.ts";
 
 /** 会議のセマンティックプロファイルを実採択論文タイトルで強化する。
@@ -705,6 +707,7 @@ export function embeddingProfileHash(data: EmbeddingData | null | undefined): st
       excluded_attribute_tags: [...ATTRIBUTE_TAGS].sort(),
       english_papers: "first-eight-concatenated",
       multilingual_papers: "excluded",
+      official_topics: "separate-clause-vectors-with-bilingual-category-context-v1",
     },
   };
   return createHash("sha256")
@@ -754,6 +757,23 @@ export async function buildEmbeddings(
   const catNames = (data.categories ?? {}) as Record<string, string>;
   const en = profileTexts(data.conferences, catNames, false);
   const multiTexts = profileTexts(data.conferences, catNames, true);
+
+  const topics = topicProfileTexts(data.conferences, catNames);
+  const multiTopics = topicProfileTexts(data.conferences, catNames, true);
+  const topicVecs = await embedTopics(
+    EMBEDDING_MODEL,
+    topics.texts,
+    topics.keys,
+    EMBEDDING_REVISION,
+    localFilesOnly,
+  );
+  const multiTopicVecs = await embedTopics(
+    EMBEDDING_MULTI_MODEL,
+    multiTopics.texts,
+    multiTopics.keys,
+    EMBEDDING_MULTI_REVISION,
+    localFilesOnly,
+  );
 
   // 言語適応型デュアルモデル（実測ベース）:
   // 英語は all-MiniLM-L6-v2（EN top1 80.1%）、日本語は paraphrase-multilingual
@@ -820,10 +840,12 @@ export async function buildEmbeddings(
     venuePapersHash: venuePapersHash(),
     manifest: embeddingManifest(data, { en: enProbe, multi: multiProbe }),
     embeddings: out,
+    topicVecs,
     multi: {
       model: EMBEDDING_MULTI_MODEL,
       dim: EMBEDDING_DIM,
       embeddings: multi,
+      topicVecs: multiTopicVecs,
     },
     paperVecs,
   });

@@ -8,9 +8,10 @@ import {
   FeatureExtractionPipeline,
   pipeline,
 } from "@huggingface/transformers";
+import { load } from "js-yaml";
 import { afterAll, beforeAll, expect, it } from "vitest";
 import Recommender from "../site/recommender.ts";
-import { profileTexts } from "../src/embedding-profiles.ts";
+import { profileTexts, topicProfileTexts } from "../src/embedding-profiles.ts";
 import {
   EMBEDDING_DIM,
   EMBEDDING_MODEL,
@@ -19,6 +20,7 @@ import {
   EMBEDDING_REVISION,
   embedEach,
   embedSet,
+  embedTopics,
 } from "../src/embedding-runtime.ts";
 
 interface Venue {
@@ -103,7 +105,20 @@ const categories = {
   hpc: "High Performance Computing",
   security: "Computer Security and Privacy",
 };
-const rows = fixture.venues.map((conf) => ({ conf, cats: conf.categories, kind: "paper" }));
+const rows = fixture.venues.map((conf) => ({
+  conf: { ...conf, scope: [conf.scope] },
+  cats: conf.categories,
+  kind: "paper",
+}));
+const scopeMetadata = (
+  load(readFileSync(join(import.meta.dirname, "..", "data/manual.yaml"), "utf8")) as {
+    venue_scopes: Record<string, { topics: string[] }>;
+  }
+).venue_scopes;
+const profileConferences = rows.map(({ conf }) => ({
+  ...conf,
+  official_scope: scopeMetadata[conf.key === "css" ? "ipsj-css" : conf.key]?.topics ?? [],
+}));
 const previousCache = env.cacheDir;
 const contracts: Array<{
   language: "en" | "ja";
@@ -276,14 +291,18 @@ beforeAll(async () => {
   env.cacheDir = join(import.meta.dirname, "..", ".cache", "embedding-models");
   Recommender.setReranker(null);
   Recommender.setPaperVecs(null);
-  Recommender.setNameIdf(Recommender.buildNameIdf(rows));
+  Recommender.setNameIdf(Recommender.buildNameIdf(rows.map((row) => row.conf)));
   Recommender.setSigWeights(null);
   Recommender.setExpandEnabled(true);
   for (const language of ["en", "ja"] as const) {
-    const profiles = profileTexts(fixture.venues, categories, language === "ja", {});
+    const profiles = profileTexts(profileConferences, categories, language === "ja", {});
     const model = language === "en" ? EMBEDDING_MODEL : EMBEDDING_MULTI_MODEL;
     const revision = language === "en" ? EMBEDDING_REVISION : EMBEDDING_MULTI_REVISION;
     const embeddings = await embedSet(model, profiles.texts, profiles.keys, revision);
+    const topics = topicProfileTexts(profileConferences, categories, language === "ja");
+    const topicVecs = await embedTopics(model, topics.texts, topics.keys, revision);
+    Recommender.setTopicVecs(topicVecs);
+
     for (const vector of Object.values(embeddings)) {
       expect(vector).toHaveLength(EMBEDDING_DIM);
       expect(vector.every(Number.isFinite)).toBe(true);
@@ -447,6 +466,7 @@ beforeAll(async () => {
 afterAll(() => {
   env.cacheDir = previousCache;
   Recommender.setPaperVecs(null);
+  Recommender.setTopicVecs(null);
   Recommender.setNameIdf(null);
   Recommender.setSigWeights(null);
   Recommender.setReranker(null);

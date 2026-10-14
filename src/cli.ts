@@ -18,6 +18,7 @@ import { retainPublishedHistory } from "./history.ts";
 import {
   applyAliases,
   applyOverrides,
+  applyVenueScopes,
   classify,
   deadlineSlotKey,
   dedupDeadlinesAfterRollforward,
@@ -952,6 +953,10 @@ export async function cmdBuild(args: BuildArgs): Promise<number> {
   }
 
   confs = select(confs, config);
+  confs = applyVenueScopes(
+    confs,
+    loadYamlFile(join(ROOT, "data", "manual.yaml"), { strict: true }).venue_scopes,
+  );
   if (verificationLedger) confs = applyVerificationLedger(confs, verificationLedger);
 
   const outdir = resolve(args.out);

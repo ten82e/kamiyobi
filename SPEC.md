@@ -226,6 +226,7 @@ kamiyobi/
 │   ├── train-reranker.ts       # dev-only reranker 学習・CV・校正 artifact 生成
 │   ├── validate-data.ts         # 公開データの意味検査
 │   ├── verify-cfp.ts            # CFP 観測の項目別検証
+│   ├── verify-full-pool-retrieval.ts # 全収録会議・実モデルの隔離改変検査
 │   ├── verify-recommendation-retrieval.ts # 隔離環境で推薦の改変検査
 │   ├── promote-candidates.ts    # promotion batch の決定・manifest 生成
 │   ├── reverification-manifest.ts # VerificationState からの再検証マニフェスト生成

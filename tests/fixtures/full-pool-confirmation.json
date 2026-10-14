@@ -1,0 +1,78 @@
+{
+  "sampling": "Selected before full-pool misses are inspected or implementation changes: Graph Generative Pre-trained Transformer (ICML 2025), Para-ksm (ATC 2025), and Fuzzing the PHP Interpreter via Dataflow Fusion (USENIX Security 2025). Fix labels using the publication venue and independently suitable general-purpose venues; no ranking-driven relabeling.",
+  "profile_policy": "No evaluated titles or abstracts, prototypes, generated catalogs, snapshots or vectors in profiles.",
+  "papers": [
+    {
+      "id": "chen25bl-en",
+      "language": "en",
+      "title": "Graph Generative Pre-trained Transformer",
+      "abstract": "Graph generation is a critical task in numerous domains, including molecular design and social network analysis, due to its ability to model complex relationships and structured data. While most modern graph generative models utilize adjacency matrix representations, this work revisits an alternative approach that represents graphs as sequences of node set and edge set. We advocate for this approach due to its efficient encoding of graphs and propose a novel representation. Based on this representation, we introduce the Graph Generative Pre-trained Transformer (G2PT), an auto-regressive model that learns graph structures via next-token prediction. To further exploit G2PT’s capabilities as a general-purpose foundation model, we explore fine-tuning strategies for two downstream applications: goal-oriented generation and graph property prediction. We conduct extensive experiments across multiple datasets. Results indicate that G2PT achieves superior generative performance on both generic graph and molecule datasets. Furthermore, G2PT exhibits strong adaptability and versatility in downstream tasks from molecular design to property prediction.",
+      "abstract_sha256": "2e409779b38acfe66eba7cf88a65717168408fb70ea94838d9418c0850a500f9",
+      "primary_venue": "icml",
+      "acceptable_venues": ["icml", "neurips", "iclr"],
+      "source": "https://proceedings.mlr.press/v267/chen25bl.html",
+      "publication": "ICML 2025",
+      "abstract_kind": "author abstract"
+    },
+    {
+      "id": "chen25bl-ja",
+      "language": "ja",
+      "title": "グラフ生成の事前学習済みTransformer",
+      "abstract": "分子設計やソーシャルネットワーク解析では、複雑な関係を持つグラフを生成する必要がある。従来のグラフ生成モデルは隣接行列を使うことが多いが、本論文は頂点集合と辺集合を系列として表す方法を見直し、効率的な表現を提案する。この表現を用いるG2PTは、次トークン予測によってグラフ構造を学習する自己回帰Transformerである。さらに、目的に沿った生成とグラフの属性予測のためのファインチューニングを検討する。一般のグラフと分子の複数データセットで生成性能を評価し、分子設計から属性予測までの応用で適応性を確認した。",
+      "abstract_sha256": "444f11efa750547fb78edefa8d4dc227a33ad93f9bec5f57cdfcd57d34e2f2f5",
+      "primary_venue": "icml",
+      "acceptable_venues": ["icml", "neurips", "iclr"],
+      "source": "https://proceedings.mlr.press/v267/chen25bl.html",
+      "publication": "ICML 2025",
+      "abstract_kind": "Japanese summary of author abstract"
+    },
+    {
+      "id": "ji25ksm-en",
+      "language": "en",
+      "title": "Para-ksm: Parallelized Memory Deduplication with Data Streaming Accelerator",
+      "abstract": "Server memory deduplication saves memory capacity, but Kernel Same-page Merging can slow down concurrent applications. This paper studies offloading page comparison and checksum computation to Intel Data Streaming Accelerator. Offloading reduces interference with applications but introduces latency through on-chip PCIe, so a direct replacement of CPU functions lowers the deduplication rate. Para-ksm redesigns the mechanism to batch operations over multiple pages, amortizing offload latency. The evaluation compares deduplication per CPU cycle and the performance degradation of concurrent applications. Para-ksm increases memory deduplication per CPU cycle by 31–50% relative to ksm while reducing the slowdown of co-running applications. The work addresses operating-system memory management and the use of hardware accelerators in server systems.",
+      "abstract_sha256": "a275c6bdc92b6bd0bad60ff3b8b8254644e29fc809cfd04b63685bd5c7d0e0bb",
+      "primary_venue": "sigops-atc",
+      "acceptable_venues": ["sigops-atc", "osdi", "sosp"],
+      "source": "https://www.usenix.org/conference/atc25/presentation/ji",
+      "publication": "USENIX ATC 2025",
+      "abstract_kind": "English summary of author abstract"
+    },
+    {
+      "id": "ji25ksm-ja",
+      "language": "ja",
+      "title": "Para-ksm：Data Streaming Acceleratorを用いたメモリ重複排除の並列化",
+      "abstract": "サーバのメモリコストを抑えるため、同内容のページをまとめるKernel Same-page Mergingが使われている。しかし、この処理は同時実行中のアプリケーションを大きく遅くする。本論文はページ比較とチェックサム計算をIntelのData Streaming Acceleratorに移す方法を検討する。単純なオフロードでは、チップ内PCIeを介する遅延のため重複排除率が低下する。Para-ksmは複数ページへの処理をまとめ、オフロード遅延を償却するように機構を再設計した。評価では、重複排除の処理効率と併走するアプリケーションへの性能影響を測り、ksmと比べてCPUサイクル当たりの重複排除量が31〜50%増えることを示した。",
+      "abstract_sha256": "b7138fc988ac948a039a7ae608d1f85fe7c6b7a36e26e4d6dfb6482fbaee23da",
+      "primary_venue": "sigops-atc",
+      "acceptable_venues": ["sigops-atc", "osdi", "sosp"],
+      "source": "https://www.usenix.org/conference/atc25/presentation/ji",
+      "publication": "USENIX ATC 2025",
+      "abstract_kind": "Japanese summary of author abstract"
+    },
+    {
+      "id": "jiang25php-en",
+      "language": "en",
+      "title": "Fuzzing the PHP Interpreter via Dataflow Fusion",
+      "abstract": "PHP interpreter memory errors threaten the security of servers, yet much prior PHP security work concentrates on application-level vulnerabilities. FlowFusion is an automatic fuzzing framework for finding memory errors in the interpreter. It represents developer-maintained test cases through dataflow and combines multiple cases to create programs with more complex semantics. It also uses test mutation, interface fuzzing, and environment crossover. The evaluation found 158 previously unknown bugs, of which 125 were fixed and 11 confirmed. FlowFusion finds bugs missed by the official test suite and naive concatenation, increases code coverage, and outperforms AFL++ and Polyglot. The framework has been integrated into the PHP toolchain. The contribution concerns vulnerability discovery and systematic testing of language runtime implementations.",
+      "abstract_sha256": "98df8d345d9cf3214472d1210114608c50e8b21748042ca2623cf0156037ee24",
+      "primary_venue": "usenix-security",
+      "acceptable_venues": ["usenix-security", "css", "ndss"],
+      "source": "https://www.usenix.org/conference/usenixsecurity25/presentation/jiang-yuancheng",
+      "publication": "USENIX Security 2025",
+      "abstract_kind": "English summary of author abstract"
+    },
+    {
+      "id": "jiang25php-ja",
+      "language": "ja",
+      "title": "データフロー融合によるPHPインタプリタのファジング",
+      "abstract": "PHP処理系のメモリエラーはサーバの機密性、完全性、可用性を脅かすが、従来のPHPセキュリティ研究はアプリケーション側の脆弱性に集中していた。FlowFusionはインタプリタのメモリエラーを見つける自動ファジング手法である。開発者が管理するテストをデータフローで表現し、複数のテストを融合して複雑な意味を持つプログラムを作る。さらにテストの変異、インタフェースのファジング、実行環境の組み合わせを使う。評価では未知の不具合158件を発見し、125件が修正、11件が確認された。公式テストや単純な連結が見逃す不具合を検出し、AFL++やPolyglotより広いコードを実行した。提案手法はPHPの公式ツールチェーンに統合されている。",
+      "abstract_sha256": "5d9a2be09e5a38f4107dbc8091ff4019ccd720b1921585a6d7f804f85c2a5cf6",
+      "primary_venue": "usenix-security",
+      "acceptable_venues": ["usenix-security", "css", "ndss"],
+      "source": "https://www.usenix.org/conference/usenixsecurity25/presentation/jiang-yuancheng",
+      "publication": "USENIX Security 2025",
+      "abstract_kind": "Japanese summary of author abstract"
+    }
+  ]
+}

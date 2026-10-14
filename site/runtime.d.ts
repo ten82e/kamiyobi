@@ -281,6 +281,7 @@ interface SiteRecommenderApi {
   blendVectors(left: number[], right: number[], weight: number): number[];
   setNameIdf(value: Record<string, unknown>): void;
   setPaperVecs(value: Record<string, number[][]> | null): void;
+  setTopicVecs(value: Record<string, number[][]> | null): void;
   setReranker(value: Record<string, unknown> | null): void;
   venueRecommendations(
     rows: SiteRow[],

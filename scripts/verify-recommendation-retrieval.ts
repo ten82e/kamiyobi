@@ -27,10 +27,11 @@ const copied = [
     .filter((name) => /^real-model-.*\.json$/.test(name))
     .sort()
     .map((name) => `tests/fixtures/${name}`),
+  "data/manual.yaml",
   "package.json",
   "tsconfig.json",
 ];
-for (const directory of ["src", "tests/fixtures", ".cache"])
+for (const directory of ["src", "tests/fixtures", "data", ".cache"])
   mkdirSync(join(isolated, directory), { recursive: true });
 for (const file of copied) cpSync(join(repo, file), join(isolated, file));
 cpSync(join(repo, "site"), join(isolated, "site"), { recursive: true });
@@ -61,7 +62,11 @@ const fingerprint = () =>
     .join(":");
 const before = fingerprint();
 const noGeneratedData = () => {
-  assert(!existsSync(join(isolated, "data")), "isolated data/ must not exist");
+  assert.deepEqual(
+    readdirSync(join(isolated, "data")),
+    ["manual.yaml"],
+    "only raw CFP metadata is allowed in data/",
+  );
   assert(!existsSync(join(isolated, "public")), "isolated public/ must not exist");
 };
 interface AssertionResult {
@@ -122,7 +127,9 @@ function requirePassing(id: string) {
     );
   if (baselineCount === null) baselineCount = report.numPassedTests;
   else assert.equal(report.numPassedTests, baselineCount, `${id}: test coverage changed`);
-  console.log(`${id}: ${report.numPassedTests} passed; data/ and public/ absent`);
+  console.log(
+    `${id}: ${report.numPassedTests} passed; precomputed artifacts absent; raw CFP metadata only`,
+  );
 }
 const mutations: Array<{ id: string; file: string; edits: Array<[string, string]> }> = [
   {
@@ -146,11 +153,11 @@ const mutations: Array<{ id: string; file: string; edits: Array<[string, string]
     file: "site/recommender.ts",
     edits: [
       [
-        "const lexicalRrfWeight = opts.semanticSimilarities ? 0.4 : opts.fieldedLexical ? 1.6 : 1;",
+        "const lexicalRrfWeight = opts.semanticSimilarities\n          ? hasTopicEvidence\n            ? 0.2\n            : 0.4\n          : opts.fieldedLexical\n            ? 1.6\n            : 1;",
         "const lexicalRrfWeight = opts.fieldedLexical ? 1.6 : 1;",
       ],
       [
-        "const semanticRrfWeight = opts.semanticSimilarities ? 1.6 : opts.fieldedLexical ? 0.4 : 1;",
+        "const semanticRrfWeight = opts.semanticSimilarities\n          ? hasTopicEvidence\n            ? 1.8\n            : 1.6\n          : opts.fieldedLexical\n            ? 0.4\n            : 1;",
         "const semanticRrfWeight = opts.fieldedLexical ? 0.4 : 1;",
       ],
     ],

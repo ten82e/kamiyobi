@@ -1303,6 +1303,36 @@ function matches(conf: Conference, rule: Record<string, unknown>): boolean {
 // overrides
 // --------------------------------------------------------------------------
 
+/** Attach independently sourced CFP topics without creating or renaming a venue. */
+export function applyVenueScopes(confs: Conference[], raw: unknown): Conference[] {
+  if (raw === undefined || raw === null) return confs;
+  if (typeof raw !== "object" || Array.isArray(raw))
+    throw new Error("venue_scopes must be a mapping");
+  const entries = new Map<string, string[]>();
+  for (const [key, value] of Object.entries(raw)) {
+    if (!value || typeof value !== "object" || Array.isArray(value))
+      throw new Error(`invalid venue scope: ${key}`);
+    const entry = value as Record<string, unknown>;
+    if (
+      typeof entry.source_url !== "string" ||
+      !/^https:\/\//.test(entry.source_url) ||
+      !Array.isArray(entry.topics) ||
+      !entry.topics.length ||
+      entry.topics.some((t) => typeof t !== "string" || !t.trim())
+    )
+      throw new Error(`venue scope needs official source_url and nonempty topics: ${key}`);
+    entries.set(key, entry.topics as string[]);
+  }
+  return confs.map((conf) =>
+    entries.has(conf.key)
+      ? {
+          ...conf,
+          official_scope: [...new Set([...(conf.official_scope ?? []), ...entries.get(conf.key)!])],
+        }
+      : conf,
+  );
+}
+
 export function applyOverrides(
   confs: Conference[] | null | undefined,
   overrides: Record<string, unknown> | null | undefined,
