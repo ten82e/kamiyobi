@@ -1,6 +1,13 @@
-import { readFileSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { expect, it, vi } from "vitest";
+import { env } from "@huggingface/transformers";
+import { beforeAll, expect, it, vi } from "vitest";
+import {
+  EMBEDDING_MODEL,
+  EMBEDDING_MULTI_MODEL,
+  EMBEDDING_MULTI_REVISION,
+  EMBEDDING_REVISION,
+} from "../src/embedding-runtime.ts";
 import { buildEmbeddings } from "../src/embeddings.ts";
 import { tempWork } from "./helpers.ts";
 
@@ -23,6 +30,18 @@ vi.mock("@huggingface/transformers", () => ({
     return pipeline(input.task, input.model.model, input.model.options);
   },
 }));
+beforeAll(() => {
+  env.cacheDir = tempWork("kamiyobi-tokenizer-fixture-");
+  for (const [model, revision] of [
+    [EMBEDDING_MODEL, EMBEDDING_REVISION],
+    [EMBEDDING_MULTI_MODEL, EMBEDDING_MULTI_REVISION],
+  ]) {
+    const directory = join(env.cacheDir, model, revision);
+    mkdirSync(directory, { recursive: true });
+    for (const file of ["tokenizer.json", "tokenizer_config.json"])
+      writeFileSync(join(directory, file), "{}");
+  }
+});
 pipeline.mockImplementation((task: string, model: string, options: unknown) => {
   expect(task).toBe("feature-extraction");
   expect(options).toEqual({ local_files_only: true, device: "cpu", dtype: "fp32" });

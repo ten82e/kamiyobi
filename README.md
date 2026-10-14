@@ -66,7 +66,7 @@ stdio の読み取り専用サーバです。外部への送信は行わない�
 | `search_venues` | 全収録会議から研究テーマ・題名・概要で投稿先を検索 |
 | `recommend_venues` | 論文情報に合う投稿先の候補 |
 
-`search_venues` と `recommend_venues` は `retrieval: "semantic"` で英日実モデルを使えます。モデルは `.cache/embedding-models` に準備してください（埋め込み付きビルドで取得します）。未準備ならエラーを返します。指定しない場合は従来の語彙検索です。
+`search_venues` と `recommend_venues` は `retrieval: "semantic"` で英日実モデルを使えます。`node src/prepare-models.ts` でモデルだけを `.cache/embedding-models` に準備できます。`--offline` を付けると外部接続せずに読込・推論を確認します。未準備ならエラーを返します。指定しない場合は従来の語彙検索です。
 
 `search_deadlines` は画面と同じ検索処理を使います。`scope: "screen"` は初期一覧、`scope: "all"` は収録全体です。初期一覧のファイルがない場合は全体へ切り替え、その旨を返します。
 

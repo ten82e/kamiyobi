@@ -40,7 +40,11 @@ export class SemanticModelError extends Error {
       : phase === "load"
         ? "実モデルの読み込みに失敗しました。モデルファイルの破損や実行環境を確認してください。"
         : "実モデルによる推論に失敗しました。入力と実行環境を確認してください。";
-    super(`${reason}\n対象モデル: ${model}@${revision}\n保存先: ${directory}`, { cause });
+    super(
+      `${reason}\n対象モデル: ${model}@${revision}\n保存先: ${directory}` +
+        (missing.length ? "\n準備: node src/prepare-models.ts" : ""),
+      { cause },
+    );
     this.name = "SemanticModelError";
     this.diagnostic = {
       code,

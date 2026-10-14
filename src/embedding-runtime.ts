@@ -25,6 +25,9 @@ async function loadPinnedTokenizer(model: string, revision: string, localFilesOn
   if (localFilesOnly) {
     const directory = join(env.cacheDir!, model, revision);
     try {
+      // Avoid memoizing absent tokenizer metadata inside the model library before preparation.
+      for (const name of ["tokenizer.json", "tokenizer_config.json"])
+        if (!existsSync(join(directory, name))) throw new Error(`missing local tokenizer ${name}`);
       return await AutoTokenizer.from_pretrained(directory, { local_files_only: true });
     } catch (cause) {
       throw new Error(`local_files_only tokenizer unavailable at ${directory}`, { cause });
