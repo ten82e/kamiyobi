@@ -84,7 +84,7 @@ function run(label: string, broken: boolean) {
       assertionResults: Array<{ fullName: string; status: string; failureMessages: string[] }>;
     }) => suite.assertionResults,
   );
-  assert.equal(assertions.length, 60, `${label}: evaluation cases changed`);
+  assert.equal(assertions.length, 168, `${label}: evaluation cases changed`);
   if (broken) {
     assert.notEqual(result.status, 0, `${label}: fault survived`);
     assert(
@@ -126,6 +126,32 @@ const faults = [
     file: files[1],
     needle: '生成モデル: "generative modeling neural machine learning",',
     replacement: '生成モデル: "generation",',
+  },
+  {
+    id: "hpc-acronym-hint-removed",
+    file: files[1],
+    needle: 'hpc: "high performance computing supercomputing parallel scientific computing",',
+    replacement: 'hpc: "HPC",',
+  },
+  {
+    id: "collective-communication-hint-removed",
+    file: files[1],
+    needle:
+      '"MPI collective communication parallel computing high performance computing supercomputing"',
+    replacement: '"collective communication"',
+  },
+  {
+    id: "ransomware-hint-removed",
+    file: files[1],
+    needle: 'ランサムウェア: "ransomware malware cybersecurity extortion attacks",',
+    replacement: 'ランサムウェア: "",',
+  },
+  {
+    id: "domestic-official-topics-ignored",
+    file: files[0],
+    needle: 'env.cacheDir = join(root, ".cache/embedding-models");',
+    replacement:
+      'conferences = conferences.map(c => (c as {key:string}).key === "ipsj-sighpc" ? {...(c as Record<string,unknown>), official_scope: []} : c); env.cacheDir = join(root, ".cache/embedding-models");',
   },
 ];
 try {

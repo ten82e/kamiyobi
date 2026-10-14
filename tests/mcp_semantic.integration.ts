@@ -20,13 +20,62 @@ if (
   throw new Error("holdout inputs or labels changed");
 const initial = JSON.parse(raw);
 const holdout = JSON.parse(holdoutRaw);
-for (const corpus of [initial, holdout])
+const domainsRaw = readFileSync(join(repo, "tests/fixtures/mcp-semantic-domains.json"), "utf8");
+if (
+  createHash("sha256").update(domainsRaw).digest("hex") !==
+  "3d736ce110df290a7e1b272f8769bcb2215d38426ea2ca4fa4ca218549f2ea37"
+)
+  throw new Error("domain evaluation inputs or labels changed");
+const domains = JSON.parse(domainsRaw);
+const priorMcpSources = new Set([...initial.papers, ...holdout.papers].map((p) => p.source));
+for (const p of domains.papers)
+  if (priorMcpSources.has(p.source)) throw new Error("domain paper was already evaluated");
+const confirmationRaw = readFileSync(
+  join(repo, "tests/fixtures/mcp-semantic-domains-confirmation.json"),
+  "utf8",
+);
+if (
+  createHash("sha256").update(confirmationRaw).digest("hex") !==
+  "284175fe174435e7860094022e7aae897dcd1d78205a6bf6119039732e1f750f"
+)
+  throw new Error("domain confirmation inputs or labels changed");
+const confirmation = JSON.parse(confirmationRaw);
+const developmentSources = new Set([
+  ...priorMcpSources,
+  ...domains.papers.map((p: { source: string }) => p.source),
+]);
+for (const p of confirmation.papers)
+  if (developmentSources.has(p.source))
+    throw new Error("domain confirmation source was already evaluated");
+const finalRaw = readFileSync(join(repo, "tests/fixtures/mcp-semantic-domains-final.json"), "utf8");
+if (
+  createHash("sha256").update(finalRaw).digest("hex") !==
+  "4398417641b8d2e34421e48d147cde1e5806bc6fdd21b74b7c02a88967741fca"
+)
+  throw new Error("final confirmation inputs or labels changed");
+const finalConfirmation = JSON.parse(finalRaw);
+const evaluatedSources = new Set([
+  ...developmentSources,
+  ...confirmation.papers.map((p: { source: string }) => p.source),
+]);
+for (const p of finalConfirmation.papers)
+  if (evaluatedSources.has(p.source))
+    throw new Error("final confirmation source was already evaluated");
+for (const corpus of [initial, holdout, domains, confirmation, finalConfirmation])
   if (corpus.candidate_count !== 696 || corpus.top_k !== 5)
     throw new Error("evaluation gate changed");
 const initialSources = new Set(initial.papers.map((p: { source: string }) => p.source));
 for (const p of holdout.papers)
   if (initialSources.has(p.source)) throw new Error("holdout source leaked from development");
-const corpus = { papers: [...initial.papers, ...holdout.papers] };
+const corpus = {
+  papers: [
+    ...initial.papers,
+    ...holdout.papers,
+    ...domains.papers,
+    ...confirmation.papers,
+    ...finalConfirmation.papers,
+  ],
+};
 interface Paper {
   id: string;
   language: string;

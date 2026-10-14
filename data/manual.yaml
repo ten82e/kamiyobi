@@ -7074,8 +7074,14 @@ conferences:
 
 schema_version: 1
 
-# 公式 CFP の募集主題。開催回や締切、採択論文は含めない。
+# 公式CFP・研究会の案内に記載された対象分野。開催回や締切、採択論文は含めない。
 venue_scopes:
+  ipsj-sighpc:
+    source_url: https://www.sighpc.ipsj.or.jp/hpc_chater.html
+    topics:
+      - Numerical computation and numerical simulation, modeling, discretization, algorithms, standard libraries, numerical representations, high precision and quality assurance. 数値計算・数値シミュレーション、モデル化、離散化、アルゴリズム、標準ライブラリ、数値表現、高精度計算、品質保証。
+      - High-performance architecture usage and performance evaluation, parallel and distributed processing, vector processing, workstations, experimental systems, superscalar execution, cache and memory access. 高性能計算用アーキテクチャの利用と性能評価、並列・分散処理、ベクトル処理、ワークステーション、実験システム、スーパースカラ、キャッシュ、メモリーアクセス。
+      - Technologies connecting scientific computation and computers, programming languages, optimization, data placement, mapping, visualization, debugging tools, performance evaluation models and measurements. 計算と計算機を結ぶ技術、プログラミング言語、最適化、データ配置、マッピング、可視化、デバッグツール、性能評価モデルと実測。
   fast:
     source_url: https://www.usenix.org/conference/fast25/call-for-papers
     topics:

@@ -1,0 +1,86 @@
+{
+  "candidate_count": 696,
+  "top_k": 5,
+  "papers": [
+    {
+      "id": "hzccl-en",
+      "language": "en",
+      "source": "https://sc24.supercomputing.org/proceedings/tech_paper/tech_paper_pages/pap299.html",
+      "title": "hZCCL: Accelerating Collective Communication with Co-Designed Homomorphic Compression",
+      "abstract": "As network bandwidth lags behind increasing computing power, efficient collective communication is a major challenge for exascale applications. Traditional approaches use error-bounded lossy compression to accelerate collective operations but suffer from the costly decompression-operation-compression (DOC) workflow. We propose hZCCL, the first homomorphic compression-communication co-design enabling direct operations on compressed data, avoiding expensive DOC overhead. Alongside the co-design framework, we introduce a lightweight, multi-core CPU-optimized compressor and a homomorphic compressor with a runtime heuristic to select efficient compression pipelines dynamically. We evaluate hZCCL with up to 512 nodes and across five application datasets. The experimental results demonstrate that our homomorphic compressor achieves a CPU throughput of up to 379.08 GB/s, surpassing the conventional DOC workflow by up to 36.53X. Moreover, our hZCCL-accelerated collectives outperform two state-of-the-art baselines, delivering speedups of up to 2.12X and 6.77X compared to original MPI collectives in single-thread and multi-thread modes, respectively, while maintaining data accuracy.",
+      "split": "development",
+      "domain": "hpc",
+      "acceptable_venues": ["sc", "ics", "isc-hpc", "ipdps"]
+    },
+    {
+      "id": "stripeless-en",
+      "language": "en",
+      "source": "https://www.usenix.org/conference/osdi25/presentation/gao",
+      "title": "Stripeless Data Placement for Erasure-Coded In-Memory Storage",
+      "abstract": "Erasure coding plays a crucial role in distributed storage systems to provide fault tolerance at a low storage cost. Conventional erasure coding schemes are based on stripes. However, placing data into stripes can incur non-negligible performance overheads that will manifest in emerging fast in-memory storage systems, making conventional erasure coding schemes suboptimal in such scenarios. Aiming to eliminate such overheads, we present Nos, a stripeless erasure coding scheme. It lets each node in the storage system independently replicate data to other nodes and encode received data replica into parities with XOR. Thus, Nos avoids the overheads caused by stripes. To enable failure recovery, Nos uses a combinatoric structure called symmetric balanced incomplete block design (SBIBD) to decide primary-to-backup node affinities during replication. Atop Nos, we further build Nostor, a distributed in-memory key-value store. Evaluations demonstrate that Nostor achieves 1.61x and 2.60x throughputs with similar or lower latencies than stripe-based erasure coding baselines.",
+      "split": "development",
+      "acceptable_venues": ["osdi", "sosp", "fast", "eurosys"],
+      "domain": "systems"
+    },
+    {
+      "id": "ransomware-en",
+      "language": "en",
+      "source": "https://www.usenix.org/conference/usenixsecurity25/presentation/sarabi",
+      "title": "The Ransomware Decade: The Creation of a Fine-Grained Dataset and a Longitudinal Study",
+      "abstract": "Ransomware attacks have grown and evolved considerably in the past decade and are now one of the most common and most profitable attack vectors. Successful ransomware attacks have the ability to shut hospitals down, cause massive data and financial losses, tarnish the reputations of organizations, and even cause direct physical harm to people and property. Consequently, considerable attention has been paid to various individual aspects of the ransomware ecosystem in both the research community and the popular press. However, there continues to be a lack of comprehensive long-range census of these events. This presents a significant barrier to any comprehensive analysis of the ecosystem as a whole. In this paper, we present a longitudinal study of a decade of the ransomware attack landscape. This study is built upon a sophisticated process we developed to source and curate a unique large-scale dataset of ransomware incidents with fine-grained annotations on the basis of public reports of such incidents. We detail this process in the paper and showcase a variety of analysis enabled by such a dataset. Of particular interest are findings around the downstream impact of a large ransom payment vs. a high-profile refusal to pay, the impact of double extortion, the difference in susceptibility to different attack vectors and in payment attitudes across industry sectors.",
+      "split": "development",
+      "acceptable_venues": ["usenix-security", "ccs", "ndss", "sp"],
+      "domain": "security"
+    },
+    {
+      "id": "hzccl-ja",
+      "language": "ja",
+      "source": "https://sc24.supercomputing.org/proceedings/tech_paper/tech_paper_pages/pap299.html",
+      "title": "hZCCL：準同型圧縮との協調設計による集団通信の高速化",
+      "abstract": "ネットワーク帯域の伸びが計算能力の増大に追いつかない中、効率的な集団通信はエクサスケールのアプリケーションにとって重要な課題である。従来は誤差を制限した非可逆圧縮を集団演算に用いるが、展開・演算・再圧縮（DOC）の費用が高い。hZCCLは準同型圧縮と通信を協調設計し、圧縮データを直接演算することでDOCの費用を避ける初の手法である。協調設計の枠組みに加え、マルチコアCPU向けに最適化した軽量圧縮器と、実行時のヒューリスティックによって効率的な圧縮パイプラインを動的に選ぶ準同型圧縮器を導入する。最大512ノードと5種類のアプリケーションデータで評価した。準同型圧縮器のCPUスループットは最大379.08 GB/sで、従来のDOC処理を最大36.53倍上回った。また、データ精度を維持しつつ、hZCCLの集団通信は二つの最先端のベースラインを上回り、元のMPI集団通信に対して、シングルスレッドとマルチスレッドでそれぞれ最大2.12倍と6.77倍の高速化を達成した。",
+      "split": "development",
+      "domain": "hpc",
+      "acceptable_venues": ["sc", "ics", "isc-hpc", "ipdps"]
+    },
+    {
+      "id": "stripeless-ja",
+      "language": "ja",
+      "source": "https://www.usenix.org/conference/osdi25/presentation/gao",
+      "title": "消失訂正符号を使うインメモリストレージのストライプ不要のデータ配置",
+      "abstract": "消失訂正符号は、分散ストレージの耐障害性を低い保存費用で実現する。従来方式はストライプに基づくが、データをストライプへ配置する費用は、高速なインメモリストレージでは無視できず、従来方式の性能を制限する。この費用を取り除くため、ストライプを使わない消失訂正符号方式Nosを提案する。各ストレージノードが独立に他ノードへデータを複製し、受け取った複製データをXORでパリティへ符号化することで、ストライプに伴う費用を避ける。障害復旧のため、複製時の主ノードとバックアップノードの対応を、対称均衡不完備ブロックデザイン（SBIBD）という組合せ構造で決める。Nosを使った分散インメモリキーバリューストアNostorを構築した。評価では、ストライプ方式のベースラインと同等以下の遅延で、1.61倍と2.60倍のスループットを達成した。",
+      "split": "development",
+      "acceptable_venues": ["osdi", "sosp", "fast", "eurosys"],
+      "domain": "systems"
+    },
+    {
+      "id": "ransomware-ja",
+      "language": "ja",
+      "source": "https://www.usenix.org/conference/usenixsecurity25/presentation/sarabi",
+      "title": "ランサムウェアの10年間：詳細なデータセットの構築と経年調査",
+      "abstract": "ランサムウェア攻撃は過去10年で大きく増加・変化し、最も一般的で利益の高い攻撃経路の一つとなった。攻撃が成功すると、病院の停止、大規模なデータ損失と金銭被害、組織の評判の悪化だけでなく、人や財産への直接の物理的被害も起こり得る。このため研究と報道ではランサムウェアの個別の側面が注目されてきたが、これらの出来事を長期にわたって網羅的に把握する資料は不足している。この不足は、攻撃の生態系全体の分析を妨げる。本論文はランサムウェア攻撃の10年間を経年調査する。公開された事件の報告から、大規模で詳細な注釈付きの事件データセットを収集・整備する手順を開発し、この手順と、得られたデータを使う多様な分析を示す。特に、多額の身代金の支払いと著名な支払い拒否が後続の攻撃へ与える影響、二重恐喝の影響、産業分野ごとの攻撃経路への脆弱性と支払い態度の違いを調べる。",
+      "split": "development",
+      "acceptable_venues": ["usenix-security", "ccs", "ndss", "sp"],
+      "domain": "security"
+    },
+    {
+      "id": "async-collective-ja",
+      "language": "ja",
+      "source": "https://ipsj.ixsq.nii.ac.jp/records/2001259",
+      "title": "高スループット非同期集団通信の性能モデル化に向けた予備評価",
+      "abstract": "非同期集団通信のインターフェースが提案され、MPIライブラリなどに広く実装・使用されるようになってきている。非同期集団通信を含む非同期通信は通信と依存関係のない計算をオーバラップして実行することで通信を隠ぺいするものである。通信量が少ない場合は通信遅延が計算で隠ぺいされ、全体の性能が向上する。しかし、通信量の大きい高スループットな通信を行う際にはオーバラップ処理がメモリバンド幅により制限されてしまう可能性がある。そこで、本研究では、高スループットにおける非同期通信の性能モデル化の基礎とするため、高スループットな計算と通信のオーバラップ処理における性能を評価する予備実験を行った。この実験からメモリバンド幅が計算と通信のオーバラップ処理に与える影響について考察を行った。",
+      "split": "development",
+      "domain": "domestic",
+      "acceptable_venues": ["ipsj-sighpc"]
+    },
+    {
+      "id": "async-collective-en",
+      "language": "en",
+      "source": "https://ipsj.ixsq.nii.ac.jp/records/2001259",
+      "title": "Preliminary Evaluation Toward Performance Modeling of High-Throughput Asynchronous Collective Communication",
+      "abstract": "Interfaces for asynchronous collective communication have been proposed and are now widely implemented and used in MPI libraries. Asynchronous communication, including asynchronous collectives, hides communication by overlapping it with computations that do not depend on that communication. When communication volumes are small, computation hides communication latency and improves overall performance. However, overlapping high-throughput communication with large communication volumes may be limited by memory bandwidth. To provide a foundation for performance modeling of asynchronous communication at high throughput, this study conducts preliminary experiments evaluating high-throughput overlapping computation and communication. The experiments are used to examine how memory bandwidth affects the overlap between computation and communication.",
+      "split": "development",
+      "domain": "domestic",
+      "acceptable_venues": ["ipsj-sighpc"]
+    }
+  ]
+}

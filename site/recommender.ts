@@ -15304,6 +15304,14 @@ const Recommender = (() => {
     フィッシング: "phishing security social engineering attacks",
     視覚効果: "visual effects interactive displays user interfaces",
     視覚効果生成: "visual effects creation interactive displays user interfaces",
+    hpc: "high performance computing supercomputing parallel scientific computing",
+    mpi: "message passing interface parallel high performance computing",
+    集団通信:
+      "MPI collective communication parallel computing high performance computing supercomputing",
+    非同期集団通信:
+      "MPI nonblocking collective communication parallel computing high performance computing",
+    ランサムウェア: "ransomware malware cybersecurity extortion attacks",
+    ransomware: "malware cybersecurity extortion attacks",
     生成モデル: "generative modeling neural machine learning",
     拡散モデル: "diffusion models neural generative machine learning",
     "diffusion models": "neural generative machine learning",
