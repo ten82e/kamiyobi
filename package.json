@@ -27,7 +27,8 @@
     "build:manual": "node src/cli.ts build --out public",
     "test:live-consumers": "vitest run --config vitest.models.config.ts tests/live_consumers.integration.ts",
     "test:full-pool": "vitest run --config vitest.models.config.ts tests/full_pool_models.integration.ts",
-    "test:full-pool-mutations": "node scripts/verify-full-pool-retrieval.ts"
+    "test:full-pool-mutations": "node scripts/verify-full-pool-retrieval.ts",
+    "test:mcp-recovery-mutations": "node scripts/verify-mcp-recovery.ts"
   },
   "license": "MIT",
   "overrides": {

@@ -231,6 +231,7 @@ kamiyobi/
 │   ├── validate-data.ts         # 公開データの意味検査
 │   ├── verify-cfp.ts            # CFP 観測の項目別検証
 │   ├── verify-mcp-semantic.ts     # MCP実モデルの隔離破壊検証
+│   ├── verify-mcp-recovery.ts     # 同じ接続でのモデル準備・再試行の破壊検証
 │   ├── verify-live-consumers.ts     # 全収録会議の画面・MCP共通処理を隔離環境で破壊検証
 │   ├── verify-full-pool-retrieval.ts # 全収録会議・実モデルの隔離改変検査
 │   ├── verify-recommendation-retrieval.ts # 隔離環境で推薦の改変検査

@@ -12,6 +12,7 @@ export default defineConfig({
       "tests/mcp_semantic.integration.ts",
       "tests/mcp_cli_models.integration.ts",
       "tests/mcp_cache_models.integration.ts",
+      "tests/mcp_recovery_models.integration.ts",
     ],
     maxWorkers: 1,
     hookTimeout: 600000,
