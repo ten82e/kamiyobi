@@ -805,7 +805,8 @@ it("入力の形が、道具の説明と一致する（第 854 回）", async ()
     ],
     list_upcoming: ["days", "kind", "kinds", "scope"],
     venue_info: ["key", "name", "scope"],
-    recommend_venues: ["paper", "limit", "offset"],
+    recommend_venues: ["paper", "limit", "offset", "retrieval"],
+    search_venues: ["query", "limit", "offset", "retrieval"],
     explain_word: ["word", "scope"],
     collection_stats: [],
   };

@@ -192,6 +192,7 @@ kamiyobi/
 │   ├── embedding-runtime.ts     # 実モデルの推論とベクトル生成
 │   ├── bench-recommender.ts     # 推薦ベンチ
 │   ├── build.ts                 # JSON/CSV/MD/llms.txt/HTML 出力
+│   ├── mcp-semantic.ts          # MCPの英日実モデル推論
 │   ├── mcp.ts                   # AI から引く読み取り専用の MCP サーバ（stdio）
 │   └── cli.ts                   # エントリポイント
 ├── site/
@@ -226,6 +227,7 @@ kamiyobi/
 │   ├── train-reranker.ts       # dev-only reranker 学習・CV・校正 artifact 生成
 │   ├── validate-data.ts         # 公開データの意味検査
 │   ├── verify-cfp.ts            # CFP 観測の項目別検証
+│   ├── verify-mcp-semantic.ts     # MCP実モデルの隔離破壊検証
 │   ├── verify-live-consumers.ts     # 全収録会議の画面・MCP共通処理を隔離環境で破壊検証
 │   ├── verify-full-pool-retrieval.ts # 全収録会議・実モデルの隔離改変検査
 │   ├── verify-recommendation-retrieval.ts # 隔離環境で推薦の改変検査
@@ -1032,7 +1034,7 @@ CSV と画面からダウンロードする ICS は、絞り込み後の全行�
 
 ### MCP の検索契約
 
-MCP は同じ検索・推薦処理を使う読み取り専用の stdio サーバである。`search_deadlines` は `scope: screen/all`、絞り込み、`limit`（既定20、最大100）、`offset`（0以上の安全な整数）を受ける。構造化結果には件数・取得位置・次の取得位置・生成時刻・判定時刻・検索行を含め、従来のテキスト結果も返す。日付のみの行の `utc`・`jst` は null とし、推定・確認状態・投稿トラックを独立した項目にする。画面と同じ募集の統合処理を使い、確認済みの特集号には掲載予定・投稿言語・元の出典を `submission` に保持する。次ページは同じ条件で `next_offset` を `offset` に渡す。 `search_venues` は締切の有無によらず全収録会議を候補に、研究テーマ・題名・概要で投稿先を検索する。`recommend_venues` と同じ語彙検索を使い、`candidate_venues` に検索した会議数を返す。`recommend_venues` も `offset` によるページ送りと構造化結果を返す。順位・一致評価・受付状態・締切の確認情報を保持し、常時受付の論文誌には締切日時を作らない。語彙のみの推薦では画面と同じ処理を使う。 推薦の `venue_evidence` は収録開催年数、論文サンプル数、DBLP情報・出版社情報・ランクの記載の有無を返す。創設年、会議の年齢、査読品質は推測しない。
+MCP は同じ検索・推薦処理を使う読み取り専用の stdio サーバである。`search_deadlines` は `scope: screen/all`、絞り込み、`limit`（既定20、最大100）、`offset`（0以上の安全な整数）を受ける。構造化結果には件数・取得位置・次の取得位置・生成時刻・判定時刻・検索行を含め、従来のテキスト結果も返す。日付のみの行の `utc`・`jst` は null とし、推定・確認状態・投稿トラックを独立した項目にする。画面と同じ募集の統合処理を使い、確認済みの特集号には掲載予定・投稿言語・元の出典を `submission` に保持する。次ページは同じ条件で `next_offset` を `offset` に渡す。 `search_venues` は締切の有無によらず全収録会議を候補に、研究テーマ・題名・概要で投稿先を検索する。`recommend_venues` と共通の処理を使い、`retrieval: semantic` はローカルの実モデルで英日推論し、未指定は語彙検索とする。意味検索は現行プロフィールから推論し、生成済みベクトルを要求しない。モデル未準備時はエラーを返す。`candidate_venues` に検索した会議数を返す。`recommend_venues` も `offset` によるページ送りと構造化結果を返す。順位・一致評価・受付状態・締切の確認情報を保持し、常時受付の論文誌には締切日時を作らない。語彙のみの推薦では画面と同じ処理を使う。 推薦の `venue_evidence` は収録開催年数、論文サンプル数、DBLP情報・出版社情報・ランクの記載の有無を返す。創設年、会議の年齢、査読品質は推測しない。
 
 同じ MCP 接続でも、カタログ・snapshot・推薦索引の更新を次の要求で反映する。ファイルがない場合や読めない場合も、修復後の要求で再読込する。判定時刻は要求ごとの現在時刻とし、推薦の生成日時は推薦索引の日時を返す。
 

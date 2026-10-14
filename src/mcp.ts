@@ -1787,17 +1787,13 @@ function collectionStats(args: Record<string, unknown> = {}, now: number): strin
 
 /* ---- 投稿先の推薦---- */
 
-/* 画面の「投稿先を探す」は、論文の題名・概要から候補を出す – この計画の看板だが、MCP には
- * 出口が無く、AI は「この論文どこに出せる?」にこの収録を使って答へられなかつた。
- *
- * **語の一致だけ**で評價する（意味検索の埋め込みは読まない – 模型を抱へるとこの道具が重く
- * 成る。画面も埋め込みが無い時は同じ道に落ちる）。その旨は返り値の頭に書く（人が見る数と
- * AI が言う数が違ふのが一番惡い – 埋め込みを使へる画面では点が少し動く）。 */
+/* 投稿先の検索・推薦は、語彙検索または明示的に指定した実モデルで評価する。 */
 interface RecommendationIndex {
   rows: Row[];
   conferences: unknown[];
   generated_at: unknown;
   uses_reranker: boolean;
+  categories: Record<string, string>;
 }
 let recommendationCache: RecommendationIndex | null | undefined;
 
@@ -1831,6 +1827,7 @@ function recommendation(): RecommendationIndex | null {
       conferences?: unknown[];
       reranker?: unknown;
       generated_at?: unknown;
+      categories?: Record<string, string>;
     };
     const conferences = Array.isArray(品書.conferences) ? 品書.conferences : [];
     if (!conferences.length) throw new Error("conferences が空");
@@ -1841,6 +1838,7 @@ function recommendation(): RecommendationIndex | null {
       conferences,
       generated_at: 品書.generated_at ?? null,
       uses_reranker: isValidRerankerModel(品書.reranker),
+      categories: 品書.categories ?? {},
     };
   } catch {
     recommendationCache = null;
@@ -1848,11 +1846,12 @@ function recommendation(): RecommendationIndex | null {
   return recommendationCache;
 }
 
-function recommendVenues(
+async function recommendVenues(
   args: Record<string, unknown> & { paper?: unknown; limit?: unknown; offset?: unknown },
   now: number,
   receive?: (result: Record<string, unknown>) => void,
-): string {
+  search = false,
+): Promise<string> {
   const offset = args.offset === undefined ? 0 : args.offset;
   if (typeof offset !== "number" || !Number.isSafeInteger(offset) || offset < 0)
     throw new Error("offset は 0 以上の整数で指定してください。");
@@ -1927,9 +1926,31 @@ function recommendVenues(
   const 會議 = 索引.conferences;
   const pool = Recommender.candidatePool(行 as never, 會議, now) as unknown as Row[];
 
-  const 候補 = Recommender.venueRecommendations(pool, 論文ごとの行, null, now, {
+  if (args.retrieval !== undefined && !["lexical", "semantic"].includes(String(args.retrieval)))
+    throw new Error("retrieval は lexical または semantic を指定してください。");
+  const semantic =
+    args.retrieval === "semantic"
+      ? await (await import("./mcp-semantic.ts")).semanticVenueScores(
+          ROOT,
+          會議,
+          索引.categories,
+          論文ごとの行,
+        )
+      : null;
+  if (!semantic) Recommender.setTopicVecs(null);
+  const 候補 = Recommender.venueRecommendations(pool, 論文ごとの行, semantic?.scores ?? null, now, {
     fieldedLexical: true,
+    ...(semantic
+      ? {
+          semanticSimilarities: semantic.similarities,
+          venueCats: Recommender.autoDetectCats(論文ごとの行),
+        }
+      : {}),
   }).filter((r) => r.fit.score >= 10);
+  if (search && semantic)
+    候補.sort(
+      (a, b) => (semantic.similarities[b.venueKey] ?? 0) - (semantic.similarities[a.venueKey] ?? 0),
+    );
 
   const 題々 = 論文ごとの行
     .map((l) =>
@@ -1947,8 +1968,8 @@ function recommendVenues(
 
   const 過ぎた件數 = 候補.filter((r) => r.availability.status === "past").length;
   const 頭 =
-    `${題の見出し}に合う投稿先: ${候補.length} 件（語の一致を基に評価${無視の斷り}${截りの文}${limit端數} – ` +
-    `意味検索の埋め込みは読まないので、埋め込みを使える画面とは点が動く事があります${限り.斷り}）` +
+    `${題の見出し}に合う投稿先: ${候補.length} 件（${semantic ? "実モデルの意味検索を基に評価" : "語の一致を基に評価"}${無視の斷り}${截りの文}${limit端數} – ` +
+    `${semantic ? "英語・日本語のモデルで全収録会議を評価しました" : "意味検索の埋め込みは読まないので、埋め込みを使える画面とは点が動く事があります"}${限り.斷り}）` +
     /* 過ぎた候補は「次回の開催に向けた参考」として件数を分けて書く（黙っていると AI が
      * 今出せるように勧めてしまふ – 画面の「締切済み」と同じ出し分け）。 */
     (過ぎた件數 > 0
@@ -1986,7 +2007,8 @@ function recommendVenues(
     next_offset: offset + 見本.length < 候補.length ? offset + 見本.length : null,
     evaluated_at: new Date(now).toISOString(),
     generated_at: 索引.generated_at,
-    uses_embeddings: false,
+    uses_embeddings: Boolean(semantic),
+    embedding_model: semantic ? { id: semantic.model, revision: semantic.revision } : null,
     uses_reranker: 索引.uses_reranker,
     ignored_filters: 無視した,
     input: {
@@ -2030,7 +2052,7 @@ function recommendVenues(
     頭,
 
     "評価の「候補」はいちばん近い会議との差が小さいこと、「重なりうすい」は言葉の重なりが弱いことを示します（画面の『見方のてびき』と同じ）。数値は並べるための目安で、採択の予測ではありません。",
-    `（一致評価の高い順${offset > 0 ? `。${offset + 1} 件目から ${見本.length} 件表示・残り ${Math.max(0, 候補.length - offset - 見本.length)} 件` : 候補.length > limit ? `。${limit} 件まで表示・残り ${候補.length - limit} 件` : ""}）`,
+    `（${search && semantic ? "意味検索の類似度が高い順" : "一致評価の高い順"}${offset > 0 ? `。${offset + 1} 件目から ${見本.length} 件表示・残り ${Math.max(0, 候補.length - offset - 見本.length)} 件` : 候補.length > limit ? `。${limit} 件まで表示・残り ${候補.length - limit} 件` : ""}）`,
     "",
     ...見本.map((r, i) => {
       const 評價 = `${String(r.fit.label ?? "評価保留")}（${Number(r.fit.score) || 0} 点）`;
@@ -2215,10 +2237,16 @@ const TOOLS = [
   {
     name: "search_venues",
     description:
-      "全収録の投稿先プロフィールから、研究テーマ・論文の題名・概要に合う会議や論文誌を検索する。締切不明や締切済みの会議も候補に含む。語彙の一致と公式トピックを用い、意味検索のモデルは使わない。締切日時を探す場合は search_deadlines を使う。構造化結果の candidate_venues は検索した収録会議数、total は一致した候補数。limit と offset でページ送りできる。",
+      "全収録の投稿先プロフィールから、研究テーマ・論文の題名・概要に合う会議や論文誌を検索する。締切不明や締切済みの会議も候補に含む。retrieval: semantic で実モデル、lexical で語彙と公式トピックを用いる。締切日時を探す場合は search_deadlines を使う。構造化結果の candidate_venues は検索した収録会議数、total は一致した候補数。limit と offset でページ送りできる。",
     inputSchema: {
       type: "object",
       properties: {
+        retrieval: {
+          type: "string",
+          enum: ["lexical", "semantic"],
+          description:
+            "既定はlexical。semanticはローカルの実モデルで全収録会議を意味検索。モデル未準備時はエラーを返す。",
+        },
         query: {
           type: "string",
           description: "研究テーマ、題名、概要、または title・abstract を持つJSON文字列",
@@ -2232,10 +2260,16 @@ const TOOLS = [
   {
     name: "recommend_venues",
     description:
-      "論文情報に合う投稿先を語彙の一致で探す。学習済みの並べ替えモデルがある場合は併用する。意味検索の埋め込みは使わないため、画面の評価と異なる場合がある。候補の範囲は画面と共通。順位表に入るのは実質的な一致がある候補だけで、証拠がない会議を分野だけの一致で推薦しない。長い入力は最初の 20 行と各行の長さ制限で切り、切った旨を返す。返す行の形: 順位と一致評価、選定理由、締切の確認状況に続いて締切行。1ページ最大30件。structuredContent に順位・一致評価・受付状態・締切・確認情報を返す。続きは同じ論文情報と next_offset を offset に指定する。",
+      "論文情報に合う投稿先を語彙の一致で探す。学習済みの並べ替えモデルがある場合は併用する。retrieval: semantic を指定すると実モデルを使う。候補の範囲は画面と共通。順位表に入るのは実質的な一致がある候補だけで、証拠がない会議を分野だけの一致で推薦しない。長い入力は最初の 20 行と各行の長さ制限で切り、切った旨を返す。返す行の形: 順位と一致評価、選定理由、締切の確認状況に続いて締切行。1ページ最大30件。structuredContent に順位・一致評価・受付状態・締切・確認情報を返す。続きは同じ論文情報と next_offset を offset に指定する。",
     inputSchema: {
       type: "object",
       properties: {
+        retrieval: {
+          type: "string",
+          enum: ["lexical", "semantic"],
+          description:
+            "既定はlexical。semanticはローカルの実モデルで全収録会議を意味検索。モデル未準備時はエラーを返す。",
+        },
         paper: {
           type: "string",
           description:
@@ -2271,12 +2305,12 @@ const TOOLS = [
   },
 ] as const;
 
-function callTool(
+async function callTool(
   name: string,
   args: Record<string, unknown>,
   now: number,
   receive?: (result: Record<string, unknown>) => void,
-): string {
+): Promise<string> {
   refreshDataCaches();
   if (name === "search_deadlines") return searchDeadlines(args, now, receive);
   if (name === "list_upcoming") return listUpcoming(args, now);
@@ -2286,7 +2320,7 @@ function callTool(
   if (name === "search_venues") {
     if (typeof args.query !== "string" || !args.query.trim())
       throw new Error("query に研究テーマ・題名・概要を指定してください。");
-    return recommendVenues({ ...args, paper: args.query }, now, receive);
+    return recommendVenues({ ...args, paper: args.query }, now, receive, true);
   }
   if (name === "collection_stats") return collectionStats(args, now);
   throw new Error(`知らないツール: ${name}`);
@@ -2298,7 +2332,7 @@ function send(message: Record<string, unknown>): void {
   process.stdout.write(`${JSON.stringify(message)}\n`);
 }
 
-function handle(raw: string, now: number): void {
+async function handle(raw: string, now: number): Promise<void> {
   let value: unknown;
   try {
     value = JSON.parse(raw);
@@ -2395,7 +2429,7 @@ function handle(raw: string, now: number): void {
         (k) => !Object.keys(此の道具?.inputSchema?.properties ?? {}).includes(k),
       );
       let structuredContent: Record<string, unknown> | undefined;
-      const text = callTool(name, args, now, (value) => {
+      const text = await callTool(name, args, now, (value) => {
         structuredContent = value;
       });
       reply({
@@ -2425,6 +2459,10 @@ function handle(raw: string, now: number): void {
 
 export function runStdio(now?: number): void {
   let buffer = "";
+  let queue = Promise.resolve();
+  const enqueue = (raw: string) => {
+    queue = queue.then(() => handle(raw, now ?? Date.now()));
+  };
   process.stdin.setEncoding("utf8");
   process.stdin.on("data", (chunk: string) => {
     buffer += chunk;
@@ -2432,14 +2470,14 @@ export function runStdio(now?: number): void {
     while (at >= 0) {
       const raw = buffer.slice(0, at).trim();
       buffer = buffer.slice(at + 1);
-      if (raw) handle(raw, now ?? Date.now());
+      if (raw) enqueue(raw);
       at = buffer.indexOf("\n");
     }
   });
   process.stdin.on("end", () => {
     const raw = buffer.trim();
     buffer = "";
-    if (raw) handle(raw, now ?? Date.now());
+    if (raw) enqueue(raw);
   });
 }
 
@@ -2450,7 +2488,7 @@ function cliNumber(value: string | undefined): string | number | undefined {
   return Number.isFinite(number) ? number : value;
 }
 
-function main(): void {
+async function main(): Promise<void> {
   const [tool, ...rawArgs] = process.argv.slice(2);
   const rest = [...rawArgs];
   if (!tool || tool === "--help" || tool === "-h") {
@@ -2548,7 +2586,7 @@ function main(): void {
             })();
   if (offset !== undefined) args.offset = offset;
   let page: Record<string, unknown> | undefined;
-  const result = callTool(名, args, now, (value) => {
+  const result = await callTool(名, args, now, (value) => {
     page = value;
   });
   const nextOffset = page?.next_offset;
@@ -2569,6 +2607,10 @@ function isDirectExecution(): boolean {
 
 /* 直接起動された時だけ stdio を開く（import した検査では開かない）。 */
 if (isDirectExecution()) {
-  if (process.argv.length > 2) main();
+  if (process.argv.length > 2)
+    void main().catch((error) => {
+      process.stderr.write(`${error.message}\n`);
+      process.exitCode = 1;
+    });
   else runStdio();
 }

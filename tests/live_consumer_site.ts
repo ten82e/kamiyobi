@@ -12,7 +12,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 /** Build from raw sources and explicit empty paper profiles, with only pretrained weights reused. */
-export function prepareLiveConsumerSite() {
+export function prepareLiveConsumerSite(embeddings = true) {
   const repo = join(import.meta.dirname, "..");
   const root = mkdtempSync(join(tmpdir(), "kamiyobi-live-consumers-"));
   for (const name of ["src", "site"])
@@ -50,8 +50,8 @@ env.cacheDir=${JSON.stringify(join(repo, ".cache/embedding-models"))};
 env.allowRemoteModels=false;
 setRoot(import.meta.dirname);
 const config=load(fs.readFileSync("config.yaml","utf8"));
-const stats=await buildAll(pool.conferences,config,"public",new Date("2026-10-14T00:00:00Z"),{venuePapers:{},reranker:null,localEmbeddingsOnly:true});
-if(!stats.files.includes("embeddings.json"))throw new Error("actual model output missing");
+const stats=await buildAll(pool.conferences,config,"public",new Date("2026-10-14T00:00:00Z"),{venuePapers:{},reranker:null,localEmbeddingsOnly:true,noEmbeddings:${!embeddings}});
+if(${embeddings}&&!stats.files.includes("embeddings.json"))throw new Error("actual model output missing");
 console.log(JSON.stringify(stats));
 fs.rmSync(pool.raw,{recursive:true,force:true});
 `,
