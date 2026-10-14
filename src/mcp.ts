@@ -2498,6 +2498,8 @@ async function main(): Promise<void> {
         "  AI から: MCP クライアントからこのファイルを起動します（`node src/mcp.ts`）。",
         "  手元で確認: ツール名と引数を指定すると、1 回分の結果を表示します。",
         `  ツール: ${TOOLS.map((t) => t.name).join(" / ")}`,
+        "  論文の入力: --input ファイル名でUTF-8テキスト・JSONを読む。--input - は標準入力。",
+        "  件数: --limit N で指定すると、題名末尾の数字も題名として扱います。",
         "  投稿先検索・推薦: --retrieval semantic で実モデル、lexical で語彙検索（既定）。",
         "  検索・推薦: --json で構造化結果を出力。--offset で続きの取得位置を指定。",
         '  例: node src/mcp.ts search "セキュリティ" 5',
@@ -2588,9 +2590,65 @@ async function main(): Promise<void> {
     offset = Number(value);
     rest.splice(offsetAt, 2);
   }
+  let explicitLimit: number | undefined;
+  const limitAt = rest.indexOf("--limit");
+  if (limitAt >= 0) {
+    const value = rest[limitAt + 1];
+    if (
+      !["search_deadlines", "search_venues", "recommend_venues"].includes(名) ||
+      rest.lastIndexOf("--limit") !== limitAt ||
+      !/^\d+$/.test(value ?? "") ||
+      !Number.isSafeInteger(Number(value)) ||
+      Number(value) < 1
+    ) {
+      throw new Error("--limit は検索・推薦で1以上の整数を1つ指定してください。");
+    }
+    explicitLimit = Number(value);
+    rest.splice(limitAt, 2);
+  }
+  let inputText: string | undefined;
+  const inputAt = rest.indexOf("--input");
+  if (inputAt >= 0) {
+    const value = rest[inputAt + 1];
+    if (
+      !["search_venues", "recommend_venues"].includes(名) ||
+      rest.lastIndexOf("--input") !== inputAt ||
+      !value ||
+      value.startsWith("--")
+    )
+      throw new Error("--input は投稿先検索・推薦でファイル名または - を1つ指定してください。");
+    rest.splice(inputAt, 2);
+    if (rest.length && !(explicitLimit === undefined && rest.length === 1 && /^\d+$/.test(rest[0])))
+      throw new Error("--input と題名の直接入力は同時に指定できません。");
+    let bytes: Buffer;
+    try {
+      bytes = readFileSync(value === "-" ? 0 : value);
+    } catch (cause) {
+      throw new Error(
+        `入力${value === "-" ? "（標準入力）" : `ファイル「${value}」`}を読めません。`,
+        { cause },
+      );
+    }
+    if (
+      bytes.subarray(0, 5).toString() === "%PDF-" ||
+      (bytes[0] === 0x50 && bytes[1] === 0x4b && bytes[2] === 3 && bytes[3] === 4)
+    )
+      throw new Error(
+        "--input はUTF-8のテキスト・JSON用です。PDFは画面の論文入力から読み込めます。Wordファイルはテキスト・JSONへ変換してください。",
+      );
+    try {
+      inputText = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+    } catch (cause) {
+      throw new Error("入力はUTF-8のテキスト・JSONで保存してください。", { cause });
+    }
+    if (!inputText.trim()) throw new Error("入力に論文の題名または概要を指定してください。");
+  }
   /* 人の道では、題名が空白で割れて渡つて來る。**末尾が数の時だけ**件数として扱ふ
    * （題名の語に数字が混ざる事がある – 全部を件数と読むと、題名が削られる）。 */
-  const 尾が數 = rest.length > 1 && /^\d+$/.test(String(rest[rest.length - 1] ?? ""));
+  const 尾が數 =
+    explicitLimit === undefined &&
+    rest.length > 1 &&
+    /^\d+$/.test(String(rest[rest.length - 1] ?? ""));
   const args: Record<string, unknown> =
     名 === "search_deadlines" || 名 === "explain_word"
       ? { query: rest[0], word: rest[0], limit: cliNumber(rest[1]) }
@@ -2623,6 +2681,11 @@ async function main(): Promise<void> {
                   });
                 return 其の儘 ? { key: 語 } : { name: 語 };
               })();
+  if (inputText !== undefined) {
+    if (名 === "search_venues") args.query = inputText;
+    else args.paper = inputText;
+    args.limit = explicitLimit ?? (rest.length ? cliNumber(rest[0]) : undefined);
+  } else if (explicitLimit !== undefined) args.limit = explicitLimit;
   if (offset !== undefined) args.offset = offset;
   if (retrieval !== undefined) args.retrieval = retrieval;
   let page: Record<string, unknown> | undefined;

@@ -29,9 +29,10 @@ beforeAll(() => {
     }),
   );
 });
-function run(args: string[]) {
+function run(args: string[], input?: string) {
   return spawnSync(process.execPath, [join(root, "src/mcp.ts"), ...args], {
     cwd: root,
+    input,
     encoding: "utf8",
     timeout: 30000,
   });
@@ -84,4 +85,71 @@ it("reports an unknown tool as failure without polluting JSON output", () => {
   expect(result.stdout).toBe("");
   expect(result.stderr).toContain("7種類");
   expect(result.stderr).toContain("search_venues");
+});
+
+it("reads a fielded Japanese paper from a file without treating its path as the title", () => {
+  const file = join(root, "draft.txt");
+  writeFileSync(
+    file,
+    "タイトル：実装の評価\n概要：消失訂正符号を用いた分散メモリストレージを評価する。",
+  );
+  const result = run(["recommend", "--input", file, "--limit", "1", "--json"]);
+  expect(result.status, result.stderr).toBe(0);
+  const page = JSON.parse(result.stdout);
+  expect(page.input.received).toBe(1);
+  expect(page.rows.map((r: { venue_key: string }) => r.venue_key)).toEqual(["storage"]);
+});
+it("accepts piped JSON including quotes and newlines as one paper", () => {
+  const result = run(
+    ["search_venues", "--input", "-", "1", "--json"],
+    JSON.stringify({ title: 'An "evaluation"', abstract: "erasure coded\nmemory storage" }),
+  );
+  expect(result.status, result.stderr).toBe(0);
+  const page = JSON.parse(result.stdout);
+  expect(page.input.received).toBe(1);
+  expect(page.limit).toBe(1);
+  expect(page.rows[0].venue_key).toBe("storage");
+});
+it("preserves a title-ending year when the count is explicit", () => {
+  const result = run(["recommend", "Memory", "storage", "2026", "--limit", "1"]);
+  expect(result.status, result.stderr).toBe(0);
+  expect(result.stdout).toContain("Memory storage 2026");
+  expect(result.stdout).toMatch(/\n1\. /);
+  expect(result.stdout).not.toMatch(/\n2\. /);
+});
+it.each([
+  ["recommend", "--input"],
+  ["recommend", "--input", "--json"],
+  ["stats", "--input", "-"],
+  ["recommend", "direct title", "--input", "-"],
+  ["recommend", "--input", "-", "--input", "-"],
+  ["recommend", "--limit"],
+  ["recommend", "title", "--limit", "0"],
+  ["recommend", "title", "--limit", "1.5"],
+  ["recommend", "title", "--limit", "1", "--limit", "2"],
+])("rejects ambiguous input/count arguments %j", (...args) => {
+  const result = run(args, "memory storage");
+  expect(result.status).toBe(1);
+  expect(result.stdout).toBe("");
+  expect(result.stderr).toMatch(/--input|--limit/);
+});
+it("reports unreadable files, empty input, invalid UTF-8 and binary documents", () => {
+  const invalid = join(root, "invalid.txt");
+  const pdf = join(root, "paper.pdf");
+  const word = join(root, "paper.docx");
+  writeFileSync(invalid, Buffer.from([0xc3, 0x28]));
+  writeFileSync(pdf, "%PDF-1.7 fake");
+  writeFileSync(word, Buffer.from([0x50, 0x4b, 3, 4]));
+  for (const [file, input, message] of [
+    [join(root, "missing.txt"), undefined, "読めません"],
+    ["-", "  ", "題名または概要"],
+    [invalid, undefined, "UTF-8"],
+    [pdf, undefined, "Wordファイル"],
+    [word, undefined, "Wordファイル"],
+  ] as const) {
+    const result = run(["search_venues", "--input", file, "--json"], input);
+    expect(result.status).toBe(1);
+    expect(result.stdout).toBe("");
+    expect(result.stderr).toContain(message);
+  }
 });
