@@ -430,9 +430,14 @@ describe("MCP recommendation results with independent raw fixtures", () => {
       },
     ];
     const result = call(sandbox([predicted]), { paper: "GPU programming" }).result;
-    expect(result?.structuredContent?.total).toBe(0);
-    expect(result?.structuredContent?.rows).toEqual([]);
+    expect(result?.structuredContent?.total).toBe(1);
+    expect(result?.structuredContent?.rows[0]).toMatchObject({
+      availability: { status: "unknown", timestamp: null },
+      deadline: null,
+    });
+    expect(result?.content[0].text).toContain("投稿締切未確認");
     expect(result?.content[0].text).not.toContain("締切が過ぎた会議です");
+    expect(result?.content[0].text).not.toContain("2026-01-05");
   });
 
   it.each([-1, 1.5, "2", Number.MAX_SAFE_INTEGER + 1])("rejects invalid offsets: %s", (offset) => {
@@ -484,5 +489,75 @@ describe("MCP recommendation results with independent raw fixtures", () => {
       next_offset: 30,
     });
     expect(result?.content[0].text).toContain("上限 30 を超えた");
+  });
+  it("pages beyond two hundred matching venues without hiding the remaining candidates", () => {
+    const conferences = Array.from({ length: 231 }, (_, i) =>
+      venue(
+        `gpu-study-${String(i).padStart(3, "0")}`,
+        `GPU memory study ${i}`,
+        "gpu memory management",
+      ),
+    );
+    const root = sandbox(conferences);
+    try {
+      const replies = callSequence(root, [
+        { paper: "gpu memory management", limit: 30, offset: 200 },
+        { paper: "gpu memory management", limit: 30, offset: 230 },
+      ]).map((reply) => reply.result!.structuredContent!);
+      expect(replies[0]).toMatchObject({ total: 231, returned: 30, next_offset: 230 });
+      expect(replies[0].rows.map((row) => row.rank)).toEqual(
+        Array.from({ length: 30 }, (_, i) => 201 + i),
+      );
+      expect(replies[1]).toMatchObject({ total: 231, returned: 1, next_offset: null });
+      expect(replies[1].rows[0].rank).toBe(231);
+      expect(new Set(replies.flatMap((page) => page.rows.map((row) => row.venue_key))).size).toBe(
+        31,
+      );
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+  it("keeps a matching venue whose past editions were omitted from the screen catalog", () => {
+    const future = venue("gpu-future", "GPU computing", "gpu memory management");
+    const past = venue(
+      "gpu-past",
+      "GPU storage",
+      "gpu memory management",
+      ["systems"],
+      "2025-01-01T00:00:00Z",
+    );
+    const root = sandbox([future, past]);
+    try {
+      const path = join(root, "public/catalog.json");
+      const screen = JSON.parse(readFileSync(path, "utf8"));
+      screen.conferences.find((conf: Venue) => conf.key === "gpu-past").editions = [];
+      writeFileSync(path, JSON.stringify(screen));
+      const result = call(root, { paper: "gpu memory management", limit: 30 }).result!
+        .structuredContent!;
+      expect(result.rows.map((row) => row.venue_key).sort()).toEqual(["gpu-future", "gpu-past"]);
+      const old = result.rows.find((row) => row.venue_key === "gpu-past")!;
+      expect(old.availability.status).toBe("past");
+      expect(old.deadline).toMatchObject({ utc: "2025-01-01T00:00:00Z" });
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+  it("retains an undated venue without claiming that submissions are open or closed", () => {
+    const item = venue("gpu-undated", "GPU memory research", "gpu memory management");
+    item.editions = [];
+    const root = sandbox([item]);
+    try {
+      const response = call(root, { paper: "gpu memory management", limit: 30 }).result!;
+      expect(response.structuredContent!.rows).toHaveLength(1);
+      expect(response.structuredContent!.rows[0]).toMatchObject({
+        venue_key: "gpu-undated",
+        availability: { status: "unknown", timestamp: null },
+        deadline: null,
+      });
+      expect(response.content[0].text).toContain("投稿締切未確認");
+      expect(response.content[0].text).not.toMatch(/NaN|1970|残り.*日|締切が過ぎた/);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
   });
 });

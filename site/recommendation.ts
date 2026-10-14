@@ -7,7 +7,12 @@ type Result = ReturnType<typeof Core.venueRecommendations>[number];
  * Semantic retrieval keeps its independently verified scoring and feature artifacts. */
 export function venueRecommendations(...args: Args): Result[] {
   const [rows, lines, semanticScores, now, options = {}] = args;
-  if (semanticScores) return Core.venueRecommendations(...args);
+  const topN =
+    Number.isInteger(options.topN) && (options.topN ?? 0) > 0
+      ? options.topN!
+      : Math.max(1, rows.length);
+  if (semanticScores)
+    return Core.venueRecommendations(rows, lines, semanticScores, now, { ...options, topN });
   const named = new Set<string>();
   const text = lines
     .map((line) => `${line.title} ${line.keywords ?? ""}`)
@@ -21,10 +26,9 @@ export function venueRecommendations(...args: Args): Result[] {
     const escaped = key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     if (new RegExp(`(?:^|[^a-z0-9-])${escaped}(?=$|[^a-z0-9-])`, "i").test(text)) named.add(key);
   }
-  const topN = Number.isInteger(options.topN) && (options.topN ?? 0) > 0 ? options.topN! : 200;
   const results = Core.venueRecommendations(rows, lines, semanticScores, now, {
     ...options,
-    topN: named.size ? Math.max(200, topN) : topN,
+    topN: named.size ? Math.max(rows.length, topN) : topN,
   });
   return results
     .filter((result) => {

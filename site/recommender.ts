@@ -316,7 +316,7 @@ export function isValidRerankerModel(value: unknown): value is LinearRerankerMod
 }
 interface Availability {
   kind: string;
-  status: "ongoing" | "uncertain" | "open" | "past";
+  status: "ongoing" | "uncertain" | "open" | "past" | "unknown";
   timestamp: number | null;
   local_date: string | null;
   date_state: "definitely-future" | "uncertain-on-date" | "definitely-past" | null;
@@ -12173,6 +12173,7 @@ const Recommender = (() => {
 
   function kindLabelJa(kind: unknown): string {
     const key = String(kind ?? "");
+    if (key === "venue") return "投稿先（締切未確認）";
     return KIND_LABEL_JA[key] || key;
   }
 
@@ -14049,6 +14050,56 @@ const Recommender = (() => {
     return out;
   }
 
+  /** Retain collected venues without a usable submission date; never invent a deadline. */
+  function undatedVenueRows(confs: unknown, represented: readonly CandidateRow[]): CandidateRow[] {
+    const keys = new Set(
+      represented.flatMap((row) => [
+        row.conf.key,
+        ...(row.submission?.sourceRecords ?? []).map((record) => record.venueKey),
+      ]),
+    );
+    const safeConfs = Array.isArray(confs)
+      ? confs.map(normalizeConference).filter((conf): conf is ConferenceRecord => conf !== null)
+      : [];
+    return safeConfs
+      .filter((conf) => !keys.has(conf.key))
+      .map((conf) => {
+        const ed = [...(conf.editions ?? [])]
+          .filter((edition) => !edition.estimated && !("estimate" in edition && edition.estimate))
+          .sort((a, b) => Number(b.year ?? 0) - Number(a.year ?? 0))[0] ?? { id: conf.key };
+        return {
+          conf,
+          ed,
+          dl: {},
+          kind: "venue",
+          est: false,
+          t: Number.NaN,
+          tShown: Number.NaN,
+          tLast: Number.NaN,
+          tEvent: jstNoonMs(ed.event_start, Number.NaN),
+          cats: conf.categories ?? [],
+          tags: conf.tags ?? [],
+          rankPairs: Object.entries(conf.rank ?? {}).map(([name, grade]) => `${name}:${grade}`),
+          hay: searchNormalize([conf.title, conf.full_name, conf.key].filter(Boolean).join(" ")),
+          name: conf.title,
+          year: ed.year ?? null,
+        };
+      });
+  }
+
+  /** Keep every collected venue while distinguishing known submission dates from missing dates. */
+  function candidatePool(
+    rows: readonly CandidateRow[],
+    conferences: unknown,
+    now: number,
+  ): CandidateRow[] {
+    const submissions = rows.filter((row) => row.kind === "paper" || row.kind === "abstract");
+    const dated = submissions
+      .filter((row) => !deadlineRowIsPast(row, now))
+      .concat(journalRows(conferences, now), pastRepresentatives(submissions, now));
+    return dated.concat(undatedVenueRows(conferences, dated));
+  }
+
   function rowDateOnlyState(
     row: CandidateRow | null | undefined,
     now: number,
@@ -14340,7 +14391,7 @@ const Recommender = (() => {
       venue_name_evidence: (entry.match.agg?.name ?? 0) > 0 ? 1 : 0,
       prior_venue: entry.match.venueHit ? 1 : 0,
       language_match: languageMatch,
-      venue_kind: ["paper", "journal"].includes(entry.row.kind) ? 1 : 0,
+      venue_kind: ["paper", "journal", "venue"].includes(entry.row.kind) ? 1 : 0,
     };
   }
 
@@ -14393,11 +14444,13 @@ const Recommender = (() => {
       status:
         row && row.kind === "journal"
           ? "ongoing"
-          : dateState === "uncertain-on-date"
-            ? "uncertain"
-            : future
-              ? "open"
-              : "past",
+          : !row || !Number.isFinite(row.t)
+            ? "unknown"
+            : dateState === "uncertain-on-date"
+              ? "uncertain"
+              : future
+                ? "open"
+                : "past",
       timestamp: time,
       local_date: row?.dateOnly ? (row.localDate ?? null) : null,
       date_state: dateState,
@@ -15515,6 +15568,8 @@ const Recommender = (() => {
     roundSearchTerms: roundSearchTerms,
     categorySearchTerms: categorySearchTerms,
     pastRepresentatives: pastRepresentatives,
+    undatedVenueRows: undatedVenueRows,
+    candidatePool: candidatePool,
     pickRepresentative: pickRepresentative,
     comparePapers: comparePapers,
     safeExternalUrl: safeExternalUrl,

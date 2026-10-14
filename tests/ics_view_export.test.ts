@@ -394,3 +394,39 @@ it("推薦候補の ICS にも投稿トラックを書き出す", () => {
   expect(摘要無し, "トラックがないのに空の括弧がある").not.toContain("（）");
   expect(摘要無し, "トラックがない行の摘要が変わっている").toBe("SUMMARY:SIGCOMM 2027：論文締切");
 });
+
+it("never turns ongoing acceptance or an undated venue into a calendar event", () => {
+  const source = jsFunction(siteRuntime(), "shownIcsInput");
+  const dated = {
+    conf: { key: "dated", title: "Dated" },
+    ed: { id: "dated-2027", year: 2027 },
+    dl: { kind: "paper", utc: "2027-01-01T00:00:00Z" },
+    kind: "paper",
+    t: Date.parse("2027-01-01T00:00:00Z"),
+  };
+  const ongoing = {
+    conf: { key: "journal", title: "Journal" },
+    ed: { id: "journal" },
+    dl: {},
+    kind: "journal",
+    t: NOW.getTime(),
+  };
+  const undated = {
+    conf: { key: "undated", title: "Undated" },
+    ed: { id: "undated" },
+    dl: {},
+    kind: "venue",
+    t: NaN,
+  };
+  const input = new Function(
+    "shown",
+    "Recommender",
+    "jstParts",
+    vmSafeSource(`${source}; return shownIcsInput();`),
+  )([ongoing, undated, dated], Recommender, jstParts) as ScreenDeadlineInput[];
+  expect(input.map((row) => row.key)).toEqual(["dated"]);
+  const calendar = icsViewText(input, NOW, 生成);
+  expect(件々(calendar)).toHaveLength(1);
+  expect(calendar).not.toContain("Journal");
+  expect(calendar).not.toContain("Undated");
+});

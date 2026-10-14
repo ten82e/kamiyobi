@@ -8,7 +8,8 @@ import {
   FeatureExtractionPipeline,
 } from "@huggingface/transformers";
 import { afterAll, beforeAll, expect, it } from "vitest";
-import Recommender from "../site/recommender.ts";
+import Recommender from "../site/recommendation.ts";
+import { consolidateReviewedSubmissions } from "../site/submission-identity.ts";
 import { profileTexts, topicProfileTexts } from "../src/embedding-profiles.ts";
 import {
   EMBEDDING_MODEL,
@@ -75,6 +76,7 @@ const results: Result[] = [];
 const previousCache = env.cacheDir;
 let raw: string;
 let keys: string[];
+let representedVenueKeys: string[];
 
 beforeAll(async () => {
   for (const [index, text] of fixtureTexts.entries())
@@ -125,7 +127,17 @@ beforeAll(async () => {
       ),
       paper.id,
     ).toBe(true);
-  const rows = conferences.map((conf) => ({ conf, cats: conf.categories, kind: "paper" }));
+  const consumerConferences = pool.conferences.map((conf) => ({ ...conf, papers: [] }));
+  const datedRows = consolidateReviewedSubmissions(
+    Recommender.candidateRows({ conferences: consumerConferences }),
+    (row) => `${row.conf.key}|${row.ed.year ?? ""}|${row.kind}|${Math.trunc(row.t)}`,
+  );
+  const rows = Recommender.candidatePool(datedRows, consumerConferences, Date.UTC(2026, 0, 1));
+  const represented = rows.flatMap((row) => [
+    row.conf.key,
+    ...(row.submission?.sourceRecords ?? []).map((record) => record.venueKey),
+  ]);
+  representedVenueKeys = [...new Set(represented)].sort();
   env.cacheDir = join(root, ".cache/embedding-models");
   Recommender.setReranker(null);
   Recommender.setPaperVecs(null);
@@ -281,3 +293,7 @@ for (const language of ["en", "ja"])
           }));
         expect(misses).toEqual([]);
       });
+
+it("every collected venue is represented by the actual consumer candidate pool", () => {
+  expect(representedVenueKeys).toEqual([...keys].sort());
+});

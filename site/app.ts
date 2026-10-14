@@ -1216,22 +1216,24 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       '<div style="background: var(--chip); padding: 14px; border-radius: 6px; border: 1px solid var(--border); margin-bottom: 16px;">' +
       '<div style="font-size: 0.78rem; color: var(--muted);">種別・日時</div>' +
       '<div style="font-size: 1.1rem; font-weight: 600; color: var(--fg); margin-top: 2px;">' +
-      esc(KIND_LABEL[r.kind] || r.kind) +
+      esc(Recommender.kindLabelJa(r.kind)) +
       "</div>" +
       (r.kind === "journal"
         ? '<div style="font-family: var(--font-mono); font-size: 0.85rem; color: var(--accent); margin-top: 4px;">常時受付（締切なし）</div>'
-        : r.dateOnly
-          ? '<div style="font-family: var(--font-mono); font-size: 0.85rem; color: var(--accent); margin-top: 4px;">' +
-            esc(
-              `${r.localDate}${Recommender.weekdayJaFromDate(r.localDate) ? `(${Recommender.weekdayJaFromDate(r.localDate)})` : ""}`,
-            ) +
-            dateOnlyText +
-            "</div>"
-          : '<div style="font-family: var(--font-mono); font-size: 0.85rem; color: var(--accent); margin-top: 4px;">' +
-            fmtJst(new Date(r.t)) +
-            "（" +
-            crossCheck +
-            "）</div>") +
+        : !Number.isFinite(r.t)
+          ? '<div style="margin-top: 4px;">投稿締切未確認</div>'
+          : r.dateOnly
+            ? '<div style="font-family: var(--font-mono); font-size: 0.85rem; color: var(--accent); margin-top: 4px;">' +
+              esc(
+                `${r.localDate}${Recommender.weekdayJaFromDate(r.localDate) ? `(${Recommender.weekdayJaFromDate(r.localDate)})` : ""}`,
+              ) +
+              dateOnlyText +
+              "</div>"
+            : '<div style="font-family: var(--font-mono); font-size: 0.85rem; color: var(--accent); margin-top: 4px;">' +
+              fmtJst(new Date(r.t)) +
+              "（" +
+              crossCheck +
+              "）</div>") +
       (kindDetail
         ? `<div style="font-size: 0.8rem; color: var(--muted); margin-top: 4px;">${esc(kindDetail)}</div>`
         : "") +
@@ -2564,9 +2566,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     // （過去行は代表 1 行のみに限定し、全過去版で埋めない）
     let pool = rows;
     if (pLines.length && Rec) {
-      pool = rows
-        .filter((row) => !isPast(row))
-        .concat(Rec.journalRows(activeData.conferences, now), Rec.pastRepresentatives(rows, now));
+      pool = Rec.candidatePool(rows, activeData.conferences, now);
     } else if (state.kind === "journal" && Rec) {
       pool = rows.concat(Rec.journalRows(activeData.conferences, now));
     }
@@ -2597,7 +2597,8 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       const byKind =
         r.kind !== "abstract" &&
         r.kind !== "paper" &&
-        !((pLines.length || state.kind === "journal") && r.kind === "journal");
+        !((pLines.length || state.kind === "journal") && r.kind === "journal") &&
+        !(inRecommend && r.kind === "venue");
       // 各条件は**独立に**数える（1 行が過去かつ投稿締切以外なら両方に立つ）。
       // なので内訳を足しても全件にはならない — 表示文でもそう書く。
       if (!inRecommend) {
@@ -2982,6 +2983,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   function shownIcsInput(): ScreenDeadlineInput[] {
     const out: ScreenDeadlineInput[] = [];
     for (const r of shown) {
+      if (r.kind === "journal" && !r.dl.utc && !r.dateOnly) continue;
       const at = Number(r.t);
       if (!Number.isFinite(at)) continue;
       const ed = r.ed || {};
@@ -3941,6 +3943,8 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     // 常時受付ジャーナルは締切の概念がないため「本日終了」等の誤解を与えない表示にする
     if (r.kind === "journal") {
       rem = { text: "常時受付", cls: "" };
+    } else if (!Number.isFinite(r.t)) {
+      rem = { text: "締切未確認", cls: "" };
     }
 
     const c0 = td(tr, "残り", "c-deadline");
@@ -3951,6 +3955,8 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       // 種別セル・CSV・詳細・てびきと同じ語に寄せる（1 行の中で 2 つの名前が見えると
       // 別のものだと誤解する）。
       line(c1, "常時受付", "nowrap");
+    } else if (!Number.isFinite(r.t)) {
+      line(c1, "投稿締切未確認", "nowrap");
     } else if (r.dateOnly) {
       // 暦日だけ分かっている締切でも、動作計画は曜日で見込むので曜日を添える。
       const dateOnlyDay = Recommender.weekdayJaFromDate(r.localDate);
@@ -3994,7 +4000,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     detailButton.textContent = "詳細・投稿日程";
     detailButton.setAttribute(
       "aria-label",
-      `${name.trim()}の${KIND_LABEL[r.kind] || r.kind}の詳細・投稿日程`,
+      `${name.trim()}の${Recommender.kindLabelJa(r.kind)}の詳細・投稿日程`,
     );
     detailButton.addEventListener("click", (event) => {
       event.stopPropagation();
@@ -4092,7 +4098,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     }
 
     const c3 = td(tr, "種別");
-    line(c3, (KIND_LABEL[r.kind] || r.kind) + (r.dupLabel ? `: ${r.dupLabel}` : ""));
+    line(c3, Recommender.kindLabelJa(r.kind) + (r.dupLabel ? `: ${r.dupLabel}` : ""));
     const detail = kindDetailJa(r.dl.round, r.dl.label);
     if (detail) {
       line(c3, detail, "sub");

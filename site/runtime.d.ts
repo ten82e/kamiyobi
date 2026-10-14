@@ -145,6 +145,8 @@ interface SiteRecommenderApi {
   venueCategories(lines: readonly unknown[], rows: SiteRow[]): string[];
   journalRows(conferences: SiteConference[], now: number): SiteRow[];
   pastRepresentatives(rows: SiteRow[], now: number): SiteRow[];
+  undatedVenueRows(conferences: unknown, represented: readonly SiteRow[]): SiteRow[];
+  candidatePool(rows: SiteRow[], conferences: unknown, now: number): SiteRow[];
   rankMatches(rankPairs: string[], grade: string): boolean;
   comparePapers(a: SiteRow, b: SiteRow, now: number): number;
   candidateRows(data: unknown): SiteRow[];

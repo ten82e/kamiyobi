@@ -97,4 +97,118 @@ describe("shared word-only recommendation fallback", () => {
       );
     }
   });
+  it.each([false, true])(
+    "keeps all matching venues before UI pagination (semantic=%s)",
+    (semantic) => {
+      const input = Array.from({ length: 231 }, (_, i) =>
+        rows(`gpu-study-${i}`, `GPU memory study ${i}`, "GPU memory management", ["systems"]).map(
+          (row) => ({ ...row, conf: { ...row.conf, scope: ["GPU memory management"] } }),
+        ),
+      ).flat();
+      const scores = semantic
+        ? Object.fromEntries(input.map((row, i) => [row.conf.key, 90 - i / 100]))
+        : null;
+      const options = { fieldedLexical: true };
+      const all = Recommendation.venueRecommendations(
+        input,
+        lines("GPU memory management"),
+        scores,
+        now,
+        options,
+      );
+      expect(all).toHaveLength(231);
+      expect(new Set(all.map((item) => item.venueKey)).size).toBe(231);
+      expect(all).toEqual(
+        Core.venueRecommendations(input, lines("GPU memory management"), scores, now, {
+          ...options,
+          topN: input.length,
+        }),
+      );
+      const limited = Recommendation.venueRecommendations(
+        input,
+        lines("GPU memory management"),
+        scores,
+        now,
+        { ...options, topN: 7 },
+      );
+      expect(limited.map((item) => item.venueKey)).toEqual(
+        all.slice(0, 7).map((item) => item.venueKey),
+      );
+      expect(limited.map((item) => item.fit.score)).toEqual(
+        all.slice(0, 7).map((item) => item.fit.score),
+      );
+    },
+  );
+  it("retrieves an explicitly named venue even when its lexical rank is beyond two hundred", () => {
+    const strong = Array.from({ length: 231 }, (_, i) =>
+      rows(`gpu-study-${i}`, `GPU memory study ${i}`, "GPU memory management", ["systems"]),
+    ).flat();
+    const preferred = rows("fgcs", "FGCS", "Future Generation Computer Systems", ["systems"]);
+    const input = [...strong, ...preferred];
+    const query = lines("GPU memory management fgcs");
+    const all = Core.venueRecommendations(input, query, null, now, {
+      fieldedLexical: true,
+      topN: input.length,
+    });
+    expect(all.findIndex((item) => item.venueKey === "fgcs")).toBeGreaterThanOrEqual(200);
+    expect(
+      Recommendation.venueRecommendations(input, query, null, now, {
+        fieldedLexical: true,
+        topN: 1,
+      }).map((item) => item.venueKey),
+    ).toEqual(["fgcs"]);
+  });
+  it("keeps undated venue metadata, avoids duplicates and leaves CSV dates empty", () => {
+    const known = rows("dated", "GPU memory systems", "GPU memory systems", ["systems"]);
+    const conferences = [
+      known[0].conf,
+      {
+        key: "undated",
+        title: "GPU memory research",
+        categories: ["systems"],
+        scope: ["gpu memory management"],
+        editions: [],
+      },
+    ];
+    const missing = Recommendation.undatedVenueRows(conferences, known);
+    expect(missing.map((row) => row.conf.key)).toEqual(["undated"]);
+    expect(Number.isFinite(missing[0].t)).toBe(false);
+    expect(missing[0].dl).toEqual({});
+    expect(Recommendation.undatedVenueRows(conferences, [...known, ...missing])).toEqual([]);
+    const results = Recommendation.venueRecommendations(
+      [...known, ...missing],
+      lines("GPU memory management"),
+      null,
+      now,
+      { fieldedLexical: true },
+    );
+    expect(results.find((row) => row.venueKey === "undated")!.availability).toMatchObject({
+      status: "unknown",
+      timestamp: null,
+      local_date: null,
+    });
+    const csv = Recommendation.candidateRowsToCsv(
+      [missing[0] as unknown as Record<string, unknown>],
+      now,
+    );
+    expect(csv.split("\r\n")[1].startsWith(",,,,,,,")).toBe(true);
+    expect(csv).not.toMatch(/NaN|1970-01-01/);
+  });
+  it("does not recreate an alias of an already consolidated submission as an undated venue", () => {
+    const dated = rows("canonical", "GPU research", "GPU research", ["systems"]);
+    const represented = dated.map((row) => ({
+      ...row,
+      submission: {
+        issueLabel: "issue",
+        language: "English",
+        shareAliases: [],
+        sourceRecords: [
+          { venueKey: "canonical", editionId: "canonical27", year: 2027 },
+          { venueKey: "alias", editionId: "alias27", year: 2027 },
+        ],
+      },
+    }));
+    const conferences = [dated[0].conf, { key: "alias", title: "GPU alias", editions: [] }];
+    expect(Recommendation.undatedVenueRows(conferences, represented)).toEqual([]);
+  });
 });

@@ -13,7 +13,7 @@ import {
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, describe, expect, it } from "vitest";
-import Recommender from "../site/recommender.ts";
+import Recommender from "../site/recommendation.ts";
 import { consolidateReviewedSubmissions } from "../site/submission-identity.ts";
 import { FILTER_RUNTIME_STUBS, site } from "./built_golden_shared.ts";
 import { REPO_ROOT, tempWork } from "./helpers.ts";
@@ -31,6 +31,11 @@ function rawSubmissionIsClosed(
   now: number,
 ): boolean {
   if (row.kind === "journal") return false;
+  if (row.kind === "venue") {
+    expect(Number.isFinite(row.t)).toBe(false);
+    expect(row.dl.utc).toBeUndefined();
+    return false;
+  }
   const boundary =
     row.dl.precision === "date-only" ? row.dl.latest_utc : (row.dl.utc ?? row.dl.at_utc);
   expect(boundary, "終了判定に必要な元の締切境界がない").toBeTypeOf("string");
@@ -950,16 +955,12 @@ it("投稿先の推薦が、画面と同じ核で出る（第 857 回）", async
     "Time-Sensitive Networking Scheduling for Deterministic Industrial Networks | tsn, real-time, scheduling, deterministic";
   const now = Date.now();
 
-  const 品書 = join(REPO_ROOT, "public", "catalog.json");
-  const 品書の會議 = existsSync(品書)
-    ? ((JSON.parse(readFileSync(品書, "utf8")) as { conferences?: unknown[] }).conferences ?? [])
-    : (索引.conferences ?? []);
-  索引.conferences = 品書の會議; // 行・ジャーナルとも品書から（MCP と同じ出所）
   const 行 = displayCandidates(索引 as never);
-  const pool = (行 as unknown as Parameters<typeof Recommender.deadlineRowIsPast>[0][])
+  let pool = (行 as unknown as Parameters<typeof Recommender.deadlineRowIsPast>[0][])
     .filter((r) => !Recommender.deadlineRowIsPast(r as never, now))
     .concat(Recommender.journalRows(索引.conferences ?? [], now) as unknown as never[])
     .concat(Recommender.pastRepresentatives(行 as never, now) as unknown as never[]);
+  pool = pool.concat(Recommender.undatedVenueRows(索引.conferences ?? [], pool as never) as never);
   const 正 = Recommender.venueRecommendations(
     pool as never,
     Recommender.parsePaperLines(題),
@@ -2192,7 +2193,7 @@ it("推薦の pool は画面と同じ組み立て（第 894 回）", async () =>
    * その 92% は**過ぎた締切**なので、「おすすめの投稿先」の 1・2 番目に締め切つた会報が
    * 擧がり、AI は「來年でなく今出せる」と誤つて勧めてしまふ。画面は「これからの締切 +
    * 常時受付のジャーナル + これからの締切が無い会議の過去代表 1 行」で選ぶので、それに揃へる。 */
-  const 品書 = join(REPO_ROOT, "public", "catalog.json");
+  const 品書 = join(REPO_ROOT, "public", "recommendation-index.json");
   expect(
     existsSync(品書),
     "検証に必要な生成物がありません。オフラインビルドを実行してください",
@@ -2206,12 +2207,15 @@ it("推薦の pool は画面と同じ組み立て（第 894 回）", async () =>
   const rows = displayCandidates(catalog) as unknown as Array<Record<string, unknown>>;
   const now = Date.now();
   /* 画面の pool をこちらで組み立てる（`site/app.ts` の `pool` と同じ 3 つ）。 */
-  const pool = (rows as unknown as Parameters<typeof Recommender.deadlineRowIsPast>[0][])
+  let pool = (rows as unknown as Parameters<typeof Recommender.deadlineRowIsPast>[0][])
     .filter((r) => !Recommender.deadlineRowIsPast(r as never, now))
     .concat(Recommender.journalRows(catalog.conferences ?? [], now) as unknown as never[])
     .concat(Recommender.pastRepresentatives(rows as never, now) as unknown as never[]);
   const 題 =
     "Time-Sensitive Networking Scheduling for Deterministic Industrial Networks | tsn, real-time, scheduling, deterministic";
+  pool = pool.concat(
+    Recommender.undatedVenueRows(catalog.conferences ?? [], pool as never) as never,
+  );
   const 正 = Recommender.venueRecommendations(
     pool as never,
     Recommender.parsePaperLines(題),
@@ -2232,7 +2236,7 @@ it("推薦の pool は画面と同じ組み立て（第 894 回）", async () =>
 });
 
 it("品書が再学習の重みを持つ – 画面の推薦が MCP と同じ順に成る（第 895 回）", async () => {
-  const 品書 = join(REPO_ROOT, "public", "catalog.json");
+  const 品書 = join(REPO_ROOT, "public", "recommendation-index.json");
   expect(
     existsSync(品書),
     "検証に必要な生成物がありません。オフラインビルドを実行してください",
@@ -2247,7 +2251,7 @@ it("品書が再学習の重みを持つ – 画面の推薦が MCP と同じ順
     "Time-Sensitive Networking Scheduling for Deterministic Industrial Networks | tsn, real-time, scheduling, deterministic";
   const now = Date.now();
   const rows = displayCandidates(catalog as never);
-  const pool = (rows as unknown as Parameters<typeof Recommender.deadlineRowIsPast>[0][])
+  let pool = (rows as unknown as Parameters<typeof Recommender.deadlineRowIsPast>[0][])
     .filter((r) => !Recommender.deadlineRowIsPast(r as never, now))
     .concat(Recommender.journalRows(catalog.conferences ?? [], now) as unknown as never[])
     .concat(Recommender.pastRepresentatives(rows as never, now) as unknown as never[]);
@@ -2255,6 +2259,9 @@ it("品書が再学習の重みを持つ – 画面の推薦が MCP と同じ順
     Recommender.buildNameIdf((catalog as { conferences?: unknown[] }).conferences ?? []),
   );
   Recommender.setReranker(catalog.reranker ?? null);
+  pool = pool.concat(
+    Recommender.undatedVenueRows(catalog.conferences ?? [], pool as never) as never,
+  );
   const 正 = Recommender.venueRecommendations(
     pool as never,
     Recommender.parsePaperLines(paper),
@@ -3724,7 +3731,9 @@ it("list_upcoming の件数は、その窓の事实と合う（第 990 回）", 
 });
 
 it("MCPの候補件数は共有推薦処理と一致し、終了件数は元の締切データに合う", async () => {
-  const 品書 = JSON.parse(readFileSync(join(REPO_ROOT, "public", "catalog.json"), "utf8")) as {
+  const 品書 = JSON.parse(
+    readFileSync(join(REPO_ROOT, "public", "recommendation-index.json"), "utf8"),
+  ) as {
     conferences?: unknown[];
     reranker?: unknown;
   };
@@ -3733,12 +3742,15 @@ it("MCPの候補件数は共有推薦処理と一致し、終了件数は元の�
     Recommender.setNameIdf(Recommender.buildNameIdf(品書.conferences ?? []));
     Recommender.setReranker(品書.reranker ?? null);
     const 行 = displayCandidates(品書 as never);
-    const pool = 行
+    let pool = 行
       .filter((r) => !Recommender.deadlineRowIsPast(r, 今))
       .concat(
         Recommender.journalRows(品書.conferences ?? [], 今) as never,
         Recommender.pastRepresentatives(行, 今) as never,
       );
+    pool = pool.concat(
+      Recommender.undatedVenueRows(品書.conferences ?? [], pool as never) as never,
+    );
     const lines = Recommender.parsePaperLines(題);
     const 候補 = Recommender.venueRecommendations(pool, lines, null, 今, {
       fieldedLexical: true,

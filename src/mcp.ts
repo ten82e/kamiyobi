@@ -318,19 +318,27 @@ function 確認の內譯(rows: Row[]): string {
  * 画面の列の順その侭ではない。 */
 function line(r: Row, now: number): string {
   const 常時受付 = r.kind === "journal" && !r.dl.utc && !r.dateOnly;
-  const 日 = 常時受付 ? "常時受付（締切なし）" : r.dateOnly ? r.localDate : jst(r.t);
+  const 締切未確認 = !常時受付 && !Number.isFinite(r.t);
+  const 日 = 常時受付
+    ? "常時受付（締切なし）"
+    : 締切未確認
+      ? "投稿締切未確認"
+      : r.dateOnly
+        ? r.localDate
+        : jst(r.t);
   const 殘り = Math.floor((r.t - now) / 86400000);
 
   const 日の狀態 = Recommender.dateOnlyStateJa(r, now);
-  const 殘り文 = 常時受付
-    ? ""
-    : r.dateOnly
-      ? 日の狀態 === "definitely-past"
-        ? "（時刻未確認。締切日経過）"
-        : 日の狀態 === "uncertain-on-date"
-          ? "（時刻未確認。すでに終了している可能性があります）"
-          : ""
-      : ` 残り${殘り < 0 ? "（過ぎた）" : `${殘り}日`}`;
+  const 殘り文 =
+    常時受付 || 締切未確認
+      ? ""
+      : r.dateOnly
+        ? 日の狀態 === "definitely-past"
+          ? "（時刻未確認。締切日経過）"
+          : 日の狀態 === "uncertain-on-date"
+            ? "（時刻未確認。すでに終了している可能性があります）"
+            : ""
+        : ` 残り${殘り < 0 ? "（過ぎた）" : `${殘り}日`}`;
 
   const トラック = String((r.dl as { track?: unknown }).track ?? "").trim();
   const 種別 =
@@ -1914,13 +1922,10 @@ function recommendVenues(
   if (!論文ごとの行.length)
     return "論文の題名を読み取れませんでした。題名を 1 行でください（`|` でキーワードと投稿先を添えられます）。";
 
-  const 品書の行 = screenRows();
-  const 行 = 品書の行 ? displayRows(品書の行) : 索引.rows;
-  const 會議 = 品書の行 ? ((catalog()?.conferences as unknown[]) ?? []) : 索引.conferences;
-  const pool = 行
-    .filter((r) => !Recommender.deadlineRowIsPast(r, now))
-    .concat(Recommender.journalRows(會議, now) as unknown as Row[])
-    .concat(Recommender.pastRepresentatives(行 as never, now) as unknown as Row[]);
+  // Recommendation profiles retain past editions that the deadline-screen window omits.
+  const 行 = 索引.rows;
+  const 會議 = 索引.conferences;
+  const pool = Recommender.candidatePool(行 as never, 會議, now) as unknown as Row[];
 
   const 候補 = Recommender.venueRecommendations(pool, 論文ごとの行, null, now, {
     fieldedLexical: true,
