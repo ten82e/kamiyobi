@@ -3808,6 +3808,54 @@ it("會期の行は、年を添えた名・日本語の開催地・空でも「�
   expect(未確認の行.length, "未確認の行が一つも無い（この檢查が空振り）").toBeGreaterThan(0);
 });
 
+/* 畫面の行の詳細は、上流が書いた會期の**原文**を「原表記: 」として添える
+ * （公式ページで人が見る字面が其のまま殘る）。MCP は譯した値しか出して居なかつた
+ * （實測 2026-10-16: 2,446 版のうち 2,374 版が原文を持つ）。 */
+it("會期の欄に、上流が書いた原文を「原表記」として添える（第 1109 回）", async () => {
+  const R = (await import("../site/recommender.ts")).default;
+  const 收錄 = JSON.parse(readFileSync(join(REPO_ROOT, "data", "snapshot.json"), "utf8"));
+  const 行たち = R.candidateRows(收錄) as unknown as Array<{
+    ed?: { date_text?: string };
+    conf?: { key?: string };
+  }>;
+  let 原文あり = 0;
+  let 原文なし = 0;
+  const 見本: Array<[string, string]> = [];
+  for (const r of 行たち) {
+    const 原文 = String(r.ed?.date_text ?? "").trim();
+    const 表示 = String(R.eventCellJa(r as never) ?? "").trim();
+    const 行 = structuredDeadline(r as never, Date.now());
+    const 會期の欄 = (/会期 ([^|]+)/.exec(String(行.display)) ?? ["", ""])[1];
+    if (原文 && 原文 !== 表示) {
+      原文あり += 1;
+      expect(會期の欄, `${String(r.conf?.key)} の會期の欄に原表記が無い`).toContain(
+        `（原表記: ${原文}）`,
+      );
+      /* 構造化結果にも原文を持つ（機器が讀める方）。 */
+      expect(行.date_text, `${String(r.conf?.key)} の date_text が無い`).toBe(原文);
+      if (見本.length < 4) 見本.push([String(r.conf?.key), 會期の欄]);
+    } else {
+      原文なし += 1;
+      expect(會期の欄, `${String(r.conf?.key)} に要らない原表記を添えた`).not.toContain("原表記:");
+    }
+  }
+  expect(原文あり, "原文を持つ行がほぼ無い（この檢查が空振り）").toBeGreaterThan(1000);
+  expect(原文なし, "原文の無い行がほぼ無い（この檢查の片側しか見て居ない）").toBeGreaterThan(10);
+
+  /* 7 欄の形は崩さない（「返す行の形」は說明に書いた契約）。 */
+  const 答 = await call("search_deadlines", {
+    query: "3DV",
+    limit: 1,
+    scope: "all",
+    include_past: true,
+  });
+  const 行 = 答.split("\n").find((l) => /^\d{4}-\d{2}-\d{2}/.test(l)) ?? "";
+  const 欄 = 行.split(" | ").map((c) => c.trim());
+  expect(欄.length, `欄の數が增へた: ${行}`).toBeLessThanOrEqual(8);
+  const 會期の欄 = 欄.find((c) => c.startsWith("会期 ")) ?? "";
+  expect(會期の欄, "會期の欄が讀めない").toContain("（原表記: ");
+});
+
 it("--json でも、構造化を伴はない案内を其の侭出す（第 1099 回）", async () => {
   /* 空の検索語は「省せる引數」を列挙した案内を返す。JSON を賴んだ時に汎用の斷りに
    * すり替はると、直し方の書いてある文が消える – 實測 2026-10-15: `search "" --json` は

@@ -54,6 +54,8 @@ interface Row {
     link?: string;
     event_start?: string;
     event_end?: string;
+    /** 上流が書いた會期の原文（`March 18-21, 2024` のやうな自由文）。 */
+    date_text?: string;
     estimate?: unknown;
   };
   dl: {
@@ -390,7 +392,22 @@ function line(r: Row, now: number): string {
   const 見直し = String(
     (r.ed as { event_review?: Record<string, unknown> } | undefined)?.event_review?.note ?? "",
   ).trim();
-  const 會期の文 = 見直し ? `${會期}（${見直し}）` : 會期;
+  /* 上流が書いた會期の**原文**（「March 18-21, 2024」）。畫面の行の詳細は「原表記: 」として
+   * 添える – 公式ページで人が見る字面が其のまま殘る。譯した値と違ふ時だけ出す
+   * （重ねて書かない – 畫面の `eventRawJa !== eventShownJa` と同じ決まり）。
+   * 實測 2026-10-16: 2,446 版のうち 2,374 版が原文を持つのに、MCP は一句も出して居なかつた –
+   * 「公式の募集要項にはどう書いてあるか」を確かめる人が、譯だけを見て居た。 */
+  const 原表記 = String(r.ed.date_text ?? "").trim();
+  /* 註は**一つ一つを丸括弧に單獨で入れる**（畫面の行の詳細が行を分けて出すのと同じ –
+   * 一つの括弧に「・」で詰め込むと、見直しの覺え書きと原文が一つの文のやうに讀める）。 */
+  const 會期の文 =
+    `${會期}` +
+    [
+      見直し ? `（${見直し}）` : "",
+      原表記 && 原表記 !== 會期 ? `（原表記: ${原表記}）` : "",
+    ]
+      .filter((t) => t.length > 0)
+      .join("");
 
   const 幅 = String(Recommender.estimateWindowJa(r.ed) ?? "").trim();
   const 推定 = r.est ? "（推定）" : "";
@@ -990,6 +1007,8 @@ export function structuredDeadline(r: Row, now: number): Record<string, unknown>
     verification: r.dl.verification ?? null,
     event_start: r.ed.event_start ?? null,
     event_end: r.ed.event_end ?? null,
+    /* 上流が書いた會期の原文（畫面の行の詳細が「原表記: 」で出すのと同じ値）。 */
+    date_text: r.ed.date_text ?? null,
     submission: r.submission
       ? {
           issue_label: r.submission.issueLabel,
@@ -2196,7 +2215,7 @@ const TOOLS = [
   {
     name: "search_deadlines",
     description:
-      "日本語で投稿締切を検索する。語を省いて kind / kinds / rank / domestic / online / within_days だけでも絞れる。既定は今後の abstract / paper / journal、推定は除外。scope は screen（初期一覧）または all（収録全体）。structuredContent に total・rows・next_offset を返す。続きは同じ条件と next_offset を offset に指定する。日付のみの行の utc・jst は null。推定期間、投稿トラック、確認状態を別に返す。公式確認（いつ・どこで・何を確かめたか）は verification_ja に画面の行の詳細と同じ日本語で返します（内部の鍵名は verification に残します）。前に出ていた締切も表示する。日付語は別ラウンドや会期にも当たるため、締切だけの期間指定には within_days を使う。0 件のときは画面と同じ案内と「打ち直すなら」の候補を返す。返す行の形: 日時 | 種別 | 確認状態（ある場合）| 会議名（版の識別子）| ランク | 会期 | 開催地 URL。テキストは `| ` で切り、構造化結果を優先する。",
+      "日本語で投稿締切を検索する。語を省いて kind / kinds / rank / domestic / online / within_days だけでも絞れる。既定は今後の abstract / paper / journal、推定は除外。scope は screen（初期一覧）または all（収録全体）。structuredContent に total・rows・next_offset を返す。続きは同じ条件と next_offset を offset に指定する。日付のみの行の utc・jst は null。推定期間、投稿トラック、確認状態を別に返す。公式確認（いつ・どこで・何を確かめたか）は verification_ja に画面の行の詳細と同じ日本語で返します（内部の鍵名は verification に残します）。前に出ていた締切も表示する。日付語は別ラウンドや会期にも当たるため、締切だけの期間指定には within_days を使う。会期の欄には、上流が書いた原文（`March 18-21, 2024` のやうな自由文）を「原表記」として添えます（画面の行の詳細と同じ）。0 件のときは画面と同じ案内と「打ち直すなら」の候補を返す。返す行の形: 日時 | 種別 | 確認状態（ある場合）| 会議名（版の識別子）| ランク | 会期 | 開催地 URL。テキストは `| ` で切り、構造化結果を優先する。",
     inputSchema: {
       type: "object",
       properties: {
