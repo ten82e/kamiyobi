@@ -1579,6 +1579,31 @@ function venueLookupText(value: unknown): string {
     .trim();
 }
 
+function venueClassification(conf: NonNullable<SnapshotFile["conferences"]>[number]) {
+  return {
+    categories: conf.categories ?? [],
+    rank: conf.rank ?? null,
+    tags: conf.tags ?? [],
+    domestic: Recommender.isDomesticTag(conf.tags),
+  };
+}
+
+function venueClassificationLines(
+  conf: NonNullable<SnapshotFile["conferences"]>[number],
+): string[] {
+  const metadata = venueClassification(conf);
+  const rankPairs = Object.entries(metadata.rank ?? {})
+    .filter(([, grade]) => Boolean(grade))
+    .map(([source, grade]) => `${source}:${grade}`);
+  const topics = Recommender.topicTagsJa(metadata.tags);
+  return [
+    `分野: ${metadata.categories.map((key) => Recommender.categoryLabelJa(key)).join("・") || Recommender.unconfirmedLabelJa()}`,
+    `ランク: ${ランクJa({ rankPairs })}`,
+    ...(topics.length ? [`主題: ${topics.join("・")}`] : []),
+    ...(metadata.domestic ? ["区分: 国内"] : []),
+  ];
+}
+
 function venueIdentity(conf: NonNullable<SnapshotFile["conferences"]>[number]) {
   const text = (value: unknown): string | null =>
     typeof value === "string" && value.trim() ? value : null;
@@ -1790,6 +1815,7 @@ function venueInfo(
       const identity = venueIdentity(在る);
       receive?.({
         ...identity,
+        ...venueClassification(在る),
         deadline_total: 0,
         upcoming_deadline_total: 0,
         past_deadline_total: 0,
@@ -1808,6 +1834,7 @@ function venueInfo(
         identity.full_name !== identity.acronym
           ? [`正式名: ${identity.full_name}`]
           : []),
+        ...venueClassificationLines(在る),
         ...venueScheduleLines(editions),
         ...(link ? [`公式ページ: ${link}`] : []),
         ...(古さ ? ["", 古さ] : []),
@@ -1933,12 +1960,10 @@ function venueInfo(
   const 過ぎた件數 = hit.filter((r) => Recommender.deadlineRowIsPast(r, now)).length;
   // 共有募集の行には統合先の属性が入るため、照会した会議の属性を使う。
   const venue = 會議の版 ?? 一つ.conf;
-  const venueRankPairs = Object.entries(venue.rank ?? {})
-    .filter(([, grade]) => Boolean(grade))
-    .map(([source, grade]) => `${source}:${grade}`);
   const identity = venueIdentity(venue);
   receive?.({
     ...identity,
+    ...venueClassification(venue),
     deadline_total: hit.length,
     upcoming_deadline_total: 今後,
     past_deadline_total: 過ぎた件數,
@@ -1966,22 +1991,7 @@ function venueInfo(
     ...(scopeErr ? [scopeErr] : []),
     `版: ${版.map((id) => (行を持つ版.has(id) ? id : `${id}(会期だけ)`)).join(" / ")}`,
 
-    `分野: ${
-      (venue.categories ?? [])
-        .map((key) => String(Recommender.categoryLabelJa(key) ?? key))
-        .join("・") || String(Recommender.unconfirmedLabelJa() ?? "未確認")
-    }`,
-    /* ランクも言ふ（一つの会議を調べた人が、次の一手を決めるのに要る – 画面の列と同じ語）。 */
-    `ランク: ${ランクJa({ rankPairs: venueRankPairs })}`,
-    /* **主題**も言ふ。畫面は行の詳細を開いた人の「主題: 」に同じ札を出す
-     * （`app.ts` が `Recommender.topicTagsJa` を呼ぶ – 分野より詳しい粒度）。此を言はないと、
-     * 「この學會は何を扱ふ處か」をAIが答えられない – 實測 2026-10-16: 收録 139 会議が
-     * 主題を持つ（1,203 行）のに、MCP はvenue_infoでも行でも一言も出して居なかつた。
-     * 無い會議では行ごと出さない（畫面と同じ – 空の「主題: 」を置かない）。 */
-    ...(() => {
-      const 主題 = (Recommender.topicTagsJa(venue.tags) ?? []).filter(Boolean);
-      return 主題.length ? [`主題: ${主題.join("・")}`] : [];
-    })(),
+    ...venueClassificationLines(venue),
     /* その会議の締切が、どの位確かめられているか（行ごとの札だけでは、全体の偏りが分からん）。 */
     `確認: ${確認の內譯(hit)}`,
     投稿の案內,

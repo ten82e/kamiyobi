@@ -20,7 +20,8 @@ it("returns every ambiguous venue as structured identity data and accepts its ke
     link: `https://example.org/series/${i}`,
     legacy_keys: ["shared-old"],
     categories: ["systems"],
-    rank: {},
+    rank: i === 7 ? { core: "B" } : {},
+    tags: i === 7 ? ["storage", "domestic-jp"] : [],
     editions: [
       {
         id: `edition-${i}`,
@@ -148,6 +149,10 @@ it("returns every ambiguous venue as structured identity data and accepts its ke
       });
       expect(selected.structuredContent).toMatchObject({
         venue_key: "series-7",
+        categories: ["systems"],
+        rank: { core: "B" },
+        tags: ["storage", "domestic-jp"],
+        domestic: true,
         deadline_total: 0,
         editions: [
           {
@@ -159,6 +164,11 @@ it("returns every ambiguous venue as structured identity data and accepts its ke
         ],
       });
       expect(selected.content[0].text).not.toContain("31 の会議");
+      expect(
+        selected.content[0].text
+          .split("\n")
+          .filter((line: string) => /^(分野|ランク|主題|区分):/.test(line)),
+      ).toEqual(["分野: システム", "ランク: CORE B", "主題: ストレージ", "区分: 国内"]);
     }
     for (const args of [
       { key: "ipsj-27-r-compsac" },
@@ -169,6 +179,10 @@ it("returns every ambiguous venue as structured identity data and accepts its ke
       expect(selected.structuredContent).toMatchObject({
         venue_key: "ipsj-27-r-compsac",
         title: "Partner Archive",
+        categories: ["systems"],
+        rank: { core: "B" },
+        tags: ["storage"],
+        domestic: false,
         deadline_total: 2,
         next_submission: { edition_id: "partner28" },
       });
@@ -191,6 +205,10 @@ it("returns every ambiguous venue as structured identity data and accepts its ke
     expect(shared.structuredContent).toMatchObject({
       venue_key: "ipsj-27-r-compsac",
       title: "Partner Archive",
+      categories: ["systems"],
+      rank: { core: "B" },
+      tags: ["storage"],
+      domestic: false,
       deadline_total: 1,
       next_submission: null,
       editions: [{ edition_id: "ipsj-27-r26" }],
@@ -227,10 +245,32 @@ it("returns every ambiguous venue as structured identity data and accepts its ke
       join(root, "data/snapshot.json"),
       JSON.stringify({ conferences: [...conferences, sharedOnly[0], withoutClassification] }),
     );
-    expect(classification(await call({ key: "ipsj-27-r-compsac", scope: "all" }))).toEqual([
-      "分野: 未確認",
-      "ランク: ランク未確認",
-    ]);
+    const missing = await call({ key: "ipsj-27-r-compsac", scope: "all" });
+    expect(missing.structuredContent).toMatchObject({
+      categories: [],
+      rank: null,
+      tags: [],
+      domestic: false,
+    });
+    expect(classification(missing)).toEqual(["分野: 未確認", "ランク: ランク未確認"]);
+    writeFileSync(
+      join(root, "data/snapshot.json"),
+      JSON.stringify({ conferences: [{ ...withoutClassification, editions: [] }] }),
+    );
+    for (const scope of ["all", "screen"]) {
+      const empty = await call({ key: "ipsj-27-r-compsac", scope });
+      expect(empty.structuredContent).toMatchObject({
+        venue_key: "ipsj-27-r-compsac",
+        categories: [],
+        rank: null,
+        tags: [],
+        domestic: false,
+        deadline_total: 0,
+        rows: [],
+        editions: [],
+      });
+      expect(classification(empty)).toEqual(["分野: 未確認", "ランク: ランク未確認"]);
+    }
   } finally {
     reader.close();
     child.kill();
