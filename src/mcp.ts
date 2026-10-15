@@ -1159,8 +1159,9 @@ function searchDeadlines(
     .join("");
   const { list, 名, 生成, 窓が無い } = pick(args.scope);
 
-  const 空の種別 = Array.isArray(args.kinds) && args.kinds.length === 0;
-  const 種別一種 = args.kinds !== undefined && (args as { kind?: unknown }).kind !== undefined;
+  const 引く種別 = args.kinds ?? args.kind;
+  const 空の種別 = Array.isArray(引く種別) && 引く種別.length === 0;
+  const 種別一種 = args.kinds !== undefined && args.kinds !== null && args.kind !== undefined;
   const 古さ = 古さの斷り(生成, now);
   /* 語が空（種別だけの時）は**全部に当たる**目にする。 */
   const 照合 = 絞り込みだけ
@@ -1203,11 +1204,7 @@ function searchDeadlines(
     "other",
   ];
 
-  const 名乘り全部 = [
-    ...名乘りとして讀む(args.kinds),
-    ...名乘りとして讀む((args as { kind?: unknown }).kind),
-    /* **日本語の名も受ける**。 */
-  ].map((k) => 種別の英語(k));
+  const 名乘り全部 = 名乘りとして讀む(引く種別).map((k) => 種別の英語(k));
   const 知らん = 名乘り全部.filter((k) => !知って居る種別.includes(k));
 
   const ランク = Recommender.rankGradeJa(args.rank);
@@ -1228,7 +1225,7 @@ function searchDeadlines(
 
   /* 行が見えている時に出す注（類語・曖昧さ – 第 942・948 回）。 */
   const 見えて居る文 = 見えて居る注(query, hit.length);
-  const 頭 = `${絞り込みだけ ? "語を指定せず、絞り込みだけ" : `検索語「${query}」に当たる締切`}: ${hit.length} 件（${名} ${list.length} 行・画面の既定と同じ絞り込み。絞る前は ${素の.length} 行${ランク ? `／ランク ${ランク}` : ""}${args.domestic === true ? "／国内のみ" : ""}${args.online === true ? "／オンライン参加可のみ" : ""}${窓あり ? `／締切まで ${窓の日數} 日以内${窓の端数の斷り}` : ""}${讀めない引數}）${limit端數}${檢索語を切つた ? `（${打たれた検索語.length} 字のうち、最初の ${檢索語の截} 字で調べました – 残りの語は参考にしていません）` : ""}${知らん.length ? `／知らない種別（指定したままでは 0 件になります）: ${知らない値の文("", 知らん)}` : ""}${空の種別 ? `／kinds が空なので種別で絞していません（0 件にしたいなら kind を 1 つ）` : ""}${種別一種 ? `／kind は kinds と共に与えられたので見ていません` : ""}${知らんランク ? `／知らないランク（等級は ${Recommender.rankGradeOrderJa().join("・")}）: ${知らんランク}${limit端數}` : ""}${日付の語 ? "\n日付は日本時間（JST）。月や日付の語は、締切の日付と「会期」の日付の両方に当たる（画面のてびきと同じ約束）ので、月で引いた時に見出しの月と違う日が出る行がある。" : ""}${窓が無い ? `\n${窓が無いの斷り(true)}` : ""}${scopeErr ? `\n${scopeErr}` : ""}${解決の文}${記号だけの文 ? `\n${記号だけの文}` : ""}${見えて居る文}`;
+  const 頭 = `${絞り込みだけ ? "語を指定せず、絞り込みだけ" : `検索語「${query}」に当たる締切`}: ${hit.length} 件（${名} ${list.length} 行・画面の既定と同じ絞り込み。絞る前は ${素の.length} 行${ランク ? `／ランク ${ランク}` : ""}${args.domestic === true ? "／国内のみ" : ""}${args.online === true ? "／オンライン参加可のみ" : ""}${窓あり ? `／締切まで ${窓の日數} 日以内${窓の端数の斷り}` : ""}${讀めない引數}）${limit端數}${檢索語を切つた ? `（${打たれた検索語.length} 字のうち、最初の ${檢索語の截} 字で調べました – 残りの語は参考にしていません）` : ""}${知らん.length ? `／知らない種別: ${知らない値の文("", 知らん)}` : ""}${空の種別 ? `／kinds が空なので既定の投稿締切（概要・論文・常時受付）を対象にしています` : ""}${種別一種 ? `／kind は kinds と共に与えられたので見ていません` : ""}${知らんランク ? `／知らないランク（等級は ${Recommender.rankGradeOrderJa().join("・")}）: ${知らんランク}${limit端數}` : ""}${日付の語 ? "\n日付は日本時間（JST）。月や日付の語は、締切の日付と「会期」の日付の両方に当たる（画面のてびきと同じ約束）ので、月で引いた時に見出しの月と違う日が出る行がある。" : ""}${窓が無い ? `\n${窓が無いの斷り(true)}` : ""}${scopeErr ? `\n${scopeErr}` : ""}${解決の文}${記号だけの文 ? `\n${記号だけの文}` : ""}${見えて居る文}`;
   if (!hit.length) {
     /* 画面と同じ約束 – 案内は「素の当たりが 0」の時に出る物なので、絞り込みで 0 に成つた時は
      * その旨を書く（絞り込みを外せば出る事がある）。 */
@@ -1448,7 +1445,7 @@ function listUpcoming(
   const 全部 = 名乘り.some((k) => k.toLowerCase() === "all");
 
   const 選ぶ = new Set(名乘り.map((k) => k.toLowerCase()));
-  /* 知らない種別は名指す（`search_deadlines` と同じ扱ひ – その侭では 0 件に成る）。 */
+  /* 未知の種別は名指す。既知の種別と併用された場合は、既知の種別の結果が残る。 */
   const 知って居る種別 = [
     "all",
     ...投稿の種別,
@@ -1463,7 +1460,7 @@ function listUpcoming(
   ];
   const 知らん = 名乘り.filter((k) => !知って居る種別.includes(k.toLowerCase()));
 
-  const 空の種別 = Array.isArray(args.kinds) && args.kinds.length === 0;
+  const 空の種別 = Array.isArray(引き) && 引き.length === 0;
   const { list, 名, 生成, 窓が無い } = pick(args.scope ?? "all");
   const 古さ = 古さの斷り(生成, now);
 
@@ -1535,9 +1532,7 @@ function listUpcoming(
     evaluated_at: new Date(now).toISOString(),
     items: page.map((item) => item.item),
   });
-  const 知らんの斷り = 知らん.length
-    ? `／知らない種別（指定したままでは 0 件になります）: ${知らない値の文("", 知らん)}`
-    : "";
+  const 知らんの斷り = 知らん.length ? `／知らない種別: ${知らない値の文("", 知らん)}` : "";
   const pageNotice = !timeline.length
     ? "指定した条件に当たる収録済みの締切・会期はありません。"
     : !page.length
@@ -1546,7 +1541,7 @@ function listUpcoming(
       : `全 ${timeline.length} 件中 ${offset + 1}〜${offset + page.length} 件目` +
         `（このページ: 締切 ${deadlinePage.length} 件・会期 ${eventPage.length} 件）。`;
   return [
-    `今日から ${日數の表現}（JST の暦日で数える）の締切: ${hit.length} 件（${名}・日本時間の早い順）${讀めない引數}${知らんの斷り}${端数の斷り}${上限の斷り}${limitInput.斷り}${端數と上限の斷り(limitInput.使ふ, 100)}${空の種別 ? `／kinds が空なので種別で絞していません（0 件にしたいなら kind を 1 つ）` : ""}`,
+    `今日から ${日數の表現}（JST の暦日で数える）の締切: ${hit.length} 件（${名}・日本時間の早い順）${讀めない引數}${知らんの斷り}${端数の斷り}${上限の斷り}${limitInput.斷り}${端數と上限の斷り(limitInput.使ふ, 100)}${空の種別 ? `／kinds が空なので種別では絞り込んでいません` : ""}`,
     ...(scopeErr ? [scopeErr] : []),
     ...(窓が無いの斷り(窓が無い) ? [窓が無いの斷り(窓が無い)] : []),
     pageNotice,

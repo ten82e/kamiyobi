@@ -2006,9 +2006,7 @@ it("list_upcoming の種別はどれかで選び、知らない種別を名指�
   /* 複数の種別は**どれか**（61 件 = `paper` だけと同じ）。 */
   const 複数 = await call("list_upcoming", { kinds: ["paper", "zzz"] });
   expect(複数, "どれかで選べていない").toMatch(/締切: [1-9]\d* 件/);
-  expect(複数, "知らない種別を名指していない").toContain(
-    "知らない種別（指定したままでは 0 件になります）: zzz",
-  );
+  expect(複数, "知らない種別を名指していない").toContain("知らない種別: zzz");
   /* 大文字でも受け付ける（AI は `PAPER` を送る）。 */
   const 大文字 = await call("list_upcoming", { kind: "PAPER" });
   expect(大文字, "大文字の種別を受け付けていない").toMatch(/締切: [1-9]\d* 件/);
@@ -4574,27 +4572,27 @@ it("種別の打ち間違ひを黙つて 0 件にしない（第 999 回）", as
   const 單數 = await call("search_deadlines", { query: "セキュリティ", kind: "zzz" });
   expect(單數, "知らない kind を名指していない").toContain("知らない種別");
   expect(單數.split("\\n")[0], "黙つて 0 件に成つている").toContain("知らない種別");
-  /* 空配列は「濾して居ません」と言う。 */
+  /* 空配列は既定の投稿締切を選ぶため、対象を明示する。 */
   const 空 = await call("search_deadlines", { query: "セキュリティ", kinds: [] });
   expect(空, "空の kinds を黙つて絞さない扱ひにしていない").toContain(
-    "kinds が空なので種別で絞していません",
+    "kinds が空なので既定の投稿締切（概要・論文・常時受付）を対象にしています",
   );
   /* 良い値には何も言はない。 */
   for (const 良い of [{ kind: "paper" }, { kinds: ["paper"] }, { kinds: ["paper", "abstract"] }]) {
     const 答 = await call("search_deadlines", { query: "セキュリティ", ...良い });
     expect(答, `${JSON.stringify(良い)} に餘計な斷りが出た`).not.toContain("知らない種別");
-    expect(答, `${JSON.stringify(良い)} に餘計な斷りが出た`).not.toContain("種別で絞していません");
+    expect(答, `${JSON.stringify(良い)} に餘計な斷りが出た`).not.toContain("kinds が空なので");
   }
 });
 
 it("list_upcoming も種別の空配列を黙らない（第 1000 回）", async () => {
   const 空 = await call("list_upcoming", { kinds: [] });
   expect(空, "空の kinds を黙つて絞さない扱ひにしていない").toContain(
-    "kinds が空なので種別で絞していません",
+    "kinds が空なので種別では絞り込んでいません",
   );
   /* 良い値には何も言はない。 */
   const 良い = await call("list_upcoming", { kinds: ["paper"] });
-  expect(良い, "良い値に餘計な斷りが出た").not.toContain("種別で絞していません");
+  expect(良い, "良い値に餘計な斷りが出た").not.toContain("kinds が空なので");
   const 知らん = await call("list_upcoming", { kind: "zzz" });
   expect(知らん, "知らない単数の kind を黙つて 0 件にしていない").toContain("知らない種別");
 });
