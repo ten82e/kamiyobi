@@ -110,6 +110,9 @@ async function call(name: string, args: Record<string, unknown>): Promise<string
   return String(res.result?.content?.[0]?.text ?? "");
 }
 
+/** 行が締切を過ぎた事を告げる札（畫面の「殘り」欄と同じ語 – 第 1098 回）。 */
+const 過去の札 = /\d+ 日前に終了|本日終了/;
+
 describe("MCP の手順が話せる（第 714 回）", () => {
   it("initialize に名乘りと道具の能力を返す", async () => {
     const res = (await client.ask({
@@ -374,16 +377,16 @@ it("会議の一覽は、今後の物から並ぶ（第 752 回）", async () =>
   const text = await call("venue_info", { key: "sigkdd", scope: "all" });
   const 日付の行 = text.split("\n").filter((l) => /^\d{4}-\d{2}-\d{2}/.test(l));
   expect(日付の行.length, "この検査の前提（日付の行がある）が崩れた").toBeGreaterThan(1);
-  const 今後 = 日付の行.filter((l) => !l.includes("（過ぎた）"));
+  const 今後 = 日付の行.filter((l) => !過去の札.test(l));
   expect(今後.length, "この検査の前提（今後の締切がある）が崩れた").toBeGreaterThan(0);
-  expect(日付の行[0], "過去の行を先に並べている").not.toContain("（過ぎた）");
+  expect(日付の行[0], "過去の行を先に並べている").not.toMatch(過去の札);
 });
 
 it("今後の締切がない会議では、その事を先に言う（第 754 回）", async () => {
   /* 過ぎた行だけを並べると、読む人（と AI）が「次はこれ」と取り違へる。 */
   const 過去だけ = await call("venue_info", { key: "aft", scope: "all" });
   expect(過去だけ, "今後の締切がない事を言つていない").toContain("今後の締切は収録にありません");
-  expect(過去だけ, "過ぎた物だと斷つていない").toContain("（過ぎた）");
+  expect(過去だけ, "過ぎた物だと斷つていない").toMatch(過去の札);
   /* 今後がある会議には付けない（雜音を増やさない）。 */
   const 今後あり = await call("venue_info", { key: "sigkdd", scope: "all" });
   expect(今後あり, "要らない斷りを付けた").not.toContain("今後の締切は収録にありません");
@@ -3241,15 +3244,24 @@ describe("list_upcoming の行が画面と同じ（第 944 回）", () => {
 it("venue_info は過去の締切も出して、その札を書く（第 945 回）", async () => {
   const 答 = await call("venue_info", { key: "icde" });
   const 行 = 答.split("\n").filter((l) => /^20\d\d-/.test(l));
-  const 過ぎた = 行.filter((l) => l.includes("残り（過ぎた）"));
+  /* 過去の行は畫面の「殘り」欄と同じ語（「N 日前に終了」・「本日終了」）。
+   * 以前は「殘り（過ぎた）」と言ふ意味の通らない文だつた。 */
+  const 過ぎた = 行.filter((l) => 過去の札.test(l));
   expect(過ぎた.length, "過去の行が出て居ない（この検査の前提が崩れた）").toBeGreaterThan(0);
   expect(過ぎた.length).toBeLessThan(行.length);
   /* 過去の行はどれも札を持つ（無札だと「これから」の行に見える）。 */
   for (const l of 行) {
     if (l.includes("20")) expect(l.length, "行が空").toBeGreaterThan(10);
   }
-  /* 將來の行は「残り」の札が付く。 */
-  expect(行.some((l) => /殘り\d+日|殘り\d+時間/.test(l)) ? true : / /).toBeTruthy();
+  /* 將來の行は「あと N 日」の札が付く（空振り防止 – 過去の行が此方に当たらない事も見る）。 */
+  expect(
+    行.some((l) => /あと \d+ 日/.test(l)),
+    "これからの行に「あと N 日」が出ていない",
+  ).toBe(true);
+  expect(
+    過ぎた.some((l) => /あと \d+ 日/.test(l)),
+    "過去の行に「あと N 日」が出っている",
+  ).toBe(false);
   /* 説明にも書いた（道具の一覽の文 – AI は先にそれを読む）。 */
   const 一覽 = (await client.ask({ jsonrpc: "2.0", id: 97, method: "tools/list" })) as {
     result?: { tools?: Array<{ name?: string; description?: string }> };
@@ -3262,6 +3274,111 @@ it("venue_info は過去の締切も出して、その札を書く（第 945 回
   const 推薦 =
     (一覽.result?.tools ?? []).find((t) => t.name === "recommend_venues")?.description ?? "";
   expect(推薦, "推薦の截りを說明に書いて居ない").toContain("最初の 20 行");
+});
+
+/* AI が讀む行の「殘り」と、人が畫面で見る「殘り」欄が違ふと、利用者はどちらを信じて
+ * いいか分からない。以前は MCP が 24 時間の floor を自分で數へて居たため、CHES の
+ * 2026-10-15 20:59 JST が MCP では「殘り0日」・畫面では「あと 18 时间」だつた
+ * （實測 2026-10-15）。過去の行は「殘り（過ぎた）」と言ふ意味の通らない文だつた。
+ * 畫面の `remain()` をビルド成果物から拔き出して突き合わせる（兩者が違ふたら落ちる）。 */
+it("行の殘りの語は、畫面の「殘り」欄と同じ數へ方と同じ言葉を使ふ（第 1098 回）", async () => {
+  const remainSrc = jsFunction(siteRuntime(), "remain");
+  const now = Date.now();
+  class FakeDate extends Date {
+    static now() {
+      return now;
+    }
+  }
+  /* 日付の計算は JST の暦日（オフセットは app.ts のremain()がインラインで持つ）。
+   * 拔き出した本体はテンプレートリテラルを含むので、**變數として埋める**（素で貼ると
+   * 外側のテンプレートが壊れる）。 */
+  const remain = new Function("Date", "DAY", `return (${remainSrc});`)(FakeDate, 86400000) as (
+    ms: number,
+  ) => { text: string; cls: string };
+
+  /* 正規化した引數で同じ語が出る（先・半日先・同じ日・過去・幅の果て・數へられない）。 */
+  const H = 3600000;
+  const D = 86400000;
+  for (const 隔 of [
+    -400 * D,
+    -30 * D,
+    -2 * D,
+    -26 * H,
+    -20 * H,
+    -3 * H,
+    -1,
+    0,
+    30 * 60000,
+    5 * H,
+    3 * D,
+    28 * D,
+    400 * D,
+    Number.NaN,
+  ]) {
+    expect(
+      Recommender.remainingLabelJa(now + 隔, now).text,
+      `隔たり ${隔}ms で畫面と MCP の語が違ふ`,
+    ).toBe(remain(now + 隔).text);
+  }
+
+  /* **實物** – venue_info の行の殘りの語が、畫面の規則と同じに成る。 */
+  const 答 = await call("venue_info", { key: "icde" });
+  const 行 = 答.split("\n").filter((l) => /^20\d\d-/.test(l));
+  expect(行.length, "行が出て居ない（この検査の前提が崩れた）").toBeGreaterThan(5);
+  let 見た = 0;
+  for (const l of 行) {
+    const 刻む =
+      /^(\d{4}-\d{2}-\d{2})\([^)]*\) (\d{2}):(\d{2})(?::(\d{2}))? JST (.*?)（元の宣言/.exec(l);
+    if (!刻む) continue;
+    const 刻 = Date.parse(`${刻む[1]}T${刻む[2]}:${刻む[3]}:${刻む[4] ?? "00"}+09:00`);
+    expect(Number.isFinite(刻), `行の日時を讀めない: ${l}`).toBe(true);
+    expect(刻む[5], `行の殘りの語が畫面と違ふ: ${l}`).toBe(remain(刻).text);
+    見た += 1;
+  }
+  expect(見た, "時刻のある行を一つも見て居ない（この検査が空振り）").toBeGreaterThan(3);
+  /* 意味の通らない文を出さない。 */
+  for (const l of 行) {
+    expect(l, "「殘り（過ぎた）」が出ている").not.toContain("殘り（過ぎた）");
+    expect(l, "「殘り0日」が出ている").not.toContain("殘り0日");
+  }
+});
+
+it("--json でも、構造化を伴はない案内を其の侭出す（第 1099 回）", async () => {
+  /* 空の検索語は「省せる引數」を列挙した案内を返す。JSON を賴んだ時に汎用の斷りに
+   * すり替はると、直し方の書いてある文が消える – 實測 2026-10-15: `search "" --json` は
+   * 「檢索語が空です…」を出さず、「構造化結果を取得できませんでした」だけを出して居た。 */
+  const 空語 = spawnSync(
+    process.execPath,
+    [join(REPO_ROOT, "src", "mcp.ts"), "search", "", "--json"],
+    {
+      cwd: REPO_ROOT,
+      encoding: "utf8",
+      timeout: 120_000,
+    },
+  );
+  expect(空語.status, 空語.stderr).toBe(0);
+  expect(空語.stdout, "案内が出て居ない").toContain("検索語が空です");
+  expect(空語.stdout, "省せる引數が列舉されて居ない").toContain("kind / kinds / rank");
+
+  /* 論文が讀めない推薦も同じ（此方も案内が答へになる）。 */
+  const 空論文 = spawnSync(
+    process.execPath,
+    [join(REPO_ROOT, "src", "mcp.ts"), "recommend", "--json"],
+    { cwd: REPO_ROOT, encoding: "utf8", timeout: 120_000 },
+  );
+  expect(空論文.status, 空論文.stderr).toBe(0);
+  expect(空論文.stdout, "案内が出て居ない").toContain("論文の題名か概要をください。");
+
+  /* 結果のある時は JSON の侭（案内を出す変更で JSON を壞しない）。 */
+  const 本物 = spawnSync(
+    process.execPath,
+    [join(REPO_ROOT, "src", "mcp.ts"), "search", "セキュリティ", "2", "--limit", "2", "--json"],
+    { cwd: REPO_ROOT, encoding: "utf8", timeout: 120_000 },
+  );
+  expect(本物.status, 本物.stderr).toBe(0);
+  const 頁 = JSON.parse(本物.stdout.trim()) as { total?: number; rows?: unknown[] };
+  expect(頁.total, "total が讀めない").toBeGreaterThan(0);
+  expect(頁.rows).toHaveLength(2);
 });
 
 it("曖昧な名の候補は、一番新しい版の繋ぎ先を添える（第 946 回）", async () => {
@@ -3331,7 +3448,7 @@ it("長い論文は最初の 20 行だけを見て、その旨を言う（第 95
 it("venue_info は過去の件数を頭で言う（第 961 回）", async () => {
   const 答 = await call("venue_info", { key: "icde" });
   const 行 = 答.split("\n").filter((l) => /^20\d\d-/.test(l));
-  const 過去 = 行.filter((l) => l.includes("（過ぎた）")).length;
+  const 過去 = 行.filter((l) => 過去の札.test(l)).length;
   expect(過去, "過去の行がない（この検查の前提が崩れた）").toBeGreaterThan(0);
   expect(過去).toBeLessThan(行.length);
   expect(答, "過去の件数を頭で言つていない").toMatch(new RegExp(`過去は ${過去} 件`));
@@ -4865,10 +4982,10 @@ it("時刻未確認の行は「いつ終はつたか」を言う（第 1055 回�
     /* 二重に「（時刻未確認）」と並べない（重複は slops）。 */
     expect(l.split("（時刻未確認）").length - 1, "「（時刻未確認）」が重なっている").toBe(0);
   }
-  /* **確認された時刻の行**は「残り N 日」の儘。 */
+  /* **確認された時刻の行**は畫面と同じ「あと N 日」の札が付く。 */
   const icde = await call("venue_info", { key: "icde", scope: "all" });
-  const 確定 = icde.split("\n").filter((l) => /^2\d{3}-/.test(l) && /残り\d+日/.test(l));
-  expect(確定.length, "確定の行に「残り」が出ていない").toBeGreaterThan(0);
+  const 確定 = icde.split("\n").filter((l) => /^2\d{3}-/.test(l) && /あと \d+ 日/.test(l));
+  expect(確定.length, "確定の行に「あと N 日」が出ていない").toBeGreaterThan(0);
 });
 
 it("札の「未確認」は正本から取る（第 1058 回）", async () => {

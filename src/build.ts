@@ -1383,7 +1383,12 @@ export function toCatalog(
     return {
       ...entry,
       recommendation_axes: recommendationAxes(
-        { ...entry, all_editions: conf.editions },
+        /* `papers` は catalog に載せない（data.json と推薦索引が正本 – 載せると窓の分が
+         * 膨らむ）。だが**論文サンプル數は其処から數へる**。載せないまま數へると
+         * `profileCoverage` が 0 に固まり、画面のカードと MCP が「論文サンプル 0件」と
+         * 出して居た（推薦索引は 8件 – 實測 2026-10-15 で 23 会議が不一致。畫面と AI が
+         * 同じ噓をつく状態で、順位の元にした論文數とカードの數が食ひ違って居た）。 */
+        { ...entry, all_editions: conf.editions, papers: conf.papers ?? [] },
         null,
         safeNow.getTime(),
       ),

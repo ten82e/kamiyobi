@@ -6,6 +6,7 @@ import recommender from "../site/recommender.ts";
 import {
   ROOT as BUILD_ROOT,
   setRoot as setBuildRoot,
+  toCatalog,
   toRecommendationIndex,
 } from "../src/build.ts";
 import { tempWork } from "./helpers.ts";
@@ -338,6 +339,36 @@ describe("recommendation axes", () => {
       venue_evidence: { yearsObserved: 4, profileCoverage: 2 },
       deadline_trust: { date: "official", sourceFreshness: "unknown" },
     });
+  });
+
+  /* 締切画面が最初に読む catalog にも同じ軸を載せる。此処が推薦索引と食ひ違ふと、
+   * 畫面のカードと MCP が**同じ噓**を付く（順位の元にした論文數と、カードの「論文サンプル」が
+   * 違ふ）。實測 2026-10-15: catalog は `papers` を載せない為に `profileCoverage` が 0 に
+   * 固まり、23 会議が推薦索引（8件）と不一致だつた。catalog は papers を載せない侭、
+   * 數へる時だけ正本を見る。 */
+  it("counts paper samples in the catalog axes without publishing the titles", () => {
+    const data = {
+      generated_at: "2026-08-25T00:00:00.000Z",
+      site: {},
+      sources: [],
+      categories: {},
+      conferences: [conference()],
+    };
+    const at = new Date("2026-08-25T00:00:00.000Z");
+    const catalog = toCatalog(data, at) as { conferences: Array<Record<string, unknown>> };
+    const index = toRecommendationIndex(data, at) as {
+      conferences: Array<Record<string, unknown>>;
+    };
+    const entry = catalog.conferences[0]!;
+    expect(entry.recommendation_axes).toMatchObject({
+      venue_evidence: { yearsObserved: 4, profileCoverage: 2 },
+    });
+    // 推薦索引と同じ軸（此処が割れると畫面と AI が違ふ数を言ふ）。
+    expect((entry.recommendation_axes as Record<string, unknown>).venue_evidence).toEqual(
+      (index.conferences[0]!.recommendation_axes as Record<string, unknown>).venue_evidence,
+    );
+    // catalog は題名を載せない（data.json と推薦索引が正本）。
+    expect(entry).not.toHaveProperty("papers");
   });
 
   it("fails closed when the reranker artifact cannot be parsed", () => {

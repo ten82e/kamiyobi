@@ -7847,6 +7847,32 @@ const Recommender = (() => {
     return "definitely-past";
   }
 
+  /** 一覧の「残り」欄の語。**画面・CSV・MCP が同じ入口を見る**（正本は此処）。
+   * 画面のセルは `site/app.ts` の `remain()`、表計算の数値は `deadlinesToCsv` が
+   * 同じ規則（JST の暦日差）で数へ、MCP の行はここの `text` をそのまま使ふ。
+   * 數へ方を此処で受けると、畫面と AI の答へが違ふ日に成る（實測 2026-10-15: CHES の
+   * 2026-10-15 20:59 JST は 24 時間の floor だと「残り0日」・JST の暦日だと「あと 18 時間」。
+   * 過去の行は「殘り（過ぎた）」の様な意味の通らない文に成る）。 */
+  function remainingLabelJa(
+    t: number,
+    nowMs: number,
+  ): { text: string; cls: "" | "past" | "today" | "soon" } {
+    if (!Number.isFinite(t)) return { text: "―", cls: "" };
+    /* JST の暦日（オフセットはインライン – この関数はビウド成果物から抜き出して檢查する）。 */
+    const jstDay = (value: number) => Math.floor((value + 9 * 3600000) / 86400000);
+    const diff = t - nowMs;
+    if (diff < 0) {
+      const days = jstDay(nowMs) - jstDay(t);
+      return { text: days <= 0 ? "本日終了" : `${days} 日前に終了`, cls: "past" };
+    }
+    if (diff < 86400000) {
+      const h = Math.floor(diff / 3600000);
+      return { text: h <= 0 ? "まもなく" : `あと ${h} 時間`, cls: "today" };
+    }
+    const cal = jstDay(t) - jstDay(nowMs);
+    return { text: `あと ${cal} 日`, cls: cal <= 14 ? "soon" : "" };
+  }
+
   function deadlineRowIsPast(
     row: { t?: unknown; tLast?: unknown; dateOnly?: unknown },
     nowMs: number,
@@ -15476,6 +15502,7 @@ const Recommender = (() => {
     jstNoonMs: jstNoonMs,
     pastDeadlineTagJa: pastDeadlineTagJa,
     dateOnlyStateJa: dateOnlyStateJa,
+    remainingLabelJa: remainingLabelJa,
     deadlineShiftsOf: deadlineShiftsOf,
     deadlineShiftLineJa: deadlineShiftLineJa,
     estimateWindowJa: estimateWindowJa,

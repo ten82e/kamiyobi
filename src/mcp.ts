@@ -327,9 +327,12 @@ function line(r: Row, now: number): string {
       : r.dateOnly
         ? r.localDate
         : jst(r.t);
-  const 殘り = Math.floor((r.t - now) / 86400000);
-
   const 日の狀態 = Recommender.dateOnlyStateJa(r, now);
+  /* 残りの語は**画面の「残り」欄と同じ入口**（`Recommender.remainingLabelJa` –
+   * app.ts の `remain()` と同じ語・同じ JST の暦日差）。此処で 24 時間の floor を
+   * 自分で数へて居たため、畫面と AI の答へが違ふ日に成って居た（實測 2026-10-15: CHES の
+   * 2026-10-15 20:59 JST は MCP が「残り0日」・畫面が「あと 18 時間」。過去の行は
+   * 「殘り（過ぎた）」と言ふ、意味の通らない文が出て居た）。 */
   const 殘り文 =
     常時受付 || 締切未確認
       ? ""
@@ -339,7 +342,7 @@ function line(r: Row, now: number): string {
           : 日の狀態 === "uncertain-on-date"
             ? "（時刻未確認。すでに終了している可能性があります）"
             : ""
-        : ` 残り${殘り < 0 ? "（過ぎた）" : `${殘り}日`}`;
+        : ` ${Recommender.remainingLabelJa(r.t, now).text}`;
 
   const トラック = String((r.dl as { track?: unknown }).track ?? "").trim();
   const 種別 =
@@ -2697,8 +2700,14 @@ async function main(): Promise<void> {
     page = value;
   });
   if (json) {
-    if (!page)
-      throw new Error("構造化結果を取得できませんでした。入力と収録データを確認してください。");
+    /* 構造化を伴はない結果（空の検索語・論文が讀めない等の**案内**）でも、其の侭の案内を
+     * 出す。汎用の断りにすり替へると、直し方の書いてある文が消える – 實測 2026-10-15:
+     * `search "" --json` は「検索語が空です…（省せる引数の列挙）」を出さず、
+     * 「構造化結果を取得できませんでした」だけを出して居た。 */
+    if (!page) {
+      process.stdout.write(`${result}\n`);
+      return;
+    }
     process.stdout.write(`${JSON.stringify(page)}\n`);
     return;
   }
