@@ -1291,7 +1291,11 @@ function semanticOutput(value: unknown): value is SemanticOutput {
               raw && Recommender.placeJa(raw) !== raw
                 ? `<div style="color: var(--muted); font-size: 0.8rem;">原表記: ${esc(raw)}</div>`
                 : "";
-            return `<li>${esc(Recommender.laterEditionLineJa(next))}${original}</li>`;
+            const url = safeExternalUrl(next.link || "");
+            const official = url
+              ? ` <a href="${esc(url)}" target="_blank" rel="noopener noreferrer">この開催回の公式サイト</a>`
+              : "";
+            return `<li>${esc(Recommender.laterEditionLineJa(next))}${official}${original}</li>`;
           })
           .join("") +
         "</ul>";

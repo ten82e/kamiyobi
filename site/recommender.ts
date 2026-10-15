@@ -8497,6 +8497,7 @@ const Recommender = (() => {
   }
 
   interface UpcomingEdition {
+    link?: string;
     start: string;
     end: string;
     place: string;
@@ -8536,6 +8537,7 @@ const Recommender = (() => {
         start,
         end,
         place: String(ed.place || ""),
+        ...(typeof ed.link === "string" && ed.link.trim() ? { link: ed.link } : {}),
         precision:
           typeof ed.event_date_precision === "string" ? ed.event_date_precision : undefined,
         segments,

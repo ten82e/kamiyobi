@@ -36,8 +36,13 @@ function markup(rows: ReturnType<typeof collected>) {
   const render = new Function(
     "Recommender",
     "esc",
+    "safeExternalUrl",
     `return (${jsFunction(runtime, "laterEditionsMarkup")});`,
-  )(Recommender, new Function(`return (${jsFunction(runtime, "esc")});`)());
+  )(
+    Recommender,
+    new Function(`return (${jsFunction(runtime, "esc")});`)(),
+    new Function("Recommender", `return (${jsFunction(runtime, "safeExternalUrl")});`)(Recommender),
+  );
   const expr = /const laterEditionsHtml =([\s\S]*?);/.exec(jsFunction(runtime, "openDrawer"))?.[1];
   expect(expr).toBeDefined();
   return new Function("laterEditionsMarkup", "laterEditions", `return (${expr});`)(
@@ -127,4 +132,31 @@ describe("all future drawer editions are reachable", () => {
     expect(items[2]).toContain("2029年の開催回: 会期未発表");
     expect(items[2]).toContain("原表記: Kyoto, Japan");
   });
+});
+
+it("retains each edition URL through the drawer and only links safe explicit URLs", () => {
+  const urls = [
+    "https://example.org/2029?lang=ja&view=cfp",
+    "https://example.org/2030",
+    "javascript:alert(1)",
+    "data:text/html,bad",
+    "",
+    "https://example.org/2034",
+  ];
+  const input = {
+    ...conf,
+    link: "https://example.org/current",
+    editions: conf.editions.slice(1, 7).map((ed, i) => ({ ...ed, link: urls[i] })),
+  };
+  const rows = collected(input);
+  expect(rows.map((row) => row.link || "")).toEqual(urls);
+  const html = markup(rows);
+  const items = listItems(html);
+  expect(items[0]).toContain('href="https://example.org/2029?lang=ja&amp;view=cfp"');
+  expect(items[1]).toContain('href="https://example.org/2030"');
+  expect(items[5]).toContain('href="https://example.org/2034"');
+  for (const i of [2, 3, 4]) expect(items[i]).not.toContain("<a ");
+  expect(html.match(/この開催回の公式サイト/g)).toHaveLength(3);
+  expect(html).not.toContain("https://example.org/current");
+  expect(html).toContain('target="_blank" rel="noopener noreferrer"');
 });
