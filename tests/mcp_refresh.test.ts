@@ -263,3 +263,40 @@ it("falls back for malformed catalog structures, preserves valid empty windows a
     client.close();
   }
 });
+
+it("reports absent deadline dates without losing conference counts and refreshes the range on one connection", async () => {
+  const client = server();
+  const stats = async () => (await client.request("collection_stats")).content[0].text;
+  try {
+    writeFileSync(join(client.root, "data/snapshot.json"), JSON.stringify({ conferences: [] }));
+    const empty = await stats();
+    expect(empty).toContain("会議 0 件 / 版 0 件");
+    expect(empty).toContain("締切の行 0 行（締切の日付は未収録）");
+    expect(empty).not.toMatch(/undefined|NaN|Invalid Date/);
+
+    const eventOnly = data("EventOnly");
+    eventOnly.conferences[0].editions[0].deadlines = [];
+    writeFileSync(join(client.root, "data/snapshot.json"), JSON.stringify(eventOnly));
+    const event = await stats();
+    expect(event).toContain("会議 1 件 / 版 1 件");
+    expect(event).toContain("締切の行 0 行（締切の日付は未収録）");
+
+    const withDeadlines = data("Dated");
+    withDeadlines.conferences[0].editions[0].deadlines.push({
+      kind: "paper",
+      precision: "exact",
+      utc: "2026-11-23T00:00:00Z",
+      tz_raw: "UTC",
+    });
+    writeFileSync(join(client.root, "data/snapshot.json"), JSON.stringify(withDeadlines));
+    const dated = await stats();
+    expect(dated).toContain("会議 1 件 / 版 1 件");
+    expect(dated).toContain("締切の行 2 行（日付の幅 2026-10-14 〜 2026-11-23）");
+    expect(dated).not.toContain("締切の日付は未収録");
+
+    writeFileSync(join(client.root, "data/snapshot.json"), JSON.stringify(eventOnly));
+    expect(await stats()).toContain("締切の行 0 行（締切の日付は未収録）");
+  } finally {
+    client.close();
+  }
+});
