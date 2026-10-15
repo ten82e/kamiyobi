@@ -1659,6 +1659,21 @@ function venueInfo(
   const 求 = venueLookupText(name);
   const requestedKey = venueLookupText(key);
   const venues = snapshot().conferences ?? [];
+  const notifyAmbiguity = (
+    candidates: Array<Parameters<typeof venueIdentity>[0]>,
+    matchedBy: "name" | "legacy_key" | "source_record",
+  ) => {
+    receive?.({
+      lookup_status: "ambiguous",
+      matched_by: matchedBy,
+      query: key || name,
+      scope: "all",
+      generated_at: snapshot().snapshot_metadata?.generated_at ?? null,
+      evaluated_at: new Date(now).toISOString(),
+      candidate_count: candidates.length,
+      candidates: candidates.map(venueIdentity),
+    });
+  };
   const namedVenues = key
     ? []
     : venues.filter((conf) =>
@@ -1667,6 +1682,7 @@ function venueInfo(
         ),
       );
   if (namedVenues.length > 1) {
+    notifyAmbiguity(namedVenues, "name");
     const latestLinks = latestDeadlineLinks(allRows());
     return [
       `「${name}」には ${namedVenues.length} の会議が当たりました。key を指定してください:`,
@@ -1700,6 +1716,10 @@ function venueInfo(
           );
         })
       : [];
+  const resolvedVenue =
+    current ??
+    (aliases.length === 1 ? aliases[0] : undefined) ??
+    (namedVenues.length === 1 ? namedVenues[0] : undefined);
   const lookupKey = current
     ? venueLookupText(current.key)
     : aliases.length === 1
@@ -1746,6 +1766,7 @@ function venueInfo(
     const 問はた全部 = key ? (current ? [current] : aliases) : [];
     const 問はた候補 = key && 問はた全部.length > 1 ? 問はた全部 : [];
     if (問はた候補.length > 1) {
+      notifyAmbiguity(問はた候補, "legacy_key");
       return [
         `「${String(key).trim()}」は ${問はた候補.length} つの会議の古い key です（改名・統合前の識別子）。` +
           `一覧から選び、key を指定して検索し直してください:`,
@@ -1831,26 +1852,40 @@ function venueInfo(
   }
 
   const 會々 = [...new Set(hit.map((r) => r.conf.key))];
-  if (會々.length > 1) {
-    const 名乗り = [...new Map(hit.map((r) => [r.conf.key, r.conf.title])).entries()];
-
-    const 繋ぎ先 = latestDeadlineLinks(hit);
+  if (會々.length > 1 && !resolvedVenue) {
+    const candidateRows = allRows().filter(matchesRow);
+    const candidates = [
+      ...new Map(
+        candidateRows.map((row) => [
+          row.conf.key,
+          venues.find((conf) => conf.key === row.conf.key) ?? row.conf,
+        ]),
+      ).values(),
+    ];
+    notifyAmbiguity(candidates, key ? "source_record" : "name");
+    const 名乗り = candidates.map((conf) => [String(conf.key), String(conf.title)]);
+    const 繋ぎ先 = latestDeadlineLinks(candidateRows);
     return [
-      `「${key || name}」には ${會々.length} の会議が当たりました。名を細く打つか、key で指してください:`,
+      `「${key || name}」には ${candidates.length} の会議が当たりました。名を細く打つか、key で指してください:`,
       ...(scopeErr ? [scopeErr] : []),
-      ...名乗り.slice(0, 20).map(([k, t]) => {
+      ...名乗り.map(([k, t]) => {
         const 先 = 繋ぎ先.get(venueLookupText(k));
         return `- ${t}（key: ${k}）${先 ? ` ${先.url}` : ""}`;
       }),
-      ...(名乗り.length > 20 ? [`- ほか ${名乗り.length - 20} 件`] : []),
       ...(古さ ? ["", 古さ] : []),
     ].join("\n");
   }
-  const 一つ = hit[0];
+  const 一つ =
+    hit.find(
+      (row) =>
+        resolvedVenue && venueLookupText(row.conf.key) === venueLookupText(resolvedVenue.key),
+    ) ?? hit[0];
 
-  const 會議の版 = (snapshot().conferences ?? []).find(
-    (c: { key?: unknown }) => venueLookupText(c.key) === venueLookupText(一つ.conf.key),
-  );
+  const 會議の版 =
+    resolvedVenue ??
+    (snapshot().conferences ?? []).find(
+      (c: { key?: unknown }) => venueLookupText(c.key) === venueLookupText(一つ.conf.key),
+    );
   const schedules = venueSchedules(會議の版 ?? { editions: [] });
   const 行を持つ版 = new Set(hit.map((r) => r.ed.id));
   const 版 = [
@@ -1893,8 +1928,9 @@ function venueInfo(
 
   /* 過去の件数（下の頭で言う – 何件が過ぎたかを AI が自分で数へなくて済むやうに – 第 961 回）。 */
   const 過ぎた件數 = hit.filter((r) => Recommender.deadlineRowIsPast(r, now)).length;
+  const identity = venueIdentity(會議の版 ?? 一つ.conf);
   receive?.({
-    ...venueIdentity(會議の版 ?? 一つ.conf),
+    ...identity,
     deadline_total: hit.length,
     upcoming_deadline_total: 今後,
     past_deadline_total: 過ぎた件數,
@@ -1909,14 +1945,14 @@ function venueInfo(
     斷り +
       `（${名}・${list.length} 行から）` +
       (key && name ? "\n注: name は key と共に与えられたので見ていません" : ""),
-    `会議: ${一つ.conf.title}（key: ${一つ.conf.key}${一つ.conf.acronym ? `・${一つ.conf.acronym}` : ""}）`,
+    `会議: ${identity.title || identity.venue_key}（key: ${identity.venue_key}${identity.acronym ? `・${identity.acronym}` : ""}）`,
     /* 正式名も言ふ（**會議名のすぐ下** – 畫面の一覧のセルと行の詳細がどちらも
      * 略稱の下に正式名を出すその順）。實測 2026-10-16: 收録 5,039 行が正式名を持つ
      * のに、MCP は一句も出して居なかつた – 「ICDE と何の略？」に AI が答えられない。
      * 略稱と正式名が同じ行では出さない（畫面と同じ – 重ねて書かない）。 */
     ...(() => {
-      const 正式名 = String(一つ.conf.full_name ?? "").trim();
-      if (!正式名 || 正式名 === 一つ.conf.title) return [];
+      const 正式名 = identity.full_name;
+      if (!正式名 || 正式名 === identity.title) return [];
       return [`正式名: ${正式名}`];
     })(),
     ...(scopeErr ? [scopeErr] : []),
@@ -2568,7 +2604,7 @@ const TOOLS = [
   {
     name: "venue_info",
     description:
-      "会議の開催回、締切、会期、ランク、主題、正式名を返す。structuredContent の editions に推定を除く全開催回の会期・確かさ・公式URL、rows に締切を返す。key は小文字の識別子、name は略称・正式名・名前の一部。版の識別子も関連する会議へ案内する。曖昧な名前は候補を示し、別会議の開催回を混ぜない。scope の既定は all で、過ぎた分も全部出る。今後の物から並べ、推定以外の次の投稿締切を next_submission、推定の見込みを next_estimated_submission で分けて返す。主題は分野より詳しい札で、収録にある会議だけに出します（画面の行の詳細の「主題」と同じ）。返す行の形: 会議の要約に続いて、日時 | 種別 | 確認状態（ある場合）| 会議名（版の識別子）| ランク | 会期 | 開催地 URL。",
+      "会議の開催回、締切、会期、ランク、主題、正式名を返す。structuredContent の editions に推定を除く全開催回の会期・確かさ・公式URL、rows に締切を返す。key は小文字の識別子、name は略称・正式名・名前の一部。版の識別子も関連する会議へ案内する。曖昧な名前や古いkeyは lookup_status: ambiguous と candidates を返す。候補の venue_key を key に指定して再照会する。scope の既定は all で、過ぎた分も全部出る。今後の物から並べ、推定以外の次の投稿締切を next_submission、推定の見込みを next_estimated_submission で分けて返す。主題は分野より詳しい札で、収録にある会議だけに出します（画面の行の詳細の「主題」と同じ）。返す行の形: 会議の要約に続いて、日時 | 種別 | 確認状態（ある場合）| 会議名（版の識別子）| ランク | 会期 | 開催地 URL。",
     inputSchema: {
       type: "object",
       properties: {

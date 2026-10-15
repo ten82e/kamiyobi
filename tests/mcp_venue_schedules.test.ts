@@ -246,7 +246,13 @@ it("does not cap schedule-only editions at three, sixty or one hundred", () => {
 });
 it("asks to disambiguate event-only venues instead of returning the first venue's schedules", () => {
   const { data, text } = call({ name: "fresh" });
-  expect(data).toBeUndefined();
+  expect(data).toMatchObject({
+    lookup_status: "ambiguous",
+    candidate_count: 2,
+    candidates: [{ venue_key: "fresh" }, { venue_key: "fresh-secondary" }],
+  });
+  expect(data).not.toHaveProperty("editions");
+  expect(data).not.toHaveProperty("venue_key");
   expect(text).toContain("2 の会議");
   expect(text).toContain("key: fresh）");
   expect(text).toContain("key: fresh-secondary）");
