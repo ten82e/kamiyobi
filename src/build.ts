@@ -3840,10 +3840,12 @@ export function toUpcomingMd(
     } else {
       const start = rec.start;
       const end = rec.end;
-      if (
-        dateOnly(start).getTime() > dateOnly(horizon).getTime() ||
-        today.getTime() > dateOnly(end).getTime()
-      ) {
+      const bounds = Recommender.eventDateBoundsMs(
+        fmtDate(start),
+        fmtDate(end),
+        ed.event_date_precision,
+      );
+      if (!bounds || bounds[0] > dateOnly(horizon).getTime() || today.getTime() > bounds[1]) {
         continue;
       }
       let left: string;

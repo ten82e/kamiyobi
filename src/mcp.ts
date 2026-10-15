@@ -1315,8 +1315,8 @@ export function 開催の行(days: number, now: number): UpcomingEventRow[] {
         const 開始 = Date.parse(String(seg.start ?? ""));
         if (!Number.isFinite(開始)) continue;
         const 終了 = Date.parse(String(seg.end ?? seg.start ?? "")) || 開始;
-        /* 期間に掛かっている会期だけ（会期中の会議も「開催中」として出す）。 */
-        if (終了 < today || 開始 >= 限り) continue;
+        const bounds = Recommender.eventDateBoundsMs(seg.start, seg.end, ed.event_date_precision);
+        if (!bounds || bounds[1] < today || bounds[0] >= 限り) continue;
         /* 會議名は**年を添えた形**（`titleWithYearJa` – 畫面の行の詳細と upcoming.md の
          * 正本）。略稱を先に出すと「SEC」のやうに一會社の別の名が出て、upcoming.md の
          * 「USENIX Security 2026」と別物になる。版の識別子は後に續ける（省かない）。

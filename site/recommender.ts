@@ -8515,6 +8515,31 @@ const Recommender = (() => {
     return parts.join(" ");
   }
 
+  function eventDateBoundsMs(
+    start: unknown,
+    end: unknown,
+    precision: unknown,
+  ): [number, number] | null {
+    const from = String(start ?? "").trim();
+    const to = String(end || from).trim();
+    const parse = (value: string): number => {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return Number.NaN;
+      const ms = Date.parse(value);
+      return Number.isFinite(ms) && new Date(ms).toISOString().slice(0, 10) === value
+        ? ms
+        : Number.NaN;
+    };
+    const first = parse(from);
+    const last = parse(to);
+    if (!Number.isFinite(first) || !Number.isFinite(last) || last < first) return null;
+    if (precision !== "month-only") return [first, last];
+    const lower = new Date(first);
+    lower.setUTCDate(1);
+    const upper = new Date(last);
+    upper.setUTCMonth(upper.getUTCMonth() + 1, 0);
+    return [lower.getTime(), upper.getTime()];
+  }
+
   function eventCellJa(row: unknown): string {
     const ed = ((row as { ed?: unknown } | null)?.ed || {}) as Record<string, unknown>;
     if (Array.isArray(ed.event_segments) && ed.event_segments.length) {
@@ -15669,6 +15694,7 @@ const Recommender = (() => {
     extendedLabelJa: () => EXTENDED_LABEL_JA,
     placeJa: placeJa,
     weekdayJaFromDate: weekdayJaFromDate,
+    eventDateBoundsMs: eventDateBoundsMs,
     eventCellJa: eventCellJa,
     titleWithYearJa: titleWithYearJa,
     deadlinesToCsv: deadlinesToCsv,
