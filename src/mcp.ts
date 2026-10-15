@@ -58,6 +58,9 @@ interface Row {
     event_end?: string;
     /** 上流が書いた會期の原文（`March 18-21, 2024` のやうな自由文）。 */
     date_text?: string;
+    event_date_precision?: unknown;
+    event_segments?: Array<{ start?: unknown; end?: unknown; label?: unknown }>;
+    event_review?: unknown;
     estimate?: unknown;
   };
   dl: {
@@ -960,6 +963,24 @@ function 見えて居る注(query: string, 行數: number): string {
 }
 
 /** Keep date-only and estimated deadlines separate from confirmed instants. */
+function eventMetadata(ed: {
+  date_text?: unknown;
+  event_date_precision?: unknown;
+  event_segments?: unknown;
+  event_review?: unknown;
+}) {
+  return {
+    date_text: ed.date_text ?? null,
+    event_date_precision:
+      typeof ed.event_date_precision === "string" ? ed.event_date_precision : null,
+    event_segments: Array.isArray(ed.event_segments) ? ed.event_segments : [],
+    event_review:
+      ed.event_review && typeof ed.event_review === "object" && !Array.isArray(ed.event_review)
+        ? (ed.event_review as Record<string, unknown>)
+        : null,
+  };
+}
+
 export function structuredDeadline(r: Row, now: number): Record<string, unknown> {
   return {
     venue_key: r.conf.key,
@@ -1007,7 +1028,7 @@ export function structuredDeadline(r: Row, now: number): Record<string, unknown>
     event_start: r.ed.event_start ?? null,
     event_end: r.ed.event_end ?? null,
     /* 上流が書いた會期の原文（畫面の行の詳細が「原表記: 」で出すのと同じ値）。 */
-    date_text: r.ed.date_text ?? null,
+    ...eventMetadata(r.ed),
     submission: r.submission
       ? {
           issue_label: r.submission.issueLabel,
@@ -1546,8 +1567,7 @@ function venueSchedules(conf: { key?: unknown; editions?: unknown[] }) {
         year: typeof ed.year === "number" ? ed.year : null,
         event_start: text(ed.event_start),
         event_end: text(ed.event_end),
-        event_date_precision: text(ed.event_date_precision),
-        event_segments: Array.isArray(ed.event_segments) ? ed.event_segments : [],
+        ...eventMetadata(ed),
         event_display:
           Recommender.eventCellJa({ ed }) ||
           (ed.event_date_precision === "not-announced" ? "会期未発表" : "会期未確認"),
@@ -1563,10 +1583,15 @@ function venueScheduleLines(editions: ReturnType<typeof venueSchedules>): string
   if (!editions.length) return [];
   return [
     "開催回の会期（推定を除く・過去の開催回も含む）:",
-    ...editions.map(
-      (ed) =>
-        `- ${ed.year ?? "年未確認"}（${ed.edition_id ?? "識別子未確認"}） | ${ed.event_display} | ${ed.place_ja}${ed.official_url ? ` ${ed.official_url}` : ""}`,
-    ),
+    ...editions.map((ed) => {
+      const note = String(ed.event_review?.note ?? "").trim();
+      const raw = String(ed.date_text ?? "").trim();
+      const annotations = [
+        note ? `（${note}）` : "",
+        raw && raw !== ed.event_display ? `（原表記: ${raw}）` : "",
+      ].join("");
+      return `- ${ed.year ?? "年未確認"}（${ed.edition_id ?? "識別子未確認"}） | ${ed.event_display}${annotations} | ${ed.place_ja}${ed.official_url ? ` ${ed.official_url}` : ""}`;
+    }),
   ];
 }
 

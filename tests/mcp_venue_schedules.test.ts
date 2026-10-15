@@ -19,6 +19,17 @@ for (const dir of ["src", "site"]) cpSync(join(repo, dir), join(root, dir), { re
 symlinkSync(join(repo, "node_modules"), join(root, "node_modules"));
 writeFileSync(join(root, "package.json"), '{"type":"module"}');
 mkdirSync(join(root, "data"));
+const review = {
+  edition_id: "reviewed-split",
+  source_date_text: "June 1 & 5-6, 2029",
+  source_date_text_alternatives: ["June 1, June 5-6, 2029"],
+  source_start: "2029-06-01",
+  source_end: "2029-06-06",
+  source_url: "https://example.org/review-source",
+  reviewed_on: "2029-05-30",
+  held_year: 2029,
+  note: "開催回の年と開催年を照合済み",
+};
 const editions = [
   {
     id: "month",
@@ -60,6 +71,35 @@ writeFileSync(
         editions.map((ed) => ({ ...ed, place: "Tokyo, Japan", deadlines: [] })),
       ),
       venue("estimated-only", [editions[3]]),
+      venue("reviewed", [
+        {
+          ...editions[1],
+          id: "reviewed-split",
+          date_text: review.source_date_text,
+          event_review: review,
+          deadlines: [],
+        },
+      ]),
+      venue("reviewed-dated", [
+        {
+          ...editions[1],
+          id: "reviewed-split",
+          date_text: review.source_date_text,
+          event_review: review,
+          deadlines: [{ kind: "paper", utc: "2029-05-01T00:00:00Z", tz_raw: "UTC" }],
+        },
+      ]),
+      venue("same-date-text", [
+        {
+          id: "same-date",
+          year: 2029,
+          event_start: "2029-06-01",
+          event_end: "2029-06-01",
+          event_date_precision: "single-day",
+          date_text: "2029-06-01(金)",
+          deadlines: [],
+        },
+      ]),
       {
         ...venue("identity-en", []),
         title: "RCS",
@@ -115,13 +155,13 @@ writeFileSync(
   join(root, "run.ts"),
   'import {runStdio} from "./src/mcp.ts";runStdio(Date.parse("2029-05-31T00:00:00Z"));',
 );
-function call(args: Record<string, unknown>) {
+function call(args: Record<string, unknown>, tool = "venue_info") {
   for (const dir of ["public", ".cache"]) expect(existsSync(join(root, dir))).toBe(false);
   const child = spawnSync(process.execPath, ["run.ts"], {
     cwd: root,
     encoding: "utf8",
     timeout: 15000,
-    input: `${JSON.stringify({ jsonrpc: "2.0", id: 1, method: "tools/call", params: { name: "venue_info", arguments: args } })}\n`,
+    input: `${JSON.stringify({ jsonrpc: "2.0", id: 1, method: "tools/call", params: { name: tool, arguments: args } })}\n`,
   });
   expect(child.status, child.stderr).toBe(0);
   const result = JSON.parse(child.stdout.trim()).result;
@@ -250,4 +290,50 @@ it("does not invent missing identity fields or repeat identical full names", () 
   const same = call({ key: "identity-same" });
   expect(same.data).toMatchObject({ title: "Same", full_name: "Same", acronym: "Same" });
   expect(same.text).not.toContain("正式名:");
+});
+
+it("preserves original event wording and full review records for scheduled and deadline-bearing venues", () => {
+  for (const key of ["reviewed", "reviewed-dated"]) {
+    const { data, text } = call({ key });
+    expect(data.editions).toHaveLength(1);
+    expect(data.editions[0]).toMatchObject({
+      date_text: review.source_date_text,
+      event_date_precision: "split-dates",
+      event_segments: editions[1].event_segments,
+      event_review: review,
+    });
+    expect(text).toContain("（開催回の年と開催年を照合済み）（原表記: June 1 & 5-6, 2029）");
+    if (key === "reviewed-dated") {
+      expect(data.rows).toHaveLength(1);
+      expect(data.rows[0]).toMatchObject({
+        date_text: review.source_date_text,
+        event_date_precision: "split-dates",
+        event_segments: editions[1].event_segments,
+        event_review: review,
+      });
+    }
+  }
+  const searched = call(
+    { query: "reviewed-dated", kinds: ["paper"], include_past: true, scope: "all" },
+    "search_deadlines",
+  );
+  expect(searched.data.rows).toHaveLength(1);
+  expect(searched.data.rows[0]).toMatchObject({
+    date_text: review.source_date_text,
+    event_date_precision: "split-dates",
+    event_segments: editions[1].event_segments,
+    event_review: review,
+  });
+});
+it("leaves absent review data null and avoids duplicating unchanged event wording", () => {
+  const missing = call({ key: "fresh" });
+  expect(missing.data.editions[2]).toMatchObject({
+    date_text: null,
+    event_review: null,
+    event_segments: [],
+  });
+  const same = call({ key: "same-date-text" });
+  expect(same.data.editions[0]).toMatchObject({ date_text: "2029-06-01(金)", event_review: null });
+  expect(same.text.match(/2029-06-01\(金\)/g)).toHaveLength(1);
+  expect(same.text).not.toContain("原表記:");
 });
