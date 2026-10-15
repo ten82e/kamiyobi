@@ -1005,7 +1005,8 @@ export function toJson(
         place: ed.place,
         date_text: ed.date_text,
         event_date_precision:
-          ed.event_segments?.length && ed.event_date_precision !== "not-announced"
+          ed.event_segments?.length &&
+          !["not-announced", "month-only"].includes(ed.event_date_precision || "")
             ? "split-dates"
             : eventDatePrecisionOf(
                 ed.event_date_precision,
@@ -3312,6 +3313,10 @@ export function sessionSpanJa(
 export function editionSessionJa(ed: Edition): string {
   if (ed.event_date_precision === "not-announced") {
     const text = Recommender.eventCellJa({ ed });
+    return ed.estimated ? `${text}（推定）` : text;
+  }
+  if (ed.event_date_precision === "month-only" && !ed.event_start && !ed.event_segments?.length) {
+    const text = Recommender.eventCellJa({ ed: { ...ed, event_end: fmtDate(ed.event_end) } });
     return ed.estimated ? `${text}（推定）` : text;
   }
   if (!ed.event_start && !ed.event_segments?.length) return "";

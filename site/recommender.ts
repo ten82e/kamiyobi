@@ -8699,16 +8699,19 @@ const Recommender = (() => {
         .join(" / ");
     }
     const start = String(ed.event_start || "").trim();
-    if (!start) return String(ed.date_text || "").trim();
     const end = String(ed.event_end || "").trim();
     if (precision === "month-only") {
       const month = (date: string): string =>
-        /^\d{4}-\d{2}-\d{2}$/.test(date) ? date.slice(0, 7) : "";
+        /^\d{4}-(?:0[1-9]|1[0-2])-\d{2}$/.test(date) ? date.slice(0, 7) : "";
       const from = month(start);
       const to = month(end);
       const span = from && to && from !== to ? `${from} 〜 ${to}` : from || to;
-      return span ? `${span}（月のみ判明）` : "開催月のみ判明（日付未確認）";
+      if (span) return `${span}（月のみ判明）`;
+      const raw = String(ed.date_text || "").trim();
+      if (/^\d{4}年(?:[1-9]|1[0-2])月号(?:（掲載予定）)?$/.test(raw)) return raw;
+      return "開催月のみ判明（日付未確認）";
     }
+    if (!start) return String(ed.date_text || "").trim();
     const withDay = (date: string): string => {
       const day = weekdayJaFromDate(date);
       return day ? `${date}(${day})` : date;
