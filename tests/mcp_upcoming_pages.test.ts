@@ -279,3 +279,27 @@ it("supports JSON and page controls through the actual CLI", () => {
     total: 245,
   });
 });
+
+it("marks uncertain dates in MCP text while preserving raw structured dates", () => {
+  const results = calls([{ offset: 0 }, { offset: 100 }, { offset: 200 }]);
+  const text = results
+    .flatMap((r) => r.content.map((part: { text: string }) => part.text))
+    .join("\n");
+  const unverified = text.split("\n").find((line) => line.includes("key: event000・"));
+  const month = text.split("\n").find((line) => line.includes("key: event001・"));
+  const exact = text.split("\n").find((line) => line.includes("key: event002・"));
+  expect(unverified).toContain("2026-10-16(金)（日付未確認）");
+  expect(month).toContain("2026-10（月のみ判明）");
+  expect(month).not.toContain("2026-10-16");
+  expect(exact).toContain("2026-10-16(金)");
+  expect(exact).not.toContain("未確認");
+  expect(
+    results
+      .flatMap((r) => r.structuredContent.items)
+      .find((r: { venue_key: string }) => r.venue_key === "event001"),
+  ).toMatchObject({
+    event_start: "2026-10-16",
+    event_end: "2026-10-16",
+    event_date_precision: "month-only",
+  });
+});

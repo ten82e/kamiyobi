@@ -8156,6 +8156,15 @@ const Recommender = (() => {
    * 会期の曜日まで検索に入れると「金曜日」が締切の日で引けなくなる（2026-08-09 生成ビルドで
    * 実測: 131 件 → 398 件に膨らみ、大部分は会期が金曜に終わる行）。曜日は締切の日の語の
    * ままにして、会期で選ぶ人は一覧の「会期」順で並べ替える道がある（てびきに書く）。 */
+  function eventCertaintySearchText(value: unknown): string {
+    const tokens: Record<string, string> = {
+      会期未発表: "eventdateunannounced",
+      月のみ判明: "eventdatemonthonly",
+      日付未確認: "eventdateunverified",
+    };
+    return String(value ?? "").replace(/会期未発表|月のみ判明|日付未確認/g, (word) => tokens[word]);
+  }
+
   function eventDaySearchWords(row: unknown): string {
     const ev = ((row as { ed?: unknown } | null)?.ed || {}) as Record<string, unknown>;
     const words: string[] = [];
@@ -8165,11 +8174,7 @@ const Recommender = (() => {
       words.push(dayTermsJa(value), iso);
     });
 
-    eventCellJa({ ed: ev })
-      .split(" ")
-      .forEach((part) => {
-        if (/^\d{4}-\d{2}-\d{2}[（(][日月火水木金土][）)]$/u.test(part)) words.push(part);
-      });
+    words.push(eventCertaintySearchText(eventCellJa({ ed: ev })));
     return words.filter(Boolean).join(" ");
   }
 
@@ -8515,19 +8520,36 @@ const Recommender = (() => {
     if (Array.isArray(ed.event_segments) && ed.event_segments.length) {
       return ed.event_segments
         .map((part: Record<string, unknown>) => {
-          const span = eventCellJa({ ed: { event_start: part.start, event_end: part.end } });
+          const span = eventCellJa({
+            ed: {
+              event_start: part.start,
+              event_end: part.end,
+              event_date_precision: ed.event_date_precision,
+            },
+          });
           return span + (part.label ? `（${String(part.label)}）` : "");
         })
         .join(" / ");
     }
     const start = String(ed.event_start || "").trim();
     if (!start) return String(ed.date_text || "").trim();
+    const precision = String(ed.event_date_precision || "");
+    if (precision === "not-announced") return "会期未発表";
+    const end = String(ed.event_end || "").trim();
+    if (precision === "month-only") {
+      const month = (date: string): string =>
+        /^\d{4}-\d{2}-\d{2}$/.test(date) ? date.slice(0, 7) : "";
+      const from = month(start);
+      const to = month(end);
+      const span = from && to && from !== to ? `${from} 〜 ${to}` : from || to;
+      return span ? `${span}（月のみ判明）` : "開催月のみ判明（日付未確認）";
+    }
     const withDay = (date: string): string => {
       const day = weekdayJaFromDate(date);
       return day ? `${date}(${day})` : date;
     };
-    const end = String(ed.event_end || "").trim();
-    return end && end !== start ? `${withDay(start)} 〜 ${withDay(end)}` : withDay(start);
+    const span = end && end !== start ? `${withDay(start)} 〜 ${withDay(end)}` : withDay(start);
+    return precision === "unverified" ? `${span}（日付未確認）` : span;
   }
 
   function csvDeadlineCells(row: Record<string, unknown>, nowMs: number): string[] {
@@ -12716,6 +12738,7 @@ const Recommender = (() => {
   );
 
   function queryTokenGroups(query: unknown, nowMs?: number): string[][] {
+    if (typeof query === "string") query = eventCertaintySearchText(query);
     if (typeof query === "string" && CATEGORY_CHIP_HEADS_JA.length) {
       query = query.replace(CATEGORY_CHIP_TAIL, "$1");
     }

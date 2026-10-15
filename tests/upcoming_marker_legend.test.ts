@@ -261,6 +261,12 @@ describe("表だけで出張の段取りを決められるよう、会期列を�
       const value = cells[7];
       if (value === "未確認") unknown += 1;
       else if (SPAN.test(value)) dated += 1;
+      else if (
+        /^(?:\d{4}-\d{2}(?: 〜 \d{4}-\d{2})?（月のみ判明）|会期未発表|\d{4}-\d{2}-\d{2}\([日月火水木金土]\)(?: 〜 \d{4}-\d{2}-\d{2}\([日月火水木金土]\))?（日付未確認）)(?:（推定）)?$/.test(
+          value,
+        )
+      )
+        unknown += 1;
       else expect.fail(`想定外の会期の値: ${JSON.stringify(value)}`);
     }
     expect(dated, "会期の日付が入った行が 1 行もない（空振りの検査になる）").toBeGreaterThan(0);

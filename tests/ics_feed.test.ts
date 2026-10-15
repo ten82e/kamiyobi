@@ -1023,6 +1023,12 @@ describe("会期を出張の段取りに使えるよう、予定の本文に書�
       const value = line.slice("会期: ".length);
       if (value === Recommender.unconfirmedLabelJa()) unknown += 1;
       else if (
+        /^(?:\d{4}-\d{2}(?: 〜 \d{4}-\d{2})?（月のみ判明）|会期未発表|\d{4}-\d{2}-\d{2}\([日月火水木金土]\)(?: 〜 \d{4}-\d{2}-\d{2}\([日月火水木金土]\))?（日付未確認）)(?:（推定）)?$/.test(
+          value,
+        )
+      )
+        unknown += 1;
+      else if (
         /^\d{4}-\d{2}-\d{2}\([日月火水木金土]\)( 〜 \d{4}-\d{2}-\d{2}\([日月火水木金土]\))?(?:（推定）)?$/.test(
           value,
         )

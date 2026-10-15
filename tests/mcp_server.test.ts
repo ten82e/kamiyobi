@@ -2684,10 +2684,13 @@ it("list_upcoming に会期（開催）の行を出す（第 910 回）", async 
   const 行 = text
     .split("\n")
     .slice(text.split("\n").findIndex((l) => l.includes("開催（会期の行）")) + 1)
-    .filter((l) => l.startsWith("- 20"));
+    .filter((l) => l.startsWith("- 20") || l.startsWith("- 会期未発表"));
   expect(行.length, `開催の行が ${件} 件と違ふ`).toBe(Number(件));
   /* 各行は会期を持つ（`- 2026-10-11(土) 〜 2026-10-15(木) | 会議名（key: …）`）。 */
-  expect(行[0], "会期の行の形が違う").toMatch(/^- 20\d\d-\d\d-\d\d\(.\).*\| .+（key: [^）]+）/u);
+  for (const row of 行)
+    expect(row, "会期の行の形が違う").toMatch(
+      /^- (?:20\d\d-\d\d-\d\d\([日月火水木金土]\)(?: 〜 20\d\d-\d\d-\d\d\([日月火水木金土]\))?(?:（日付未確認）)?|20\d\d-\d\d(?: 〜 20\d\d-\d\d)?（月のみ判明）|会期未発表) \| .+（key: [^）]+）/u,
+    );
   /* 締切の行も出ている（開催の節を足しても、締切の行は減らして居ない）。 */
   expect(text, "締切の行が見えない").toMatch(/^20\d\d-\d\d-\d\d/mu);
 });

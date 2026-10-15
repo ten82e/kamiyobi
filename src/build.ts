@@ -3308,14 +3308,24 @@ export function sessionSpanJa(
 }
 
 export function editionSessionJa(ed: Edition): string {
+  if (!ed.event_start && !ed.event_segments?.length) return "";
   if (ed.event_segments?.length)
     return ed.event_segments
-      .map(
-        (part) =>
-          `${sessionSpanJa(part.start, part.end, ed.estimated)}${part.label ? `（${part.label}）` : ""}`,
-      )
+      .map((part) => {
+        const text = Recommender.eventCellJa({
+          ed: {
+            event_start: part.start,
+            event_end: part.end,
+            event_date_precision: ed.event_date_precision,
+          },
+        });
+        return `${text}${ed.estimated ? "（推定）" : ""}${part.label ? `（${part.label}）` : ""}`;
+      })
       .join(" / ");
-  return sessionSpanJa(ed.event_start, ed.event_end, ed.estimated);
+  const text = Recommender.eventCellJa({
+    ed: { ...ed, event_start: fmtDate(ed.event_start), event_end: fmtDate(ed.event_end) },
+  });
+  return text && ed.estimated ? `${text}（推定）` : text;
 }
 
 export function icsEventRows(
@@ -3846,10 +3856,16 @@ export function toUpcomingMd(
       } else {
         left = `開催中(残り${(endDay - today.getTime()) / DAY_MS + 1}日)`;
       }
-      // 会期も曜日を添える（出張・会場押さえは曜日で見込むため）。
-      const startText = `${fmtDate(start)}${calendarDayJa(start) ? `(${calendarDayJa(start)})` : ""}`;
-      const endText = `${fmtDate(end)}${calendarDayJa(end) ? `(${calendarDayJa(end)})` : ""}`;
-      const when = end.getTime() !== start.getTime() ? `${startText} 〜 ${endText}` : startText;
+      if (["month-only", "unverified", "not-announced"].includes(ed.event_date_precision || "")) {
+        left = "日付未確認";
+      }
+      const when = Recommender.eventCellJa({
+        ed: {
+          event_start: fmtDate(start),
+          event_end: fmtDate(end),
+          event_date_precision: ed.event_date_precision,
+        },
+      });
       rows.push(
         `| ${when} | ${left} | ${name} | ${escapeMdCell(rec.kind_note ? `開催（${rec.kind_note}）` : "開催")} | - | ${ed.estimated ? "推定" : ""} | ${placeEscaped} | ${when} |  |`,
       );

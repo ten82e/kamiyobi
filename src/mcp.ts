@@ -1502,14 +1502,12 @@ function listUpcoming(
 function 開催の節(行: UpcomingEventRow[], page: UpcomingEventRow[], remaining: number): string[] {
   if (!行.length) return [];
   const 日 = (ms: number): string => new Date(ms).toISOString().slice(0, 10);
-  const 曜日 = (ms: number): string =>
-    ["日", "月", "火", "水", "木", "金", "土"][new Date(ms).getUTCDay()] ?? "";
   return [
     "",
     `開催（会期の行）: ${行.length} 件（同じ窓の会期です。画面の一覧とカレンダーには出ない物で、upcoming.md と同じ窓です。会議名は年を添えた形、開催地は締切の行と同じ日本語表記にします）`,
     ...page.map(
       (r) =>
-        `- ${日(r.開始)}(${曜日(r.開始)}) ${r.終了 === r.開始 ? "" : `〜 ${日(r.終了)}(${曜日(r.終了)}) `}` +
+        `- ${Recommender.eventCellJa({ ed: { event_start: 日(r.開始), event_end: 日(r.終了), event_date_precision: r.event_date_precision } })} ` +
         `| ${r.会議}（key: ${r.key}${r.版 ? `・${r.版}` : ""}）${r.開催地 ? ` | ${r.開催地}` : ""}${r.link ? ` ${r.link}` : ""}`,
     ),
     ...(remaining ? [`- ほか ${remaining} 件`] : []),
