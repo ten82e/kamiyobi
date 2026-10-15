@@ -4363,7 +4363,7 @@ it("list_upcoming の件数は、その窓の事实と合う（第 990 回）", 
     let n = 0;
     for (const c of (收錄.conferences ?? []) as Array<Record<string, unknown>>) {
       for (const e of (c.editions ?? []) as Array<Record<string, unknown>>) {
-        if (e.estimated === true) continue;
+        if (e.estimated === true || e.event_date_precision === "not-announced") continue;
         const segs =
           Array.isArray(e.event_segments) && (e.event_segments as unknown[]).length
             ? (e.event_segments as Array<Record<string, unknown>>)

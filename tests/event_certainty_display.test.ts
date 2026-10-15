@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import Recommender from "../site/recommender.ts";
-import { editionSessionJa, recordsOf, toUpcomingMd } from "../src/build.ts";
+import { editionSessionJa, recordsOf, toJson, toUpcomingMd } from "../src/build.ts";
 import { conferencesFromJson } from "../src/model.ts";
 
 const start = "2028-05-01";
@@ -13,6 +13,43 @@ const cases = [
 ] as const;
 
 describe("event certainty in human-readable dates", () => {
+  it("preserves not-announced when serializing editions that retain old segments", () => {
+    const precision = "not-announced";
+    const segments = [{ start, end, label: "オンライン" }];
+    const confs = conferencesFromJson({
+      conferences: [
+        {
+          key: "retained",
+          title: "Retained",
+          editions: [
+            {
+              id: "retained28",
+              year: 2028,
+              event_start: start,
+              event_end: end,
+              event_date_precision: precision,
+              event_segments: segments,
+              deadlines: [],
+            },
+          ],
+        },
+      ],
+    });
+    expect(toJson(confs, {}, new Date("2028-03-01"), {})).toMatchObject({
+      conferences: [
+        {
+          editions: [
+            {
+              event_date_precision: precision,
+              event_segments: segments,
+              event_start: start,
+              event_end: end,
+            },
+          ],
+        },
+      ],
+    });
+  });
   it.each(cases)(
     "retains %s when dates exist in every published display",
     (precision, expected) => {
@@ -53,6 +90,10 @@ describe("event certainty in human-readable dates", () => {
       for (const now of ["2028-04-30T12:00:00Z", "2028-05-01T12:00:00Z", "2028-05-15T12:00:00Z"]) {
         const md = toUpcomingMd(recordsOf(confs), new Date(now), 60);
         const line = md.split("\n").find((line) => line.includes("Fresh meeting"));
+        if (precision === "not-announced") {
+          expect(line, "未発表の会期を日付で絞った一覧に出さない").toBeUndefined();
+          continue;
+        }
         expect(line).toBeDefined();
         expect(line).toContain(`| ${expected} |`);
         if (precision !== "exact-range") {

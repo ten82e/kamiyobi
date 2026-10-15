@@ -40,6 +40,28 @@ const raw = {
     ],
   })),
 };
+for (const segmented of [false, true]) {
+  const conf = {
+    key: segmented ? "unannounced-segments" : "unannounced-dates",
+    title: segmented ? "unannounced-segments" : "unannounced-dates",
+    categories: ["systems"],
+    editions: [
+      {
+        id: "unannounced",
+        year: 2028,
+        event_start: "2028-02-17",
+        event_end: "2028-02-29",
+        event_date_precision: "not-announced",
+        estimated: false,
+        deadlines: [],
+        ...(segmented
+          ? { event_segments: [{ start: "2028-02-20", end: "2028-02-29", label: "旧案内" }] }
+          : {}),
+      },
+    ],
+  };
+  raw.conferences.push(conf);
+}
 mkdirSync(join(root, "data"));
 writeFileSync(join(root, "data/snapshot.json"), JSON.stringify(raw));
 writeFileSync(
@@ -85,6 +107,21 @@ const cases = [
 ] as const;
 
 describe("month-only date windows without invented event dates", () => {
+  it("retains unannounced edition details without presenting old dates as known schedules", () => {
+    for (const conf of raw.conferences.filter((c) => c.key.startsWith("unannounced-"))) {
+      const saved = JSON.stringify(conf);
+      const entries = Recommender.upcomingEditionsOf(
+        conf,
+        "",
+        Date.parse("2028-02-20T00:00:00Z"),
+        10,
+      );
+      expect(entries).toHaveLength(1);
+      expect(Recommender.laterEditionLineJa(entries[0])).toContain("会期未発表");
+      expect(Recommender.laterEditionLineJa(entries[0])).not.toMatch(/2028-02-(?:17|20|29)/);
+      expect(JSON.stringify(conf)).toBe(saved);
+    }
+  });
   it.each(cases)("keeps the possible month at %s in Markdown and real MCP", (now, expected) => {
     const md = toUpcomingMd(records, new Date(now), 1);
     const rows = md.split("\n").filter((line) => line.startsWith("| ") && line.includes("2028"));
@@ -149,7 +186,20 @@ describe("month-only date windows without invented event dates", () => {
         expect(md).not.toContain("month-only 2028");
         expect(html).not.toContain("month-only 2028");
       }
+      expect(md).not.toContain("unannounced-dates 2028");
+      expect(md).not.toContain("unannounced-segments 2028");
+      expect(html).not.toContain("unannounced-dates 2028");
+      expect(html).not.toContain("unannounced-segments 2028");
       const data = JSON.parse(readFileSync(join(root, "out/data.json"), "utf8"));
+      for (const key of ["unannounced-dates", "unannounced-segments"]) {
+        expect(
+          data.conferences.find((c: { key: string }) => c.key === key).editions[0],
+        ).toMatchObject({
+          event_start: "2028-02-17",
+          event_end: "2028-02-29",
+          event_date_precision: "not-announced",
+        });
+      }
       expect(
         data.conferences.find((c: { key: string }) => c.key === "month-only").editions[0],
       ).toMatchObject({

@@ -1349,7 +1349,7 @@ export function 開催の行(days: number, now: number): UpcomingEventRow[] {
         link?: unknown;
       };
       /* 推定の版は入れない（画面の表と同じ規則 – 第 299 回）。 */
-      if (ed.estimated === true) continue;
+      if (ed.estimated === true || ed.event_date_precision === "not-announced") continue;
 
       const 区分: Array<{ start?: unknown; end?: unknown; label?: unknown }> =
         Array.isArray(ed.event_segments) && ed.event_segments.length

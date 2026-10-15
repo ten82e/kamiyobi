@@ -1004,14 +1004,15 @@ export function toJson(
         link: officialUrl,
         place: ed.place,
         date_text: ed.date_text,
-        event_date_precision: ed.event_segments?.length
-          ? "split-dates"
-          : eventDatePrecisionOf(
-              ed.event_date_precision,
-              ed.date_text,
-              ed.event_start,
-              ed.event_end,
-            ),
+        event_date_precision:
+          ed.event_segments?.length && ed.event_date_precision !== "not-announced"
+            ? "split-dates"
+            : eventDatePrecisionOf(
+                ed.event_date_precision,
+                ed.date_text,
+                ed.event_start,
+                ed.event_end,
+              ),
         ...(ed.event_segments !== undefined ? { event_segments: ed.event_segments } : {}),
         ...(ed.event_review !== undefined ? { event_review: ed.event_review } : {}),
         event_start: ed.event_start ? fmtDate(ed.event_start) : null,
@@ -3846,7 +3847,12 @@ export function toUpcomingMd(
         fmtDate(end),
         ed.event_date_precision,
       );
-      if (!bounds || bounds[0] > horizonDay.getTime() || today.getTime() > bounds[1]) {
+      if (
+        ed.event_date_precision === "not-announced" ||
+        !bounds ||
+        bounds[0] > horizonDay.getTime() ||
+        today.getTime() > bounds[1]
+      ) {
         continue;
       }
       let left: string;
