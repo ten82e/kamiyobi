@@ -2749,7 +2749,7 @@ it("道具の說明が、実際に出ているものを名指す（第 914 回�
   const 必要な語: Array<[string, string[]]> = [
     ["search_deadlines", ["0 件", "within_days", "scope", "kinds"]],
     ["list_upcoming", ["開催", "kind", "days"]],
-    ["venue_info", ["key", "次の投稿締切", "版"]],
+    ["venue_info", ["key", "次の投稿締切", "版", "主題"]],
     ["explain_word", ["0 件", "案内"]],
     ["recommend_venues", ["一致評価", "選定理由", "候補"]],
     ["collection_stats", ["分野別の会議数", "データ源"]],
@@ -3431,6 +3431,141 @@ it("国内の行に「国内」の札を付ける – 國際会議の日本開�
   }
   expect(正本の國內, "國內の行が無い（この検査が空振り）").toBeGreaterThan(5);
   expect(札の付いた行, "札の數が判定と違ふ").toBe(正本の國內);
+});
+
+/* 畫面は行の詳細を開いた人の「主題: 」に、分野より詳しい粒度の札を出す
+ * （`app.ts` が `Recommender.topicTagsJa` を呼ぶ）。MCP の venue_info は一句も出して
+ * 居なかつたので、「この學會は何を扱ふ處か」を AI が答えられなかつた
+ * （實測 2026-10-16: 收録 139 會社が主題を持つ・1,203 行）。 */
+it("venue_info の頭は、行の詳細の「主題」も言ふ（第 1103 回）", async () => {
+  const R = (await import("../site/recommender.ts")).default;
+  /* 語も共通の正本から取る（畫面の詳細も MCP も寫さない）。 */
+  expect(readFileSync(join(REPO_ROOT, "src", "mcp.ts"), "utf8"), "主題の札を寫して居る").toContain(
+    "Recommender.topicTagsJa(",
+  );
+  expect(siteRuntime("app.js"), "畫面が正本を呼んで居ない").toContain("Recommender.topicTagsJa(");
+
+  /* 收録から、主題を持つ會議と持たない會議を集める。 */
+  const 行たち = R.candidateRows(
+    JSON.parse(readFileSync(join(REPO_ROOT, "data", "snapshot.json"), "utf8")),
+  ) as unknown as Array<{ conf?: { key?: unknown; tags?: string[] } }>;
+  const 主題ある = new Map<string, string>();
+  const 主題なし = new Set<string>();
+  for (const r of 行たち) {
+    const key = String(r.conf?.key ?? "");
+    if (!key) continue;
+    const 札 = R.topicTagsJa(r.conf?.tags ?? []);
+    if (札.length) 主題ある.set(key, 札.join("・"));
+    else 主題なし.add(key);
+  }
+  expect(主題ある.size, "主題を持つ會議が無い（この検査が空振り）").toBeGreaterThan(10);
+  expect(主題なし.size, "主題の無い會議が無い（この檢査が片側しか見て居ない）").toBeGreaterThan(10);
+
+  /* **實物** – 主題を持つ會議は、正本と同じ札を同じ順で言ふ。 */
+  for (const [key, 期待] of [...主題ある.entries()].slice(0, 6)) {
+    const 答 = await call("venue_info", { key, scope: "all" });
+    const 行 = 答.split("\n").find((l) => l.startsWith("主題: ")) ?? "";
+    expect(行, `${key} の主題が正本と違ふ`).toBe(`主題: ${期待}`);
+    /* 分野の行の後（畫面の詳細と同じ並び）。 */
+    const 順 = 答.split("\n");
+    const 分野の位置 = 順.findIndex((l) => l.startsWith("分野: "));
+    const 主題の位置 = 順.findIndex((l) => l.startsWith("主題: "));
+    expect(主題の位置, `${key} の主題の行が讀めない`).toBeGreaterThan(0);
+    expect(主題の位置, `${key} の主題が分野より前に出て居る`).toBeGreaterThan(分野の位置);
+  }
+
+  /* 主題を持たない會議には行を出さない（畫面と同じ – 空の「主題: 」を置かない）。 */
+  for (const key of [...主題なし].slice(0, 4)) {
+    const 答 = await call("venue_info", { key, scope: "all" });
+    expect(答, `${key} に主題の行を出した`).not.toContain("主題: ");
+  }
+});
+
+/* 畫面は會議名の下に**正式名**を出す（一覧のセル・行の詳細の兩方）。MCP は一句も
+ * 出して居なかつたので、「ICDE と何の略？」に AI が答えられなかつた
+ * （實測 2026-10-16: 收録 5,069 行のうち 5,039 行が正式名を持つ）。 */
+it("venue_info の頭と行に、正式名を持つ（第 1104 回）", async () => {
+  const R = (await import("../site/recommender.ts")).default;
+  /* 畫面も正式名を出す（一覧のセル・行の詳細の兩方）。 */
+  const 畫面 = readFileSync(join(REPO_ROOT, "site", "app.ts"), "utf8");
+  expect(畫面, "一覧のセルが正式名を出して居ない").toContain("line(c2, r.conf.full_name");
+  expect(畫面, "行の詳細が正式名を出して居ない").toContain(
+    '$("drawerFullName").textContent = r.conf.full_name',
+  );
+
+  /* 收録の行の大部分が正式名を持つ（此の檢査が空振りしない爲の前提）。 */
+  const 行たち = R.candidateRows(
+    JSON.parse(readFileSync(join(REPO_ROOT, "data", "snapshot.json"), "utf8")),
+  ) as unknown as Array<{ conf?: { key?: unknown; title?: unknown; full_name?: unknown } }>;
+  const 正式名の見本 = new Map<string, string>();
+  const 同し = new Map<string, string>();
+  let 正式名あり = 0;
+  for (const r of 行たち) {
+    const 正式名 = String(r.conf?.full_name ?? "").trim();
+    const 略號 = String(r.conf?.title ?? "").trim();
+    const key = String(r.conf?.key ?? "");
+    if (!key) continue;
+    if (正式名 && 正式名 !== 略號) {
+      正式名あり += 1;
+      if (正式名の見本.size < 6) 正式名の見本.set(key, 正式名);
+    } else if (正式名) 同し.set(key, 正式名);
+  }
+  expect(正式名あり, "正式名を持つ行がほぼ無い（この検査が空振り）").toBeGreaterThan(1000);
+  expect(同し.size, "略號と正式名が同じ會社が無い（此の檢査の片側が見えて居ない）").toBeGreaterThan(
+    0,
+  );
+
+  /* **實物** – venue_info の頭が、會議名のすぐ下に正式名を言ふ。 */
+  for (const [key, 正式名] of 正式名の見本) {
+    const 答 = await call("venue_info", { key, scope: "all" });
+    const 順 = 答.split("\n");
+    const 會議の位置 = 順.findIndex((l) => l.startsWith("会議: "));
+    const 正式名の位置 = 順.indexOf(`正式名: ${正式名}`);
+    expect(正式名の位置, `${key} の正式名が出て居ない`).toBeGreaterThan(0);
+    expect(正式名の位置, `${key} の正式名が會議名の下に無い`).toBe(會議の位置 + 1);
+  }
+
+  /* 略號と正式名が同じ會社では重ねて書かない（畫面と同じ – `full_name` は持つ）。 */
+  const 同しのkey = [...同し.keys()][0]!;
+  const 答 = await call("venue_info", { key: 同しのkey, scope: "all" });
+  expect(答, `${同しのkey} に正式名の行を出した（略號と同じ）`).not.toContain("正式名: ");
+  expect(答, `${同しのkey} の會議名が出て居ない`).toContain("会議: ");
+
+  /* 行の方でも正式名を持つ（文字は 7 欄の形を崩さない侭、機械可読で）。 */
+  const 行检 = await call("search_deadlines", { query: "ICDE", limit: 1, scope: "all" });
+  expect(行检).toContain("ICDE");
+  const 構造 = spawnSync(
+    process.execPath,
+    [join(REPO_ROOT, "src", "mcp.ts"), "search", "ICDE", "1", "--limit", "1", "--json"],
+    { cwd: REPO_ROOT, encoding: "utf8", timeout: 120_000 },
+  );
+  expect(構造.status, 構造.stderr).toBe(0);
+  const 頁 = JSON.parse(構造.stdout.trim()) as { rows?: Array<{ full_name?: string | null }> };
+  expect(頁.rows?.[0]?.full_name, "行に正式名が無い").toBeTruthy();
+});
+
+/* 推薦の方でも正式名を持つ。畫面の推薦カードは會議名の下に正式名を出す（一覧のセルと
+ * 同じ）。締切の行が null の候補（締切不明・常時受付）でも正式名が讀めるやうに、
+ * 行自体に持たせる（締切の行の中だけに入れると、そこが空の候補で消える）。 */
+it("推薦の行にも正式名を持つ（第 1105 回）", async () => {
+  const 推薦 = spawnSync(
+    process.execPath,
+    [join(REPO_ROOT, "src", "mcp.ts"), "recommend", "分散システム", "3", "--limit", "3", "--json"],
+    { cwd: REPO_ROOT, encoding: "utf8", timeout: 180_000 },
+  );
+  expect(推薦.status, 推薦.stderr).toBe(0);
+  const 頁 = JSON.parse(推薦.stdout.trim()) as {
+    rows?: Array<{ title?: string; full_name?: string | null; venue_key?: string }>;
+  };
+  const 行 = 頁.rows ?? [];
+  expect(行.length, "推薦の行が出て居ない（この検査の前提が崩れた）").toBeGreaterThan(0);
+  for (const r of 行) {
+    expect(r.full_name, `${r.venue_key} の正式名が無い`).toBeTruthy();
+    expect(r.full_name, `${r.venue_key} の正式名が略號と同じ`).not.toBe(r.title);
+  }
+  /* 締切の行が null の候補が有っても正式名は殘る（行に入れてあるので）。 */
+  const 締切なし = 行.filter((r) => r.full_name && r.full_name !== r.title);
+  expect(締切なし.length, "正式名の讀める行が無い（この検査が空振り）").toBeGreaterThan(0);
 });
 
 it("--json でも、構造化を伴はない案内を其の侭出す（第 1099 回）", async () => {

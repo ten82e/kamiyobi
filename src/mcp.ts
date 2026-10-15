@@ -40,6 +40,8 @@ interface Row {
     link?: string;
     categories?: string[];
     rank?: unknown;
+    /** 主題のタグ（`machine-learning` など）。畫面の行の詳細の「主題」と同じ正本から組む。 */
+    tags?: string[];
   };
   /** ランクの対（`ccf:A`・`core:A*` の形）。画面のランク列と同じ正本から組む。 */
   rankPairs?: string[];
@@ -946,6 +948,11 @@ export function structuredDeadline(r: Row, now: number): Record<string, unknown>
   return {
     venue_key: r.conf.key,
     title: r.conf.title,
+    /* 正式名。畫面の一覧は會議名の下に（正式名が略稱と違ふ時だけ）出す – 實測
+     * 2026-10-16: 收録 5,069 行のうち 5,039 行が正式名を持つのに、MCP は一句も
+     * 出して居なかつた。「ICDE と何の略？」に AI が答えられない狀態だつた。
+     * 行の文字は 7 欄の形を崩さない侭、此方で機械が讀める形で持つ。 */
+    full_name: r.conf.full_name ?? null,
     edition_id: r.ed.id,
     year: r.ed.year ?? null,
     kind: r.kind,
@@ -1612,6 +1619,15 @@ function venueInfo(args: { key?: unknown; name?: unknown; scope?: unknown }, now
       `（${名}・${list.length} 行から）` +
       (key && name ? "\n注: name は key と共に与えられたので見ていません" : ""),
     `会議: ${一つ.conf.title}（key: ${一つ.conf.key}${一つ.conf.acronym ? `・${一つ.conf.acronym}` : ""}）`,
+    /* 正式名も言ふ（**會議名のすぐ下** – 畫面の一覧のセルと行の詳細がどちらも
+     * 略稱の下に正式名を出すその順）。實測 2026-10-16: 收録 5,039 行が正式名を持つ
+     * のに、MCP は一句も出して居なかつた – 「ICDE と何の略？」に AI が答えられない。
+     * 略稱と正式名が同じ行では出さない（畫面と同じ – 重ねて書かない）。 */
+    ...(() => {
+      const 正式名 = String(一つ.conf.full_name ?? "").trim();
+      if (!正式名 || 正式名 === 一つ.conf.title) return [];
+      return [`正式名: ${正式名}`];
+    })(),
     ...(scopeErr ? [scopeErr] : []),
     `版: ${版.map((id) => (行を持つ版.has(id) ? id : `${id}(会期だけ)`)).join(" / ")}`,
 
@@ -1620,8 +1636,17 @@ function venueInfo(args: { key?: unknown; name?: unknown; scope?: unknown }, now
         .map((key) => String(Recommender.categoryLabelJa(key) ?? key))
         .join("・") || String(Recommender.unconfirmedLabelJa() ?? "未確認")
     }`,
-    /* ランクも言う（一つの会議を調べた人が、次の一手を決めるのに要る – 画面の列と同じ語）。 */
+    /* ランクも言ふ（一つの会議を調べた人が、次の一手を決めるのに要る – 画面の列と同じ語）。 */
     `ランク: ${ランクJa(一つ)}`,
+    /* **主題**も言ふ。畫面は行の詳細を開いた人の「主題: 」に同じ札を出す
+     * （`app.ts` が `Recommender.topicTagsJa` を呼ぶ – 分野より詳しい粒度）。此を言はないと、
+     * 「この學會は何を扱ふ處か」をAIが答えられない – 實測 2026-10-16: 收録 139 会議が
+     * 主題を持つ（1,203 行）のに、MCP はvenue_infoでも行でも一言も出して居なかつた。
+     * 無い會議では行ごと出さない（畫面と同じ – 空の「主題: 」を置かない）。 */
+    ...(() => {
+      const 主題 = (Recommender.topicTagsJa(一つ.conf.tags) ?? []).filter(Boolean);
+      return 主題.length ? [`主題: ${主題.join("・")}`] : [];
+    })(),
     /* その会議の締切が、どの位確かめられているか（行ごとの札だけでは、全体の偏りが分からん）。 */
     `確認: ${確認の內譯(hit)}`,
     投稿の案內,
@@ -2045,6 +2070,9 @@ async function recommendVenues(
       rank: offset + index + 1,
       venue_key: r.venueKey,
       title: r.row.conf.title,
+      /* 正式名。畫面の推薦カードは會議名の下に正式名を出す（一覧のセルと同じ）– 締切の
+       * 行が null の候補（締切不明・常時受付）でも正式名が讀めるやうに、此に持つ。 */
+      full_name: r.row.conf.full_name ?? null,
       fit: {
         score: r.fit.score,
         confidence: r.fit.confidence,
@@ -2238,7 +2266,7 @@ const TOOLS = [
   {
     name: "venue_info",
     description:
-      "会議の開催回、締切、会期、ランクを返す。key は小文字の識別子、name は略称・正式名・名前の一部。版の識別子も関連する会議へ案内する。曖昧な名前は候補を示し、別会議の開催回を混ぜない。scope の既定は all で、過ぎた分も全部出る。今後の物から並べ、次の投稿締切も示す。返す行の形: 会議の要約に続いて、日時 | 種別 | 確認状態（ある場合）| 会議名（版の識別子）| ランク | 会期 | 開催地 URL。",
+      "会議の開催回、締切、会期、ランク、主題、正式名を返す。key は小文字の識別子、name は略称・正式名・名前の一部。版の識別子も関連する会議へ案内する。曖昧な名前は候補を示し、別会議の開催回を混ぜない。scope の既定は all で、過ぎた分も全部出る。今後の物から並べ、次の投稿締切も示す。主題は分野より詳しい札で、収録にある会議だけに出します（画面の行の詳細の「主題」と同じ）。返す行の形: 会議の要約に続いて、日時 | 種別 | 確認状態（ある場合）| 会議名（版の識別子）| ランク | 会期 | 開催地 URL。",
     inputSchema: {
       type: "object",
       properties: {

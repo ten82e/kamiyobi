@@ -4002,7 +4002,7 @@ export function toLlmsTxt(
     "他のツールでは `days`・`key`・`name`・`word`・`paper` を使います。各ツールの inputSchema で受け付ける項目と既定値を確認してください。",
     "収録 snapshot と公開物はビルド時の統合・選択で件数が異なる場合があります。収録全体と初期一覧を同じ範囲として比較しないでください。",
     "`scope: screen` は初期一覧、`scope: all` は収録全体です。初期カタログがない場合は全体へ切り替え、その旨を返します。画面と件数を比べる場合は、期間・種別・推定・過去表示を揃えてください。",
-    "`search_deadlines` の structuredContent は total・rows・next_offset を持ちます。続きは同じ条件で next_offset を offset に渡します。日付のみの行の utc・jst は null です。推定期間、確認状態、投稿トラックは別の項目です。行に `domestic`（国内の学会か。開催地が日本とは別で、日本で開かれる国際会議は false）を持たせてあります。行のテキストでは同じ判定を「国内」の札で出します。",
+    "`search_deadlines` の structuredContent は total・rows・next_offset を持ちます。続きは同じ条件で next_offset を offset に渡します。日付のみの行の utc・jst は null です。推定期間、確認状態、投稿トラックは別の項目です。行に `domestic`（国内の学会か。開催地が日本とは別で、日本で開かれる国際会議は false）と `full_name`（正式名。画面の一覧が会議名の下に出すのと同じ）を持たせてあります。行のテキストでは `domestic` を「国内」の札で出します。",
     "0件では画面と同じ案内を使い、次の一手まで返す設計です。入力や結果の切り詰めは黙らない方針で、採択率・参加費・投稿要件など未収録の情報を推測して答えません。",
     "",
     "## サイト（index.html）の日本語での引き方",
