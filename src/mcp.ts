@@ -1636,7 +1636,15 @@ function venueInfo(
   const name = 文字として讀む(args.name);
   if (!key && !name) return "key（会議の識別子）か name（会議名の一部）をください。";
   /* `名` は使はない（この道具は会議の名を自分で組み立てる）ので受け取らない。 */
-  const { list, 生成, 名 } = pick(args.scope ?? "all");
+  const { list, 生成, 名, 窓が無い } = pick(args.scope ?? "all");
+  const context = {
+    scope: 名 === "収録の全体" ? "all" : "screen",
+    catalog_fallback: 窓が無い,
+    generated_at: 生成 ?? null,
+    event_scope: "all",
+    event_generated_at: snapshot().snapshot_metadata?.generated_at ?? null,
+    evaluated_at: new Date(now).toISOString(),
+  };
   const 古さ = 古さの斷り(生成, now);
 
   const 求 = venueLookupText(name);
@@ -1757,9 +1765,7 @@ function venueInfo(
         latest_past_submission: null,
         rows: [],
         editions,
-        event_scope: "all",
-        event_generated_at: snapshot().snapshot_metadata?.generated_at ?? null,
-        evaluated_at: new Date(now).toISOString(),
+        ...context,
       });
       return [
         `問はた会議（${String(在る.acronym || 在る.title || 在る.key)}・key: ${String(在る.key)}）は収録に在りますが、**締切の行が 1 本もありません**（版 ${版々.length} 件）。` +
@@ -1888,9 +1894,7 @@ function venueInfo(
     latest_past_submission: 直近の過去 ? structuredDeadline(直近の過去, now) : null,
     rows: ordered.map((row) => structuredDeadline(row, now)),
     editions: schedules,
-    event_scope: "all",
-    event_generated_at: snapshot().snapshot_metadata?.generated_at ?? null,
-    evaluated_at: new Date(now).toISOString(),
+    ...context,
   });
   return [
     斷り +
