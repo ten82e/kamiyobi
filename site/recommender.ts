@@ -8612,6 +8612,7 @@ const Recommender = (() => {
     const record = conf as { editions?: Array<Record<string, unknown>> };
     const words: string[] = [];
     for (const ed of record.editions || []) {
+      if (ed.estimated === true) continue;
       const segments = Array.isArray(ed.event_segments) ? ed.event_segments : [];
       const start = String(ed.event_start || segments[0]?.start || "");
       if (
