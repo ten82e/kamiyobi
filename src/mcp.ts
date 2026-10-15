@@ -1521,7 +1521,48 @@ function venueLookupText(value: unknown): string {
     .trim();
 }
 
-function venueInfo(args: { key?: unknown; name?: unknown; scope?: unknown }, now: number): string {
+function venueSchedules(conf: { key?: unknown; editions?: unknown[] }) {
+  return (conf.editions ?? []).flatMap((value) => {
+    if (!value || typeof value !== "object") return [];
+    const ed = value as Record<string, unknown>;
+    if (ed.estimated === true) return [];
+    const text = (value: unknown): string | null =>
+      typeof value === "string" && value.trim() ? value : null;
+    return [
+      {
+        edition_id: text(ed.id),
+        year: typeof ed.year === "number" ? ed.year : null,
+        event_start: text(ed.event_start),
+        event_end: text(ed.event_end),
+        event_date_precision: text(ed.event_date_precision),
+        event_segments: Array.isArray(ed.event_segments) ? ed.event_segments : [],
+        event_display:
+          Recommender.eventCellJa({ ed }) ||
+          (ed.event_date_precision === "not-announced" ? "会期未発表" : "会期未確認"),
+        place: text(ed.place),
+        place_ja: Recommender.placeJa(Recommender.placeWithPrefectureJa(ed.place)) || "未確認",
+        official_url: text(ed.link),
+      },
+    ];
+  });
+}
+
+function venueScheduleLines(editions: ReturnType<typeof venueSchedules>): string[] {
+  if (!editions.length) return [];
+  return [
+    "開催回の会期（推定を除く・過去の開催回も含む）:",
+    ...editions.map(
+      (ed) =>
+        `- ${ed.year ?? "年未確認"}（${ed.edition_id ?? "識別子未確認"}） | ${ed.event_display} | ${ed.place_ja}${ed.official_url ? ` ${ed.official_url}` : ""}`,
+    ),
+  ];
+}
+
+function venueInfo(
+  args: { key?: unknown; name?: unknown; scope?: unknown },
+  now: number,
+  receive?: (result: Record<string, unknown>) => void,
+): string {
   const key = 文字として讀む(args.key);
   const name = 文字として讀む(args.name);
   if (!key && !name) return "key（会議の識別子）か name（会議名の一部）をください。";
@@ -1600,9 +1641,9 @@ function venueInfo(args: { key?: unknown; name?: unknown; scope?: unknown }, now
         ...(古さ ? ["", 古さ] : []),
       ].join("\n");
     }
-    const 在る = key
-      ? 問はた全部[0]
-      : 收錄の會議.find((c) => {
+    const 在る候補 = key
+      ? 問はた全部
+      : 收錄の會議.filter((c) => {
           const ck = venueLookupText(c.key);
           const title = venueLookupText(c.title);
           const acronym = venueLookupText(c.acronym);
@@ -1615,16 +1656,24 @@ function venueInfo(args: { key?: unknown; name?: unknown; scope?: unknown }, now
               ck.includes(求))
           );
         });
+    if (在る候補.length > 1) {
+      return [
+        `「${name}」には ${在る候補.length} の会議が当たりました。key を指定してください:`,
+        ...在る候補.map((c) => `- ${String(c.title || c.key)}（key: ${String(c.key)}）`),
+      ].join("\n");
+    }
+    const 在る = 在る候補[0];
     if (在る) {
       const 版々 = Array.isArray(在る.editions) ? 在る.editions : [];
       const 會期あり = 版々.some((e) => {
         const ed = e as {
+          estimated?: unknown;
           event_start?: unknown;
           event_end?: unknown;
           event_date_precision?: unknown;
           event_segments?: Array<{ start?: unknown; end?: unknown }>;
         } | null;
-        if (!ed) return false;
+        if (!ed || ed.estimated === true) return false;
         const parts =
           Array.isArray(ed.event_segments) && ed.event_segments.length
             ? ed.event_segments
@@ -1634,9 +1683,20 @@ function venueInfo(args: { key?: unknown; name?: unknown; scope?: unknown }, now
         );
       });
       const link = String(在る.link ?? "").trim();
+      const editions = venueSchedules(在る);
+      receive?.({
+        venue_key: 在る.key,
+        deadline_total: 0,
+        rows: [],
+        editions,
+        event_scope: "all",
+        event_generated_at: snapshot().snapshot_metadata?.generated_at ?? null,
+        evaluated_at: new Date(now).toISOString(),
+      });
       return [
         `問はた会議（${String(在る.acronym || 在る.title || 在る.key)}・key: ${String(在る.key)}）は収録に在りますが、**締切の行が 1 本もありません**（版 ${版々.length} 件）。` +
           (會期あり ? EVENT_ONLY_NOTICE_JA : "会期も確認できていないので、どの一覧にも出ません。"),
+        ...venueScheduleLines(editions),
         ...(link ? [`公式ページ: ${link}`] : []),
         ...(古さ ? ["", 古さ] : []),
       ].join("\n");
@@ -1710,6 +1770,16 @@ function venueInfo(args: { key?: unknown; name?: unknown; scope?: unknown }, now
   const 會議の版 = (snapshot().conferences ?? []).find(
     (c: { key?: unknown }) => venueLookupText(c.key) === venueLookupText(一つ.conf.key),
   );
+  const schedules = venueSchedules(會議の版 ?? { editions: [] });
+  receive?.({
+    venue_key: 一つ.conf.key,
+    deadline_total: hit.length,
+    rows: hit.map((row) => structuredDeadline(row, now)),
+    editions: schedules,
+    event_scope: "all",
+    event_generated_at: snapshot().snapshot_metadata?.generated_at ?? null,
+    evaluated_at: new Date(now).toISOString(),
+  });
   const 行を持つ版 = new Set(hit.map((r) => r.ed.id));
   const 版 = [
     ...new Set([
@@ -1792,6 +1862,7 @@ function venueInfo(args: { key?: unknown; name?: unknown; scope?: unknown }, now
     /* その会議の締切が、どの位確かめられているか（行ごとの札だけでは、全体の偏りが分からん）。 */
     `確認: ${確認の內譯(hit)}`,
     投稿の案內,
+    ...venueScheduleLines(schedules.filter((ed) => !行を持つ版.has(ed.edition_id || ""))),
     "",
 
     /* 丸括弧の締めと件數がくつつく（「…早い順）過去は 18 件」）と讀みにくいので、
@@ -2417,7 +2488,7 @@ const TOOLS = [
   {
     name: "venue_info",
     description:
-      "会議の開催回、締切、会期、ランク、主題、正式名を返す。key は小文字の識別子、name は略称・正式名・名前の一部。版の識別子も関連する会議へ案内する。曖昧な名前は候補を示し、別会議の開催回を混ぜない。scope の既定は all で、過ぎた分も全部出る。今後の物から並べ、次の投稿締切も示す。主題は分野より詳しい札で、収録にある会議だけに出します（画面の行の詳細の「主題」と同じ）。返す行の形: 会議の要約に続いて、日時 | 種別 | 確認状態（ある場合）| 会議名（版の識別子）| ランク | 会期 | 開催地 URL。",
+      "会議の開催回、締切、会期、ランク、主題、正式名を返す。structuredContent の editions に推定を除く全開催回の会期・確かさ・公式URL、rows に締切を返す。key は小文字の識別子、name は略称・正式名・名前の一部。版の識別子も関連する会議へ案内する。曖昧な名前は候補を示し、別会議の開催回を混ぜない。scope の既定は all で、過ぎた分も全部出る。今後の物から並べ、次の投稿締切も示す。主題は分野より詳しい札で、収録にある会議だけに出します（画面の行の詳細の「主題」と同じ）。返す行の形: 会議の要約に続いて、日時 | 種別 | 確認状態（ある場合）| 会議名（版の識別子）| ランク | 会期 | 開催地 URL。",
     inputSchema: {
       type: "object",
       properties: {
@@ -2518,7 +2589,7 @@ async function callTool(
   refreshDataCaches();
   if (name === "search_deadlines") return searchDeadlines(args, now, receive);
   if (name === "list_upcoming") return listUpcoming(args, now, receive);
-  if (name === "venue_info") return venueInfo(args, now);
+  if (name === "venue_info") return venueInfo(args, now, receive);
   if (name === "explain_word") return explainWord(args, now);
   if (name === "recommend_venues") return recommendVenues(args, now, receive);
   if (name === "search_venues") {
