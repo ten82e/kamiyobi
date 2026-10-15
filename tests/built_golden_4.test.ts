@@ -2225,7 +2225,7 @@ it("過ぎた締切の印は、根拠があるときだけ「次回予定」と�
     tEvent: number;
     dateOnly: boolean;
     conf: unknown;
-    ed: { event_start?: string };
+    ed: { event_start?: string; event_date_precision?: string };
   };
   const rows = R.candidateRows(catalog) as unknown as TagRow[];
   const 過去 = rows.filter((r) => R.deadlineRowIsPast(r, at));
@@ -2255,7 +2255,12 @@ it("過ぎた締切の印は、根拠があるときだけ「次回予定」と�
     "次回が確認できない行に「次回予定」と書いている",
   ).toEqual([]);
   // 会期がまだ先の行を「次回予定」と呼ばない（その会は終わっていない）。
-  const 会期がこれから = 過去.filter((r) => Number.isFinite(r.tEvent) && r.tEvent >= at);
+  const 会期がこれから = 過去.filter(
+    (r) =>
+      Number.isFinite(r.tEvent) &&
+      r.tEvent >= at &&
+      ["exact-range", "single-day"].includes(r.ed.event_date_precision || ""),
+  );
   expect(
     会期がこれから.length,
     "会期がこれからの過去行が無く、この検査が空振りしている",
@@ -2293,6 +2298,8 @@ it("過ぎた締切の印は、根拠があるときだけ「次回予定」と�
   expect(R.pastDeadlineTagJa(会期がこれから行, now), "会期がこれからの行の印が違う").toBe(
     "締切済み（会期がこれから）",
   );
+  会期がこれから行.ed.event_date_precision = "month-only";
+  expect(R.pastDeadlineTagJa(会期がこれから行, now)).toBe("締切済み");
   // 幅を持つ行（時刻未確認）は「表示したより前に終わった可能性がある」の間は過ぎたと呼ばない。
   const 幅 = {
     t: Date.parse("2026-05-20T00:00:00Z"),

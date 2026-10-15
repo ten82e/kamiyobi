@@ -7924,15 +7924,37 @@ const Recommender = (() => {
       tEvent?: unknown;
       dateOnly?: unknown;
       conf?: unknown;
-      ed?: { event_start?: unknown } | null;
+      ed?: {
+        id?: string;
+        event_start?: unknown;
+        event_date_precision?: unknown;
+        event_segments?: Array<{ start?: unknown; end?: unknown }>;
+      } | null;
     },
     nowMs: number,
   ): string {
     if (!deadlineRowIsPast(row, nowMs)) return "";
     const tEvent = Number(row.tEvent);
-    if (Number.isFinite(tEvent) && tEvent >= nowMs)
-      return `${PAST_DEADLINE_TAG_JA}（会期がこれから）`;
-    const next = upcomingEditionsOf(row.conf, String(row.ed?.event_start || ""), nowMs);
+    const precision = String(row.ed?.event_date_precision || "");
+    const certain = !["month-only", "unverified", "not-announced"].includes(precision);
+    const parts = row.ed?.event_segments?.length
+      ? row.ed.event_segments
+      : [{ start: row.ed?.event_start, end: row.ed?.event_start }];
+    const starts = parts.flatMap((part) => {
+      const bounds = eventDateBoundsMs(part.start, part.end, precision);
+      return bounds ? [bounds[0]] : [];
+    });
+    const future = precision
+      ? starts.length > 0 && Math.min(...starts) - 9 * 3_600_000 > nowMs
+      : Number.isFinite(tEvent) && tEvent >= nowMs;
+    if (certain && future) return `${PAST_DEADLINE_TAG_JA}（会期がこれから）`;
+    const next = upcomingEditionsOf(
+      row.conf,
+      String(row.ed?.event_start || ""),
+      nowMs,
+      3,
+      row.ed?.id,
+    );
     if (next.length) return `${PAST_DEADLINE_TAG_JA}（次回予定）`;
     return PAST_DEADLINE_TAG_JA;
   }
