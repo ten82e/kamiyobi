@@ -564,4 +564,49 @@ server.listen(0,'127.0.0.1',()=>{
       ).toBe(before[1]);
     });
   }
+  if (entry === "CLI") {
+    it("keeps configured upcoming windows consistent across CLI tables, catalogs and the index", () => {
+      const configPath = join(root, "config.yaml");
+      const config = JSON.parse(readFileSync(configPath, "utf8"));
+      const near = edition("single-day", true);
+      Object.assign(near, {
+        year: 2026,
+        edition_id: "near",
+        event_start: new Date("2026-08-10T00:00:00Z"),
+        event_end: new Date("2026-08-10T00:00:00Z"),
+        link: "https://example.org/near",
+      });
+      const far = edition("single-day", true);
+      Object.assign(far, {
+        year: 2026,
+        edition_id: "far",
+        event_start: new Date("2026-09-10T00:00:00Z"),
+        event_end: new Date("2026-09-10T00:00:00Z"),
+        link: "https://example.org/far",
+      });
+      for (const [value, expectedDays] of [
+        [7, 7],
+        [undefined, 180],
+        [-50, 180],
+        [0, 180],
+        [1.5, 180],
+        ["invalid", 180],
+        [999, 400],
+        [400, 400],
+        ["14", 14],
+      ] as const) {
+        writeFileSync(configPath, JSON.stringify({ ...config, site: { upcoming_days: value } }));
+        buildAndCheck([conference("A", [near, far])], { ...zero, "single-day": 2 }, 0, 0);
+        const md = readFileSync(join(root, "out/upcoming.md"), "utf8");
+        const llms = readFileSync(join(root, "out/llms.txt"), "utf8");
+        const note = llms.split("\n").find((line) => line.startsWith("- upcoming.md："));
+        const catalog = JSON.parse(readFileSync(join(root, "out/catalog.json"), "utf8"));
+        expect(md, String(value)).toContain(`# 直近 ${expectedDays} 日の締切と開催`);
+        expect(catalog.window.upcoming_days, String(value)).toBe(expectedDays);
+        expect(note, String(value)).toContain(`直近 ${expectedDays} 日の締切と開催`);
+        expect(md).toContain("https://example.org/near");
+        expect(md.includes("https://example.org/far"), String(value)).toBe(expectedDays >= 32);
+      }
+    });
+  }
 });

@@ -3932,6 +3932,14 @@ export function toUpcomingMd(
   return `${[...head, ...rows, ...tail].join("\n")}\n`;
 }
 
+const UPCOMING_DAYS_CAP = 400;
+
+function upcomingWindowDays(value: unknown): { requested: number; days: number } {
+  const raw = Number(value ?? 180);
+  const requested = Number.isFinite(raw) && Number.isInteger(raw) && raw > 0 ? raw : 180;
+  return { requested, days: Math.min(requested, UPCOMING_DAYS_CAP) };
+}
+
 export function toLlmsTxt(
   config: Record<string, unknown> | null | undefined,
   spans?: LlmsSpans | null,
@@ -3988,7 +3996,8 @@ export function toLlmsTxt(
       if (name === "upcoming.md") {
         return (
           `- ${name}：直近 ${String(
-            Number((safeConfig.site as Record<string, unknown> | null)?.upcoming_days ?? 180),
+            upcomingWindowDays((safeConfig.site as Record<string, unknown> | null)?.upcoming_days)
+              .days,
           )} 日の締切と開催の表。MCP の \`list_upcoming\` でも会期を取得できます。` +
           "MCP の対象期間は `days` で指定します。購読カレンダー `deadlines.ics` は締切のみです。"
         );
@@ -4224,16 +4233,9 @@ export async function buildAll(
   const nowUtc = new Date(safeNow.getTime());
   // DTSTAMP is derived from --now (floored to the day).
   const site = (safeConfig.site as Record<string, unknown>) ?? {};
-  // config.yaml の site.upcoming_days（既定 180）: upcoming.md の窓を決める。
-  // 設定値を読まないと 180 に固定されるため、site.upcoming_days を反映する。
-  const rawUpcomingDays = Number(site.upcoming_days ?? 180);
-
-  const UPCOMING_DAYS_CAP = 400;
-  const upcomingDays =
-    Number.isFinite(rawUpcomingDays) && Number.isInteger(rawUpcomingDays) && rawUpcomingDays > 0
-      ? rawUpcomingDays
-      : 180;
-  const upcomingDays使ふ = Math.min(upcomingDays, UPCOMING_DAYS_CAP);
+  const { requested: upcomingDays, days: upcomingDays使ふ } = upcomingWindowDays(
+    site.upcoming_days,
+  );
   if (upcomingDays使ふ < upcomingDays) {
     process.stderr.write(
       `warning: site.upcoming_days=${upcomingDays} は上限 ${UPCOMING_DAYS_CAP} を超えたので ${UPCOMING_DAYS_CAP} 日として扱います` +

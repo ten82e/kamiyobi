@@ -52,7 +52,7 @@ function run(label: string, broken: boolean) {
   writeFileSync(join(root, `${label}.log`), `${child.stdout ?? ""}${child.stderr ?? ""}`);
   assert(!child.error, String(child.error));
   const report = JSON.parse(readFileSync(output, "utf8"));
-  assert.equal(report.numTotalTests, 18, `${label}: required tests missing`);
+  assert.equal(report.numTotalTests, 19, `${label}: required tests missing`);
   assert.equal(report.numPendingTests, 0, `${label}: tests skipped`);
   assert.equal(child.status === 0, !broken, `${label}: inspect ${root}`);
   if (broken) {
