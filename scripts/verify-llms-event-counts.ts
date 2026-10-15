@@ -14,7 +14,8 @@ import { join } from "node:path";
 
 const repo = join(import.meta.dirname, "..");
 const root = mkdtempSync(join(tmpdir(), "kamiyobi-event-count-mutations-"));
-for (const dir of ["src", "site"]) cpSync(join(repo, dir), join(root, dir), { recursive: true });
+for (const dir of ["src", "site", "scripts"])
+  cpSync(join(repo, dir), join(root, dir), { recursive: true });
 mkdirSync(join(root, "tests"));
 for (const file of ["llms_event_counts.test.ts", "llms_build_counts.test.ts"])
   cpSync(join(repo, "tests", file), join(root, "tests", file));
@@ -26,6 +27,8 @@ writeFileSync(
 );
 const file = "src/build.ts";
 const original = readFileSync(join(root, file), "utf8");
+const cliFile = "src/cli.ts";
+const cliOriginal = readFileSync(join(root, cliFile), "utf8");
 function run(label: string, broken: boolean) {
   for (const dir of ["data", "public", ".cache"])
     assert(!existsSync(join(root, dir)), `${label}: generated input present: ${dir}`);
@@ -44,7 +47,7 @@ function run(label: string, broken: boolean) {
   writeFileSync(join(root, `${label}.log`), `${child.stdout ?? ""}${child.stderr ?? ""}`);
   assert(!child.error, String(child.error));
   const report = JSON.parse(readFileSync(output, "utf8"));
-  assert.equal(report.numTotalTests, 12, `${label}: required tests missing`);
+  assert.equal(report.numTotalTests, 14, `${label}: required tests missing`);
   assert.equal(report.numPendingTests, 0, `${label}: tests skipped`);
   assert.equal(child.status === 0, !broken, `${label}: inspect ${root}`);
   if (broken) {
@@ -63,16 +66,22 @@ function run(label: string, broken: boolean) {
       const suite = report.testResults.find((suite: { name: string }) =>
         suite.name.endsWith("/llms_build_counts.test.ts"),
       );
-      assert(
-        suite?.assertionResults.some(
-          (test: { status: string; failureMessages: string[] }) =>
-            test.status === "failed" &&
-            test.failureMessages.some(
-              (message) => message.includes("AssertionError") && message.includes("llms.txt"),
-            ),
-        ),
-        `${label}: real build assertions did not detect fault`,
-      );
+      for (const entry of label.startsWith("cli-") ? ["CLI"] : ["API", "CLI"]) {
+        assert(
+          suite?.assertionResults.some(
+            (test: { fullName: string; status: string; failureMessages: string[] }) =>
+              test.fullName.includes(`${entry} build`) &&
+              test.status === "failed" &&
+              test.failureMessages.some(
+                (message) =>
+                  message.includes("AssertionError") &&
+                  (message.includes("llms.txt") ||
+                    message.includes("independently specified input counts")),
+              ),
+          ),
+          `${label}: ${entry} count assertions did not detect fault`,
+        );
+      }
     }
   } else assert.equal(report.numFailedTests, 0);
   for (const dir of ["data", "public", ".cache"])
@@ -82,6 +91,18 @@ function run(label: string, broken: boolean) {
   );
 }
 const faults = [
+  [
+    "cli-drops-conferences",
+    "await buildAll(confs, config, outdir, now, {",
+    "await buildAll([], config, outdir, now, {",
+    cliFile,
+  ],
+  [
+    "cli-drops-later-editions",
+    "await buildAll(confs, config, outdir, now, {",
+    "await buildAll(confs.map(conf => ({...conf, editions: conf.editions.slice(0, 1)})), config, outdir, now, {",
+    cliFile,
+  ],
   ["build-drops-data", "      data as Record<string, unknown>,", "      undefined,"],
   [
     "build-passes-catalog-instead-of-history",
@@ -115,17 +136,19 @@ const faults = [
 console.log(`Isolated copy: ${root}`);
 run("baseline", false);
 try {
-  for (const [label, needle, replacement] of faults) {
-    assert.equal(original.split(needle).length, 2, `${label}: ambiguous mutation target`);
-    writeFileSync(join(root, file), original.replace(needle, replacement));
+  for (const [label, needle, replacement, target = file] of faults) {
+    const before = target === cliFile ? cliOriginal : original;
+    assert.equal(before.split(needle).length, 2, `${label}: ambiguous mutation target`);
+    writeFileSync(join(root, target), before.replace(needle, replacement));
     try {
       run(label, true);
     } finally {
-      writeFileSync(join(root, file), original);
+      writeFileSync(join(root, target), before);
     }
   }
 } finally {
   writeFileSync(join(root, file), original);
+  writeFileSync(join(root, cliFile), cliOriginal);
 }
 run("restored", false);
 assert.equal(
@@ -133,6 +156,7 @@ assert.equal(
   original,
   "workspace changed during isolated checks",
 );
+assert.equal(readFileSync(join(repo, cliFile), "utf8"), cliOriginal, "CLI workspace changed");
 console.log(
   `Detected ${faults.length}/${faults.length} faults; workspace unchanged. Logs: ${root}`,
 );
