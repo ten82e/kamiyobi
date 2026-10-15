@@ -394,22 +394,7 @@ function line(r: Row, now: number): string {
         : Recommender.unconfirmedLabelJa(),
     );
 
-  const 見直し = String(
-    (r.ed as { event_review?: Record<string, unknown> } | undefined)?.event_review?.note ?? "",
-  ).trim();
-  /* 上流が書いた會期の**原文**（「March 18-21, 2024」）。畫面の行の詳細は「原表記: 」として
-   * 添える – 公式ページで人が見る字面が其のまま殘る。譯した値と違ふ時だけ出す
-   * （重ねて書かない – 畫面の `eventRawJa !== eventShownJa` と同じ決まり）。
-   * 實測 2026-10-16: 2,446 版のうち 2,374 版が原文を持つのに、MCP は一句も出して居なかつた –
-   * 「公式の募集要項にはどう書いてあるか」を確かめる人が、譯だけを見て居た。 */
-  const 原表記 = String(r.ed.date_text ?? "").trim();
-  /* 註は**一つ一つを丸括弧に單獨で入れる**（畫面の行の詳細が行を分けて出すのと同じ –
-   * 一つの括弧に「・」で詰め込むと、見直しの覺え書きと原文が一つの文のやうに讀める）。 */
-  const 會期の文 =
-    `${會期}` +
-    [見直し ? `（${見直し}）` : "", 原表記 && 原表記 !== 會期 ? `（原表記: ${原表記}）` : ""]
-      .filter((t) => t.length > 0)
-      .join("");
+  const 會期の文 = 會期 + eventAnnotationsJa(r.ed, 會期);
 
   const 幅 = String(Recommender.estimateWindowJa(r.ed) ?? "").trim();
   const 推定 = r.est ? "（推定）" : "";
@@ -963,6 +948,16 @@ function 見えて居る注(query: string, 行數: number): string {
 }
 
 /** Keep date-only and estimated deadlines separate from confirmed instants. */
+function eventAnnotationsJa(
+  ed: { date_text?: unknown; event_review?: unknown },
+  display: string,
+): string {
+  const review = ed.event_review as { note?: unknown } | null | undefined;
+  const note = String(review?.note ?? "").trim();
+  const raw = String(ed.date_text ?? "").trim();
+  return [note ? `（${note}）` : "", raw && raw !== display ? `（原表記: ${raw}）` : ""].join("");
+}
+
 function eventMetadata(ed: {
   date_text?: unknown;
   event_date_precision?: unknown;
@@ -1283,7 +1278,7 @@ function searchDeadlines(
   ].join("\n");
 }
 
-interface UpcomingEventRow {
+interface UpcomingEventRow extends ReturnType<typeof eventMetadata> {
   開始: number;
   終了: number;
   会議: string;
@@ -1293,7 +1288,6 @@ interface UpcomingEventRow {
   link: string;
 
   year: number | null;
-  event_date_precision: string | null;
   segment_label: string | null;
   place: string | null;
 }
@@ -1320,6 +1314,8 @@ export function 開催の行(days: number, now: number): UpcomingEventRow[] {
         event_end?: unknown;
         event_segments?: unknown;
         event_date_precision?: unknown;
+        date_text?: unknown;
+        event_review?: unknown;
         place?: unknown;
         link?: unknown;
       };
@@ -1356,8 +1352,7 @@ export function 開催の行(days: number, now: number): UpcomingEventRow[] {
           key: String(会議.key ?? ""),
           版: String(ed.id ?? ""),
           year: typeof ed.year === "number" ? ed.year : null,
-          event_date_precision:
-            typeof ed.event_date_precision === "string" ? ed.event_date_precision : null,
+          ...eventMetadata(ed),
           segment_label: typeof seg.label === "string" ? seg.label : null,
           place: typeof ed.place === "string" && ed.place.trim() ? ed.place : null,
           開催地:
@@ -1468,7 +1463,7 @@ function listUpcoming(
         year: event.year,
         event_start: date(event.開始),
         event_end: date(event.終了),
-        event_date_precision: event.event_date_precision,
+        ...eventMetadata(event),
         segment_label: event.segment_label,
         place: event.place,
         place_ja: event.開催地,
@@ -1526,11 +1521,21 @@ function 開催の節(行: UpcomingEventRow[], page: UpcomingEventRow[], remaini
   return [
     "",
     `開催（会期の行）: ${行.length} 件（同じ窓の会期です。画面の一覧とカレンダーには出ない物で、upcoming.md と同じ窓です。会議名は年を添えた形、開催地は締切の行と同じ日本語表記にします）`,
-    ...page.map(
-      (r) =>
-        `- ${Recommender.eventCellJa({ ed: { event_start: 日(r.開始), event_end: 日(r.終了), event_date_precision: r.event_date_precision } })}${r.segment_label ? `（${r.segment_label}）` : ""} ` +
-        `| ${r.会議}（key: ${r.key}${r.版 ? `・${r.版}` : ""}）${r.開催地 ? ` | ${r.開催地}` : ""}${r.link ? ` ${r.link}` : ""}`,
-    ),
+    ...page.flatMap((r) => {
+      const span =
+        Recommender.eventCellJa({
+          ed: {
+            event_start: 日(r.開始),
+            event_end: 日(r.終了),
+            event_date_precision: r.event_date_precision,
+          },
+        }) + (r.segment_label ? `（${r.segment_label}）` : "");
+      const annotations = eventAnnotationsJa(r, span);
+      return [
+        `- ${span} | ${r.会議}（key: ${r.key}${r.版 ? `・${r.版}` : ""}）${r.開催地 ? ` | ${r.開催地}` : ""}${r.link ? ` ${r.link}` : ""}`,
+        ...(annotations ? [`  会期の注記: ${annotations}`] : []),
+      ];
+    }),
     ...(remaining ? [`- ほか ${remaining} 件`] : []),
   ];
 }
@@ -1584,12 +1589,7 @@ function venueScheduleLines(editions: ReturnType<typeof venueSchedules>): string
   return [
     "開催回の会期（推定を除く・過去の開催回も含む）:",
     ...editions.map((ed) => {
-      const note = String(ed.event_review?.note ?? "").trim();
-      const raw = String(ed.date_text ?? "").trim();
-      const annotations = [
-        note ? `（${note}）` : "",
-        raw && raw !== ed.event_display ? `（原表記: ${raw}）` : "",
-      ].join("");
+      const annotations = eventAnnotationsJa(ed, ed.event_display);
       return `- ${ed.year ?? "年未確認"}（${ed.edition_id ?? "識別子未確認"}） | ${ed.event_display}${annotations} | ${ed.place_ja}${ed.official_url ? ` ${ed.official_url}` : ""}`;
     }),
   ];

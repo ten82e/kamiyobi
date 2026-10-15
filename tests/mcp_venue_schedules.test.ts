@@ -337,3 +337,61 @@ it("leaves absent review data null and avoids duplicating unchanged event wordin
   expect(same.text.match(/2029-06-01\(金\)/g)).toHaveLength(1);
   expect(same.text).not.toContain("原表記:");
 });
+
+it("retains event evidence for each upcoming segment, including one-item pages", () => {
+  const all = call({ days: 10, limit: 100 }, "list_upcoming");
+  const items = all.data.items;
+  const selected = items.filter((item: { venue_key: string }) => item.venue_key === "reviewed");
+  expect(selected).toHaveLength(2);
+  expect(
+    selected.map((item: { event_start: string; event_end: string }) => [
+      item.event_start,
+      item.event_end,
+    ]),
+  ).toEqual([
+    ["2029-06-01", "2029-06-01"],
+    ["2029-06-05", "2029-06-06"],
+  ]);
+  for (const [index, row] of selected.entries()) {
+    const expected = {
+      type: "event",
+      venue_key: "reviewed",
+      edition_id: "reviewed-split",
+      year: 2028,
+      event_start: index === 0 ? "2029-06-01" : "2029-06-05",
+      event_end: index === 0 ? "2029-06-01" : "2029-06-06",
+      event_date_precision: "split-dates",
+      event_segments: editions[1].event_segments,
+      date_text: review.source_date_text,
+      event_review: review,
+      segment_label: index === 0 ? "オンライン" : "現地開催",
+    };
+    expect(row).toMatchObject(expected);
+    const page = call({ days: 10, limit: 1, offset: items.indexOf(row) }, "list_upcoming");
+    expect(page.data.items).toHaveLength(1);
+    expect(page.data.items[0]).toMatchObject(expected);
+    expect(page.text).toContain(`（${expected.segment_label}） |`);
+    expect(page.text).toContain(
+      "\n  会期の注記: （開催回の年と開催年を照合済み）（原表記: June 1 & 5-6, 2029）",
+    );
+  }
+});
+it("does not invent reviews or duplicate unchanged wording in upcoming event text", () => {
+  const result = call({ days: 10, limit: 100 }, "list_upcoming");
+  const row = result.data.items.find(
+    (item: { venue_key: string }) => item.venue_key === "same-date-text",
+  );
+  expect(row).toMatchObject({
+    event_review: null,
+    event_segments: [],
+    date_text: "2029-06-01(金)",
+  });
+  const page = call(
+    { days: 10, limit: 1, offset: result.data.items.indexOf(row) },
+    "list_upcoming",
+  );
+  expect(page.data.items).toHaveLength(1);
+  expect(page.data.items[0].venue_key).toBe("same-date-text");
+  expect(page.text.match(/2029-06-01\(金\)/g)).toHaveLength(1);
+  expect(page.text).not.toContain("原表記:");
+});
