@@ -3568,6 +3568,89 @@ it("推薦の行にも正式名を持つ（第 1105 回）", async () => {
   expect(締切なし.length, "正式名の讀める行が無い（この検査が空振り）").toBeGreaterThan(0);
 });
 
+/* 行の詳細の「公式確認」は、内部表記（`source_class`・`verified_fields`・ISO の時刻）を
+ * そのまま見せない約束で、畫面が日本語に譯して居た。MCP は内部の鍵名のまま返して居たの
+ * で、日本人研究者には讀めない（實測 2026-10-16）。組み立てを recommender の正本
+ * （`verificationSummaryJa`）の一つに寄せ、畫面は其の部品を HTML に並べ・MCP は其の儘返す。 */
+it("公式確認の日本語は、行の詳細が並べる部品と同じ（第 1106 回）", async () => {
+  /* 1) **配線** – 畫面も MCP も同じ正本を呼ぶ（此處に寫くと兩者が違ふ字面になる）。 */
+  expect(siteRuntime("app.js"), "畫面が正本を呼んで居ない").toContain(
+    "Recommender.verificationSummaryJa(dl)",
+  );
+  expect(
+    readFileSync(join(REPO_ROOT, "src", "mcp.ts"), "utf8"),
+    "MCP が正本を呼んで居ない",
+  ).toContain("Recommender.verificationSummaryJa(r.dl)");
+
+  /* 2) **實物** – 畫面の HTML・正本の部品・MCP の行の三つが、全部の締切で一致する。
+   * 畫面の函數は拔き出して動かし（`Recommender` を注入）、MCP の行は其の export を呼む。 */
+  const app = siteRuntime();
+  const script = [
+    `const Recommender = require(${JSON.stringify(join(REPO_ROOT, "site/recommendation.ts"))}).default;`,
+    `const { structuredDeadline } = require(${JSON.stringify(join(REPO_ROOT, "src", "mcp.ts"))});`,
+    "const esc = (x) => String(x ?? '');",
+    `const verificationSummary = new Function('esc', 'Recommender', 'return (' + ${JSON.stringify(
+      jsFunction(app, "verificationSummary"),
+    )} + ')')(esc, Recommender);`,
+    "const fs = require('node:fs');",
+    `const data = JSON.parse(fs.readFileSync(${JSON.stringify(join(site, "data.json"))}, 'utf8'));`,
+    "const rows = Recommender.candidateRows(data);",
+    "let n = 0; let bad = [];",
+    "for (const r of rows) {",
+    "  const html = verificationSummary(r.dl);",
+    "  const 正本 = Recommender.verificationSummaryJa(r.dl);",
+    "  const mcp = structuredDeadline(r, Date.now()).verification_ja;",
+    "  const 取る = (名前) => { const m = html.match(new RegExp('<b>' + 名前 + '</b> ([^<]*)')); return m ? m[1] : null; };",
+    /* 次の確認予定はHTMLの同じ書式から拔く（正規表現のリテラルを二重引用符の中で書くと
+     * `\/` が `/` に減つてflagsの誤りになる – 實測 2026-10-16）。 */
+    "  const 次回 = html.includes('<b>次回確認予定</b> ') ? html.split('<b>次回確認予定</b> ')[1].split('<')[0] : null;",
+    "  if (!正本) {",
+    "    if (html) bad.push(['記録が無い行に HTML を出した', r.conf.key]);",
+    "    if (mcp !== null) bad.push(['記録が無い行に MCP が出した', r.conf.key, mcp]);",
+    "    continue;",
+    "  }",
+    "  if (!html) { bad.push(['記録がある行に HTML を出して居ない', r.conf.key]); continue; }",
+    "  const 表 = { 公式確認: 取る('公式確認'), 確認元: 取る('確認元'), 確認範囲: 取る('確認範囲'), 状態: 取る('状態'), 次回: 次回 };",
+    "  const 部品 = { 公式確認: 正本.verified_at, 確認元: 正本.source, 確認範囲: 正本.scope, 状態: 正本.status, 次回: 正本.next_check_at };",
+    "  for (const k of Object.keys(部品)) if ((表[k] || null) !== (部品[k] || null)) bad.push([k, r.conf.key, 表[k], 部品[k]]);",
+    "  if (JSON.stringify(mcp) !== JSON.stringify(正本)) bad.push(['MCP が正本と違ふ', r.conf.key, mcp, 正本]);",
+    "  n += 1;",
+    "}",
+    "console.log(JSON.stringify({ n, bad: bad.slice(0, 5) }));",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", vmSafeSource(script)], {
+    encoding: "utf8",
+    timeout: 180_000,
+  });
+  expect(proc.status, proc.stderr).toBe(0);
+  const got = JSON.parse(proc.stdout.trim()) as { n: number; bad: unknown[] };
+  expect(got.n, "公式確認のある締切が無い（この検査が空振り）").toBeGreaterThan(1000);
+  expect(got.bad, "畫面の HTML・正本・MCP の行が違ふ").toEqual([]);
+
+  /* 3) MCP の行が內部表記を出さない事（實物の引數で）。 */
+  const 構造 = spawnSync(
+    process.execPath,
+    [join(REPO_ROOT, "src", "mcp.ts"), "search", "セキュリティ", "3", "--limit", "3", "--json"],
+    { cwd: REPO_ROOT, encoding: "utf8", timeout: 180_000 },
+  );
+  expect(構造.status, 構造.stderr).toBe(0);
+  const 頁 = JSON.parse(構造.stdout.trim()) as {
+    rows?: Array<{ verification_ja?: Record<string, unknown> | null; verification?: unknown }>;
+  };
+  const 行 = 頁.rows ?? [];
+  expect(行.length, "行が出て居ない（この検査の前提が崩れた）").toBeGreaterThan(0);
+  for (const r of 行) {
+    const 日本語 = r.verification_ja;
+    if (!日本語) continue;
+    for (const [名, 値] of Object.entries(日本語)) {
+      expect(String(値 ?? ""), `${名} に内部表記が殘つて居る: ${String(値)}`).not.toMatch(
+        /official-cfp|verified_fields|source_class|selector_or_field|T\d{2}:\d{2}:\d{2}/,
+      );
+    }
+    expect(日本語.status, "狀態の語が讀めない").toBeTruthy();
+  }
+});
+
 it("--json でも、構造化を伴はない案内を其の侭出す（第 1099 回）", async () => {
   /* 空の検索語は「省せる引數」を列挙した案内を返す。JSON を賴んだ時に汎用の斷りに
    * すり替はると、直し方の書いてある文が消える – 實測 2026-10-15: `search "" --json` は

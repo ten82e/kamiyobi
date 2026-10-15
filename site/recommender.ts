@@ -7938,6 +7938,119 @@ const Recommender = (() => {
     unverified: "要確認",
   };
 
+  /* 行の詳細の「公式確認」の語彙。**内部表記をそのまま見せない**（SPEC §7）ための表で、
+   * 畫面（`app.ts` の `verificationSummary`）と AI（MCP の `verificationSummaryJa`）が
+   * 同じ表を見る。此處に寫して置くと兩者が別の字面になり、AI が
+   * `source_class: official-cfp` の儘を日本人研究者に伝へて了ふ
+   * （實測 2026-10-16: MCP の行の構造化結果は内部の鍵名のまま出して居た）。
+   * 知らない語は勝手に譯さない – 其の儘出す（推測して書く方が惡い）。 */
+  const VERIFY_SOURCE_LABELS_JA: Record<string, string> = {
+    "official-cfp": "公式CFP",
+    publisher: "出版社ページ",
+    "official-homepage": "公式ホームページ",
+    aggregator: "集約サイト",
+    unknown: "未確認",
+  };
+
+  const VERIFY_FIELD_LABELS_JA: Record<string, string> = {
+    date: "日付",
+    time: "時刻",
+    timezone: "タイムゾーン",
+    kind: "種別",
+    round: "ラウンド",
+    track: "トラック",
+    deadline: "締切",
+  };
+
+  /* `selector_or_field` は公式ページのどこを読んだかを示す機械の判定名
+   * （實測で `deadline-text-window`・`table-row:deadline`）。確認範圍ではないので、
+   * 読み方を譯せる物だけ譯して出す。 */
+  const VERIFY_SELECTOR_LABELS_JA: Record<string, string> = {
+    "deadline-text-window": "本文中の締切の記述",
+    "table-row:deadline": "公式ページ内の表の締切欄",
+  };
+
+  /** 確認元の語（知らないクラスは其の儘 – 譯さない）。 */
+  function verifySourceLabelJa(value: unknown): string {
+    const name = String(value ?? "").trim();
+    if (!name) return "公式";
+    return VERIFY_SOURCE_LABELS_JA[name] || name;
+  }
+
+  /** 確認範圍の語。讀み取つた項目が有る時は其の列、無い時は判定名か既定の三つ。
+   * （項目が讀めた時は**其の儘譯す** – 空の欄を出さない為に既定で埋めない。畫面の
+   *  `fieldsJa` と同じ形。） */
+  function verifyScopeJa(verified: unknown, selector: unknown): string {
+    if (Array.isArray(verified))
+      return verified
+        .map((item) => VERIFY_FIELD_LABELS_JA[String(item)] || String(item))
+        .join("・");
+    const name = typeof selector === "string" ? selector.trim() : "";
+    if (!name) return "日付・時刻・タイムゾーン";
+    const label = VERIFY_SELECTOR_LABELS_JA[name];
+    return label ? `${label}（公式ページの読み取り箇所）` : `機械の判定名のまま: ${name}`;
+  }
+
+  /** 語彙の表（畫面が讀む用 – 寫さずに正本から取る）。 */
+  function verifyLabelTables(): {
+    status: Record<string, string>;
+    source: Record<string, string>;
+    field: Record<string, string>;
+    selector: Record<string, string>;
+  } {
+    return {
+      status: { ...VERIFICATION_STATUS_LABELS_JA },
+      source: { ...VERIFY_SOURCE_LABELS_JA },
+      field: { ...VERIFY_FIELD_LABELS_JA },
+      selector: { ...VERIFY_SELECTOR_LABELS_JA },
+    };
+  }
+
+  /** 行の詳細の「公式確認」を**日本語の部品**で返す（畫面が HTML に組み、MCP が其の侭返す）。
+   * 記録が無い行は null（畫面も欄ごと出さない）。日時は JST の暦日の時刻で、
+   * 利用者の端末の時刻合わせに左右されない書き方にする。 */
+  function verificationSummaryJa(dl: unknown): {
+    verified_at: string;
+    source: string;
+    scope: string;
+    status: string;
+    next_check_at: string | null;
+  } | null {
+    const record = (dl ?? {}) as {
+      verification?: Record<string, unknown>;
+      evidence?: Array<Record<string, unknown>>;
+    };
+    const verification = record.verification;
+    if (!verification || typeof verification !== "object") return null;
+    const evidence = (record.evidence ?? []).find(
+      (item) => item.verifiedFields ?? item.verified_fields,
+    );
+    const verified = evidence?.verifiedFields ?? evidence?.verified_fields;
+    return {
+      verified_at: verification.last_verified_at
+        ? jstStampJa(String(verification.last_verified_at))
+        : "未確認",
+      source: verifySourceLabelJa(verification.source_class),
+      scope: verifyScopeJa(verified, verification.selector_or_field),
+      status: VERIFICATION_STATUS_LABELS_JA[String(verification.status ?? "")] || "再確認待ち",
+      next_check_at: verification.next_check_at
+        ? jstStampJa(String(verification.next_check_at))
+        : null,
+    };
+  }
+
+  /** 公式確認の日時を JST で（`2026-08-02(日) 03:30 JST`）。讀めない値は其の侭言ふ。 */
+  function jstStampJa(value: string): string {
+    const d = new Date(value);
+    if (!Number.isFinite(d.getTime())) return `読み取り不能（原文: ${value}）`;
+    const jst = new Date(d.getTime() + 9 * 3600000);
+    const p = (n: number): string => String(n).padStart(2, "0");
+    const weekday = ["日", "月", "火", "水", "木", "金", "土"][jst.getUTCDay()];
+    return `${jst.getUTCFullYear()}-${p(jst.getUTCMonth() + 1)}-${p(jst.getUTCDate())}(${weekday}) ${p(
+      jst.getUTCHours(),
+    )}:${p(jst.getUTCMinutes())} JST`;
+  }
+
   /** 検証状態の欄の形（オブジェクト・文字列・無し）を状態語に落とす。 */
   function verificationStatusKey(value: unknown): string {
     if (value && typeof value === "object")
@@ -15627,6 +15740,11 @@ const Recommender = (() => {
     kindLabelTable: () => ({ ...KIND_LABEL_JA }),
     kindDateFieldJa: kindDateFieldJa,
     verificationStatusLabelTable: () => ({ ...VERIFICATION_STATUS_LABELS_JA }),
+    verifyLabelTables: verifyLabelTables,
+    verifySourceLabelJa: verifySourceLabelJa,
+    verifyScopeJa: verifyScopeJa,
+    verificationSummaryJa: verificationSummaryJa,
+    jstStampJa: jstStampJa,
     verificationStatusLabelJa: verificationStatusLabelJa,
     roundSearchTerms: roundSearchTerms,
     categorySearchTerms: categorySearchTerms,

@@ -4196,93 +4196,24 @@ function semanticOutput(value: unknown): value is SemanticOutput {
      * 出ていた（項目その物が無いときの既定値は「日付・時刻・タイムゾーン」と日本語なので、
      * 同じ欄の中で日本語と機械の表記が混ざっていた）。知らない語を勝手に翻訳しない –
      * 中身を推測して書くほうが悪いので、そのまま出す。
-     * （下の語彙表はこの関数の内側にある。検査が関数ごと抜き出して実行できる形に
-     * 保っておくため – 外に出すと抜き出した側で参照が切れる）。 */
+     *
+     * 組み立ては recommender の正本（`verificationSummaryJa`）の一つに寄せた。畫面は
+     * 其の部品を HTML に並べ、**MCP は其の儘**返す – 畫面と AI が同じ字面を見る。
+     * （第 1106 回: MCP は内部の鍵名のまま出して居た。）拔き出して動かす検査は
+     * `Recommender` を注入する。 */
 
-    const VERIFY_SOURCE_LABELS_JA: Record<string, string> = {
-      "official-cfp": "公式CFP",
-      publisher: "出版社ページ",
-      "official-homepage": "公式ホームページ",
-      aggregator: "集約サイト",
-      unknown: "未確認",
-    };
-
-    const VERIFY_FIELD_LABELS_JA: Record<string, string> = {
-      date: "日付",
-      time: "時刻",
-      timezone: "タイムゾーン",
-      kind: "種別",
-      round: "ラウンド",
-      track: "トラック",
-      deadline: "締切",
-    };
-
-    /* `selector_or_field` は公式ページのどこを読んだかを示す機械の判定名
-     * （実測で `deadline-text-window` 3 件・`table-row:deadline` 2 件）。確認範囲では
-     * ないので、読み方を訳せる物だけ訳して出す。 */
-    const VERIFY_SELECTOR_LABELS_JA: Record<string, string> = {
-      "deadline-text-window": "本文中の締切の記述",
-      "table-row:deadline": "公式ページ内の表の締切欄",
-    };
-
-    const verifiedFieldsJa = (list: readonly unknown[]): string =>
-      list.map((item) => VERIFY_FIELD_LABELS_JA[String(item)] || String(item)).join("・");
-
-    const fieldsJa = (
-      verified: readonly unknown[] | null | undefined,
-      selector: unknown,
-    ): string => {
-      if (Array.isArray(verified)) return verifiedFieldsJa(verified);
-      const name = typeof selector === "string" ? selector.trim() : "";
-      if (!name) return "日付・時刻・タイムゾーン";
-      const label = VERIFY_SELECTOR_LABELS_JA[name];
-      return label ? `${label}（公式ページの読み取り箇所）` : `機械の判定名のまま: ${name}`;
-    };
-
-    const verification = dl?.verification;
-    if (!verification) return "";
-    /* 語彙は一覧の印・検索用の語と同じ正本。 */
-    const statusLabels: Record<string, string> = VERIFICATION_STATUS_LABELS;
-
-    const jstStamp = (value: string): string => {
-      const d = new Date(value);
-      if (!Number.isFinite(d.getTime())) return `読み取り不能（原文: ${value}）`;
-      const jst = new Date(d.getTime() + 9 * 3600000);
-      const p = (n: number): string => String(n).padStart(2, "0");
-      const weekday = ["日", "月", "火", "水", "木", "金", "土"][jst.getUTCDay()];
-      // `fmtJst` と同じ並び（`2026-08-02(日) 03:30 JST`）を、内側で組み立てる。
-      return `${jst.getUTCFullYear()}-${p(jst.getUTCMonth() + 1)}-${p(jst.getUTCDate())}(${weekday}) ${p(
-        jst.getUTCHours(),
-      )}:${p(jst.getUTCMinutes())} JST`;
-    };
-
-    const evidence = (dl.evidence ?? []).find(
-      (item) => item.verifiedFields ?? item.verified_fields,
-    );
-    const verified = evidence?.verifiedFields ?? evidence?.verified_fields;
-    const fields = fieldsJa(
-      Array.isArray(verified) ? verified : null,
-      verification.selector_or_field,
-    );
-    const verifiedAt = verification.last_verified_at
-      ? jstStamp(verification.last_verified_at)
-      : "未確認";
+    const 要約 = Recommender.verificationSummaryJa(dl);
+    if (!要約) return "";
     return (
       '<div class="verification-summary"><b>公式確認</b> ' +
-      esc(verifiedAt) +
+      esc(要約.verified_at) +
       "<br><b>確認元</b> " +
-      esc(
-        VERIFY_SOURCE_LABELS_JA[verification.source_class || ""] ||
-          verification.source_class ||
-          "公式",
-      ) +
+      esc(要約.source) +
       "<br><b>確認範囲</b> " +
-      esc(fields) +
+      esc(要約.scope) +
       "<br><b>状態</b> " +
-      esc(statusLabels[verification.status || ""] || "再確認待ち") +
-      (verification.next_check_at
-        ? `<br><b>次回確認予定</b> ${esc(jstStamp(verification.next_check_at))}`
-        : "") +
+      esc(要約.status) +
+      (要約.next_check_at ? `<br><b>次回確認予定</b> ${esc(要約.next_check_at)}` : "") +
       "</div>"
     );
   }

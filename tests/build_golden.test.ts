@@ -3326,7 +3326,10 @@ it("drawer is a keyboard-operable modal dialog with focus management (#218)", ()
     "onKeydown({ key: 'd', preventDefault() {}, target: { tagName: 'BODY' } });",
     "const dOpened = calls.open.length === 1 && calls.open[0] === 'B';",
     "const dFocusedRow = calls.focus[calls.focus.length - 1] === 'row1';",
-    "const verificationSummary = new Function('esc', 'return (' + SUMMARY + ')')((s) => String(s ?? ''));",
+    /* 組み立ては recommender の正本（`verificationSummaryJa`）– 畫面と MCP が同じ字面を
+     * 見る。拔き出した関数が其の正本を呼ぶので、此處へ本物を入れる。 */
+    `const SummaryJa = require(${JSON.stringify(join(REPO_ROOT, "site/recommendation.ts"))}).default.verificationSummaryJa;`,
+    "const verificationSummary = new Function('esc', 'Recommender', 'return (' + SUMMARY + ')')((s) => String(s ?? ''), { verificationSummaryJa: SummaryJa });",
     // 「未確認」の語は正本（recommender.js の `UNCONFIRMED_LABEL_JA`）から取る。
     (siteRuntime("recommender.js").match(/const UNCONFIRMED_LABEL_JA = [^\n]*;/) || [""])[0],
     "const UNCONFIRMED_JA = UNCONFIRMED_LABEL_JA;",
@@ -3678,7 +3681,9 @@ it("normal deadline drawer includes verification details", () => {
     "const document = { activeElement: null, getElementById: (id) => els[id] || null };",
     "function $(id) { return document.getElementById(id); }",
     "const window = { _prevFocus: null };",
-    `const verificationSummary = new Function('esc', 'return (' + ${JSON.stringify(summarySrc)} + ')')((s) => String(s ?? ''));`,
+    /* 組み立ては recommender の正本（`verificationSummaryJa`）。此處へ本物を入れる。 */
+    `const SummaryJa = require(${JSON.stringify(join(REPO_ROOT, "site/recommendation.ts"))}).default.verificationSummaryJa;`,
+    `const verificationSummary = new Function('esc', 'Recommender', 'return (' + ${JSON.stringify(summarySrc)} + ')')((s) => String(s ?? ''), { verificationSummaryJa: SummaryJa });`,
     // 「未確認」の語は正本（recommender.js の `UNCONFIRMED_LABEL_JA`）から取る。
     (siteRuntime("recommender.js").match(/const UNCONFIRMED_LABEL_JA = [^\n]*;/) || [""])[0],
     "const UNCONFIRMED_JA = UNCONFIRMED_LABEL_JA;",
@@ -5047,7 +5052,9 @@ it("ドロワーは表の情報（分野・ランク・ラウンド）を落と�
     jsFunction(siteRuntime("recommender.js"), "meetingRangeJa"),
     jsFunction(siteRuntime("recommender.js"), "upcomingEditionsOf"),
     jsFunction(siteRuntime("recommender.js"), "laterEditionLineJa"),
-    `const verificationSummary = new Function('esc', 'return (' + ${JSON.stringify(summarySrc)} + ')')(esc);`,
+    /* 組み立ては recommender の正本（`verificationSummaryJa`）– 本物を入れる。 */
+    `const SummaryJa = require(${JSON.stringify(join(REPO_ROOT, "site/recommendation.ts"))}).default.verificationSummaryJa;`,
+    `const verificationSummary = new Function('esc', 'Recommender', 'return (' + ${JSON.stringify(summarySrc)} + ')')(esc, { verificationSummaryJa: SummaryJa });`,
     // 理由の語（「 kamiyobi が公式で…確認できていません」など）も正本の塊ごと注入する。
     // 表のセルの注記と行の詳細の本文が同じ式を見るようにしたので、ここで写すと壊れる。
     runtime.match(/const RANK_UNRATED_JA = [^\n]*;/)?.[0] ?? "",

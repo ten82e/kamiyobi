@@ -3093,6 +3093,9 @@ it("行の詳細の公式確認は内部表記のまま見せない（SPEC §7�
    * 同じ欄の中で日本語と機械の表記が混ざっていた。 */
   const app = siteRuntime("app.js");
   const script = [
+    /* 組み立ては recommender の正本（`verificationSummaryJa`）に寄せた – 畫面と MCP が
+     * 同じ字面を見る。拔き出した関数が其の正本を呼ぶので、此處へ本物を入れる。 */
+    `const Recommender = (await import(${JSON.stringify(`file://${join(REPO_ROOT, "site/recommendation.ts")}`)})).default;`,
     verificationLabelsSource(),
     "const esc = (x) => String(x);",
     `const verificationSummary = (${jsFunction(app, "verificationSummary")});`,
@@ -3180,6 +3183,9 @@ it("行の詳細の公式確認の日時は利用者の端末の時刻合わせ�
    * 書く。`toLocaleString` は数の区切りでも既に避けることにしてある（`countJa` の comment）。 */
   const app = siteRuntime("app.js");
   const script = [
+    /* 組み立ては recommender の正本（`verificationSummaryJa`）に寄せた – 畫面と MCP が
+     * 同じ字面を見る。拔き出した関数が其の正本を呼ぶので、此處へ本物を入れる。 */
+    `const Recommender = (await import(${JSON.stringify(`file://${join(REPO_ROOT, "site/recommendation.ts")}`)})).default;`,
     verificationLabelsSource(),
     "const esc = (x) => String(x);",
     // `fmtJst` は `pad` と `WEEKDAY_JA` を使うので、もろもろビルド成果から取る。
