@@ -1051,7 +1051,9 @@ MCP は同じ検索・推薦処理を使う読み取り専用の stdio サーバ
 
 同じ MCP 接続でも、カタログ・snapshot・推薦索引の更新を次の要求で反映する。ファイルがない場合や読めない場合も、修復後の要求で再読込する。判定時刻は要求ごとの現在時刻とし、推薦の生成日時は推薦索引の日時を返す。
 
-投稿先検索・推薦に必要な `public/recommendation-index.json` が未作成・形式不正・読込不能の場合は、候補0件の成功結果として扱わない。MCP は `isError: true` と `structuredContent.error` に、それぞれ `RECOMMENDATION_INDEX_NOT_READY`・`RECOMMENDATION_INDEX_INVALID`・`RECOMMENDATION_INDEX_UNREADABLE` を返す。エラーには相対パス `path`、`retryable: true`、`recovery_command: "npm run build"` を含める。CLI は標準エラー出力と終了コード1で通知する。失敗はキャッシュせず、ファイル更新のない一時的な読込障害も、同じ MCP 接続・同じ入力の次の要求で再試行する。
+締切検索・直近一覧・会議詳細で画面用カタログから収録全体へ切り替えた場合は、`catalog_error` に `CATALOG_NOT_READY`（未作成）・`CATALOG_INVALID`（形式不正）・`CATALOG_UNREADABLE`（読込不能）のいずれかを返す。相対パス `path` と `retryable: true` を含め、`recovery_command` は未作成・形式不正なら `"npm run build"`、読込不能なら null とする。文章の案内も同じ区別を使い、読込不能では再試行を先に案内する。正常な画面用カタログと、明示的に収録全体を選んだ場合には `catalog_error` を付けない。
+
+投稿先検索・推薦に必要な `public/recommendation-index.json` が未作成・形式不正・読込不能の場合は、候補0件の成功結果として扱わない。MCP は `isError: true` と `structuredContent.error` に、それぞれ `RECOMMENDATION_INDEX_NOT_READY`・`RECOMMENDATION_INDEX_INVALID`・`RECOMMENDATION_INDEX_UNREADABLE` を返す。エラーには相対パス `path`、`retryable: true`、`recovery_command` を含める。`recovery_command` は未作成・形式不正なら `"npm run build"`、読込不能なら null とする。CLI は標準エラー出力と終了コード1で通知する。失敗はキャッシュせず、ファイル更新のない一時的な読込障害も、同じ MCP 接続・同じ入力の次の要求で再試行する。
 
 ## 8. テスト（`tests/`）
 

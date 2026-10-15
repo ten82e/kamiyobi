@@ -29,7 +29,10 @@ function venue(key: string, day: number) {
     ],
   };
 }
-function client(empty: boolean, { persistent = false, recommendation = false } = {}) {
+function client(
+  empty: boolean,
+  { persistent = false, recommendation = false, transient = true, catalogState = "valid" } = {},
+) {
   const root = tempWork("kamiyobi-catalog-read-retry-");
   for (const dir of ["src", "site"])
     cpSync(join(REPO_ROOT, dir), join(root, dir), { recursive: true });
@@ -38,43 +41,49 @@ function client(empty: boolean, { persistent = false, recommendation = false } =
   for (const dir of ["public", "data"]) mkdirSync(join(root, dir));
   const catalog = join(root, "public/catalog.json");
   const snapshot = join(root, "data/snapshot.json");
-  writeFileSync(
-    catalog,
-    JSON.stringify({
-      generated_at: screenTime,
-      conferences: empty
-        ? []
-        : [
-            {
-              ...venue("screen", 5),
-              ...(recommendation
-                ? {
-                    recommendation_axes: {
-                      research_fit: { score: null, categories: ["systems"], tags: [] },
-                      venue_evidence: {
-                        yearsObserved: 9,
-                        profileCoverage: 3,
-                        dblpLinked: true,
-                        publisherSource: false,
-                        rankListed: false,
-                      },
-                      deadline_precision: "exact",
-                      evidence_quality: "none",
-                      deadline_trust: {
-                        date: "unverified",
-                        time: "unverified",
-                        timezone: "unverified",
-                        kind: "unverified",
-                        sourceFreshness: "unknown",
-                        conflicts: 0,
-                      },
+  const catalogSource = JSON.stringify({
+    generated_at: screenTime,
+    conferences: empty
+      ? []
+      : [
+          {
+            ...venue("screen", 5),
+            ...(recommendation
+              ? {
+                  recommendation_axes: {
+                    research_fit: { score: null, categories: ["systems"], tags: [] },
+                    venue_evidence: {
+                      yearsObserved: 9,
+                      profileCoverage: 3,
+                      dblpLinked: true,
+                      publisherSource: false,
+                      rankListed: false,
                     },
-                  }
-                : {}),
-            },
-          ],
-    }),
-  );
+                    deadline_precision: "exact",
+                    evidence_quality: "none",
+                    deadline_trust: {
+                      date: "unverified",
+                      time: "unverified",
+                      timezone: "unverified",
+                      kind: "unverified",
+                      sourceFreshness: "unknown",
+                      conflicts: 0,
+                    },
+                  },
+                }
+              : {}),
+          },
+        ],
+  });
+  if (catalogState !== "missing")
+    writeFileSync(
+      catalog,
+      catalogState === "invalid"
+        ? "{"
+        : catalogState === "row-invalid"
+          ? JSON.stringify({ conferences: [{ ...venue("screen", 5), editions: {} }] })
+          : catalogSource,
+    );
   if (recommendation)
     writeFileSync(
       join(root, "public/recommendation-index.json"),
@@ -96,8 +105,12 @@ function client(empty: boolean, { persistent = false, recommendation = false } =
       snapshot,
       ...(recommendation ? [join(root, "public/recommendation-index.json")] : []),
     ].map((path) => {
-      const stat = statSync(path, { bigint: true });
-      return [stat.ino, stat.size, stat.mtimeNs, stat.ctimeNs];
+      try {
+        const stat = statSync(path, { bigint: true });
+        return [stat.ino, stat.size, stat.mtimeNs, stat.ctimeNs];
+      } catch {
+        return null;
+      }
     });
   const before = identity();
   writeFileSync(
@@ -107,7 +120,7 @@ import fs from "node:fs";
 import {syncBuiltinESMExports} from "node:module";
 import {runStdio} from "./src/mcp.ts";
 const read=fs.readFileSync;
-let failures=${persistent ? "Infinity" : "1"};
+let failures=${transient ? (persistent ? "Infinity" : "1") : "0"};
 fs.readFileSync=function(file,...args){
   if(String(file).endsWith("catalog.json")){
     fs.appendFileSync("catalog-reads.txt","read\\n");
@@ -149,6 +162,9 @@ runStdio(Date.parse("2030-01-01T00:00:00Z"));
       expect(response.result.isError).not.toBe(true);
       return response.result;
     },
+    restoreCatalog() {
+      writeFileSync(catalog, catalogSource);
+    },
     reads() {
       return readFileSync(join(root, "catalog-reads.txt"), "utf8").trim().split("\n").length;
     },
@@ -161,13 +177,41 @@ runStdio(Date.parse("2030-01-01T00:00:00Z"));
     },
   };
 }
-function check(result: any, tool: string, scope: string, fallback: boolean, empty: boolean) {
+function check(
+  result: any,
+  tool: string,
+  scope: string,
+  fallback: boolean,
+  empty: boolean,
+  reason: "missing" | "invalid" | "unreadable" = "unreadable",
+) {
   const data = result.structuredContent;
   expect(data).toMatchObject({
     scope,
     catalog_fallback: fallback,
     generated_at: scope === "all" ? allTime : screenTime,
   });
+  const text = result.content[0].text;
+  if (fallback) {
+    expect(data.catalog_error).toEqual({
+      code: {
+        missing: "CATALOG_NOT_READY",
+        invalid: "CATALOG_INVALID",
+        unreadable: "CATALOG_UNREADABLE",
+      }[reason],
+      path: "public/catalog.json",
+      retryable: true,
+      recovery_command: reason === "unreadable" ? null : "npm run build",
+    });
+    expect(text).toContain("public/catalog.json");
+    if (reason === "unreadable") {
+      expect(text).toContain("同じ入力で再試行してください");
+      expect(text).not.toContain("npm run build");
+    } else expect(text).toContain("npm run build");
+  } else {
+    expect(data.catalog_error).toBeUndefined();
+    expect(text).not.toContain("public/catalog.json");
+  }
   if (tool === "venue_info" && scope === "screen" && empty) {
     expect(data).toMatchObject({
       lookup_status: "out_of_scope",
@@ -266,3 +310,25 @@ it("reloads catalog-derived recommendation evidence after a transient read failu
     server.close();
   }
 });
+
+it.each(["missing", "invalid", "row-invalid"])(
+  "distinguishes %s catalog failures and clears their recovery advice after repair",
+  async (catalogState) => {
+    const server = client(false, { transient: false, catalogState });
+    try {
+      for (const tool of tools)
+        check(
+          await server.request(tool),
+          tool,
+          "all",
+          true,
+          false,
+          catalogState === "missing" ? "missing" : "invalid",
+        );
+      server.restoreCatalog();
+      for (const tool of tools) check(await server.request(tool), tool, "screen", false, false);
+    } finally {
+      server.close();
+    }
+  },
+);

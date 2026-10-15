@@ -15824,6 +15824,7 @@ const Recommender = (() => {
     rankMatches: rankMatches,
     rankGradeJa: rankGradeJa,
     candidateRows: candidateRows,
+    isCandidateConference: isConference,
     categoryLabelJa: categoryLabelJa,
     meetingRangeJa: meetingRangeJa,
     upcomingEditionsOf: upcomingEditionsOf,

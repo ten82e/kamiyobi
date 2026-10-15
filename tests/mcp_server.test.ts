@@ -2201,7 +2201,7 @@ it("窓がない手元では、何を読んでいるかを言う（第 892 回�
       (行?.result as { content?: Array<{ text?: string }> } | undefined)?.content?.[0]?.text ?? "",
     );
   };
-  const 斷り = "public/catalog.json）がないか、有効な会議一覧を読み取れない";
+  const 斷り = "public/catalog.json）がないため、収録全体のデータを使っています";
   const 檢索 = 聞く({ name: "search_deadlines", arguments: { query: "セキュリティ", limit: 1 } });
   expect(檢索, "窓がない事を言つていない").toContain(斷り);
   expect(檢索, "どうすればよいか言つていない").toContain("npm run build");

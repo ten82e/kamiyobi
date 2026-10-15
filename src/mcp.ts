@@ -109,6 +109,37 @@ interface SnapshotFile {
 }
 let snapshotCache: SnapshotFile | null = null;
 let catalogCache: Record<string, unknown> | null | undefined;
+type DataReadFailure = "missing" | "invalid" | "unreadable";
+let catalogReadFailure: DataReadFailure | null = null;
+
+function dataReadFailure(cause: unknown): DataReadFailure {
+  const code = cause && typeof cause === "object" && "code" in cause ? String(cause.code) : "";
+  return code === "ENOENT" ? "missing" : code ? "unreadable" : "invalid";
+}
+function recoveryCommand(reason: DataReadFailure): string | null {
+  return reason === "unreadable" ? null : "npm run build";
+}
+function recoveryNoticeJa(reason: DataReadFailure): string {
+  return reason === "unreadable"
+    ? "同じ入力で再試行してください。解消しない場合は、ファイルの保存先と読み取り権限を確認してください。"
+    : "このリポジトリで `npm run build` を実行してデータを生成してから、同じ入力で再試行してください。";
+}
+function catalogFailureFields(fallback: boolean): Record<string, unknown> {
+  if (!fallback) return {};
+  const reason = catalogReadFailure ?? "invalid";
+  return {
+    catalog_error: {
+      code: {
+        missing: "CATALOG_NOT_READY",
+        invalid: "CATALOG_INVALID",
+        unreadable: "CATALOG_UNREADABLE",
+      }[reason],
+      path: "public/catalog.json",
+      retryable: true,
+      recovery_command: recoveryCommand(reason),
+    },
+  };
+}
 
 /** 収録全体を保存した `data/snapshot.json`。 */
 function snapshot(): SnapshotFile {
@@ -126,12 +157,13 @@ function catalog(): Record<string, unknown> | null {
           ? (value as Record<string, unknown>).conferences
           : undefined;
       catalogCache =
-        Array.isArray(conferences) &&
-        conferences.every((conf) => conf && typeof conf === "object" && !Array.isArray(conf))
+        Array.isArray(conferences) && conferences.every(Recommender.isCandidateConference)
           ? (value as Record<string, unknown>)
           : null;
-    } catch {
+      catalogReadFailure = catalogCache === null ? "invalid" : null;
+    } catch (cause) {
       catalogCache = null;
+      catalogReadFailure = dataReadFailure(cause);
     }
   }
   return catalogCache;
@@ -146,6 +178,8 @@ function screenRows(): Row[] | null {
     screenCache = Recommender.candidateRows(品書 as never) as unknown as Row[];
     return screenCache;
   } catch {
+    catalogCache = null;
+    catalogReadFailure = "invalid";
     return null;
   }
 }
@@ -227,9 +261,15 @@ function pick(scope: unknown): { list: Row[]; 名: string; 生成: unknown; 窓�
 /** 窓が無い時の斷り（一覽を返す道具の頭に付ける）。空文字の時は何も足さない。 */
 function 窓が無いの斷り(窓が無い: boolean): string {
   if (!窓が無い) return "";
+  const reason = catalogReadFailure ?? "invalid";
+  const detail = {
+    missing: "がないため、",
+    invalid: "から有効な会議一覧を読み取れないため、",
+    unreadable: "を読み込めないため、",
+  }[reason];
   return (
-    "※ 画面が最初に読む窓（public/catalog.json）がないか、有効な会議一覧を読み取れないため、収録の全体を読んでいます。" +
-    "公開先の画面と同じ件数にするには、このリポジトリで `npm run build` してからお試しください。"
+    `※ 初期表示用データ（public/catalog.json）${detail}収録全体のデータを使っています。` +
+    recoveryNoticeJa(reason)
   );
 }
 
@@ -1187,6 +1227,7 @@ function searchDeadlines(
     next_offset: nextOffset,
     scope: 窓が無い || scopeValue(args.scope) === "all" ? "all" : "screen",
     catalog_fallback: 窓が無い,
+    ...catalogFailureFields(窓が無い),
     generated_at: 生成 ?? null,
     evaluated_at: new Date(now).toISOString(),
     rows: page.map((r) => structuredDeadline(r, now)),
@@ -1527,6 +1568,7 @@ function listUpcoming(
     scope: 窓が無い || scopeValue(args.scope ?? "all") === "all" ? "all" : "screen",
     event_scope: "all",
     catalog_fallback: 窓が無い,
+    ...catalogFailureFields(窓が無い),
     generated_at: 生成 ?? null,
     event_generated_at: snapshot().snapshot_metadata?.generated_at ?? null,
     evaluated_at: new Date(now).toISOString(),
@@ -1700,6 +1742,7 @@ function venueInfo(
   const context = {
     scope: 名 === "収録の全体" ? "all" : "screen",
     catalog_fallback: 窓が無い,
+    ...catalogFailureFields(窓が無い),
     generated_at: 生成 ?? null,
     event_scope: "all",
     event_generated_at: snapshot().snapshot_metadata?.generated_at ?? null,
@@ -2298,18 +2341,16 @@ class RecommendationIndexError extends Error {
     code: string;
     path: string;
     retryable: boolean;
-    recovery_command: string;
+    recovery_command: string | null;
   };
-  constructor(reason: "missing" | "invalid" | "unreadable") {
+  constructor(reason: DataReadFailure) {
     const path = "public/recommendation-index.json";
     const detail = {
       missing: "がありません",
       invalid: "の形式が不正です",
       unreadable: "を読み込めません",
     }[reason];
-    super(
-      `推薦データ（${path}）${detail}。このリポジトリで \`npm run build\` を実行してデータを生成してから、同じ入力で再試行してください。`,
-    );
+    super(`推薦データ（${path}）${detail}。${recoveryNoticeJa(reason)}`);
     this.name = "RecommendationIndexError";
     this.diagnostic = {
       code: {
@@ -2319,7 +2360,7 @@ class RecommendationIndexError extends Error {
       }[reason],
       path,
       retryable: true,
-      recovery_command: "npm run build",
+      recovery_command: recoveryCommand(reason),
     };
   }
 }
@@ -2330,6 +2371,7 @@ function refreshDataCaches(): void {
   // 読込失敗は要求内で共有し、次の要求ではファイルの更新がなくても再試行する。
   if (catalogCache === null) {
     catalogCache = undefined;
+    catalogReadFailure = null;
     軸の索引 = undefined;
   }
   const versions = [CATALOG_PATH, DATA_PATH, RECOMMENDATION_PATH]
@@ -2346,6 +2388,7 @@ function refreshDataCaches(): void {
   dataFileVersions = versions;
   snapshotCache = null;
   catalogCache = undefined;
+  catalogReadFailure = null;
   screenCache = null;
   allCache = null;
   軸の索引 = undefined;
@@ -2363,10 +2406,7 @@ function recommendation(): RecommendationIndex {
       categories?: Record<string, string>;
     };
     const conferences = Array.isArray(品書.conferences) ? 品書.conferences : [];
-    if (
-      !conferences.length ||
-      conferences.some((conf) => !conf || typeof conf !== "object" || Array.isArray(conf))
-    )
+    if (!conferences.length || !conferences.every(Recommender.isCandidateConference))
       throw new Error("有効な会議一覧がありません");
     Recommender.setNameIdf(Recommender.buildNameIdf(conferences));
     Recommender.setReranker(品書.reranker ?? null);
@@ -2378,10 +2418,7 @@ function recommendation(): RecommendationIndex {
       categories: 品書.categories ?? {},
     };
   } catch (cause) {
-    const code = cause && typeof cause === "object" && "code" in cause ? String(cause.code) : "";
-    throw new RecommendationIndexError(
-      code === "ENOENT" ? "missing" : code ? "unreadable" : "invalid",
-    );
+    throw new RecommendationIndexError(dataReadFailure(cause));
   }
   return recommendationCache;
 }

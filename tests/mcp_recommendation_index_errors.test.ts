@@ -78,11 +78,14 @@ it("reports index failures and recovers both tools in English and Japanese on th
               code,
               path,
               retryable: true,
-              recovery_command: "npm run build",
+              recovery_command: code === "RECOMMENDATION_INDEX_UNREADABLE" ? null : "npm run build",
             },
           });
           expect(result.content[0].text).toContain(path);
-          expect(result.content[0].text).toContain("npm run build");
+          if (code === "RECOMMENDATION_INDEX_UNREADABLE") {
+            expect(result.content[0].text).toContain("同じ入力で再試行してください");
+            expect(result.content[0].text).not.toContain("npm run build");
+          } else expect(result.content[0].text).toContain("npm run build");
           expect(result.content[0].text).not.toContain(root);
         }
       }
@@ -96,6 +99,8 @@ it("reports index failures and recovers both tools in English and Japanese on th
       '{"conferences":[]}',
       '{"conferences":[null]}',
       '{"conferences":[[]]}',
+      '{"conferences":[{"key":"bad","editions":{}}]}',
+      '{"conferences":[{"key":"bad","categories":{}}]}',
     ]) {
       writeFileSync(join(root, path), invalid);
       await check("RECOMMENDATION_INDEX_INVALID");
@@ -141,7 +146,10 @@ it.each(["search_venues", "recommend"])(
         expect(child.status).toBe(1);
         expect(child.stdout).toBe("");
         expect(child.stderr).toContain(path);
-        expect(child.stderr).toContain("npm run build");
+        if (reason === "unreadable") {
+          expect(child.stderr).toContain("同じ入力で再試行してください");
+          expect(child.stderr).not.toContain("npm run build");
+        } else expect(child.stderr).toContain("npm run build");
         expect(child.stderr).not.toContain(root);
         expect(child.stderr).toContain(
           {
