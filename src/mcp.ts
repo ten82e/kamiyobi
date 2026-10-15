@@ -1617,9 +1617,22 @@ function venueInfo(args: { key?: unknown; name?: unknown; scope?: unknown }, now
         });
     if (在る) {
       const 版々 = Array.isArray(在る.editions) ? 在る.editions : [];
-      const 會期あり = 版々.some((e) =>
-        String((e as { event_start?: unknown } | null)?.event_start ?? "").trim(),
-      );
+      const 會期あり = 版々.some((e) => {
+        const ed = e as {
+          event_start?: unknown;
+          event_end?: unknown;
+          event_date_precision?: unknown;
+          event_segments?: Array<{ start?: unknown; end?: unknown }>;
+        } | null;
+        if (!ed) return false;
+        const parts =
+          Array.isArray(ed.event_segments) && ed.event_segments.length
+            ? ed.event_segments
+            : [{ start: ed.event_start, end: ed.event_end }];
+        return parts.some((part) =>
+          Recommender.eventDateBoundsMs(part.start, part.end, ed.event_date_precision),
+        );
+      });
       const link = String(在る.link ?? "").trim();
       return [
         `問はた会議（${String(在る.acronym || 在る.title || 在る.key)}・key: ${String(在る.key)}）は収録に在りますが、**締切の行が 1 本もありません**（版 ${版々.length} 件）。` +
