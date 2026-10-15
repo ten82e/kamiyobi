@@ -85,12 +85,38 @@ it("表に行が出ていても、会期だけ確定の該当件数が件数欄�
   // 「締切まで」の窓も掛かる。
   expect(out.win).toEqual([]);
 
-  // 件数欄への出し方（ビルド後）。表に行があるときだけ出し、読み上げにも同じ語を流す。
-  expect(runtime, "件数欄に会期だけ確定の件数を出していない").toContain("会期情報がある開催回");
-  expect(runtime, "0 件のときと二重に出している").toContain(
-    "if (shown.length && scheduleOnly.length)",
+  const render = jsFunction(runtime, "render");
+  const countBlock = /if \(scheduleOnly.length\) \{[\s\S]*?\n\s*\}/.exec(render)?.[0];
+  expect(countBlock).toBeDefined();
+  const summarize = new Function(
+    "shown",
+    "scheduleOnly",
+    "Recommender",
+    "countJa",
+    `
+    let cnt='',cntLive='';
+    ${countBlock}
+    ${jsFunction(runtime, "zeroResultLiveNote")}
+    if (!shown.length) cntLive += zeroResultLiveNote({
+      catalogConferences:1,scheduleOnlyCount:scheduleOnly.length,
+      clearable:true,pastShown:false,hidden:{},queryMatch:{catalog:0,journal:0},
+      termCounts:[],hiddenKindWords:[],query:'',urlQuery:false,
+    });
+    return {cnt,cntLive};
+  `,
   );
-  expect(runtime, "読み上げに伝えていない").toContain("cntLive += scheduleNote");
+  for (const shown of [[], [{}]]) {
+    for (const schedules of [[{}], [{}, {}, {}]]) {
+      const counts = summarize(shown, schedules, Recommender, String);
+      for (const text of [counts.cnt, counts.cntLive]) {
+        expect(text).toContain(`会期情報がある開催回 ${schedules.length} 件`);
+        expect(text.match(/会期情報がある開催回/g)).toHaveLength(1);
+      }
+    }
+    const empty = summarize(shown, [], Recommender, String);
+    expect(empty.cnt).not.toContain("会期情報がある開催回");
+    expect(empty.cntLive).not.toContain("会期情報がある開催回");
+  }
 });
 
 it("画面に出る曜日が検索の語になり、週末・平日も寄せた先を出す（SPEC §7）", () => {

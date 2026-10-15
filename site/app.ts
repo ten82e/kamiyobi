@@ -2301,6 +2301,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
    * 言っていた）。長い文を aria-live に流すのは避ける方針なので、読み上げには同じ原因を
    * 短い形で入れる。 */
   function zeroResultLiveNote(filter: {
+    scheduleOnlyCount?: number;
     hiddenKindWords: string[];
     termCounts: Array<{ term: string; count: number }>;
     /* 欄の名前の連結形（`分野セキュリティ`）を案内するかを決める問答。
@@ -2322,6 +2323,8 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   }): string {
     // データその物が無いときは、他のどの説明より先にそれを言う（読み上げは短い形で）。
     if (!filter.catalogConferences) return " ｜ 締切のデータが入っていません";
+    if (filter.scheduleOnlyCount && filter.scheduleOnlyCount > 0)
+      return ` ｜ 会期情報がある開催回 ${countJa(filter.scheduleOnlyCount)} 件（投稿締切は未収録）`;
     /* 0 件画面の下の方には「外せる条件」を書く。読み上げには短い形だけを流すので、
      * その案内が画面に出ていることを一言添えないと、支援技術では 0 件とだけ聞いて
      * 操作をやめてしまう（画面の内訳まで流すと 1 打鍵ごとに数十語になるので、
@@ -5084,10 +5087,10 @@ function semanticOutput(value: unknown): value is SemanticOutput {
        * 出していたので、表に 1 行でも出た人は「これで全部だ」と受け取ってしまう
        * （2026-09-23 実測: 「研究会」は表 16 件に対し会期だけの該当 28 件、
        * 「ネットワーク」は 39 件に対し 31 件が画面に出ていなかった）。 */
-      if (shown.length && scheduleOnly.length) {
+      if (scheduleOnly.length) {
         const scheduleNote = ` ｜ 会期情報がある開催回 ${countJa(scheduleOnly.length)} 件（投稿締切は未収録）`;
         cnt += scheduleNote;
-        cntLive += scheduleNote;
+        if (shown.length) cntLive += scheduleNote;
       }
       // 「スパコン」などを分野名に寄せたときは、寄せた先をその場で書く。
       // 理由も見ずに分野全体の行を並べると、なぜ出たか分からないまま行の壁になる。
@@ -5232,6 +5235,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         // 0 件案内が「外せる条件」として並べる数と、読み上げの言いぶりを揃える。
         clearable: filtersClearable(zeroFilter),
         pastShown: state.past,
+        scheduleOnlyCount: scheduleOnly.length,
       });
     /* 件数欄は**見える欄**に出す。推薦モードの文言（`あなたの論文に合う投稿先 N 件`・
      * 分野自動判定・意味検索の状態）は `#count` に置いていたが、`#count` は畳んだ

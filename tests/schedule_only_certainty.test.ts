@@ -230,16 +230,21 @@ describe("schedule-only UI respects date certainty and selected filters", () => 
       ),
     ).toEqual(rows);
     expect(received).toMatchObject({ rank: "A*" });
-    const block = /if \(shown.length && scheduleOnly.length\) \{([\s\S]*?)\n\s*\}/.exec(src)?.[1];
+    const block = /if \(scheduleOnly.length\) \{[\s\S]*?\n\s*\}/.exec(src)?.[0];
     expect(block).toBeDefined();
-    const count = new Function(
+    const countFor = new Function(
       "scheduleOnly",
       "countJa",
+      "shown",
       `let cnt='',cntLive='';${block};return {cnt,cntLive};`,
-    )(rows, String);
+    );
+    const count = countFor(rows, String, [{}]);
     expect(count.cnt).toContain("開催回 1 件（投稿締切は未収録）");
     expect(count.cntLive).toBe(count.cnt);
     expect(count.cnt).not.toContain("確定");
+    expect(countFor(rows, String, []).cnt).toBe(count.cnt);
+    expect(countFor(rows, String, []).cntLive).toBe("");
+    expect(countFor([], String, [])).toEqual({ cnt: "", cntLive: "" });
   });
   it("keeps explicit split dates even without a continuous envelope", () => {
     const input = {
