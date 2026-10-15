@@ -598,7 +598,7 @@ it("「オンライン参加可のみ」で出ない理由を 2 通りに分け�
   expect(box).toContain("開催地が未確認");
   const dd = html.slice(
     html.indexOf("<dt>オンライン参加可</dt>"),
-    html.indexOf("<dt>会期のみ・締切未定</dt>"),
+    html.indexOf("<dt>会期情報あり・投稿締切未収録</dt>"),
   );
   expect(dd).toContain("オンライン参加が無いのだと誤解しないでください");
 });

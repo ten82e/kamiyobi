@@ -4256,21 +4256,29 @@ it("the empty state offers the next schedule-only meeting (SPEC §7)", () => {
   expect(html).toContain('id="emptyMeeting"');
   const app = siteRuntime("app.js");
   expect(app).toContain("Recommender.scheduleOnlyEditions");
-  expect(app).toContain("会期だけ確定している次回");
-  expect(app).toContain("締切が未定の会は表に載せません");
+  expect(app).toContain("投稿締切が未収録の開催回");
+  expect(app).toContain("投稿締切が未収録の開催回は締切一覧に載せません");
   // 実データで実際に効いていること（0 件なら検査が空回りする）。
   const editions = Recommender.scheduleOnlyEditions(data);
   expect(editions.length).toBeGreaterThan(0);
   expect(editions.some((e) => e.tags.indexOf("domestic-jp") >= 0)).toBe(true);
   // 案内に混ぜるのは「締切を持たない版」だけ。会議ごとに件数が一致するかで見る。
-  type EditionShape = { deadlines?: unknown[]; event_start?: string };
+  type EditionShape = {
+    deadlines?: unknown[];
+    schedule_deadlines?: unknown[];
+    event_start?: string;
+    estimated?: boolean;
+  };
   for (const conf of (data.conferences || []) as Array<{
     key: string;
     editions?: EditionShape[];
   }>) {
     const expected = (conf.editions || []).filter(
       (ed) =>
-        !(ed.deadlines || []).length && /^\d{4}-\d{2}-\d{2}$/.test(String(ed.event_start || "")),
+        !ed.estimated &&
+        !(ed.deadlines || []).length &&
+        !(ed.schedule_deadlines || []).length &&
+        /^\d{4}-\d{2}-\d{2}$/.test(String(ed.event_start || "")),
     ).length;
     const got = Recommender.scheduleOnlyEditions({ conferences: [conf] }).length;
     expect(got, `${conf.key}: 締切の無い版と案内対象の件数が合わない`).toBe(expected);
@@ -4318,12 +4326,12 @@ it("the next-meeting note formats the schedule-only edition for a Japanese reade
   expect(proc.status, proc.stderr).toBe(0);
   const shown = JSON.parse(proc.stdout) as { hidden: boolean; text: string };
   expect(shown.hidden).toBe(false);
-  expect(shown.text).toContain("会期だけ確定している次回:");
+  expect(shown.text).toContain("投稿締切が未収録の開催回:");
   // 暦日 + 曜日（時刻を付けない）/ 同じ年は年を二度書かない / 会場名を出す。
-  expect(shown.text).toContain("2026-11-12(木)〜11-13(金)");
+  expect(shown.text).toContain("2026-11-12(木) 〜 2026-11-13(金)");
   expect(shown.text).toContain("情報処理学会 AL 研究会");
   expect(shown.text).toContain("松江テルサ（島根県）");
-  expect(shown.text).toContain("締切が未定の会は表に載せません");
+  expect(shown.text).toContain("投稿締切が未収録の開催回は締切一覧に載せません");
   expect(shown.text).not.toContain("2026-09-04");
 
   // 期間外（30 日先まで）なら案内しない。
@@ -4344,7 +4352,7 @@ it("the drawer lists the same conference's later meetings (SPEC §7)", () => {
     html.indexOf('id="helpPanel"'),
     html.indexOf("</details>", html.indexOf('id="helpPanel"')),
   );
-  for (const word of ["会期のみ・締切未定", "upcoming.html", "今後の会期"]) {
+  for (const word of ["会期情報あり・投稿締切未収録", "upcoming.html", "今後の会期"]) {
     expect(guide, `てびき に「${word}」が無い`).toContain(word);
   }
 

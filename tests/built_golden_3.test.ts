@@ -86,9 +86,7 @@ it("表に行が出ていても、会期だけ確定の該当件数が件数欄�
   expect(out.win).toEqual([]);
 
   // 件数欄への出し方（ビルド後）。表に行があるときだけ出し、読み上げにも同じ語を流す。
-  expect(runtime, "件数欄に会期だけ確定の件数を出していない").toContain(
-    "同じ条件で会期だけが確定している会",
-  );
+  expect(runtime, "件数欄に会期だけ確定の件数を出していない").toContain("会期情報がある開催回");
   expect(runtime, "0 件のときと二重に出している").toContain(
     "if (shown.length && scheduleOnly.length)",
   );
@@ -4070,7 +4068,7 @@ it("締切一覧のファイルは、読みやすい版へ導線を送り、Mark
   }
 
   // てびきの本文も、押した先が読みやすい形であることを書く（案内と実装のずれは画面の外側でも起きる）。
-  const gStart = html.indexOf("<dt>会期のみ・締切未定</dt>");
+  const gStart = html.indexOf("<dt>会期情報あり・投稿締切未収録</dt>");
   expect(gStart, "てびきの該当項がない").toBeGreaterThan(-1);
   const guideNote = html.slice(gStart, html.indexOf("</dd>", gStart));
   expect(guideNote, "てびきが読みやすい版へ送っていない").toContain("upcoming.html");

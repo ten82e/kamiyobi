@@ -70,6 +70,8 @@ interface EditionRecord {
   /** 会期の暦日。国際会議の `date_text` は英語表記なので、月での検索はこっちを使う。 */
   event_start?: string;
   event_end?: string;
+  event_date_precision?: string;
+  event_segments?: Array<{ start: string; end: string; label?: string }>;
   estimated?: boolean;
   /** 公式ページ。検索欄に URL を貼って収録確認をする人が使えるように、検索語へ入れる。 */
   link?: string;
@@ -77,7 +79,7 @@ interface EditionRecord {
   schedule_deadlines?: DeadlineRecord[];
 }
 
-/** 会期だけが決まっていて締切が未定の回（締切一覧の表には出さない）。 */
+/** 会期情報があり、投稿締切が未収録の回（締切一覧の表には出さない）。 */
 interface ScheduleOnlyEdition {
   key: string;
   name: string;
@@ -85,6 +87,9 @@ interface ScheduleOnlyEdition {
   place: string;
   eventStart: string;
   eventEnd: string;
+  eventDatePrecision?: string;
+  eventSegments?: Array<{ start: string; end: string; label?: string }>;
+  rankPairs: string[];
   cats: string[];
   tags: string[];
   hay: string;
@@ -14193,7 +14198,7 @@ const Recommender = (() => {
   }
 
   /**
-   * 会期だけが決まっていて締切が未定の回を一覧にする。締切一覧の表は締切行でできており、
+   * 会期情報があり、投稿締切が未収録の回を一覧にする。締切一覧の表は締切行でできており、
    * これらの回は `upcoming.md` にしか出ない。検索で引っ掛けて「次回の開催」を案内できる
    * ようにするのが目的なので、`candidateRows` と同じ検索要素（分類・開催地・都道府県・月・
    * タグ）を同じヘルパーで組み立てる。
@@ -14209,9 +14214,11 @@ const Recommender = (() => {
         .join(" ")
         .toLowerCase();
       (conf.editions || []).forEach((ed) => {
-        if ((ed.deadlines || []).length || (ed.schedule_deadlines || []).length) return;
-        const start = String(ed.event_start || "");
-        const end = String(ed.event_end || start);
+        if (ed.estimated || (ed.deadlines || []).length || (ed.schedule_deadlines || []).length)
+          return;
+        const segments = Array.isArray(ed.event_segments) ? ed.event_segments : [];
+        const start = String(ed.event_start || segments[0]?.start || "");
+        const end = String(ed.event_end || segments.at(-1)?.end || start);
         if (!/^\d{4}-\d{2}-\d{2}$/.test(start)) return;
         out.push({
           key: String(conf.key || ""),
@@ -14220,6 +14227,9 @@ const Recommender = (() => {
           place: String(ed.place || ""),
           eventStart: start,
           eventEnd: end,
+          eventDatePrecision: ed.event_date_precision,
+          eventSegments: segments,
+          rankPairs: Object.entries(conf.rank || {}).map(([source, grade]) => `${source}:${grade}`),
           cats: conf.categories || [],
           tags: confTags,
           hay: searchNormalize(
@@ -14227,7 +14237,7 @@ const Recommender = (() => {
             `${baseHay} ${ed.place || ""} ${ed.date_text || ""} ${linkSearchTerms(ed.link)} ` +
               `${categorySearchTerms(conf.categories, confTags)} ${tagSearchTerms(confTags)} ` +
               `${placeJa(ed.place)} ${placePrefectureJa(ed.place)} ` +
-              `${monthTermsJa(start)} ${monthTermsJa(end)} ${weekdaySearchTerms(start)}`,
+              `${monthTermsJa(start)} ${monthTermsJa(end)} ${weekdaySearchTerms(start)} ${eventDaySearchWords({ ed })}`,
           ),
         });
       });

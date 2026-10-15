@@ -3767,28 +3767,25 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     return `${base}${horizonNote}${nameNote}${termNote} 多いのは ${tips.join(" / ")}。${retypeNote}${meetingNote}`;
   }
 
-  /**
-   * 0 件のとき、会期だけ確定している次回開催を案内する。締切が未定の会は表に載らない
-   * （`upcoming.html` 側にしか出ない）ので、「検索語は合っているのに 0 件」をそのまま
-   * 放置しない。表示する日程は表と同じく暦日 + 曜日で、時刻は付けない。
-   */
-  /* 会期だけが確定している回の形（表の行とは別物なので型も分けて持つ – 件数欄と 0 件の
-   * 案内で同じ型を使い回す）。 */
+  /** 投稿締切が未収録の開催回。会期の確かさと分割区間を案内まで保持する。 */
   type ScheduleOnlyMatch = {
     name: string;
     eventStart: string;
     eventEnd: string;
+    eventDatePrecision?: string;
+    eventSegments?: Array<{ start: string; end: string; label?: string }>;
     place?: string;
     link?: string;
   };
 
-  /* いまの絞り込みで残る「会期だけが確定している会」を数える（表に出さないだけで、
+  /* いまの絞り込みで残る、投稿締切が未収録の開催回を数える（表に出さないだけで、
    * 検索語・分野・国内・オンライン・締切までの窓は表と同じ目盛りで掛ける）。 */
   function scheduleOnlyMatches(filter: {
     window: string;
     cats: string[];
     domestic: boolean;
     online: boolean;
+    rank?: string;
   }): ScheduleOnlyMatch[] {
     const now = Date.now();
     const limit = windowLimitMs(filter.window, now);
@@ -3809,12 +3806,21 @@ function semanticOutput(value: unknown): value is SemanticOutput {
               ),
           );
         if (knownSubmission) return false;
+        if (filter.rank && !Recommender.rankMatches(m.rankPairs, filter.rank)) return false;
         if (searchQuery.trim() && !meetsQuery(m.hay)) return false;
         if (filter.domestic && m.tags.indexOf("domestic-jp") < 0) return false;
         if (filter.online && !Recommender.placeOffersOnline(m.place)) return false;
         if (filter.cats.length && !filter.cats.some((c) => m.cats.indexOf(c) >= 0)) return false;
-        const startMs = Date.parse(`${m.eventStart}T00:00:00+09:00`);
-        return Number.isFinite(startMs) && startMs >= now && startMs <= limit;
+        const segments = m.eventSegments?.length
+          ? m.eventSegments
+          : [{ start: m.eventStart, end: m.eventEnd }];
+        return segments.some((part) => {
+          const bounds = Recommender.eventDateBoundsMs(part.start, part.end, m.eventDatePrecision);
+          if (!bounds) return false;
+          const startMs = bounds[0] - 9 * 3_600_000;
+          const endExclusiveMs = bounds[1] + 15 * 3_600_000;
+          return endExclusiveMs > now && startMs < limit;
+        });
       })
       .sort((a, b) => a.eventStart.localeCompare(b.eventStart)) as unknown as ScheduleOnlyMatch[];
   }
@@ -3827,13 +3833,13 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     const found = matches.slice(0, 3);
     if (!found.length) return;
     const lead = document.createElement("strong");
-    lead.textContent = "会期だけ確定している次回:";
+    lead.textContent = "投稿締切が未収録の開催回:";
     box.appendChild(lead);
     found.forEach((m, index) => {
       const sep = document.createTextNode(index === 0 ? " " : " / ");
       box.appendChild(sep);
       const label = document.createTextNode(
-        `${Recommender.meetingRangeJa(m.eventStart, m.eventEnd)} `,
+        `${Recommender.eventCellJa({ ed: { event_start: m.eventStart, event_end: m.eventEnd, event_date_precision: m.eventDatePrecision, event_segments: m.eventSegments } })} `,
       );
       box.appendChild(label);
       if (m.link) {
@@ -3858,18 +3864,13 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     /* 「upcoming.html に載せます」と言うだけだと、画面を読む人にはファイル名が打てない
      * （このファイルはこのサイトの同じ場所にあるので、押せば届く）。文章の中も押せる形に
      * する（外側の文章はそのまま – 読み上げで同じ語を二度読ませない）。 */
-    box.appendChild(document.createTextNode(" 締切が未定の会は表に載せません（会期は"));
+    box.appendChild(
+      document.createTextNode(" 投稿締切が未収録の開催回は締切一覧に載せません（会期は"),
+    );
     const upcoming = document.createElement("a");
     upcoming.href = "upcoming.html";
     upcoming.textContent = "upcoming.html";
-    /* md はマークダウンのまま配るので、ブラウザでは表に整形されない（実測: 配信先の
-     * `content-type` は `text/markdown` で、ブラウザはこれを表として描画しない。記号が並んだ
-     * 文章で見えるか、ダウンロードされる）。てびきの項と同じ説明を title に添える
-     * （見出し文を長くして読み上げで同じ語を二度読ませないため）。 */
-    upcoming.title =
-      "マークダウンで書いた表なので、ブラウザでは表に整形されず、記号が並んだ文章として開くか、" +
-      "そのままダウンロードされます（開き方はブラウザで違います）。表が見たいだけならこの画面の" +
-      "一覧が早く、締切が未定で会期だけ決まっている会はこのファイルにしか載りません。";
+    upcoming.title = "会期の一覧をブラウザで読めます。日付の確かさも併記しています。";
     box.appendChild(upcoming);
     box.appendChild(document.createTextNode("にも掲載）。"));
     box.hidden = false;
@@ -4995,7 +4996,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     let cntLive = cnt;
     // 前の描画で出した理由が残り続けないよう、状態を組み直すたびに消す。
     countSemanticReason = null;
-    /* 会期だけが確定している会の当たり数を、件数欄と 0 件の案内で共用する（同じ絞り込みを
+    /* 投稿締切が未収録の開催回の当たり数を、件数欄と 0 件の案内で共用する（同じ絞り込みを
      * 二箇所に書かない）。対象は数十件なので、毎回数えても打鍵のコストにはならない。 */
     const scheduleOnly =
       recMode || paperMode
@@ -5005,6 +5006,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
             cats: state.cats,
             domestic: state.domestic,
             online: state.online,
+            rank: state.rank,
           });
     // 「全 M 件」との差をその場で説明する。内訳は独立に数えているので合計は全件にならない
     // （過去かつ投稿締切以外の行が両方に立つ）ため、「〜をのぞく」の形で書く。
@@ -5044,12 +5046,12 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         );
       }
       if (parts.length) cnt += ` ｜ のぞく: ${parts.join("・")}`;
-      /* 同じ条件で会期だけが確定している会の件数。これまでは表が 0 件のときにだけ
+      /* 会期情報がある開催回の件数。これまでは表が 0 件のときにだけ
        * 出していたので、表に 1 行でも出た人は「これで全部だ」と受け取ってしまう
        * （2026-09-23 実測: 「研究会」は表 16 件に対し会期だけの該当 28 件、
        * 「ネットワーク」は 39 件に対し 31 件が画面に出ていなかった）。 */
       if (shown.length && scheduleOnly.length) {
-        const scheduleNote = ` ｜ 同じ条件で会期だけが確定している会 ${countJa(scheduleOnly.length)} 件（締切は未定）`;
+        const scheduleNote = ` ｜ 会期情報がある開催回 ${countJa(scheduleOnly.length)} 件（投稿締切は未収録）`;
         cnt += scheduleNote;
         cntLive += scheduleNote;
       }
