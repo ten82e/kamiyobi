@@ -4312,7 +4312,7 @@ it("the next-meeting note formats the schedule-only edition for a Japanese reade
     "]}] };",
     "let searchQuery = Recommender.expandRelativeMonths('アルゴリズム', Date.now());",
     "const box = { hidden: true, textContent: '', appendChild(node) { if (node.textContent) this.textContent += node.textContent; } };",
-    "const document = { createElement: (tag) => ({ tagName: tag, textContent: '', href: '', target: '', rel: '' }), createTextNode: (text) => ({ textContent: text }) };",
+    "const document = { createElement: (tag) => ({ tagName: tag, textContent: '', href: '', target: '', rel: '', appendChild(node) { this.textContent += node.textContent || ''; } }), createTextNode: (text) => ({ textContent: text }) };",
     "const $ = () => box;",
     jsFunction(siteRuntime("app.js"), "scheduleOnlyMatches"),
     jsFunction(siteRuntime("app.js"), "renderNextMeetingNote"),

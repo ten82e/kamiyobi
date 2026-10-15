@@ -160,7 +160,7 @@ describe("schedule-only UI respects date certainty and selected filters", () => 
     expect(box.text()).toContain("投稿締切が未収録の開催回:");
     expect(box.text()).not.toMatch(/確定|締切が未定/);
     const link = box.children.find((n) => n.href === "upcoming.html");
-    expect(link?.title).toContain("ブラウザで読めます");
+    expect(link?.title).toContain("期間外の開催回は載りません");
     expect(link?.title).not.toContain("マークダウン");
     expect(render([]).hidden).toBe(true);
   });

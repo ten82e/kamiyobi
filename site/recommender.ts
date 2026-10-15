@@ -83,6 +83,7 @@ interface EditionRecord {
 interface ScheduleOnlyEdition {
   key: string;
   name: string;
+  year?: number;
   link: string;
   place: string;
   eventStart: string;
@@ -14223,6 +14224,7 @@ const Recommender = (() => {
         out.push({
           key: String(conf.key || ""),
           name: String(conf.title || conf.key || ""),
+          year: ed.year,
           link: String((ed as { link?: string }).link || (conf as { link?: string }).link || ""),
           place: String(ed.place || ""),
           eventStart: start,
@@ -14234,7 +14236,7 @@ const Recommender = (() => {
           tags: confTags,
           hay: searchNormalize(
             /* 会期だけの行も、公式ページの URL で引けるようにする（上の締切行と同じ理由）。 */
-            `${baseHay} ${ed.place || ""} ${ed.date_text || ""} ${linkSearchTerms(ed.link)} ` +
+            `${baseHay} ${titleWithYearJa(conf.title || conf.key, ed.year)} ${ed.place || ""} ${ed.date_text || ""} ${linkSearchTerms(ed.link)} ` +
               `${categorySearchTerms(conf.categories, confTags)} ${tagSearchTerms(confTags)} ` +
               `${placeJa(ed.place)} ${placePrefectureJa(ed.place)} ` +
               `${monthTermsJa(start)} ${monthTermsJa(end)} ${weekdaySearchTerms(start)} ${eventDaySearchWords({ ed })}`,

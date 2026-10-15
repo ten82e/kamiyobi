@@ -963,6 +963,8 @@ footer a:hover { text-decoration: underline; }
   }
 }
 
+.schedule-only-list { margin: 8px 0; padding-left: 1.5em; text-align: left; }
+.schedule-only-list li { margin: 6px 0; }
 </style>
 </head>
 <body>
@@ -1238,7 +1240,7 @@ footer a:hover { text-decoration: underline; }
   <div class="empty" id="empty" style="padding: 32px; text-align: center; color: var(--muted);" hidden>
     <span id="emptyText">該当する締切はありません。</span>
     <div id="emptyRecovery" class="active-filters" role="group" aria-label="検索語を残して試せる条件" hidden></div>
-    <p id="emptyMeeting" style="margin: 12px 0 0; font-size: 13px;" hidden></p>
+    <div id="emptyMeeting" style="margin: 12px 0 0; font-size: 13px;" hidden></div>
     <div style="margin-top: 12px;">
       <button id="emptyReset" type="button" hidden>条件をまとめて外す</button>
     </div>
@@ -1439,7 +1441,7 @@ footer a:hover { text-decoration: underline; }
       </div>
       <div>
         <dt>会期情報あり・投稿締切未収録</dt>
-        <dd>投稿締切が未収録の開催回は、締切一覧には出ません。会期は<a href="upcoming.html" title="会期の一覧をブラウザで読めます。日付の確かさも併記しています。"><code>upcoming.html</code></a>で確認できます。検索結果が0件でも、同じ条件で会期情報が見つかればその場に案内します。締切一覧に行がある場合も、件数欄に「会期情報がある開催回」の件数を併記します。月のみ判明・日付未確認・未発表の区別は会期の表示で確認してください。期間の指定は会期に適用します。情報があれば、行の詳細の「今後の会期」に別の開催回も表示します。</dd>
+        <dd>投稿締切が未収録の開催回は、締切一覧には出ません。直近の会期は<a href="upcoming.html" title="生成時点から一定期間の一覧です。期間外の開催回は載りません。"><code>upcoming.html</code></a>で確認できます。検索結果が0件でも、同じ条件で会期情報が見つかればその場に案内します。締切一覧に行がある場合も、件数欄に「会期情報がある開催回」の件数を併記します。月のみ判明・日付未確認・未発表の区別は会期の表示で確認してください。期間の指定は会期に適用します。情報があれば、行の詳細の「今後の会期」に別の開催回も表示します。</dd>
       </div>
       <div>
         <dt>ランク</dt>

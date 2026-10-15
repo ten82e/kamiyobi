@@ -3770,6 +3770,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   /** 投稿締切が未収録の開催回。会期の確かさと分割区間を案内まで保持する。 */
   type ScheduleOnlyMatch = {
     name: string;
+    year?: number;
     eventStart: string;
     eventEnd: string;
     eventDatePrecision?: string;
@@ -3825,32 +3826,34 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       .sort((a, b) => a.eventStart.localeCompare(b.eventStart)) as unknown as ScheduleOnlyMatch[];
   }
 
-  function renderNextMeetingNote(matches: ScheduleOnlyMatch[]): void {
+  function renderNextMeetingNote(matches: ScheduleOnlyMatch[], limit = 3): void {
     const box = $("emptyMeeting");
     if (!box) return;
     box.textContent = "";
     box.hidden = true;
-    const found = matches.slice(0, 3);
+    const found = matches.slice(0, limit);
     if (!found.length) return;
     const lead = document.createElement("strong");
     lead.textContent = "投稿締切が未収録の開催回:";
     box.appendChild(lead);
-    found.forEach((m, index) => {
-      const sep = document.createTextNode(index === 0 ? " " : " / ");
-      box.appendChild(sep);
+    const list = document.createElement("ul");
+    list.className = "schedule-only-list";
+    found.forEach((m) => {
+      const item = document.createElement("li");
       const label = document.createTextNode(
         `${Recommender.eventCellJa({ ed: { event_start: m.eventStart, event_end: m.eventEnd, event_date_precision: m.eventDatePrecision, event_segments: m.eventSegments } })} `,
       );
-      box.appendChild(label);
+      item.appendChild(label);
+      const name = Recommender.titleWithYearJa(m.name, m.year);
       if (m.link) {
         const a = document.createElement("a");
         a.href = m.link;
         a.target = "_blank";
         a.rel = "noopener";
-        a.textContent = m.name;
-        box.appendChild(a);
+        a.textContent = name;
+        item.appendChild(a);
       } else {
-        box.appendChild(document.createTextNode(m.name));
+        item.appendChild(document.createTextNode(name));
       }
       if (m.place) {
         // 会期だけの会の開催地も、表と同じく日本語に寄せる（原文は title に残す）。
@@ -3858,21 +3861,29 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         const placeNode = document.createElement("span");
         placeNode.textContent = ` ＠${shownPlace}`;
         if (shownPlace !== m.place) placeNode.title = String(m.place);
-        box.appendChild(placeNode);
+        item.appendChild(placeNode);
       }
+      list.appendChild(item);
     });
-    /* 「upcoming.html に載せます」と言うだけだと、画面を読む人にはファイル名が打てない
-     * （このファイルはこのサイトの同じ場所にあるので、押せば届く）。文章の中も押せる形に
-     * する（外側の文章はそのまま – 読み上げで同じ語を二度読ませない）。 */
-    box.appendChild(
-      document.createTextNode(" 投稿締切が未収録の開催回は締切一覧に載せません（会期は"),
-    );
+    box.appendChild(list);
+    if (matches.length > found.length) {
+      const more = document.createElement("button");
+      more.type = "button";
+      more.className = "filter-remove";
+      more.textContent = `残り ${(matches.length - found.length).toLocaleString("ja-JP")} 開催回を表示`;
+      more.addEventListener("click", () => {
+        renderNextMeetingNote(matches, matches.length);
+        box.tabIndex = -1;
+        box.focus();
+      });
+      box.appendChild(more);
+    }
+    box.appendChild(document.createTextNode(" 投稿締切が未収録の開催回は締切一覧に載せません。"));
     const upcoming = document.createElement("a");
     upcoming.href = "upcoming.html";
-    upcoming.textContent = "upcoming.html";
-    upcoming.title = "会期の一覧をブラウザで読めます。日付の確かさも併記しています。";
+    upcoming.textContent = "直近の締切と会期の一覧";
+    upcoming.title = "生成時点から一定期間の一覧です。期間外の開催回は載りません。";
     box.appendChild(upcoming);
-    box.appendChild(document.createTextNode("にも掲載）。"));
     box.hidden = false;
   }
 
