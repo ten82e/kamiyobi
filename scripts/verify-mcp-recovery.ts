@@ -19,6 +19,8 @@ for (const directory of ["src", "site"])
 mkdirSync(join(root, "tests/fixtures"), { recursive: true });
 for (const file of [
   "mcp_recovery_models.integration.ts",
+  "mcp_recovery_case.ts",
+  "interrupted_model_download.mjs",
   "live_consumer_site.ts",
   "full_venue_pool.ts",
 ])
