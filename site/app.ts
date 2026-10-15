@@ -4101,10 +4101,13 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       pp.textContent = Recommender.pastDeadlineTagJa(r, Date.now());
       tags.appendChild(pp);
     }
-    if ((r.tags || []).indexOf("domestic-jp") >= 0) {
+    /* 國內の札（畫面と同じ語 – 語の正本は recommender 側。`domestic-jp` は構造のタグ
+     * なので主題欄には出さず、列の外に一つ出す）。日本で開催される國際会議と
+     * 國內の學會を區別するのが此の札の役目。 */
+    if (Recommender.isDomesticTag(r.tags)) {
       const dj = document.createElement("span");
       dj.className = "tag";
-      dj.textContent = "国内";
+      dj.textContent = Recommender.domesticTagLabelJa(r.tags);
       tags.appendChild(dj);
     }
     if (tags.childNodes.length) {

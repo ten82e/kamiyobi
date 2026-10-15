@@ -15,6 +15,7 @@ import { join } from "node:path";
 import { afterAll, describe, expect, it } from "vitest";
 import Recommender from "../site/recommendation.ts";
 import { consolidateReviewedSubmissions } from "../site/submission-identity.ts";
+import { structuredDeadline } from "../src/mcp.ts";
 import { FILTER_RUNTIME_STUBS, site } from "./built_golden_shared.ts";
 import { REPO_ROOT, tempWork } from "./helpers.ts";
 import { jsFunction, siteRuntime, vmSafeSource } from "./runtime_extract.ts";
@@ -3341,6 +3342,95 @@ it("行の殘りの語は、畫面の「殘り」欄と同じ數へ方と同じ�
     expect(l, "「殘り（過ぎた）」が出ている").not.toContain("殘り（過ぎた）");
     expect(l, "「殘り0日」が出ている").not.toContain("殘り0日");
   }
+});
+
+/* 畫面は過去の行に、列の外に「締切済み」系の札を出す（`app.ts` が
+ * `Recommender.pastDeadlineTagJa` を呼ぶ）。MCP は「N 日前に終了」とだけ言つて居たため、
+ * AI が「もう出せない會議」として片付けて了ひ、**會期がまだ先の行**を見落して居た
+ * （實測 2026-10-16: ICDE の過去 18 行のうち 3 行は會期がこれから・15 行は次回が確認できる）。
+ * 札の語を寫さず、畫面と同じ入口を呼ぶ事も確かめる（app.js の配線と同じ決まり）。 */
+it("過ぎた行の札は、畫面が列の外に出す同じ札を言ふ（第 1101 回）", async () => {
+  const R = (await import("../site/recommender.ts")).default;
+  const 實物 = readFileSync(join(REPO_ROOT, "src", "mcp.ts"), "utf8");
+  expect(實物, "札の語を寫して居る（正本を呼ぶ）").toContain("Recommender.pastDeadlineTagJa(");
+  expect(實物, "畫面と同じ入口を呼んで居ない").toMatch(
+    /Recommender\.pastDeadlineTagJa\(r,\s*now\)/,
+  );
+
+  /* 正本の行で、札がどう分かれるか（畫面がその札を出す行と同じ行）。 */
+  const 行たち = R.candidateRows(
+    JSON.parse(readFileSync(join(REPO_ROOT, "data", "snapshot.json"), "utf8")),
+  ) as unknown as Array<Parameters<typeof R.pastDeadlineTagJa>[0] & { conf?: { key?: unknown } }>;
+  const now = Date.now();
+  const 正本の札 = new Map<string, number>();
+  let 正本の過去 = 0;
+  for (const r of 行たち) {
+    if (String(r.conf?.key ?? "") !== "icde") continue;
+    if (!R.deadlineRowIsPast(r, now)) continue;
+    正本の過去 += 1;
+    const 札 = R.pastDeadlineTagJa(r, now);
+    正本の札.set(札, (正本の札.get(札) ?? 0) + 1);
+  }
+  expect(正本の過去, "過去の行が無い（この検査の前提が崩れた）").toBeGreaterThan(5);
+  /* 三つの形が揃ふ事（空振り防止 – 「締切済み」だけでは區別を見て居ない）。 */
+  expect([...正本の札.keys()].length, "札の形が一つしかない").toBeGreaterThan(1);
+
+  /* **實物** – MCP の過去の行が、正本と同じ札を同じ數だけ持つ。 */
+  const 答 = await call("venue_info", { key: "icde", scope: "all" });
+  const 過ぎた行 = 答.split("\n").filter((l) => /^20\d\d-/.test(l) && 過去の札.test(l));
+  expect(過ぎた行.length, "過去の行の數が正本と違ふ").toBe(正本の過去);
+  const 實物の札 = new Map<string, number>();
+  for (const l of 過ぎた行) {
+    const 札 = [...l.matchAll(/(締切済み(?:（[^）]*）)?)/g)].map((m) => m[1]);
+    expect(札.length, `札が付いて居ない: ${l}`).toBe(1);
+    實物の札.set(札[0]!, (實物の札.get(札[0]!) ?? 0) + 1);
+  }
+  expect([...實物の札.entries()].sort(), "札の內譯が正本と違ふ").toEqual(
+    [...正本の札.entries()].sort(),
+  );
+  /* これからの行には札を付けない（畫面も同じ – 騒音を增やさない）。 */
+  const 今後 = 答.split("\n").filter((l) => /^20\d\d-/.test(l) && !過去の札.test(l));
+  for (const l of 今後) expect(l, "これからの行に締切済みを付けた").not.toContain("締切済み");
+});
+
+/* 畫面は國內の行に列の外へ「国内」の札を出す（`domestic-jp` は構造のタグなので主題欄には
+ * 出さない）。MCP は此を言つて居なかつたため、**日本で開催される國際会議**（CSFW 2027 の
+ * 東京など）と國內の學會を區別できなかつた（實測 2026-10-16: 畫面は 38 行に出して居た）。
+ * 語も判定も recommender の正本から取り、行と結構化結果の兩方で持つ。 */
+it("国内の行に「国内」の札を付ける – 國際会議の日本開催と區別する（第 1102 回）", async () => {
+  const R = (await import("../site/recommender.ts")).default;
+  const 正本の語 = R.domesticTagLabelJa(["domestic-jp"]);
+  expect(正本の語, "正本の語が讀めない").toBe("国内");
+  expect(R.domesticTagLabelJa([]), "國內で無い行に札を出した").toBe("");
+  /* 畫面も同じ正本を呼ぶ（app.ts に寫かない）。 */
+  expect(siteRuntime("app.js"), "畫面が正本を呼んで居ない").toContain(
+    "Recommender.domesticTagLabelJa(",
+  );
+  /* MCP の行も正本を呼ぶ。 */
+  expect(readFileSync(join(REPO_ROOT, "src", "mcp.ts"), "utf8")).toContain(
+    "Recommender.domesticTagLabelJa(r.tags)",
+  );
+
+  /* **實物** – 收録の全部の行で、札と`domestic`が正本の判定と合う。 */
+  const 行たち = R.candidateRows(
+    JSON.parse(readFileSync(join(REPO_ROOT, "data", "snapshot.json"), "utf8")),
+  ) as Array<Parameters<typeof R.pastDeadlineTagJa>[0] & { conf?: { key?: unknown } }>;
+  let 正本の國內 = 0;
+  let 札の付いた行 = 0;
+  for (const r of 行たち) {
+    const 行 = structuredDeadline(r as never, Date.now());
+    const 國內 = R.isDomesticTag((r as { tags?: string[] }).tags);
+    if (國內) 正本の國內 += 1;
+    expect(行.domestic, `${String(r.conf?.key ?? "")} の國內の判定が正本と違ふ`).toBe(國內);
+    const 札 = String(行.display ?? "").includes(正本の語);
+    expect(
+      札,
+      `${String(r.conf?.key ?? "")} の札が判定と違ふ: ${String(行.display).slice(0, 80)}`,
+    ).toBe(國內);
+    if (札) 札の付いた行 += 1;
+  }
+  expect(正本の國內, "國內の行が無い（この検査が空振り）").toBeGreaterThan(5);
+  expect(札の付いた行, "札の數が判定と違ふ").toBe(正本の國內);
 });
 
 it("--json でも、構造化を伴はない案内を其の侭出す（第 1099 回）", async () => {

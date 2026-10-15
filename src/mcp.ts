@@ -353,15 +353,25 @@ function line(r: Row, now: number): string {
     String(Recommender.placeJa(r.ed.place) ?? "").trim() ||
     String(Recommender.unconfirmedLabelJa() ?? "未確認");
   const ランク = ランクJa(r);
-  /* 一覧の行に付く**札**も入れる（画面の列の外にある印 – 語も入口も画面と同じ）。
-   * ①延長（上流の締切名に Extended と付く行）②検証状態（確認済みと未設定では空 – 画面も
-   * 印を出さない）。「複数候補のため要確認」は上流に候補が複数あつて人が確かめるべき行で、
-   * これを言はないと、AI が候補の一つを確定の締切として答へる。 */
-
+  /* 一覧の行に付く**札**も入れる（画面の列の外にある印 – 語も入口も画面と同じ。
+   * `app.ts` が札を並べる順と同じ：①延長②検証状態③締切を過ぎた事④国内）。 */
   const 差し替え = String(Recommender.deadlineShiftLineJa(r.dl) ?? "").trim();
+  /* 過ぎた行の札。畫面は「締切済み」の外に、**會期がこれからの行**と**同じ会議の次回が
+   * 確認できる行**を別の札で出す（`pastDeadlineTagJa` – 行の詳細の「今後の会期」と同じ
+   * 入口）。此を言はないと、AI が「もう出せない會議」として片付けて了ひ、
+   * 會期がまだ先の行を見落とす（實測 2026-10-16: ICDE の過去 18 行のうち 17 行は
+   * 會期がこれから – MCP は「N 日前に終了」とだけ言つて居た）。 */
+  const 過ぎた札 = String(Recommender.pastDeadlineTagJa(r, now) ?? "").trim();
+  /* 国内の札。畫面は列の外に「国内」を出す（`domestic-jp` は構造のタグなので主題欄には
+   * 出さない）。此を言はないと、**日本で開催される國際会議**（CSFW 2027 の東京など）と
+   * 國內の學會を區別できない（實測 2026-10-16: 畫面は 38 行に出して居た）。
+   * 語も判定も recommender の正本から取る（此処に寫かない）。 */
+  const 國內の札 = String(Recommender.domesticTagLabelJa(r.tags) ?? "").trim();
   const 印 = [
     Recommender.isExtendedDeadline(r.dl) ? String(Recommender.extendedLabelJa() ?? "").trim() : "",
     String(Recommender.verificationStatusLabelJa(r.dl?.verification) ?? "").trim(),
+    過ぎた札,
+    國內の札,
   ].filter(Boolean);
   if (差し替え) 印.push(差し替え);
   /* **会期も入れる**（画面の「会期」列と同じ入口 `eventCellJa`）。出張の段取りはこれで決める
@@ -946,6 +956,10 @@ export function structuredDeadline(r: Row, now: number): Record<string, unknown>
     official_url: r.ed.link || r.conf.link || null,
     place: r.ed.place ?? null,
     place_ja: Recommender.placeJa(r.ed.place) || null,
+    /* 國內の學會か（畫面が列の外に「国内」の札を出すのと同じ判定）。**開催地が日本**とは
+     * 別物 – 日本で開かれる國際会議は國內ではない。日本人研究者が「國內の研究会」を
+     * 聞いた時に AI が見分けを付けられるやうに、機械可読でも持つ。 */
+    domestic: Recommender.isDomesticTag(r.tags),
     rank: r.conf.rank ?? null,
     estimated: r.est,
     estimate: r.est ? (r.ed.estimate ?? null) : null,

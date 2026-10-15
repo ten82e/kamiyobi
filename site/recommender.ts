@@ -7509,8 +7509,8 @@ const Recommender = (() => {
       parts.push(c);
       parts.push(CATEGORY_LABELS_JA[c] || "");
     });
-    if ((tags || []).indexOf("domestic-jp") >= 0) {
-      parts.push("国内");
+    if (isDomesticTag(tags)) {
+      parts.push(DOMESTIC_TAG_LABEL_JA);
       parts.push("domestic");
     }
     return parts.filter(Boolean).join(" ");
@@ -7573,6 +7573,24 @@ const Recommender = (() => {
 
   // 構造タグ（収録状態や国内区分）は主題として表示しても検索の助けにならない除外対象。
   const TAG_HIDDEN_FROM_UI = ["domestic-jp", "journal", "sensys", "virtual-execution"];
+
+  /* 行に付ける「国内」の札。`domestic-jp` は**構造のタグ**なので主題の札の表
+   * （`TAG_LABELS_JA`）には載せず、一覧は列の外に此の札を一つ出す（`app.ts`）。
+   * AI（MCP の行）も同じ札を出すので、語の正本は此処に一つだけ置く – 寫すと
+   * 畫面と AI で違ふ字面になる（實測 2026-10-16: 畫面は 38 行に「国内」を出して居たが、
+   * MCP は行も結構化結果も國內を言はず、**日本で開催される國際会議**（CSFW 2027 の東京など）
+   * と國內の學會を區別出来なかつた）。 */
+  const DOMESTIC_TAG_LABEL_JA = "国内";
+
+  /** 國內のタグを持つ行かを、畫面・CSV・MCP が同じ判定で見る。 */
+  function isDomesticTag(tags: readonly string[] | null | undefined): boolean {
+    return (tags || []).indexOf("domestic-jp") >= 0;
+  }
+
+  /** 行に付ける「国内」の札（國內で無い行は空）。 */
+  function domesticTagLabelJa(tags: readonly string[] | null | undefined): string {
+    return isDomesticTag(tags) ? DOMESTIC_TAG_LABEL_JA : "";
+  }
 
   function tagKey(tag: unknown): string {
     const raw = typeof tag === "string" ? tag : "";
@@ -15599,6 +15617,8 @@ const Recommender = (() => {
 
     kanaFoldMemo: (): typeof kanaFold => kanaFold,
     tagLabelJa: tagLabelJa,
+    isDomesticTag: isDomesticTag,
+    domesticTagLabelJa: domesticTagLabelJa,
     topicTagsJa: topicTagsJa,
     tagSearchTerms: tagSearchTerms,
     scheduleOnlyEditions: scheduleOnlyEditions,

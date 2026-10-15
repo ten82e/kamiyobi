@@ -1601,7 +1601,12 @@ it("index.html has domestic filter and tag", () => {
   const html = siteHtmlRuntime();
   expect(html).toContain('id="domestic"');
   expect(html).toContain("domestic-jp");
-  expect(html).toContain('textContent = "国内"');
+  /* 札の語「国内」は recommender の正本から取る（寫すと畫面と MCP で違ふ字面になる –
+   * 第 1102 回で MCP も同じ札を出すやうにした）。判定も正本の同じ入口。 */
+  expect(html).toContain("Recommender.domesticTagLabelJa(");
+  expect(html).toContain("Recommender.isDomesticTag(");
+  expect(html).not.toContain('textContent = "国内"');
+  expect(siteRuntime("recommender.js")).toContain('"国内"');
   // 読み側も同じ鍵を見ている（値の形は urlFlagJa に寄せた・SPEC §7）。
   expect(html).toContain('p.get("domestic")');
   expect(html).toContain("state.domestic = domesticFlag.on");
