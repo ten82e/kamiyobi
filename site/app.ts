@@ -2524,6 +2524,88 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   }
 
   let recommendationCandidateCount = 0;
+  interface DeadlineRecovery {
+    key: string;
+    label: string;
+    count: number;
+    changes: Partial<UiState>;
+  }
+
+  function deadlineRecoveryOptions(
+    current: UiState,
+    count: (candidate: UiState) => number,
+  ): DeadlineRecovery[] {
+    const options: Array<Omit<DeadlineRecovery, "count">> = [];
+    const add = (key: string, label: string, changes: Partial<UiState>) =>
+      options.push({ key, label, changes });
+    if (!current.past) add("past", "過去の締切も表示", { past: true });
+    if (!current.est) add("est", "推定締切を含める", { est: true });
+    if (current.win && current.win !== "all") add("window", "締切までの期間を外す", { win: "all" });
+    if (current.rank && current.rank !== "all") add("rank", "ランクをすべてにする", { rank: "" });
+    if (current.cats.length) add("cats", "分野の指定を外す", { cats: [] });
+    if (current.domestic) add("domestic", "国内のみの条件を外す", { domestic: false });
+    if (current.online) add("online", "オンライン参加可の条件を外す", { online: false });
+    if (current.kind) add("kind", "概要・論文の投稿締切を表示", { kind: "" });
+    const results = options
+      .map((option) => ({ ...option, count: count({ ...current, ...option.changes }) }))
+      .filter((option) => option.count > 0);
+    if (!results.length && options.length > 1) {
+      const changes: Partial<UiState> = {
+        past: true,
+        est: true,
+        win: "all",
+        rank: "",
+        cats: [],
+        domestic: false,
+        online: false,
+        kind: "",
+      };
+      const n = count({ ...current, ...changes });
+      if (n > 0)
+        results.push({
+          key: "combined",
+          label: "検索語を残して他の条件を広げる",
+          changes,
+          count: n,
+        });
+    }
+    return results;
+  }
+
+  function collectDeadlineRecoveries(): DeadlineRecovery[] {
+    const original = state;
+    try {
+      return deadlineRecoveryOptions(original, (candidate) => {
+        state = candidate;
+        return filter().length;
+      });
+    } finally {
+      state = original;
+      // 候補の計数中に変わった内訳や分野別の集計を、表示中の条件に戻す。
+      filter();
+    }
+  }
+
+  function renderDeadlineRecoveries(actions: DeadlineRecovery[], partialHistory: boolean): void {
+    const box = $("emptyRecovery");
+    box.textContent = "";
+    box.hidden = actions.length === 0;
+    for (const action of actions) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "filter-remove";
+      const lower = partialHistory && action.changes.past === true;
+      button.textContent = `${action.label}（${countJa(action.count)} 件${lower ? "以上" : ""}）`;
+      button.addEventListener("click", () => {
+        state = { ...state, ...action.changes };
+        toForm();
+        apply();
+        $("results").focus();
+      });
+      box.appendChild(button);
+    }
+  }
+
   function filter(問ひ?: string): AppRow[] {
     const now = Date.now();
     // `来月` などの相対月を検索語として受け付ける。展開式の一覧への反映は recommender が
@@ -3261,6 +3343,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   }
 
   function emptyDeadlineHint(filter: {
+    actionableRecovery?: boolean;
     window: string;
     past: boolean;
     cats: number;
@@ -3581,6 +3664,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
      * 価値があるか読めなかった）。外せば増えるという約束ではなく、いま隠れている行数なので、
      * そのように書く。件数欄と同じ名前の同じ数字を使う（案内と件数欄が違う行の話をするのを防ぐ）。 */
     const tip = (text: string, key: string, label: string): void => {
+      if (filter.actionableRecovery) return;
       // 隠している行数が 0 の条件を勧めても、行は増えずに外し直しの手だけ増える
       // （件数欄に内訳として出ていない条件と同じ理屈）。
       const n = filter.hidden ? filter.hidden[key] || 0 : 0;
@@ -5058,9 +5142,11 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     if (!recMode && !paperMode) cntLive += sortNoteJa(sortKey, sortAsc);
     /* 0 件の理由は、のちのち表の場所に出す長い文と同じ材料から作る（同じ判定を二箇所に
        書かない）。0 件のときだけ走るので、打鍵ごとの当たりの数え上げは増えない。 */
+    const recoveries = !recMode && !paperMode && !shown.length ? collectDeadlineRecoveries() : [];
     const zeroFilter =
       !recMode && !paperMode && !shown.length
         ? {
+            actionableRecovery: true,
             window: state.win,
             past: state.past,
             cats: state.cats.length,
@@ -5221,6 +5307,10 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       if (zeroFilter) {
         const filter = zeroFilter;
         $("emptyText").textContent = emptyDeadlineHint(filter);
+        renderDeadlineRecoveries(recoveries, activeData === DATA && resolveHistoryRef() !== "");
+        $("emptyReset").textContent = state.q.trim()
+          ? "検索語も消して条件クリア"
+          : "条件をまとめて外す";
         renderNextMeetingNote(scheduleOnly);
         // 「過去の締切も表示」だけは一覧の意味を変える（過去行の読み込みを伴う）ので
         // まとめて外す側では触らず、文章での案内に留める。
