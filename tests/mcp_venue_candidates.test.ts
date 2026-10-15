@@ -274,6 +274,10 @@ it("returns every ambiguous venue as structured identity data and accepts its ke
       rows: [{ venue_key: "jip" }],
     });
     expect(shared.content[0].text).toContain("会議: Partner Archive（key: ipsj-27-r-compsac");
+    expect(shared.content[0].text.split("\n").find((line: string) => line.startsWith("版: "))).toBe(
+      "版: ipsj-27-r26",
+    );
+    expect(shared.content[0].text).toContain("2026（ipsj-27-r26）");
     const classification = (result: { content: { text: string }[] }) =>
       result.content[0].text.split("\n").filter((line) => /^(分野|ランク|主題):/.test(line));
     expect(classification(shared)).toEqual([

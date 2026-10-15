@@ -60,7 +60,7 @@ writeFileSync(
   join(root, "run.ts"),
   'import {runStdio} from "./src/mcp.ts";runStdio(Date.parse("2029-06-03T00:00:00Z"));',
 );
-function call(args: Record<string, unknown>) {
+function call(args: Record<string, unknown>, raw = false) {
   expect(existsSync(join(root, ".cache"))).toBe(false);
   const child = spawnSync(process.execPath, ["run.ts"], {
     cwd: root,
@@ -72,7 +72,7 @@ function call(args: Record<string, unknown>) {
   const result = JSON.parse(child.stdout.trim()).result;
   expect(result.isError).not.toBe(true);
   expect(result.structuredContent).toBeDefined();
-  return result.structuredContent;
+  return raw ? result : result.structuredContent;
 }
 it("reports the actual fallback source when screen data is absent, without marking an all request as fallback", () => {
   expect(existsSync(join(root, "public"))).toBe(false);
@@ -156,5 +156,47 @@ it("does not invent generation timestamps from the evaluation clock when provena
     });
   } finally {
     writeSnapshot();
+  }
+});
+
+it("distinguishes uncollected deadlines from out-of-screen deadlines in edition labels", () => {
+  const expanded = {
+    ...venue,
+    editions: [
+      ...venue.editions,
+      { id: "event", year: 2031, event_start: "2031-06-15", deadlines: [] },
+      { id: "unknown", year: 2032, event_date_precision: "not-announced", deadlines: [] },
+    ],
+  };
+  writeSnapshot({ ...snapshot, conferences: [expanded] });
+  mkdirSync(join(root, "public"));
+  writeFileSync(
+    join(root, "public/catalog.json"),
+    JSON.stringify({
+      generated_at: catalogAt,
+      conferences: [{ ...venue, editions: venue.editions.slice(0, 1) }],
+    }),
+  );
+  try {
+    const screen = call({ key: "fresh", scope: "screen" }, true);
+    const header = (result: { content: { text: string }[] }) =>
+      result.content[0].text.split("\n").find((line) => line.startsWith("版: "));
+    expect(header(screen)).toBe(
+      "版: event(締切未収録) / far(締切は表示範囲外) / near / unknown(締切未収録)",
+    );
+    expect(
+      screen.structuredContent.rows.map((row: { edition_id: string }) => row.edition_id),
+    ).toEqual(["near"]);
+    expect(
+      screen.structuredContent.editions.map((ed: { edition_id: string }) => ed.edition_id),
+    ).toEqual(["near", "far", "event", "unknown"]);
+    const all = call({ key: "fresh", scope: "all" }, true);
+    expect(header(all)).toBe("版: event(締切未収録) / far / near / unknown(締切未収録)");
+    expect(all.structuredContent.rows.map((row: { edition_id: string }) => row.edition_id)).toEqual(
+      ["near", "far"],
+    );
+  } finally {
+    writeSnapshot();
+    rmSync(join(root, "public"), { recursive: true, force: true });
   }
 });

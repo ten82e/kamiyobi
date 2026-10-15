@@ -1963,10 +1963,22 @@ function venueInfo(
     );
   const schedules = venueSchedules(會議の版 ?? { editions: [] });
   const 行を持つ版 = new Set(hit.map((r) => r.ed.id));
+  const venueKey = venueLookupText(會議の版?.key ?? 一つ.conf.key);
+  const deadlineEditionIds = (rows: Row[]): Set<string> =>
+    new Set(
+      rows.flatMap((row) => [
+        ...(venueLookupText(row.conf.key) === venueKey ? [row.ed.id] : []),
+        ...(row.submission?.sourceRecords ?? [])
+          .filter((record) => venueLookupText(record.venueKey) === venueKey)
+          .map((record) => record.editionId),
+      ]),
+    );
+  const displayedDeadlineEditions = deadlineEditionIds(hit);
+  const allDeadlineEditions = deadlineEditionIds(allRows().filter(matchesRow));
   const 版 = [
     ...new Set([
       ...((會議の版?.editions ?? []) as Array<{ id?: unknown }>).map((e) => String(e.id ?? "")),
-      ...行を持つ版,
+      ...displayedDeadlineEditions,
     ]),
   ]
     .filter((id) => id.length > 0)
@@ -2034,7 +2046,7 @@ function venueInfo(
       return [`正式名: ${正式名}`];
     })(),
     ...(scopeErr ? [scopeErr] : []),
-    `版: ${版.map((id) => (行を持つ版.has(id) ? id : `${id}(会期だけ)`)).join(" / ")}`,
+    `版: ${版.map((id) => (displayedDeadlineEditions.has(id) ? id : `${id}(${allDeadlineEditions.has(id) ? "締切は表示範囲外" : "締切未収録"})`)).join(" / ")}`,
 
     ...venueClassificationLines(venue),
     /* その会議の締切が、どの位確かめられているか（行ごとの札だけでは、全体の偏りが分からん）。 */
