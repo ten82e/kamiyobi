@@ -1,4 +1,5 @@
-import { spawnSync } from "node:child_process";
+import { execFileSync, spawnSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import {
   cpSync,
   existsSync,
@@ -19,10 +20,10 @@ import {
   serializeVenueProfileArtifact,
 } from "../src/embeddings.ts";
 import type { Conference, Edition, EventDatePrecision } from "../src/model.ts";
-import { cacheSlot } from "../src/sources/base.ts";
+import { cacheMetadata, cacheSlot, extractedRoot } from "../src/sources/base.ts";
 
 const repo = join(import.meta.dirname, "..");
-describe.each(["API", "CLI", "upstream CLI"])("%s build", (entry) => {
+describe.each(["API", "CLI", "upstream CLI", "archive CLI"])("%s build", (entry) => {
   const root = mkdtempSync(join(tmpdir(), "kamiyobi-llms-build-"));
   afterAll(() => rmSync(root, { recursive: true, force: true }));
   for (const dir of ["src", "site", "scripts"])
@@ -101,6 +102,50 @@ await buildAll(confs,{},'out',new Date('2026-08-09T00:00:00Z'),{
       }),
     );
   }
+  if (entry === "archive CLI") {
+    writeFileSync(
+      join(root, "guard.mjs"),
+      `
+const originalFetch=globalThis.fetch;
+const routes={
+  'https://codeload.github.com/ccfddl/ccf-deadlines/tar.gz/refs/heads/main':'ccfddl',
+  'https://codeload.github.com/huggingface/ai-deadlines/tar.gz/refs/heads/main':'aideadlines'
+};
+globalThis.fetch=(url,opts)=>{
+  const route=routes[String(url)];
+  if(!route) throw new Error('unexpected upstream request: '+url);
+  return originalFetch(process.env.COUNT_ARCHIVE_ORIGIN+'/'+route,opts);
+};
+`,
+    );
+    writeFileSync(
+      join(root, "archive-runner.mjs"),
+      `
+import {createServer} from 'node:http';
+import {readFileSync,appendFileSync} from 'node:fs';
+import {spawn} from 'node:child_process';
+const server=createServer((req,res)=>{
+  const name=req.url?.slice(1);
+  if(!['ccfddl','aideadlines'].includes(name)){res.writeHead(404).end();return;}
+  appendFileSync('requests.jsonl',JSON.stringify(name)+'\\n');
+  res.writeHead(200,{'Content-Type':'application/gzip'});
+  res.end(readFileSync('archives/'+name+'.tar.gz'));
+});
+server.listen(0,'127.0.0.1',()=>{
+  const child=spawn(process.execPath,process.argv.slice(2),{
+    stdio:'inherit',env:{...process.env,COUNT_ARCHIVE_ORIGIN:'http://127.0.0.1:'+server.address().port}
+  });
+  child.on('error',err=>{console.error(err);server.close(()=>process.exit(1));});
+  child.on('exit',code=>server.close(()=>process.exit(code??1)));
+});
+`,
+    );
+  }
+  const upstreamEntry = entry === "upstream CLI" || entry === "archive CLI";
+  function clearOnlineOutputs() {
+    for (const path of ["data/snapshot.json", "data/source-snapshots"])
+      rmSync(join(root, path), { recursive: true, force: true });
+  }
   function assertNoGeneratedInputs() {
     for (const path of [
       "public",
@@ -158,6 +203,12 @@ await buildAll(confs,{},'out',new Date('2026-08-09T00:00:00Z'),{
     other: number,
     dated: number,
   ) {
+    if (entry === "archive CLI") {
+      rmSync(join(root, "archive-cache"), { recursive: true, force: true });
+      rmSync(join(root, "requests.jsonl"), { force: true });
+      clearOnlineOutputs();
+      expect(existsSync(join(root, "archive-cache")), "archive cache must start empty").toBe(false);
+    }
     assertNoGeneratedInputs();
     writeFileSync(join(root, "input.json"), JSON.stringify(confs));
     if (entry === "CLI")
@@ -183,17 +234,25 @@ await buildAll(confs,{},'out',new Date('2026-08-09T00:00:00Z'),{
             "--config",
             "config.yaml",
             "--cache",
-            entry === "upstream CLI" ? "upstream-cache" : "empty-cache",
-            "--offline",
+            entry === "archive CLI"
+              ? "archive-cache"
+              : entry === "upstream CLI"
+                ? "upstream-cache"
+                : "empty-cache",
+            ...(entry === "archive CLI" ? [] : ["--offline"]),
             "--no-embeddings",
             "--now",
             "2026-08-09T00:00:00Z",
           ];
-    const child = spawnSync(process.execPath, command, {
-      cwd: root,
-      encoding: "utf8",
-      timeout: 60000,
-    });
+    const child = spawnSync(
+      process.execPath,
+      entry === "archive CLI" ? ["archive-runner.mjs", ...command] : command,
+      {
+        cwd: root,
+        encoding: "utf8",
+        timeout: 60000,
+      },
+    );
     expect(child.error).toBeUndefined();
     expect(child.status, `${child.stdout}\n${child.stderr}`).toBe(0);
     const data = JSON.parse(readFileSync(join(root, "out/data.json"), "utf8")) as {
@@ -237,14 +296,50 @@ await buildAll(confs,{},'out',new Date('2026-08-09T00:00:00Z'),{
       Number(coverage![2].replaceAll(",", "")),
       "llms.txt dated count must match data.json",
     ).toBe(withDates.length);
-    if (entry === "upstream CLI") {
+    if (upstreamEntry) {
       expect(existsSync(join(root, "data/manual.yaml"))).toBe(false);
       expect(new Set(editions.map((ed) => ed.source))).toEqual(new Set(["ccfddl", "aideadlines"]));
       expect(child.stderr).not.toContain("が取得できない");
     }
+    if (entry === "archive CLI") {
+      expect(
+        readFileSync(join(root, "requests.jsonl"), "utf8")
+          .trim()
+          .split("\n")
+          .map((line) => JSON.parse(line))
+          .sort(),
+        "both archives must be downloaded over HTTP",
+      ).toEqual(["aideadlines", "ccfddl"]);
+      for (const [name, repoName, dir] of [
+        ["ccfddl", "ccfddl/ccf-deadlines", "conference"],
+        ["aideadlines", "huggingface/ai-deadlines", "src/data/conferences"],
+      ]) {
+        const slot = cacheSlot(join(root, "archive-cache"), repoName, "main");
+        expect(
+          cacheMetadata(slot)?.contentHash,
+          "downloaded archive bytes must reach cache metadata",
+        ).toBe(
+          createHash("sha256")
+            .update(readFileSync(join(root, "archives", `${name}.tar.gz`)))
+            .digest("hex"),
+        );
+        const extracted = extractedRoot(slot);
+        expect(extracted, "downloaded archive must be extracted").not.toBeNull();
+        expect(
+          readFileSync(join(extracted!, dir, "counts.yaml"), "utf8"),
+          "downloaded rows must reach extracted cache",
+        ).toBe(readFileSync(rawPath(repoName, dir), "utf8"));
+      }
+      clearOnlineOutputs();
+    }
     assertNoGeneratedInputs();
   }
-  if (entry !== "upstream CLI") {
+  function rawPath(repoName: string, dir: string) {
+    return entry === "archive CLI"
+      ? join(root, "archive-input", repoName.replaceAll("/", "__"), "raw", dir, "counts.yaml")
+      : join(cacheSlot(join(root, "upstream-cache"), repoName, "main"), "raw", dir, "counts.yaml");
+  }
+  if (!upstreamEntry) {
     it("rebuilds llms.txt counts from all published editions as editions are added and removed", () => {
       expect(existsSync(join(root, "out"))).toBe(false);
       const confs = [
@@ -349,9 +444,23 @@ await buildAll(confs,{},'out',new Date('2026-08-09T00:00:00Z'),{
         ["ccfddl/ccf-deadlines", "conference", input.ccf],
         ["huggingface/ai-deadlines", "src/data/conferences", input.ai],
       ] as const) {
-        const path = join(cacheSlot(cache, repoName, "main"), "raw", dir);
+        const path = join(rawPath(repoName, dir), "..");
         mkdirSync(path, { recursive: true });
         writeFileSync(join(path, "counts.yaml"), JSON.stringify(rows));
+        if (entry === "archive CLI") {
+          mkdirSync(join(root, "archives"), { recursive: true });
+          execFileSync("tar", [
+            "-czf",
+            join(
+              root,
+              "archives",
+              repoName.startsWith("ccfddl/") ? "ccfddl.tar.gz" : "aideadlines.tar.gz",
+            ),
+            "-C",
+            join(root, "archive-input", repoName.replaceAll("/", "__")),
+            "raw",
+          ]);
+        }
       }
     }
     function writeOverrides(editions: Record<string, unknown>) {
@@ -445,23 +554,9 @@ await buildAll(confs,{},'out',new Date('2026-08-09T00:00:00Z'),{
       });
       buildAndCheck(null, { ...zero, "single-day": 1, "split-dates": 1, unverified: 1 }, 2, 1);
       expect([JSON.stringify(input.ccf), JSON.stringify(input.ai)]).toEqual(before);
+      expect(readFileSync(rawPath("ccfddl/ccf-deadlines", "conference"), "utf8")).toBe(before[0]);
       expect(
-        readFileSync(
-          join(
-            cacheSlot(join(root, "upstream-cache"), "ccfddl/ccf-deadlines", "main"),
-            "raw/conference/counts.yaml",
-          ),
-          "utf8",
-        ),
-      ).toBe(before[0]);
-      expect(
-        readFileSync(
-          join(
-            cacheSlot(join(root, "upstream-cache"), "huggingface/ai-deadlines", "main"),
-            "raw/src/data/conferences/counts.yaml",
-          ),
-          "utf8",
-        ),
+        readFileSync(rawPath("huggingface/ai-deadlines", "src/data/conferences"), "utf8"),
       ).toBe(before[1]);
     });
   }

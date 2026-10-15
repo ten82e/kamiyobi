@@ -29,6 +29,11 @@ const file = "src/build.ts";
 const original = readFileSync(join(root, file), "utf8");
 const cliFile = "src/cli.ts";
 const cliOriginal = readFileSync(join(root, cliFile), "utf8");
+const ccfFile = "src/sources/ccfddl.ts";
+const aiFile = "src/sources/aideadlines.ts";
+const originals = new Map(
+  [file, cliFile, ccfFile, aiFile].map((path) => [path, readFileSync(join(root, path), "utf8")]),
+);
 function run(label: string, broken: boolean) {
   for (const dir of ["data", "public", ".cache"])
     assert(!existsSync(join(root, dir)), `${label}: generated input present: ${dir}`);
@@ -47,7 +52,7 @@ function run(label: string, broken: boolean) {
   writeFileSync(join(root, `${label}.log`), `${child.stdout ?? ""}${child.stderr ?? ""}`);
   assert(!child.error, String(child.error));
   const report = JSON.parse(readFileSync(output, "utf8"));
-  assert.equal(report.numTotalTests, 16, `${label}: required tests missing`);
+  assert.equal(report.numTotalTests, 18, `${label}: required tests missing`);
   assert.equal(report.numPendingTests, 0, `${label}: tests skipped`);
   assert.equal(child.status === 0, !broken, `${label}: inspect ${root}`);
   if (broken) {
@@ -66,11 +71,13 @@ function run(label: string, broken: boolean) {
       const suite = report.testResults.find((suite: { name: string }) =>
         suite.name.endsWith("/llms_build_counts.test.ts"),
       );
-      for (const entry of label.startsWith("upstream-")
-        ? ["upstream CLI"]
-        : label.startsWith("cli-")
-          ? ["CLI", "upstream CLI"]
-          : ["API", "CLI", "upstream CLI"]) {
+      for (const entry of label.startsWith("archive-")
+        ? ["archive CLI"]
+        : label.startsWith("upstream-")
+          ? ["upstream CLI", "archive CLI"]
+          : label.startsWith("cli-")
+            ? ["CLI", "upstream CLI", "archive CLI"]
+            : ["API", "CLI", "upstream CLI", "archive CLI"]) {
         assert(
           suite?.assertionResults.some(
             (test: { fullName: string; status: string; failureMessages: string[] }) =>
@@ -95,6 +102,18 @@ function run(label: string, broken: boolean) {
   );
 }
 const faults = [
+  [
+    "archive-ccf-loader-drops-editions",
+    'return parseTree(join(root, "conference"));',
+    'return parseTree(join(root, "conference")).map(conf=>({...conf,editions:conf.editions.slice(0,1)}));',
+    ccfFile,
+  ],
+  [
+    "archive-ai-loader-drops-editions",
+    'return parseTree(join(root, "src", "data", "conferences"));',
+    'return parseTree(join(root, "src", "data", "conferences")).map(conf=>({...conf,editions:conf.editions.slice(0,1)}));',
+    aiFile,
+  ],
   [
     "upstream-loses-ccf-before-merge",
     "    sourceGroups,\n    overrides.aliases",
@@ -159,7 +178,7 @@ console.log(`Isolated copy: ${root}`);
 run("baseline", false);
 try {
   for (const [label, needle, replacement, target = file] of faults) {
-    const before = target === cliFile ? cliOriginal : original;
+    const before = originals.get(target)!;
     assert.equal(before.split(needle).length, 2, `${label}: ambiguous mutation target`);
     writeFileSync(join(root, target), before.replace(needle, replacement));
     try {
@@ -169,8 +188,7 @@ try {
     }
   }
 } finally {
-  writeFileSync(join(root, file), original);
-  writeFileSync(join(root, cliFile), cliOriginal);
+  for (const [path, before] of originals) writeFileSync(join(root, path), before);
 }
 run("restored", false);
 assert.equal(
@@ -179,6 +197,8 @@ assert.equal(
   "workspace changed during isolated checks",
 );
 assert.equal(readFileSync(join(repo, cliFile), "utf8"), cliOriginal, "CLI workspace changed");
+for (const [path, before] of originals)
+  assert.equal(readFileSync(join(repo, path), "utf8"), before, `${path}: workspace changed`);
 console.log(
   `Detected ${faults.length}/${faults.length} faults; workspace unchanged. Logs: ${root}`,
 );
