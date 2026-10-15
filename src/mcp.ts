@@ -1549,7 +1549,7 @@ function 開催の節(行: UpcomingEventRow[], page: UpcomingEventRow[], remaini
   const 日 = (ms: number): string => new Date(ms).toISOString().slice(0, 10);
   return [
     "",
-    `開催（会期の行）: ${行.length} 件（同じ窓の会期です。画面の一覧とカレンダーには出ない物で、upcoming.md と同じ窓です。会議名は年を添えた形、開催地は締切の行と同じ日本語表記にします）`,
+    `開催（会期の行）: ${行.length} 件（会期は収録全体から指定期間に重なる開催を表示します。upcoming.md の対象期間とは異なる場合があります。購読カレンダー deadlines.ics は締切のみです）`,
     ...page.flatMap((r) => {
       const span =
         Recommender.eventCellJa({

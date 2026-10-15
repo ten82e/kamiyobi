@@ -276,9 +276,13 @@ server.listen(0,'127.0.0.1',()=>{
     expect(uncertain).toHaveLength(other);
     const withDates = uncertain.filter((ed) => ed.event_start !== null);
     expect(withDates).toHaveLength(dated);
-    const lines = readFileSync(join(root, "out/llms.txt"), "utf8")
-      .split("\n")
-      .filter((line) => line.includes("- event_date_precision:"));
+    const llmsText = readFileSync(join(root, "out/llms.txt"), "utf8");
+    const upcomingNote = llmsText.split("\n").find((line) => line.startsWith("- upcoming.md："));
+    expect(upcomingNote).toContain("MCP の `list_upcoming` でも会期を取得できます");
+    expect(upcomingNote).toContain("MCP の対象期間は `days` で指定します");
+    expect(upcomingNote).toContain("購読カレンダー `deadlines.ics` は締切のみです");
+    expect(upcomingNote).not.toMatch(/この表にだけ|MCP.*締切の行だけ|同じ会期の行/);
+    const lines = llmsText.split("\n").filter((line) => line.includes("- event_date_precision:"));
     expect(lines).toHaveLength(1);
     const matches = [...lines[0].matchAll(/'([^']+)'（[^）]*・([\d,]+) 版）/g)];
     expect(matches).toHaveLength(6);

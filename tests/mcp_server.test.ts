@@ -2674,9 +2674,11 @@ it("list_upcoming に会期（開催）の行を出す（第 910 回）", async 
   expect(text, "開催の節がない").toContain("開催（会期の行）");
   /* **どこにも無い物ではない**ことを書く（AI が表に読みに行く様に）。 */
   expect(text, "同じ表の場所を言つていない").toContain("upcoming.md");
-  expect(text, "画面とカレンダーに出ない事を言つていない").toContain(
-    "画面の一覧とカレンダーには出ない",
+  expect(text, "会期の取得範囲を説明していない").toContain("会期は収録全体から指定期間");
+  expect(text, "購読カレンダーの対象を説明していない").toContain(
+    "購読カレンダー deadlines.ics は締切のみです",
   );
+  expect(text, "MCP と公開表の期間が常に同じだと案内している").not.toContain("同じ窓");
   const 件 = /開催（会期の行）: ([\d,]+) 件/.exec(text)?.[1]?.replace(/,/g, "") ?? "0";
   expect(Number(件), "開催の行が 1 件も出ていない").toBeGreaterThan(0);
   /* 件数と行数が合う（切り詰めた時も它的に書く – 第 765 回の決めごと）。 */

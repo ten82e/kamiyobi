@@ -300,3 +300,47 @@ it("reports absent deadline dates without losing conference counts and refreshes
     client.close();
   }
 });
+
+it("describes the event scope independently of deadline scope and follows the requested upcoming period", async () => {
+  const client = server();
+  try {
+    const input = data("Full");
+    Object.assign(input.conferences[0].editions[0], {
+      event_start: "2026-10-14",
+      event_end: "2026-10-14",
+      event_date_precision: "single-day",
+    });
+    const later = data("Later").conferences[0];
+    Object.assign(later.editions[0], {
+      event_start: "2026-11-10",
+      event_end: "2026-11-10",
+      event_date_precision: "single-day",
+      deadlines: [],
+    });
+    input.conferences.push(later);
+    writeFileSync(join(client.root, "data/snapshot.json"), JSON.stringify(input));
+    writeFileSync(join(client.root, "public/catalog.json"), JSON.stringify({ conferences: [] }));
+    for (const scope of ["screen", "all"]) {
+      for (const days of [2, 40]) {
+        const result = await client.request("list_upcoming", { scope, days });
+        expect(result.structuredContent).toMatchObject({
+          scope,
+          event_scope: "all",
+          days,
+          deadline_total: scope === "all" ? 1 : 0,
+          event_total: days === 2 ? 1 : 2,
+          items: expect.arrayContaining([
+            expect.objectContaining({ type: "event", venue_key: "Full" }),
+          ]),
+        });
+        const text = result.content[0].text;
+        expect(text).toContain("会期は収録全体から指定期間に重なる開催を表示します");
+        expect(text).toContain("upcoming.md の対象期間とは異なる場合があります");
+        expect(text).toContain("購読カレンダー deadlines.ics は締切のみです");
+        expect(text).not.toMatch(/同じ窓|画面の一覧とカレンダーには出ない/);
+      }
+    }
+  } finally {
+    client.close();
+  }
+});
