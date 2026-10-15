@@ -1353,7 +1353,8 @@ export function toCatalog(
               eventEnd !== null &&
               eventEnd >= lookback &&
               eventStart <= horizon;
-        if (!inWindow && !deadlines.length) return null;
+        if (!inWindow && !deadlines.length && edition.event_date_precision !== "not-announced")
+          return null;
         const compact = compactEdition(edition, deadlines);
         // Supplemental dates belong only to the drawer; the list retains its existing window.
         const scheduleDeadlines = jsonRecords(edition.deadlines).filter(

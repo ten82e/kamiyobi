@@ -135,6 +135,51 @@ describe("schedule-only UI respects date certainty and selected filters", () => 
     expect(split).toContain("2028-02-01(火)（オンライン） / 2028-02-28(月)（現地開催）");
     expect(split).not.toContain(" 〜 ");
   });
+  it("finds unannounced editions without a date, preserves their notice, and excludes them from finite windows", () => {
+    const original = venue("undated", "", "", "not-announced");
+    original.editions[0].year = 2030;
+    const input = { conferences: [original] };
+    for (const dates of [
+      ["", ""],
+      ["2028-02-22", "2028-02-24"],
+      ["2027-01-01", "2027-01-03"],
+    ]) {
+      Object.assign(original.editions[0], { event_start: dates[0], event_end: dates[1] });
+      const saved = JSON.stringify(input);
+      const rows = matches(input, at, "undated");
+      expect(rows).toHaveLength(1);
+      expect(rows[0]).toMatchObject({
+        name: "undated",
+        year: 2030,
+        eventDatePrecision: "not-announced",
+      });
+      const box = render(rows);
+      expect(box.hidden).toBe(false);
+      expect(box.text()).toContain("会期未発表");
+      expect(box.text()).toContain("undated 2030");
+      expect(box.text()).not.toMatch(/本日開催|開催中|2028-02-22|2027-01-01/);
+      for (const window of ["1", "7", "30", "400"]) {
+        expect(matches(input, at, "undated", { window })).toEqual([]);
+      }
+      expect(JSON.stringify(input)).toBe(saved);
+    }
+    expect(matches(input, at, "undated", { cats: ["ai"] })).toEqual([]);
+    expect(matches(input, at, "undated", { rank: "A*" })).toEqual([]);
+    expect(matches(input, at, "other")).toEqual([]);
+    expect(matches(input, at, "undated", { domestic: true })).toEqual([]);
+    expect(matches(input, at, "undated", { online: true })).toEqual([]);
+    original.editions[0].event_date_precision = "exact-range";
+    original.editions[0].event_start = "2028-02-22";
+    original.editions[0].event_end = "2028-02-24";
+    expect(matches(input, at, "undated", { window: "7" })).toHaveLength(1);
+    expect(render(matches(input, at, "undated", { window: "7" })).text()).not.toContain(
+      "会期未発表",
+    );
+    original.editions[0].event_start = "";
+    original.editions[0].event_end = "";
+    expect(matches(input, at, "undated")).toEqual([]);
+    expect(Recommender.scheduleOnlyEditions(input)).toEqual([]);
+  });
   it("honors the query, rank, category, domestic and online filters", () => {
     expect(names(matches(data, at, "month"))).toEqual(["month"]);
     expect(names(matches(data, at, "2028-02（月のみ判明）"))).toEqual(["month"]);

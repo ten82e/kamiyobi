@@ -14332,7 +14332,8 @@ const Recommender = (() => {
         const segments = Array.isArray(ed.event_segments) ? ed.event_segments : [];
         const start = String(ed.event_start || segments[0]?.start || "");
         const end = String(ed.event_end || segments.at(-1)?.end || start);
-        if (!/^\d{4}-\d{2}-\d{2}$/.test(start)) return;
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(start) && ed.event_date_precision !== "not-announced")
+          return;
         out.push({
           key: String(conf.key || ""),
           name: String(conf.title || conf.key || ""),

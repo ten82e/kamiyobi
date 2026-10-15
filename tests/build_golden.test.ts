@@ -4273,6 +4273,7 @@ it("the empty state offers the next schedule-only meeting (SPEC §7)", () => {
     deadlines?: unknown[];
     schedule_deadlines?: unknown[];
     event_start?: string;
+    event_date_precision?: string;
     estimated?: boolean;
   };
   for (const conf of (data.conferences || []) as Array<{
@@ -4284,7 +4285,8 @@ it("the empty state offers the next schedule-only meeting (SPEC §7)", () => {
         !ed.estimated &&
         !(ed.deadlines || []).length &&
         !(ed.schedule_deadlines || []).length &&
-        /^\d{4}-\d{2}-\d{2}$/.test(String(ed.event_start || "")),
+        (ed.event_date_precision === "not-announced" ||
+          /^\d{4}-\d{2}-\d{2}$/.test(String(ed.event_start || ""))),
     ).length;
     const got = Recommender.scheduleOnlyEditions({ conferences: [conf] }).length;
     expect(got, `${conf.key}: 締切の無い版と案内対象の件数が合わない`).toBe(expected);

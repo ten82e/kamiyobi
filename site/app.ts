@@ -3834,6 +3834,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         if (filter.domestic && m.tags.indexOf("domestic-jp") < 0) return false;
         if (filter.online && !Recommender.placeOffersOnline(m.place)) return false;
         if (filter.cats.length && !filter.cats.some((c) => m.cats.indexOf(c) >= 0)) return false;
+        if (m.eventDatePrecision === "not-announced") return !Number.isFinite(limit);
         const segments = m.eventSegments?.length
           ? m.eventSegments
           : [{ start: m.eventStart, end: m.eventEnd }];
@@ -3863,7 +3864,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     found.forEach((m) => {
       const item = document.createElement("li");
       const label = document.createTextNode(
-        `${Recommender.eventCellJa({ ed: { event_start: m.eventStart, event_end: m.eventEnd, event_date_precision: m.eventDatePrecision, event_segments: m.eventSegments } })} `,
+        `${m.eventDatePrecision === "not-announced" ? "会期未発表" : Recommender.eventCellJa({ ed: { event_start: m.eventStart, event_end: m.eventEnd, event_date_precision: m.eventDatePrecision, event_segments: m.eventSegments } })} `,
       );
       item.appendChild(label);
       const name = Recommender.titleWithYearJa(m.name, m.year);
