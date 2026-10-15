@@ -3413,6 +3413,8 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       estimatedNext?: string;
     } | null;
     loadedLastDay?: string;
+    fullRecordLoaded?: boolean;
+    canLoadFullRecord?: boolean;
     recordLastDay?: string;
     horizonDays?: number;
   }): string {
@@ -3500,18 +3502,20 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       const span = filter.queryDaySpan;
       // URL を貼った人を日付の話に引きずり込まない（語の分解と同じ判断 – 第 236 回）。
       if (span?.first && !filter.urlQuery && horizonDay && span.first > horizonDay) {
-        const recordLast = filter.recordLastDay || "";
+        const recordLast = filter.fullRecordLoaded ? horizonDay : filter.recordLastDay || "";
         horizonNote =
           recordLast && span.first > recordLast
             ? // 収録その物より先。あるかどうかを kamiyobi が知らないので、無いとは言い切らない。
               ` 打った日付「${span.label}」は、収録している中で一番遠い締切 ${recordLast} より先です。` +
               "その日付に締切があるかどうかも、まだ確認できていません。"
             : ` 打った日付「${span.label}」は、いま読み込んでいるデータ（${horizonDay} まで）より先です。` +
-              (filter.horizonDays
-                ? `速く開くためのデータが生成から ${countJa(filter.horizonDays)} 日先で切れているためで、`
-                : "速く開くためのデータが生成から一定の日数先で切れているためで、") +
-              "この欄の「収録の全体を読み込む」を押すと、一覧がその先も探します" +
-              (recordLast ? `（収録の中で一番遠い締切は ${recordLast} です）。` : "。");
+              (filter.canLoadFullRecord === true
+                ? (filter.horizonDays
+                    ? `初期表示は生成から ${countJa(filter.horizonDays)} 日先までを対象にしています。`
+                    : "") +
+                  "この欄の「収録の全体を読み込む」を押すと、収録全体を同じ条件で検索します。" +
+                  (recordLast ? `収録の中で一番遠い締切は ${recordLast} です。` : "")
+                : "収録全体に該当する締切があるかは、まだ確認できていません。");
       }
     }
     /* 名前は名簿にあるのに締切が行に無い会議。「別の語で試す」も「過去の締切も
@@ -5217,6 +5221,12 @@ function semanticOutput(value: unknown): value is SemanticOutput {
             // 呼ばないのは、この関数の検査ハーネスが `Recommender` の一部分しか持たないため）。
             queryDaySpan: Recommender.queryDaySpanJa(searchQuery),
             loadedLastDay: farthestRowDayJa(rows),
+            fullRecordLoaded: activeData !== DATA,
+            canLoadFullRecord:
+              activeData === DATA &&
+              historyStatus !== "loading" &&
+              historyStatus !== "error" &&
+              resolveHistoryRef() !== "",
             // 名簿にあるのに締切の行が 1 本も無い会議。`rows` は絞り込み前なので、
             // 「読み込めているデータに行があるか」で判断できる（読み込んだあとは行が出る）。
             nameOnly: nameOnlyRecordInfo(
@@ -5331,6 +5341,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         : "";
       fullRecordOffer.hidden = !lastDay;
     }
+    $("dataScope").hidden = !DATA.calendar && fullRecordOffer.hidden && !showHistoryStatus;
     if (showHistoryStatus) {
       $("historyStatusText").textContent =
         historyStatus === "loading" ? HISTORY_LOADING_JA : HISTORY_ERROR_JA;

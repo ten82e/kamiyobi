@@ -215,6 +215,7 @@ it("passes the computed recovery plan and suppresses global counts through the r
     "recMode",
     `
     const paperMode=false,searchQuery=state.q,DATA={conferences:[{},{},{}]},rows=[],KIND_LABEL={};
+    const activeData=DATA,historyStatus="idle",resolveHistoryRef=()=>"";
     const hiddenDeadlineCounts=()=>({past:999,est:888}),hiddenKindQueryWords=()=>[];
     const queryMatchCounts=()=>({catalog:3,journal:0}),queryTermNotes=()=>[];
     const columnValueHitsJa=()=>false,splitCountJa=()=>0,shorterWordsForZero=()=>[],deadTermRemainderCount=()=>null;

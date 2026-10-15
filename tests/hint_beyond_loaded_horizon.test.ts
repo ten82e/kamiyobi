@@ -28,6 +28,8 @@ function clear(over: Record<string, unknown> = {}): Record<string, unknown> {
     queryMatch: { catalog: 0, journal: 0 },
     hidden: { ...HIDDEN },
     loadedLastDay: HORIZON,
+    fullRecordLoaded: false,
+    canLoadFullRecord: true,
     recordLastDay: RECORD_LAST,
     horizonDays: 180,
     ...over,

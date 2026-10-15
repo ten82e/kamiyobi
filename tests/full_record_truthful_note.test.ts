@@ -37,6 +37,7 @@ function renderOffer({
   };
   const elements: Record<string, { hidden: boolean; textContent: string }> = {
     fullRecord: { hidden: true, textContent: "" },
+    dataScope: { hidden: false, textContent: "" },
     fullRecordText: { hidden: false, textContent: "" },
   };
   execute(
@@ -48,7 +49,11 @@ function renderOffer({
     loaded ? {} : data,
     () => (history ? "data.json" : ""),
   );
-  return { hidden: elements.fullRecord.hidden, text: elements.fullRecordText.textContent };
+  return {
+    hidden: elements.fullRecord.hidden,
+    text: elements.fullRecordText.textContent,
+    scopeHidden: elements.dataScope.hidden,
+  };
 }
 
 it("reports loaded dates and download scope without inventing later deadlines or a truncation cause", () => {
@@ -82,4 +87,12 @@ it("hides the offer when the full data is active, unavailable, loading, or has n
     { last: "" },
   ])
     expect(renderOffer(options).hidden).toBe(true);
+});
+
+it("hides an empty data-scope panel while preserving calendar content and load status", () => {
+  expect(renderOffer({ calendar: "", loaded: true }).scopeHidden).toBe(true);
+  expect(renderOffer({ calendar: "", history: false }).scopeHidden).toBe(true);
+  expect(renderOffer({ calendar: "" }).scopeHidden).toBe(false);
+  expect(renderOffer({ loaded: true }).scopeHidden).toBe(false);
+  expect(renderOffer({ calendar: "", loading: true }).scopeHidden).toBe(false);
 });
