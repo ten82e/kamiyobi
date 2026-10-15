@@ -3651,6 +3651,163 @@ it("公式確認の日本語は、行の詳細が並べる部品と同じ（第 
   }
 });
 
+/* 會期の行は upcoming.md と同じ窓の物として居たのに、會議名は略稱（「SEC」・md は
+ * 「USENIX Security 2026」）・開催地は**生の英文**（「Karlsruhe, Germany」・締切の行は
+ * 「Karlsruhe, ドイツ」）を出して居た（實測 2026-10-16: 2,378 版）。日本人研究者が
+ * 讀むのは締切の行と同じ日本語表記でなければならない。 */
+it("會期の行は upcoming.md と同じ會議名と同じ日本語の開催地を出す（第 1107 回）", async () => {
+  /* md の側。**MCP が讀む rebuild と同じ物**を讀む – `site` は檢査用の摘データで建てた
+   * 別物なので、此處では public/（本物の snapshot から建てた物）を見る。 */
+  const mdの道 = join(REPO_ROOT, "public", "upcoming.md");
+  expect(existsSync(mdの道), "檢証に必要な生成物がありません。オフラインビルドを実行してください").toBe(
+    true,
+  );
+  const md = readFileSync(mdの道, "utf8");
+  const md行 = new Map<string, { 名: string; 開催地: string }>();
+  for (const line of md.split("\n")) {
+    if (!line.startsWith("| ")) continue;
+    const cells = line
+      .slice(1, -1)
+      .split("|")
+      .map((cell) => cell.trim());
+    if (cells.length < 8 || cells[3] !== "開催") continue;
+    const 名 = /^\[([^\]]+)\]\(/.exec(cells[2])?.[1];
+    if (!名) continue;
+    const 日 = [...cells[0].matchAll(/(\d{4}-\d{2}-\d{2})/g)].map((m) => m[1]);
+    md行.set(`${日[0]}..${日[1] ?? 日[0]}|${名}`, { 名, 開催地: cells[6] });
+  }
+  expect(md行.size, "upcoming.md に會期の行が無い（この檢查の前提が崩れた）").toBeGreaterThan(20);
+  /* md の窓の果て（これより先の MCP の行は、md を建てた時が古いので突き合はせない）。 */
+  const mdの果て = Math.max(
+    ...[...md行.keys()].map((k) => Date.parse(k.split("..")[1]!.split("|")[0]!)),
+  );
+
+  /* MCP の側。**md の窓の中の行は全部見つからなければならない** – 見つからない儘を
+   * 「窓の外」として見逃して了ふと、改名の損が殘つたまま檢查が通つて了ふ
+   * （實測 2026-10-16: 略稱を先に出す改めを取り逃がした）。 */
+  const 答 = await call("list_upcoming", { days: 120, scope: "all", limit: 400 });
+  /* 「ほか N 件」の打ち切りは會期の行では無いので外す。 */
+  const 節 = 答.split("\n").filter((l) => l.startsWith("- ") && !l.startsWith("- ほか"));
+  let 見た = 0;
+  let 窓の外 = 0;
+  const 見到 = new Set<string>();
+  for (const l of 節) {
+    const m =
+      /^- (\d{4}-\d{2}-\d{2})\(.\)(?: 〜 (\d{4}-\d{2}-\d{2})\(.\))? \| (.+?)（key: [^）]*） \| (.*?) (https?:\/\/\S+)$/.exec(
+        l,
+      );
+    /* 會期の行は**全て**開催地を持つ（空でも「未確認」を出す）。丸ごと讀めない行は
+     * 開催地を落として居る – 默つて飛ばさずに落とす。 */
+    if (!m) {
+      expect(l, `會期の行の形が讀めない（開催地を落として居る）: ${l}`).toMatch(/\| .+ \| .+ https?:/);
+      continue;
+    }
+    const 名 = m[3]!;
+    const 終了 = m[2] ?? m[1]!;
+    if (Date.parse(終了) > mdの果て) {
+      窓の外 += 1;
+      continue;
+    }
+    const Mdの行 = md行.get(`${m[1]}..${終了}|${名}`);
+    expect(Mdの行, `「${名}」（${m[1]}）が upcoming.md に見つからない（窓の中の行）`).toBeTruthy();
+    見た += 1;
+    見到.add(Mdの行!.開催地);
+    expect(m[4], `「${名}」の開催地が upcoming.md と違ふ（md: ${Mdの行!.開催地}）`).toBe(
+      Mdの行!.開催地,
+    );
+    /* 會議名も年を添えた形（md と同じ）。 */
+    expect(名, `「${名}」が upcoming.md と違ふ`).toBe(Mdの行!.名);
+  }
+  expect(見た, "upcoming.md と突き合はせた行が無い（この檢查が空振り）").toBeGreaterThan(20);
+  /* md の窓の外が多すぎない事（窓を取り過ぎて突き合はせが空振りして居ない）。 */
+  expect(窓の外, "md の窓の外の行が多すぎる（突き合はせの窓が變はった）").toBeLessThan(見た);
+  /* 日本語化した開催地が實際に出て居る事（「ドイツ」のやうな國名）。 */
+  const 日本語の開催地 = [...見到].filter((p) => /[\u3040-\u30ff\u4e00-\u9fff]/.test(p));
+  expect(日本語の開催地.length, "日本語の開催地が一つも無い（この檢查が空振り）").toBeGreaterThan(3);
+  /* 締切の行と同じ表記（MCP の中で二つの書き方を出さない）。 */
+  const 締切の行 = 答.split("\n").filter((l) => /^\d{4}-\d{2}-\d{2}/.test(l));
+  for (const l of 締切の行.slice(0, 40)) {
+    for (const p of 日本語の開催地) {
+      if (!l.includes(p)) continue;
+      expect(l, `締切の行に會期の行と同じ開催地「${p}」が無い`).toContain(p);
+    }
+  }
+});
+
+/* 會期の行の三つの決まりを、確實な入力で固定化する（md との突き合はせは表示の 100 件まで
+ * しか屆かない爲、其の外の行は此方で見る）。 */
+it("會期の行は、年を添えた名・日本語の開催地・空でも「未確認」を出す（第 1108 回）", async () => {
+  /* md との突き合はせは表示の 100 件までしか屆かない爲、其の外の行（空の開催地を持つ
+   * 158 版など）は此方で見る。會期の行を作る関数を其の儘讀む。 */
+  const { 開催の行 } = await import("../src/mcp.ts");
+  const now = Date.parse("2026-10-15T00:00:00Z");
+  const 行 = 開催の行(400, now);
+  expect(行.length, "會期の行が出て居ない（この檢查の前提が崩れた）").toBeGreaterThan(20);
+
+  /* 1) **會議名は年を添えた形**（略稱を先に出すと「SEC」のやうに別名に成る）。
+   * 年は `titleWithYearJa` が付ける（名前に「HUST-26」のやうに年が既に入って居る行は
+   * 其の儘 – 重ねて付けない）。**省略形の名**（「SEC」のやうに年が無い名）を出さない事を
+   * 見るには、正本と同じ式で組み直して突き合はせる。 */
+  const R = (await import("../site/recommender.ts")).default;
+  const 正本の名 = new Map(
+    R.candidateRows(
+      JSON.parse(readFileSync(join(REPO_ROOT, "public", "data.json"), "utf8")),
+    ).map((r: unknown) => {
+      const 行 = r as { conf?: { key?: string; title?: string }; ed?: { id?: string; year?: number } };
+      return [
+        `${String(行.conf?.key ?? "")}|${String(行.ed?.id ?? "")}`,
+        R.titleWithYearJa(String(行.conf?.title ?? 行.conf?.key ?? ""), 行.ed?.year ?? null),
+      ];
+    }),
+  );
+  let 年の無い名 = 0;
+  let 突き合はせた = 0;
+  for (const r of 行) {
+    const 期待 = 正本の名.get(`${r.key}|${r.版}`);
+    if (!期待) continue;
+    expect(r.会議, `${r.key}／${r.版} の會議名が正本と違ふ`).toBe(期待);
+    突き合はせた += 1;
+    if (!/\d{4}/.test(r.会議)) 年の無い名 += 1;
+  }
+  expect(突き合はせた, "會議名を突き合はせた行が無い（この檢查が空振り）").toBeGreaterThan(50);
+  /* 略稱だけの名（年が無い）は、名前に年が入って居る行だけに限る。 */
+  const 略稱だけ = 行.filter((r) => !/\d{4}/.test(r.会議) && !/\d{2}\b/.test(r.会議));
+  expect(
+    略稱だけ.length,
+    `略稱だけの會議名が出て居る: ${JSON.stringify(略稱だけ.slice(0, 3))}`,
+  ).toBe(0);
+
+  /* 2) **開催地は締切の行と同じ式**（`placeJa(placeWithPrefectureJa(...))` – upcoming.md が
+   * 使ふのと同じ）。生の英文を出さない事を、正本と突き合はせて見る。 */
+  /* MCP が讀むのは **snapshot その物**（公開物はビルド時の統合で變はる事がある）。
+   * 會期の行も `snapshot().conferences` を見るので、突き合はせも snapshot で行ふ。 */
+  const 收錄 = JSON.parse(readFileSync(join(REPO_ROOT, "data", "snapshot.json"), "utf8")) as {
+    conferences?: Array<{ key?: string; editions?: Array<{ id?: string; place?: string }> }>;
+  };
+  const 生の開催地 = new Map<string, string>();
+  for (const c of 收錄.conferences ?? [])
+    for (const ed of c.editions ?? [])
+      生の開催地.set(`${String(c.key ?? "")}|${String(ed.id ?? "")}`, String(ed.place ?? ""));
+  let 突き合はせた開催地 = 0;
+  for (const r of 行) {
+    const 生 = 生の開催地.get(`${r.key}|${r.版}`);
+    if (生 === undefined) continue;
+    const 期待 =
+      R.placeJa(R.placeWithPrefectureJa(生)) || String(R.unconfirmedLabelJa() ?? "未確認");
+    expect(r.開催地, `${r.key}／${r.版} の開催地が締切の行と同じ式と違ふ`).toBe(期待);
+    突き合はせた開催地 += 1;
+  }
+  expect(突き合はせた開催地, "開催地を突き合はせた行が無い（この檢查が空振り）").toBeGreaterThan(50);
+
+  /* 3) **空でも「未確認」**（空欄にすると公式が出て居ないのと收錄漏れが區別できない）。 */
+  for (const r of 行) {
+    expect(r.開催地, `空の開催地が空欄のまま出て居る: ${r.会議}`).not.toBe("");
+  }
+  /* 未確認が實際に出る事（收録に 158 版、開催地を持たない物がある）。 */
+  const 未確認の行 = 行.filter((r) => r.開催地 === "未確認");
+  expect(未確認の行.length, "未確認の行が一つも無い（この檢查が空振り）").toBeGreaterThan(0);
+});
+
 it("--json でも、構造化を伴はない案内を其の侭出す（第 1099 回）", async () => {
   /* 空の検索語は「省せる引數」を列挙した案内を返す。JSON を賴んだ時に汎用の斷りに
    * すり替はると、直し方の書いてある文が消える – 實測 2026-10-15: `search "" --json` は

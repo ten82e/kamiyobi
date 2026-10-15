@@ -1244,7 +1244,7 @@ function searchDeadlines(
   ].join("\n");
 }
 
-function 開催の行(
+export function 開催の行(
   days: number,
   now: number,
 ): Array<{
@@ -1278,6 +1278,7 @@ function 開催の行(
     for (const e of 会議.editions ?? []) {
       const ed = e as {
         id?: unknown;
+        year?: unknown;
         estimated?: unknown;
         event_start?: unknown;
         event_end?: unknown;
@@ -1300,13 +1301,26 @@ function 開催の行(
         const 終了 = Date.parse(String(seg.end ?? seg.start ?? "")) || 開始;
         /* 期間に掛かっている会期だけ（会期中の会議も「開催中」として出す）。 */
         if (終了 < now || 開始 >= 限り) continue;
+        /* 會議名は**年を添えた形**（`titleWithYearJa` – 畫面の行の詳細と upcoming.md の
+         * 正本）。略稱を先に出すと「SEC」のやうに一會社の別の名が出て、upcoming.md の
+         * 「USENIX Security 2026」と別物になる。版の識別子は後に續ける（省かない）。
+         * 開催地も**日本語化した表記**（`placeJa`）。實測 2026-10-16: 生のまま出すと
+         * 2,378 版が「Karlsruhe, Germany」の儘で、締切の行（「Karlsruhe, ドイツ」）と
+         * **MCP の中で違ふ表記**に成って居た。空でも「未確認」を出す（空欄にすると
+         * 公式が出て居ないのと收録漏れが區別できない – upcoming.md と同じ決まり）。 */
+        const 會議名 = Recommender.titleWithYearJa(
+          String(会議.title ?? 会議.key ?? ""),
+          typeof ed.year === "number" ? ed.year : null,
+        );
         出.push({
           開始,
           終了,
-          会議: 略稱 || String(会議.title ?? 会議.key ?? ""),
+          会議: 會議名 || 略稱 || String(会議.key ?? ""),
           key: String(会議.key ?? ""),
           版: String(ed.id ?? ""),
-          開催地: String(ed.place ?? ""),
+          開催地:
+            Recommender.placeJa(Recommender.placeWithPrefectureJa(ed.place)) ||
+            String(Recommender.unconfirmedLabelJa() ?? "未確認"),
           link: String(ed.link ?? 会議.link ?? ""),
         });
       }
@@ -1397,7 +1411,7 @@ function 開催の節(行: ReturnType<typeof 開催の行>): string[] {
     ["日", "月", "火", "水", "木", "金", "土"][new Date(ms).getUTCDay()] ?? "";
   return [
     "",
-    `開催（会期の行）: ${行.length} 件（同じ窓・同じ表。画面の一覧とカレンダーには出ない。upcoming.md と同じ物）`,
+    `開催（会期の行）: ${行.length} 件（同じ窓の会期です。画面の一覧とカレンダーには出ない物で、upcoming.md と同じ窓です。会議名は年を添えた形、開催地は締切の行と同じ日本語表記にします）`,
     ...行
       .slice(0, 100)
       .map(
@@ -2243,7 +2257,7 @@ const TOOLS = [
   {
     name: "list_upcoming",
     description:
-      "今日から days 日以内の締切と開催日程を返す。締切は最大100件。既定は種別では絞らない（全部）、推定も含む。kind / kinds は日本語の種別名と配列も受ける。推定期間・トラック・前に出ていた締切も表示する。範囲は JST の暦日で判定する。within_days と境目の切り方は同じ。search_deadlines と件数を比べる場合は種別・推定・scope を揃える。既定の条件では件数はそのままでは違う。返す行の形: 締切は日時 | 種別 | 確認状態（ある場合）| 会議名（版の識別子）| ランク | 会期 | 開催地 URL。会期の行は別の形で、開催の節に - 開始日〜終了日 | 会議名（key: 識別子・版）| 開催地 URL。",
+      "今日から days 日以内の締切と開催日程を返す。締切は最大100件。既定は種別では絞らない（全部）、推定も含む。kind / kinds は日本語の種別名と配列も受ける。推定期間・トラック・前に出ていた締切も表示する。範囲は JST の暦日で判定する。within_days と境目の切り方は同じ。search_deadlines と件数を比べる場合は種別・推定・scope を揃える。既定の条件では件数はそのままでは違う。返す行の形: 締切は日時 | 種別 | 確認状態（ある場合）| 会議名（版の識別子）| ランク | 会期 | 開催地 URL。会期の行は別の形で、開催の節に - 開始日〜終了日 | 会議名（key: 識別子・版）| 開催地 URL。会期の行の会議名は年を添えた形、開催地は締切の行と同じ日本語表記です（空でも「未確認」を出します）。",
     inputSchema: {
       type: "object",
       properties: {
