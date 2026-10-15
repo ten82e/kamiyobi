@@ -1521,6 +1521,18 @@ function venueLookupText(value: unknown): string {
     .trim();
 }
 
+function venueIdentity(conf: NonNullable<SnapshotFile["conferences"]>[number]) {
+  const text = (value: unknown): string | null =>
+    typeof value === "string" && value.trim() ? value : null;
+  return {
+    venue_key: String(conf.key ?? ""),
+    title: text(conf.title),
+    full_name: text(conf.full_name),
+    acronym: text(conf.acronym),
+    official_url: text(conf.link),
+  };
+}
+
 function venueSchedules(conf: { key?: unknown; editions?: unknown[] }) {
   return (conf.editions ?? []).flatMap((value) => {
     if (!value || typeof value !== "object") return [];
@@ -1706,8 +1718,9 @@ function venueInfo(
       });
       const link = String(在る.link ?? "").trim();
       const editions = venueSchedules(在る);
+      const identity = venueIdentity(在る);
       receive?.({
-        venue_key: 在る.key,
+        ...identity,
         deadline_total: 0,
         rows: [],
         editions,
@@ -1718,6 +1731,11 @@ function venueInfo(
       return [
         `問はた会議（${String(在る.acronym || 在る.title || 在る.key)}・key: ${String(在る.key)}）は収録に在りますが、**締切の行が 1 本もありません**（版 ${版々.length} 件）。` +
           (會期あり ? EVENT_ONLY_NOTICE_JA : "会期も確認できていないので、どの一覧にも出ません。"),
+        ...(identity.full_name &&
+        identity.full_name !== identity.title &&
+        identity.full_name !== identity.acronym
+          ? [`正式名: ${identity.full_name}`]
+          : []),
         ...venueScheduleLines(editions),
         ...(link ? [`公式ページ: ${link}`] : []),
         ...(古さ ? ["", 古さ] : []),
@@ -1787,7 +1805,7 @@ function venueInfo(
   );
   const schedules = venueSchedules(會議の版 ?? { editions: [] });
   receive?.({
-    venue_key: 一つ.conf.key,
+    ...venueIdentity(會議の版 ?? 一つ.conf),
     deadline_total: hit.length,
     rows: hit.map((row) => structuredDeadline(row, now)),
     editions: schedules,

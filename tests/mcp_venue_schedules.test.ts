@@ -60,6 +60,32 @@ writeFileSync(
         editions.map((ed) => ({ ...ed, place: "Tokyo, Japan", deadlines: [] })),
       ),
       venue("estimated-only", [editions[3]]),
+      {
+        ...venue("identity-en", []),
+        title: "RCS",
+        acronym: "RCS",
+        full_name: "Research Computing Symposium",
+      },
+      {
+        ...venue("identity-ja", [editions[0]]),
+        title: "システム研究会",
+        acronym: "SYS",
+        full_name: "情報処理システム研究会",
+      },
+      {
+        ...venue("identity-dated", [
+          {
+            id: "dated",
+            year: 2029,
+            deadlines: [{ kind: "paper", utc: "2029-06-01T00:00:00Z", tz_raw: "UTC" }],
+          },
+        ]),
+        title: "RCS",
+        acronym: "RCS",
+        full_name: "Reliable Computing Symposium",
+      },
+      { ...venue("identity-same", []), title: "Same", acronym: "Same", full_name: "Same" },
+      { ...venue("identity-missing", []), link: null },
       venue("fresh-secondary", [
         { id: "foreign", year: 2040, event_start: "2040-01-01", deadlines: [] },
       ]),
@@ -189,4 +215,39 @@ it("does not advertise estimated dates as recorded event schedules", () => {
   expect(data.editions).toEqual([]);
   expect(text).toContain("会期も確認できていない");
   expect(text).not.toContain("2031-06-01");
+});
+
+it("retains canonical names, full names and acronyms independently of deadlines and language", () => {
+  for (const [key, title, acronym, fullName, total] of [
+    ["identity-en", "RCS", "RCS", "Research Computing Symposium", 0],
+    ["identity-ja", "システム研究会", "SYS", "情報処理システム研究会", 0],
+    ["identity-dated", "RCS", "RCS", "Reliable Computing Symposium", 1],
+  ] as const) {
+    const { data, text } = call({ key });
+    expect(data).toMatchObject({
+      venue_key: key,
+      title,
+      acronym,
+      full_name: fullName,
+      official_url: "https://example.org/current",
+      deadline_total: total,
+    });
+    expect(text).toContain(`正式名: ${fullName}`);
+    expect(text.match(/正式名:/g)).toHaveLength(1);
+  }
+});
+it("does not invent missing identity fields or repeat identical full names", () => {
+  const missing = call({ key: "identity-missing" });
+  expect(missing.data).toMatchObject({
+    venue_key: "identity-missing",
+    title: "identity-missing",
+    full_name: null,
+    acronym: null,
+    official_url: null,
+  });
+  expect(missing.text).not.toContain("正式名:");
+  expect(missing.text).not.toContain("公式ページ:");
+  const same = call({ key: "identity-same" });
+  expect(same.data).toMatchObject({ title: "Same", full_name: "Same", acronym: "Same" });
+  expect(same.text).not.toContain("正式名:");
 });
