@@ -47,7 +47,7 @@ function run(label: string, broken: boolean) {
   writeFileSync(join(root, `${label}.log`), `${child.stdout ?? ""}${child.stderr ?? ""}`);
   assert(!child.error, String(child.error));
   const report = JSON.parse(readFileSync(output, "utf8"));
-  assert.equal(report.numTotalTests, 14, `${label}: required tests missing`);
+  assert.equal(report.numTotalTests, 16, `${label}: required tests missing`);
   assert.equal(report.numPendingTests, 0, `${label}: tests skipped`);
   assert.equal(child.status === 0, !broken, `${label}: inspect ${root}`);
   if (broken) {
@@ -66,11 +66,15 @@ function run(label: string, broken: boolean) {
       const suite = report.testResults.find((suite: { name: string }) =>
         suite.name.endsWith("/llms_build_counts.test.ts"),
       );
-      for (const entry of label.startsWith("cli-") ? ["CLI"] : ["API", "CLI"]) {
+      for (const entry of label.startsWith("upstream-")
+        ? ["upstream CLI"]
+        : label.startsWith("cli-")
+          ? ["CLI", "upstream CLI"]
+          : ["API", "CLI", "upstream CLI"]) {
         assert(
           suite?.assertionResults.some(
             (test: { fullName: string; status: string; failureMessages: string[] }) =>
-              test.fullName.includes(`${entry} build`) &&
+              test.fullName.startsWith(`${entry} build `) &&
               test.status === "failed" &&
               test.failureMessages.some(
                 (message) =>
@@ -91,6 +95,24 @@ function run(label: string, broken: boolean) {
   );
 }
 const faults = [
+  [
+    "upstream-loses-ccf-before-merge",
+    "    sourceGroups,\n    overrides.aliases",
+    "    sourceGroups.map((group, index) => index === 0 ? [] : group),\n    overrides.aliases",
+    cliFile,
+  ],
+  [
+    "upstream-loses-ai-before-merge",
+    "    sourceGroups,\n    overrides.aliases",
+    "    sourceGroups.map((group, index) => index === 1 ? [] : group),\n    overrides.aliases",
+    cliFile,
+  ],
+  [
+    "upstream-overrides-not-passed",
+    "confs = applyOverrides(confs, overrides);",
+    "confs = applyOverrides(confs, {});",
+    cliFile,
+  ],
   [
     "cli-drops-conferences",
     "await buildAll(confs, config, outdir, now, {",

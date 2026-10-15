@@ -19,9 +19,10 @@ import {
   serializeVenueProfileArtifact,
 } from "../src/embeddings.ts";
 import type { Conference, Edition, EventDatePrecision } from "../src/model.ts";
+import { cacheSlot } from "../src/sources/base.ts";
 
 const repo = join(import.meta.dirname, "..");
-describe.each(["API", "CLI"])("%s build", (entry) => {
+describe.each(["API", "CLI", "upstream CLI"])("%s build", (entry) => {
   const root = mkdtempSync(join(tmpdir(), "kamiyobi-llms-build-"));
   afterAll(() => rmSync(root, { recursive: true, force: true }));
   for (const dir of ["src", "site", "scripts"])
@@ -43,7 +44,7 @@ await buildAll(confs,{},'out',new Date('2026-08-09T00:00:00Z'),{
 });
 `,
   );
-  if (entry === "CLI") {
+  if (entry !== "API") {
     expect(existsSync(join(root, "data"))).toBe(false);
     mkdirSync(join(root, "data"));
     // Count tests supply fresh, unrelated profile inputs; no published artifacts are copied.
@@ -78,7 +79,7 @@ await buildAll(confs,{},'out',new Date('2026-08-09T00:00:00Z'),{
       join(root, "config.yaml"),
       JSON.stringify({
         rollforward: { enabled: false },
-        taxonomy: { test: { venues: ["A", "B", "C"] } },
+        taxonomy: { test: { venues: ["A", "B", "C", "up-ccf", "up-ai"] } },
         categories: { test: {} },
       }),
     );
@@ -151,14 +152,19 @@ await buildAll(confs,{},'out',new Date('2026-08-09T00:00:00Z'),{
       sources: ["manual"],
     };
   }
-  function buildAndCheck(confs: Conference[], expected: typeof zero, other: number, dated: number) {
+  function buildAndCheck(
+    confs: Conference[] | null,
+    expected: typeof zero,
+    other: number,
+    dated: number,
+  ) {
     assertNoGeneratedInputs();
     writeFileSync(join(root, "input.json"), JSON.stringify(confs));
     if (entry === "CLI")
       writeFileSync(
         join(root, "data/manual.yaml"),
         JSON.stringify({
-          conferences: confs.map((conf) => ({
+          conferences: confs!.map((conf) => ({
             ...conf,
             editions: conf.editions.map((ed) => ({ ...ed, id: ed.edition_id })),
           })),
@@ -177,7 +183,7 @@ await buildAll(confs,{},'out',new Date('2026-08-09T00:00:00Z'),{
             "--config",
             "config.yaml",
             "--cache",
-            "empty-cache",
+            entry === "upstream CLI" ? "upstream-cache" : "empty-cache",
             "--offline",
             "--no-embeddings",
             "--now",
@@ -192,7 +198,11 @@ await buildAll(confs,{},'out',new Date('2026-08-09T00:00:00Z'),{
     expect(child.status, `${child.stdout}\n${child.stderr}`).toBe(0);
     const data = JSON.parse(readFileSync(join(root, "out/data.json"), "utf8")) as {
       conferences: {
-        editions: { event_date_precision: keyof typeof zero; event_start: string | null }[];
+        editions: {
+          event_date_precision: keyof typeof zero;
+          event_start: string | null;
+          source: string;
+        }[];
       }[];
     };
     const editions = data.conferences.flatMap((conf) => conf.editions);
@@ -227,68 +237,232 @@ await buildAll(confs,{},'out',new Date('2026-08-09T00:00:00Z'),{
       Number(coverage![2].replaceAll(",", "")),
       "llms.txt dated count must match data.json",
     ).toBe(withDates.length);
+    if (entry === "upstream CLI") {
+      expect(existsSync(join(root, "data/manual.yaml"))).toBe(false);
+      expect(new Set(editions.map((ed) => ed.source))).toEqual(new Set(["ccfddl", "aideadlines"]));
+      expect(child.stderr).not.toContain("が取得できない");
+    }
     assertNoGeneratedInputs();
   }
-  it("rebuilds llms.txt counts from all published editions as editions are added and removed", () => {
-    expect(existsSync(join(root, "out"))).toBe(false);
-    const confs = [
-      conference("A", [edition("exact-range", true), edition("unverified")]),
-      conference("B", [edition("month-only", true)]),
-    ];
-    buildAndCheck(confs, { ...zero, "exact-range": 1, unverified: 1, "month-only": 1 }, 2, 1);
-    confs[1].editions.push(
-      edition("unverified", true),
-      edition("not-announced"),
-      edition("single-day", true),
-      edition("split-dates", true),
-    );
-    buildAndCheck(
-      confs,
-      {
-        ...zero,
-        "exact-range": 1,
-        unverified: 2,
-        "month-only": 1,
-        "not-announced": 1,
-        "single-day": 1,
-        "split-dates": 1,
-      },
-      5,
-      3,
-    );
-    confs.splice(0, 1);
-    buildAndCheck(
-      confs,
-      {
-        ...zero,
-        unverified: 1,
-        "month-only": 1,
-        "not-announced": 1,
-        "single-day": 1,
-        "split-dates": 1,
-      },
-      4,
-      3,
-    );
-  });
-  it("rebuilds precision and coverage counts when the same edition changes certainty and dates", () => {
-    const event = edition("unverified", true);
-    const confs = [conference("C", [event, edition("not-announced")])];
-    buildAndCheck(confs, { ...zero, unverified: 1, "not-announced": 1 }, 2, 1);
-    event.event_date_precision = "exact-range";
-    buildAndCheck(confs, { ...zero, "exact-range": 1, "not-announced": 1 }, 1, 0);
-    event.event_date_precision = "month-only";
-    buildAndCheck(confs, { ...zero, "month-only": 1, "not-announced": 1 }, 2, 1);
-    event.event_start = null;
-    event.event_end = null;
-    buildAndCheck(confs, { ...zero, "month-only": 1, "not-announced": 1 }, 2, 0);
-    if (entry === "CLI") {
-      const configPath = join(root, "config.yaml");
-      writeFileSync(
-        configPath,
-        JSON.stringify({ ...JSON.parse(readFileSync(configPath, "utf8")), exclude: ["C"] }),
+  if (entry !== "upstream CLI") {
+    it("rebuilds llms.txt counts from all published editions as editions are added and removed", () => {
+      expect(existsSync(join(root, "out"))).toBe(false);
+      const confs = [
+        conference("A", [edition("exact-range", true), edition("unverified")]),
+        conference("B", [edition("month-only", true)]),
+      ];
+      buildAndCheck(confs, { ...zero, "exact-range": 1, unverified: 1, "month-only": 1 }, 2, 1);
+      confs[1].editions.push(
+        edition("unverified", true),
+        edition("not-announced"),
+        edition("single-day", true),
+        edition("split-dates", true),
       );
-      buildAndCheck(confs, zero, 0, 0);
-    } else buildAndCheck([], zero, 0, 0);
-  });
+      buildAndCheck(
+        confs,
+        {
+          ...zero,
+          "exact-range": 1,
+          unverified: 2,
+          "month-only": 1,
+          "not-announced": 1,
+          "single-day": 1,
+          "split-dates": 1,
+        },
+        5,
+        3,
+      );
+      confs.splice(0, 1);
+      buildAndCheck(
+        confs,
+        {
+          ...zero,
+          unverified: 1,
+          "month-only": 1,
+          "not-announced": 1,
+          "single-day": 1,
+          "split-dates": 1,
+        },
+        4,
+        3,
+      );
+    });
+    it("rebuilds precision and coverage counts when the same edition changes certainty and dates", () => {
+      const event = edition("unverified", true);
+      const confs = [conference("C", [event, edition("not-announced")])];
+      buildAndCheck(confs, { ...zero, unverified: 1, "not-announced": 1 }, 2, 1);
+      event.event_date_precision = "exact-range";
+      buildAndCheck(confs, { ...zero, "exact-range": 1, "not-announced": 1 }, 1, 0);
+      event.event_date_precision = "month-only";
+      buildAndCheck(confs, { ...zero, "month-only": 1, "not-announced": 1 }, 2, 1);
+      event.event_start = null;
+      event.event_end = null;
+      buildAndCheck(confs, { ...zero, "month-only": 1, "not-announced": 1 }, 2, 0);
+      if (entry === "CLI") {
+        const configPath = join(root, "config.yaml");
+        writeFileSync(
+          configPath,
+          JSON.stringify({ ...JSON.parse(readFileSync(configPath, "utf8")), exclude: ["C"] }),
+        );
+        buildAndCheck(confs, zero, 0, 0);
+      } else buildAndCheck([], zero, 0, 0);
+    });
+  } else {
+    function rawInputs() {
+      return {
+        ccf: [
+          {
+            title: "UP-CCF",
+            sub: "DS",
+            confs: [
+              {
+                year: 2027,
+                id: "ccf27",
+                date: "May 1-2, 2027",
+                link: "https://ccf.example.org/2027",
+              },
+              {
+                year: 2028,
+                id: "ccf28",
+                date: "May 1-2, 2028",
+                link: "https://ccf.example.org/2028",
+              },
+            ],
+          },
+        ],
+        ai: [
+          {
+            title: "UP-AI",
+            year: 2027,
+            id: "ai27",
+            date: "June 1, 2027",
+            link: "https://ai.example.org/2027",
+          },
+          { title: "UP-AI", year: 2028, id: "ai28", date: "", link: "https://ai.example.org/2028" },
+        ],
+      };
+    }
+    function writeRaw(input: ReturnType<typeof rawInputs>) {
+      const cache = join(root, "upstream-cache");
+      rmSync(cache, { recursive: true, force: true });
+      for (const [repoName, dir, rows] of [
+        ["ccfddl/ccf-deadlines", "conference", input.ccf],
+        ["huggingface/ai-deadlines", "src/data/conferences", input.ai],
+      ] as const) {
+        const path = join(cacheSlot(cache, repoName, "main"), "raw", dir);
+        mkdirSync(path, { recursive: true });
+        writeFileSync(join(path, "counts.yaml"), JSON.stringify(rows));
+      }
+    }
+    function writeOverrides(editions: Record<string, unknown>) {
+      writeFileSync(
+        join(root, "data/overrides.yaml"),
+        JSON.stringify({ conferences: { "up-ccf": { editions } } }),
+      );
+    }
+    it("tracks additions and removals from both raw upstream sources after overrides", () => {
+      const input = rawInputs();
+      writeRaw(input);
+      writeOverrides({ ccf28: { event_date_precision: "month-only" } });
+      buildAndCheck(
+        null,
+        { ...zero, "exact-range": 1, "single-day": 1, "month-only": 1, unverified: 1 },
+        2,
+        1,
+      );
+      input.ccf[0].confs.push({
+        year: 2029,
+        id: "ccf29",
+        date: "TBA",
+        link: "https://ccf.example.org/2029",
+      });
+      input.ai.push({
+        title: "UP-AI",
+        year: 2029,
+        id: "ai29",
+        date: "June 1-2, 2029",
+        link: "https://ai.example.org/2029",
+      });
+      writeRaw(input);
+      buildAndCheck(
+        null,
+        {
+          ...zero,
+          "exact-range": 2,
+          "single-day": 1,
+          "month-only": 1,
+          unverified: 1,
+          "not-announced": 1,
+        },
+        3,
+        1,
+      );
+      input.ccf[0].confs.shift();
+      input.ai.splice(0, 1);
+      writeRaw(input);
+      buildAndCheck(
+        null,
+        { ...zero, "exact-range": 1, "month-only": 1, unverified: 1, "not-announced": 1 },
+        3,
+        1,
+      );
+    });
+    it("tracks override-only precision, date coverage and edition removal with unchanged upstream inputs", () => {
+      const input = rawInputs();
+      writeRaw(input);
+      const before = [...Object.values(input).map((rows) => JSON.stringify(rows))];
+      writeOverrides({ ccf28: { event_date_precision: "month-only" } });
+      buildAndCheck(
+        null,
+        { ...zero, "exact-range": 1, "single-day": 1, "month-only": 1, unverified: 1 },
+        2,
+        1,
+      );
+      writeOverrides({
+        ccf28: {
+          event_date_precision: "unverified",
+          date_text: "",
+          event_start: null,
+          event_end: null,
+        },
+      });
+      buildAndCheck(null, { ...zero, "exact-range": 1, "single-day": 1, unverified: 2 }, 2, 0);
+      writeOverrides({
+        ccf28: {
+          event_date_precision: "single-day",
+          event_start: "2028-05-03",
+          event_end: "2028-05-03",
+        },
+      });
+      buildAndCheck(null, { ...zero, "exact-range": 1, "single-day": 2, unverified: 1 }, 1, 0);
+      writeOverrides({
+        ccf27: { drop: true },
+        ccf28: {
+          event_date_precision: "split-dates",
+          event_start: "2028-05-03",
+          event_end: "2028-05-05",
+        },
+      });
+      buildAndCheck(null, { ...zero, "single-day": 1, "split-dates": 1, unverified: 1 }, 2, 1);
+      expect([JSON.stringify(input.ccf), JSON.stringify(input.ai)]).toEqual(before);
+      expect(
+        readFileSync(
+          join(
+            cacheSlot(join(root, "upstream-cache"), "ccfddl/ccf-deadlines", "main"),
+            "raw/conference/counts.yaml",
+          ),
+          "utf8",
+        ),
+      ).toBe(before[0]);
+      expect(
+        readFileSync(
+          join(
+            cacheSlot(join(root, "upstream-cache"), "huggingface/ai-deadlines", "main"),
+            "raw/src/data/conferences/counts.yaml",
+          ),
+          "utf8",
+        ),
+      ).toBe(before[1]);
+    });
+  }
 });
