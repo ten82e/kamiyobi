@@ -4,6 +4,7 @@ import {
   existsSync,
   mkdirSync,
   mkdtempSync,
+  readFileSync,
   rmSync,
   symlinkSync,
   writeFileSync,
@@ -175,6 +176,9 @@ it("returns actual edition schedules directly, with raw precision, segments and 
   const { data, text } = call({ key: "ＦＲＥＳＨ" });
   expect(data).toMatchObject({
     venue_key: "fresh",
+    edition_total: 4,
+    estimated_edition_total: 1,
+    non_estimated_edition_total: 3,
     deadline_total: 0,
     upcoming_deadline_total: 0,
     past_deadline_total: 0,
@@ -186,6 +190,9 @@ it("returns actual edition schedules directly, with raw precision, segments and 
     event_generated_at: null,
     evaluated_at: "2029-05-31T00:00:00.000Z",
   });
+  expect(text).toContain("版 4 件、うち推定 1 件");
+  expect(text).not.toContain("問はた");
+  expect(text).not.toContain("収録に在ります");
   expect(data.editions.map((ed: { edition_id: string }) => ed.edition_id)).toEqual([
     "month",
     "split",
@@ -264,6 +271,12 @@ it("asks to disambiguate event-only venues instead of returning the first venue'
 it("does not advertise estimated dates as recorded event schedules", () => {
   const { data, text } = call({ key: "estimated-only" });
   expect(data.editions).toEqual([]);
+  expect(data).toMatchObject({
+    edition_total: 1,
+    estimated_edition_total: 1,
+    non_estimated_edition_total: 0,
+  });
+  expect(text).toContain("版 1 件、うち推定 1 件");
   expect(text).toContain("会期も確認できていない");
   expect(text).not.toContain("2031-06-01");
 });
@@ -405,4 +418,50 @@ it("does not invent reviews or duplicate unchanged wording in upcoming event tex
   expect(page.data.items[0].venue_key).toBe("same-date-text");
   expect(page.text.match(/2029-06-01\(金\)/g)).toHaveLength(1);
   expect(page.text).not.toContain("原表記:");
+});
+
+it("updates edition counts and estimate markers when forecasts are added and removed", () => {
+  const path = join(root, "data/snapshot.json");
+  const original = readFileSync(path, "utf8");
+  const input = JSON.parse(original);
+  const actual = {
+    id: "actual",
+    year: 2029,
+    deadlines: [{ kind: "paper", utc: "2029-06-01T00:00:00Z", tz_raw: "UTC" }],
+  };
+  const predicted = (i: number) => ({
+    id: `estimate-${i}`,
+    year: 2030 + i,
+    estimated: true,
+    event_start: "2030-06-01",
+    deadlines: [],
+  });
+  input.conferences = [venue("dynamic", [actual])];
+  try {
+    for (const n of [0, 1, 3, 0]) {
+      input.conferences[0].editions = [
+        actual,
+        ...Array.from({ length: n }, (_, i) => predicted(i)),
+      ];
+      writeFileSync(path, JSON.stringify(input));
+      const { data, text } = call({ key: "dynamic" });
+      expect(data).toMatchObject({
+        edition_total: n + 1,
+        estimated_edition_total: n,
+        non_estimated_edition_total: 1,
+        deadline_total: 1,
+      });
+      expect(data.editions.map((ed: { edition_id: string }) => ed.edition_id)).toEqual(["actual"]);
+      const expected = [
+        "actual",
+        ...Array.from({ length: n }, (_, i) => `estimate-${i}(推定・締切未収録)`),
+      ];
+      expect(text.split("\n").find((line: string) => line.startsWith("版: "))).toBe(
+        `版: ${expected.join(" / ")}`,
+      );
+      expect(text).not.toContain("2030-06-01");
+    }
+  } finally {
+    writeFileSync(path, original);
+  }
 });

@@ -1616,6 +1616,18 @@ function venueIdentity(conf: NonNullable<SnapshotFile["conferences"]>[number]) {
   };
 }
 
+function venueEditionCounts(conf: Parameters<typeof venueIdentity>[0], nonEstimatedCount: number) {
+  const estimatedCount = (conf.editions ?? []).filter(
+    (value) =>
+      value && typeof value === "object" && (value as { estimated?: unknown }).estimated === true,
+  ).length;
+  return {
+    edition_total: nonEstimatedCount + estimatedCount,
+    non_estimated_edition_total: nonEstimatedCount,
+    estimated_edition_total: estimatedCount,
+  };
+}
+
 function venueSchedules(conf: { key?: unknown; editions?: unknown[] }) {
   return (conf.editions ?? []).flatMap((value) => {
     if (!value || typeof value !== "object") return [];
@@ -1827,9 +1839,11 @@ function venueInfo(
       const link = String(在る.link ?? "").trim();
       const editions = venueSchedules(在る);
       const identity = venueIdentity(在る);
+      const editionCounts = venueEditionCounts(在る, editions.length);
       receive?.({
         ...identity,
         ...venueClassification(在る),
+        ...editionCounts,
         deadline_total: 0,
         upcoming_deadline_total: 0,
         past_deadline_total: 0,
@@ -1841,7 +1855,7 @@ function venueInfo(
         ...context,
       });
       return [
-        `問はた会議（${String(在る.acronym || 在る.title || 在る.key)}・key: ${String(在る.key)}）は収録に在りますが、**締切の行が 1 本もありません**（版 ${版々.length} 件）。` +
+        `会議（${String(在る.acronym || 在る.title || 在る.key)}・key: ${String(在る.key)}）は収録されていますが、締切の行が 1 本もありません（版 ${editionCounts.edition_total} 件${editionCounts.estimated_edition_total ? `、うち推定 ${editionCounts.estimated_edition_total} 件` : ""}）。` +
           eventAvailabilityNoticeJa(版々),
         ...(identity.full_name &&
         identity.full_name !== identity.title &&
@@ -1962,6 +1976,14 @@ function venueInfo(
       (c: { key?: unknown }) => venueLookupText(c.key) === venueLookupText(一つ.conf.key),
     );
   const schedules = venueSchedules(會議の版 ?? { editions: [] });
+  const editionCounts = venueEditionCounts(會議の版 ?? 一つ.conf, schedules.length);
+  const estimatedEditionIds = new Set(
+    (會議の版?.editions ?? []).flatMap((value) => {
+      if (!value || typeof value !== "object") return [];
+      const ed = value as { id?: unknown; estimated?: unknown };
+      return ed.estimated === true && typeof ed.id === "string" ? [ed.id] : [];
+    }),
+  );
   const 行を持つ版 = new Set(hit.map((r) => r.ed.id));
   const venueKey = venueLookupText(會議の版?.key ?? 一つ.conf.key);
   const deadlineEditionIds = (rows: Row[]): Set<string> =>
@@ -2021,6 +2043,7 @@ function venueInfo(
   receive?.({
     ...identity,
     ...venueClassification(venue),
+    ...editionCounts,
     deadline_total: hit.length,
     upcoming_deadline_total: 今後,
     past_deadline_total: 過ぎた件數,
@@ -2046,7 +2069,17 @@ function venueInfo(
       return [`正式名: ${正式名}`];
     })(),
     ...(scopeErr ? [scopeErr] : []),
-    `版: ${版.map((id) => (displayedDeadlineEditions.has(id) ? id : `${id}(${allDeadlineEditions.has(id) ? "締切は表示範囲外" : "締切未収録"})`)).join(" / ")}`,
+    `版: ${版
+      .map((id) => {
+        const notes = [
+          ...(estimatedEditionIds.has(id) ? ["推定"] : []),
+          ...(!displayedDeadlineEditions.has(id)
+            ? [allDeadlineEditions.has(id) ? "締切は表示範囲外" : "締切未収録"]
+            : []),
+        ];
+        return notes.length ? `${id}(${notes.join("・")})` : id;
+      })
+      .join(" / ")}`,
 
     ...venueClassificationLines(venue),
     /* その会議の締切が、どの位確かめられているか（行ごとの札だけでは、全体の偏りが分からん）。 */
