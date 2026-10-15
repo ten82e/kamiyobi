@@ -9,6 +9,7 @@ interface Venue {
   key: string;
   title: string;
   full_name?: string;
+  link?: string;
   categories: string[];
   tags?: string[];
   scope?: string;
@@ -88,6 +89,7 @@ interface Reply {
       rows: Array<{
         rank: number;
         venue_key: string;
+        official_url: string | null;
         fit: { score: number; confidence: string };
         availability: { status: string };
         deadline: Record<string, unknown> | null;
@@ -560,4 +562,65 @@ describe("MCP recommendation results with independent raw fixtures", () => {
       rmSync(root, { recursive: true, force: true });
     }
   });
+});
+
+it("retains recommendation links independently of whether a candidate has a submission deadline", () => {
+  const dated = venue("gpu-dated-url", "GPU programming dated", "gpu parallel programming");
+  dated.link = "https://example.org/dated-series";
+  (dated.editions[0] as { link: string }).link = " https://example.org/dated-2027 ";
+  const ongoing: Venue = {
+    key: "gpu-ongoing-url",
+    title: "GPU programming journal",
+    categories: ["systems"],
+    scope: "gpu parallel programming",
+    tags: ["journal"],
+    editions: [],
+    link: " https://example.org/journal ",
+  };
+  const unknown: Venue = {
+    key: "gpu-unknown-url",
+    title: "GPU programming unknown",
+    categories: ["systems"],
+    scope: "gpu parallel programming",
+    editions: [],
+    link: "https://example.org/unknown",
+  };
+  const absent: Venue = {
+    ...unknown,
+    key: "gpu-absent-url",
+    title: "GPU programming absent",
+    link: undefined,
+  };
+  const blank = venue("gpu-blank-url", "GPU programming blank", "gpu parallel programming");
+  blank.link = "https://example.org/blank-series";
+  (blank.editions[0] as { link: string }).link = " ";
+  const root = sandbox([dated, ongoing, unknown, absent, blank]);
+  const replies = callSequence(root, [
+    { paper: "GPU parallel programming", limit: 10 },
+    { paper: "GPUの並列プログラミング", limit: 10 },
+  ]);
+  for (const reply of replies) {
+    expect(reply.result?.isError).not.toBe(true);
+    const result = reply.result!;
+    const data = result.structuredContent!;
+    expect(data.total).toBe(5);
+    const expected = [
+      ["gpu-dated-url", "https://example.org/dated-2027", "open"],
+      ["gpu-ongoing-url", "https://example.org/journal", "ongoing"],
+      ["gpu-unknown-url", "https://example.org/unknown", "unknown"],
+      ["gpu-absent-url", null, "unknown"],
+      ["gpu-blank-url", "https://example.org/blank-series", "open"],
+    ] as const;
+    for (const [key, url, status] of expected) {
+      const row = data.rows.find((row) => row.venue_key === key)!;
+      expect(row, key).toBeDefined();
+      expect(row.official_url, key).toBe(url);
+      expect(row.availability.status, key).toBe(status);
+      if (status === "unknown" || status === "ongoing") {
+        expect(row.deadline, key).toBeNull();
+        expect(row.availability).toMatchObject({ timestamp: null });
+      } else expect(row.deadline?.official_url, key).toBe(url);
+      if (url) expect(result.content[0].text, key).toContain(url);
+    }
+  }
 });

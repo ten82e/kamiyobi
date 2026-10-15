@@ -2515,6 +2515,7 @@ async function recommendVenues(
       rank: offset + index + 1,
       venue_key: r.venueKey,
       title: r.row.conf.title,
+      official_url: officialLink(r.row.ed.link, r.row.conf.link),
       /* 正式名。畫面の推薦カードは會議名の下に正式名を出す（一覧のセルと同じ）– 締切の
        * 行が null の候補（締切不明・常時受付）でも正式名が讀めるやうに、此に持つ。 */
       full_name: r.row.conf.full_name ?? null,
