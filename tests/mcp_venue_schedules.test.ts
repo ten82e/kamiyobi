@@ -176,6 +176,10 @@ it("returns actual edition schedules directly, with raw precision, segments and 
   expect(data).toMatchObject({
     venue_key: "fresh",
     deadline_total: 0,
+    upcoming_deadline_total: 0,
+    past_deadline_total: 0,
+    next_submission: null,
+    latest_past_submission: null,
     rows: [],
     event_scope: "all",
     event_generated_at: null,

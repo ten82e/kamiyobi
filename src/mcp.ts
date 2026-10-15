@@ -1750,6 +1750,10 @@ function venueInfo(
       receive?.({
         ...identity,
         deadline_total: 0,
+        upcoming_deadline_total: 0,
+        past_deadline_total: 0,
+        next_submission: null,
+        latest_past_submission: null,
         rows: [],
         editions,
         event_scope: "all",
@@ -1832,15 +1836,6 @@ function venueInfo(
     (c: { key?: unknown }) => venueLookupText(c.key) === venueLookupText(一つ.conf.key),
   );
   const schedules = venueSchedules(會議の版 ?? { editions: [] });
-  receive?.({
-    ...venueIdentity(會議の版 ?? 一つ.conf),
-    deadline_total: hit.length,
-    rows: hit.map((row) => structuredDeadline(row, now)),
-    editions: schedules,
-    event_scope: "all",
-    event_generated_at: snapshot().snapshot_metadata?.generated_at ?? null,
-    evaluated_at: new Date(now).toISOString(),
-  });
   const 行を持つ版 = new Set(hit.map((r) => r.ed.id));
   const 版 = [
     ...new Set([
@@ -1851,30 +1846,24 @@ function venueInfo(
     .filter((id) => id.length > 0)
     .sort();
 
-  const 見本 = sortRows(hit)
-    .slice()
-    /* 今後の物を先に、同じ側では**表示の早さ**（第 751＋970 回 – `t` だと日付だけの行が
-     * 表示と食ひ違ふ順に出る。画面と同じ「残り」の順）。 */
-    .sort(
-      (a, b) =>
-        Number(a.t < now) - Number(b.t < now) ||
-        表示の刻み(a) - 表示の刻み(b) ||
-        a.conf.title.localeCompare(b.conf.title, "ja"),
-    )
-    .map((r) => line(r, now));
+  const ordered = sortRows(hit).sort(
+    (a, b) =>
+      Number(Recommender.deadlineRowIsPast(a, now)) -
+        Number(Recommender.deadlineRowIsPast(b, now)) ||
+      表示の刻み(a) - 表示の刻み(b) ||
+      a.conf.title.localeCompare(b.conf.title, "ja"),
+  );
+  const 見本 = ordered.map((r) => line(r, now));
   /* 今後の締切が無い会議では、**その事を先に言う**が「次はこれ」と取り違へる）。 */
   const 今後 = hit.filter((r) => !Recommender.deadlineRowIsPast(r, now)).length;
   const 斷り = 今後 ? "" : "※ この会議の今後の締切は収録にありません（以下は過去の締切です）。\n";
 
-  const 投稿の行 = hit
-    .filter((r) => 投稿の種別.includes(r.kind))
-    /* 表示の早さで並べる。 */
-    .sort((a, b) => Number(a.t < now) - Number(b.t < now) || 表示の刻み(a) - 表示の刻み(b));
+  const 投稿の行 = ordered.filter((r) => 投稿の種別.includes(r.kind));
   const 次の投稿 = 投稿の行.find((r) => !Recommender.deadlineRowIsPast(r, now));
   /* 過ぎた分の「直近」は**一番遲い過去**（投稿の締切が今年の分まで出たならそれを言う –
    * 一番古い過去を出すと「5 年前に終はつた会議」と読めてしまふ）。 */
   const 直近の過去 = 投稿の行
-    .filter((r) => r.t < now)
+    .filter((r) => Recommender.deadlineRowIsPast(r, now))
     .reduce<(typeof 投稿の行)[number] | null>(
       (a, b) => (!a || 表示の刻み(b) > 表示の刻み(a) ? b : a),
       null,
@@ -1887,6 +1876,19 @@ function venueInfo(
 
   /* 過去の件数（下の頭で言う – 何件が過ぎたかを AI が自分で数へなくて済むやうに – 第 961 回）。 */
   const 過ぎた件數 = hit.filter((r) => Recommender.deadlineRowIsPast(r, now)).length;
+  receive?.({
+    ...venueIdentity(會議の版 ?? 一つ.conf),
+    deadline_total: hit.length,
+    upcoming_deadline_total: 今後,
+    past_deadline_total: 過ぎた件數,
+    next_submission: 次の投稿 ? structuredDeadline(次の投稿, now) : null,
+    latest_past_submission: 直近の過去 ? structuredDeadline(直近の過去, now) : null,
+    rows: ordered.map((row) => structuredDeadline(row, now)),
+    editions: schedules,
+    event_scope: "all",
+    event_generated_at: snapshot().snapshot_metadata?.generated_at ?? null,
+    evaluated_at: new Date(now).toISOString(),
+  });
   return [
     斷り +
       `（${名}・${list.length} 行から）` +
