@@ -433,7 +433,7 @@ function line(r: Row, now: number): string {
     tz && utc && !/^JST$/i.test(tz)
       ? `（元の宣言 ${tz}／${utc.replace("T", " ").replace("Z", " UTC")}）`
       : "";
-  return `${幅 ? 幅 : 日}${幅の但し}${殘り文}${元} | ${種別}${回}${推定}${募集言語}${印.length ? ` | ${印.join("・")}` : ""} | ${r.conf.title}（${r.ed.id}）| ${ランク} | 会期 ${會期の文} | ${場所}${出典}`;
+  return `${幅 ? 幅 : 日}${幅の但し}${殘り文}${元} | ${種別}${回}${推定}${募集言語}${印.length ? ` | ${印.join("・")}` : ""} | ${r.conf.title}（${r.ed.id}）| ${ランク} | ${會期 === "会期未発表" ? 會期の文 : `会期 ${會期の文}`} | ${場所}${出典}`;
 }
 
 function retypeTips(query: string, list: Row[], now: number): string[] {

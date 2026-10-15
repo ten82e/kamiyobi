@@ -8682,6 +8682,8 @@ const Recommender = (() => {
 
   function eventCellJa(row: unknown): string {
     const ed = ((row as { ed?: unknown } | null)?.ed || {}) as Record<string, unknown>;
+    const precision = String(ed.event_date_precision || "");
+    if (precision === "not-announced") return "会期未発表";
     if (Array.isArray(ed.event_segments) && ed.event_segments.length) {
       return ed.event_segments
         .map((part: Record<string, unknown>) => {
@@ -8698,8 +8700,6 @@ const Recommender = (() => {
     }
     const start = String(ed.event_start || "").trim();
     if (!start) return String(ed.date_text || "").trim();
-    const precision = String(ed.event_date_precision || "");
-    if (precision === "not-announced") return "会期未発表";
     const end = String(ed.event_end || "").trim();
     if (precision === "month-only") {
       const month = (date: string): string =>

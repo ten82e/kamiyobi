@@ -3883,7 +3883,8 @@ it("會期の欄に、上流が書いた原文を「原表記」として添え�
     const 原文 = String(r.ed?.date_text ?? "").trim();
     const 表示 = String(R.eventCellJa(r as never) ?? "").trim();
     const 行 = structuredDeadline(r as never, Date.now());
-    const 會期の欄 = (/会期 ([^|]+)/.exec(String(行.display)) ?? ["", ""])[1];
+    const 會期の欄 = String(行.display).split("|").at(-2)?.trim() ?? "";
+    expect(會期の欄, `${String(r.conf?.key)} の会期欄が空`).not.toBe("");
     if (原文 && 原文 !== 表示) {
       原文あり += 1;
       expect(會期の欄, `${String(r.conf?.key)} の會期の欄に原表記が無い`).toContain(

@@ -154,7 +154,9 @@ describe("event certainty in human-readable dates", () => {
       ],
     });
     expect(editionSessionJa(conf[0].editions[0])).toBe("");
-    expect(Recommender.eventCellJa({ ed: { event_date_precision: "not-announced" } })).toBe("");
+    expect(Recommender.eventCellJa({ ed: { event_date_precision: "not-announced" } })).toBe(
+      "会期未発表",
+    );
     expect(
       Recommender.eventCellJa({
         ed: { date_text: "2027年9月号（掲載予定）", event_date_precision: "month-only" },

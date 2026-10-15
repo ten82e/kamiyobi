@@ -3310,6 +3310,10 @@ export function sessionSpanJa(
 }
 
 export function editionSessionJa(ed: Edition): string {
+  if (ed.event_date_precision === "not-announced") {
+    const text = Recommender.eventCellJa({ ed });
+    return ed.estimated ? `${text}（推定）` : text;
+  }
   if (!ed.event_start && !ed.event_segments?.length) return "";
   if (ed.event_segments?.length)
     return ed.event_segments
