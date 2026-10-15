@@ -379,6 +379,7 @@ export const SEARCH_CANON = (() => {
       // 英語の正式名称の寄せ: 表・綴りの形・判定を関数 1 本に閉じた。
       "collapseFieldPhraseEnglish",
       "relativeDayGroups",
+      "editionYearSearchTerm",
       "eventCertaintySearchText",
       "queryTokenGroups",
       "compoundSplitHit",

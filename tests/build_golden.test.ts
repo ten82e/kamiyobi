@@ -2745,6 +2745,8 @@ it("drawer shows JST with weekday and the official timezone, viewer-timezone ind
   const recSrc = siteRuntime("recommender.js");
   const drawerDepsSrc = [
     jsFunction(recSrc, "meetingRangeJa"),
+    jsFunction(recSrc, "eventDateBoundsMs"),
+    jsFunction(recSrc, "eventCellJa"),
     jsFunction(recSrc, "upcomingEditionsOf"),
     jsFunction(recSrc, "laterEditionLineJa"),
   ].join("\n");
@@ -3288,6 +3290,8 @@ it("drawer is a keyboard-operable modal dialog with focus management (#218)", ()
     jsFunction(siteRuntime("recommender.js"), "weekdayJaFromDate"),
     'const placeJa = (v) => String(v ?? "");',
     jsFunction(siteRuntime("recommender.js"), "meetingRangeJa"),
+    jsFunction(siteRuntime("recommender.js"), "eventDateBoundsMs"),
+    jsFunction(siteRuntime("recommender.js"), "eventCellJa"),
     jsFunction(siteRuntime("recommender.js"), "upcomingEditionsOf"),
     jsFunction(siteRuntime("recommender.js"), "laterEditionLineJa"),
   ].join("\n");
@@ -3664,6 +3668,8 @@ it("normal deadline drawer includes verification details", () => {
     jsFunction(siteRuntime("recommender.js"), "weekdayJaFromDate"),
     'const placeJa = (v) => String(v ?? "");',
     jsFunction(siteRuntime("recommender.js"), "meetingRangeJa"),
+    jsFunction(siteRuntime("recommender.js"), "eventDateBoundsMs"),
+    jsFunction(siteRuntime("recommender.js"), "eventCellJa"),
     jsFunction(siteRuntime("recommender.js"), "upcomingEditionsOf"),
     jsFunction(siteRuntime("recommender.js"), "laterEditionLineJa"),
   ].join("\n");
@@ -5058,6 +5064,8 @@ it("ドロワーは表の情報（分野・ランク・ラウンド）を落と�
     jsFunction(siteRuntime("recommender.js"), "weekdayJaFromDate"),
     'const placeJa = (v) => String(v ?? "");',
     jsFunction(siteRuntime("recommender.js"), "meetingRangeJa"),
+    jsFunction(siteRuntime("recommender.js"), "eventDateBoundsMs"),
+    jsFunction(siteRuntime("recommender.js"), "eventCellJa"),
     jsFunction(siteRuntime("recommender.js"), "upcomingEditionsOf"),
     jsFunction(siteRuntime("recommender.js"), "laterEditionLineJa"),
     /* 組み立ては recommender の正本（`verificationSummaryJa`）– 本物を入れる。 */

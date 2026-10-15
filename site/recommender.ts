@@ -6884,6 +6884,10 @@ const Recommender = (() => {
    * 黙って条件が変わったように見えると、自分が何を見たのか分からなくなる。 */
   function relativeDayNotes(query: unknown, nowMs: number): string[] {
     const notes: string[] = [];
+    query = String(query ?? "").replace(/([0-9０-９]{4})年の開催回/g, (shown) => {
+      notes.push(`${shown} = 開催回の年で照合（開催日の年とは別）`);
+      return " ";
+    });
 
     const 解いた語: Array<{ 見せ: string; 解: string }> = [];
 
@@ -8233,7 +8237,20 @@ const Recommender = (() => {
           }
         }
       }
-      return { term: String(alts[0] || ""), count: count };
+      const labels: Record<string, string> = {
+        eventdateunannounced: "会期未発表",
+        eventdatemonthonly: "月のみ判明",
+        eventdateunverified: "日付未確認",
+      };
+      const raw = String(alts[0] || "");
+      const term =
+        labels[raw] ||
+        raw.replace(
+          /^kyed([a-j]{4})$/,
+          (_, digits: string) =>
+            `${[...digits].map((digit) => digit.charCodeAt(0) - 97).join("")}年の開催回`,
+        );
+      return { term, count: count };
     });
   }
 
@@ -8248,7 +8265,8 @@ const Recommender = (() => {
 
     queryTokenGroups(expandRelativeMonths(query, nowMs ?? Date.now()), nowMs).forEach((group) => {
       const term = String(((group || [])[0] as string) || "").trim();
-      if (term) words.push(term);
+      if (term && !/^(?:kyed[a-j]{4}|eventdate(?:unannounced|monthonly|unverified))$/.test(term))
+        words.push(term);
     });
     if (!words.length || words.length > 6) return [];
 
@@ -8478,47 +8496,113 @@ const Recommender = (() => {
     return when;
   }
 
-  /** 同じ会議のこれから先の会期（行になっている回を除く）。研究会は毎月開くので、
-   *  1 行だけ見て「次はいつか」が分からないのは惜しい。 */
+  interface UpcomingEdition {
+    start: string;
+    end: string;
+    place: string;
+    precision?: string;
+    segments?: Array<{ start: string; end: string; label?: string }>;
+    year?: number;
+    editionId?: string;
+  }
+
+  /** 同じ会議の今後の会期。識別子がある場合は表示中の開催回だけを除く。 */
   function upcomingEditionsOf(
     conf: unknown,
     exceptStart: string,
     nowMs: number,
     max = 3,
-  ): Array<{ start: string; end: string; place: string }> {
+    exceptId?: string,
+  ): UpcomingEdition[] {
     const record = conf as { editions?: Array<Record<string, unknown>> };
-    const out: Array<{ start: string; end: string; place: string }> = [];
+    const out: UpcomingEdition[] = [];
     for (const ed of record.editions || []) {
-      const start = String(ed.event_start || "");
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(start)) continue;
-      if (start === exceptStart) continue;
-      const startMs = Date.parse(`${start}T00:00:00+09:00`);
-      // 会期を終えた回は出さない（開始日が今を向いていても、終了日が過ぎていれば除く）。
-      const endMs = Date.parse(`${String(ed.event_end || start)}T23:59:59+09:00`);
-      if (!Number.isFinite(startMs) || !Number.isFinite(endMs)) continue;
-      if (endMs < nowMs) continue;
-      out.push({ start, end: String(ed.event_end || start), place: String(ed.place || "") });
+      if (ed.estimated === true) continue;
+      const segments = Array.isArray(ed.event_segments)
+        ? (ed.event_segments as UpcomingEdition["segments"])
+        : undefined;
+      const start = String(ed.event_start || segments?.[0]?.start || "");
+      const end = String(ed.event_end || segments?.at(-1)?.end || start);
+      if (exceptId ? ed.id === exceptId : start === exceptStart) continue;
+      const parts = segments?.length ? segments : [{ start, end }];
+      if (
+        !parts.some((part) => {
+          const bounds = eventDateBoundsMs(part.start, part.end, ed.event_date_precision);
+          return bounds && bounds[1] + 15 * 3_600_000 > nowMs;
+        })
+      )
+        continue;
+      out.push({
+        start,
+        end,
+        place: String(ed.place || ""),
+        precision:
+          typeof ed.event_date_precision === "string" ? ed.event_date_precision : undefined,
+        segments,
+        year: typeof ed.year === "number" ? ed.year : undefined,
+        editionId: typeof ed.id === "string" ? ed.id : undefined,
+      });
     }
     return out.sort((a, b) => a.start.localeCompare(b.start)).slice(0, max);
   }
 
-  function laterEditionLineJa(ed: { start: string; end: string; place: string }): string {
+  function laterEditionLineJa(ed: UpcomingEdition): string {
     const place = String(ed.place || "");
-    return `${meetingRangeJa(ed.start, ed.end)}${place ? ` ＠${placeJa(place)}` : ""}`;
+    const span =
+      ed.segments?.length || (ed.precision && !["single-day", "exact-range"].includes(ed.precision))
+        ? eventCellJa({
+            ed: {
+              event_start: ed.start,
+              event_end: ed.end,
+              event_date_precision: ed.precision,
+              event_segments: ed.segments,
+            },
+          })
+        : meetingRangeJa(ed.start, ed.end);
+    const year =
+      ed.year && (String(ed.year) !== ed.start.slice(0, 4) || ed.precision === "not-announced")
+        ? `${ed.year}年の開催回: `
+        : "";
+    return `${year}${span}${place ? ` ＠${placeJa(place)}` : ""}`;
   }
 
-  function laterEditionSearchWords(conf: unknown, exceptStart: string): string {
-    const record = conf as { editions?: Array<Record<string, unknown>> };
-    const parts: string[] = [];
-    for (const ed of record.editions || []) {
-      const start = String(ed.event_start || "");
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(start)) continue;
-      if (exceptStart && start === exceptStart) continue;
-      const end = String(ed.event_end || start);
+  function editionYearSearchTerm(year: unknown): string {
+    return `kyed${String(year)
+      .normalize("NFKC")
+      .replace(/\d/g, (digit) => String.fromCharCode(97 + Number(digit)))}`;
+  }
 
-      parts.push(meetingRangeJa(start, end), start, end);
+  function laterEditionSearchWords(conf: unknown, exceptStart: string, exceptId?: string): string {
+    const record = conf as { editions?: Array<Record<string, unknown>> };
+    const words: string[] = [];
+    for (const ed of record.editions || []) {
+      const segments = Array.isArray(ed.event_segments) ? ed.event_segments : [];
+      const start = String(ed.event_start || segments[0]?.start || "");
+      if (/^\d{4}-\d{2}-\d{2}$/.test(start)) {
+        if (typeof ed.year === "number") words.push(editionYearSearchTerm(ed.year));
+      }
+      if (exceptId ? ed.id === exceptId : exceptStart && start === exceptStart) continue;
+      const parts = segments.length ? segments : [{ start, end: ed.event_end || start }];
+      for (const part of parts) {
+        if (!part || !/^\d{4}-\d{2}-\d{2}$/.test(String(part.start))) continue;
+        const end = String(part.end || part.start);
+        words.push(
+          meetingRangeJa(String(part.start), end),
+          String(part.start),
+          end,
+          eventCertaintySearchText(
+            eventCellJa({
+              ed: {
+                event_start: part.start,
+                event_end: end,
+                event_date_precision: ed.event_date_precision,
+              },
+            }),
+          ).replace(/\([日月火水木金土]\)/gu, ""),
+        );
+      }
     }
-    return parts.join(" ");
+    return words.join(" ");
   }
 
   function eventDateBoundsMs(
@@ -12769,6 +12853,10 @@ const Recommender = (() => {
   );
 
   function queryTokenGroups(query: unknown, nowMs?: number): string[][] {
+    if (typeof query === "string")
+      query = query.replace(/([0-9０-９]{4})年の開催回/g, (_, year: string) =>
+        editionYearSearchTerm(year),
+      );
     if (typeof query === "string") query = eventCertaintySearchText(query);
     if (typeof query === "string" && CATEGORY_CHIP_HEADS_JA.length) {
       query = query.replace(CATEGORY_CHIP_TAIL, "$1");
@@ -14080,7 +14168,7 @@ const Recommender = (() => {
           .filter(Boolean)
           .join(" ")
           .toLowerCase();
-        const catHay = `${laterEditionSearchWords(conf, String(ed.event_start || ""))} ${categorySearchTerms(conf.categories, confTags)} ${placeJa(ed.place)} ${placePrefectureJa(ed.place)} ${participationSearchTerms(ed.place)} ${domesticFacetSearchTerms(confTags, conf.title)}`;
+        const catHay = `${laterEditionSearchWords(conf, String(ed.event_start || ""), ed.id)} ${categorySearchTerms(conf.categories, confTags)} ${placeJa(ed.place)} ${placePrefectureJa(ed.place)} ${participationSearchTerms(ed.place)} ${domesticFacetSearchTerms(confTags, conf.title)}`;
         (ed.deadlines || []).forEach((dl) => {
           const dateOnly = dl.precision === "date-only";
           const window = dateOnly ? dateOnlyWindowMs(dl.local_date) : null;

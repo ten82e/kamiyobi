@@ -1266,7 +1266,13 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     // 行をめくって探さなくて済むように）。日程の書き方は表と揃える。
     const laterEditions = r.submission
       ? []
-      : Recommender.upcomingEditionsOf(r.conf, String(r.ed.event_start || ""), Date.now());
+      : Recommender.upcomingEditionsOf(
+          r.conf,
+          String(r.ed.event_start || ""),
+          Date.now(),
+          3,
+          r.ed.id,
+        );
     const catNamesJa = (r.cats || []).map((key) => catLabel(key));
     const rankShown = (r.rankPairs || []).map((pair) => Recommender.rankPairLabelJa(pair));
     // 今後の会期の開催地も、表と同じ書き方で日本語に寄せる（行の詳細の中で
