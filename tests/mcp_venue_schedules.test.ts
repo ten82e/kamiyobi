@@ -179,6 +179,7 @@ it("returns actual edition schedules directly, with raw precision, segments and 
     upcoming_deadline_total: 0,
     past_deadline_total: 0,
     next_submission: null,
+    next_estimated_submission: null,
     latest_past_submission: null,
     rows: [],
     event_scope: "all",

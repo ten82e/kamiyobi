@@ -4135,9 +4135,10 @@ describe("venue_info は版の一覽を収録通りに出す（第 969 回）", 
         expect(件の形, `「${key}」の版の言ひ方が讀めない`).not.toBeNull();
         expect(Number(件の形?.[1]), `「${key}」の版の數が違ふ`).toBe(本の版);
       }
-      /* 「次の投稿締切」は**投稿の種別で一番近い未來**。*/
+      /* 「次の投稿締切」は**投稿の種別で推定を除く一番近い未來**。*/
       const 次の行 = 答.split("\n").find((l) => l.startsWith("次の投稿締切: ")) ?? "";
       const 本の次 = ((c.editions ?? []) as unknown[])
+        .filter((e) => (e as { estimated?: unknown }).estimated !== true)
         .flatMap((e) => {
           const dls = (e as { deadlines?: unknown[] }).deadlines ?? [];
           return dls.map((d) => ({
@@ -4155,26 +4156,10 @@ describe("venue_info は版の一覽を収録通りに出す（第 969 回）", 
         ).not.toContain("次の投稿締切: 2");
       } else {
         const m = /次の投稿締切: (\d{4}-\d{2}-\d{2})/.exec(次の行);
-        const 幅の行 = /次の投稿締切: 推定期間 (\d{4}-\d{2}-\d{2})〜(\d{4}-\d{2}-\d{2})/.exec(
-          次の行,
-        );
-        const 點 = /元の宣言 [^／]*／(\d{4}-\d{2}-\d{2})/.exec(次の行);
-        const 取つた日 = m?.[1] ?? 點?.[1];
-        expect(
-          取つた日,
-          `「${key}」に未來の投稿締切が在るのに言つて居ん（幅の行: ${次の行.slice(0, 60)}）`,
-        ).toBeTruthy();
-        if (!m?.[1] && 幅の行) {
-          /* 幅を出している時、点推定点は幅の中に収まつて居なければならない（整合）。 */
-          const 始め = Date.parse(`${幅の行[1]}T00:00:00Z`);
-          const 終り = Date.parse(`${幅の行[2]}T00:00:00Z`);
-          const 點日 = Date.parse(`${點?.[1]}T00:00:00Z`);
-          expect(
-            點日 >= 始め && 點日 <= 終り,
-            `「${key}」の點推定点 ${點?.[1]} が幅 ${幅の行[1]}〜${幅の行[2]} の外に在る`,
-          ).toBe(true);
-        }
-        const 使ふ日 = m ?? 點;
+        expect(m?.[1], `「${key}」の推定以外の次の投稿締切が読めない`).toBeTruthy();
+        expect(次の行).not.toContain("推定期間");
+        expect(次の行).not.toContain("（推定）");
+        const 使ふ日 = m;
         const 言つた日 = Date.parse(`${使ふ日?.[1]}T00:00:00Z`);
         expect(
           Math.abs(言つた日 - 本の次.日),

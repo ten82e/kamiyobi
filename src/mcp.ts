@@ -1753,6 +1753,7 @@ function venueInfo(
         upcoming_deadline_total: 0,
         past_deadline_total: 0,
         next_submission: null,
+        next_estimated_submission: null,
         latest_past_submission: null,
         rows: [],
         editions,
@@ -1859,11 +1860,12 @@ function venueInfo(
   const 斷り = 今後 ? "" : "※ この会議の今後の締切は収録にありません（以下は過去の締切です）。\n";
 
   const 投稿の行 = ordered.filter((r) => 投稿の種別.includes(r.kind));
-  const 次の投稿 = 投稿の行.find((r) => !Recommender.deadlineRowIsPast(r, now));
+  const 次の投稿 = 投稿の行.find((r) => !r.est && !Recommender.deadlineRowIsPast(r, now));
+  const 推定の次の投稿 = 投稿の行.find((r) => r.est && !Recommender.deadlineRowIsPast(r, now));
   /* 過ぎた分の「直近」は**一番遲い過去**（投稿の締切が今年の分まで出たならそれを言う –
    * 一番古い過去を出すと「5 年前に終はつた会議」と読めてしまふ）。 */
   const 直近の過去 = 投稿の行
-    .filter((r) => Recommender.deadlineRowIsPast(r, now))
+    .filter((r) => !r.est && Recommender.deadlineRowIsPast(r, now))
     .reduce<(typeof 投稿の行)[number] | null>(
       (a, b) => (!a || 表示の刻み(b) > 表示の刻み(a) ? b : a),
       null,
@@ -1871,8 +1873,8 @@ function venueInfo(
   const 投稿の案內 = 次の投稿
     ? `次の投稿締切: ${line(次の投稿, now)}`
     : 直近の過去
-      ? `次の投稿締切: 今後の収録にありません（直近では ${line(直近の過去, now)}）。`
-      : "次の投稿締切: 収録にありません（この会議の投稿の締切は 1 本も記録されていません）。";
+      ? `次の投稿締切: 今後の収録にありません（推定を除く。直近では ${line(直近の過去, now)}）。`
+      : "次の投稿締切: 推定を除く投稿締切は収録にありません。";
 
   /* 過去の件数（下の頭で言う – 何件が過ぎたかを AI が自分で数へなくて済むやうに – 第 961 回）。 */
   const 過ぎた件數 = hit.filter((r) => Recommender.deadlineRowIsPast(r, now)).length;
@@ -1882,6 +1884,7 @@ function venueInfo(
     upcoming_deadline_total: 今後,
     past_deadline_total: 過ぎた件數,
     next_submission: 次の投稿 ? structuredDeadline(次の投稿, now) : null,
+    next_estimated_submission: 推定の次の投稿 ? structuredDeadline(推定の次の投稿, now) : null,
     latest_past_submission: 直近の過去 ? structuredDeadline(直近の過去, now) : null,
     rows: ordered.map((row) => structuredDeadline(row, now)),
     editions: schedules,
@@ -1925,6 +1928,7 @@ function venueInfo(
     /* その会議の締切が、どの位確かめられているか（行ごとの札だけでは、全体の偏りが分からん）。 */
     `確認: ${確認の內譯(hit)}`,
     投稿の案內,
+    ...(推定の次の投稿 ? [`次の投稿締切（推定）: ${line(推定の次の投稿, now)}`] : []),
     ...venueScheduleLines(schedules.filter((ed) => !行を持つ版.has(ed.edition_id || ""))),
     "",
 
@@ -2551,7 +2555,7 @@ const TOOLS = [
   {
     name: "venue_info",
     description:
-      "会議の開催回、締切、会期、ランク、主題、正式名を返す。structuredContent の editions に推定を除く全開催回の会期・確かさ・公式URL、rows に締切を返す。key は小文字の識別子、name は略称・正式名・名前の一部。版の識別子も関連する会議へ案内する。曖昧な名前は候補を示し、別会議の開催回を混ぜない。scope の既定は all で、過ぎた分も全部出る。今後の物から並べ、次の投稿締切も示す。主題は分野より詳しい札で、収録にある会議だけに出します（画面の行の詳細の「主題」と同じ）。返す行の形: 会議の要約に続いて、日時 | 種別 | 確認状態（ある場合）| 会議名（版の識別子）| ランク | 会期 | 開催地 URL。",
+      "会議の開催回、締切、会期、ランク、主題、正式名を返す。structuredContent の editions に推定を除く全開催回の会期・確かさ・公式URL、rows に締切を返す。key は小文字の識別子、name は略称・正式名・名前の一部。版の識別子も関連する会議へ案内する。曖昧な名前は候補を示し、別会議の開催回を混ぜない。scope の既定は all で、過ぎた分も全部出る。今後の物から並べ、推定以外の次の投稿締切を next_submission、推定の見込みを next_estimated_submission で分けて返す。主題は分野より詳しい札で、収録にある会議だけに出します（画面の行の詳細の「主題」と同じ）。返す行の形: 会議の要約に続いて、日時 | 種別 | 確認状態（ある場合）| 会議名（版の識別子）| ランク | 会期 | 開催地 URL。",
     inputSchema: {
       type: "object",
       properties: {
