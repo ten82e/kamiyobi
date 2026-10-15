@@ -1270,7 +1270,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
           r.conf,
           String(r.ed.event_start || ""),
           Date.now(),
-          3,
+          Number.POSITIVE_INFINITY,
           r.ed.id,
         );
     const catNamesJa = (r.cats || []).map((key) => catLabel(key));
@@ -1280,21 +1280,33 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     // 別の場所だと誤解する）。原文は下に同じ「原表記」の書き方で出す – 開催地の行と
     // 同じ作法に揃える（以前はここだけ `title` の注記で、タッチ操作の端末と読み上げで
     // 原文に辿れなかった。2026-08-09 生成ビルドで実測）。
-    const laterEditionsText = laterEditions
-      .map((next) => Recommender.laterEditionLineJa(next))
-      .join(" / ");
-    const laterEditionsRaw = laterEditions
-      .map((next) => String(next.place || ""))
-      .filter((place) => place && Recommender.placeJa(place) !== place)
-      .join(" / ");
-    const laterEditionsHtml = laterEditions.length
-      ? `<p style="margin-bottom: 4px;"><strong>今後の会期:</strong> ${esc(laterEditionsText)}</p>` +
-        (laterEditionsRaw
-          ? '<p style="margin-bottom: 8px; color: var(--muted); font-size: 0.8rem;">原表記: ' +
-            esc(laterEditionsRaw) +
-            "</p>"
-          : '<p style="margin-bottom: 8px;"></p>')
-      : "";
+    function laterEditionsMarkup(editions: typeof laterEditions): string {
+      if (!editions.length) return "";
+      const rows = (items: typeof editions): string =>
+        '<ul class="schedule-only-list">' +
+        items
+          .map((next) => {
+            const raw = String(next.place || "");
+            const original =
+              raw && Recommender.placeJa(raw) !== raw
+                ? `<div style="color: var(--muted); font-size: 0.8rem;">原表記: ${esc(raw)}</div>`
+                : "";
+            return `<li>${esc(Recommender.laterEditionLineJa(next))}${original}</li>`;
+          })
+          .join("") +
+        "</ul>";
+      const first = editions.slice(0, 3);
+      const remaining = editions.slice(3);
+      return (
+        "<div><strong>今後の会期:</strong>" +
+        rows(first) +
+        (remaining.length
+          ? `<details><summary>残り ${remaining.length.toLocaleString("ja-JP")} 開催回を表示</summary>${rows(remaining)}</details>`
+          : "") +
+        "</div>"
+      );
+    }
+    const laterEditionsHtml = laterEditionsMarkup(laterEditions);
     html +=
       '<div style="font-size: 0.85rem;">' +
       '<p style="margin-bottom: 8px;"><strong>' +
