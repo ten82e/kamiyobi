@@ -1,5 +1,13 @@
 import { spawnSync } from "node:child_process";
-import { cpSync, mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
+import {
+  cpSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  symlinkSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, expect, it } from "vitest";
@@ -302,4 +310,64 @@ it("marks uncertain dates in MCP text while preserving raw structured dates", ()
     event_end: "2026-10-16",
     event_date_precision: "month-only",
   });
+});
+
+it("explains the actual page range and distinguishes exhausted pages from an empty period", () => {
+  const offsets = [0, 100, 240, 245, Number.MAX_SAFE_INTEGER];
+  const results = calls(offsets.map((offset) => ({ offset, limit: 7 })));
+  for (const [i, result] of results.entries()) {
+    const offset = offsets[i];
+    const data = result.structuredContent;
+    const text = result.content.map((part: { text: string }) => part.text).join("\n");
+    const returned = offset < 240 ? 7 : offset === 240 ? 5 : 0;
+    expect(data).toMatchObject({ total: 245, offset, returned });
+    if (returned) {
+      const deadlines = data.items.filter(
+        (item: { type: string }) => item.type === "deadline",
+      ).length;
+      expect(text).toContain(`全 245 件中 ${offset + 1}〜${offset + returned} 件目`);
+      expect(text).toContain(`このページ: 締切 ${deadlines} 件・会期 ${returned - deadlines} 件`);
+      expect(text).not.toContain("この位置には結果がありません");
+    } else {
+      expect(data).toMatchObject({ items: [], next_offset: null });
+      expect(text).toContain(`この位置には結果がありません（offset: ${offset}／全 245 件）`);
+      expect(text).toContain("同じ条件で offset: 0 を指定すると、先頭から取得できます");
+      expect(text).not.toMatch(/\d+〜\d+ 件目/);
+      expect(text).not.toContain("指定した条件に当たる収録済みの締切・会期はありません");
+    }
+  }
+  const empty = calls([{ offset: 100 }], "2027-01-01T00:00:00Z")[0];
+  expect(empty.structuredContent).toMatchObject({ total: 0, returned: 0, next_offset: null });
+  const text = empty.content.map((part: { text: string }) => part.text).join("\n");
+  expect(text).toContain("指定した条件に当たる収録済みの締切・会期はありません");
+  expect(text).not.toContain("先頭から取得できます");
+});
+
+it("reports exhausted pages through the text CLI without claiming the period has no results", () => {
+  writeFileSync(join(root, "clock.mjs"), `Date.now=()=>Date.parse(${JSON.stringify(now)});`);
+  const child = spawnSync(
+    process.execPath,
+    ["--import", "./clock.mjs", "src/mcp.ts", "upcoming", "2", "--offset", "245", "--limit", "7"],
+    { cwd: root, encoding: "utf8", timeout: 10000 },
+  );
+  expect(child.status, child.stderr).toBe(0);
+  expect(child.stdout).toContain("この位置には結果がありません（offset: 245／全 245 件）");
+  expect(child.stdout).toContain("同じ条件で offset: 0 を指定すると、先頭から取得できます");
+  expect(child.stdout).not.toContain("指定した条件に当たる収録済みの締切・会期はありません");
+});
+
+it("describes zero filtered results without claiming the period has no recorded deadlines", () => {
+  const path = join(root, "data/snapshot.json");
+  const original = readFileSync(path, "utf8");
+  try {
+    writeFileSync(path, JSON.stringify({ conferences: conferences.slice(0, 123) }));
+    const [present, excluded] = calls([{ kind: "paper" }, { kind: "registration" }]);
+    expect(present.structuredContent).toMatchObject({ total: 122, event_total: 0 });
+    expect(excluded.structuredContent).toMatchObject({ total: 0, returned: 0, next_offset: null });
+    const text = excluded.content.map((part: { text: string }) => part.text).join("\n");
+    expect(text).toContain("指定した条件に当たる収録済みの締切・会期はありません");
+    expect(text).not.toContain("指定期間に当たる収録済みの締切・会期はありません");
+  } finally {
+    writeFileSync(path, original);
+  }
 });

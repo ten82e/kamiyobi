@@ -1538,10 +1538,18 @@ function listUpcoming(
   const 知らんの斷り = 知らん.length
     ? `／知らない種別（指定したままでは 0 件になります）: ${知らない値の文("", 知らん)}`
     : "";
+  const pageNotice = !timeline.length
+    ? "指定した条件に当たる収録済みの締切・会期はありません。"
+    : !page.length
+      ? `この位置には結果がありません（offset: ${offset}／全 ${timeline.length} 件）。` +
+        "同じ条件で offset: 0 を指定すると、先頭から取得できます。"
+      : `全 ${timeline.length} 件中 ${offset + 1}〜${offset + page.length} 件目` +
+        `（このページ: 締切 ${deadlinePage.length} 件・会期 ${eventPage.length} 件）。`;
   return [
     `今日から ${日數の表現}（JST の暦日で数える）の締切: ${hit.length} 件（${名}・日本時間の早い順）${讀めない引數}${知らんの斷り}${端数の斷り}${上限の斷り}${limitInput.斷り}${端數と上限の斷り(limitInput.使ふ, 100)}${空の種別 ? `／kinds が空なので種別で絞していません（0 件にしたいなら kind を 1 つ）` : ""}`,
     ...(scopeErr ? [scopeErr] : []),
     ...(窓が無いの斷り(窓が無い) ? [窓が無いの斷り(窓が無い)] : []),
+    pageNotice,
     "",
     ...deadlinePage.map((row) => line(row, now)),
     ...(deadlineRemaining
