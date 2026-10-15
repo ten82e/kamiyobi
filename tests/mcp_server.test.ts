@@ -5783,7 +5783,7 @@ it("打たれた語が空で見えない（第 1080 回）", async () => {
   });
   expect(cli.status, `CLI が落ちた: ${cli.stderr?.slice(0, 120)}`).toBe(0);
   expect(cli.stdout, "CLI で打たれた語が見えない").toContain(
-    "その会議（key: `xxx`）は収録に在りません",
+    "その会議（name: `xxx`）は収録に在りません",
   );
   /* 両方空（省略）なら黙つて「ください」に落ちる。 */
   const 空 = await call("venue_info", {});

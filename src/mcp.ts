@@ -1689,7 +1689,7 @@ function venueInfo(
   const venues = snapshot().conferences ?? [];
   const notifyAmbiguity = (
     candidates: Array<Parameters<typeof venueIdentity>[0]>,
-    matchedBy: "name" | "legacy_key" | "source_record",
+    matchedBy: "name" | "legacy_key" | "source_record" | "edition_key",
   ) => {
     receive?.({
       lookup_status: "ambiguous",
@@ -1855,15 +1855,35 @@ function venueInfo(
       ].join("\n");
     }
 
-    const 版の會議 = key
-      ? 收錄の會議.find((c) =>
+    const editionVenues = key
+      ? 收錄の會議.filter((c) =>
           (Array.isArray(c.editions) ? c.editions : []).some(
             (e) => venueLookupText((e as { id?: unknown } | null)?.id) === requestedKey,
           ),
         )
-      : undefined;
+      : [];
+    if (editionVenues.length > 1) {
+      notifyAmbiguity(editionVenues, "edition_key");
+      return [
+        `「${key}」は ${editionVenues.length} 会議の開催回に使われている識別子です。会議を選び、key を指定して照会してください:`,
+        ...editionVenues.map(
+          (conf) => `- ${String(conf.title || conf.key)}（key: ${String(conf.key)}）`,
+        ),
+        ...(古さ ? ["", 古さ] : []),
+      ].join("\n");
+    }
+    const 版の會議 = editionVenues[0];
     if (版の會議) {
       const 本の會議 = String(版の會議.key ?? "");
+      receive?.({
+        lookup_status: "edition_key",
+        query: key,
+        scope: "all",
+        generated_at: snapshot().snapshot_metadata?.generated_at ?? null,
+        evaluated_at: new Date(now).toISOString(),
+        ...venueIdentity(版の會議),
+        retry_arguments: { key: 本の會議, scope: "all" },
+      });
       return [
         `「${key}」は**版（edition）の識別子**で、会議その物の key ではありません。` +
           `会議の key は \`${本の會議}\` です（key で引き直すと、この会議の全ての版と締切が出ます）。`,
@@ -1874,17 +1894,28 @@ function venueInfo(
     const 大文字の問 = String(key ?? "").trim();
     const 略稱で当たる =
       大文字の問.length > 0
-        ? 收錄の會議
-            .filter((c) => {
-              const 題 = String(c.acronym || c.title || "").trim();
-              return 題.length > 0 && venueLookupText(題) === venueLookupText(大文字の問);
-            })
-            .slice(0, 3)
+        ? 收錄の會議.filter((c) => {
+            const 題 = String(c.acronym || c.title || "").trim();
+            return 題.length > 0 && venueLookupText(題) === venueLookupText(大文字の問);
+          })
         : [];
 
     const 打たれた語 = 大文字の問 || String(name ?? "").trim();
+    receive?.({
+      lookup_status: "not_found",
+      query: 打たれた語,
+      scope: "all",
+      generated_at: snapshot().snapshot_metadata?.generated_at ?? null,
+      evaluated_at: new Date(now).toISOString(),
+      venue_total: 收錄の會議.length,
+      candidate_count: 略稱で当たる.length,
+      candidates: 略稱で当たる.map(venueIdentity),
+      ...(略稱で当たる.length === 1
+        ? { retry_arguments: { key: String(略稱で当たる[0].key), scope: "all" } }
+        : {}),
+    });
     return [
-      `その会議（key: \`${打たれた語}\`）は収録に在りません（収録 ${收錄の會議.length} 会議）。`,
+      `その会議（${key ? "key" : "name"}: \`${打たれた語}\`）は収録に在りません（収録 ${收錄の會議.length} 会議）。`,
       ...(略稱で当たる.length > 0
         ? [
             `\`key\` は小文字の識別子です。**略称で引く時は \`name\` に「${大文字の問}」を渡してください**` +
@@ -2636,7 +2667,7 @@ const TOOLS = [
   {
     name: "venue_info",
     description:
-      "会議の開催回、締切、会期、ランク、主題、正式名を返す。structuredContent の editions に推定を除く全開催回の会期・確かさ・公式URL、rows に締切を返す。key は小文字の識別子、name は略称・正式名・名前の一部。版の識別子も関連する会議へ案内する。曖昧な名前や古いkeyは lookup_status: ambiguous と candidates を返す。候補の venue_key を key に指定して再照会する。表示範囲外の締切は lookup_status: out_of_scope と再照会用の retry_arguments で案内する。scope の既定は all で、過ぎた分も全部出る。今後の物から並べ、推定以外の次の投稿締切を next_submission、推定の見込みを next_estimated_submission で分けて返す。主題は分野より詳しい札で、収録にある会議だけに出します（画面の行の詳細の「主題」と同じ）。返す行の形: 会議の要約に続いて、日時 | 種別 | 確認状態（ある場合）| 会議名（版の識別子）| ランク | 会期 | 開催地 URL。",
+      "会議の開催回、締切、会期、ランク、主題、正式名を返す。structuredContent の editions に推定を除く全開催回の会期・確かさ・公式URL、rows に締切を返す。key は小文字の識別子、name は略称・正式名・名前の一部。開催回の識別子は lookup_status: edition_key と retry_arguments で関連会議へ案内する。見つからない識別子は lookup_status: not_found と略称の候補を返す。曖昧な名前や古いkeyは lookup_status: ambiguous と candidates を返す。候補の venue_key を key に指定して再照会する。表示範囲外の締切は lookup_status: out_of_scope と再照会用の retry_arguments で案内する。scope の既定は all で、過ぎた分も全部出る。今後の物から並べ、推定以外の次の投稿締切を next_submission、推定の見込みを next_estimated_submission で分けて返す。主題は分野より詳しい札で、収録にある会議だけに出します（画面の行の詳細の「主題」と同じ）。返す行の形: 会議の要約に続いて、日時 | 種別 | 確認状態（ある場合）| 会議名（版の識別子）| ランク | 会期 | 開催地 URL。",
     inputSchema: {
       type: "object",
       properties: {
