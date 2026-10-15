@@ -3755,6 +3755,7 @@ export function toUpcomingMd(
    * 終わった会期が「開催中(残り1日)」、当日開始の 2 件が「1日」＝明日になっていた）。日本の朝に
    * この表で出張の予定を読む人が、噓をつかずに済む側へ寄せる。 */
   const today = dateOnly(new Date(safeNow.getTime() + 9 * 3_600_000));
+  const horizonDay = dateOnly(new Date(horizon.getTime() + 9 * 3_600_000));
   const rows: string[] = [];
   for (const rec of records ?? []) {
     if (!rec || typeof rec !== "object") continue;
@@ -3845,7 +3846,7 @@ export function toUpcomingMd(
         fmtDate(end),
         ed.event_date_precision,
       );
-      if (!bounds || bounds[0] > dateOnly(horizon).getTime() || today.getTime() > bounds[1]) {
+      if (!bounds || bounds[0] > horizonDay.getTime() || today.getTime() > bounds[1]) {
         continue;
       }
       let left: string;
@@ -3876,13 +3877,13 @@ export function toUpcomingMd(
   // md を単体で読む人（grep する人、他ツールに食わせる人）にとって、
   // 「いつの時点で」「いつまで」を網羅した表なのかが分からないと表を使えない。
   // サイト側は JST 基準で揃えているので、生成時刻の JST での読み方も添える。
-  const spanEnd = fmtDate(horizon);
+  const spanEnd = fmtDate(horizonDay);
   const spanEndWeekday = calendarDayJa(spanEnd);
   const head = [
     `# 直近 ${safeDays} 日の締切と開催`,
     "",
     `生成時刻: ${fmtUTC(safeNow, "%Y-%m-%dT%H:%M:%SZ")}（JST では ${jstClock(safeNow)}）`,
-    `対象期間: ${fmtDate(safeNow)} 〜 ${spanEnd}${spanEndWeekday ? `(${spanEndWeekday})` : ""}（生成時刻から ${safeDays} 日先まで。進行中の会期は開始日が生成時刻より前でも載る）`,
+    `対象期間: ${fmtDate(today)} 〜 ${spanEnd}${spanEndWeekday ? `(${spanEndWeekday})` : ""}（日本時間の暦日。生成時刻から ${safeDays} 日先まで。進行中の会期は開始日が生成時刻より前でも載る）`,
     "",
 
     "> 日付列は締切の公式表記（AoE / UTC / JST 宣言）をそのまま載せ、日本時間での読みを後に添える",
