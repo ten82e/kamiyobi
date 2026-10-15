@@ -113,11 +113,20 @@ function snapshot(): SnapshotFile {
   return snapshotCache;
 }
 
-/** 画面が最初に読む窓（`public/catalog.json`）。無ければ null。 */
+/** 画面が最初に読む窓。有効な会議配列がなければ null。 */
 function catalog(): Record<string, unknown> | null {
   if (catalogCache === undefined) {
     try {
-      catalogCache = JSON.parse(readFileSync(CATALOG_PATH, "utf8")) as Record<string, unknown>;
+      const value: unknown = JSON.parse(readFileSync(CATALOG_PATH, "utf8"));
+      const conferences =
+        value && typeof value === "object" && !Array.isArray(value)
+          ? (value as Record<string, unknown>).conferences
+          : undefined;
+      catalogCache =
+        Array.isArray(conferences) &&
+        conferences.every((conf) => conf && typeof conf === "object" && !Array.isArray(conf))
+          ? (value as Record<string, unknown>)
+          : null;
     } catch {
       catalogCache = null;
     }
@@ -216,7 +225,7 @@ function pick(scope: unknown): { list: Row[]; 名: string; 生成: unknown; 窓�
 function 窓が無いの斷り(窓が無い: boolean): string {
   if (!窓が無い) return "";
   return (
-    "※ 画面が最初に読む窓（public/catalog.json）がこの手元にないので、収録の全体を読んでいます。" +
+    "※ 画面が最初に読む窓（public/catalog.json）がないか、有効な会議一覧を読み取れないため、収録の全体を読んでいます。" +
     "公開先の画面と同じ件数にするには、このリポジトリで `npm run build` してからお試しください。"
   );
 }

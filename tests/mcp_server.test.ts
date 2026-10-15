@@ -2169,8 +2169,7 @@ it("窓がない手元では、何を読んでいるかを言う（第 892 回�
   /* 品書（`public/catalog.json`）を build して居ない手元では、窓が無いので収録の全体を見る。
    * 黙つていると**件数が配布先の画面と違ふ理由が読めない** – 実測 2026-10-23: 品書がある時は
    * `セキュリティ` 37 件・無い時は 42 件。AI は「画面と違ふ」で躪き、利用者は噓を疑ふ。
-   * 読み込みは起動時に一度だけなので、この検查は**別の手順を起こして**試す（長生きのサーバは
-   * 既に品書を読んで仕舞ふ – 実測 2026-10-23 に踏んだ）。 */
+   * 隔離した手元から呼び出し、共有している画面用データは変更しない。 */
   const 品書 = join(REPO_ROOT, "public", "catalog.json");
   expect(
     existsSync(品書),
@@ -2204,7 +2203,7 @@ it("窓がない手元では、何を読んでいるかを言う（第 892 回�
       (行?.result as { content?: Array<{ text?: string }> } | undefined)?.content?.[0]?.text ?? "",
     );
   };
-  const 斷り = "public/catalog.json）がこの手元にない";
+  const 斷り = "public/catalog.json）がないか、有効な会議一覧を読み取れない";
   const 檢索 = 聞く({ name: "search_deadlines", arguments: { query: "セキュリティ", limit: 1 } });
   expect(檢索, "窓がない事を言つていない").toContain(斷り);
   expect(檢索, "どうすればよいか言つていない").toContain("npm run build");
@@ -2214,7 +2213,7 @@ it("窓がない手元では、何を読んでいるかを言う（第 892 回�
   expect(語, "語の案内が窓がない事を言つていない").toContain(斷り);
   /* 品書がある時は斷りを出さない（騷音を増やさない）。 */
   const 在る = await call("search_deadlines", { query: "セキュリティ", limit: 1 });
-  expect(在る, "品書がある時に斷りを付けた").not.toContain("この手元にない");
+  expect(在る, "品書がある時に斷りを付けた").not.toContain(斷り);
   expect(在る, "品書がある時に窓の名を変へた").toContain("画面が最初に読む窓");
 });
 

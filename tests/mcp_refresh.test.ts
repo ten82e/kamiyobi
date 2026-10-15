@@ -199,3 +199,67 @@ it("evaluates each request at its current time instead of the server startup tim
     client.close();
   }
 });
+
+it("falls back for malformed catalog structures, preserves valid empty windows and recovers on the same connection", async () => {
+  const client = server();
+  try {
+    client.write("data/snapshot.json", "Saved");
+    client.write("public/catalog.json", "Initial");
+    expect((await client.request("search_deadlines")).structuredContent).toMatchObject({
+      total: 1,
+      scope: "screen",
+      catalog_fallback: false,
+      rows: [{ venue_key: "Initial" }],
+    });
+    for (const malformed of [
+      {},
+      [],
+      "broken",
+      { conferences: null },
+      { conferences: {} },
+      { conferences: "wrong" },
+      { conferences: [null] },
+      { conferences: ["broken"] },
+      { conferences: [[]] },
+      { conferences: [data("Initial").conferences[0], null] },
+    ]) {
+      writeFileSync(join(client.root, "public/catalog.json"), JSON.stringify(malformed));
+      const result = await client.request("search_deadlines");
+      expect(result.isError).not.toBe(true);
+      expect(result.content[0].text).toContain("有効な会議一覧を読み取れない");
+      expect(result.content[0].text).not.toContain("この手元にない");
+      expect(result.structuredContent, JSON.stringify(malformed)).toMatchObject({
+        total: 1,
+        scope: "all",
+        catalog_fallback: true,
+        generated_at: initialTime,
+        rows: [{ venue_key: "Saved" }],
+      });
+    }
+    for (const conferences of [[], [{ key: "metadata-only", title: "Metadata Only" }]]) {
+      writeFileSync(
+        join(client.root, "public/catalog.json"),
+        JSON.stringify({ generated_at: initialTime, conferences }),
+      );
+      const empty = await client.request("search_deadlines");
+      expect(empty.content[0].text).not.toContain("有効な会議一覧を読み取れない");
+      expect(empty.structuredContent).toMatchObject({
+        total: 0,
+        scope: "screen",
+        catalog_fallback: false,
+        rows: [],
+      });
+    }
+    client.write("public/catalog.json", "Repaired", "2026-10-14T00:00:00Z");
+    const repaired = await client.request("search_deadlines");
+    expect(repaired.structuredContent).toMatchObject({
+      total: 1,
+      scope: "screen",
+      catalog_fallback: false,
+      generated_at: "2026-10-14T00:00:00Z",
+      rows: [{ venue_key: "Repaired" }],
+    });
+  } finally {
+    client.close();
+  }
+});
