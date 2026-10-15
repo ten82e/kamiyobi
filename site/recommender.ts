@@ -8199,15 +8199,27 @@ const Recommender = (() => {
 
   function eventDaySearchWords(row: unknown): string {
     const ev = ((row as { ed?: unknown } | null)?.ed || {}) as Record<string, unknown>;
+    const precision = String(ev.event_date_precision || "");
+    if (precision === "not-announced") return `${eventCertaintySearchText("会期未発表")} tbd tba`;
+    if (precision === "month-only")
+      return eventCertaintySearchText(
+        eventCellJa({ ed: { ...ev, date_text: "" } }) || "月のみ判明",
+      );
     const words: string[] = [];
     [ev.event_start, ev.event_end].forEach((value) => {
       const iso = isoDayJa(value);
       if (!iso) return;
       words.push(dayTermsJa(value), iso);
     });
-
     words.push(eventCertaintySearchText(eventCellJa({ ed: ev })));
     return words.filter(Boolean).join(" ");
+  }
+
+  function eventSourceSearchText(ed: unknown): string {
+    const ev = (ed || {}) as Record<string, unknown>;
+    return ["month-only", "not-announced"].includes(String(ev.event_date_precision))
+      ? eventDaySearchWords({ ed: ev })
+      : String(ev.date_text || "");
   }
 
   /* 検索語を語の組に分けて、収録データで何行に当たるかを数える。語を並べて打った人が
@@ -8602,14 +8614,28 @@ const Recommender = (() => {
     for (const ed of record.editions || []) {
       const segments = Array.isArray(ed.event_segments) ? ed.event_segments : [];
       const start = String(ed.event_start || segments[0]?.start || "");
-      if (/^\d{4}-\d{2}-\d{2}$/.test(start)) {
-        if (typeof ed.year === "number") words.push(editionYearSearchTerm(ed.year));
-      }
+      if (
+        (/^\d{4}-\d{2}-\d{2}$/.test(start) || ed.event_date_precision === "not-announced") &&
+        typeof ed.year === "number"
+      )
+        words.push(editionYearSearchTerm(ed.year));
       if (exceptId ? ed.id === exceptId : exceptStart && start === exceptStart) continue;
+      if (ed.event_date_precision === "not-announced") {
+        words.push(eventDaySearchWords({ ed }));
+        continue;
+      }
       const parts = segments.length ? segments : [{ start, end: ed.event_end || start }];
       for (const part of parts) {
         if (!part || !/^\d{4}-\d{2}-\d{2}$/.test(String(part.start))) continue;
         const end = String(part.end || part.start);
+        if (ed.event_date_precision === "month-only") {
+          words.push(
+            eventDaySearchWords({
+              ed: { ...ed, event_start: part.start, event_end: end, event_segments: [] },
+            }),
+          );
+          continue;
+        }
         words.push(
           meetingRangeJa(String(part.start), end),
           String(part.start),
@@ -14186,7 +14212,7 @@ const Recommender = (() => {
           conferenceNameSearchTerms(conf),
           conf.key,
           ed.place,
-          ed.date_text,
+          eventSourceSearchText(ed),
           linkSearchTerms(ed.link),
         ]
           .filter(Boolean)
@@ -14233,7 +14259,7 @@ const Recommender = (() => {
             tags: conf.tags || [],
             rankPairs,
             hay: searchNormalize(
-              `${baseHay} ${dl.label || ""} ${dl.kind || ""} ${kindLabelJa(dl.kind)} ${statusBadgeWords(ed, dl).join(" ")} ${roundSearchTerms(dl.round).join(" ")} ${unconfirmedHayJa({ kind: dl.kind || "", ed, rankPairs })} ${rankSearchTerms(rankPairs)} ${catHay} ${tagSearchTerms(confTags)} ${monthTermsJa(dateOnly ? dl.local_date : t)} ${dayTermsJa(dateOnly ? dl.local_date : t)} ${monthTermsJa(ed.event_start)} ${monthTermsJa(ed.event_end)} ${weekdaySearchTerms(
+              `${baseHay} ${dl.label || ""} ${dl.kind || ""} ${kindLabelJa(dl.kind)} ${statusBadgeWords(ed, dl).join(" ")} ${roundSearchTerms(dl.round).join(" ")} ${unconfirmedHayJa({ kind: dl.kind || "", ed, rankPairs })} ${rankSearchTerms(rankPairs)} ${catHay} ${tagSearchTerms(confTags)} ${monthTermsJa(dateOnly ? dl.local_date : t)} ${dayTermsJa(dateOnly ? dl.local_date : t)} ${ed.event_date_precision === "not-announced" ? "" : `${monthTermsJa(ed.event_start)} ${monthTermsJa(ed.event_end)}`} ${weekdaySearchTerms(
                 dateOnly ? dl.local_date : t,
               )} ${zoneSearchWords(dl, dateOnly)} ${cellWords} ${officialWords} ${shiftWords} ${eventDaySearchWords(
                 {
@@ -14349,10 +14375,10 @@ const Recommender = (() => {
           tags: confTags,
           hay: searchNormalize(
             /* 会期だけの行も、公式ページの URL で引けるようにする（上の締切行と同じ理由）。 */
-            `${baseHay} ${titleWithYearJa(conf.title || conf.key, ed.year)} ${ed.place || ""} ${ed.date_text || ""} ${linkSearchTerms(ed.link)} ` +
+            `${baseHay} ${titleWithYearJa(conf.title || conf.key, ed.year)} ${ed.place || ""} ${eventSourceSearchText(ed)} ${linkSearchTerms(ed.link)} ` +
               `${categorySearchTerms(conf.categories, confTags)} ${tagSearchTerms(confTags)} ` +
               `${placeJa(ed.place)} ${placePrefectureJa(ed.place)} ` +
-              `${monthTermsJa(start)} ${monthTermsJa(end)} ${weekdaySearchTerms(start)} ${eventDaySearchWords({ ed })}`,
+              `${ed.event_date_precision === "not-announced" ? "" : `${monthTermsJa(start)} ${monthTermsJa(end)}`} ${["month-only", "not-announced"].includes(String(ed.event_date_precision)) ? "" : weekdaySearchTerms(start)} ${eventDaySearchWords({ ed })}`,
           ),
         });
       });

@@ -56,7 +56,7 @@ describe("期の区分の語に語尾を繋げても案内が出る（第 503 �
     expect(案内("週明けの締切")).toContain("週の明けという言い方は");
   });
   it("案内が導す語は実在する（第 353 回）", () => {
-    expect(列("1日").size).toBe(63);
+    expect(列("1日").size).toBe(59);
     expect(列("上旬").size).toBe(10);
     expect(列("月曜").size).toBe(59);
     expect(列("来週").size).toBe(43);

@@ -72,9 +72,9 @@ describe("月の塊にまでを離って続ける形が詰め形と同じ行を�
     expect(列("来 上旬 まで").size).toBe(180);
     expect(列("今 上旬 まで").size).toBe(118);
     expect(列("9 月 上旬 まで").size).toBe(181);
-    expect(列("翌月 上旬 まで").size).toBe(174);
+    expect(列("翌月 上旬 まで").size).toBe(173);
     expect(列("2026年9月 上旬 まで").size).toBe(180);
-    expect(列("再来月 上旬 まで").size).toBe(302);
+    expect(列("再来月 上旬 まで").size).toBe(301);
     expect(列("昨月 上旬 まで").size).toBe(0);
     expect(列("来月 上旬 までに").size).toBe(180);
   });

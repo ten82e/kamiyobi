@@ -47,12 +47,33 @@ function 文本(語: string): string[] {
 }
 
 describe("上旬・中旬・下旬", () => {
-  it("三分の一を合わせるとその月の行とちょうど一致する（漏れも余分もない）", () => {
+  it("日が判明している会期は三旬に分け、月のみ判明の会期は未分類として残す", () => {
+    const catalog = JSON.parse(readFileSync(join(builtSite(), "catalog.json"), "utf8"));
+    const monthOnly = Recommender.candidateRows(catalog).filter(
+      (row) => row.conf.key === "percom" && row.ed.id === "percom27",
+    );
+    expect(monthOnly).toHaveLength(3);
+    for (const row of monthOnly) {
+      expect(row.ed).toMatchObject({
+        event_date_precision: "month-only",
+        event_start: "2027-03-08",
+      });
+      expect(String(row.dl.utc)).not.toMatch(/^2027-03/);
+    }
+    const unassigned = new Set(monthOnly.map((row) => String(row.hay)));
     ["12月", "3月", "11月"].forEach((月) => {
       const 全体 = 行集合(月);
       expect(全体.size, `"${月}" の行が読めない（検査が空振り）`).toBeGreaterThan(0);
       const 三つ = 和集合(`${月}上旬`, `${月}中旬`, `${月}下旬`);
-      expect(差分(三つ, 全体), `"${月}の旬の和集合" が "${月}" と違う行を出した`).toBe(0);
+      const remaining = 月 === "3月" ? unassigned : new Set<string>();
+      expect(
+        [...remaining].some((row) => 三つ.has(row)),
+        "月のみ判明の会期を旬に割り当てた",
+      ).toBe(false);
+      expect(
+        差分(new Set([...三つ, ...remaining]), 全体),
+        `"${月}" の日程が判明した行に漏れか余分がある`,
+      ).toBe(0);
     });
   });
 
