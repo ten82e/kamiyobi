@@ -3368,6 +3368,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   }
 
   function emptyDeadlineHint(filter: {
+    scheduleOnlyCount?: number;
     actionableRecovery?: boolean;
     window: string;
     past: boolean;
@@ -3426,6 +3427,8 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       );
     }
     const base = "該当する締切はありません。";
+    if (filter.scheduleOnlyCount && filter.scheduleOnlyCount > 0)
+      return `${base} 投稿締切が未収録の開催回が ${countJa(filter.scheduleOnlyCount)} 件見つかりました。会期情報は下に表示しています。`;
     const trimmedQuery = filter.query.trim();
     /* 検索語が採否通知・査読結果公開など、表に出さない種別に当たっていることがある。
      * 外せる条件とは別枠の「なぜ 0 件か」なので、先に文として立てる。 */
@@ -5346,7 +5349,10 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       $("recommendationCards").hidden = true;
       if (zeroFilter) {
         const filter = zeroFilter;
-        $("emptyText").textContent = emptyDeadlineHint(filter);
+        $("emptyText").textContent = emptyDeadlineHint({
+          ...filter,
+          scheduleOnlyCount: scheduleOnly.length,
+        });
         renderDeadlineRecoveries(recoveries, activeData === DATA && resolveHistoryRef() !== "");
         $("emptyReset").textContent = state.q.trim()
           ? "検索語も消して条件クリア"

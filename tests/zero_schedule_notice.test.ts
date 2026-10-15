@@ -1,6 +1,6 @@
 import { expect, it } from "vitest";
 import Recommender from "../site/recommender.ts";
-import { jsFunction, siteRuntime } from "./runtime_extract.ts";
+import { deadlineHintFunction, jsFunction, siteRuntime } from "./runtime_extract.ts";
 
 const runtime = siteRuntime();
 const note = new Function(
@@ -59,6 +59,52 @@ it("passes the actual filtered schedule count to the live notice from the render
     filter,
     () => true,
     { past: false },
+    [{}, {}, {}],
+  );
+  expect(received).toMatchObject({ ...filter, scheduleOnlyCount: 3 });
+});
+
+it("shows matching schedules in the empty-state explanation instead of asking for a different query", () => {
+  const hint = deadlineHintFunction();
+  const input = {
+    ...filter,
+    window: "all",
+    past: false,
+    cats: 0,
+    domestic: false,
+    online: false,
+    rank: "",
+    kind: "paper",
+    est: false,
+  };
+  for (const scheduleOnlyCount of [1, 1234]) {
+    const text = hint({ ...input, scheduleOnlyCount });
+    expect(text).toContain(
+      `開催回が ${scheduleOnlyCount.toLocaleString("ja-JP")} 件見つかりました`,
+    );
+    expect(text).toContain("会期情報は下に表示しています");
+    expect(text).not.toMatch(/打ち直すなら|別の語で試す|収録データにありません|条件を緩める/);
+    expect(hint({ ...input, scheduleOnlyCount, urlQuery: true })).not.toContain(
+      "収録に見当たりません",
+    );
+  }
+  expect(hint({ ...input, scheduleOnlyCount: 0 })).toContain("打ち直すなら");
+  expect(hint(input)).toContain("打ち直すなら");
+  expect(hint({ ...input, scheduleOnlyCount: 1, catalogConferences: 0 })).toContain(
+    "データが入っていません",
+  );
+});
+it("passes the actual filtered schedule count to the empty-state explanation", () => {
+  const render = jsFunction(runtime, "render");
+  const call = /textContent = (emptyDeadlineHint\([\s\S]*?\));/.exec(render)?.[1];
+  expect(call).toBeDefined();
+  let received: Record<string, unknown> | undefined;
+  new Function("emptyDeadlineHint", "filter", "scheduleOnly", `return (${call});`)(
+    (value: Record<string, unknown>) => {
+      received = value;
+      return "";
+    },
+    filter,
     [{}, {}, {}],
   );
   expect(received).toMatchObject({ ...filter, scheduleOnlyCount: 3 });
