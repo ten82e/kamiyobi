@@ -28,7 +28,7 @@ const RECOMMENDATION_PATH = join(ROOT, "public", "recommendation-index.json");
 const SERVER_NAME = "kamiyobi";
 const SERVER_VERSION = "1.0.0";
 const EVENT_ONLY_NOTICE_JA =
-  "会期は収録にあります。直近の開催は upcoming.md を確認してください。購読カレンダー（deadlines.ics）は締切のみです。";
+  "会期は収録にあります。全開催回の日程は venue_info で確認できます。直近一覧（list_upcoming / upcoming.md）は対象期間内の開催だけを扱います。購読カレンダー（deadlines.ics）は締切のみです。";
 const DEFAULT_PROTOCOL = "2025-06-18";
 
 /* 行の形（`Recommender.candidateRows` が返す物の内、ここで使う分だけ）。 */
@@ -870,9 +870,7 @@ function 名乘りの案内(query: string, list: Row[], now: number): string[] {
   const 見本 = 当たる.slice(0, 3).map((c) => {
     const key = String(c.key ?? "");
     const 版々 = Array.isArray(c.editions) ? c.editions : [];
-    const 會期あり = 版々.some((e) =>
-      String((e as { event_start?: unknown } | null)?.event_start ?? "").trim(),
-    );
+
     /* 推定の未來の締切（第 930・964 回 – SOSP は「収録にあるのは過ぎた締切だけ」に添へたが、
      * TrustCom の樣に**この窓に行がある**会議では添へて居なかつた。推定しか未來が無い会議は
      * 「絞り込みを外すと出ます」だけでは、AI がその日を言へない）。 */
@@ -906,9 +904,7 @@ function 名乘りの案内(query: string, list: Row[], now: number): string[] {
               return `この窓には締切の行がありませんが、**推定なら ${推定} に締切が在ります**（include_estimated で出ます – 確約ではない）`;
             return 'この窓には締切の行がありませんが、**収録には在ります**（scope: "all" で過去の分行が出せます）';
           })()
-        : 會期あり
-          ? `締切の行が 1 本もありません（${EVENT_ONLY_NOTICE_JA}）`
-          : "締切の行が 1 本もありません（会期も確認できていません）";
+        : `締切の行が 1 本もありません（${eventAvailabilityNoticeJa(版々)}）`;
     return `- ${String(c.title ?? key)}（key: ${key}・版 ${版々.length} 件）: ${狀態}`;
   });
   return [
@@ -947,7 +943,30 @@ function 見えて居る注(query: string, 行數: number): string {
   return `\n${全部.join("\n")}${添 ? `\n${添}` : ""}`;
 }
 
-/** Keep date-only and estimated deadlines separate from confirmed instants. */
+function eventAvailabilityNoticeJa(editions: unknown[]): string {
+  const records = editions.flatMap((value) => {
+    if (!value || typeof value !== "object" || Array.isArray(value)) return [];
+    const ed = value as Record<string, unknown>;
+    return ed.estimated === true ? [] : [ed];
+  });
+  const hasDates = records.some((ed) => {
+    if (ed.event_date_precision === "not-announced") return false;
+    const parts =
+      Array.isArray(ed.event_segments) && ed.event_segments.length
+        ? ed.event_segments
+        : [{ start: ed.event_start, end: ed.event_end }];
+    return parts.some((value) => {
+      if (!value || typeof value !== "object") return false;
+      const part = value as { start?: unknown; end?: unknown };
+      return Boolean(Recommender.eventDateBoundsMs(part.start, part.end, ed.event_date_precision));
+    });
+  });
+  if (hasDates) return EVENT_ONLY_NOTICE_JA;
+  if (records.some((ed) => ed.event_date_precision === "not-announced"))
+    return "会期は未発表です。開催日は公式案内で確認してください。購読カレンダー（deadlines.ics）は締切のみです。";
+  return "会期も確認できていないため、開催日で絞る一覧には出ません。";
+}
+
 function eventAnnotationsJa(
   ed: { date_text?: unknown; event_review?: unknown },
   display: string,
@@ -976,6 +995,7 @@ function eventMetadata(ed: {
   };
 }
 
+/** Keep date-only and estimated deadlines separate from confirmed instants. */
 export function structuredDeadline(r: Row, now: number): Record<string, unknown> {
   return {
     venue_key: r.conf.key,
@@ -1724,23 +1744,6 @@ function venueInfo(
     const 在る = 在る候補[0];
     if (在る) {
       const 版々 = Array.isArray(在る.editions) ? 在る.editions : [];
-      const 會期あり = 版々.some((e) => {
-        const ed = e as {
-          estimated?: unknown;
-          event_start?: unknown;
-          event_end?: unknown;
-          event_date_precision?: unknown;
-          event_segments?: Array<{ start?: unknown; end?: unknown }>;
-        } | null;
-        if (!ed || ed.estimated === true) return false;
-        const parts =
-          Array.isArray(ed.event_segments) && ed.event_segments.length
-            ? ed.event_segments
-            : [{ start: ed.event_start, end: ed.event_end }];
-        return parts.some((part) =>
-          Recommender.eventDateBoundsMs(part.start, part.end, ed.event_date_precision),
-        );
-      });
       const link = String(在る.link ?? "").trim();
       const editions = venueSchedules(在る);
       const identity = venueIdentity(在る);
@@ -1755,7 +1758,7 @@ function venueInfo(
       });
       return [
         `問はた会議（${String(在る.acronym || 在る.title || 在る.key)}・key: ${String(在る.key)}）は収録に在りますが、**締切の行が 1 本もありません**（版 ${版々.length} 件）。` +
-          (會期あり ? EVENT_ONLY_NOTICE_JA : "会期も確認できていないので、どの一覧にも出ません。"),
+          eventAvailabilityNoticeJa(版々),
         ...(identity.full_name &&
         identity.full_name !== identity.title &&
         identity.full_name !== identity.acronym

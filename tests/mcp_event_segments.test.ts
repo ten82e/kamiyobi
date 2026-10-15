@@ -108,17 +108,17 @@ it("keeps segment labels, certainty, edition identity and official URLs in MCP t
   }
 });
 
-function lookup() {
+function lookup(tool = "venue_info") {
   const child = spawnSync(process.execPath, ["run.ts"], {
     cwd: root,
     encoding: "utf8",
     timeout: 15000,
-    input: `${JSON.stringify({ jsonrpc: "2.0", id: 1, method: "tools/call", params: { name: "venue_info", arguments: { key: "fresh" } } })}\n`,
+    input: `${JSON.stringify({ jsonrpc: "2.0", id: 1, method: "tools/call", params: { name: tool, arguments: tool === "venue_info" ? { key: "fresh" } : { query: "fresh", scope: "all" } } })}\n`,
   });
   expect(child.status, child.stderr).toBe(0);
   const result = JSON.parse(child.stdout.trim()).result;
   expect(result.isError).not.toBe(true);
-  const text = result.content.map((c: { text?: string }) => c.text || "").join("\n");
+  const text = result.content[0].text as string;
   return text;
 }
 it("recognizes segment-only schedules when looking up an event-only venue over MCP", () => {
@@ -146,6 +146,59 @@ it("updates schedule availability for valid single dates, invalid dates and empt
     }
     writeSnapshot([]);
     expect(lookup()).toContain("会期も確認できていない");
+  } finally {
+    writeSnapshot(editions);
+  }
+});
+
+it("keeps venue lookup and zero-hit search notices consistent as certainty and schedule evidence change", () => {
+  try {
+    for (const [input, expected] of [
+      [
+        [{ id: "split", event_segments: [{ start: "2029-06-01", end: "2029-06-02" }] }],
+        "会期は収録にあります",
+      ],
+      [
+        [{ id: "bad", event_start: "2029-02-30", event_end: "2029-03-01" }],
+        "会期も確認できていない",
+      ],
+      [[{ id: "estimate", estimated: true, event_start: "2029-06-01" }], "会期も確認できていない"],
+      [[{ id: "unannounced", event_date_precision: "not-announced" }], "会期は未発表です"],
+      [
+        [
+          {
+            id: "stale-date",
+            event_date_precision: "not-announced",
+            event_start: "2029-06-01",
+            event_end: "2029-06-02",
+          },
+        ],
+        "会期は未発表です",
+      ],
+      [
+        [{ id: "month", event_date_precision: "month-only", event_start: "2029-06-01" }],
+        "会期は収録にあります",
+      ],
+      [
+        [
+          { id: "pending", event_date_precision: "not-announced" },
+          { id: "known", event_start: "2029-06-01" },
+        ],
+        "会期は収録にあります",
+      ],
+      [[], "会期も確認できていない"],
+    ] as const) {
+      writeSnapshot(input.map((ed) => ({ year: 2029, ...ed })));
+      for (const tool of ["venue_info", "search_deadlines"]) {
+        const text = lookup(tool);
+        expect(text, `${tool}: ${JSON.stringify(input)}`).toContain(expected);
+        expect(text).not.toContain("どの一覧にも出ません");
+        if (expected !== "会期は収録にあります") {
+          expect(text).not.toContain("会期は収録にあります");
+          expect(text).not.toContain("upcoming.md");
+        }
+      }
+    }
   } finally {
     writeSnapshot(editions);
   }
