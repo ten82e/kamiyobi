@@ -1558,6 +1558,18 @@ function venueScheduleLines(editions: ReturnType<typeof venueSchedules>): string
   ];
 }
 
+function latestDeadlineLinks(rows: Row[]) {
+  const links = new Map<string, { url: string; at: number }>();
+  for (const row of rows) {
+    const url = String(row.ed.link ?? "").trim();
+    if (!url) continue;
+    const key = venueLookupText(row.conf.key);
+    const previous = links.get(key);
+    if (!previous || row.t >= previous.at) links.set(key, { url, at: row.t });
+  }
+  return links;
+}
+
 function venueInfo(
   args: { key?: unknown; name?: unknown; scope?: unknown },
   now: number,
@@ -1573,6 +1585,37 @@ function venueInfo(
   const 求 = venueLookupText(name);
   const requestedKey = venueLookupText(key);
   const venues = snapshot().conferences ?? [];
+  const namedVenues = key
+    ? []
+    : venues.filter((conf) =>
+        [conf.key, conf.title, conf.acronym, conf.full_name].some((value) =>
+          venueLookupText(value).includes(求),
+        ),
+      );
+  if (namedVenues.length > 1) {
+    const latestLinks = latestDeadlineLinks(allRows());
+    return [
+      `「${name}」には ${namedVenues.length} の会議が当たりました。key を指定してください:`,
+      ...(scopeErr ? [scopeErr] : []),
+      ...namedVenues.map((conf) => {
+        const latestEdition = (conf.editions ?? [])
+          .filter((value): value is Record<string, unknown> =>
+            Boolean(
+              value &&
+                typeof value === "object" &&
+                (value as Record<string, unknown>).estimated !== true &&
+                (value as Record<string, unknown>).link,
+            ),
+          )
+          .sort((a, b) => Number(b.year || 0) - Number(a.year || 0))[0];
+        const url =
+          latestLinks.get(venueLookupText(conf.key))?.url ||
+          String(latestEdition?.link || conf.link || "").trim();
+        return `- ${String(conf.title || conf.key)}（key: ${String(conf.key)}）${url ? ` ${url}` : ""}`;
+      }),
+      ...(古さ ? ["", 古さ] : []),
+    ].join("\n");
+  }
   const current = key ? venues.find((c) => venueLookupText(c.key) === requestedKey) : undefined;
   const aliases =
     key && !current
@@ -1620,7 +1663,6 @@ function venueInfo(
         ...(古さ ? ["", 古さ] : []),
       ].join("\n");
     }
-    const 求 = venueLookupText(name);
     const 收錄の會議 = snapshot().conferences ?? [];
     /* key を指定されている時は**その key で**名簿を引く。名が空の儘名前で探すと、
      * `title.includes("")` がどれにも当たつて**先頭の会議**を返してしまふ – 実測 2026-10-12:
@@ -1641,27 +1683,7 @@ function venueInfo(
         ...(古さ ? ["", 古さ] : []),
       ].join("\n");
     }
-    const 在る候補 = key
-      ? 問はた全部
-      : 收錄の會議.filter((c) => {
-          const ck = venueLookupText(c.key);
-          const title = venueLookupText(c.title);
-          const acronym = venueLookupText(c.acronym);
-          return (
-            Boolean(ck) &&
-            (ck === 求 ||
-              title.includes(求) ||
-              acronym.includes(求) ||
-              venueLookupText(c.full_name).includes(求) ||
-              ck.includes(求))
-          );
-        });
-    if (在る候補.length > 1) {
-      return [
-        `「${name}」には ${在る候補.length} の会議が当たりました。key を指定してください:`,
-        ...在る候補.map((c) => `- ${String(c.title || c.key)}（key: ${String(c.key)}）`),
-      ].join("\n");
-    }
+    const 在る候補 = key ? 問はた全部 : namedVenues;
     const 在る = 在る候補[0];
     if (在る) {
       const 版々 = Array.isArray(在る.editions) ? 在る.editions : [];
@@ -1746,19 +1768,12 @@ function venueInfo(
   if (會々.length > 1) {
     const 名乗り = [...new Map(hit.map((r) => [r.conf.key, r.conf.title])).entries()];
 
-    const 繋ぎ先 = new Map<string, { url: string; 日: number }>();
-    for (const r of hit) {
-      const url = String(r.ed.link ?? "").trim();
-      if (!url) continue;
-      /* 一番**新しい**行の繋ぎ先を残す（行の並びに依らない – 第 946 回）。 */
-      const 今 = 繋ぎ先.get(r.conf.key);
-      if (!今 || r.t >= 今.日) 繋ぎ先.set(r.conf.key, { url, 日: r.t });
-    }
+    const 繋ぎ先 = latestDeadlineLinks(hit);
     return [
       `「${key || name}」には ${會々.length} の会議が当たりました。名を細く打つか、key で指してください:`,
       ...(scopeErr ? [scopeErr] : []),
       ...名乗り.slice(0, 20).map(([k, t]) => {
-        const 先 = 繋ぎ先.get(k);
+        const 先 = 繋ぎ先.get(venueLookupText(k));
         return `- ${t}（key: ${k}）${先 ? ` ${先.url}` : ""}`;
       }),
       ...(名乗り.length > 20 ? [`- ほか ${名乗り.length - 20} 件`] : []),

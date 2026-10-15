@@ -65,6 +65,41 @@ writeFileSync(
       venue("shadow", "Shadow", ["empty"]),
       venue("ai+sys", "AI+Systems"),
       venue("event-only", "Event Only", [], false, "2027-02-01"),
+      venue("series-alpha", "Series Alpha"),
+      venue("series-beta", "Series Beta", [], false, "2027-02-01"),
+      venue("series-gamma", "Series Gamma", [], false),
+      ...Array.from({ length: 31 }, (_, i) => venue(`broad-${i}`, `Broad ${i}`, [], i % 2 === 0)),
+      {
+        ...venue("link-alpha", "LinkChoice Alpha"),
+        editions: [
+          {
+            id: "old-alpha",
+            year: 2027,
+            link: "https://alpha.example.org/old",
+            deadlines: [{ kind: "paper", utc: "2026-01-01T00:00:00Z" }],
+          },
+          {
+            id: "new-alpha",
+            year: 2028,
+            link: "https://alpha.example.org/new",
+            deadlines: [{ kind: "paper", utc: "2027-01-01T00:00:00Z" }],
+          },
+        ],
+      },
+      {
+        ...venue("link-beta", "LinkChoice Beta"),
+        editions: [
+          { id: "old-beta", year: 2027, link: "https://beta.example.org/old", deadlines: [] },
+          { id: "new-beta", year: 2028, link: "https://beta.example.org/new", deadlines: [] },
+          {
+            id: "estimate-beta",
+            year: 2029,
+            link: "https://beta.example.org/estimated",
+            estimated: true,
+            deadlines: [],
+          },
+        ],
+      },
     ],
   }),
 );
@@ -180,4 +215,50 @@ it("sends event-only venues to the upcoming table without promising an ICS deadl
     expect(text).toContain("購読カレンダー（deadlines.ics）は締切のみ");
     expect(text).not.toContain("「開催」として載ります");
   }
+});
+
+it("disambiguates names against every venue regardless of deadline availability or screen scope", () => {
+  const all = call({ name: "ＳＥＲＩＥＳ", scope: "all" });
+  expect(all).toContain("3 の会議");
+  for (const key of ["series-alpha", "series-beta", "series-gamma"])
+    expect(all).toContain(`key: ${key}）`);
+  expect(all).not.toContain("series-alpha27");
+  mkdirSync(join(root, "public"));
+  writeFileSync(
+    join(root, "public/catalog.json"),
+    JSON.stringify({ conferences: [venue("series-alpha", "Series Alpha")] }),
+  );
+  try {
+    {
+      const text = call({ name: "ＳＥＲＩＥＳ", scope: "screen" });
+      expect(text).toContain("3 の会議");
+      for (const key of ["series-alpha", "series-beta", "series-gamma"])
+        expect(text).toContain(`key: ${key}）`);
+      expect(text).not.toContain("series-alpha27");
+      expect(text).not.toContain("2027-01-10");
+    }
+    const selected = call({ key: "ＳＥＲＩＥＳ－ＢＥＴＡ", name: "series", scope: "screen" });
+    expect(selected).toContain("series-beta27");
+    expect(selected).not.toContain("series-alpha27");
+    expect(selected).not.toContain("3 の会議");
+  } finally {
+    rmSync(join(root, "public"), { recursive: true, force: true });
+  }
+});
+
+it("returns every disambiguation key when more than twenty venues share a name", () => {
+  const text = call({ name: "Broad" });
+  expect(text).toContain("31 の会議");
+  const keys = [...text.matchAll(/key: (broad-\d+)）/g)].map((match) => match[1]);
+  expect(keys).toEqual(Array.from({ length: 31 }, (_, i) => `broad-${i}`));
+  expect(text).not.toContain("2027-01-10");
+});
+
+it("retains latest explicit candidate links for venues with and without deadlines", () => {
+  const text = call({ name: "LinkChoice" });
+  expect(text).toContain("2 の会議");
+  expect(text).toContain("key: link-alpha） https://alpha.example.org/new");
+  expect(text).toContain("key: link-beta） https://beta.example.org/new");
+  expect(text).not.toContain("/old");
+  expect(text).not.toContain("/estimated");
 });

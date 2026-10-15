@@ -179,7 +179,9 @@ it("asks to disambiguate event-only venues instead of returning the first venue'
   expect(text).toContain("2 の会議");
   expect(text).toContain("key: fresh）");
   expect(text).toContain("key: fresh-secondary）");
-  expect(text).not.toContain("https://example.org/month");
+  expect(text).toContain("key: fresh） https://example.org/month");
+  expect(text).not.toContain("開催回の会期");
+  expect(text).not.toContain("2029-06（月のみ判明）");
 });
 
 it("does not advertise estimated dates as recorded event schedules", () => {
