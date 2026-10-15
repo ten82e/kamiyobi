@@ -1777,11 +1777,25 @@ function venueInfo(
     const outside =
       名 !== "収録の全体" && aliases.length < 2 ? displayRows(allRows()).filter(matchesRow) : [];
     if (outside.length) {
-      const candidates = [...new Map(outside.map((row) => [row.conf.key, row.conf])).values()];
+      const candidates = resolvedVenue
+        ? [resolvedVenue]
+        : [...new Map(outside.map((row) => [row.conf.key, row.conf])).values()];
+      receive?.({
+        lookup_status: "out_of_scope",
+        query: key || name,
+        ...context,
+        available_scope: "all",
+        available_generated_at: snapshot().snapshot_metadata?.generated_at ?? null,
+        available_deadline_total: outside.length,
+        candidate_count: candidates.length,
+        candidates: candidates.map(venueIdentity),
+        ...(candidates.length === 1
+          ? { retry_arguments: { key: String(candidates[0].key), scope: "all" } }
+          : {}),
+      });
       return [
         `「${key || name}」の締切はこの表示範囲にはありません。収録全体には ${outside.length} 件あります。scope: "all" で取得してください。`,
-        ...candidates.slice(0, 20).map((conf) => `- ${conf.title}（key: ${conf.key}）`),
-        ...(candidates.length > 20 ? [`- ほか ${candidates.length - 20} 件`] : []),
+        ...candidates.map((conf) => `- ${conf.title}（key: ${conf.key}）`),
         ...(古さ ? ["", 古さ] : []),
       ].join("\n");
     }
@@ -2622,7 +2636,7 @@ const TOOLS = [
   {
     name: "venue_info",
     description:
-      "会議の開催回、締切、会期、ランク、主題、正式名を返す。structuredContent の editions に推定を除く全開催回の会期・確かさ・公式URL、rows に締切を返す。key は小文字の識別子、name は略称・正式名・名前の一部。版の識別子も関連する会議へ案内する。曖昧な名前や古いkeyは lookup_status: ambiguous と candidates を返す。候補の venue_key を key に指定して再照会する。scope の既定は all で、過ぎた分も全部出る。今後の物から並べ、推定以外の次の投稿締切を next_submission、推定の見込みを next_estimated_submission で分けて返す。主題は分野より詳しい札で、収録にある会議だけに出します（画面の行の詳細の「主題」と同じ）。返す行の形: 会議の要約に続いて、日時 | 種別 | 確認状態（ある場合）| 会議名（版の識別子）| ランク | 会期 | 開催地 URL。",
+      "会議の開催回、締切、会期、ランク、主題、正式名を返す。structuredContent の editions に推定を除く全開催回の会期・確かさ・公式URL、rows に締切を返す。key は小文字の識別子、name は略称・正式名・名前の一部。版の識別子も関連する会議へ案内する。曖昧な名前や古いkeyは lookup_status: ambiguous と candidates を返す。候補の venue_key を key に指定して再照会する。表示範囲外の締切は lookup_status: out_of_scope と再照会用の retry_arguments で案内する。scope の既定は all で、過ぎた分も全部出る。今後の物から並べ、推定以外の次の投稿締切を next_submission、推定の見込みを next_estimated_submission で分けて返す。主題は分野より詳しい札で、収録にある会議だけに出します（画面の行の詳細の「主題」と同じ）。返す行の形: 会議の要約に続いて、日時 | 種別 | 確認状態（ある場合）| 会議名（版の識別子）| ランク | 会期 | 開催地 URL。",
     inputSchema: {
       type: "object",
       properties: {

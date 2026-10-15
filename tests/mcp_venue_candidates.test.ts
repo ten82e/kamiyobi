@@ -192,6 +192,65 @@ it("returns every ambiguous venue as structured identity data and accepts its ke
         selected.structuredContent.rows.map((row: { edition_id: string }) => row.edition_id).sort(),
       ).toEqual(["jip-compsac2027-si", "partner28"]);
     }
+    for (const [args, venueKey, count] of [
+      [{ key: "series-30" }, "series-30", 1],
+      [{ name: "システム研究会 30" }, "series-30", 1],
+      [{ key: "ipsj-27-r-compsac" }, "ipsj-27-r-compsac", 2],
+      [{ key: "old-partner" }, "ipsj-27-r-compsac", 2],
+      [{ name: "Partner Archive" }, "ipsj-27-r-compsac", 2],
+    ] as const) {
+      const outside = await call({ ...args, scope: "screen" });
+      expect(outside.structuredContent).toMatchObject({
+        lookup_status: "out_of_scope",
+        query: "key" in args ? args.key : args.name,
+        scope: "screen",
+        catalog_fallback: false,
+        generated_at: "2027-12-01T00:00:00Z",
+        available_scope: "all",
+        available_generated_at: generatedAt,
+        available_deadline_total: count,
+        candidate_count: 1,
+        retry_arguments: { key: venueKey, scope: "all" },
+      });
+      expect(outside.structuredContent.candidates).toEqual([
+        venueKey === "series-30"
+          ? {
+              venue_key: venueKey,
+              title: "Series 30",
+              full_name: "システム研究会 30",
+              acronym: "S30",
+              official_url: "https://example.org/series/30",
+            }
+          : {
+              venue_key: venueKey,
+              title: "Partner Archive",
+              full_name: null,
+              acronym: null,
+              official_url: null,
+            },
+      ]);
+      expect(outside.structuredContent).not.toHaveProperty("rows");
+      expect(outside.structuredContent).not.toHaveProperty("deadline_total");
+      expect(outside.content[0].text).toContain(`key: ${venueKey}`);
+      if (venueKey !== "series-30") expect(outside.content[0].text).not.toContain("key: jip");
+      const retried = await call(outside.structuredContent.retry_arguments);
+      expect(retried.structuredContent).toMatchObject({
+        venue_key: venueKey,
+        scope: "all",
+        deadline_total: count,
+      });
+      expect(retried.structuredContent.rows).toHaveLength(count);
+    }
+    const visible = await call({ key: "series-0", scope: "screen" });
+    expect(visible.structuredContent).toMatchObject({
+      venue_key: "series-0",
+      scope: "screen",
+      deadline_total: 1,
+    });
+    expect(visible.structuredContent).not.toHaveProperty("retry_arguments");
+    const eventOnly = await call({ key: "series-7", scope: "screen" });
+    expect(eventOnly.structuredContent).toMatchObject({ venue_key: "series-7", deadline_total: 0 });
+    expect(eventOnly.structuredContent).not.toHaveProperty("retry_arguments");
     const sharedOnly = structuredClone(linkedVenues);
     sharedOnly[1].editions.pop();
     writeFileSync(
