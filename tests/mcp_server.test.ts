@@ -111,6 +111,52 @@ async function call(name: string, args: Record<string, unknown>): Promise<string
   return String(res.result?.content?.[0]?.text ?? "");
 }
 
+async function upcomingText(args: Record<string, unknown>): Promise<string> {
+  const texts: string[] = [];
+  let offset = 0;
+  let total: number | undefined;
+  let returned = 0;
+  for (;;) {
+    const response = (await client.ask({
+      jsonrpc: "2.0",
+      id: 2,
+      method: "tools/call",
+      params: { name: "list_upcoming", arguments: { ...args, offset } },
+    })) as {
+      result?: {
+        isError?: boolean;
+        content?: Array<{ text?: string }>;
+        structuredContent?: {
+          total: number;
+          offset: number;
+          limit: number;
+          returned: number;
+          next_offset: number | null;
+          items: unknown[];
+        };
+      };
+    };
+    expect(response.result?.isError).not.toBe(true);
+    const page = response.result?.structuredContent;
+    expect(page, "直近一覧のページ情報がない").toBeDefined();
+    expect(page!.offset).toBe(offset);
+    expect(page!.limit).toBeLessThanOrEqual(100);
+    expect(page!.returned).toBe(page!.items.length);
+    expect(page!.returned).toBeLessThanOrEqual(page!.limit);
+    total ??= page!.total;
+    expect(page!.total).toBe(total);
+    returned += page!.returned;
+    texts.push(String(response.result?.content?.[0]?.text ?? ""));
+    if (page!.next_offset === null) break;
+    expect(page!.next_offset).toBe(offset + page!.returned);
+    expect(page!.next_offset).toBeGreaterThan(offset);
+    expect(page!.next_offset).toBeLessThan(total!);
+    offset = page!.next_offset;
+  }
+  expect(returned, "ページ送りで行が欠けている").toBe(total);
+  return texts.join("\n");
+}
+
 /** 行が締切を過ぎた事を告げる札（畫面の「殘り」欄と同じ語 – 第 1098 回）。 */
 const 過去の札 = /\d+ 日前に終了|本日終了/;
 
@@ -807,7 +853,7 @@ it("入力の形が、道具の説明と一致する（第 854 回）", async ()
       "within_days",
       "scope",
     ],
-    list_upcoming: ["days", "kind", "kinds", "scope"],
+    list_upcoming: ["days", "limit", "offset", "kind", "kinds", "scope"],
     venue_info: ["key", "name", "scope"],
     recommend_venues: ["paper", "limit", "offset", "retrieval"],
     search_venues: ["query", "limit", "offset", "retrieval"],
@@ -2625,7 +2671,7 @@ it("真偽の引数は文字列でも効く – 読めない値は名指す（�
 });
 
 it("list_upcoming に会期（開催）の行を出す（第 910 回）", async () => {
-  const text = await call("list_upcoming", { days: 30, scope: "all", limit: 1 });
+  const text = await upcomingText({ days: 30, scope: "all", limit: 1 });
   expect(text, "開催の節がない").toContain("開催（会期の行）");
   /* **どこにも無い物ではない**ことを書く（AI が表に読みに行く様に）。 */
   expect(text, "同じ表の場所を言つていない").toContain("upcoming.md");
@@ -3222,7 +3268,7 @@ describe("list_upcoming の行が画面と同じ（第 944 回）", () => {
     };
 
     for (const days of [7, 30]) {
-      const 答 = await call("list_upcoming", {
+      const 答 = await upcomingText({
         days,
         kinds: ["abstract", "paper", "journal"],
         limit: 400,
@@ -4323,6 +4369,7 @@ it("list_upcoming の件数は、その窓の事实と合う（第 990 回）", 
   }
 
   const 開催の事實 = (days: number): number => {
+    const 今日 = Date.parse(new Date(今 + 9 * 3600000).toISOString().slice(0, 10));
     const 限り = Recommender.withinDaysLimitMs(days, 今);
     let n = 0;
     for (const c of (收錄.conferences ?? []) as Array<Record<string, unknown>>) {
@@ -4338,7 +4385,7 @@ it("list_upcoming の件数は、その窓の事实と合う（第 990 回）", 
           const 開 = Date.parse(String(seg.start ?? ""));
           if (!Number.isFinite(開)) continue;
           const 終 = Date.parse(String(seg.end ?? seg.start ?? "")) || 開;
-          if (終 < 今 || 開 >= 限り) continue;
+          if (終 < 今日 || 開 >= 限り) continue;
           n += 1;
         }
       }
@@ -4715,7 +4762,7 @@ it("行を返す 6 つの道具は、全部「返す行の形」を書く（第 
     ["list_upcoming", { days: 30, limit: 2 }],
     ["explain_word", { word: "セキュリティ" }],
   ] as const) {
-    const 答 = await call(名前, 引數);
+    const 答 = 名前 === "list_upcoming" ? await upcomingText(引數) : await call(名前, 引數);
     /* 会期の行（`- 2026-10-01(木) 〜 2026-10-31(土) | CSS（key: …・…） | 開催地 URL`）は
      * **別の形**で「（key: 」を持つので、この 6 つの検查の対象外 – それを持つ行を除く。
      * 1 日の会期（`- 2026-10-12(月) | ISTAI26（key: …`）も同樣に「（key: 」を持つ。 */

@@ -1262,10 +1262,7 @@ function searchDeadlines(
   ].join("\n");
 }
 
-export function 開催の行(
-  days: number,
-  now: number,
-): Array<{
+interface UpcomingEventRow {
   開始: number;
   終了: number;
   会議: string;
@@ -1273,17 +1270,17 @@ export function 開催の行(
   版: string;
   開催地: string;
   link: string;
-}> {
+
+  year: number | null;
+  event_date_precision: string | null;
+  segment_label: string | null;
+  place: string | null;
+}
+
+export function 開催の行(days: number, now: number): UpcomingEventRow[] {
   const 限り = Recommender.withinDaysLimitMs(days, now);
-  const 出: Array<{
-    開始: number;
-    終了: number;
-    会議: string;
-    key: string;
-    版: string;
-    開催地: string;
-    link: string;
-  }> = [];
+  const today = Date.parse(new Date(now + 9 * 3600000).toISOString().slice(0, 10));
+  const 出: UpcomingEventRow[] = [];
   for (const c of snapshot().conferences ?? []) {
     const 会議 = c as {
       key?: unknown;
@@ -1301,15 +1298,16 @@ export function 開催の行(
         event_start?: unknown;
         event_end?: unknown;
         event_segments?: unknown;
+        event_date_precision?: unknown;
         place?: unknown;
         link?: unknown;
       };
       /* 推定の版は入れない（画面の表と同じ規則 – 第 299 回）。 */
       if (ed.estimated === true) continue;
 
-      const 区分: Array<{ start?: unknown; end?: unknown }> =
+      const 区分: Array<{ start?: unknown; end?: unknown; label?: unknown }> =
         Array.isArray(ed.event_segments) && ed.event_segments.length
-          ? (ed.event_segments as Array<{ start?: unknown; end?: unknown }>)
+          ? (ed.event_segments as Array<{ start?: unknown; end?: unknown; label?: unknown }>)
           : ed.event_start
             ? [{ start: ed.event_start, end: ed.event_end ?? ed.event_start }]
             : [];
@@ -1318,7 +1316,7 @@ export function 開催の行(
         if (!Number.isFinite(開始)) continue;
         const 終了 = Date.parse(String(seg.end ?? seg.start ?? "")) || 開始;
         /* 期間に掛かっている会期だけ（会期中の会議も「開催中」として出す）。 */
-        if (終了 < now || 開始 >= 限り) continue;
+        if (終了 < today || 開始 >= 限り) continue;
         /* 會議名は**年を添えた形**（`titleWithYearJa` – 畫面の行の詳細と upcoming.md の
          * 正本）。略稱を先に出すと「SEC」のやうに一會社の別の名が出て、upcoming.md の
          * 「USENIX Security 2026」と別物になる。版の識別子は後に續ける（省かない）。
@@ -1336,6 +1334,11 @@ export function 開催の行(
           会議: 會議名 || 略稱 || String(会議.key ?? ""),
           key: String(会議.key ?? ""),
           版: String(ed.id ?? ""),
+          year: typeof ed.year === "number" ? ed.year : null,
+          event_date_precision:
+            typeof ed.event_date_precision === "string" ? ed.event_date_precision : null,
+          segment_label: typeof seg.label === "string" ? seg.label : null,
+          place: typeof ed.place === "string" && ed.place.trim() ? ed.place : null,
           開催地:
             Recommender.placeJa(Recommender.placeWithPrefectureJa(ed.place)) ||
             String(Recommender.unconfirmedLabelJa() ?? "未確認"),
@@ -1348,9 +1351,22 @@ export function 開催の行(
 }
 
 function listUpcoming(
-  args: { days?: unknown; kind?: unknown; kinds?: unknown; scope?: unknown },
+  args: {
+    days?: unknown;
+    kind?: unknown;
+    kinds?: unknown;
+    scope?: unknown;
+    limit?: unknown;
+    offset?: unknown;
+  },
   now: number,
+  receive?: (result: Record<string, unknown>) => void,
 ): string {
+  const offset = args.offset === undefined ? 0 : args.offset;
+  if (typeof offset !== "number" || !Number.isSafeInteger(offset) || offset < 0)
+    throw new Error("offset は 0 以上の整数で指定してください。");
+  const limitInput = 數の引數("limit", args.limit, 1);
+  const limit = Math.max(1, Math.floor(Math.min(limitInput.使ふ ?? 100, 100)));
   const 日數の引數 = 數の引數("days", args.days, 1);
   const 使ふ日數 = 日數の引數.使ふ;
 
@@ -1407,22 +1423,83 @@ function listUpcoming(
         (全部 || 選ぶ.size === 0 || 選ぶ.has(r.kind) || 選ぶ.has(r.dl.kind)),
     ),
   );
+  const events = 開催の行(days, now);
+  const date = (value: number): string => new Date(value).toISOString().slice(0, 10);
+  const timeline: Array<{
+    at: number;
+    item: Record<string, unknown>;
+    row?: Row;
+    event?: UpcomingEventRow;
+  }> = [
+    ...hit.map((row) => ({
+      at: 表示の刻み(row),
+      row,
+      item: { type: "deadline", ...structuredDeadline(row, now) },
+    })),
+    ...events.map((event) => ({
+      at: event.開始,
+      event,
+      item: {
+        type: "event",
+        venue_key: event.key,
+        title: event.会議,
+        edition_id: event.版,
+        year: event.year,
+        event_start: date(event.開始),
+        event_end: date(event.終了),
+        event_date_precision: event.event_date_precision,
+        segment_label: event.segment_label,
+        place: event.place,
+        place_ja: event.開催地,
+        official_url: event.link || null,
+      },
+    })),
+  ];
+  timeline.sort((a, b) => a.at - b.at);
+  const page = timeline.slice(offset, offset + limit);
+  const nextOffset = offset + page.length < timeline.length ? offset + page.length : null;
+  const deadlinePage = page.flatMap((item) => (item.row ? [item.row] : []));
+  const eventPage = page.flatMap((item) => (item.event ? [item.event] : []));
+  const remaining = timeline.slice(offset + page.length);
+  const deadlineRemaining = remaining.filter((item) => item.row).length;
+  receive?.({
+    total: timeline.length,
+    deadline_total: hit.length,
+    event_total: events.length,
+    days,
+    offset,
+    limit,
+    returned: page.length,
+    next_offset: nextOffset,
+    scope: 窓が無い || scopeValue(args.scope ?? "all") === "all" ? "all" : "screen",
+    event_scope: "all",
+    catalog_fallback: 窓が無い,
+    generated_at: 生成 ?? null,
+    event_generated_at: snapshot().snapshot_metadata?.generated_at ?? null,
+    evaluated_at: new Date(now).toISOString(),
+    items: page.map((item) => item.item),
+  });
   const 知らんの斷り = 知らん.length
     ? `／知らない種別（指定したままでは 0 件になります）: ${知らない値の文("", 知らん)}`
     : "";
   return [
-    `今日から ${日數の表現}（JST の暦日で数える）の締切: ${hit.length} 件（${名}・日本時間の早い順）${讀めない引數}${知らんの斷り}${端数の斷り}${上限の斷り}${空の種別 ? `／kinds が空なので種別で絞していません（0 件にしたいなら kind を 1 つ）` : ""}`,
+    `今日から ${日數の表現}（JST の暦日で数える）の締切: ${hit.length} 件（${名}・日本時間の早い順）${讀めない引數}${知らんの斷り}${端数の斷り}${上限の斷り}${limitInput.斷り}${端數と上限の斷り(limitInput.使ふ, 100)}${空の種別 ? `／kinds が空なので種別で絞していません（0 件にしたいなら kind を 1 つ）` : ""}`,
     ...(scopeErr ? [scopeErr] : []),
     ...(窓が無いの斷り(窓が無い) ? [窓が無いの斷り(窓が無い)] : []),
     "",
-    ...hit.slice(0, 100).map((r) => line(r, now)),
-    ...(hit.length > 100 ? ["", `（100 件まで表示・残り ${hit.length - 100} 件）`] : []),
-    ...開催の節(開催の行(days, now)),
+    ...deadlinePage.map((row) => line(row, now)),
+    ...(deadlineRemaining
+      ? ["", `（締切はこのページ ${deadlinePage.length} 件まで表示・残り ${deadlineRemaining} 件）`]
+      : []),
+    ...開催の節(events, eventPage, remaining.filter((item) => item.event).length),
+    ...(nextOffset !== null
+      ? ["", `次の結果: 同じ条件で offset: ${nextOffset} を指定してください。`]
+      : []),
     ...(古さ ? ["", 古さ] : []),
   ].join("\n");
 }
 
-function 開催の節(行: ReturnType<typeof 開催の行>): string[] {
+function 開催の節(行: UpcomingEventRow[], page: UpcomingEventRow[], remaining: number): string[] {
   if (!行.length) return [];
   const 日 = (ms: number): string => new Date(ms).toISOString().slice(0, 10);
   const 曜日 = (ms: number): string =>
@@ -1430,14 +1507,12 @@ function 開催の節(行: ReturnType<typeof 開催の行>): string[] {
   return [
     "",
     `開催（会期の行）: ${行.length} 件（同じ窓の会期です。画面の一覧とカレンダーには出ない物で、upcoming.md と同じ窓です。会議名は年を添えた形、開催地は締切の行と同じ日本語表記にします）`,
-    ...行
-      .slice(0, 100)
-      .map(
-        (r) =>
-          `- ${日(r.開始)}(${曜日(r.開始)}) ${r.終了 === r.開始 ? "" : `〜 ${日(r.終了)}(${曜日(r.終了)}) `}` +
-          `| ${r.会議}（key: ${r.key}${r.版 ? `・${r.版}` : ""}）${r.開催地 ? ` | ${r.開催地}` : ""}${r.link ? ` ${r.link}` : ""}`,
-      ),
-    ...(行.length > 100 ? [`- ほか ${行.length - 100} 件`] : []),
+    ...page.map(
+      (r) =>
+        `- ${日(r.開始)}(${曜日(r.開始)}) ${r.終了 === r.開始 ? "" : `〜 ${日(r.終了)}(${曜日(r.終了)}) `}` +
+        `| ${r.会議}（key: ${r.key}${r.版 ? `・${r.版}` : ""}）${r.開催地 ? ` | ${r.開催地}` : ""}${r.link ? ` ${r.link}` : ""}`,
+    ),
+    ...(remaining ? [`- ほか ${remaining} 件`] : []),
   ];
 }
 
@@ -2294,11 +2369,20 @@ const TOOLS = [
   {
     name: "list_upcoming",
     description:
-      "今日から days 日以内の締切と開催日程を返す。締切は最大100件。既定は種別では絞らない（全部）、推定も含む。kind / kinds は日本語の種別名と配列も受ける。推定期間・トラック・前に出ていた締切も表示する。範囲は JST の暦日で判定する。within_days と境目の切り方は同じ。search_deadlines と件数を比べる場合は種別・推定・scope を揃える。既定の条件では件数はそのままでは違う。返す行の形: 締切は日時 | 種別 | 確認状態（ある場合）| 会議名（版の識別子）| ランク | 会期 | 開催地 URL。会期の行は別の形で、開催の節に - 開始日〜終了日 | 会議名（key: 識別子・版）| 開催地 URL。会期の行の会議名は年を添えた形、開催地は締切の行と同じ日本語表記です（空でも「未確認」を出します）。",
+      "今日から days 日以内の締切と開催日程を返す。両方を合わせて時系列に1ページ最大100件。structuredContent.items の type は deadline または event。total・next_offset を返し、続きは同じ条件で offset に next_offset を指定する。scope と kind/kinds は締切の条件で、会期は収録全体の同期間から選ぶ。既定は種別では絞らない（全部）、推定も含む。kind / kinds は日本語の種別名と配列も受ける。推定期間・トラック・前に出ていた締切も表示する。範囲は JST の暦日で判定する。within_days と境目の切り方は同じ。search_deadlines と件数を比べる場合は種別・推定・scope を揃える。既定の条件では件数はそのままでは違う。返す行の形: 締切は日時 | 種別 | 確認状態（ある場合）| 会議名（版の識別子）| ランク | 会期 | 開催地 URL。会期の行は別の形で、開催の節に - 開始日〜終了日 | 会議名（key: 識別子・版）| 開催地 URL。会期の行の会議名は年を添えた形、開催地は締切の行と同じ日本語表記です（空でも「未確認」を出します）。",
     inputSchema: {
       type: "object",
       properties: {
         days: { type: "number", description: "何日先まで（既定 30・最大 400）" },
+        limit: {
+          type: "number",
+          description: "締切と会期を合わせた1ページの件数（既定100・最大100）",
+        },
+        offset: {
+          type: "integer",
+          minimum: 0,
+          description: "取得開始位置。続きは同じ条件と next_offset を指定",
+        },
         kind: {
           type: "string",
           description:
@@ -2422,7 +2506,7 @@ async function callTool(
 ): Promise<string> {
   refreshDataCaches();
   if (name === "search_deadlines") return searchDeadlines(args, now, receive);
-  if (name === "list_upcoming") return listUpcoming(args, now);
+  if (name === "list_upcoming") return listUpcoming(args, now, receive);
   if (name === "venue_info") return venueInfo(args, now);
   if (name === "explain_word") return explainWord(args, now);
   if (name === "recommend_venues") return recommendVenues(args, now, receive);
@@ -2613,7 +2697,7 @@ async function main(): Promise<void> {
         "  論文の入力: --input ファイル名でUTF-8テキスト・JSONを読む。--input - は標準入力。",
         "  件数: --limit N で指定すると、題名末尾の数字も題名として扱います。",
         "  投稿先検索・推薦: --retrieval semantic で実モデル、lexical で語彙検索（既定）。",
-        "  検索・推薦: --json で構造化結果を出力。--offset で続きの取得位置を指定。",
+        "  検索・推薦・直近一覧: --json で構造化結果を出力。--offset で続きの取得位置を指定。",
         '  例: node src/mcp.ts search "セキュリティ" 5',
         '  続き: node src/mcp.ts search "セキュリティ" 5 --offset 5',
         '  推薦の続き: node src/mcp.ts recommend "分散システム" 5 --offset 5',
@@ -2673,10 +2757,10 @@ async function main(): Promise<void> {
   const json = jsonAt >= 0;
   if (json) {
     if (
-      !["search_deadlines", "search_venues", "recommend_venues"].includes(名) ||
+      !["search_deadlines", "search_venues", "recommend_venues", "list_upcoming"].includes(名) ||
       rest.lastIndexOf("--json") !== jsonAt
     ) {
-      process.stderr.write("--json は検索・推薦で1つ指定してください。\n");
+      process.stderr.write("--json は検索・推薦・直近一覧で1つ指定してください。\n");
       process.exitCode = 1;
       return;
     }
@@ -2687,14 +2771,14 @@ async function main(): Promise<void> {
   if (offsetAt >= 0) {
     const value = rest[offsetAt + 1];
     if (
-      !["search_deadlines", "search_venues", "recommend_venues"].includes(名) ||
+      !["search_deadlines", "search_venues", "recommend_venues", "list_upcoming"].includes(名) ||
       rest.lastIndexOf("--offset") !== offsetAt ||
       value === undefined ||
       !/^\d+$/.test(value) ||
       !Number.isSafeInteger(Number(value))
     ) {
       (json ? process.stderr : process.stdout).write(
-        "--offset は検索・推薦の取得開始位置です。0 以上の整数を1つ指定してください。\n",
+        "--offset は検索・推薦・直近一覧の取得開始位置です。0 以上の整数を1つ指定してください。\n",
       );
       process.exitCode = 1;
       return;
@@ -2707,13 +2791,13 @@ async function main(): Promise<void> {
   if (limitAt >= 0) {
     const value = rest[limitAt + 1];
     if (
-      !["search_deadlines", "search_venues", "recommend_venues"].includes(名) ||
+      !["search_deadlines", "search_venues", "recommend_venues", "list_upcoming"].includes(名) ||
       rest.lastIndexOf("--limit") !== limitAt ||
       !/^\d+$/.test(value ?? "") ||
       !Number.isSafeInteger(Number(value)) ||
       Number(value) < 1
     ) {
-      throw new Error("--limit は検索・推薦で1以上の整数を1つ指定してください。");
+      throw new Error("--limit は検索・推薦・直近一覧で1以上の整数を1つ指定してください。");
     }
     explicitLimit = Number(value);
     rest.splice(limitAt, 2);
