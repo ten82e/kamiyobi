@@ -27,6 +27,8 @@ const DATA_PATH = join(ROOT, "data", "snapshot.json");
 const RECOMMENDATION_PATH = join(ROOT, "public", "recommendation-index.json");
 const SERVER_NAME = "kamiyobi";
 const SERVER_VERSION = "1.0.0";
+const EVENT_ONLY_NOTICE_JA =
+  "会期は収録にあります。直近の開催は upcoming.md を確認してください。購読カレンダー（deadlines.ics）は締切のみです。";
 const DEFAULT_PROTOCOL = "2025-06-18";
 
 /* 行の形（`Recommender.candidateRows` が返す物の内、ここで使う分だけ）。 */
@@ -917,7 +919,7 @@ function 名乘りの案内(query: string, list: Row[], now: number): string[] {
             return 'この窓には締切の行がありませんが、**収録には在ります**（scope: "all" で過去の分行が出せます）';
           })()
         : 會期あり
-          ? "締切の行が 1 本もありません（会期だけが収録に在り、upcoming.md とカレンダーには「開催」として載ります）"
+          ? `締切の行が 1 本もありません（${EVENT_ONLY_NOTICE_JA}）`
           : "締切の行が 1 本もありません（会期も確認できていません）";
     return `- ${String(c.title ?? key)}（key: ${key}・版 ${版々.length} 件）: ${狀態}`;
   });
@@ -1439,6 +1441,13 @@ function 開催の節(行: ReturnType<typeof 開催の行>): string[] {
   ];
 }
 
+function venueLookupText(value: unknown): string {
+  return String(value ?? "")
+    .normalize("NFKC")
+    .toLowerCase()
+    .trim();
+}
+
 function venueInfo(args: { key?: unknown; name?: unknown; scope?: unknown }, now: number): string {
   const key = 文字として讀む(args.key);
   const name = 文字として讀む(args.name);
@@ -1447,46 +1456,64 @@ function venueInfo(args: { key?: unknown; name?: unknown; scope?: unknown }, now
   const { list, 生成, 名 } = pick(args.scope ?? "all");
   const 古さ = 古さの斷り(生成, now);
 
-  const 求 = name.toLowerCase();
+  const 求 = venueLookupText(name);
+  const requestedKey = venueLookupText(key);
+  const venues = snapshot().conferences ?? [];
+  const current = key ? venues.find((c) => venueLookupText(c.key) === requestedKey) : undefined;
+  const aliases =
+    key && !current
+      ? venues.filter((c) => {
+          const legacy = (c as { legacy_keys?: unknown }).legacy_keys;
+          return (
+            Array.isArray(legacy) && legacy.some((old) => venueLookupText(old) === requestedKey)
+          );
+        })
+      : [];
+  const lookupKey = current
+    ? venueLookupText(current.key)
+    : aliases.length === 1
+      ? venueLookupText(aliases[0].key)
+      : requestedKey;
   const 的 = (r: Row): boolean =>
     key
-      ? r.conf.key.toLowerCase() === String(key).toLowerCase()
-      : r.conf.title.toLowerCase().includes(求) ||
-        String(r.conf.acronym ?? "")
-          .toLowerCase()
-          .includes(求) ||
-        String(r.conf.full_name ?? "")
-          .toLowerCase()
-          .includes(求) ||
-        r.conf.key.toLowerCase().includes(求);
-  const hit = list.filter((row) => {
+      ? venueLookupText(r.conf.key) === lookupKey
+      : venueLookupText(r.conf.title).includes(求) ||
+        venueLookupText(r.conf.acronym).includes(求) ||
+        venueLookupText(r.conf.full_name).includes(求) ||
+        venueLookupText(r.conf.key).includes(求);
+  const matchesRow = (row: Row): boolean => {
     if (的(row)) return true;
     return (
       row.submission?.sourceRecords.some((record) => {
-        if (key) return record.venueKey.toLowerCase() === key.toLowerCase();
-        const source = snapshot().conferences?.find((conf) => conf.key === record.venueKey);
+        if (key) return venueLookupText(record.venueKey) === lookupKey;
+        const source = venues.find((conf) => conf.key === record.venueKey);
         return [source?.title, source?.acronym, source?.full_name, record.venueKey].some(
-          (value) => typeof value === "string" && value.toLowerCase().includes(求),
+          (value) => typeof value === "string" && venueLookupText(value).includes(求),
         );
       }) ?? false
     );
-  });
+  };
+  const hit = aliases.length > 1 ? [] : list.filter(matchesRow);
   if (!hit.length) {
-    const 求 = name.toLowerCase();
+    const outside =
+      名 !== "収録の全体" && aliases.length < 2 ? displayRows(allRows()).filter(matchesRow) : [];
+    if (outside.length) {
+      const candidates = [...new Map(outside.map((row) => [row.conf.key, row.conf])).values()];
+      return [
+        `「${key || name}」の締切はこの表示範囲にはありません。収録全体には ${outside.length} 件あります。scope: "all" で取得してください。`,
+        ...candidates.slice(0, 20).map((conf) => `- ${conf.title}（key: ${conf.key}）`),
+        ...(candidates.length > 20 ? [`- ほか ${candidates.length - 20} 件`] : []),
+        ...(古さ ? ["", 古さ] : []),
+      ].join("\n");
+    }
+    const 求 = venueLookupText(name);
     const 收錄の會議 = snapshot().conferences ?? [];
     /* key を指定されている時は**その key で**名簿を引く。名が空の儘名前で探すと、
      * `title.includes("")` がどれにも当たつて**先頭の会議**を返してしまふ – 実測 2026-10-12:
      * `venue_info({key: "sc"})`（窓に行が無い）が、全く別の会議（jornadas-dl2）の情報を
      * 「その会議は収録に在りますが…」と返していた。問はた会議の事を言うのがこの道具の役目。 */
 
-    const 古い鍵で當たる = (c: (typeof 收錄の會議)[number]): boolean => {
-      if (String(c.key ?? "").toLowerCase() === key.toLowerCase()) return true;
-      const 古い = (c as { legacy_keys?: unknown }).legacy_keys;
-      return (Array.isArray(古い) ? 古い : []).some(
-        (l: unknown) => String(l ?? "").toLowerCase() === key.toLowerCase(),
-      );
-    };
-    const 問はた全部 = key ? 收錄の會議.filter(古い鍵で當たる) : [];
+    const 問はた全部 = key ? (current ? [current] : aliases) : [];
     const 問はた候補 = key && 問はた全部.length > 1 ? 問はた全部 : [];
     if (問はた候補.length > 1) {
       return [
@@ -1503,17 +1530,15 @@ function venueInfo(args: { key?: unknown; name?: unknown; scope?: unknown }, now
     const 在る = key
       ? 問はた全部[0]
       : 收錄の會議.find((c) => {
-          const ck = String(c.key ?? "").toLowerCase();
-          const title = String(c.title ?? "").toLowerCase();
-          const acronym = String(c.acronym ?? "").toLowerCase();
+          const ck = venueLookupText(c.key);
+          const title = venueLookupText(c.title);
+          const acronym = venueLookupText(c.acronym);
           return (
             Boolean(ck) &&
             (ck === 求 ||
               title.includes(求) ||
               acronym.includes(求) ||
-              String(c.full_name ?? "")
-                .toLowerCase()
-                .includes(求) ||
+              venueLookupText(c.full_name).includes(求) ||
               ck.includes(求))
           );
         });
@@ -1525,9 +1550,7 @@ function venueInfo(args: { key?: unknown; name?: unknown; scope?: unknown }, now
       const link = String(在る.link ?? "").trim();
       return [
         `問はた会議（${String(在る.acronym || 在る.title || 在る.key)}・key: ${String(在る.key)}）は収録に在りますが、**締切の行が 1 本もありません**（版 ${版々.length} 件）。` +
-          (會期あり
-            ? "会期は収録にあるので、直近の一覧（upcoming.md）とカレンダー（deadlines.ics）には「開催」として載ります。"
-            : "会期も確認できていないので、どの一覧にも出ません。"),
+          (會期あり ? EVENT_ONLY_NOTICE_JA : "会期も確認できていないので、どの一覧にも出ません。"),
         ...(link ? [`公式ページ: ${link}`] : []),
         ...(古さ ? ["", 古さ] : []),
       ].join("\n");
@@ -1536,8 +1559,7 @@ function venueInfo(args: { key?: unknown; name?: unknown; scope?: unknown }, now
     const 版の會議 = key
       ? 收錄の會議.find((c) =>
           (Array.isArray(c.editions) ? c.editions : []).some(
-            (e) =>
-              String((e as { id?: unknown } | null)?.id ?? "").toLowerCase() === key.toLowerCase(),
+            (e) => venueLookupText((e as { id?: unknown } | null)?.id) === requestedKey,
           ),
         )
       : undefined;
@@ -1556,7 +1578,7 @@ function venueInfo(args: { key?: unknown; name?: unknown; scope?: unknown }, now
         ? 收錄の會議
             .filter((c) => {
               const 題 = String(c.acronym || c.title || "").trim();
-              return 題.length > 0 && 題.toLowerCase() === 大文字の問.toLowerCase();
+              return 題.length > 0 && venueLookupText(題) === venueLookupText(大文字の問);
             })
             .slice(0, 3)
         : [];
@@ -1600,8 +1622,7 @@ function venueInfo(args: { key?: unknown; name?: unknown; scope?: unknown }, now
   const 一つ = hit[0];
 
   const 會議の版 = (snapshot().conferences ?? []).find(
-    (c: { key?: unknown }) =>
-      String(c.key ?? "").toLowerCase() === String(一つ.conf.key ?? "").toLowerCase(),
+    (c: { key?: unknown }) => venueLookupText(c.key) === venueLookupText(一つ.conf.key),
   );
   const 行を持つ版 = new Set(hit.map((r) => r.ed.id));
   const 版 = [
@@ -2764,10 +2785,10 @@ async function main(): Promise<void> {
                 const 其の儘 =
                   Boolean(語) &&
                   (snapshot().conferences ?? []).some((c) => {
-                    if (String(c.key ?? "").toLowerCase() === 語.toLowerCase()) return true;
+                    if (venueLookupText(c.key) === venueLookupText(語)) return true;
                     const 古い = (c as { legacy_keys?: unknown }).legacy_keys;
                     return (Array.isArray(古い) ? 古い : []).some(
-                      (l: unknown) => String(l ?? "").toLowerCase() === 語.toLowerCase(),
+                      (l: unknown) => venueLookupText(l) === venueLookupText(語),
                     );
                   });
                 return 其の儘 ? { key: 語 } : { name: 語 };
