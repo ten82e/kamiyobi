@@ -342,6 +342,10 @@ function officialLink(editionLink: unknown, venueLink?: unknown): string | null 
   return null;
 }
 
+function placeDisplayJa(value: unknown): string {
+  return String(Recommender.placeJa(Recommender.placeWithPrefectureJa(value)) ?? "").trim();
+}
+
 /** 1 行を 1 行の文字にする。**語は画面の列と同じ入口から取る**（日時・種別・会議・ランク・
  * 会期・開催地）。並びはこちらの都合（日時 → 種別 → 会議 → ランク → 会期 → 開催地）で、
  * 画面の列の順その侭ではない。 */
@@ -377,9 +381,7 @@ function line(r: Row, now: number): string {
     String(Recommender.kindLabelJa(r.kind) ?? r.kind) + (トラック ? `（${トラック}）` : "");
   const 回 = (r.dl.round ?? 1) > 1 ? ` R${r.dl.round}` : "";
   /* 場所の「未確認」も**正本から取る**と同じべた書きだつた。書き寫すとずれる）。 */
-  const 場所 =
-    String(Recommender.placeJa(r.ed.place) ?? "").trim() ||
-    String(Recommender.unconfirmedLabelJa() ?? "未確認");
+  const 場所 = placeDisplayJa(r.ed.place) || String(Recommender.unconfirmedLabelJa() ?? "未確認");
   const ランク = ランクJa(r);
   /* 一覧の行に付く**札**も入れる（画面の列の外にある印 – 語も入口も画面と同じ。
    * `app.ts` が札を並べる順と同じ：①延長②検証状態③締切を過ぎた事④国内）。 */
@@ -1034,7 +1036,7 @@ export function structuredDeadline(r: Row, now: number): Record<string, unknown>
     label: r.dl.label ?? null,
     official_url: officialLink(r.ed.link, r.conf.link),
     place: r.ed.place ?? null,
-    place_ja: Recommender.placeJa(r.ed.place) || null,
+    place_ja: placeDisplayJa(r.ed.place) || null,
     /* 國內の學會か（畫面が列の外に「国内」の札を出すのと同じ判定）。**開催地が日本**とは
      * 別物 – 日本で開かれる國際会議は國內ではない。日本人研究者が「國內の研究会」を
      * 聞いた時に AI が見分けを付けられるやうに、機械可読でも持つ。 */
@@ -1395,9 +1397,7 @@ export function 開催の行(days: number, now: number): UpcomingEventRow[] {
           ...eventMetadata(ed),
           segment_label: typeof seg.label === "string" ? seg.label : null,
           place: typeof ed.place === "string" && ed.place.trim() ? ed.place : null,
-          開催地:
-            Recommender.placeJa(Recommender.placeWithPrefectureJa(ed.place)) ||
-            String(Recommender.unconfirmedLabelJa() ?? "未確認"),
+          開催地: placeDisplayJa(ed.place) || String(Recommender.unconfirmedLabelJa() ?? "未確認"),
           link: officialLink(ed.link, 会議.link) ?? "",
         });
       }
@@ -1654,7 +1654,7 @@ function venueSchedules(conf: { key?: unknown; editions?: unknown[] }) {
           Recommender.eventCellJa({ ed }) ||
           (ed.event_date_precision === "not-announced" ? "会期未発表" : "会期未確認"),
         place: text(ed.place),
-        place_ja: Recommender.placeJa(Recommender.placeWithPrefectureJa(ed.place)) || "未確認",
+        place_ja: placeDisplayJa(ed.place) || "未確認",
         official_url: officialLink(ed.link),
       },
     ];
