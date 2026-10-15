@@ -4048,7 +4048,32 @@ export function toLlmsTxt(
     "    - year: integer, id: string（例 'sigcomm26'）, link: string, place: string",
     "    - date_text: string：上流の自由文の会期表記。構造化されていないことがある。",
     "    - event_start / event_end: string|null：'YYYY-MM-DD'。パース不能なら null。",
-    "    - event_date_precision: string：会期の日付の確かさ。'exact-range'（開始と終了が確定・2,243 版）・'single-day'（1 日・114 版）・'month-only'（月までしか分からない・11 版）・'split-dates'（飛び石・3 版）・'unverified'（未確認・173 版）・'not-announced'（未発表・59 版）。'exact-range' と 'single-day' 以外は日付が空の事が多い（実測 2026-10-06: それ以外の 246 版のうち 15 版は event_start が入っている。収録が増えればこの数も動く）。",
+    // 件数は出力するデータから集計し、収録内容の変更を説明にも反映する。
+    (() => {
+      const 版 = jsonRecords(data?.conferences).flatMap((conf) =>
+        jsonRecords(conf.editions).map((edition) => ({
+          確かさ: String(edition.event_date_precision ?? ""),
+          始まる日: edition.event_start,
+        })),
+      );
+      // 他の件数表示と同じく、3桁ごとに区切る。
+      const 千の桁 = (n: number): string => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+      const 數 = (確かさ: string): number => 版.filter((e) => e.確かさ === 確かさ).length;
+      // 確定した日付範囲・単日の開催回を除き、日付が記録されている件数も示す。
+      const 其の外 = 版.filter((e) => e.確かさ !== "exact-range" && e.確かさ !== "single-day");
+      const 其の外で日が入る = 其の外.filter((e) => String(e.始まる日 ?? "").trim()).length;
+      return (
+        "    - event_date_precision: string：会期の日付の確かさ。" +
+        `'exact-range'（開始と終了が確定・${千の桁(數("exact-range"))} 版）` +
+        `・'single-day'（1 日・${千の桁(數("single-day"))} 版）` +
+        `・'month-only'（月までしか分からない・${千の桁(數("month-only"))} 版）` +
+        `・'split-dates'（飛び石・${千の桁(數("split-dates"))} 版）` +
+        `・'unverified'（未確認・${千の桁(數("unverified"))} 版）` +
+        `・'not-announced'（未発表・${千の桁(數("not-announced"))} 版）。` +
+        `'exact-range' と 'single-day' 以外の ${千の桁(其の外.length)} 版のうち、` +
+        `${千の桁(其の外で日が入る)} 版には event_start が記録されている。件数は出力データから集計する。`
+      );
+    })(),
     "    - call_identity: object：{seriesId, editionId, callId, parentEventId}。呼びかけ（call）の同一性。",
     "    - legacy_ids: string[]：以前の版の識別子（改名・統合の前に使っていた物）。",
     "    - event_review: object：会期の見直しの記録（上流の原文の日付文言 source_date_text・確かめた日 reviewed_on・覚え書き note など。正本は src/model.ts の EventReview）。",
