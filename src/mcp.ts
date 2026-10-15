@@ -2293,7 +2293,37 @@ interface RecommendationIndex {
   uses_reranker: boolean;
   categories: Record<string, string>;
 }
-let recommendationCache: RecommendationIndex | null | undefined;
+class RecommendationIndexError extends Error {
+  readonly diagnostic: {
+    code: string;
+    path: string;
+    retryable: boolean;
+    recovery_command: string;
+  };
+  constructor(reason: "missing" | "invalid" | "unreadable") {
+    const path = "public/recommendation-index.json";
+    const detail = {
+      missing: "がありません",
+      invalid: "の形式が不正です",
+      unreadable: "を読み込めません",
+    }[reason];
+    super(
+      `推薦データ（${path}）${detail}。このリポジトリで \`npm run build\` を実行してデータを生成してから、同じ入力で再試行してください。`,
+    );
+    this.name = "RecommendationIndexError";
+    this.diagnostic = {
+      code: {
+        missing: "RECOMMENDATION_INDEX_NOT_READY",
+        invalid: "RECOMMENDATION_INDEX_INVALID",
+        unreadable: "RECOMMENDATION_INDEX_UNREADABLE",
+      }[reason],
+      path,
+      retryable: true,
+      recovery_command: "npm run build",
+    };
+  }
+}
+let recommendationCache: RecommendationIndex | undefined;
 
 let dataFileVersions = "";
 function refreshDataCaches(): void {
@@ -2318,7 +2348,7 @@ function refreshDataCaches(): void {
 }
 
 /** 索引の更新時に読み直し、名前の IDF と reranker を設定して候補行を作る。 */
-function recommendation(): RecommendationIndex | null {
+function recommendation(): RecommendationIndex {
   if (recommendationCache !== undefined) return recommendationCache;
   try {
     const 品書 = JSON.parse(readFileSync(RECOMMENDATION_PATH, "utf8")) as {
@@ -2328,7 +2358,11 @@ function recommendation(): RecommendationIndex | null {
       categories?: Record<string, string>;
     };
     const conferences = Array.isArray(品書.conferences) ? 品書.conferences : [];
-    if (!conferences.length) throw new Error("conferences が空");
+    if (
+      !conferences.length ||
+      conferences.some((conf) => !conf || typeof conf !== "object" || Array.isArray(conf))
+    )
+      throw new Error("有効な会議一覧がありません");
     Recommender.setNameIdf(Recommender.buildNameIdf(conferences));
     Recommender.setReranker(品書.reranker ?? null);
     recommendationCache = {
@@ -2338,8 +2372,11 @@ function recommendation(): RecommendationIndex | null {
       uses_reranker: isValidRerankerModel(品書.reranker),
       categories: 品書.categories ?? {},
     };
-  } catch {
-    recommendationCache = null;
+  } catch (cause) {
+    const code = cause && typeof cause === "object" && "code" in cause ? String(cause.code) : "";
+    throw new RecommendationIndexError(
+      code === "ENOENT" ? "missing" : code ? "unreadable" : "invalid",
+    );
   }
   return recommendationCache;
 }
@@ -2364,8 +2401,6 @@ async function recommendVenues(
       "画面の入力と同じ形（`題名 | キーワード, キーワード | 投稿先`）が一番よく当たります（1 行だけでも構いません）。",
     ].join("\n");
   const 索引 = recommendation();
-  if (!索引)
-    return `推薦の索引（${RECOMMENDATION_PATH.replace(`${ROOT}/`, "")}）が読めません。このリポジトリで \`npm run build\` を実行してからお試しください。`;
 
   const 無視した = [
     "scope",
@@ -2960,9 +2995,11 @@ async function handle(raw: string, now: number): Promise<void> {
       const 文 = String(error instanceof Error ? error.message : error).trim();
       reply({
         content: [{ type: "text", text: `道具の実行に失敗: ${文 || "不明な失敗"}` }],
-        ...(error instanceof Error && error.name === "SemanticModelError" && "diagnostic" in error
-          ? { structuredContent: { error: (error as SemanticModelError).diagnostic } }
-          : {}),
+        ...(error instanceof RecommendationIndexError
+          ? { structuredContent: { error: error.diagnostic } }
+          : error instanceof Error && error.name === "SemanticModelError" && "diagnostic" in error
+            ? { structuredContent: { error: (error as SemanticModelError).diagnostic } }
+            : {}),
         isError: true,
       });
     }
