@@ -100,6 +100,9 @@ interface SnapshotFile {
     acronym?: unknown;
     full_name?: unknown;
     link?: unknown;
+    categories?: string[];
+    rank?: unknown;
+    tags?: string[];
     editions?: unknown[];
   }>;
   snapshot_metadata?: { generated_at?: unknown };
@@ -299,7 +302,7 @@ function 古さの斷り(生成: unknown, now: number): string {
 
 /** ランクの語（画面のランク列と同じ入口・同じ語）。無い行は画面と同じく「ランク未確認」と
  * 書く – **書かないと、AI が「ランクが無い」と読むか「こちらの抜け」と読むか決まらない**。 */
-function ランクJa(r: Row): string {
+function ランクJa(r: Pick<Row, "rankPairs">): string {
   return (
     (r.rankPairs ?? [])
       .map((pair) => String(Recommender.rankPairLabelJa(pair) ?? "").trim())
@@ -1928,7 +1931,12 @@ function venueInfo(
 
   /* 過去の件数（下の頭で言う – 何件が過ぎたかを AI が自分で数へなくて済むやうに – 第 961 回）。 */
   const 過ぎた件數 = hit.filter((r) => Recommender.deadlineRowIsPast(r, now)).length;
-  const identity = venueIdentity(會議の版 ?? 一つ.conf);
+  // 共有募集の行には統合先の属性が入るため、照会した会議の属性を使う。
+  const venue = 會議の版 ?? 一つ.conf;
+  const venueRankPairs = Object.entries(venue.rank ?? {})
+    .filter(([, grade]) => Boolean(grade))
+    .map(([source, grade]) => `${source}:${grade}`);
+  const identity = venueIdentity(venue);
   receive?.({
     ...identity,
     deadline_total: hit.length,
@@ -1959,19 +1967,19 @@ function venueInfo(
     `版: ${版.map((id) => (行を持つ版.has(id) ? id : `${id}(会期だけ)`)).join(" / ")}`,
 
     `分野: ${
-      (一つ.conf.categories ?? [])
+      (venue.categories ?? [])
         .map((key) => String(Recommender.categoryLabelJa(key) ?? key))
         .join("・") || String(Recommender.unconfirmedLabelJa() ?? "未確認")
     }`,
     /* ランクも言ふ（一つの会議を調べた人が、次の一手を決めるのに要る – 画面の列と同じ語）。 */
-    `ランク: ${ランクJa(一つ)}`,
+    `ランク: ${ランクJa({ rankPairs: venueRankPairs })}`,
     /* **主題**も言ふ。畫面は行の詳細を開いた人の「主題: 」に同じ札を出す
      * （`app.ts` が `Recommender.topicTagsJa` を呼ぶ – 分野より詳しい粒度）。此を言はないと、
      * 「この學會は何を扱ふ處か」をAIが答えられない – 實測 2026-10-16: 收録 139 会議が
      * 主題を持つ（1,203 行）のに、MCP はvenue_infoでも行でも一言も出して居なかつた。
      * 無い會議では行ごと出さない（畫面と同じ – 空の「主題: 」を置かない）。 */
     ...(() => {
-      const 主題 = (Recommender.topicTagsJa(一つ.conf.tags) ?? []).filter(Boolean);
+      const 主題 = (Recommender.topicTagsJa(venue.tags) ?? []).filter(Boolean);
       return 主題.length ? [`主題: ${主題.join("・")}`] : [];
     })(),
     /* その会議の締切が、どの位確かめられているか（行ごとの札だけでは、全体の偏りが分からん）。 */

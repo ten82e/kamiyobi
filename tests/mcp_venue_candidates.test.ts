@@ -45,7 +45,9 @@ it("returns every ambiguous venue as structured identity data and accepts its ke
     {
       key: "jip",
       title: "JIP",
-      categories: [],
+      categories: ["security"],
+      rank: { ccf: "A" },
+      tags: ["security"],
       editions: [
         {
           id: "jip-compsac2027-si",
@@ -59,7 +61,9 @@ it("returns every ambiguous venue as structured identity data and accepts its ke
       key: "ipsj-27-r-compsac",
       title: "Partner Archive",
       legacy_keys: ["old-partner"],
-      categories: [],
+      categories: ["systems"],
+      rank: { core: "B" },
+      tags: ["storage"],
       editions: [
         {
           id: "ipsj-27-r26",
@@ -193,6 +197,40 @@ it("returns every ambiguous venue as structured identity data and accepts its ke
       rows: [{ venue_key: "jip" }],
     });
     expect(shared.content[0].text).toContain("会議: Partner Archive（key: ipsj-27-r-compsac");
+    const classification = (result: { content: { text: string }[] }) =>
+      result.content[0].text.split("\n").filter((line) => /^(分野|ランク|主題):/.test(line));
+    expect(classification(shared)).toEqual([
+      "分野: システム",
+      "ランク: CORE B",
+      "主題: ストレージ",
+    ]);
+    for (const args of [{ key: "old-partner" }, { name: "Partner Archive" }]) {
+      expect(classification(await call({ ...args, scope: "all" }))).toEqual([
+        "分野: システム",
+        "ランク: CORE B",
+        "主題: ストレージ",
+      ]);
+    }
+    expect(classification(await call({ key: "jip", scope: "all" }))).toEqual([
+      "分野: セキュリティ",
+      "ランク: CCF A",
+      "主題: セキュリティ",
+    ]);
+    // 属性が未収録でも、共有募集の統合先の属性で補わない。
+    const {
+      categories: _categories,
+      rank: _rank,
+      tags: _tags,
+      ...withoutClassification
+    } = sharedOnly[1];
+    writeFileSync(
+      join(root, "data/snapshot.json"),
+      JSON.stringify({ conferences: [...conferences, sharedOnly[0], withoutClassification] }),
+    );
+    expect(classification(await call({ key: "ipsj-27-r-compsac", scope: "all" }))).toEqual([
+      "分野: 未確認",
+      "ランク: ランク未確認",
+    ]);
   } finally {
     reader.close();
     child.kill();
