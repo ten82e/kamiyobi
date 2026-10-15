@@ -2327,6 +2327,11 @@ let recommendationCache: RecommendationIndex | undefined;
 
 let dataFileVersions = "";
 function refreshDataCaches(): void {
+  // 読込失敗は要求内で共有し、次の要求ではファイルの更新がなくても再試行する。
+  if (catalogCache === null) {
+    catalogCache = undefined;
+    軸の索引 = undefined;
+  }
   const versions = [CATALOG_PATH, DATA_PATH, RECOMMENDATION_PATH]
     .map((path) => {
       try {
@@ -2860,7 +2865,15 @@ async function callTool(
   refreshDataCaches();
   if (name === "search_deadlines") return searchDeadlines(args, now, receive);
   if (name === "list_upcoming") return listUpcoming(args, now, receive);
-  if (name === "venue_info") return venueInfo(args, now, receive);
+  if (name === "venue_info") {
+    let fallback = false;
+    const text = venueInfo(args, now, (result) => {
+      fallback = result.catalog_fallback === true;
+      receive?.(result);
+    });
+    const notice = 窓が無いの斷り(fallback);
+    return notice ? `${text}\n\n${notice}` : text;
+  }
   if (name === "explain_word") return explainWord(args, now);
   if (name === "recommend_venues") return recommendVenues(args, now, receive);
   if (name === "search_venues") {
