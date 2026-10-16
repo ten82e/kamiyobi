@@ -1201,7 +1201,7 @@ export function structuredDeadline(r: Row, now: number): Record<string, unknown>
      * `Recommender.verificationSummaryJa`）。內部の鍵名（`source_class`・
      * `verified_fields`）をそのまま醫に渡すと、日本人研究者が讀めない
      * （實測 2026-10-16: MCP は内部表記のまま出して居た）。記録が無い行は null。 */
-    verification_ja: Recommender.verificationSummaryJa(r.dl),
+    verification_ja: Recommender.verificationSummaryJa(r.dl, now),
     verification: r.dl.verification ?? null,
     event_start: r.ed.event_start ?? null,
     event_end: r.ed.event_end ?? null,
@@ -1715,7 +1715,15 @@ function listUpcoming(
     "",
     ...deadlinePage.map((row) => line(row, now)),
     ...(deadlineRemaining
-      ? ["", `（締切はこのページ ${deadlinePage.length} 件まで表示・残り ${deadlineRemaining} 件）`]
+      ? [
+          "",
+          /* 締切と会期は日時の早い順に混ぜるので、このページが会期だけで埋まる事がある。
+           * 「0 件まで表示」と書くと、締切が無いのか出ていないだけなのか読めない
+           * （2026-10-16 実測: 14 日・limit 3 で「締切 47 件」の次に「0 件まで表示」と出た）。 */
+          deadlinePage.length
+            ? `（締切はこのページ ${deadlinePage.length} 件まで表示・残り ${deadlineRemaining} 件）`
+            : `（このページには締切が出ていません（会期だけ）。締切と会期を日時の早い順に混ぜているためです。締切はこの先に ${deadlineRemaining} 件あり、続きは offset: ${nextOffset ?? 0} で取れます）`,
+        ]
       : []),
     ...開催の節(events, eventPage, remaining.filter((item) => item.event).length),
     ...(nextOffset !== null

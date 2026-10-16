@@ -8125,15 +8125,20 @@ const Recommender = (() => {
   /** 確認範圍の語。讀み取つた項目が有る時は其の列、無い時は判定名か既定の三つ。
    * （項目が讀めた時は**其の儘譯す** – 空の欄を出さない為に既定で埋めない。畫面の
    *  `fieldsJa` と同じ形。） */
-  function verifyScopeJa(verified: unknown, selector: unknown): string {
+  function verifyScopeJa(verified: unknown, selector: unknown, confirmed: boolean): string {
     if (Array.isArray(verified))
       return verified
         .map((item) => VERIFY_FIELD_LABELS_JA[String(item)] || String(item))
         .join("・");
     const name = typeof selector === "string" ? selector.trim() : "";
-    if (!name) return "日付・時刻・タイムゾーン";
-    const label = VERIFY_SELECTOR_LABELS_JA[name];
-    return label ? `${label}（公式ページの読み取り箇所）` : `機械の判定名のまま: ${name}`;
+    if (name) {
+      const label = VERIFY_SELECTOR_LABELS_JA[name];
+      return label ? `${label}（公式ページの読み取り箇所）` : `機械の判定名のまま: ${name}`;
+    }
+    /* 確かめていない行に「日付・時刻・タイムゾーン」と書くと、その範囲を確かめた事になる。
+     * 記録はあるが中身が無い行（実測 2026-10-16: 収録 871 行のうち 529 行）は、
+     * まだ確かめていないと言う（同じ欄の「公式確認 未確認」と食い違わせない）。 */
+    return confirmed ? "日付・時刻・タイムゾーン" : "まだ確かめていません";
   }
 
   /** 語彙の表（畫面が讀む用 – 寫さずに正本から取る）。 */
@@ -8154,7 +8159,10 @@ const Recommender = (() => {
   /** 行の詳細の「公式確認」を**日本語の部品**で返す（畫面が HTML に組み、MCP が其の侭返す）。
    * 記録が無い行は null（畫面も欄ごと出さない）。日時は JST の暦日の時刻で、
    * 利用者の端末の時刻合わせに左右されない書き方にする。 */
-  function verificationSummaryJa(dl: unknown): {
+  function verificationSummaryJa(
+    dl: unknown,
+    now?: number,
+  ): {
     verified_at: string;
     source: string;
     scope: string;
@@ -8176,10 +8184,21 @@ const Recommender = (() => {
         ? jstStampJa(String(verification.last_verified_at))
         : "未確認",
       source: verifySourceLabelJa(verification.source_class),
-      scope: verifyScopeJa(verified, verification.selector_or_field),
+      scope: verifyScopeJa(
+        verified,
+        verification.selector_or_field,
+        Boolean(verification.last_verified_at),
+      ),
       status: VERIFICATION_STATUS_LABELS_JA[String(verification.status ?? "")] || "再確認待ち",
+      /* 見直す予定が過ぎている行は、その事を添える（「予定」とだけ書くと、これから
+       * 見直すように読める – データが古い日に開いた人に嘘になる）。`now` を渡さない
+       * 呼び方（検査が関数を抜き出して走らせる物）では何も添えない。 */
       next_check_at: verification.next_check_at
-        ? jstStampJa(String(verification.next_check_at))
+        ? jstStampJa(String(verification.next_check_at)) +
+          (Number.isFinite(Number(now)) &&
+          Date.parse(String(verification.next_check_at)) < Number(now)
+            ? "（過ぎています）"
+            : "")
         : null,
     };
   }

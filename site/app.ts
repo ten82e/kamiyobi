@@ -4369,7 +4369,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
      * （第 1106 回: MCP は内部の鍵名のまま出して居た。）拔き出して動かす検査は
      * `Recommender` を注入する。 */
 
-    const 要約 = Recommender.verificationSummaryJa(dl);
+    const 要約 = Recommender.verificationSummaryJa(dl, Date.now());
     if (!要約) return "";
     return (
       '<div class="verification-summary"><b>公式確認</b> ' +

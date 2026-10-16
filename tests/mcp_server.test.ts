@@ -3671,12 +3671,12 @@ it("推薦の行にも正式名を持つ（第 1105 回）", async () => {
 it("公式確認の日本語は、行の詳細が並べる部品と同じ（第 1106 回）", async () => {
   /* 1) **配線** – 畫面も MCP も同じ正本を呼ぶ（此處に寫くと兩者が違ふ字面になる）。 */
   expect(siteRuntime("app.js"), "畫面が正本を呼んで居ない").toContain(
-    "Recommender.verificationSummaryJa(dl)",
+    "Recommender.verificationSummaryJa(dl, Date.now())",
   );
   expect(
     readFileSync(join(REPO_ROOT, "src", "mcp.ts"), "utf8"),
     "MCP が正本を呼んで居ない",
-  ).toContain("Recommender.verificationSummaryJa(r.dl)");
+  ).toContain("Recommender.verificationSummaryJa(r.dl, now)");
 
   /* 2) **實物** – 畫面の HTML・正本の部品・MCP の行の三つが、全部の締切で一致する。
    * 畫面の函數は拔き出して動かし（`Recommender` を注入）、MCP の行は其の export を呼む。 */
@@ -3694,7 +3694,8 @@ it("公式確認の日本語は、行の詳細が並べる部品と同じ（第 
     "let n = 0; let bad = [];",
     "for (const r of rows) {",
     "  const html = verificationSummary(r.dl);",
-    "  const 正本 = Recommender.verificationSummaryJa(r.dl);",
+    /* 見直す予定が過ぎた行に「（過ぎています）」を添えるので、三つとも同じ時計で組む。 */
+    "  const 正本 = Recommender.verificationSummaryJa(r.dl, Date.now());",
     "  const mcp = structuredDeadline(r, Date.now()).verification_ja;",
     "  const 取る = (名前) => { const m = html.match(new RegExp('<b>' + 名前 + '</b> ([^<]*)')); return m ? m[1] : null; };",
     /* 次の確認予定はHTMLの同じ書式から拔く（正規表現のリテラルを二重引用符の中で書くと
