@@ -5994,10 +5994,16 @@ function semanticOutput(value: unknown): value is SemanticOutput {
 
   let paperInputBeforeSwap: PaperInputJa | null = null;
 
+  function setPaperActionHidden(button: HTMLElement, hidden: boolean): void {
+    const moveFocus = hidden && document.activeElement === button;
+    button.hidden = hidden;
+    if (moveFocus) valueElement("paperPrimaryTitle").focus();
+  }
+
   /** 入れ替え前の入力に戻せることを、ボタンで示す（ボタン名は画面側にある）。 */
   function setPaperUndoVisible(visible: boolean): void {
     const button = $("paperUndo");
-    if (button) button.hidden = !visible;
+    if (button) setPaperActionHidden(button, !visible);
   }
 
   function setPrimaryRecord(record?: Partial<PaperRecord>) {
@@ -6013,7 +6019,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     pdfJob++;
     if (pdfAbortController) pdfAbortController.abort();
     pdfAbortController = null;
-    cancelPdf.hidden = true;
+    setPaperActionHidden(cancelPdf, true);
     $("paperFileLabel").textContent = "未選択";
   }
   cancelPdf.addEventListener("click", () => {
@@ -6075,7 +6081,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       .finally(() => {
         if (job === pdfJob) {
           pdfAbortController = null;
-          cancelPdf.hidden = true;
+          setPaperActionHidden(cancelPdf, true);
         }
       });
     target.value = "";

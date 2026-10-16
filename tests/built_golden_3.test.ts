@@ -2465,6 +2465,7 @@ it("条件クリアは論文の入力を消さず、消す操作は名前の書�
     "const paperFiles = { value: 'stale' };",
     "let pdfJob = 0, pdfAbortController = null;",
     "const cancelPdf = { hidden: true };",
+    "const document = { activeElement: null };",
     // 「論文の入力を消す」は下書きの記憶も消す（消した物が次の刷新で戻ってくる形を作らない）。
     // そこで記憶の側も本物と同じ形で生やす。
     "const PAPER_DRAFT_KEY = 'draft.key';",
@@ -2479,6 +2480,7 @@ it("条件クリアは論文の入力を消さず、消す操作は名前の書�
     jsFunction(app, "paperInputHasText"),
     jsFunction(app, "readPaperInput"),
     jsFunction(app, "savePaperDraft"),
+    jsFunction(app, "setPaperActionHidden"),
     jsFunction(app, "stopPaperFileRead"),
     jsFunction(app, "clearPaperInput").replace(
       "function clearPaperInput",

@@ -18,6 +18,7 @@ const inputFunctions = [
   "syncPaperText",
   "paperInputHasText",
   "paperInputWithSample",
+  "setPaperActionHidden",
   "setPaperUndoVisible",
   "savePaperDraft",
   "clearPaperInput",
@@ -43,10 +44,18 @@ interface RecordInput {
   abstract?: string;
 }
 function harness() {
+  let active: unknown = null;
   class Input {
     files: Array<{ name: string }> = [];
     value = "";
-    hidden = true;
+    private isHidden = true;
+    get hidden() {
+      return this.isHidden;
+    }
+    set hidden(value: boolean) {
+      this.isHidden = value;
+      if (value && active === this) active = null;
+    }
     clicks = 0;
     listeners = new Map<string, (event: { currentTarget: Input }) => void>();
     addEventListener(name: string, fn: (event: { currentTarget: Input }) => void) {
@@ -55,6 +64,9 @@ function harness() {
     click() {
       this.clicks++;
       this.listeners.get("click")?.({ currentTarget: this });
+    }
+    focus() {
+      active = this;
     }
   }
   const input = new Input();
@@ -71,16 +83,18 @@ function harness() {
       "paperPrimaryKeywords",
       "paperReferences",
       "paperText",
-    ].map((id) => [id, { value: id === "paperPrimaryTitle" ? "入力済み論文" : "" }]),
+    ].map((id) => [
+      id,
+      {
+        value: id === "paperPrimaryTitle" ? "入力済み論文" : "",
+        focus() {
+          active = this;
+        },
+      },
+    ]),
   );
   const draft = new Map<string, string>();
-  const cancel = {
-    hidden: true,
-    addEventListener: (_name: string, fn: () => void) => {
-      cancel.click = fn;
-    },
-    click: () => {},
-  };
+  const cancel = new Input();
   const pending = new Map<
     string,
     {
@@ -100,7 +114,12 @@ function harness() {
       HTMLInputElement: Input,
       AbortController,
       Recommender,
-      document: { querySelectorAll: () => [sampleNode] },
+      document: {
+        querySelectorAll: () => [sampleNode],
+        get activeElement() {
+          return active;
+        },
+      },
       PAPER_DRAFT_KEY: "draft",
       paperPrimaryVenue: "",
       window: {
@@ -148,6 +167,12 @@ function harness() {
     written,
     values,
     draft,
+    activeElement: () => active,
+    focus: (id: string) => {
+      if (id === "paperUndo") undo.focus();
+      else if (id === "cancelPdf") cancel.focus();
+      else values[id].focus();
+    },
     choose: () => choose.click(),
     chooserOpens: () => input.clicks,
     undoButton: undo,
@@ -190,6 +215,84 @@ it("opens the native chooser without changing the current paper or draft", () =>
   expect(ui.written).toEqual([]);
   expect(ui.pending.size).toBe(0);
   expect(ui.applied()).toBe(0);
+});
+
+it("returns focus to the restored title when the focused undo button disappears", () => {
+  const ui = harness();
+  const originalDraft = ui.draft.get("draft");
+  ui.sample();
+  ui.focus("paperUndo");
+  ui.undo();
+  expect(ui.activeElement()).toBe(ui.values.paperPrimaryTitle);
+  expect(ui.values.paperPrimaryTitle.value).toBe("入力済み論文");
+  expect(ui.draft.get("draft")).toBe(originalDraft);
+  expect(ui.undoButton.hidden).toBe(true);
+});
+
+it("does not move focus from another field when showing or hiding undo", () => {
+  const ui = harness();
+  ui.focus("paperPrimaryAbstract");
+  ui.sample();
+  expect(ui.activeElement()).toBe(ui.values.paperPrimaryAbstract);
+  ui.undo();
+  expect(ui.activeElement()).toBe(ui.values.paperPrimaryAbstract);
+  expect(ui.undoButton.hidden).toBe(true);
+});
+
+it.each([
+  ["paper.pdf", "success"],
+  ["paper.txt", "success"],
+  ["paper.pdf", "failure"],
+  ["paper.txt", "failure"],
+])("keeps keyboard focus in the input after %s finishes with %s", async (file, outcome) => {
+  const ui = harness();
+  await ui.select(file);
+  ui.focus("cancelPdf");
+  if (outcome === "success") ui.pending.get(file)!.resolve({ title: "読み取った論文" });
+  else ui.pending.get(file)!.reject(new Error("reading failed"));
+  await tick();
+  expect(ui.activeElement()).toBe(ui.values.paperPrimaryTitle);
+  expect(ui.cancel.hidden).toBe(true);
+  expect(ui.values.paperPrimaryTitle.value).toBe(
+    outcome === "success" ? "読み取った論文" : "入力済み論文",
+  );
+});
+
+it("does not take focus from another field when a file finishes reading", async () => {
+  const ui = harness();
+  await ui.select("paper.txt");
+  ui.focus("paperPrimaryKeywords");
+  ui.pending.get("paper.txt")!.resolve({ title: "読み取った論文" });
+  await tick();
+  expect(ui.activeElement()).toBe(ui.values.paperPrimaryKeywords);
+  expect(ui.cancel.hidden).toBe(true);
+});
+
+it("keeps focus on an undo button that remains visible after another file is read", async () => {
+  const ui = harness();
+  ui.sample();
+  await ui.select("replacement.txt");
+  ui.focus("paperUndo");
+  ui.pending.get("replacement.txt")!.resolve({ title: "選び直した論文" });
+  await tick();
+  expect(ui.activeElement()).toBe(ui.undoButton);
+  expect(ui.undoButton.hidden).toBe(false);
+  expect(ui.values.paperPrimaryTitle.value).toBe("選び直した論文");
+});
+
+it("returns focus to the input after cancelling the focused file read", async () => {
+  const ui = harness();
+  await ui.select("cancelled.pdf");
+  ui.focus("cancelPdf");
+  ui.cancel.click();
+  const read = ui.pending.get("cancelled.pdf")!;
+  read.reject(Object.assign(new Error("cancelled"), { name: "AbortError" }));
+  await tick();
+  expect(read.signal.aborted).toBe(true);
+  expect(ui.activeElement()).toBe(ui.values.paperPrimaryTitle);
+  expect(ui.cancel.hidden).toBe(true);
+  expect(ui.values.paperPrimaryTitle.value).toBe("入力済み論文");
+  expect(ui.label.textContent).toBe("キャンセルしました");
 });
 
 it("cancels the previous read when another paper file is selected", async () => {
