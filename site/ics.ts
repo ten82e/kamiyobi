@@ -267,6 +267,11 @@ export function icsCalendarText(
  * 「画面で絞り込んだ写し」である事を名前に入れる。 */
 export const ICS_VIEW_CAL_NAME_JA = "kamiyobi 締切一覧（この一覧の写し）";
 
+/** 推薦の候補を書き出した 1 本の名前。**一覧の写しと同じ名にしない** – 同じカレンダー
+ * アプリに両方を入れた人は、棚に同じ名が 2 つ並んで見分けられなくなる（2026-10-17 実測:
+ * 推薦の画面で落とした ICS の見出しが「この一覧の写し」になっていた）。 */
+export const ICS_VIEW_CANDIDATE_CAL_NAME_JA = "kamiyobi 締切一覧（投稿先の候補の写し）";
+
 /** 画面の 1 行を、カレンダーの 1 件に組むための材料。**画面の表示と同じ値**を渡す
  * （会議名は年を添えた形、種別・日付欄・会期・開催地は画面と同じ入口から取った物）。 */
 export interface ScreenDeadlineInput {
@@ -419,9 +424,13 @@ export function icsViewDescriptionJa(
     /* 同じ締切は、購読の側と同じ識別子（UID）を付ける – 兩方を同じカレンダーに入れても
      * 同じ予定として扱はれる。品書に UID が載つて居ない締切（購読の対象より先の物など）は
      * 此処で組むので、其の分だけは別の予定になり得る – 其の事も言ふ。 */
-    "同じ締切には、購読の deadlines.ics と同じ識別子（UID）を付けます。",
-    "購読の対象より先の締切（「収録の全体を読み込む」で出した物）は、購読の側と別の",
-    "識別子になる事があります – 同じカレンダーに入れると、その分だけ二度並びます。",
+    /* 全履歴を読み込んだ締切も購読と同じ UID になった（`data.json` にも載せた）ので、
+     * 「先の締切は別の識別子になる」という但し書きは實態に合はなくなった（2026-10-17）。
+     * 別の識別子に成るのは**購読に入つて居ない締切**（過ぎた物など）だけで、其れは
+     * 購読の側に無いので二重には成らない。 */
+    "同じ締切には、購読の deadlines.ics と同じ識別子（UID）を付けます –",
+    "両方を同じカレンダーに入れても、同じ予定として扱われます。",
+    "購読に入っていない締切（過ぎた物など）には、この写しだけの識別子を付けます。",
     generatedAt && !Number.isNaN(generatedAt.getTime())
       ? `データ生成: ${stampHumanJa(generatedAt)}。`
       : "",
@@ -435,12 +444,12 @@ export function icsViewText(
   items: readonly ScreenDeadlineInput[] | null | undefined,
   now: Date | null | undefined,
   generatedAt?: Date | null,
-  options?: { scopeJa?: string },
+  options?: { scopeJa?: string; calName?: string },
 ): string {
   const safeNow = now instanceof Date && !Number.isNaN(now.getTime()) ? now : new Date();
   const rows = icsRowsFromScreen(items, safeNow);
   return icsCalendarText(rows, safeNow, {
-    calName: ICS_VIEW_CAL_NAME_JA,
+    calName: options?.calName ?? ICS_VIEW_CAL_NAME_JA,
     description: icsViewDescriptionJa(rows, generatedAt ?? null, options?.scopeJa),
   });
 }

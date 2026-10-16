@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   ICS_VIEW_CAL_NAME_JA,
+  ICS_VIEW_CANDIDATE_CAL_NAME_JA,
   icsViewText,
   jstParts,
   type ScreenDeadlineInput,
@@ -300,6 +301,47 @@ describe("画面の一覧をカレンダーに書き出す（第 856 回）", ()
     expect(落ちた.length, "1 本も落ちて來ない").toBe(1);
     /* 名前に JST の日が入る（CSV と同じ約束 – 端末の時刻合わせで日付が一日ずれない）。 */
     expect(落ちた[0].name, "名前が違う").toMatch(/^kamiyobi-deadlines-\d{8}\.ics$/);
+    /* 候補の別の時は、名前も候補の物になる（CSV と同じ規則）。同じ日に兩方を落とした人が
+     * 暦の棚で見分けられるように – 入る予定も違う。2026-10-17 實測: 推薦の畫面で落とした
+     * ICS が一覧と同じ名前に成り、同じ日に兩方を落とすと片方が上書きされた。 */
+    const 候補を走らせる = new Function(
+      "shownIcsText",
+      "Blob",
+      "URL",
+      "document",
+      "state",
+      "candidateScopeOnScreen",
+      vmSafeSource(`${src}\nreturn exportShownIcs;`),
+    )(
+      () => "BEGIN:VCALENDAR\r\nEND:VCALENDAR\r\n",
+      Blob,
+      URL,
+      document,
+      { mode: "recommend" },
+      () => true,
+    ) as () => void;
+    落ちた.length = 0;
+    候補を走らせる();
+    expect(落ちた.length, "候補の 1 本が落ちて來ない").toBe(1);
+    expect(落ちた[0].name, "候補の名前が一覧と同じ").toMatch(/^kamiyobi-candidates-\d{8}\.ics$/);
+  });
+
+  it("候補の書き出しは、暦の名も一覧と分ける", () => {
+    /* 同じカレンダーアプリに両方を入れた人は、棚に同じ名が 2 つ並ぶと見分けられない。
+     * 2026-10-17 實測: 推薦の畫面で落とした ICS の見出しが「この一覧の写し」だった。 */
+    expect(ICS_VIEW_CANDIDATE_CAL_NAME_JA, "候補の暦の名が一覧と同じ").not.toBe(
+      ICS_VIEW_CAL_NAME_JA,
+    );
+    const 候補 = icsViewText([材料()], NOW, NOW, { calName: ICS_VIEW_CANDIDATE_CAL_NAME_JA });
+    expect(候補, "見出しが候補の名になっていない").toContain(
+      `X-WR-CALNAME:${ICS_VIEW_CANDIDATE_CAL_NAME_JA}`,
+    );
+    const 一覧 = icsViewText([材料()], NOW, NOW);
+    expect(一覧, "渡さない時の既定が変わった").toContain(`X-WR-CALNAME:${ICS_VIEW_CAL_NAME_JA}`);
+    /* 書き出しの本文にも、どちらの写しかを書く。 */
+    expect(候補, "説明が候補の物だと言っていない").toContain("候補");
+    expect(候補, "購読と同じ識別子を使う事を言っていない").toContain("同じ識別子");
+    expect(候補, "古い但し書きが殘っている").not.toContain("購読の対象より先の締切");
   });
 
   it("押した時の動きが、見えている行だけを渡す（配付物を読み直さない）", () => {
@@ -367,7 +409,8 @@ describe("画面の一覧をカレンダーに書き出す（第 856 回）", ()
       "この候補の締切 12 件をカレンダー（.ics）でダウンロード",
     );
 
-    expect(app, "推薦の別を渡していない").toContain("shownIcsText(candidateScopeOnScreen())");
+    expect(app, "候補の別を求めていない").toContain("const 候補 = candidateScopeOnScreen();");
+    expect(app, "推薦の別を渡していない").toContain("shownIcsText(候補)");
     expect(app, "書き出しの別の正本がない").toContain("function candidateScopeOnScreen()");
     /* 候補の時も、候補が空なら出さない（hidden の条件から推薦の別を外した）。 */
     expect(app, "推薦では出さないままに成つている").not.toContain(

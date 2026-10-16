@@ -1,7 +1,12 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { expect, it } from "vitest";
-import { icsViewText, jstParts } from "../site/ics.ts";
+import {
+  ICS_VIEW_CAL_NAME_JA,
+  ICS_VIEW_CANDIDATE_CAL_NAME_JA,
+  icsViewText,
+  jstParts,
+} from "../site/ics.ts";
 import Recommender from "../site/recommender.ts";
 import { REPO_ROOT } from "./helpers.ts";
 import { jsFunction, siteRuntime } from "./runtime_extract.ts";
@@ -56,6 +61,9 @@ function harness(initial: Row[], mode: "recommend" | "deadlines" = "deadlines") 
     "icsViewText",
     "DATA",
     "candidateScopeOnScreen",
+    /* 書き出しの暦の名は画面の正本から取る（候補と一覧で分ける）。 */
+    "ICS_VIEW_CAL_NAME_JA",
+    "ICS_VIEW_CANDIDATE_CAL_NAME_JA",
     [
       jsFunction(app, "countJa"),
       jsFunction(app, "exportIcsLabelJa"),
@@ -77,6 +85,8 @@ function harness(initial: Row[], mode: "recommend" | "deadlines" = "deadlines") 
     icsViewText,
     { generated_at: "2029-12-31T00:00:00Z" },
     () => candidates,
+    ICS_VIEW_CAL_NAME_JA,
+    ICS_VIEW_CANDIDATE_CAL_NAME_JA,
   );
   function replace(rows: Row[]) {
     shown.splice(0, shown.length, ...rows);

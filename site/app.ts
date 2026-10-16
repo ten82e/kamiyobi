@@ -1,4 +1,10 @@
-import { icsViewText, jstParts, type ScreenDeadlineInput } from "./ics.js";
+import {
+  ICS_VIEW_CAL_NAME_JA,
+  ICS_VIEW_CANDIDATE_CAL_NAME_JA,
+  icsViewText,
+  jstParts,
+  type ScreenDeadlineInput,
+} from "./ics.js";
 import { loadPublishedRecommendation } from "./publish.js";
 import Recommender from "./recommendation.js";
 import {
@@ -3192,12 +3198,15 @@ function semanticOutput(value: unknown): value is SemanticOutput {
      * カレンダーの情報欄で取り違へない樣に）。 */
     return icsViewText(shownIcsInput(), new Date(), generated, {
       scopeJa: recMode ? "「投稿先を探す」が挙げた候補" : "絞り込んだ",
+      /* 暦の棚に出る名前も分ける（同じ名が 2 つ並ぶと見分けられない）。 */
+      calName: recMode ? ICS_VIEW_CANDIDATE_CAL_NAME_JA : ICS_VIEW_CAL_NAME_JA,
     });
   }
 
   function exportShownIcs() {
     /* 候補の別は CSV と同じ規則で決める（推薦の画面でも、論文情報が空なら候補は出ていない）。 */
-    const text = shownIcsText(candidateScopeOnScreen());
+    const 候補 = candidateScopeOnScreen();
+    const text = shownIcsText(候補);
     if (typeof Blob === "undefined" || typeof URL === "undefined" || !URL.createObjectURL) return;
     const url = URL.createObjectURL(new Blob([text], { type: "text/calendar;charset=utf-8" }));
     /* ファイル名の日は JST（CSV と同じ理由 – 端末の時刻合わせで日付が一日ずれる）。 */
@@ -3205,7 +3214,11 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     const stamp = `${stampDate.getUTCFullYear()}${String(stampDate.getUTCMonth() + 1).padStart(2, "0")}${String(stampDate.getUTCDate()).padStart(2, "0")}`;
     const anchor = document.createElement("a");
     anchor.href = url;
-    anchor.download = `kamiyobi-deadlines-${stamp}.ics`;
+    /* 候補と一覧は別の物なので、名前も分ける（CSV と同じ規則。同じ日に両方を落とした人が
+     * 暦の棚で見分けられるように – 入る予定も違う。2026-10-17 実測: 推薦の画面で落とした
+     * ICS が一覧と同じ `kamiyobi-deadlines-<日>.ics` に成り、同じ日に兩方を落とすと
+     * 片方が上書きされた）。 */
+    anchor.download = `kamiyobi-${候補 ? "candidates" : "deadlines"}-${stamp}.ics`;
     document.body.appendChild(anchor);
     anchor.click();
     document.body.removeChild(anchor);
