@@ -117,3 +117,50 @@ it("keeps revisions distinct and never installs an obsolete completion", async (
   expect(ui.loaded).toEqual([{ generation: 2, ok: true }]);
   expect(ui.context.semLoadedModel).toBe("en@new");
 });
+
+it("reuses both ready language models across repeated language changes", async () => {
+  const ui = harness();
+  const english = () => {};
+  const japanese = () => {};
+  ui.request(1, "en");
+  await tick();
+  ui.pending[0].resolve(english);
+  await tick();
+  ui.request(2, "ja");
+  await tick();
+  ui.pending[1].resolve(japanese);
+  await tick();
+  for (let generation = 3; generation <= 8; generation++) {
+    const language = generation % 2 ? "en" : "ja";
+    ui.request(generation, language);
+    await tick();
+    expect(ui.pending).toHaveLength(2);
+    expect(ui.context.semModel).toBe(language === "en" ? english : japanese);
+    expect(ui.context.semLoadedModel).toBe(`${language}@pinned`);
+    expect(ui.loaded.at(-1)).toEqual({ generation, ok: true });
+  }
+});
+
+it("retains a model that completed while its input was obsolete for the next language switch", async () => {
+  const ui = harness();
+  ui.request(1, "en");
+  ui.request(2, "ja");
+  await tick();
+  const english = () => {};
+  const japanese = () => {};
+  ui.pending[0].resolve(english);
+  await tick();
+  expect(ui.loaded).toEqual([]);
+  expect(ui.context.semModel).toBeNull();
+  ui.pending[1].resolve(japanese);
+  await tick();
+  expect(ui.context.semModel).toBe(japanese);
+  ui.request(3, "en");
+  await tick();
+  expect(ui.pending).toHaveLength(2);
+  expect(ui.context.semModel).toBe(english);
+  expect(ui.loaded).toEqual([
+    { generation: 2, ok: true },
+    { generation: 3, ok: true },
+  ]);
+});

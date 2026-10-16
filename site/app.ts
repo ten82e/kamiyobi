@@ -2003,8 +2003,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         return module.pipeline("feature-extraction", modelId, { revision });
       });
       semModelLoads.set(modelKey, pending);
-      const finished = () => semModelLoads.delete(modelKey);
-      pending.then(finished, finished);
+      pending.catch(() => semModelLoads.delete(modelKey));
     }
     pending
       .then((model) => {
