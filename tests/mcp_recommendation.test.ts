@@ -98,7 +98,7 @@ interface Reply {
     };
   };
 }
-function callSequence(root: string, argumentsList: unknown[]): Reply[] {
+function callSequence(root: string, argumentsList: unknown[], tool = "recommend_venues"): Reply[] {
   const result = spawnSync(process.execPath, [join(root, "run.ts")], {
     encoding: "utf8",
     timeout: 20000,
@@ -108,7 +108,7 @@ function callSequence(root: string, argumentsList: unknown[]): Reply[] {
           jsonrpc: "2.0",
           id: i + 1,
           method: "tools/call",
-          params: { name: "recommend_venues", arguments: args },
+          params: { name: tool, arguments: args },
         }),
       )
       .join("\n")}\n`,
@@ -464,20 +464,171 @@ describe("MCP recommendation results with independent raw fixtures", () => {
     },
   );
 
-  it.each([null, { title: "GPU programming" }, ["GPU programming"], true, 99])(
-    "rejects a non-string paper value and accepts JSON encoded as a string: %j",
-    (paper) => {
+  it.each([
+    { paper: null, message: "paper は文字列" },
+    { paper: ["GPU programming"], message: "paper[0] は title・abstract を持つ論文オブジェクト" },
+    { paper: [], message: "paper に論文を1件以上" },
+    { paper: true, message: "paper は文字列" },
+    { paper: 99, message: "paper は文字列" },
+  ])(
+    "rejects unsupported paper input and accepts a corrected JSON string: $paper",
+    ({ paper, message }) => {
       const [invalid, recovered] = callSequence(sandbox(input), [
         { paper },
         { paper: JSON.stringify({ title: "GPU programming" }) },
       ]);
       expect(invalid.result?.isError).toBe(true);
-      expect(invalid.result?.content[0].text).toContain("paper は文字列");
+      expect(invalid.result?.content[0].text).toContain(message);
       expect(invalid.result?.structuredContent).toBeUndefined();
       expect(recovered.result?.isError).not.toBe(true);
       expect(recovered.result?.structuredContent?.rows[0].venue_key).toBe("gpu-programming");
     },
   );
+
+  it.each(["recommend_venues", "search_venues"])(
+    "%s accepts structured papers without losing title, abstract, keywords, venue or newlines",
+    (tool) => {
+      const root = sandbox(input);
+      const field = tool === "recommend_venues" ? "paper" : "query";
+      for (const paper of [
+        { title: "GPU programming" },
+        { title: "An investigation", keywords: ["GPU memory management"] },
+        { title: "GPU", venue: "GPU memory" },
+        { abstract: "GPU memory management and\nGPU memory allocation" },
+        {
+          title: "An investigation",
+          abstract: "GPU kernel optimization",
+          keywords: ["GPU", "kernels"],
+          venue: "GPU kernels",
+        },
+        {
+          title: 'GPU "memory" allocation',
+          abstract: "memory management\nGPU scheduling",
+          keywords: "memory, GPU",
+        },
+        {
+          title: "GPUメモリ管理",
+          abstract: "GPUのメモリ割り当てとカーネルの実行方式を評価する。",
+          keywords: ["GPU", "memory"],
+          venue: null,
+        },
+        { title: null, abstract: "GPU programming" },
+        [{ title: "GPU programming" }, { abstract: "GPU memory management" }],
+      ]) {
+        const [encoded, structured] = callSequence(
+          root,
+          [
+            { [field]: JSON.stringify(paper), limit: 30 },
+            { [field]: paper, limit: 30 },
+          ],
+          tool,
+        );
+        expect(encoded.result?.isError).not.toBe(true);
+        expect(encoded.result?.structuredContent?.total).toBeGreaterThan(0);
+        expect(structured.result?.isError, JSON.stringify(structured)).not.toBe(true);
+        expect(structured.result?.structuredContent).toEqual(encoded.result?.structuredContent);
+        expect(structured.result?.content).toEqual(encoded.result?.content);
+      }
+    },
+  );
+
+  it.each(["recommend_venues", "search_venues"])(
+    "%s rejects malformed structured papers and permits a corrected object on the same connection",
+    (tool) => {
+      const field = tool === "recommend_venues" ? "paper" : "query";
+      for (const paper of [
+        null,
+        [],
+        true,
+        99,
+        {},
+        { title: " " },
+        { title: {} },
+        { abstract: ["GPU"] },
+        { title: "GPU", keywords: ["memory", 4] },
+        { title: "GPU", venue: {} },
+        { title: "GPU", source: "unexpected" },
+        [{ title: "GPU" }, null],
+      ]) {
+        const [invalid, recovered] = callSequence(
+          sandbox(input),
+          [{ [field]: paper }, { [field]: { title: "GPU programming" } }],
+          tool,
+        );
+        expect(invalid.result?.isError).toBe(true);
+        expect(invalid.result?.structuredContent).toBeUndefined();
+        expect(invalid.result?.content[0].text).toContain(field);
+        if (Array.isArray(paper) && paper.length > 0)
+          expect(invalid.result?.content[0].text).toContain(`${field}[1]`);
+        expect(invalid.result?.content[0].text).not.toMatch(/\[object Object\]|undefined|NaN/);
+        expect(recovered.result?.isError).not.toBe(true);
+        expect(recovered.result?.structuredContent?.rows[0].venue_key).toBe("gpu-programming");
+      }
+    },
+  );
+
+  it("applies the existing twenty-paper limit equally to structured batches and JSON strings", () => {
+    const papers = [
+      ...Array.from({ length: 20 }, (_, i) => ({ title: `GPU programming study ${i}` })),
+      { title: "GPU memory management" },
+    ];
+    const [twenty, encoded, structured] = callSequence(sandbox(input), [
+      { paper: papers.slice(0, 20) },
+      { paper: JSON.stringify(papers) },
+      { paper: papers },
+    ]);
+    expect(structured.result?.isError).not.toBe(true);
+    expect(structured.result?.structuredContent).toEqual(encoded.result?.structuredContent);
+    expect(structured.result?.structuredContent?.rows).toEqual(
+      twenty.result?.structuredContent?.rows,
+    );
+    expect(structured.result?.content[0].text).toContain("GPU programming study 0");
+    expect(structured.result?.structuredContent?.input).toEqual({
+      received: 21,
+      used: 20,
+      truncated: true,
+    });
+  });
+
+  it("advertises text, structured objects and batches for both venue tools", () => {
+    const root = sandbox(input);
+    const child = spawnSync(process.execPath, [join(root, "run.ts")], {
+      input: `${JSON.stringify({ jsonrpc: "2.0", id: 1, method: "tools/list" })}\n`,
+      encoding: "utf8",
+      timeout: 20000,
+    });
+    expect(child.status, child.stderr).toBe(0);
+    const tools = JSON.parse(child.stdout).result.tools;
+    for (const [name, field] of [
+      ["recommend_venues", "paper"],
+      ["search_venues", "query"],
+    ]) {
+      const schema = tools.find((tool: { name: string }) => tool.name === name).inputSchema
+        .properties[field];
+      expect(schema.anyOf.map((item: { type: string }) => item.type).sort()).toEqual([
+        "array",
+        "object",
+        "string",
+      ]);
+      const object = schema.anyOf.find((item: { type: string }) => item.type === "object");
+      expect(Object.keys(object.properties).sort()).toEqual([
+        "abstract",
+        "keywords",
+        "title",
+        "venue",
+      ]);
+      expect(object.additionalProperties).toBe(false);
+      expect(object.anyOf.map((branch: { required: string[] }) => branch.required)).toEqual([
+        ["title"],
+        ["abstract"],
+      ]);
+      expect(object.anyOf[0].properties.title.pattern).toBe("\\S");
+      expect(object.anyOf[1].properties.abstract.pattern).toBe("\\S");
+      const batch = schema.anyOf.find((item: { type: string }) => item.type === "array");
+      expect(batch.items).toEqual(object);
+      expect(batch.minItems).toBe(1);
+    }
+  });
 
   it("enforces the documented 30-result limit and exposes the next page", () => {
     const root = sandbox(

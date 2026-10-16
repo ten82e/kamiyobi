@@ -2515,6 +2515,51 @@ function recommendation(): RecommendationIndex {
   return recommendationCache;
 }
 
+function paperInput(value: unknown, field: string): string {
+  if (value === undefined) return "";
+  if (typeof value === "string") return value.trim();
+  const invalid = () =>
+    new Error(
+      `${field} は文字列、または title・abstract を持つ論文オブジェクトで指定してください。複数の論文はオブジェクトの配列で指定できます。`,
+    );
+  const records = Array.isArray(value) ? value : [value];
+  if (!records.length) throw new Error(`${field} に論文を1件以上指定してください。`);
+  for (const [index, record] of records.entries()) {
+    const path = Array.isArray(value) ? `${field}[${index}]` : field;
+    if (!record || typeof record !== "object" || Array.isArray(record)) {
+      if (Array.isArray(value))
+        throw new Error(`${path} は title・abstract を持つ論文オブジェクトで指定してください。`);
+      throw invalid();
+    }
+    const fields = record as Record<string, unknown>;
+    const unknown = Object.keys(fields).filter(
+      (key) => !["title", "abstract", "keywords", "venue"].includes(key),
+    );
+    if (unknown.length)
+      throw new Error(
+        `${path} に使えない項目があります: ${unknown.join("・")}。title・abstract・keywords・venue を指定してください。`,
+      );
+    for (const key of ["title", "abstract", "venue"]) {
+      if (fields[key] !== undefined && fields[key] !== null && typeof fields[key] !== "string")
+        throw new Error(`${path}.${key} は文字列で指定してください。`);
+    }
+    const keywords = fields.keywords;
+    if (
+      keywords !== undefined &&
+      keywords !== null &&
+      typeof keywords !== "string" &&
+      !(Array.isArray(keywords) && keywords.every((word) => typeof word === "string"))
+    )
+      throw new Error(`${path}.keywords は文字列または文字列の配列で指定してください。`);
+    if (
+      !(typeof fields.title === "string" && fields.title.trim()) &&
+      !(typeof fields.abstract === "string" && fields.abstract.trim())
+    )
+      throw new Error(`${path} の title または abstract に題名か概要を指定してください。`);
+  }
+  return JSON.stringify(value);
+}
+
 async function recommendVenues(
   args: Record<string, unknown> & { paper?: unknown; limit?: unknown; offset?: unknown },
   now: number,
@@ -2524,11 +2569,7 @@ async function recommendVenues(
   const offset = args.offset === undefined ? 0 : args.offset;
   if (typeof offset !== "number" || !Number.isSafeInteger(offset) || offset < 0)
     throw new Error("offset は 0 以上の整数で指定してください。");
-  if (args.paper !== undefined && typeof args.paper !== "string")
-    throw new Error(
-      "paper は文字列で指定してください。論文のJSONも、文字列にして paper に指定してください。",
-    );
-  const paper = 文字として讀む(args.paper);
+  const paper = paperInput(args.paper, "paper");
   if (!paper)
     return [
       "論文の題名か概要をください。",
@@ -2791,6 +2832,30 @@ async function recommendVenues(
   ].join("\n");
 }
 
+const PAPER_OBJECT_SCHEMA = {
+  type: "object",
+  properties: {
+    title: { type: ["string", "null"] },
+    abstract: { type: ["string", "null"] },
+    keywords: {
+      anyOf: [{ type: ["string", "null"] }, { type: "array", items: { type: "string" } }],
+    },
+    venue: { type: ["string", "null"] },
+  },
+  additionalProperties: false,
+  anyOf: [
+    { required: ["title"], properties: { title: { type: "string", pattern: "\\S" } } },
+    { required: ["abstract"], properties: { abstract: { type: "string", pattern: "\\S" } } },
+  ],
+} as const;
+const PAPER_INPUT_SCHEMA = {
+  anyOf: [
+    { type: "string" },
+    PAPER_OBJECT_SCHEMA,
+    { type: "array", items: PAPER_OBJECT_SCHEMA, minItems: 1 },
+  ],
+} as const;
+
 const TOOLS = [
   {
     name: "search_deadlines",
@@ -2928,8 +2993,9 @@ const TOOLS = [
             "既定はlexical。semanticはローカルの実モデルで全収録会議を意味検索。モデル未準備時はエラーを返す。",
         },
         query: {
-          type: "string",
-          description: "研究テーマ、題名、概要、または title・abstract を持つJSON文字列",
+          ...PAPER_INPUT_SCHEMA,
+          description:
+            "研究テーマ・題名・概要の文字列、title・abstract・keywords・venue を持つ論文オブジェクト、またはその配列。title か abstract は空でない文字列が必要。JSON文字列も使えます。",
         },
         limit: { type: "number", description: "返す候補の数（既定10・最大30）" },
         offset: { type: "integer", minimum: 0, description: "取得開始位置（既定0）" },
@@ -2951,9 +3017,9 @@ const TOOLS = [
             "既定はlexical。semanticはローカルの実モデルで全収録会議を意味検索。モデル未準備時はエラーを返す。",
         },
         paper: {
-          type: "string",
+          ...PAPER_INPUT_SCHEMA,
           description:
-            "投稿予定の論文。題名 | キーワード | 投稿先、Title/Abstract や タイトル/概要 の項目付きテキスト、title・abstract・keywords・venue を持つ JSON 文字列を受ける。概要のみの JSON も使える。",
+            "投稿予定の論文。題名 | キーワード | 投稿先、Title/Abstract や タイトル/概要 のテキスト、title・abstract・keywords・venue を持つ論文オブジェクト、またはその配列を受ける。title か abstract は空でない文字列が必要。従来のJSON文字列も使えます。",
         },
         limit: { type: "number", description: "返す候補の数（既定 10・最大 30）" },
         offset: {
@@ -3006,9 +3072,9 @@ async function callTool(
   if (name === "explain_word") return explainWord(args, now);
   if (name === "recommend_venues") return recommendVenues(args, now, receive);
   if (name === "search_venues") {
-    if (typeof args.query !== "string" || !args.query.trim())
-      throw new Error("query に研究テーマ・題名・概要を指定してください。");
-    return recommendVenues({ ...args, paper: args.query }, now, receive, true);
+    const query = paperInput(args.query, "query");
+    if (!query) throw new Error("query に研究テーマ・題名・概要を指定してください。");
+    return recommendVenues({ ...args, paper: query }, now, receive, true);
   }
   if (name === "collection_stats") return collectionStats(args, now);
   throw new Error(`知らないツール: ${name}`);

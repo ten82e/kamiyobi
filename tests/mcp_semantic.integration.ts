@@ -98,6 +98,15 @@ const cases = papers.flatMap((paper) =>
     })),
   ),
 );
+const english = papers.find((paper) => paper.language === "en")!;
+const japanese = papers.find(
+  (paper) => paper.language === "ja" && paper.source !== english.source,
+)!;
+const batchInput = [english, japanese].map((paper) => ({
+  title: paper.title,
+  abstract: paper.abstract,
+}));
+const batchTools = ["search_venues", "recommend_venues"];
 let root: string;
 let replies: Array<{ id: number; result: Record<string, any> }>;
 const request = (id: number, tool: string, args: Record<string, unknown>) => ({
@@ -112,7 +121,7 @@ function invoke(requests: unknown[]) {
     input: `${requests.map((x) => JSON.stringify(x)).join("\n")}\n`,
     encoding: "utf8",
     timeout: 600000,
-    maxBuffer: 32 * 1024 * 1024,
+    maxBuffer: 64 * 1024 * 1024,
   });
   expect(child.status, child.stderr).toBe(0);
   return child.stdout
@@ -177,23 +186,40 @@ beforeAll(async () => {
   expect(missing.result.structuredContent.rows).toBeUndefined();
   mkdirSync(join(root, ".cache"), { recursive: true });
   symlinkSync(join(repo, ".cache/embedding-models"), join(root, ".cache/embedding-models"));
-  replies = invoke(
-    cases.map((c, i) =>
-      request(i + 1, c.tool, {
+  replies = invoke([
+    ...cases.flatMap((c, i) => [
+      request(i * 2 + 1, c.tool, {
         [c.tool === "search_venues" ? "query" : "paper"]: JSON.stringify(c.input),
         retrieval: "semantic",
         limit: 30,
       }),
-    ),
-  );
-  expect(replies).toHaveLength(cases.length);
+      request(i * 2 + 2, c.tool, {
+        [c.tool === "search_venues" ? "query" : "paper"]: c.input,
+        retrieval: "semantic",
+        limit: 30,
+      }),
+    ]),
+    ...batchTools.flatMap((tool, i) => [
+      request(cases.length * 2 + i * 2 + 1, tool, {
+        [tool === "search_venues" ? "query" : "paper"]: JSON.stringify(batchInput),
+        retrieval: "semantic",
+        limit: 30,
+      }),
+      request(cases.length * 2 + i * 2 + 2, tool, {
+        [tool === "search_venues" ? "query" : "paper"]: batchInput,
+        retrieval: "semantic",
+        limit: 30,
+      }),
+    ]),
+  ]);
+  expect(replies).toHaveLength(cases.length * 2 + batchTools.length * 2);
 }, 600000);
 afterAll(() => {
   if (root) rmSync(root, { recursive: true, force: true });
 });
 for (const [i, c] of cases.entries())
   it(`MCP actual model ${c.paper.id}/${c.mode}/${c.tool} retains suitable venues in the fixed top five`, () => {
-    const reply = replies.find((r) => r.id === i + 1)?.result;
+    const reply = replies.find((r) => r.id === i * 2 + 1)?.result;
     expect(reply?.isError).not.toBe(true);
     const result = reply?.structuredContent;
     expect(result?.candidate_venues).toBe(696);
@@ -211,4 +237,40 @@ for (const [i, c] of cases.entries())
           }
         : { id: "Xenova/all-MiniLM-L6-v2", revision: "751bff37182d3f1213fa05d7196b954e230abad9" },
     );
+  });
+
+for (const [i, c] of cases.entries())
+  it(`MCP structured input ${c.paper.id}/${c.mode}/${c.tool} preserves the complete real-model result`, () => {
+    const encoded = replies.find((r) => r.id === i * 2 + 1)?.result;
+    const structured = replies.find((r) => r.id === i * 2 + 2)?.result;
+    expect(encoded?.isError).not.toBe(true);
+    expect(structured?.isError).not.toBe(true);
+    expect(structured?.structuredContent?.candidate_venues).toBe(696);
+    expect(structured?.structuredContent?.uses_embeddings).toBe(true);
+    expect({ ...structured?.structuredContent, evaluated_at: null }).toEqual({
+      ...encoded?.structuredContent,
+      evaluated_at: null,
+    });
+  });
+
+for (const [i, tool] of batchTools.entries())
+  it(`MCP structured bilingual batch/${tool} retains both papers in the real multilingual model`, () => {
+    const encoded = replies.find((reply) => reply.id === cases.length * 2 + i * 2 + 1)?.result;
+    const structured = replies.find((reply) => reply.id === cases.length * 2 + i * 2 + 2)?.result;
+    expect(encoded?.isError).not.toBe(true);
+    expect(structured?.isError).not.toBe(true);
+    expect(structured?.structuredContent).toMatchObject({
+      candidate_venues: 696,
+      uses_embeddings: true,
+      input: { received: 2, used: 2, truncated: false },
+      embedding_model: {
+        id: "Xenova/paraphrase-multilingual-MiniLM-L12-v2",
+        revision: "2c4055b12046f11709e9df2c122e59ffbdc2f900",
+      },
+    });
+    expect(structured?.structuredContent?.total).toBeGreaterThan(0);
+    expect({ ...structured?.structuredContent, evaluated_at: null }).toEqual({
+      ...encoded?.structuredContent,
+      evaluated_at: null,
+    });
   });
