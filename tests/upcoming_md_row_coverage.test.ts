@@ -81,3 +81,49 @@ it("upcoming.md は、窓に入る締切を種別ごとに落とさず載せる"
   /* 種別ごとに一致（合計だけだと、種別の取り違えが相殺されて見えない）。 */
   expect(Object.fromEntries([...表の内訳].sort())).toEqual(Object.fromEntries([...正].sort()));
 });
+
+it("窓の中では、md とカレンダーが同じ締切を同じ種別で載せる", () => {
+  /* 二つの別々の組み立て（md と ICS）が、同じ窓で同じ行を出す事を見る。どちらかが
+   * 靜かに行を落とすと、ここで種別ごとの差として出る（2026-10-17 實測: どちらも 793 行、
+   * 10 種別すべて一致）。 */
+  const out = builtSite();
+  const md = readFileSync(join(out, "upcoming.md"), "utf8");
+  const 窓 = /対象期間: \d{4}-\d{2}-\d{2} 〜 (\d{4}-\d{2}-\d{2})/.exec(md);
+  expect(窓, "md に対象期間の宣言が無い").not.toBeNull();
+  const 終 = 窓![1];
+
+  const 表 = new Map<string, number>();
+  for (const line of md.split("\n")) {
+    if (!line.startsWith("| ") || line.startsWith("| 日付") || line.startsWith("|---")) continue;
+    const セル = line
+      .slice(1, -1)
+      .split(/(?<!\\)\|/)
+      .map((c) => c.trim());
+    if (セル.length < 10 || セル[3] === "開催") continue;
+    const key = 種別の鍵(セル[3]);
+    expect(key, `種別の語を鍵へ戻せない: ${セル[3]}`).not.toBe("");
+    表.set(key, (表.get(key) ?? 0) + 1);
+  }
+
+  const ics = readFileSync(join(out, "deadlines.ics"), "utf8").replace(/\r\n[ \t]/g, "");
+  const 暦 = new Map<string, number>();
+  const 表の種別 = Recommender.kindLabelTable();
+  let 窓の行 = 0;
+  for (const blk of ics.split("BEGIN:VEVENT").slice(1)) {
+    const day = (/DTSTART;VALUE=DATE:(\d{8})/.exec(blk) ?? [])[1] ?? "";
+    if (!day) continue;
+    const iso = `${day.slice(0, 4)}-${day.slice(4, 6)}-${day.slice(6, 8)}`;
+    /* md の窓は生成日の翌日から數へる（md の 1 行目は生成日そのものだから、
+     * 同じ日に締まる行は md にもカレンダーにも出る – 其れは両方で數へる）。 */
+    if (iso > 終) continue;
+    窓の行++;
+    const 語 = ((/種別: ([^\\]*)/.exec(blk) ?? [])[1] ?? "")
+      .replace(/（[^（）]*）\s*$/u, "")
+      .trim();
+    const key = Object.entries(表の種別).find(([, label]) => String(label) === 語)?.[0] ?? `?${語}`;
+    暦.set(key, (暦.get(key) ?? 0) + 1);
+  }
+  expect(窓の行, "カレンダーの窓の行が 100 件未満（前提が崩れた）").toBeGreaterThan(100);
+  /* md の側は「生成日以降」を數へる（カレンダーの窓は生成日から始まる）。 */
+  expect(Object.fromEntries([...暦].sort())).toEqual(Object.fromEntries([...表].sort()));
+});
