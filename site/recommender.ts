@@ -767,6 +767,7 @@ const Recommender = (() => {
     表題: "title",
     標題: "title",
     題目: "title",
+    題名: "title",
     論文名: "title",
     概要: "abstract",
     抄録: "abstract",
@@ -812,21 +813,39 @@ const Recommender = (() => {
     }
     // タイトルラベルが 1 つも無ければ構造化入力ではないとみなす（表形式の生テキストを
     // 壊さないため。英語・日本語のどちらのタイトル表記でも通す）。
-    if (!/^[\s　]*(title|タイトル|表題|標題|題目|論文名)[\s　]*[:：]/im.test(raw)) return null;
+    const lines = raw.split(/\r?\n/);
+    if (
+      !lines.some((line) => {
+        const match = PAPER_FIELD_RE_JA.exec(line);
+        return match && paperFieldKeyJa(match[1]) === "title";
+      })
+    )
+      return null;
     const fields: Record<string, string> = { title: "", abstract: "", keywords: "", venue: "" };
+    const papers: PaperRecord[] = [];
+    const finish = () => {
+      const paper = normalizePaperRecord(fields);
+      if (paper) papers.push(paper);
+      for (const key of Object.keys(fields)) fields[key] = "";
+    };
     let current = "";
-    raw.split(/\r?\n/).forEach((line) => {
+    let hasTitle = false;
+    lines.forEach((line) => {
       const match = PAPER_FIELD_RE_JA.exec(line);
       if (match) {
         current = paperFieldKeyJa(match[1]);
         if (!current) return;
+        if (current === "title") {
+          if (hasTitle) finish();
+          hasTitle = true;
+        }
         fields[current] = match[2].trim();
       } else if (current && line.trim()) {
         fields[current] += (fields[current] ? "\n" : "") + line.trim();
       }
     });
-    const labeled = normalizePaperRecord(fields);
-    return labeled ? [labeled] : null;
+    finish();
+    return papers.length ? papers : null;
   }
 
   function pdfPages(pages: unknown): unknown[][] {
