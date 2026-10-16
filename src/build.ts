@@ -3566,7 +3566,10 @@ export function toNotFoundHtml(styleBlock = "", baseUrl = ""): string {
     styleBlock,
     "</head>",
     "<body>",
-    "<main>",
+    /* 樣式の塊は雛形から渡すが、幅と余白は `.wrap` が持っている。付け忘れると本文が
+     * 畫面の端から端まで屆き、廣い畫面で 1 行が長くなり過ぎる（2026-10-17 實測:
+     * `upcoming.html` は `<main class="wrap">`、404 だけ素の `<main>` だった）。 */
+    '<main class="wrap">',
     "<h1>そのページは見つかりません</h1>",
     "<p>URL の打ち間違いか、リンクが古くなっています。締切と会期の情報は次の場所に在ります。</p>",
     "<ul>",

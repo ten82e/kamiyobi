@@ -102,3 +102,19 @@ it("出口に、表計算と文字だけの表も並んでいる（第 737 回�
   /* 出口の数（足した分だけ増えている）。 */
   expect((html.match(/<li><a href/g) || []).length, "出口の数が合わない").toBe(7);
 });
+
+it("404 ページも畫面と同じ幅と余白で出す（樣式の塊を渡すだけでは足りない・SPEC §7）", () => {
+  /* 樣式の塊は雛形から渡しているが、幅と余白は `.wrap` が持っている。404 だけ素の
+   * `<main>` だったので、本文が畫面の端から端まで屆いていた（2026-10-17 實測:
+   * `upcoming.html` は `<main class="wrap">`、404 は `<main>`。幅 1,400px の畫面で
+   * 見出しの左端が 0px、行の長さが畫面幅と同じ）。 */
+  const html = page();
+  expect(html, "404 ページが畫面の幅の器を使っていない").toContain('<main class="wrap">');
+  const style = /<style>([\s\S]*?)<\/style>/.exec(html)?.[1] ?? "";
+  expect(style, "樣式の塊が無い").not.toBe("");
+  expect(style, "`.wrap` に幅が無い").toMatch(/\.wrap\s*\{[^}]*max-width:\s*\d+px/);
+  expect(style, "`.wrap` に余白が無い").toMatch(/\.wrap\s*\{[^}]*padding:/);
+  /* 直近の一覧と同じ器を使う（片方だけ直した日に食い違わない）。 */
+  const upcoming = readFileSync(join(builtSite(), "upcoming.html"), "utf8");
+  expect(upcoming, "直近の一覧が別の器を使っている").toContain('<main class="wrap">');
+});
