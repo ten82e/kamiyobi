@@ -63,6 +63,25 @@ describe("書き出しの ICS と購読の ICS の識別子", () => {
     expect(ascii.length, "ASCII の種別を持つ UID が消えた（形が変わった）").toBeGreaterThan(0);
   });
 
+  it("正典（`data.json`）にも UID が載る（全履歴を讀み込んだ後の書き出しのため）", () => {
+    /* 畫面は「収録の全体を読み込む」で `data.json` を讀み、其の後は其の締切で書き出す。
+     * 品書にだけ UID を載せて居た頃は、全履歴を讀み込んだ後の書き出し 221 件が
+     * **1 つも購読側と一致しなかった**（2026-10-17 に實ブラウザで落として實測）。 */
+    const out = builtSite();
+    const data = JSON.parse(readFileSync(join(out, "data.json"), "utf8")) as {
+      conferences?: Array<Record<string, unknown>>;
+    };
+    const 正典 = new Set<string>();
+    for (const c of data.conferences ?? [])
+      for (const e of (c.editions ?? []) as Array<Record<string, unknown>>)
+        for (const dl of (e.deadlines ?? []) as Array<Record<string, unknown>>)
+          if (typeof dl.ics_uid === "string" && dl.ics_uid) 正典.add(dl.ics_uid);
+    const 購読 = new Set(uidsOf(readFileSync(join(out, "deadlines.ics"), "utf8")));
+    expect(正典.size, "正典が持つ UID の數が、配付の予定數と違う").toBe(購読.size);
+    const 外れ = [...正典].filter((u) => !購読.has(u));
+    expect(外れ, `配付に無い UID が正典に載っている: ${外れ.slice(0, 3).join(" / ")}`).toEqual([]);
+  });
+
   it("畫面が品書の UID を材料へ渡している（配線）", () => {
     /* 品書に載っていても、畫面が読まなければ意味が無い。 */
     const app = readFileSync(join(REPO_ROOT, "site", "app.ts"), "utf8");
