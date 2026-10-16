@@ -5839,6 +5839,8 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     if (name === "AbortError") return "ファイルの読み込みをキャンセルしました";
     const message = (error instanceof Error ? error.message : String(error)).toLowerCase();
     const pasteHint = "タイトルと概要を下の欄に貼り付けてください";
+    if (message.includes("txt read failed"))
+      return `TXT を読み込めませんでした。ファイルを確かめるか、${pasteHint}`;
     /* 対応していない文書形式を「PDF が読めない」とは言わない（自分の PDF の文字化けを疑って、
      * 直せない方向へ探させることになる – 第 150 回）。 */
     if (message.indexOf("unsupported document") >= 0) {
@@ -5863,7 +5865,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     }
     if (message.indexOf("too large") >= 0 || message.indexOf("size") >= 0) {
       const mb = Math.round(PDF_MAX_BYTES / (1024 * 1024));
-      return `PDF が大きすぎます（${mb} MB まで）。抜粋を TXT にして貼るか、小さいファイルを指定してください`;
+      return `ファイルが大きすぎます（${mb} MB まで）。抜粋を TXT にして貼るか、小さいファイルを指定してください`;
     }
     if (message.indexOf("too many pages") >= 0) {
       return (
@@ -5900,11 +5902,33 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     return `unsupported document format: ${m[1].toLowerCase()}`;
   }
 
+  function decodePaperText(buffer: ArrayBuffer): string {
+    const bytes = new Uint8Array(buffer);
+    const encoding =
+      bytes[0] === 0xff && bytes[1] === 0xfe
+        ? "utf-16le"
+        : bytes[0] === 0xfe && bytes[1] === 0xff
+          ? "utf-16be"
+          : "utf-8";
+    return new TextDecoder(encoding).decode(bytes);
+  }
+
   function readPaperFile(file: File, signal: AbortSignal): Promise<PaperRecord> {
+    if (signal.aborted) return Promise.reject(abortError());
     const unsupported = unsupportedPaperFormatJa(file.name);
     if (unsupported) return Promise.reject(new Error(unsupported));
     if (file.size > PDF_MAX_BYTES) return Promise.reject(new Error("file is too large"));
-    if (/\.txt$/i.test(file.name)) return file.text().then((text) => textRecord(file.name, text));
+    if (/\.txt$/i.test(file.name))
+      return file
+        .arrayBuffer()
+        .then((buffer) => {
+          if (signal.aborted) throw abortError();
+          return textRecord(file.name, decodePaperText(buffer));
+        })
+        .catch((error: unknown) => {
+          if (error instanceof Error && error.name === "AbortError") throw error;
+          throw new Error("TXT read failed", { cause: error });
+        });
     return file
       .arrayBuffer()
       .then((buf) => readPdf(buf, signal))
