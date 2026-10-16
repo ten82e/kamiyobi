@@ -109,3 +109,18 @@ describe("一覧の表が閉じ要素まで揃った HTML で出る（第 279 �
     expect(bad.slice(0, 2), `${bad.length} 行が 10 列でない`).toEqual([]);
   });
 });
+
+it("直近の表は、Markdown と HTML で同じ行を持つ（片方だけ落とさない）", () => {
+  /* `upcoming.html` は `upcoming.md` から組む（同じ表を二度作らない）。組み替えで行が
+   * 落ちると、**JavaScript を使えない讀者だけが締切を見落とす**（2026-10-17 實測:
+   * md も html も 1,128 行。ただし數へ方 — md は `|` で始まる行、html は `<tr>` — が
+   * 違ふので、突き合わせて置く）。 */
+  const md = readFileSync(join(site, "upcoming.md"), "utf8");
+  const md行 = md
+    .split("\n")
+    .filter((l) => l.startsWith("|"))
+    .filter((l) => !/^\|\s*-{2,}/.test(l)).length;
+  const html行 = rows(body("upcoming.html")).length;
+  expect(md行, "md の行が 100 未満（前提が崩れた）").toBeGreaterThan(100);
+  expect(html行, "HTML の行が md と違う（組み替えで落ちている）").toBe(md行);
+});
