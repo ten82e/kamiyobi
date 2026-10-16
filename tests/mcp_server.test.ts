@@ -6209,10 +6209,13 @@ it("search_deadlines の行が、画面の深いリンクを組める欄を持�
  * （`data/snapshot.json`）を読む。公開している `data.json` は重複をまとめた後なので行数が
  * 違う（実測 2026-10-17: 元データ 5,069 行に対し、公開の `data.json` は 4,990 行）。
  * この違いを書かずに置くと、AI が「画面の件数と合わない」と誤った報告をする。 */
-it("collection_stats が、収録の出所と件数を元データと合わせて言う（第 1116 回）", async () => {
+it("collection_stats が、収録の出所と件数を実際のファイルと合わせて言う（第 1116 回）", async () => {
   const 文 = await call("collection_stats", {});
-  expect(文, "出す所のファイルを名指していない").toContain("data/snapshot.json");
-  const 元 = JSON.parse(readFileSync(join(REPO_ROOT, "data", "snapshot.json"), "utf8")) as {
+  /* **言った出所のファイル**と突き合わせる（今は収録の元データ。將來どちらへ變へても、
+   * 名指した方を讀むので檢查は成り立つ – 出所を言はない實装に成つたら落ちる）。 */
+  const 出所 = /収録（([^）]+)）/.exec(文)?.[1] ?? "";
+  expect(出所, "収録の出所を名指していない").not.toBe("");
+  const 元 = JSON.parse(readFileSync(join(REPO_ROOT, 出所), "utf8")) as {
     conferences?: Array<{ editions?: Array<{ deadlines?: unknown[] }> }>;
   };
   const 会議 = (元.conferences ?? []).length;
