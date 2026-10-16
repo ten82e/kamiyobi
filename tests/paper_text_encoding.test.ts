@@ -1,35 +1,8 @@
 import { expect, it } from "vitest";
-import Recommender from "../site/recommender.ts";
-import { jsFunction, siteRuntime } from "./runtime_extract.ts";
+import { paperFileReader } from "./paper_file_reader.ts";
 
-const app = siteRuntime();
-const limits = ["PDF_MAX_BYTES", "PDF_MAX_PAGES"]
-  .map((name) => {
-    const value = new RegExp(`const ${name} = [^;]+;`).exec(app)?.[0];
-    if (!value) throw new Error(`missing ${name}`);
-    return value;
-  })
-  .join("\n");
 const pdfCalls: number[] = [];
-const functions = [
-  "unsupportedPaperFormatJa",
-  "textRecord",
-  "readPaperFile",
-  "abortError",
-  "pdfFailureMessageJa",
-  "readablePaperFileRecord",
-  "paperFileStatusJa",
-];
-if (app.includes("function decodePaperText(")) functions.push("decodePaperText");
-const runtime = new Function(
-  "Recommender",
-  "readPdf",
-  [
-    limits,
-    ...functions.map((name) => jsFunction(app, name)),
-    "return {read:readPaperFile, message:pdfFailureMessageJa, readable:readablePaperFileRecord, status:paperFileStatusJa, limit:PDF_MAX_BYTES};",
-  ].join("\n"),
-)(Recommender, async (bytes: ArrayBuffer) => {
+const runtime = paperFileReader(async (bytes) => {
   pdfCalls.push(bytes.byteLength);
   return { metadata: { info: { Title: "Actual PDF" } }, pages: [] };
 });

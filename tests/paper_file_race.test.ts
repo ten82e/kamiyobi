@@ -3,6 +3,7 @@ import { stripTypeScriptTypes } from "node:module";
 import { runInNewContext } from "node:vm";
 import { expect, it } from "vitest";
 import Recommender from "../site/recommender.ts";
+import { paperFileReader } from "./paper_file_reader.ts";
 import { jsFunction } from "./runtime_extract.ts";
 
 const source = readFileSync(new URL("../site/app.ts", import.meta.url), "utf8");
@@ -47,7 +48,7 @@ interface RecordInput {
   keywords?: string;
   venue?: string;
 }
-function harness(deferPdfLoader = false) {
+function harness(deferPdfLoader = false, reader?: ReturnType<typeof paperFileReader>["read"]) {
   let active: unknown = null;
   class Input {
     files: Array<{ name: string }> = [];
@@ -110,6 +111,7 @@ function harness(deferPdfLoader = false) {
   const written: RecordInput[] = [];
   const loaders: Array<(ok: boolean) => void> = [];
   let applied = 0;
+  let scheduled = 0;
   runInNewContext(
     `${inputFunctions}\n${handlers}\n${source.slice(resetStart, resetEnd)}\n${swapHandlers}
     const originalWrite = writePaperInput;
@@ -152,17 +154,21 @@ function harness(deferPdfLoader = false) {
         if (deferPdfLoader) loaders.push(callback);
         else callback(true);
       },
-      readPaperFile: (file: { name: string }, signal: AbortSignal) =>
-        new Promise<RecordInput>((resolve, reject) => {
-          pending.set(file.name, { signal, resolve, reject });
-        }),
+      readPaperFile:
+        reader ??
+        ((file: { name: string }, signal: AbortSignal) =>
+          new Promise<RecordInput>((resolve, reject) => {
+            pending.set(file.name, { signal, resolve, reject });
+          })),
       abortError: () => Object.assign(new Error("cancelled"), { name: "AbortError" }),
       paperInputBeforeSwap: null,
       recordWrite: (record: RecordInput) => written.push(record),
       apply: () => {
         applied++;
       },
-      scheduleSemantic: () => {},
+      scheduleSemantic: () => {
+        scheduled++;
+      },
       invalidateSemantic: () => {},
       pdfFailureMessageJa: (error: Error) =>
         error.name === "AbortError" ? "キャンセルしました" : "読み込みに失敗しました",
@@ -194,6 +200,12 @@ function harness(deferPdfLoader = false) {
     undo: () => undo.listeners.get("click")!({ currentTarget: undo }),
     reset: () => reset.listeners.get("click")!({ currentTarget: reset }),
     applied: () => applied,
+    scheduled: () => scheduled,
+    async selectFiles(files: File[]) {
+      input.files = files;
+      input.listeners.get("change")!({ currentTarget: input });
+      await tick();
+    },
     async select(name: string, ...more: string[]) {
       input.files = [name, ...more].map((name) => ({ name }));
       input.listeners.get("change")!({ currentTarget: input });
@@ -601,3 +613,36 @@ it.each([
     expect(ui.undoButton.hidden).toBe(true);
   }
 });
+
+it.each(["empty-txt", "blank-txt", "empty-pdf", "mixed-reference"])(
+  "keeps the actual input and draft when %s has no paper text",
+  async (kind) => {
+    const reader = paperFileReader();
+    const ui = harness(false, reader.read);
+    const before = new Map(ui.draft);
+    const valid = new File(["Title: Valid paper\nAbstract: GPU memory management"], "valid.txt");
+    const files =
+      kind === "mixed-reference"
+        ? [valid, new File([], "reference.txt")]
+        : [
+            new File(
+              kind === "blank-txt" ? [" \r\n　"] : [],
+              kind === "empty-pdf" ? "SC.pdf" : "SC.txt",
+            ),
+          ];
+    await ui.selectFiles(files);
+    expect(ui.label.textContent).toBe("読み込みに失敗しました");
+    expect(ui.values.paperPrimaryTitle.value).toBe("入力済み論文");
+    expect(ui.draft).toEqual(before);
+    expect(ui.written).toEqual([]);
+    expect(ui.applied()).toBe(0);
+    expect(ui.scheduled()).toBe(0);
+    expect(ui.undoButton.hidden).toBe(true);
+    await ui.selectFiles([valid]);
+    expect(ui.values.paperPrimaryTitle.value).toBe("Valid paper");
+    expect(ui.values.paperPrimaryAbstract.value).toBe("GPU memory management");
+    expect(ui.written).toHaveLength(1);
+    expect(ui.applied()).toBe(1);
+    expect(ui.scheduled()).toBe(1);
+  },
+);

@@ -5839,6 +5839,10 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     if (name === "AbortError") return "ファイルの読み込みをキャンセルしました";
     const message = (error instanceof Error ? error.message : String(error)).toLowerCase();
     const pasteHint = "タイトルと概要を下の欄に貼り付けてください";
+    if (message === "txt has no paper text" || message === "pdf has no paper text") {
+      const format = message.startsWith("txt") ? "TXT" : "PDF";
+      return `${format} から題名や概要を読み取れませんでした。入力済みの論文情報は残しています。文字の入ったファイルを選ぶか、${pasteHint}`;
+    }
     if (message.includes("txt read failed"))
       return `TXT を読み込めませんでした。ファイルを確かめるか、${pasteHint}`;
     /* 対応していない文書形式を「PDF が読めない」とは言わない（自分の PDF の文字化けを疑って、
@@ -5923,16 +5927,27 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         .arrayBuffer()
         .then((buffer) => {
           if (signal.aborted) throw abortError();
-          return textRecord(file.name, decodePaperText(buffer));
+          const text = decodePaperText(buffer);
+          if (!text.trim()) throw new Error("TXT has no paper text");
+          return textRecord(file.name, text);
         })
         .catch((error: unknown) => {
-          if (error instanceof Error && error.name === "AbortError") throw error;
+          if (
+            error instanceof Error &&
+            (error.name === "AbortError" || error.message === "TXT has no paper text")
+          )
+            throw error;
           throw new Error("TXT read failed", { cause: error });
         });
     return file
       .arrayBuffer()
       .then((buf) => readPdf(buf, signal))
-      .then((result) => Recommender.pdfPaperRecord(result.metadata, result.pages, file.name));
+      .then((result) => {
+        const record = Recommender.pdfPaperRecord(result.metadata, result.pages, "");
+        if (!record.title.trim() && !record.abstract?.trim())
+          throw new Error("PDF has no paper text");
+        return record;
+      });
   }
   function readablePaperFileRecord(record: PaperRecord): PaperRecord {
     const readable = (text: string | undefined) =>
