@@ -6113,3 +6113,25 @@ it("list_upcoming の締切の行にも、カレンダーの UID が付く（第
   for (const row of 付いた.slice(0, 10))
     expect(ics, `${row.ics_uid} がカレンダーに無い`).toContain(`UID:${row.ics_uid}`);
 });
+
+/* 三つの道具（`search_deadlines`・`list_upcoming`・`venue_info`）の構造化の行は、
+ * 同じ組み立て（`structuredDeadline`）を使う。**同じ締切に同じ UID**が付く事を、
+ * 會場の側からも見る（2026-10-17 實測: `venue_info` の rows にも UID が在る）。 */
+it("venue_info の締切の行にも、カレンダーの UID が付く（第 1113 回）", async () => {
+  const r = (await client.ask({
+    jsonrpc: "2.0",
+    id: 2,
+    method: "tools/call",
+    params: { name: "venue_info", arguments: { key: "icde", scope: "all" } },
+  })) as { result?: { structuredContent?: { rows?: Array<Record<string, unknown>> } } };
+  const rows = r.result?.structuredContent?.rows ?? [];
+  expect(rows.length, "締切の行が返らない（前提が崩れた）").toBeGreaterThan(0);
+  const 付いた = rows.filter((x) => typeof x.ics_uid === "string" && x.ics_uid);
+  expect(付いた.length, "venue_info の行に 1 つも UID が付かない").toBeGreaterThan(0);
+  const ics = readFileSync(join(REPO_ROOT, "public", "deadlines.ics"), "utf8").replace(
+    /\r\n[ \t]/g,
+    "",
+  );
+  for (const row of 付いた.slice(0, 5))
+    expect(ics, `${row.ics_uid} がカレンダーに無い`).toContain(`UID:${row.ics_uid}`);
+});

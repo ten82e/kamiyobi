@@ -3167,7 +3167,7 @@ const TOOLS = [
   {
     name: "venue_info",
     description:
-      "会議の開催回、締切、会期、ランク、主題、正式名を返す。structuredContent の editions に推定を除く全開催回の会期・確かさ・公式URL、rows に締切を返す。key は小文字の識別子、name は略称・正式名・名前の一部。開催回の識別子は lookup_status: edition_key と retry_arguments で関連会議へ案内する。見つからない識別子は lookup_status: not_found と略称の候補を返す。曖昧な名前や古いkeyは lookup_status: ambiguous と candidates を返す。候補の venue_key を key に指定して再照会する。表示範囲外の締切は lookup_status: out_of_scope と再照会用の retry_arguments で案内する。scope の既定は all で、過ぎた分も全部出る。今後の物から並べ、推定以外の次の投稿締切を next_submission、推定の見込みを next_estimated_submission で分けて返す。主題は分野より詳しい札で、収録にある会議だけに出します（画面の行の詳細の「主題」と同じ）。返す行の形: 会議の要約に続いて、日時 | 種別 | 確認状態（ある場合）| 会議名（版の識別子）| ランク | 会期 | 開催地 URL。",
+      "会議の開催回、締切、会期、ランク、主題、正式名を返す。structuredContent の editions に推定を除く全開催回の会期・確かさ・公式URL、rows に締切を返す。key は小文字の識別子、name は略称・正式名・名前の一部。開催回の識別子は lookup_status: edition_key と retry_arguments で関連会議へ案内する。見つからない識別子は lookup_status: not_found と略称の候補を返す。曖昧な名前や古いkeyは lookup_status: ambiguous と candidates を返す。候補の venue_key を key に指定して再照会する。表示範囲外の締切は lookup_status: out_of_scope と再照会用の retry_arguments で案内する。scope の既定は all で、過ぎた分も全部出る。今後の物から並べ、推定以外の次の投稿締切を next_submission、推定の見込みを next_estimated_submission で分けて返す。主題は分野より詳しい札で、収録にある会議だけに出します（画面の行の詳細の「主題」と同じ）。返す行の形: 会議の要約に続いて、日時 | 種別 | 確認状態（ある場合）| 会議名（版の識別子）| ランク | 会期 | 開催地 URL。**構造化の rows は `search_deadlines` と同じ欄**を持ちます（`categories`・`categories_ja`・`ics_uid` を含む。`ics_uid` は品書に載っている締切だけ）。",
     inputSchema: {
       type: "object",
       properties: {
