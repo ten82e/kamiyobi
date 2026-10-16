@@ -3366,11 +3366,11 @@ it("global shortcuts respect editable targets and recommendation mode", () => {
   const html = siteHtmlRuntime();
   const keySrc = keydownWithBlockers(html);
   const script = [
-    "const calls = { prevented: 0, focused: 0, opened: 0 };",
+    "const calls = { prevented: 0, focused: [], opened: 0 };",
     "const state = { mode: 'recommend' };",
     "const window = {};",
     "const document = {};",
-    "function $(id) { return id === 'q' ? { focus() { calls.focused++; } } : null; }",
+    "function $(id) { return ['q', 'paperPrimaryTitle'].includes(id) ? { focus() { calls.focused.push(id); } } : null; }",
     "const onKeydown = new Function('state', 'window', 'document', '$', 'selectedIndex', 'shown', 'openDrawer', 'closeDrawer', KEY + ';return onKeydown;')(state, window, document, $, 0, [], () => { calls.opened++; }, () => {});",
     "function event(key, target) { onKeydown({ key, target, preventDefault() { calls.prevented++; } }); }",
     "event('j', { tagName: 'TEXTAREA', isContentEditable: false });",
@@ -3379,12 +3379,20 @@ it("global shortcuts respect editable targets and recommendation mode", () => {
     "event('/', { tagName: 'BODY', isContentEditable: false });",
     "console.log(JSON.stringify(calls));",
   ].join("\n");
-  const proc = spawnSync("node", ["-e", `const KEY = ${JSON.stringify(keySrc)};\n${script}`], {
-    encoding: "utf8",
-    timeout: 60_000,
-  });
+  const proc = spawnSync(
+    "node",
+    ["-e", vmSafeSource(`const KEY = ${JSON.stringify(keySrc)};\n${script}`)],
+    {
+      encoding: "utf8",
+      timeout: 60_000,
+    },
+  );
   expect(proc.status, proc.stderr).toBe(0);
-  expect(JSON.parse(proc.stdout)).toEqual({ prevented: 2, focused: 1, opened: 0 });
+  expect(JSON.parse(proc.stdout)).toEqual({
+    prevented: 1,
+    focused: ["paperPrimaryTitle"],
+    opened: 0,
+  });
 });
 
 it("keyboard Enter opens external links with noopener (reverse tabnabbing, #517)", () => {

@@ -2959,8 +2959,8 @@ it("キーボード操作は効き、入力中は効かない（SPEC §7）", ()
   expect(out.close, "Esc で詳細が閉じない").toBe(1);
   // 選択行（2件目）は会期側のリンクが無いので会議本体のリンクを開く。
   expect(out.opened, "Enter で公式ページを開かない").toEqual(["https://example.org/b"]);
-  // 推薦モードでは表用の操作を無効化する（論文の欄を打っている間に表が動かない）。
-  expect(out.recommend, "推薦モードで j が処理を止めていない").toBe(true);
+  // 推薦モードでは表用の操作へ進まず、ブラウザーの標準動作も妨げない。
+  expect(out.recommend, "推薦モードで j の標準動作を妨げた").toBe(false);
   expect(out.recommendUpdate, "推薦モードで j に行が動いた").toBe(0);
   expect(out.escBlurred, "入力欄の中では Esc が焦点を外さない").toBe(1);
 });

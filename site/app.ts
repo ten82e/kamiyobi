@@ -1617,6 +1617,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     if (contentEditable) return true;
     if (tag === "INPUT" || tag === "SELECT" || tag === "TEXTAREA") return true;
     if (tag === "BUTTON") return key === "Enter" || key === " " || key === "Spacebar";
+    if (tag === "A") return key === "Enter";
     return false;
   }
 
@@ -1654,12 +1655,13 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         e.key === "ArrowDown" ||
         e.key === "ArrowUp")
     ) {
-      e.preventDefault();
       return;
     }
     if (e.key === "/") {
       e.preventDefault();
-      $("q").focus();
+      $(
+        typeof state !== "undefined" && state.mode === "recommend" ? "paperPrimaryTitle" : "q",
+      ).focus();
     } else if (e.key === "d" && selectedIndex >= 0 && selectedIndex < shown.length) {
       // キーボードで詳細ドロワーを開く。
       // 行にフォーカスしてから開き、
