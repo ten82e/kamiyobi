@@ -5835,6 +5835,14 @@ function semanticOutput(value: unknown): value is SemanticOutput {
    * 直せないので、原因の心当たりと代替手段（貼り付け）を出す。
    * 上限値はテスト側にも書き写さず、同じ定数から作る。 */
   function pdfFailureMessageJa(error: unknown): string {
+    if (
+      error &&
+      typeof error === "object" &&
+      "paperFileName" in error &&
+      typeof error.paperFileName === "string" &&
+      "cause" in error
+    )
+      return `${error.paperFileName}：${pdfFailureMessageJa(error.cause)}`;
     const name = error instanceof Error ? error.name : "";
     if (name === "AbortError") return "ファイルの読み込みをキャンセルしました";
     const message = (error instanceof Error ? error.message : String(error)).toLowerCase();
@@ -6143,7 +6151,22 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     load
       .then(() => {
         if (job !== pdfJob || signal.aborted) throw abortError();
-        return Promise.all(files.map((file) => readPaperFile(file, signal)));
+        return Promise.all(
+          files.map((file) =>
+            readPaperFile(file, signal).catch((error: unknown) => {
+              if (
+                error &&
+                typeof error === "object" &&
+                "name" in error &&
+                error.name === "AbortError"
+              )
+                throw error;
+              throw Object.assign(new Error("paper file read failed", { cause: error }), {
+                paperFileName: file.name,
+              });
+            }),
+          ),
+        );
       })
       .then((readRecords) => {
         if (job !== pdfJob || signal.aborted) throw abortError();

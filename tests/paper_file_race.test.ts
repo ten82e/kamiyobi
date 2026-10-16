@@ -48,7 +48,7 @@ interface RecordInput {
   keywords?: string;
   venue?: string;
 }
-function harness(deferPdfLoader = false, reader?: ReturnType<typeof paperFileReader>["read"]) {
+function harness(deferPdfLoader = false, reader?: ReturnType<typeof paperFileReader>) {
   let active: unknown = null;
   class Input {
     files: Array<{ name: string }> = [];
@@ -155,7 +155,7 @@ function harness(deferPdfLoader = false, reader?: ReturnType<typeof paperFileRea
         else callback(true);
       },
       readPaperFile:
-        reader ??
+        reader?.read ??
         ((file: { name: string }, signal: AbortSignal) =>
           new Promise<RecordInput>((resolve, reject) => {
             pending.set(file.name, { signal, resolve, reject });
@@ -170,8 +170,10 @@ function harness(deferPdfLoader = false, reader?: ReturnType<typeof paperFileRea
         scheduled++;
       },
       invalidateSemantic: () => {},
-      pdfFailureMessageJa: (error: Error) =>
-        error.name === "AbortError" ? "キャンセルしました" : "読み込みに失敗しました",
+      pdfFailureMessageJa:
+        reader?.message ??
+        ((error: Error) =>
+          error.name === "AbortError" ? "キャンセルしました" : "読み込みに失敗しました"),
     },
   );
   return {
@@ -618,7 +620,7 @@ it.each(["empty-txt", "blank-txt", "empty-pdf", "mixed-reference"])(
   "keeps the actual input and draft when %s has no paper text",
   async (kind) => {
     const reader = paperFileReader();
-    const ui = harness(false, reader.read);
+    const ui = harness(false, reader);
     const before = new Map(ui.draft);
     const valid = new File(["Title: Valid paper\nAbstract: GPU memory management"], "valid.txt");
     const files =
@@ -631,7 +633,11 @@ it.each(["empty-txt", "blank-txt", "empty-pdf", "mixed-reference"])(
             ),
           ];
     await ui.selectFiles(files);
-    expect(ui.label.textContent).toBe("読み込みに失敗しました");
+    const fileName =
+      kind === "mixed-reference" ? "reference.txt" : kind === "empty-pdf" ? "SC.pdf" : "SC.txt";
+    expect(ui.label.textContent).toBe(
+      `${fileName}：${reader.message(new Error(kind === "empty-pdf" ? "PDF has no paper text" : "TXT has no paper text"))}`,
+    );
     expect(ui.values.paperPrimaryTitle.value).toBe("入力済み論文");
     expect(ui.draft).toEqual(before);
     expect(ui.written).toEqual([]);
@@ -646,3 +652,83 @@ it.each(["empty-txt", "blank-txt", "empty-pdf", "mixed-reference"])(
     expect(ui.scheduled()).toBe(1);
   },
 );
+
+it.each(["txt-read", "unsupported-reference", "password-pdf", "oversized"])(
+  "identifies the failed file for %s while preserving input and allowing a retry",
+  async (kind) => {
+    const reader = paperFileReader(async () => {
+      throw new Error("Password required");
+    });
+    const ui = harness(false, reader);
+    const before = new Map(ui.draft);
+    const valid = new File(["Title: 投稿予定論文\nAbstract: GPU memory management"], "原稿.txt");
+    const failed = new File(
+      ["unreadable fixture"],
+      kind === "unsupported-reference"
+        ? "参考文献.docx"
+        : kind === "password-pdf"
+          ? "参考文献.pdf"
+          : "参考文献.txt",
+    );
+    if (kind === "txt-read")
+      Object.defineProperty(failed, "arrayBuffer", {
+        value: async () => {
+          throw new Error("permission denied");
+        },
+      });
+    if (kind === "oversized") Object.defineProperty(failed, "size", { value: reader.limit + 1 });
+    await ui.selectFiles([valid, failed, new File(["Other reference"], "別の参考文献.txt")]);
+    expect(ui.label.textContent.startsWith(`${failed.name}：`)).toBe(true);
+    expect(ui.label.textContent).not.toContain("原稿.txt");
+    expect(ui.label.textContent).not.toContain("別の参考文献.txt");
+    expect(ui.label.textContent).toContain(
+      kind === "txt-read"
+        ? "TXT を読み込めませんでした"
+        : kind === "unsupported-reference"
+          ? ".docx は"
+          : kind === "password-pdf"
+            ? "パスワード"
+            : "ファイルが大きすぎます",
+    );
+    expect(ui.values.paperPrimaryTitle.value).toBe("入力済み論文");
+    expect(ui.draft).toEqual(before);
+    expect(ui.written).toEqual([]);
+    expect(ui.applied()).toBe(0);
+    expect(ui.scheduled()).toBe(0);
+    await ui.selectFiles([valid]);
+    expect(ui.values.paperPrimaryTitle.value).toBe("投稿予定論文");
+    expect(ui.applied()).toBe(1);
+    expect(ui.scheduled()).toBe(1);
+  },
+);
+
+it("reports a shared PDF loader failure without blaming a selected file", async () => {
+  const ui = harness(true, paperFileReader());
+  const before = new Map(ui.draft);
+  await ui.selectFiles([new File([], "原稿.txt"), new File([], "参考文献.pdf")]);
+  ui.finishPdfLoader(false);
+  await tick();
+  expect(ui.label.textContent).toContain("PDF を読む仕組みが呼び出せませんでした");
+  expect(ui.label.textContent).not.toContain("原稿.txt");
+  expect(ui.label.textContent).not.toContain("参考文献.pdf");
+  expect(ui.values.paperPrimaryTitle.value).toBe("入力済み論文");
+  expect(ui.draft).toEqual(before);
+  expect(ui.written).toEqual([]);
+  expect(ui.scheduled()).toBe(0);
+});
+
+it("keeps a cancelled extraction separate from a file failure", async () => {
+  const ui = harness(
+    false,
+    paperFileReader(async () => {
+      throw Object.assign(new Error("cancelled"), { name: "AbortError" });
+    }),
+  );
+  const before = new Map(ui.draft);
+  await ui.selectFiles([new File(["fixture"], "参考文献.pdf")]);
+  expect(ui.label.textContent).toBe("ファイルの読み込みをキャンセルしました");
+  expect(ui.values.paperPrimaryTitle.value).toBe("入力済み論文");
+  expect(ui.draft).toEqual(before);
+  expect(ui.written).toEqual([]);
+  expect(ui.scheduled()).toBe(0);
+});
