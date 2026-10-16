@@ -5910,3 +5910,34 @@ it("推薦の說明に「順位表に入る条件」を書く（第 1090 回）"
   /* 変更の理由（證據が無い会議を薦めていた）も添へる – それが何を直したかが読める。 */
   expect(文, "何を直したかが書かれていない").toContain("証拠がない会議");
 });
+
+/* 畫面は分野を札で出し、配付の ICS も本文に `分野:` を書くのに、**MCP の行だけ出して
+ * いなかった**（2026-10-17 実測: `search_deadlines` の構造化の行に `categories` が無く、
+ * AI は「この締切はどの分野か」を会場ごとの別の呼び出しでしか知れなかった）。 */
+it("search_deadlines の構造化の行に、分野を持つ（第 1107 回）", async () => {
+  const R = (await import("../site/recommender.ts")).default;
+  /* 画面も ICS も同じ語を使う（正本は `Recommender.categoryLabelJa`）。 */
+  const 畫面 = readFileSync(join(REPO_ROOT, "site", "app.ts"), "utf8");
+  expect(畫面, "一覧の分野の札が正本を呼んでいない").toContain("Recommender.categoryLabelJa");
+  const ics = readFileSync(join(REPO_ROOT, "site", "ics.ts"), "utf8");
+  expect(ics, "ICS の分野の語が正本を呼んでいない").toContain("Recommender.categoryLabelJa");
+
+  /* `call` は本文だけを返すので、構造化の側は `client.ask` を直に見る。 */
+  const 答 = (await client.ask({
+    jsonrpc: "2.0",
+    id: 2,
+    method: "tools/call",
+    params: { name: "search_deadlines", arguments: { query: "ICDE", limit: 3, scope: "all" } },
+  })) as { result?: { structuredContent?: { rows?: Array<Record<string, unknown>> } } };
+  const rows = 答.result?.structuredContent?.rows;
+  expect(rows?.length, "行が返らない（前提が崩れた）").toBeGreaterThan(0);
+  const 行 = rows![0];
+  expect(Array.isArray(行.categories), "行に categories が無い").toBe(true);
+  expect(Array.isArray(行.categories_ja), "行に categories_ja が無い").toBe(true);
+  expect((行.categories as string[]).length, "分野の鍵が空").toBeGreaterThan(0);
+  /* 日本語は正本と同じ語（書き写すと、語を変えた日に片方だけ古くなる）。 */
+  for (const key of 行.categories as string[])
+    expect(行.categories_ja as string[], `${key} の日本語が正本と違う`).toContain(
+      R.categoryLabelJa(key),
+    );
+});
