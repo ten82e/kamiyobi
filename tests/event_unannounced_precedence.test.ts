@@ -128,9 +128,17 @@ it.each(["not-announced", "month-only"] as const)(
         const expectedDisplay = expectedDisplays[index];
         expect(ed.event_date_precision).toBe(precision);
         expect(Recommender.eventCellJa({ ed })).toBe(expectedDisplay);
-        expect(
-          catalog.conferences.find((c: { key: string }) => c.key === conf.key).editions[0],
-        ).toEqual(ed);
+        /* 品書の締切には、配付のカレンダーが使った UID（`ics_uid`）が載る – 品書だけの
+         * 欄なので、外して突き合わせる（他の欄は data.json と同じである事を見る）。 */
+        const 品書の版 = catalog.conferences.find((c: { key: string }) => c.key === conf.key)
+          .editions[0] as { deadlines?: Array<Record<string, unknown>> };
+        const 外した = {
+          ...品書の版,
+          deadlines: (品書の版.deadlines ?? []).map(
+            ({ ics_uid: _uid, ...rest }: Record<string, unknown>) => rest,
+          ),
+        };
+        expect(外した).toEqual(ed);
         for (const file of ["upcoming.md", "upcoming.html"]) {
           const content = readFileSync(join(root, "out", file), "utf8");
           const rows = file.endsWith(".md")

@@ -3177,6 +3177,9 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         /* 締切の記録その物も渡す（確認の状態と延長の札を、配付する ICS と同じ語で本文に
          * 書くため – 語は共通の `statusMarksJa` が画面の正本から取る）。 */
         dl: r.dl,
+        /* 配付物の ICS が使った UID（品書の締切に載っている）。渡さないと、書き出しの
+         * 予定が購読の予定と別の物になり、両方を入れた人に同じ締切が二度並ぶ。 */
+        uid: (r.dl as { ics_uid?: unknown } | undefined)?.ics_uid,
       });
     }
     return out;

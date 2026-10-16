@@ -422,9 +422,10 @@ const LLMS_OUTPUT_NOTES_JA: Record<string, string> = {
     "画面の絞り込みは効かない。時刻未確認と推定はそのまま書く（第 266 回）。確認の状態" +
     "（`要確認` など）と延長（`延長後`）は、各予定の本文に `状態: ` の行で書く" +
     "（画面の一覧の札と同じ語 – 購読した人はカレンダーしか見ないため。第 861 回）。" +
-    "**画面が書き出す ICS とは別の物**である（同じ締切に別の UID を付ける – 両方を同じ" +
-    "カレンダーに入れると二重に並ぶ。配付物は種別の日本語名を SHA-1 に掛けた 8 桁、" +
-    "画面は ASCII の種別の鍵）。" +
+    "**同じ締切には同じ UID を付ける**（`catalog.json` の締切の `ics_uid` に載せて、" +
+    "画面の書き出しもそれをそのまま使う – 両方を同じカレンダーに入れても二重に並ばない）。" +
+    "種別の語を ASCII に落とせる行はそのまま、落とせない行（日本語の種別名）は同じ語の" +
+    "SHA-1 の先頭 8 桁にする – 読めるかより、ビルドをまたいで同じ値になる事を取る。" +
     "分野は画面と同じ日本語で " +
     "`CATEGORIES` と説明行の `分野:` の両方に載せる（第 292 回）。受信側の表示対応は kamiyobi 側では" +
     "検証していないが、説明行の語はカレンダー本文の検索に掛かる。",
@@ -1283,7 +1284,46 @@ function recordDeadlineNext(
   };
 }
 
-function compactEdition(edition: JsonRecord, deadlines: JsonRecord[]): JsonRecord {
+/** 締切の JST の暦日（`YYYYMMDD`）。UID を引く鍵に使う – 配付物の ICS が使う日と
+ * 同じ組み方（`date-only` は公式の暦日、時刻のある物は JST へ寄せた日）。 */
+function jsonDeadlineDay(deadline: JsonRecord): string {
+  if (String(deadline.precision ?? "") === "date-only")
+    return String(deadline.local_date ?? "")
+      .replace(/-/g, "")
+      .slice(0, 8);
+  const at = jsonTime(deadline.utc);
+  return at === null ? "" : new Date(at + 9 * 3600000).toISOString().slice(0, 10).replace(/-/g, "");
+}
+
+/** 配付物の ICS が使った UID を、締切に載せる（引けなければ載せない）。
+ *
+ * 畫面は SHA-1 を持たないので、自分で同じ UID を組めない – ここで渡さないと、書き出しの
+ * 予定が購読の予定と別の物になり、兩方を入れた人に同じ締切が二度並ぶ（實測 2026-10-17）。 */
+function attachIcsUids(
+  edition: JsonRecord,
+  deadlines: JsonRecord[],
+  icsUids?: Map<string, string> | null,
+): JsonRecord[] {
+  if (!icsUids) return deadlines;
+  return deadlines.map((deadline) => {
+    const uid = icsUids.get(
+      icsDeadlineUidKey(
+        String(edition.id ?? ""),
+        String(deadline.kind ?? ""),
+        deadline.round,
+        String(deadline.label ?? ""),
+        jsonDeadlineDay(deadline),
+      ),
+    );
+    return uid ? { ...deadline, ics_uid: uid } : deadline;
+  });
+}
+
+function compactEdition(
+  edition: JsonRecord,
+  deadlines: JsonRecord[],
+  icsUids?: Map<string, string> | null,
+): JsonRecord {
   return {
     year: edition.year,
     id: edition.id,
@@ -1307,7 +1347,7 @@ function compactEdition(edition: JsonRecord, deadlines: JsonRecord[]): JsonRecor
     ...(Array.isArray(edition.legacy_ids) && edition.legacy_ids.length
       ? { legacy_ids: edition.legacy_ids }
       : {}),
-    deadlines,
+    deadlines: attachIcsUids(edition, deadlines, icsUids),
   };
 }
 
@@ -1348,6 +1388,10 @@ export function toCatalog(
   // 画面側で数え直すと、配信物と同じ数を言えなくなる。
   calendar: IcsCalendarMeta | null | undefined = undefined,
   reranker?: Record<string, unknown> | null,
+  /* 締切ごとのカレンダーの UID（配付物が使った物）。畫面は SHA-1 を持たないので、
+   * 自分で同じ UID を組めない – ここで渡して、書き出しの予定が購読の予定と同じ物に
+   * なるようにする（違うと、兩方を入れた人に同じ締切が二度並ぶ）。 */
+  icsUids?: Map<string, string> | null,
 ): Record<string, unknown> {
   const safeNow = now instanceof Date && !Number.isNaN(now.getTime()) ? now : new Date();
   const horizon = safeNow.getTime() + Math.max(1, days) * DAY_MS;
@@ -1374,13 +1418,13 @@ export function toCatalog(
               eventStart <= horizon;
         if (!inWindow && !deadlines.length && edition.event_date_precision !== "not-announced")
           return null;
-        const compact = compactEdition(edition, deadlines);
+        const compact = compactEdition(edition, deadlines, icsUids);
         // Supplemental dates belong only to the drawer; the list retains its existing window.
         const scheduleDeadlines = jsonRecords(edition.deadlines).filter(
           (deadline) => !deadlines.includes(deadline),
         );
         if (deadlines.length && scheduleDeadlines.length) {
-          compact.schedule_deadlines = scheduleDeadlines;
+          compact.schedule_deadlines = attachIcsUids(edition, scheduleDeadlines, icsUids);
         }
         return compact;
       })
@@ -3436,6 +3480,23 @@ export function icsEventRows(
   records: DataRecord[] | null | undefined,
   now: Date | null | undefined,
 ): IcsRow[] {
+  return icsRowsWithUids(records, now).rows;
+}
+
+/** カレンダーの行と、その行が使った UID を一度に組む。
+ *
+ * UID を別に組み直すと、片方だけ直した日に食い違う（それが元の不具合だった – 畫面の
+ * 書き出しは ASCII の種別の鍵、配付物は日本語の種別名の SHA-1 で、同じ締切が別の予定に
+ * なっていた）。**同じ一巡で両方を作る**。
+ *
+ * 鍵は「開催回・種別・回次・原表記・JST の暦日」。畫面（`catalog.json` の締切）と
+ * 同じ材料で組める形にしてある – 畫面は SHA-1 を持たないので、配付物の UID を
+ * データに載せて渡す。 */
+export function icsRowsWithUids(
+  records: DataRecord[] | null | undefined,
+  now: Date | null | undefined,
+): { rows: IcsRow[]; uids: Map<string, string> } {
+  const uids = new Map<string, string>();
   const safeNow = now instanceof Date && !Number.isNaN(now.getTime()) ? now : new Date();
   const stamp = jstParts(safeNow);
   const rows: IcsRow[] = [];
@@ -3543,6 +3604,17 @@ export function icsEventRows(
       .join("-");
     const n = used.get(base) ?? 0;
     used.set(base, n + 1);
+    const uid = `${base}${n === 0 ? "" : `-${n + 1}`}@kamiyobi`;
+    uids.set(
+      icsDeadlineUidKey(
+        String(ed.edition_id ?? ""),
+        String(dl.kind ?? ""),
+        dl.round,
+        String(dl.label ?? ""),
+        day,
+      ),
+      uid,
+    );
     rows.push({
       day,
       at: atMs,
@@ -3551,7 +3623,7 @@ export function icsEventRows(
 
       body: icsEventBody(
         {
-          uid: `${base}${n === 0 ? "" : `-${n + 1}`}@kamiyobi`,
+          uid,
           day,
           summary,
           description: desc.join("\n"),
@@ -3564,7 +3636,20 @@ export function icsEventRows(
     });
   }
   rows.sort((a, b) => a.at - b.at || cmpStr(a.body[5] ?? "", b.body[5] ?? ""));
-  return rows;
+  return { rows, uids };
+}
+
+/** 締切ごとの UID を引く鍵。**配付物と畫面の両方が同じ材料で組める形**にする
+ * （開催回・種別・回次・原表記・JST の暦日）。日付を入れるのは引くためだけで、
+ * UID その物は日付を含まない（締切が動いても購読者の予定が入れ替わらないため）。 */
+export function icsDeadlineUidKey(
+  editionId: string,
+  kind: string,
+  round: unknown,
+  label: string,
+  day: string,
+): string {
+  return [editionId, kind, String(Number(round ?? 1) || 1), label, day].join("\u0000");
 }
 
 /* 購読先に申告する事実。行から導く – 別々に数えると、申告と中身がズレる
@@ -4323,6 +4408,7 @@ export function toLlmsTxt(
     "      - date-only は local_date: 'YYYY-MM-DD' と earliest_utc/latest_utc を持ち、utc/aoe/tz_raw は null。",
     "      - round: integer：1 起点。複数投稿ラウンドを持つ会議がある。",
     "      - track: string：投稿のトラック（例 'research track'）。空の行が多い。",
+    "      - ics_uid: string：この締切が配付のカレンダー（`deadlines.ics`）で使う UID。載る締切だけが持つ（実測 2026-10-16: 品書の締切 871 のうち 792）。画面の書き出しもこれをそのまま使うので、同じ締切が購読と書き出しで同じ予定になる。無い締切は購読の対象外（過去・先すぎる物など）で、画面が自分で組む。",
     "      - verification: object：公式 URL を確かめた記録。{official_url, last_attempt_at, last_verified_at, next_check_at, content_hash, status, source_class, source_name, provider_identity, label_signature, selector_or_field, adapter, promotion_ref}。**画面の札と「確認元」はここから出る** – `status` は 'verified'(35)|'manual-required'(4,435)|'parser-failed'(2)|'pending'(2)、`source_class` は 'official-cfp'(39)|'publisher'(3)|'aggregator'(4,097)|'unknown'(335)（実測 2026-10-16。'unknown' は確かめた元が分からない行で、値を推測しない）。**数は語の側に付ける** – 並びだけを書くと、語を並べ替えた日に数が別の語に付く。`provider_identity` は {provider, providerKey, strength} で、`provider` は 'easychair'|'openreview'|'hotcrp'|'github-pages'|'acm'|'ieee'|'dedicated-domain'|'unknown'、`strength` は 'explicit'|'provider-scoped'|'dedicated-domain'|'weak'。実測 2026-10-16: 締切 4,990 のうち 4,474 が持つ。",
     "      - superseded_deadlines: array：上書きされた古い締切の記録。{value, precision, source, supersededBy, reason, status, supersededAt, evidenceRef}。`reason` は 'manual-resolution'(36)|'official-extension'(2)、`status` は 'superseded'（実測 2026-10-16。締切 4,990 のうち 38 行）。",
     "      - promotion_ref: object：{batch, resolution}。公開した締切から、それを載せた判断（昇格）への参照。",
@@ -4462,11 +4548,12 @@ export async function buildAll(
   const data = toJson(safeConfs, safeConfig, nowUtc, opts.venuePapers);
   /* カレンダーの行は 1 回だけ作る – 件数と期間の申告（`catalog.json` 経由で画面に出す）は、
    * 同じ行から導かないと本文とズレる。 */
-  const icsRows = icsEventRows(records, nowUtc);
+  const { rows: icsRows, uids: icsUids } = icsRowsWithUids(records, nowUtc);
   const icsMeta = icsCalendarMeta(icsRows);
   // 品書は 1 回だけ組む（`catalog.json` と、画面に差し込む物と、索引の申告が
   // それぞれ違う品書を指さないため。第 289 回と同じ轍を踏まない）。
-  const catalog = toCatalog(data, nowUtc, upcomingDays使ふ, icsMeta, opts.reranker);
+  /* 締切ごとのカレンダーの UID も品書へ渡す（畫面の書き出しが購読と同じ予定になるように）。 */
+  const catalog = toCatalog(data, nowUtc, upcomingDays使ふ, icsMeta, opts.reranker, icsUids);
   // A new page build does not imply that upstream deadlines were checked again.
   catalog.source_updates = Object.values(opts.health?.sourceMetadata ?? {})
     .filter((source) => source.source !== "local")

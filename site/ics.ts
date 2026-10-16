@@ -300,17 +300,21 @@ export interface ScreenDeadlineInput {
   session?: unknown;
   /** 締切の記録その物（確認の状態と延長の判定に使う。画面が持つ `dl` をそのまま渡す）。 */
   dl?: unknown;
+  /** 配付物（`deadlines.ics`）が使った UID。品書（`catalog.json`）の締切に載っている。
+   * 渡されたらそれをそのまま使う – 購読と書き出しで同じ予定にするため（渡されない行は
+   * 此処で組む。購読の側に無い締切なので、二重にはならない）。 */
+  uid?: unknown;
 }
 
 /** 画面の行から、カレンダーの行を組む。**見えている物だけ**を入れる（過ぎた締切を表示して
  * いればそれも入る – 画面と食い違わせない）。
  *
- * **UID は配付物と違ふ**（實測 2026-10-17: 配付物は `kamiyobi-dl2ws2026-29b52d20@kamiyobi`、
- * 此方は `kamiyobi-dl2ws2026-abstract@kamiyobi`）。配付物は日本語の種別名を SHA-1 に掛けた
- * 8 桁、此方は ASCII の種別の鍵。**同じ締切が別の物として並ぶ**ので、購読と併用した人には
- * 二重に見える – 説明欄（`icsViewDescriptionJa`）で其の事を言ひ、どちらか一方を使ふ樣に
- * 案内する。揃へるには配付物の UID を畫面まで運ぶ必要があり、配付物の側を變へると
- * 既に購読して居る人の暦が入れ替はる（追ひの課題）。 */
+ * **UID は、品書（`catalog.json`）の締切に載つて居る配付物の物をその儘使ふ**
+ * （`ScreenDeadlineInput.uid`）。同じ締切が購読と書き出しで同じ予定になる
+ * （實測 2026-10-17: 揃へる前は配付物が `kamiyobi-dl2ws2026-29b52d20@kamiyobi`・
+ * 此方が `kamiyobi-dl2ws2026-abstract@kamiyobi` で、同じ日が二度並んだ）。
+ * 渡されない行（購読の対象より先の締切など）だけ此処で組む – 其の行は購読の側に
+ * 無いので二重にはならないが、同じ暦に入れると別の予定になり得る（説明欄で言ふ）。 */
 export function icsRowsFromScreen(
   items: readonly ScreenDeadlineInput[] | null | undefined,
   now: Date | null | undefined,
@@ -350,22 +354,29 @@ export function icsRowsFromScreen(
       link ? `詳細: ${link}` : "",
       `収録: ${ICS_VIEW_CAL_NAME_JA}（データ生成: ${stampHumanJa(safeNow)}）`,
     ].filter(Boolean);
-    const base = [
-      "kamiyobi",
-      icsUidSafe(item.editionId || `${item.key ?? "conf"}-${item.year ?? ""}`),
-      icsUidSafe(item.kind),
-    ]
-      .filter(Boolean)
-      .join("-");
-    const n = used.get(base) ?? 0;
-    used.set(base, n + 1);
+    /* 配付物の UID が渡されていれば、それをそのまま使う（購読と同じ予定になる）。
+     * 渡されない行だけ、此処で組む – 購読の側に無い締切なので二重にはならない。 */
+    const 配付のUID = String(item.uid ?? "").trim();
+    let uid = 配付のUID;
+    if (!uid) {
+      const base = [
+        "kamiyobi",
+        icsUidSafe(item.editionId || `${item.key ?? "conf"}-${item.year ?? ""}`),
+        icsUidSafe(item.kind),
+      ]
+        .filter(Boolean)
+        .join("-");
+      const n = used.get(base) ?? 0;
+      used.set(base, n + 1);
+      uid = `${base}${n === 0 ? "" : `-${n + 1}`}@kamiyobi`;
+    }
     rows.push({
       day,
       at: Number(item.at) || 0,
       deadline: String(item.dateField ?? "").trim() === "締切",
       body: icsEventBody(
         {
-          uid: `${base}${n === 0 ? "" : `-${n + 1}`}@kamiyobi`,
+          uid,
           day,
           summary,
           description: desc.join("\n"),
@@ -405,10 +416,12 @@ export function icsViewDescriptionJa(
     "これは購読ではなく、いまの一覧の写しです – 一覧が変わったら、もう一度この画面から",
     "書き出してください。収録の全部を購読するなら、同じ場所にある deadlines.ics を",
     "カレンダーアプリの購読先に指定します（毎日入れ替わります）。",
-    /* 同じ締切が、二つの書き出しで別の予定として扱はれる（UID が違ふ）。
-     * どちらも入れると、同じ日が二度並ぶ – 先に言ふ。 */
-    "この写しと購読の deadlines.ics は、同じ締切に別々の識別子を付けます。",
-    "両方を同じカレンダーに入れると、同じ締切が二度並びます – どちらか一方を使ってください。",
+    /* 同じ締切は、購読の側と同じ識別子（UID）を付ける – 兩方を同じカレンダーに入れても
+     * 同じ予定として扱はれる。品書に UID が載つて居ない締切（購読の対象より先の物など）は
+     * 此処で組むので、其の分だけは別の予定になり得る – 其の事も言ふ。 */
+    "同じ締切には、購読の deadlines.ics と同じ識別子（UID）を付けます。",
+    "購読の対象より先の締切（「収録の全体を読み込む」で出した物）は、購読の側と別の",
+    "識別子になる事があります – 同じカレンダーに入れると、その分だけ二度並びます。",
     generatedAt && !Number.isNaN(generatedAt.getTime())
       ? `データ生成: ${stampHumanJa(generatedAt)}。`
       : "",
