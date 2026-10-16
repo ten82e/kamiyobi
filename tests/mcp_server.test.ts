@@ -6051,11 +6051,14 @@ it("search_deadlines の行が、配付カレンダーの UID を持つ（第 11
     "",
   );
   expect(ics, "カレンダーに同じ UID の予定が無い").toContain(`UID:${uid}`);
-  /* 収録全体の行は収録 snapshot から組むので、UID を持たない（書いてある通り）。 */
+  /* 収録全体の行でも、**品書に載っている締切**には同じ UID が付く（収録 snapshot には
+   * 無いので、品書から引いている）。同じ締切が道具に依って UID を持ったり持たなかったり
+   * しない事を、両方の scope で見る。 */
   const 全 = (await 引く("all")).result?.structuredContent?.rows ?? [];
   expect(全.length, "収録全体の行が返らない").toBeGreaterThan(0);
-  for (const row of 全)
-    expect(row.ics_uid, "収録全体の行に UID を付けた（snapshot には無い）").toBeUndefined();
+  expect(String(全[0].ics_uid ?? ""), "収録全体の行に UID が付かない（品書から引けていない）").toBe(
+    uid,
+  );
 });
 
 /* 分野の語は、MCP の中でも 1 つの正本（`Recommender.categoryLabelJa`）から取る。
@@ -6084,4 +6087,29 @@ it("MCP の中でも、分野の語は 1 つの正本から取る（第 1111 回
     expect(Array.isArray(語), `${key} の categories_ja が配列でない`).toBe(true);
     expect(分野, `${key}: venue_info と search_deadlines の分野の語が違う`).toBe(語.join("・"));
   }
+});
+
+/* `list_upcoming` の締切の行にも、同じ UID を付ける（2026-10-17 實測: 此方には 1 つも
+ * 無く、`search_deadlines` の初期カタログの行にだけ在った – 同じ締切が道具に依って
+ * UID を持ったり持たなかったりすると、AI が「カレンダーのどの予定か」を言へない）。 */
+it("list_upcoming の締切の行にも、カレンダーの UID が付く（第 1112 回）", async () => {
+  const r = (await client.ask({
+    jsonrpc: "2.0",
+    id: 2,
+    method: "tools/call",
+    params: { name: "list_upcoming", arguments: { days: 60, limit: 100 } },
+  })) as {
+    result?: { structuredContent?: { items?: Array<Record<string, unknown>> } };
+  };
+  const 締切 = (r.result?.structuredContent?.items ?? []).filter((x) => x.kind);
+  expect(締切.length, "締切の行が返らない（前提が崩れた）").toBeGreaterThan(0);
+  const 付いた = 締切.filter((x) => typeof x.ics_uid === "string" && x.ics_uid);
+  expect(付いた.length, "締切の行に 1 つも UID が付かない").toBeGreaterThan(0);
+  /* 付いた UID は、實際に配付のカレンダーに在る。 */
+  const ics = readFileSync(join(REPO_ROOT, "public", "deadlines.ics"), "utf8").replace(
+    /\r\n[ \t]/g,
+    "",
+  );
+  for (const row of 付いた.slice(0, 10))
+    expect(ics, `${row.ics_uid} がカレンダーに無い`).toContain(`UID:${row.ics_uid}`);
 });

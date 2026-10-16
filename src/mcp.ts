@@ -214,6 +214,37 @@ function allRows(): Row[] {
 /** 使う窓を決める（既定は画面と同じ。`scope: "all"` で収録の全体）。
  * **生成時刻も一緒に返す** – 窓に依って出所のファイルが違ふので、古さの斷りもそれに合わせる。 */
 
+/** 品書（`catalog.json`）の締切が持つ、カレンダーの UID の索引。
+ *
+ * 収録全体の行は收録 snapshot（上流データ）から組むので UID を持たない。近い期間の締切は
+ * 品書にも載つて居るので、其ちらから引いて渡す – **同じ締切が、道具に依つて UID を持つたり
+ * 持たなかつたり**しない樣にする（2026-10-17 實測: `list_upcoming` の締切の行には 1 つも
+ * 無く、`search_deadlines` の初期カタログの行にだけ在つた）。 */
+let uid索引: Map<string, string> | undefined;
+function 品書のUID(): Map<string, string> {
+  if (uid索引 !== undefined) return uid索引;
+  const 表 = new Map<string, string>();
+  const 會議 = Array.isArray(catalog()?.conferences)
+    ? (catalog()!.conferences as Array<Record<string, unknown>>)
+    : [];
+  for (const c of 會議) {
+    const venue = String(c.key ?? "");
+    for (const e of (c.editions ?? []) as Array<Record<string, unknown>>) {
+      const edition = String(e.id ?? "");
+      for (const dl of (e.deadlines ?? []) as Array<Record<string, unknown>>) {
+        const uid = typeof dl.ics_uid === "string" ? dl.ics_uid : "";
+        if (!uid) continue;
+        表.set(
+          [venue, edition, dl.kind ?? "", dl.round ?? 1, dl.label ?? ""].join("\u0000"),
+          uid,
+        );
+      }
+    }
+  }
+  uid索引 = 表;
+  return 表;
+}
+
 let 軸の索引: Map<string, unknown> | undefined;
 function 品書の軸(): Map<string, unknown> {
   if (軸の索引 !== undefined) return 軸の索引;
@@ -1248,7 +1279,15 @@ export function structuredDeadline(r: Row, now: number): Record<string, unknown>
     rank: r.conf.rank ?? null,
     /* 配付のカレンダーの UID。**同じ締切を、AI がカレンダーの予定として名指せる**ように
      * する（2026-10-17 まで、行からカレンダーの予定へ渡る手掛かりが無かった）。 */
-    ...(typeof r.dl.ics_uid === "string" && r.dl.ics_uid ? { ics_uid: r.dl.ics_uid } : {}),
+    ...(() => {
+      const uid =
+        typeof r.dl.ics_uid === "string" && r.dl.ics_uid
+          ? r.dl.ics_uid
+          : 品書のUID().get(
+              [r.conf.key, r.ed.id, r.kind, r.dl.round ?? 1, r.dl.label ?? ""].join("\u0000"),
+            );
+      return uid ? { ics_uid: uid } : {};
+    })(),
     /* 分野。畫面は分野を札で出し、配付の ICS も本文に `分野:` を書くのに、**MCP の行だけ
      * 出して居なかつた**（2026-10-17 實測: `search_deadlines` の行の欄に `categories` が無く、
      * AI は「この締切はどの分野か」を會場の別の呼び出しでしか知れなかつた）。鍵（`security`
@@ -3020,7 +3059,7 @@ const TOOLS = [
   {
     name: "search_deadlines",
     description:
-      "日本語で投稿締切を検索する。語を省いて kind / kinds / rank / category / categories / domestic / online / within_days だけでも絞れる。既定は今後の abstract / paper / journal で、過去と推定は除きます（include_past・include_estimated で足せます）。既定の kind は MCP の方が広く、常時受付（journal）も含みます。scope は screen（初期一覧）または all（収録全体）。structuredContent に total・rows・next_offset を返す。screen で 0 件のときは scope_comparison に全収録での同条件の件数・絞る前の件数・生成時刻を返す。比較データを読めない場合は検索結果を保持し、scope_comparison_error に理由と再試行の案内を返す。範囲を変えるときもほかの条件を維持する。続きは同じ条件と next_offset を offset に指定する。日付のみの行の utc・jst は null。常時受付は締切日時・精度・回次を null とし、日付のある行の後に並べます。推定期間、投稿トラック、確認状態を別に返す。公式確認（いつ・どこで・何を確かめたか）は verification_ja に画面の行の詳細と同じ日本語で返します（内部の鍵名は verification に残します）。前に出ていた締切も表示する。日付語は別ラウンドや会期にも当たるため、締切だけの期間指定には within_days を使う。会期の欄には、上流が書いた原文（`March 18-21, 2024` のような自由文）を「原表記」として添えます（画面の行の詳細と同じ）。0 件のときは画面と同じ案内と「打ち直すなら」の候補を返す。返す行の形: 日時 | 種別 | 確認状態（ある場合）| 会議名（版の識別子）| ランク | 会期 | 開催地 URL。テキストは `| ` で切り、構造化結果を優先する。構造化の行には `categories`（分野の鍵）と `categories_ja`（画面の札と同じ日本語）も入る。`ics_uid`（配付カレンダーの予定の UID）は**初期カタログの行にだけ**入ります（収録全体の行は収録 snapshot から組むため、カレンダーの UID を持ちません）。",
+      "日本語で投稿締切を検索する。語を省いて kind / kinds / rank / category / categories / domestic / online / within_days だけでも絞れる。既定は今後の abstract / paper / journal で、過去と推定は除きます（include_past・include_estimated で足せます）。既定の kind は MCP の方が広く、常時受付（journal）も含みます。scope は screen（初期一覧）または all（収録全体）。structuredContent に total・rows・next_offset を返す。screen で 0 件のときは scope_comparison に全収録での同条件の件数・絞る前の件数・生成時刻を返す。比較データを読めない場合は検索結果を保持し、scope_comparison_error に理由と再試行の案内を返す。範囲を変えるときもほかの条件を維持する。続きは同じ条件と next_offset を offset に指定する。日付のみの行の utc・jst は null。常時受付は締切日時・精度・回次を null とし、日付のある行の後に並べます。推定期間、投稿トラック、確認状態を別に返す。公式確認（いつ・どこで・何を確かめたか）は verification_ja に画面の行の詳細と同じ日本語で返します（内部の鍵名は verification に残します）。前に出ていた締切も表示する。日付語は別ラウンドや会期にも当たるため、締切だけの期間指定には within_days を使う。会期の欄には、上流が書いた原文（`March 18-21, 2024` のような自由文）を「原表記」として添えます（画面の行の詳細と同じ）。0 件のときは画面と同じ案内と「打ち直すなら」の候補を返す。返す行の形: 日時 | 種別 | 確認状態（ある場合）| 会議名（版の識別子）| ランク | 会期 | 開催地 URL。テキストは `| ` で切り、構造化結果を優先する。構造化の行には `categories`（分野の鍵）と `categories_ja`（画面の札と同じ日本語）も入る。`ics_uid`（配付カレンダー `deadlines.ics` の予定の UID）は、**品書（初期カタログ）に載っている締切**に入ります（収録全体の行も、近い期間なら品書から引いて付けます。品書に載っていない古い締切には入りません）。",
     inputSchema: {
       type: "object",
       properties: {
