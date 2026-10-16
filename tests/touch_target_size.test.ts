@@ -13,6 +13,7 @@ const TOUCH_TARGETS = [
   ".btn-reset",
   ".preset-btn",
   ".sample-btn",
+  ".paper-file-button",
   ".chips label",
   "label.check",
   "button.tag",

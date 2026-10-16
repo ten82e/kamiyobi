@@ -47,13 +47,19 @@ function harness() {
     files: Array<{ name: string }> = [];
     value = "";
     hidden = true;
+    clicks = 0;
     listeners = new Map<string, (event: { currentTarget: Input }) => void>();
     addEventListener(name: string, fn: (event: { currentTarget: Input }) => void) {
       this.listeners.set(name, fn);
     }
+    click() {
+      this.clicks++;
+      this.listeners.get("click")?.({ currentTarget: this });
+    }
   }
   const input = new Input();
   const reset = new Input();
+  const choose = new Input();
   const undo = new Input();
   const sampleButton = new Input();
   const sampleNode = Object.assign(sampleButton, { getAttribute: () => JSON.stringify(sample) });
@@ -114,7 +120,9 @@ function harness() {
             ? reset
             : id === "paperUndo"
               ? undo
-              : label,
+              : id === "paperChoose"
+                ? choose
+                : label,
       unsupportedPaperFormatJa: () => "",
       loadPdfJs: (callback: (ok: boolean) => void) => callback(true),
       readPaperFile: (file: { name: string }, signal: AbortSignal) =>
@@ -140,6 +148,8 @@ function harness() {
     written,
     values,
     draft,
+    choose: () => choose.click(),
+    chooserOpens: () => input.clicks,
     undoButton: undo,
     sample: () => sampleButton.listeners.get("click")!({ currentTarget: sampleButton }),
     undo: () => undo.listeners.get("click")!({ currentTarget: undo }),
@@ -152,6 +162,35 @@ function harness() {
     },
   };
 }
+
+it("offers a named native button with a connected file status and supported formats", () => {
+  const html = readFileSync(new URL("../site/template.html", import.meta.url), "utf8");
+  const picker = /<button\b([^>]*\bid="paperChoose"[^>]*)>([\s\S]*?)<\/button>/.exec(html);
+  expect(picker).not.toBeNull();
+  const attributes = picker![1];
+  expect(attributes).toContain('type="button"');
+  expect(attributes).toContain('class="paper-file-button"');
+  expect(attributes).toContain('aria-describedby="paperFileLabel"');
+  expect(attributes).not.toMatch(/\b(hidden|disabled)\b|tabindex="-1"|aria-hidden="true"/);
+  expect(picker![2]).toContain("投稿予定の論文を選ぶ");
+  expect(picker![2]).toContain("PDF / TXT・複数可");
+  expect(html).toMatch(/<span\b[^>]*id="paperFileLabel"[^>]*role="status"/);
+  const file = /<input\b[^>]*id="paperFiles"[^>]*>/.exec(html)?.[0];
+  expect(file).toContain('accept=".pdf,.txt"');
+  expect(file).toMatch(/\bmultiple\b/);
+});
+
+it("opens the native chooser without changing the current paper or draft", () => {
+  const ui = harness();
+  const savedDraft = ui.draft.get("draft");
+  ui.choose();
+  expect(ui.chooserOpens()).toBe(1);
+  expect(ui.values.paperPrimaryTitle.value).toBe("入力済み論文");
+  expect(ui.draft.get("draft")).toBe(savedDraft);
+  expect(ui.written).toEqual([]);
+  expect(ui.pending.size).toBe(0);
+  expect(ui.applied()).toBe(0);
+});
 
 it("cancels the previous read when another paper file is selected", async () => {
   const ui = harness();

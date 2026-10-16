@@ -156,6 +156,7 @@
   .btn-reset,
   .preset-btn,
   .sample-btn,
+  .paper-file-button,
   .chips label,
   label.check,
   button.tag {
@@ -485,6 +486,19 @@ a.btn-reset {
   cursor: pointer;
 }
 .sample-btn:hover { color: var(--accent); border-color: var(--accent); border-style: solid; }
+.paper-file-button {
+  display: inline-block;
+  cursor: pointer;
+  max-width: 100%;
+  padding: 8px 14px;
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  background: transparent;
+  font: inherit;
+  font-size: 0.85rem;
+  color: var(--accent);
+  text-align: left;
+}
 
 /* Main Table */
 .count { font-size: 0.82rem; color: var(--muted); margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
@@ -1097,11 +1111,11 @@ footer a:hover { text-decoration: underline; }
       <h2 class="only-sr" id="paperInputHeading">論文の入力</h2>
       <span style="font-size: 0.78rem; color: var(--muted); font-weight: 500;">投稿先推薦</span>
       <div style="margin-top: 4px;">
-        <label style="display: inline-block; cursor: pointer; padding: 8px 14px; border: 1px dashed var(--border); border-radius: 8px; font-size: 0.85rem; color: var(--accent);">
+        <button id="paperChoose" type="button" class="paper-file-button" aria-describedby="paperFileLabel">
           📄 投稿予定の論文を選ぶ（PDF / TXT・複数可。1件目が投稿予定、残りは参考論文）
-          <input type="file" id="paperFiles" accept=".pdf,.txt" multiple style="display: none;">
-        </label>
-        <span id="paperFileLabel" style="font-size: 0.72rem; color: var(--muted); margin-left: 8px;">未選択</span>
+        </button>
+        <input type="file" id="paperFiles" accept=".pdf,.txt" multiple style="display: none;">
+        <span id="paperFileLabel" role="status" style="font-size: 0.72rem; color: var(--muted); margin-left: 8px;">未選択</span>
         <button id="cancelPdf" type="button" hidden>PDF読み込みをキャンセル</button>
         <button id="paperReset" type="button">論文の入力を消す</button>
         <button id="paperUndo" type="button" hidden>直前の入力に戻す</button>

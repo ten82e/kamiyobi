@@ -6007,6 +6007,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     paperPrimaryVenue = record?.venue || "";
   }
   const paperFiles = inputElement("paperFiles");
+  $("paperChoose").addEventListener("click", () => paperFiles.click());
   const cancelPdf = $("cancelPdf");
   function stopPaperFileRead() {
     pdfJob++;
