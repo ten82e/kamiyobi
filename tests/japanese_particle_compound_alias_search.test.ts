@@ -120,6 +120,6 @@ describe("助詞を含む和名も寄せ表が引ける（第 676 回）", () =>
     ];
     for (const [q, n] of 金型) expect(當(q).length, `搜 ${q}`).toBe(n);
     expect(品書.length, "品書の行数その物が動いた").toBe(3250);
-    expect(TOPIC_QUERY_ALIASES_JA.length, "主題の寄せ表の条目数").toBe(138);
+    expect(TOPIC_QUERY_ALIASES_JA.length, "主題の寄せ表の条目数").toBe(151);
   });
 });

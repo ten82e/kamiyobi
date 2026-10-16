@@ -98,6 +98,23 @@ export const TOPIC_QUERY_ALIASES_JA: string[][] = [
   ["認知", "cognitive"],
   ["ドローン", "drone"],
   ["知識グラフ", "knowledge graph"],
+  /* 分野の名前を、日本語で打つた人に屆ける（2026-10-17 實測: 収録の英文字表記は數〜
+   * 數十行當たるのに、日本語は 0 件だつた – 「打ち方が通じない」と「収録に無い」を
+   * 區別できないと、そこで檢索をやめる）。中黒の有無・長音の書き方も、同じ寄せ先へ
+   * 束ねる（`kanaFold` は長音を落とすが、中黒は別の字なので兩方を持つ）。 */
+  ["オペレーティングシステム", "operating systems"],
+  ["オペレーティング・システム", "operating systems"],
+  ["コンピュータグラフィックス", "graphics"],
+  ["コンピューターグラフィックス", "graphics"],
+  ["コンピュータ・グラフィックス", "graphics"],
+  ["ソフトウェア工学", "software engineering"],
+  ["ソフトウェア・エンジニアリング", "software engineering"],
+  ["システムソフトウェア", "systems software"],
+  ["サイバーセキュリティ", "cyber"],
+  ["暗号技術", "cryptography"],
+  ["アーキテクチャ", "architecture"],
+  ["ハイパフォーマンスコンピューティング", "high performance"],
+  ["ハイパフォーマンス・コンピューティング", "high performance"],
   ["データマイニング", "data mining"],
   ["推論", "reasoning"],
   ["プロトコル", "protocol"],

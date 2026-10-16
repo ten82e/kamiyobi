@@ -121,6 +121,6 @@ describe("並べた語の寄せ先を検索しが語ごとに数える（第 675
     expect(當("情報理論"), "並べ語の語ごとに数えて增えた筈").toBe(9);
     expect(當("高性能計算")).toBe(207);
     const 表 = readFileSync(`${REPO_ROOT}/site/topic-aliases.ts`, "utf8");
-    expect((表.match(/^\s*\["/gm) || []).length, "条目の合計が計画外に動いた").toBe(138);
+    expect((表.match(/^\s*\["/gm) || []).length, "条目の合計が計画外に動いた").toBe(151);
   });
 });

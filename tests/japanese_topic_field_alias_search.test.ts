@@ -36,6 +36,21 @@ const 寄せ: [string, string, number][] = [
   ["プランニング", "planning", 6],
   // ソフトウェアテスト – 第 675 回の検索し側の直しで 19 行（增分の 1 行は HPCTESTS 2026
   // 「testing and evaluation of systems, tools, and software」 – 語を離して書く収録 ✓）。
+  /* `ハイパフォーマンスコンピューティング` は表に在るが此の一覧には入れない –
+   * 當たる行の多く（153 行）は寄せ先の語を持たず、**收録の分類（`hpc`）で當たつて居る**。
+   * 下の「寄せ先の語を持たん行を交へん」はその道を知らないので、入れると誤爆に見える。
+   * 畫面での實測は 0 件 → 10 件（default の一覧）。 */
+  ["オペレーティングシステム", "operating systems", 53],
+  ["オペレーティング・システム", "operating systems", 53],
+  ["コンピュータグラフィックス", "graphics", 299],
+  ["コンピューターグラフィックス", "graphics", 299],
+  ["コンピュータ・グラフィックス", "graphics", 299],
+  ["ソフトウェア工学", "software engineering", 87],
+  ["ソフトウェア・エンジニアリング", "software engineering", 87],
+  ["システムソフトウェア", "systems software", 156],
+  ["サイバーセキュリティ", "cyber", 31],
+  ["暗号技術", "cryptography", 43],
+  ["アーキテクチャ", "architecture", 75],
   ["ソフトウェアテスト", "software testing", 19],
   ["テスト", "testing", 23],
   ["プログラマブル", "programmable", 26],
