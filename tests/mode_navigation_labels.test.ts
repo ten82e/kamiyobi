@@ -14,6 +14,7 @@ function harness(mode: "recommend" | "deadlines") {
       "modeRecommend",
       "modeDeadlines",
       "helpPanel",
+      "results",
       "resultsHeading",
       "deadlineResultHint",
       "recommendResultHint",
@@ -38,6 +39,42 @@ function harness(mode: "recommend" | "deadlines") {
       ];
     }),
   );
+  type HelpNode = {
+    tagName: string;
+    hidden: boolean;
+    textContent: string;
+    children: HelpNode[];
+    hasAttribute(name: string): boolean;
+  };
+  const element = (tagName: string, shared = false, children: HelpNode[] = []): HelpNode => ({
+    tagName,
+    hidden: true,
+    textContent: "",
+    children,
+    hasAttribute: (name) => shared && name === "data-recommend-help",
+  });
+  const summary = element("SUMMARY");
+  const topics = [element("DIV", true), element("DIV"), element("DIV", true), element("DIV")];
+  const sections = [summary, element("H3"), element("DL", true, topics), element("DL")];
+  const help = Object.assign(nodes.helpPanel, {
+    open: false,
+    children: sections,
+    querySelector: (selector: string) => (selector === "summary" ? summary : null),
+  });
+  help.hidden = true;
+  const siblings = [nodes.results, help];
+  Object.assign(nodes.results, {
+    before(node: typeof help) {
+      expect(node).toBe(help);
+      siblings.splice(siblings.indexOf(node), 1);
+      siblings.splice(siblings.indexOf(nodes.results), 0, node);
+    },
+    after(node: typeof help) {
+      expect(node).toBe(help);
+      siblings.splice(siblings.indexOf(node), 1);
+      siblings.splice(siblings.indexOf(nodes.results) + 1, 0, node);
+    },
+  });
   const initialSkip = /<a class="skip-link" href="([^"]+)">([^<]+)<\/a>/.exec(html);
   expect(initialSkip).not.toBeNull();
   const skip = { textContent: initialSkip![2], href: initialSkip![1] };
@@ -60,7 +97,7 @@ function harness(mode: "recommend" | "deadlines") {
     "setDeadlineProfile",
     "DATA",
     "render",
-    `${jsFunction(app, "updateModeUi")}\n${jsFunction(app, "setMode")}\nreturn {updateModeUi, setMode};`,
+    `${jsFunction(app, "updateHelpMode")}\n${jsFunction(app, "updateModeUi")}\n${jsFunction(app, "setMode")}\nreturn {updateModeUi, setMode};`,
   )(
     state,
     { querySelector: (selector: string) => (selector === ".skip-link" ? skip : null) },
@@ -82,8 +119,8 @@ function harness(mode: "recommend" | "deadlines") {
     () => {},
     {},
     () => calls.push("render"),
-  );
-  return { state, nodes, skip, calls, ...actions };
+  ) as { updateModeUi(): void; setMode(mode: "recommend" | "deadlines"): void };
+  return { state, nodes, skip, calls, help, summary, sections, topics, siblings, ...actions };
 }
 function check(h: ReturnType<typeof harness>, mode: "recommend" | "deadlines") {
   const recommend = mode === "recommend";
@@ -93,7 +130,20 @@ function check(h: ReturnType<typeof harness>, mode: "recommend" | "deadlines") {
   expect(h.skip.href).toBe("#results");
   expect(h.nodes.deadlineResultHint.hidden).toBe(recommend);
   expect(h.nodes.recommendResultHint.hidden).toBe(!recommend);
-  expect(h.nodes.helpPanel.hidden).toBe(recommend);
+  expect(h.nodes.helpPanel.hidden).toBe(false);
+  expect(h.summary.hidden).toBe(false);
+  expect(h.summary.textContent).toBe(
+    recommend
+      ? "投稿先候補の見方・意味検索が使えないとき"
+      : /<summary>([^<]+)<\/summary>/.exec(html.slice(html.indexOf('id="helpPanel"')))![1],
+  );
+  expect(h.sections.map((section) => section.hidden)).toEqual(
+    recommend ? [false, true, false, true] : [false, false, false, false],
+  );
+  expect(h.topics.map((topic) => topic.hidden)).toEqual(
+    recommend ? [false, true, false, true] : [false, false, false, false],
+  );
+  expect(h.siblings).toEqual(recommend ? [h.help, h.nodes.results] : [h.nodes.results, h.help]);
   expect(h.nodes.modeRecommend.attributes["aria-pressed"]).toBe(String(recommend));
   expect(h.nodes.modeDeadlines.attributes["aria-pressed"]).toBe(String(!recommend));
   expect([...h.nodes.controlsPanel.classes]).toEqual([
@@ -139,4 +189,27 @@ it("has one visible default guide and describes only the shortcuts available in 
     /<main\b[^>]*id="results"[^>]*tabindex="-1"[^>]*aria-labelledby="resultsHeading"/,
   );
   expect(html).toMatch(/id="resultsHeading">締切の一覧<\/h2>/);
+});
+
+it("retains the chosen disclosure state when switching modes repeatedly", () => {
+  const h = harness("deadlines");
+  for (const open of [true, false, true]) {
+    h.help.open = open;
+    for (const mode of ["recommend", "deadlines"] as const) {
+      h.setMode(mode);
+      check(h, mode);
+      expect(h.help.open).toBe(open);
+    }
+  }
+});
+
+it("marks only the existing fit and semantic-failure topics for recommendation mode", () => {
+  const lists = [...html.matchAll(/<dl data-recommend-help>([\s\S]*?)<\/dl>/g)];
+  expect(lists).toHaveLength(1);
+  const topics = [...lists[0][1].matchAll(/<div data-recommend-help>([\s\S]*?)<\/div>/g)];
+  expect(topics.map((topic) => /<dt>([^<]+)<\/dt>/.exec(topic[1])![1])).toEqual([
+    "一致評価の出し方（投稿先を探す）",
+    "意味検索が使えないとき",
+  ]);
+  expect(html.match(/id="helpPanel"/g) || []).toHaveLength(1);
 });

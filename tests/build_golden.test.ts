@@ -2864,7 +2864,8 @@ it("site UI is readable for Japanese researchers: field names, JST header, help 
   expect(template).toContain("見方のてびき");
   expect(template).toContain("Anywhere on Earth");
   expect(template).toContain('id="helpPanel"');
-  expect(runtime).toContain('$("helpPanel").hidden = recommend');
+  expect(runtime).toContain("updateHelpMode(recommend)");
+  expect(jsFunction(runtime, "updateHelpMode")).toContain("help.hidden = false");
   // 検索で分野名・国内が引けることを案内する。
   expect(template).toContain("会議名・分野・開催地で検索");
 

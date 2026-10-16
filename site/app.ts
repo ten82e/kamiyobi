@@ -5431,6 +5431,26 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     updatePresetActive();
   }
 
+  function updateHelpMode(recommend: boolean): void {
+    const help = $("helpPanel");
+    help.hidden = false;
+    const summary = help.querySelector("summary");
+    if (summary)
+      summary.textContent = recommend
+        ? "投稿先候補の見方・意味検索が使えないとき"
+        : "見方のてびき（「推定」「未確認」「該当なし」の意味・過去の締切の見方・CSV と印刷）";
+    for (const section of Array.from(help.children) as HTMLElement[]) {
+      const shared = section.hasAttribute("data-recommend-help");
+      section.hidden = recommend && section.tagName !== "SUMMARY" && !shared;
+      if (shared)
+        for (const topic of Array.from(section.children) as HTMLElement[])
+          topic.hidden = recommend && !topic.hasAttribute("data-recommend-help");
+    }
+    const results = $("results");
+    if (recommend) results.before(help);
+    else results.after(help);
+  }
+
   function updateModeUi() {
     const recommend = state.mode === "recommend";
     const panel = $("controlsPanel");
@@ -5444,8 +5464,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     if (skip) skip.textContent = `${resultLabel}へ進む`;
     $("deadlineResultHint").hidden = recommend;
     $("recommendResultHint").hidden = !recommend;
-    // てびきは締切一覧の読み方を説明するもの。推薦画面では表が消えるので畳む。
-    $("helpPanel").hidden = recommend;
+    updateHelpMode(recommend);
   }
 
   function loadRecommendationData() {
