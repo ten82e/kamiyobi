@@ -2545,13 +2545,28 @@ function recommendation(): RecommendationIndex {
 
 function paperInput(value: unknown, field: string): string {
   if (value === undefined) return "";
-  if (typeof value === "string") return value.trim();
+  let encoded = false;
+  if (typeof value === "string") {
+    const text = value.trim();
+    if (text[0] !== "{" && text[0] !== "[") return text;
+    try {
+      value = JSON.parse(text);
+    } catch {
+      return text;
+    }
+    encoded = true;
+  }
   const invalid = () =>
     new Error(
       `${field} は文字列、または title・abstract を持つ論文オブジェクトで指定してください。複数の論文はオブジェクトの配列で指定できます。`,
     );
   const records = Array.isArray(value) ? value : [value];
   if (!records.length) throw new Error(`${field} に論文を1件以上指定してください。`);
+  const textFields = encoded
+    ? ["title", "abstract", "venue", "title_text", "name", "summary"]
+    : ["title", "abstract", "venue"];
+  const keywordFields = encoded ? ["keywords", "keyword"] : ["keywords"];
+  const allowedFields = [...textFields, ...keywordFields];
   for (const [index, record] of records.entries()) {
     const path = Array.isArray(value) ? `${field}[${index}]` : field;
     if (!record || typeof record !== "object" || Array.isArray(record)) {
@@ -2560,28 +2575,30 @@ function paperInput(value: unknown, field: string): string {
       throw invalid();
     }
     const fields = record as Record<string, unknown>;
-    const unknown = Object.keys(fields).filter(
-      (key) => !["title", "abstract", "keywords", "venue"].includes(key),
-    );
+    const unknown = Object.keys(fields).filter((key) => !allowedFields.includes(key));
     if (unknown.length)
       throw new Error(
         `${path} に使えない項目があります: ${unknown.join("・")}。title・abstract・keywords・venue を指定してください。`,
       );
-    for (const key of ["title", "abstract", "venue"]) {
+    for (const key of textFields) {
       if (fields[key] !== undefined && fields[key] !== null && typeof fields[key] !== "string")
         throw new Error(`${path}.${key} は文字列で指定してください。`);
     }
-    const keywords = fields.keywords;
+    for (const key of keywordFields) {
+      const keywords = fields[key];
+      if (
+        keywords !== undefined &&
+        keywords !== null &&
+        typeof keywords !== "string" &&
+        !(Array.isArray(keywords) && keywords.every((word) => typeof word === "string"))
+      )
+        throw new Error(`${path}.${key} は文字列または文字列の配列で指定してください。`);
+    }
+    const title = fields.title || (encoded ? fields.title_text || fields.name : "");
+    const abstract = fields.abstract || (encoded ? fields.summary : "");
     if (
-      keywords !== undefined &&
-      keywords !== null &&
-      typeof keywords !== "string" &&
-      !(Array.isArray(keywords) && keywords.every((word) => typeof word === "string"))
-    )
-      throw new Error(`${path}.keywords は文字列または文字列の配列で指定してください。`);
-    if (
-      !(typeof fields.title === "string" && fields.title.trim()) &&
-      !(typeof fields.abstract === "string" && fields.abstract.trim())
+      !(typeof title === "string" && title.trim()) &&
+      !(typeof abstract === "string" && abstract.trim())
     )
       throw new Error(`${path} の title または abstract に題名か概要を指定してください。`);
   }
