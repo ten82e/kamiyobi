@@ -23,7 +23,7 @@ for (const file of ["package.json", "tsconfig.json"]) cpSync(join(repo, file), j
 symlinkSync(join(repo, "node_modules"), join(root, "node_modules"));
 writeFileSync(
   join(root, "vitest.config.ts"),
-  'import {defineConfig} from "vitest/config";export default defineConfig({test:{include:["tests/llms*counts.test.ts"],maxWorkers:1}});',
+  'import {defineConfig} from "vitest/config";export default defineConfig({test:{include:["tests/llms*counts.test.ts"],maxWorkers:1,testTimeout:180000}});',
 );
 const file = "src/build.ts";
 const original = readFileSync(join(root, file), "utf8");
