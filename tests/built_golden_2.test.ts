@@ -779,6 +779,8 @@ it("画面上部の「これからの30日間の締切」は「30 日以内」�
     "  ed: { place: 'Paris, 日本', deadlines: [] }, conf: { key: d.key },",
     "}));",
     "const DATA = { conferences: [{ key: 'a', editions: [] }, { key: 'b', editions: [] }] };",
+    fn("summaryDeadlineRows"),
+    "const summaryRows = summaryDeadlineRows(DATA, rows);",
     "const els = {};",
     "const $ = (id) => (els[id] = els[id] || { textContent: '' });",
     fn("renderSummaryStats"),

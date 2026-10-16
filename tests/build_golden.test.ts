@@ -3503,10 +3503,23 @@ it("site template statUpcoming counts confirmed submission deadlines only", () =
   // script-src ディレクティブ内のみワイルドカード禁止 (connect-src の *.cdn.hf.co は
   // fetch 先の許可であり script 実行元ではない)。境界は ';'。
   expect(template).not.toMatch(/script-src[^;>]*\*/);
-  // statUpcoming の計算が投稿締切 (abstract/paper) かつ非推定 (!r.est) のみに限定されていること
-  expect(runtime).toMatch(
-    /rows\.filter\(\(r\)\s*=>\s*\(r\.kind\s*===\s*"abstract"\s*\|\|\s*r\.kind\s*===\s*"paper"\)\s*&&\s*!r\.est/,
-  );
+  const summarize = new Function(
+    `${jsFunction(runtime, "summaryDeadlineRows")};return summaryDeadlineRows;`,
+  )();
+  const rows = [
+    { kind: "abstract", est: false, t: 1 },
+    { kind: "paper", est: false, t: 2 },
+    { kind: "notification", est: false, t: 3 },
+    { kind: "journal", est: false, t: 4 },
+    { kind: "paper", est: true, t: 5 },
+    { kind: "abstract", est: true, t: 6 },
+  ];
+  const saved = JSON.stringify(rows);
+  expect(summarize({}, rows)).toEqual([
+    { kind: "abstract", est: false, t: 1 },
+    { kind: "paper", est: false, t: 2 },
+  ]);
+  expect(JSON.stringify(rows)).toBe(saved);
 });
 
 it("site template lazy-loads recommendation data outside the catalog shell (#468)", () => {

@@ -53,7 +53,7 @@ export {
 } from "../site/ics.ts";
 
 import Recommender, { isValidRerankerModel } from "../site/recommender.ts";
-import { reviewedSubmission } from "../site/submission-identity.ts";
+import { consolidateReviewedSubmissions, reviewedSubmission } from "../site/submission-identity.ts";
 // 代表採択論文タイトル（会議のセマンティック/語彙プロファイル強化）。
 // データパイプラインで conferences に papers として載せ、ブラウザの語彙一致と
 // IDF（buildNameIdf）の両方に使えるようにする。
@@ -1406,6 +1406,22 @@ export function toCatalog(
     window: { lookback_days: 30, upcoming_days: Math.max(1, days) },
     history_ref: "data.json",
     recommendation_ref: "recommendation-index.json",
+    deadline_summary: consolidateReviewedSubmissions(
+      Recommender.candidateRows(data),
+      (row) => `${row.conf.key}|${row.ed.year ?? ""}|${row.kind}|${Math.trunc(row.t)}`,
+    )
+      .filter(
+        (row) =>
+          (row.kind === "abstract" || row.kind === "paper") &&
+          !row.est &&
+          !Recommender.deadlineRowIsPast(row, safeNow.getTime()),
+      )
+      .map((row) => ({
+        t: row.t,
+        tLast: row.tLast,
+        tShown: Number.isFinite(row.tShown) ? row.tShown : row.t,
+        dateOnly: row.dateOnly === true,
+      })),
 
     reranker: readRerankerModel(reranker),
     // カレンダー配信の中身の実測（件数と収録の最初/最後の締切日）。画面の注記はここを読む –

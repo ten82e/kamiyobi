@@ -134,6 +134,8 @@ interface SourceUpdate {
   fetched_at: string | null;
 }
 
+type DeadlineClock = Pick<AppRow, "t" | "tLast" | "tShown" | "dateOnly">;
+
 interface Catalog {
   generated_at?: string;
   source_updates?: SourceUpdate[];
@@ -146,6 +148,7 @@ interface Catalog {
   /** 「収録の全体」（`history_ref`）のバイト数。押す前に読める量を知らせる為 –
    *  第 905 回（画面は今も「大きめのデータ」だけで，更有実際は約 9.1 MB）。 */
   history_bytes?: number;
+  deadline_summary?: DeadlineClock[];
   reranker?: Record<string, unknown>;
 }
 
@@ -369,10 +372,33 @@ function catalogFrom(value: unknown): Catalog | null {
       typeof value.history_bytes === "number" && Number.isFinite(value.history_bytes)
         ? value.history_bytes
         : undefined,
+    deadline_summary: deadlineSummary(value.deadline_summary),
     calendar: calendarSpan(value.calendar),
     window: catalogWindow(value.window),
     reranker: isRecord(value.reranker) ? value.reranker : undefined,
   };
+}
+
+function deadlineSummary(value: unknown): DeadlineClock[] | undefined {
+  if (
+    !Array.isArray(value) ||
+    !value.every(
+      (row) =>
+        isRecord(row) &&
+        [row.t, row.tLast, row.tShown].every(
+          (time) => typeof time === "number" && Number.isFinite(time),
+        ) &&
+        typeof row.dateOnly === "boolean" &&
+        Number(row.tLast) >= Number(row.t),
+    )
+  )
+    return undefined;
+  return value.map((row) => ({
+    t: row.t,
+    tLast: row.tLast,
+    tShown: row.tShown,
+    dateOnly: row.dateOnly,
+  }));
 }
 
 function isDrawerRow(value: unknown): value is DrawerRow {
@@ -888,24 +914,24 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     return Recommender.dateOnlyStateJa(r, now);
   }
 
-  function rowIsPast(r: AppRow, now: number) {
+  function rowIsPast(r: DeadlineClock, now: number) {
     // 過ぎたかどうかの判定は recommender.js の正本に寄せる（一覧の印・絞り込み・残り欄が
     // 同じ規則を見るようにするため。第 225 回）。
     return Recommender.deadlineRowIsPast(r, now);
   }
 
-  function rowIsFuture(r: AppRow, now: number) {
+  function rowIsFuture(r: DeadlineClock, now: number) {
     return !rowIsPast(r, now);
   }
 
-  function rowShownDayMs(r: AppRow) {
+  function rowShownDayMs(r: DeadlineClock) {
     return Number.isFinite(r.tShown) ? r.tShown : r.t;
   }
 
   /* 期間の窓の上側を超えているか。`limit` は `windowLimitMs`（JST の暦日で切る）から渡す。
    * 経過 24 時間で区切ると、一覧が「あと 30 日」と出す行が上の数だけから落ちる
    * （2026-08-09T21:00Z 見立ての実測: 上部 176 件・一覧 177 件で `pacificvis` が足りなかった）。 */
-  function rowAfter(r: AppRow, dateLimit: number) {
+  function rowAfter(r: DeadlineClock, dateLimit: number) {
     // dateLimit は翌日の開始。午前0時ちょうどは次の暦日なので含めない。
     return rowShownDayMs(r) >= dateLimit;
   }
@@ -1805,6 +1831,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     );
   }
   let rows = buildRows(DATA);
+  const summaryRows = summaryDeadlineRows(DATA, rows);
 
   function setDeadlineProfile(data: Catalog) {
     activeData = data;
@@ -1837,17 +1864,21 @@ function semanticOutput(value: unknown): value is SemanticOutput {
 
   const historyLoader = createHistoryLoader(fetchHistoryJson, syncHistoryState);
 
+  function summaryDeadlineRows(data: Catalog, initialRows: AppRow[]): DeadlineClock[] {
+    return (
+      data.deadline_summary ??
+      initialRows.filter((row) => (row.kind === "abstract" || row.kind === "paper") && !row.est)
+    );
+  }
+
   function renderSummaryStats() {
     $("statConfs").textContent = String((DATA.conferences || []).length);
     const nowMs = Date.now();
-    const next30 = rows.filter(
-      (r) =>
-        (r.kind === "abstract" || r.kind === "paper") &&
-        !r.est &&
-        rowIsFuture(r, nowMs) &&
-        !rowAfter(r, windowLimitMs("30", nowMs)),
+    const next30 = summaryRows.filter(
+      (r) => rowIsFuture(r, nowMs) && !rowAfter(r, windowLimitMs("30", nowMs)),
     ).length;
-    $("statUpcoming").textContent = String(next30);
+    const partial = !DATA.deadline_summary && DATA.window && DATA.window.upcoming_days < 30;
+    $("statUpcoming").textContent = `${partial ? "少なくとも " : ""}${next30}`;
     const nicheCount = (DATA.conferences || []).filter(
       (c) => (c.tags || []).indexOf("niche") !== -1,
     ).length;

@@ -300,7 +300,7 @@ it("keeps fetch metadata when parsing the page catalog, without accepting malfor
     "sourceRecord",
     "calendarSpan",
     "catalogWindow",
-    `${jsFunction(app(), "catalogFrom")}; return catalogFrom;`,
+    `${jsFunction(app(), "deadlineSummary")}\n${jsFunction(app(), "catalogFrom")}; return catalogFrom;`,
   )(
     (value: unknown) => value !== null && typeof value === "object" && !Array.isArray(value),
     () => true,
