@@ -2346,14 +2346,15 @@ it("品書が再学習の重みを持つ – 画面の推薦が MCP と同じ順
 it("推薦の札の意味を、画面てびきと同じ言い回しで添える（第 896 回）", async () => {
   /* 実測 2026-10-27: 札（「候補」・「重なりうすい」）をそのまま返すだけで、何を意味するか読めなかつた。
    * AI が「候補」を「当たる見込みが高い」と取ると、推薦の强さが変はつてしまふ – 札は**一致の
-   * 證據の强さ**で、採択の予測ではない（画面のてびきの「いちばん近い会議との差が小さい」）。 */
+   * 證據の强さ**で、採択の予測ではない。強い単独一致も「候補」になる。 */
   const text = await call("recommend_venues", {
     paper:
       "Time-Sensitive Networking Scheduling for Deterministic Industrial Networks | tsn, real-time, scheduling",
     limit: 3,
   });
-  expect(text, "札の意味を言つていない").toContain("いちばん近い会議との差が小さい");
-  expect(text, "札の意味を言つていない").toContain("言葉の重なりが弱い");
+  expect(text, "札の意味を言つていない").toContain("強い一致も含みます");
+  expect(text, "札の意味を言つていない").toContain("言葉や意味の一致が弱い");
+  expect(text).not.toContain("いちばん近い会議との差が小さい");
   /* 数値（点）の読み方も黙らない（並べるための目安で採択の予測ではない – 画面のてびきの約束）。 */
   expect(text, "数値の読み方を言つていない").toContain("採択の予測ではありません");
 });

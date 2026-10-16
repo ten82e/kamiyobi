@@ -1825,8 +1825,6 @@ it("投稿先を探すモードの一致評価の語を、画面で説明して�
     "];",
     "const labels = new Set();",
     "let shownRows = 0;",
-    "let mostCommon = { label: '', count: 0 };",
-    "const tally = {};",
     "for (const p of papers) {",
     "  const lines = R.parsePaperLines(p);",
     "  const scores = {};",
@@ -1835,12 +1833,10 @@ it("投稿先を探すモードの一致評価の語を、画面で説明して�
     "    // 一覧に出る行だけを数える（しきい值は app.js の式から取る）。",
     "    if (x.fit.score >= 10) {",
     "      shownRows += 1;",
-    "      tally[x.fit.label] = (tally[x.fit.label] || 0) + 1;",
     "    }",
     "  }",
     "}",
-    "for (const [label, count] of Object.entries(tally)) if (count > mostCommon.count) mostCommon = { label, count };",
-    "console.log(JSON.stringify({ labels: [...labels], shownRows, tally, mostCommon }));",
+    "console.log(JSON.stringify({ labels: [...labels], shownRows }));",
   ].join("\n");
   // Node 26 は `node -e` のソースを ESM として見るので、静的 import がそのまま使える。
   const proc = spawnSync("node", ["-e", script], {
@@ -1851,8 +1847,6 @@ it("投稿先を探すモードの一致評価の語を、画面で説明して�
   const out = JSON.parse(proc.stdout) as {
     labels: string[];
     shownRows: number;
-    tally: { [k: string]: number };
-    mostCommon: { label: string; count: number };
   };
   expect(out.shownRows, "推薦の行が 1 も出ず、検査が空振り").toBeGreaterThan(10);
   expect(out.labels.length, "ラベルが 1 種類しか出ず、検査が空振り").toBeGreaterThan(1);
@@ -1861,11 +1855,18 @@ it("投稿先を探すモードの一致評価の語を、画面で説明して�
   for (const label of out.labels) {
     expect(html, `「${label}」が一覧に出るのに、画面のどこにも説明が無い`).toContain(label);
   }
-  // 常に出る語は、説明文が「その語がほぼ全行に出る」ことを正直に書いている。
-  const noteAt = html.indexOf(out.mostCommon.label);
-  expect(noteAt).toBeGreaterThan(-1);
-  const note = html.slice(Math.max(0, noteAt - 400), noteAt + 400);
-  expect(note).toMatch(/名前|西暦/);
+  const section = /<dt>一致評価の出し方（投稿先を探す）<\/dt>([\s\S]*?)<\/div>/.exec(html);
+  expect(section, "一致評価の説明が見つからない").not.toBeNull();
+  const definitions: Record<string, string> = {
+    候補: "は投稿先として適合を確認する対象で、強い一致も含みます。",
+    重なりうすい: "は言葉や意味の一致が弱い候補です。",
+  };
+  for (const label of out.labels) {
+    expect(definitions[label], `「${label}」の意味を検証していない`).toBeTruthy();
+    expect(section![1], `「${label}」の説明が実際のラベルと対応していない`).toContain(
+      `<strong>${label}</strong>${definitions[label]}`,
+    );
+  }
   // 以前の語は画面から消えている（論文を入力しても消えない警告に見えていた）。
   expect(html).not.toContain("情報不足");
 });
