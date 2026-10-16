@@ -626,9 +626,11 @@ function 文字として讀む(值: unknown, field: string): string {
     `${field} は文字列で指定してください。${
       field === "scope"
         ? "screen（初期一覧）または all（収録全体）を指定してください。"
-        : paperLike
-          ? "論文の題名・概要から投稿先を探す場合は search_venues に同じ論文オブジェクトを渡せます。"
-          : "複数の語も1つの文字列にまとめて指定してください。"
+        : field === "rank"
+          ? "等級（A*・A・B・C・N）を1つ指定してください。CCF A・CORE A* の表記も使えます。"
+          : paperLike
+            ? "論文の題名・概要から投稿先を探す場合は search_venues に同じ論文オブジェクトを渡せます。"
+            : "複数の語も1つの文字列にまとめて指定してください。"
     }`,
   );
 }
@@ -1227,6 +1229,7 @@ function searchDeadlines(
   const _ARGS = args;
   args = {
     ...args,
+    ...(_ARGS.rank !== undefined ? { rank: 文字として讀む(_ARGS.rank, "rank") } : {}),
     ...(_ARGS.include_past !== undefined ? { include_past: 真偽.include_past.使ふ } : {}),
     ...(_ARGS.include_estimated !== undefined
       ? { include_estimated: 真偽.include_estimated.使ふ }
