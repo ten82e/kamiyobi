@@ -3983,7 +3983,12 @@ it("parseCliArgs parses short flags with equals syntax (-o=dist, -c=config.yaml,
 it("buildAll emits recommender.js when custom template is in separate directory (#306)", async () => {
   const tmpDir = tempWork("cfp-custom-tmpl-");
   const customTmpl = join(tmpDir, "custom_template.html");
-  writeFileSync(customTmpl, "<html><body>/*__DATA__*/null</body></html>", "utf8");
+  /* 雛形の印は二つとも要る（データと、機械可読の自己紹介）。 */
+  writeFileSync(
+    customTmpl,
+    '<html><head><!--__JSONLD__--></head><body>/*__DATA__*/null</body></html>',
+    "utf8",
+  );
 
   const outDir = join(tmpDir, "out");
   const stats = await buildAll(
@@ -4032,7 +4037,11 @@ it("buildAll removes stale embeddings when local model generation fails", async 
   const template = join(tmpDir, "template.html");
   mkdirSync(outDir, { recursive: true });
   writeFileSync(join(outDir, "embeddings.json"), "stale", "utf8");
-  writeFileSync(template, "<html><body>/*__DATA__*/null</body></html>", "utf8");
+  writeFileSync(
+    template,
+    '<html><head><!--__JSONLD__--></head><body>/*__DATA__*/null</body></html>',
+    "utf8",
+  );
   const originalCacheDir = env.cacheDir;
   env.cacheDir = join(tmpDir, "empty-cache");
 

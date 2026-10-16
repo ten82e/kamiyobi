@@ -512,6 +512,9 @@ function llmsScopeJa(name: string, spans: LlmsSpans | null): string {
 }
 
 const TEMPLATE_MARKER = "/*__DATA__*/null";
+/* 機械可読の自己紹介（schema.org の Dataset）を差し込む印。雛形に置いておき、
+ * ビルドが実測値で埋める – 中身を雛形に書くと、件数や期間が次のビルドで噓になる。 */
+const JSONLD_MARKER = "<!--__JSONLD__-->";
 
 /**
  * タイトル + 開催年を組み立てる。タイトルが既にその年（例: `CANOPIE-HPC 2026`）
@@ -3602,6 +3605,56 @@ export function toNotFoundHtml(styleBlock = "", baseUrl = ""): string {
   ].join("\n");
 }
 
+/** 機械可読の自己紹介（schema.org の `Dataset`）。
+ *
+ * 頁を開いた AI と検索の側に「これは何のデータで、どこにあり、いつ作られ、どこまでを
+ * 覆うか」を一度に言う。値は**ビルドが数えた実測**を使う – 定数を書くと次のビルドで
+ * 噓になる（件数・期間・生成時刻）。 */
+export function toDatasetJsonLd(input: {
+  baseUrl?: string;
+  title?: string;
+  description?: string;
+  generatedAt?: string;
+  span?: DeadlineSpan | null;
+  repoUrl?: string;
+  keywords?: string[];
+}): string {
+  const base = String(input.baseUrl ?? "").replace(/\/+$/, "");
+  const link = (file: string): string => (base ? `${base}/${file}` : file);
+  const repo = String(input.repoUrl ?? "").replace(/\/+$/, "");
+  const node: Record<string, unknown> = {
+    "@context": "https://schema.org",
+    "@type": "Dataset",
+    name: String(input.title ?? "kamiyobi"),
+    url: base ? `${base}/` : "index.html",
+    inLanguage: "ja",
+    isAccessibleForFree: true,
+    /* 配付する 4 本。どれも毎回のビルドで書く物だけを並べる（`embeddings.json` は
+     * `--no-embeddings` で消えるので入れない）。 */
+    distribution: [
+      ["data.json", "application/json", "正規化した収録データ全体（機械可読の正）"],
+      ["data.csv", "text/csv", "1 行 1 締切の平坦な表"],
+      ["deadlines.ics", "text/calendar", "今後の締切の購読用カレンダー（RFC 5545）"],
+      ["llms.txt", "text/plain", "出力ファイルとデータ形式の索引（AI 向け）"],
+    ].map(([file, format, name]) => ({
+      "@type": "DataDownload",
+      name: String(name),
+      encodingFormat: String(format),
+      contentUrl: link(String(file)),
+    })),
+  };
+  if (input.description) node.description = String(input.description);
+  if (input.generatedAt) node.dateModified = String(input.generatedAt);
+  if (input.span) node.temporalCoverage = `${input.span.first_day}/${input.span.last_day}`;
+  if (repo) node.creator = { "@type": "Organization", name: "kamiyobi", url: repo };
+  if (repo) node.license = `${repo}/blob/main/LICENSE`;
+  if (input.keywords?.length) node.keywords = [...input.keywords];
+  /* 頁の中に置くので、`</script>` で早く閉じさせない（値は全て自分で組んだ物だが、
+   * 説明文は雛形から取るので、念のため）。 */
+  const json = JSON.stringify(node, null, 2).replace(/<\//g, "<\\/");
+  return `<script type="application/ld+json">\n${json}\n</script>`;
+}
+
 /** 機械が最初に読む 1 枚（RFC 9309）。AI の索引（`llms.txt`）への道もここに書く –
  * 索引はページからも辿れるが、クローラは最初にこのファイルを読む。 */
 export function toRobotsTxt(baseUrl = ""): string {
@@ -4448,6 +4501,9 @@ export async function buildAll(
     if (!templateText.includes(TEMPLATE_MARKER)) {
       throw new Error(`required site template marker missing: ${templatePath}`);
     }
+    if (!templateText.includes(JSONLD_MARKER)) {
+      throw new Error(`required site template marker missing: ${JSONLD_MARKER}`);
+    }
     // 画面と同じ見た目にするため、`index.html` と同じ様子の塊を取り出して使う
     // （データを書き込む前の本文から読む – JSON をまたぐ正規表現にしない）。
     const siteStyleBlock = /<style>[\s\S]*?<\/style>/.exec(templateText)?.[0] ?? "";
@@ -4456,6 +4512,26 @@ export async function buildAll(
       site.base_url ?? `https://${String(site.domain ?? "kamiyobi")}`,
     ).replace(/\/+$/, "");
     templateText = templateText.replace(TEMPLATE_MARKER, embedJson(jsonCompact(catalog)));
+    /* 機械可読の自己紹介。題と説明は雛形の `<title>`・`<meta name="description">` から取る
+     * （同じ文を二か所に書くと、片方だけ直した日に食い違う）。 */
+    templateText = templateText.replace(
+      JSONLD_MARKER,
+      toDatasetJsonLd({
+        baseUrl: siteBaseUrl,
+        title: /<title>([\s\S]*?)<\/title>/.exec(templateText)?.[1]?.trim() ?? "kamiyobi",
+        description:
+          /<meta name="description" content="([^"]*)"/.exec(templateText)?.[1]?.trim() ?? "",
+        generatedAt: String(data.generated_at ?? ""),
+        span: deadlineSpan(data),
+        /* 帰属とライセンスの行き先は `site.repo`（`ten82e/kamiyobi` の形）。 */
+        repoUrl: /^https?:\/\//.test(String(site.repo ?? ""))
+          ? String(site.repo)
+          : site.repo
+            ? `https://github.com/${String(site.repo)}`
+            : siteBaseUrl,
+        keywords: ["締切", "国際会議", "国内研究会", "ワークショップ", "ジャーナル特集号", "学会"],
+      }),
+    );
     write("index.html", templateText);
     for (const [name, source] of Object.entries(compileSiteRuntime())) write(name, source);
     // `upcoming.md` は Markdown のまま渡すとブラウザが表に整形してくれないので、

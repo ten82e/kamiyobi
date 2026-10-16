@@ -683,6 +683,14 @@ node --experimental-strip-types src/cli.ts evidence [verify|gc] [--dry-run]
 | `icon.svg` | サイト自前のファビコン（図形のみ。外部フォントに依存しない） |
 | `.nojekyll` | Pages の Jekyll 処理を無効化 |
 
+`index.html` には機械可読の自己紹介を 1 つ置く（`<script type="application/ld+json">` の
+schema.org `Dataset`）。題と説明は雛形の `<title>` と `<meta name="description">` から取り
+（同じ文を二か所に書かない）、`dateModified` は `data.json` の `generated_at`、`temporalCoverage` は
+締切を数え直した最初と最後の JST の暦日、`distribution` は毎回書く 4 本
+（`data.json`・`data.csv`・`deadlines.ics`・`llms.txt`）にする。`--no-embeddings` で消える
+`embeddings.json` は並べない（無い物を名指さない）。雛形の印（`<!--__JSONLD__-->`）が無ければ
+ビルドは止まる。中身は `</` を退避して頁を割らない。
+
 機械と AI の入口は三段にする。クローラは `robots.txt` を最初に読み、そこから `sitemap.xml` と
 AI の索引 `llms.txt` の絶対 URL を知る。`sitemap.xml` は人が開ける口（`/`・`upcoming.html`・
 `upcoming.md`・`llms.txt`）だけを並べ、データのファイルは索引が名指す – 頁でない物を
