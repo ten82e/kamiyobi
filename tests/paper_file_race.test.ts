@@ -18,6 +18,7 @@ const inputFunctions = [
   "syncPaperText",
   "paperInputHasText",
   "paperInputWithSample",
+  "setPaperUndoVisible",
   "savePaperDraft",
   "clearPaperInput",
 ]
@@ -26,6 +27,16 @@ const inputFunctions = [
 const resetStart = source.indexOf('  $("paperReset").addEventListener');
 const resetEnd = source.indexOf('  $("reset").addEventListener', resetStart);
 if (resetStart < 0 || resetEnd < 0) throw new Error("paper reset handler not found");
+const swapStart = source.indexOf('  document.querySelectorAll<HTMLElement>(".sample-btn")');
+const swapEnd = source.indexOf('  ["kind", "rank", "win",', swapStart);
+if (swapStart < 0 || swapEnd < 0) throw new Error("paper swap handlers not found");
+const swapHandlers = stripTypeScriptTypes(source.slice(swapStart, swapEnd));
+const sample = {
+  title: "分散システムの入力例",
+  abstract: "障害時にも処理を続ける分散システム",
+  keywords: "分散処理",
+  venue: "",
+};
 const tick = () => new Promise<void>((resolve) => setImmediate(resolve));
 interface RecordInput {
   title: string;
@@ -35,6 +46,7 @@ function harness() {
   class Input {
     files: Array<{ name: string }> = [];
     value = "";
+    hidden = true;
     listeners = new Map<string, (event: { currentTarget: Input }) => void>();
     addEventListener(name: string, fn: (event: { currentTarget: Input }) => void) {
       this.listeners.set(name, fn);
@@ -42,6 +54,9 @@ function harness() {
   }
   const input = new Input();
   const reset = new Input();
+  const undo = new Input();
+  const sampleButton = new Input();
+  const sampleNode = Object.assign(sampleButton, { getAttribute: () => JSON.stringify(sample) });
   const label = { textContent: "" };
   const values = Object.fromEntries(
     [
@@ -71,7 +86,7 @@ function harness() {
   const written: RecordInput[] = [];
   let applied = 0;
   runInNewContext(
-    `${inputFunctions}\n${handlers}\n${source.slice(resetStart, resetEnd)}
+    `${inputFunctions}\n${handlers}\n${source.slice(resetStart, resetEnd)}\n${swapHandlers}
     const originalWrite = writePaperInput;
     writePaperInput = (record) => { recordWrite(record); originalWrite(record); };
     savePaperDraft(readPaperInput());`,
@@ -79,6 +94,7 @@ function harness() {
       HTMLInputElement: Input,
       AbortController,
       Recommender,
+      document: { querySelectorAll: () => [sampleNode] },
       PAPER_DRAFT_KEY: "draft",
       paperPrimaryVenue: "",
       window: {
@@ -91,7 +107,14 @@ function harness() {
       pdfJob: 0,
       pdfAbortController: null,
       inputElement: () => input,
-      $: (id: string) => (id === "cancelPdf" ? cancel : id === "paperReset" ? reset : label),
+      $: (id: string) =>
+        id === "cancelPdf"
+          ? cancel
+          : id === "paperReset"
+            ? reset
+            : id === "paperUndo"
+              ? undo
+              : label,
       unsupportedPaperFormatJa: () => "",
       loadPdfJs: (callback: (ok: boolean) => void) => callback(true),
       readPaperFile: (file: { name: string }, signal: AbortSignal) =>
@@ -100,7 +123,6 @@ function harness() {
         }),
       abortError: () => Object.assign(new Error("cancelled"), { name: "AbortError" }),
       paperInputBeforeSwap: null,
-      setPaperUndoVisible: () => {},
       recordWrite: (record: RecordInput) => written.push(record),
       apply: () => {
         applied++;
@@ -118,6 +140,9 @@ function harness() {
     written,
     values,
     draft,
+    undoButton: undo,
+    sample: () => sampleButton.listeners.get("click")!({ currentTarget: sampleButton }),
+    undo: () => undo.listeners.get("click")!({ currentTarget: undo }),
     reset: () => reset.listeners.get("click")!({ currentTarget: reset }),
     applied: () => applied,
     async select(name: string) {
@@ -247,4 +272,48 @@ it("accepts a new file after clearing without a late old result replacing its dr
   expect(ui.cancel.hidden).toBe(true);
   expect(ui.written.map((record) => record.title)).toEqual(["新しい論文"]);
   expect(ui.applied()).toBe(2);
+});
+
+it.each([
+  ["sample", "old.pdf", "success"],
+  ["sample", "old.txt", "success"],
+  ["sample", "old.pdf", "failure"],
+  ["sample", "old.txt", "failure"],
+  ["undo", "old.pdf", "success"],
+  ["undo", "old.txt", "success"],
+  ["undo", "old.pdf", "failure"],
+  ["undo", "old.txt", "failure"],
+])("preserves %s after %s finishes with %s", async (action, file, outcome) => {
+  const ui = harness();
+  if (action === "undo") ui.sample();
+  await ui.select(file);
+  const read = ui.pending.get(file)!;
+  if (action === "sample") ui.sample();
+  else ui.undo();
+  const chosenTitle = action === "sample" ? sample.title : "入力済み論文";
+  const chosenAbstract = action === "sample" ? sample.abstract : "";
+  expect(ui.values.paperPrimaryTitle.value).toBe(chosenTitle);
+  expect(ui.values.paperPrimaryAbstract.value).toBe(chosenAbstract);
+  const chosenDraft = ui.draft.get("draft");
+  expect(JSON.parse(chosenDraft!)).toMatchObject({ title: chosenTitle, abstract: chosenAbstract });
+  if (outcome === "success") read.resolve({ title: "古いファイルの題名", abstract: "古い概要" });
+  else read.reject(new Error("stale failure after choosing another input"));
+  await tick();
+  expect(ui.values.paperPrimaryTitle.value).toBe(chosenTitle);
+  expect(ui.values.paperPrimaryAbstract.value).toBe(chosenAbstract);
+  expect(ui.draft.get("draft")).toBe(chosenDraft);
+  expect(ui.label.textContent).toBe("未選択");
+  expect(ui.cancel.hidden).toBe(true);
+  expect(read.signal.aborted).toBe(true);
+  expect(ui.undoButton.hidden).toBe(action === "undo");
+  expect(ui.applied()).toBe(action === "sample" ? 1 : 2);
+  if (action === "sample") {
+    ui.undo();
+    expect(ui.values.paperPrimaryTitle.value).toBe("入力済み論文");
+    expect(JSON.parse(ui.draft.get("draft")!)).toMatchObject({
+      title: "入力済み論文",
+      abstract: "",
+    });
+    expect(ui.undoButton.hidden).toBe(true);
+  }
 });

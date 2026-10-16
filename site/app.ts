@@ -6008,6 +6008,13 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   }
   const paperFiles = inputElement("paperFiles");
   const cancelPdf = $("cancelPdf");
+  function stopPaperFileRead() {
+    pdfJob++;
+    if (pdfAbortController) pdfAbortController.abort();
+    pdfAbortController = null;
+    cancelPdf.hidden = true;
+    $("paperFileLabel").textContent = "未選択";
+  }
   cancelPdf.addEventListener("click", () => {
     if (pdfAbortController) pdfAbortController.abort();
   });
@@ -6147,6 +6154,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
 
   document.querySelectorAll<HTMLElement>(".sample-btn").forEach((button) => {
     button.addEventListener("click", () => {
+      stopPaperFileRead();
       const parsed = Recommender.parsePaperLines(button.getAttribute("data-sample"))[0];
       const sample: PaperInputJa = {
         title: parsed?.title || "",
@@ -6169,6 +6177,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   $("paperUndo").addEventListener("click", () => {
     const kept = paperInputBeforeSwap;
     if (!kept) return;
+    stopPaperFileRead();
     writePaperInput(kept);
     paperInputBeforeSwap = null;
     setPaperUndoVisible(false);
@@ -6657,17 +6666,13 @@ function semanticOutput(value: unknown): value is SemanticOutput {
    * 押す人也 – てびきがそう案内している）が、打ち込んだ概要を Confirmation も Undo も無く
    * 失っていた。消す操作は、そう書かれた別のボタンに寄せる。 */
   function clearPaperInput() {
-    pdfJob++;
-    if (pdfAbortController) pdfAbortController.abort();
-    pdfAbortController = null;
-    cancelPdf.hidden = true;
+    stopPaperFileRead();
     valueElement("paperText").value = "";
     setPrimaryRecord();
     valueElement("paperReferences").value = "";
     // 消したのに次の刷新で戻ってくる、という形を作らない。
     savePaperDraft(readPaperInput());
     paperFiles.value = "";
-    $("paperFileLabel").textContent = "未選択";
     invalidateSemantic();
   }
 

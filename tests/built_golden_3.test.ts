@@ -2479,6 +2479,7 @@ it("条件クリアは論文の入力を消さず、消す操作は名前の書�
     jsFunction(app, "paperInputHasText"),
     jsFunction(app, "readPaperInput"),
     jsFunction(app, "savePaperDraft"),
+    jsFunction(app, "stopPaperFileRead"),
     jsFunction(app, "clearPaperInput").replace(
       "function clearPaperInput",
       "const clearPaperInput = function",
