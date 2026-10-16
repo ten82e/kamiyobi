@@ -740,17 +740,52 @@ function 畫面の既定(
     .concat(知らん.length ? [] : []);
 }
 
+interface ScopeComparisonError {
+  code: "SCOPE_COMPARISON_UNAVAILABLE";
+  reason: DataReadFailure;
+  path: "data/snapshot.json";
+  retryable: true;
+  recovery_command: string | null;
+}
+
 function 窓の外の件數(
   照合: (hay: string) => boolean,
   名: string,
   now: number,
   args: Parameters<typeof 畫面の既定>[2] = {},
-): { raw: number; filtered: number } {
-  if (名 !== "画面が最初に読む窓") return { raw: 0, filtered: 0 };
-  const matches = withJournals(allRows(), snapshot().conferences ?? [], now).filter(
+): { raw: number; filtered: number; generated_at: unknown; error?: ScopeComparisonError } {
+  if (名 !== "画面が最初に読む窓") return { raw: 0, filtered: 0, generated_at: null };
+  let data: SnapshotFile;
+  try {
+    data = snapshot();
+    if (
+      !Array.isArray(data?.conferences) ||
+      !data.conferences.every(Recommender.isCandidateConference)
+    )
+      throw new Error("invalid scope comparison data");
+  } catch (cause) {
+    const reason = dataReadFailure(cause);
+    return {
+      raw: 0,
+      filtered: 0,
+      generated_at: null,
+      error: {
+        code: "SCOPE_COMPARISON_UNAVAILABLE",
+        reason,
+        path: "data/snapshot.json",
+        retryable: true,
+        recovery_command: recoveryCommand(reason),
+      },
+    };
+  }
+  const matches = withJournals(displayRows(allRows()), data.conferences, now).filter(
     (r) => 照合(r.hay) === true,
   );
-  return { raw: matches.length, filtered: 畫面の既定(matches, now, args).length };
+  return {
+    raw: matches.length,
+    filtered: 畫面の既定(matches, now, args).length,
+    generated_at: data.snapshot_metadata?.generated_at ?? null,
+  };
 }
 
 function 窓の外の案内(counts: { raw: number; filtered: number }): string {
@@ -1238,7 +1273,6 @@ function searchDeadlines(
     ? () => true
     : Recommender.searchMatcher(Recommender.expandRelativeMonths(query, now), now);
   const 素の = list.filter((r) => 照合(r.hay) === true);
-  const 窓の外 = 素の.length ? { raw: 0, filtered: 0 } : 窓の外の件數(照合, 名, now, args);
 
   const 絞り込みが効く = !Recommender.searchMatcher(query, now)("・ー()");
   const 記号だけの文 =
@@ -1246,6 +1280,9 @@ function searchDeadlines(
       ? ""
       : `絞り込みとして効く語がありません（「${query}」は記号だけなので、すべての行を表示しています）。会議名・分野・開催地・日付を指定してください`;
   const hit = sortRows(畫面の既定(素の, now, args));
+  const 窓の外 = hit.length
+    ? { raw: 0, filtered: 0, generated_at: null }
+    : 窓の外の件數(照合, 名, now, args);
   const page = hit.slice(offset, offset + limit);
   const nextOffset = offset + page.length < hit.length ? offset + page.length : null;
   receive?.({
@@ -1261,6 +1298,17 @@ function searchDeadlines(
     generated_at: 生成 ?? null,
     evaluated_at: new Date(now).toISOString(),
     rows: page.map((r) => structuredDeadline(r, now)),
+    ...(窓の外.error ? { scope_comparison_error: 窓の外.error } : {}),
+    ...(名 === "画面が最初に読む窓" && hit.length === 0 && !窓の外.error
+      ? {
+          scope_comparison: {
+            scope: "all",
+            matched_before_filters: 窓の外.raw,
+            total: 窓の外.filtered,
+            generated_at: 窓の外.generated_at,
+          },
+        }
+      : {}),
   });
   const 知って居る種別 = [
     "all",
@@ -1298,6 +1346,13 @@ function searchDeadlines(
   const 見えて居る文 = 見えて居る注(query, hit.length);
   const 頭 = `${絞り込みだけ ? "語を指定せず、絞り込みだけ" : `検索語「${query}」に当たる締切`}: ${hit.length} 件（${名} ${list.length} 行・指定条件で絞り込み。絞る前は ${素の.length} 行${ランク ? `／ランク ${ランク}` : ""}${args.domestic === true ? "／国内のみ" : ""}${args.online === true ? "／オンライン参加可のみ" : ""}${窓あり ? `／締切まで ${窓の日數} 日以内${窓の端数の斷り}` : ""}${讀めない引數}）${limit端數}${檢索語を切つた ? `（${打たれた検索語.length} 字のうち、最初の ${檢索語の截} 字で調べました – 残りの語は参考にしていません）` : ""}${知らん.length ? `／知らない種別: ${知らない値の文("", 知らん)}` : ""}${空の種別 ? `／kinds が空なので既定の投稿締切（概要・論文・常時受付）を対象にしています` : ""}${種別一種 ? `／kind は kinds と共に与えられたので見ていません` : ""}${知らんランク ? `／知らないランク（等級は ${Recommender.rankGradeOrderJa().join("・")}）: ${知らんランク}${limit端數}` : ""}${日付の語 ? "\n日付は日本時間（JST）。月や日付の語は、締切の日付と「会期」の日付の両方に当たる（画面のてびきと同じ約束）ので、月で引いた時に見出しの月と違う日が出る行がある。" : ""}${窓が無い ? `\n${窓が無いの斷り(true)}` : ""}${scopeErr ? `\n${scopeErr}` : ""}${解決の文}${記号だけの文 ? `\n${記号だけの文}` : ""}${見えて居る文}`;
   if (!hit.length) {
+    if (窓の外.error)
+      return [
+        頭,
+        "",
+        "現在の一覧では、指定条件に合う行はありません。",
+        `収録全体との比較はできていません。data/snapshot.json を読み取れませんでした。${recoveryNoticeJa(窓の外.error.reason)}`,
+      ].join("\n");
     /* 画面と同じ約束 – 案内は「素の当たりが 0」の時に出る物なので、絞り込みで 0 に成つた時は
      * その旨を書く（絞り込みを外せば出る事がある）。 */
     const 案内 = 素の.length ? [] : guidance(query, 0, list, now);
@@ -1308,11 +1363,12 @@ function searchDeadlines(
       頭,
       "",
       素の.length
-        ? `語は当たりますが、現在の絞り込み条件で 0 件になりました。include_past / include_estimated / kinds${ランク ? ` / rank（いま ${ランク}）` : ""} を試してください。`
+        ? `語は当たりますが、現在の絞り込み条件で 0 件になりました。${窓の外.filtered ? "" : `include_past / include_estimated / kinds${ランク ? ` / rank（いま ${ランク}）` : ""} を試してください。`}`
         : 窓の外.raw
           ? `この語は画面が最初に読む窓（${list.length} 行）には 1 行もありませんが、${窓の外の案内(窓の外)}`
           : (果て ?? "この語では 1 行も出ません。"),
-      ...(窓あり && 素の.some((row) => row.kind === "journal")
+      ...(素の.length && 窓の外.raw ? [窓の外の案内(窓の外)] : []),
+      ...(窓あり && !窓の外.filtered && 素の.some((row) => row.kind === "journal")
         ? [
             "常時受付には締切日がないため、within_days を指定すると対象外になります。常時受付を探すときは within_days を省いてください。",
           ]
@@ -2207,17 +2263,27 @@ function explainWord(args: { word?: unknown; scope?: unknown }, now: number): st
   const { list, 名, 生成, 窓が無い } = pickSearch(args.scope, now);
   const 古さ = 古さの斷り(生成, now);
   const 照合 = Recommender.searchMatcher(Recommender.expandRelativeMonths(word, now), now);
-  const 件數 = list.filter((r) => 照合(r.hay) === true).length;
-
-  const 窓の外 = 窓の外の件數(照合, 名, now);
-  const 案内 = guidance(word, 0, list, now);
-  const 果て = 窓の外.raw ? "" : 果ての案内(word, list, 名);
-  const 日數 = 日數幅の案内(word, list, now, {});
-  const 種別の報 = 種別の報べ(word, list, now, {});
-  const 語ごと = 語ごとの案號(word, list, now);
-  const URLの報 = URLの案内(word);
-  const 名簿 = 名乘りの案内(word, list, now);
-  const 手 = retypeTips(word, 畫面の既定(list, now, {}), now);
+  const 素の行 = list.filter((r) => 照合(r.hay) === true);
+  const 件數 = 素の行.length;
+  const 畫面の行 = 畫面の既定(素の行, now, {});
+  const 窓の外 = 畫面の行.length
+    ? { raw: 0, filtered: 0, generated_at: null }
+    : 窓の外の件數(照合, 名, now);
+  if (窓の外.error)
+    return [
+      `「${word}」は素の照合で ${件數} 行・既定の絞り込みで ${畫面の行.length} 行です（${名}）。`,
+      ...(scopeErr ? [scopeErr] : []),
+      `収録全体との比較はできていません。data/snapshot.json を読み取れませんでした。${recoveryNoticeJa(窓の外.error.reason)}`,
+    ].join("\n");
+  const 条件の案内が必要 = 畫面の行.length === 0 && !窓の外.filtered;
+  const 案内 = 条件の案内が必要 ? guidance(word, 0, list, now) : [];
+  const 果て = 条件の案内が必要 && !窓の外.raw ? 果ての案内(word, list, 名) : "";
+  const 日數 = 条件の案内が必要 ? 日數幅の案内(word, list, now, {}) : [];
+  const 種別の報 = 条件の案内が必要 ? 種別の報べ(word, list, now, {}) : "";
+  const 語ごと = 条件の案内が必要 ? 語ごとの案號(word, list, now) : [];
+  const URLの報 = 条件の案内が必要 ? URLの案内(word) : [];
+  const 名簿 = 条件の案内が必要 ? 名乘りの案内(word, list, now) : [];
+  const 手 = 条件の案内が必要 ? retypeTips(word, 畫面の既定(list, now, {}), now) : [];
   const 指南 = [
     ...案内,
     ...(果て ? [果て] : []),
@@ -2232,9 +2298,6 @@ function explainWord(args: { word?: unknown; scope?: unknown }, now: number): st
   if (件數 > 0) {
     /* 行が出る時は**中身を少し見せる**。行は `search_deadlines` と同じ形
      * （`line()`）で、3 行まで。 */
-    const 素の行 = list.filter((r) => 照合(r.hay) === true);
-    /* **両方の数を言う**。 */
-    const 畫面の行 = 畫面の既定(素の行, now, {});
     const 行 = sortRows(畫面の行).slice(0, 3);
 
     const 切替 = 畫面の行.length > 行.length ? `・このうち ${行.length} 行を出します` : "";
@@ -2253,8 +2316,9 @@ function explainWord(args: { word?: unknown; scope?: unknown }, now: number): st
       ...(畫面の行.length > 行.length
         ? [`- …ほか ${畫面の行.length - 行.length} 行（search_deadlines で引けます）`]
         : []),
-      /* 画面の既定で 0 件に成る時は、その**理由**を添える。 */
-      ...(畫面の行.length === 0 && (指南.length || 受皿.length)
+      ...(畫面の行.length === 0 && 窓の外.raw ? [窓の外の案内(窓の外)] : []),
+      /* 別の範囲でも取得できない時は、条件を見直す案内を添える。 */
+      ...(畫面の行.length === 0 && !窓の外.filtered && (指南.length || 受皿.length)
         ? ["既定の絞り込みで 0 件になる理由:", ...指南, ...受皿].map((n) =>
             n === "" ? "" : `- ${n}`,
           )
@@ -2739,7 +2803,7 @@ const TOOLS = [
   {
     name: "search_deadlines",
     description:
-      "日本語で投稿締切を検索する。語を省いて kind / kinds / rank / domestic / online / within_days だけでも絞れる。既定は今後の abstract / paper / journal、推定は除外。scope は screen（初期一覧）または all（収録全体）。structuredContent に total・rows・next_offset を返す。続きは同じ条件と next_offset を offset に指定する。日付のみの行の utc・jst は null。常時受付は締切日時・精度・回次を null とし、日付のある行の後に並べます。推定期間、投稿トラック、確認状態を別に返す。公式確認（いつ・どこで・何を確かめたか）は verification_ja に画面の行の詳細と同じ日本語で返します（内部の鍵名は verification に残します）。前に出ていた締切も表示する。日付語は別ラウンドや会期にも当たるため、締切だけの期間指定には within_days を使う。会期の欄には、上流が書いた原文（`March 18-21, 2024` のやうな自由文）を「原表記」として添えます（画面の行の詳細と同じ）。0 件のときは画面と同じ案内と「打ち直すなら」の候補を返す。返す行の形: 日時 | 種別 | 確認状態（ある場合）| 会議名（版の識別子）| ランク | 会期 | 開催地 URL。テキストは `| ` で切り、構造化結果を優先する。",
+      "日本語で投稿締切を検索する。語を省いて kind / kinds / rank / domestic / online / within_days だけでも絞れる。既定は今後の abstract / paper / journal、推定は除外。scope は screen（初期一覧）または all（収録全体）。structuredContent に total・rows・next_offset を返す。screen で 0 件のときは scope_comparison に全収録での同条件の件数・絞る前の件数・生成時刻を返す。比較データを読めない場合は検索結果を保持し、scope_comparison_error に理由と再試行の案内を返す。範囲を変えるときもほかの条件を維持する。続きは同じ条件と next_offset を offset に指定する。日付のみの行の utc・jst は null。常時受付は締切日時・精度・回次を null とし、日付のある行の後に並べます。推定期間、投稿トラック、確認状態を別に返す。公式確認（いつ・どこで・何を確かめたか）は verification_ja に画面の行の詳細と同じ日本語で返します（内部の鍵名は verification に残します）。前に出ていた締切も表示する。日付語は別ラウンドや会期にも当たるため、締切だけの期間指定には within_days を使う。会期の欄には、上流が書いた原文（`March 18-21, 2024` のやうな自由文）を「原表記」として添えます（画面の行の詳細と同じ）。0 件のときは画面と同じ案内と「打ち直すなら」の候補を返す。返す行の形: 日時 | 種別 | 確認状態（ある場合）| 会議名（版の識別子）| ランク | 会期 | 開催地 URL。テキストは `| ` で切り、構造化結果を優先する。",
     inputSchema: {
       type: "object",
       properties: {

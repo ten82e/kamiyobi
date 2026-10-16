@@ -63,6 +63,19 @@ interface Page {
   catalog_fallback: boolean;
   catalog_error?: { code: string };
   rows: Deadline[];
+  scope_comparison_error?: {
+    code: string;
+    reason: string;
+    path: string;
+    retryable: boolean;
+    recovery_command: string | null;
+  };
+  scope_comparison?: {
+    scope: "all";
+    matched_before_filters: number;
+    total: number;
+    generated_at: string | null;
+  };
 }
 function client(root: string, now = "2030-01-01T00:00:00Z") {
   const child = spawn(process.execPath, ["run.ts", now], {
@@ -394,6 +407,9 @@ it("does not read the history snapshot when the selected catalog supplies the jo
     const page = (await c.call("search_deadlines", { query: "", kind: "journal", scope: "screen" }))
       .structuredContent;
     expect(keys(page)).toEqual(["alpha", "beta"]);
+    expect(page.scope_comparison).toBeUndefined();
+    const explanation = await c.call("explain_word", { word: "Alpha", scope: "screen" });
+    expect(explanation.content.map((item) => item.text).join("\n")).toContain("素の照合で 1 行");
   } finally {
     c.close();
     writeFileSync(join(root, "data/snapshot.json"), snapshotText);
@@ -488,6 +504,35 @@ fs.rmSync(pool.raw,{recursive:true,force:true});
         utc: null,
         jst: null,
       });
+    }
+    for (const [query, kind, venueKey, count, raw] of [
+      ["ネットワーク", "registration", "percom", 1, 442],
+      ["分散システム", "registration", "percom", 1, 1517],
+      ["3DV", "paper", "3dv", 6, 12],
+      ["3DV", "abstract", "3dv", 3, 12],
+      ["AAAI", "abstract", "aaai", 11, 53],
+    ] as const) {
+      const filters = { query, kind, include_past: true, limit: 100 };
+      const zero = await c.call("search_deadlines", { ...filters, scope: "screen" });
+      expect(zero.structuredContent).toMatchObject({
+        total: 0,
+        rows: [],
+        scope: "screen",
+        scope_comparison: {
+          scope: "all",
+          matched_before_filters: raw,
+          total: count,
+          generated_at: "2026-10-16T00:00:00Z",
+        },
+      });
+      expect(zero.content.map((item) => item.text).join("\n")).toContain(
+        `同じ絞り込み条件では ${count} 件です`,
+      );
+      const retry = (await c.call("search_deadlines", { ...filters, scope: "all" }))
+        .structuredContent;
+      expect(keys(retry)).toEqual(Array(count).fill(venueKey));
+      expect(retry.total).toBe(count);
+      expect(new Set(retry.rows.map((row) => `${row.edition_id}|${row.round}`)).size).toBe(count);
     }
   } finally {
     c.close();
@@ -623,5 +668,303 @@ it("explains raw full-collection matches without promising filtered-out deadline
   } finally {
     c.close();
     writeFileSync(join(root, "public/catalog.json"), catalogText);
+  }
+});
+
+it("offers an unchanged-filter scope retry when screen matches exist but none qualify", async () => {
+  function sample(
+    key: string,
+    options: {
+      kind?: string;
+      date?: string;
+      estimated?: boolean;
+      rank?: string;
+      tags?: string[];
+      place?: string;
+    } = {},
+  ) {
+    return {
+      ...venue(key, `Distributed ${key}`),
+      rank: { core: options.rank ?? "A" },
+      tags: options.tags ?? ["domestic-jp"],
+      editions:
+        options.kind === "journal"
+          ? []
+          : [
+              {
+                id: `${key}-2030`,
+                year: 2030,
+                estimated: options.estimated ?? false,
+                place: options.place ?? "Online",
+                deadlines: [
+                  {
+                    kind: options.kind ?? "paper",
+                    utc: options.date ?? "2030-01-03T00:00:00Z",
+                    tz_raw: "UTC",
+                  },
+                ],
+              },
+            ],
+    };
+  }
+  const cases = [
+    { filters: {}, hidden: { date: "2029-12-20T00:00:00Z" } },
+    { filters: {}, hidden: { estimated: true } },
+    { filters: { kind: "paper" }, hidden: { kind: "notification" } },
+    { filters: { kind: "journal" }, hidden: {}, found: { kind: "journal", tags: ["journal"] } },
+    { filters: { rank: "A" }, hidden: { rank: "B" } },
+    { filters: { domestic: true }, hidden: { tags: [] } },
+    { filters: { online: true }, hidden: { place: "Paris" } },
+    { filters: { within_days: 7 }, hidden: { date: "2030-01-20T00:00:00Z" } },
+    { filters: { within_days: 7 }, hidden: { kind: "journal", tags: ["journal"] } },
+    {
+      filters: { include_past: true, kind: "paper" },
+      hidden: { kind: "notification" },
+      found: { date: "2029-12-20T00:00:00Z" },
+    },
+    { filters: { kinds: ["paper"], kind: "notification" }, hidden: { kind: "notification" } },
+  ];
+  try {
+    for (const test of cases) {
+      const hidden = sample("hidden", test.hidden);
+      const found = sample("found", test.found);
+      writeFileSync(
+        join(root, "public/catalog.json"),
+        JSON.stringify({ generated_at: screenAt, conferences: [hidden] }),
+      );
+      writeFileSync(
+        join(root, "data/snapshot.json"),
+        JSON.stringify({
+          snapshot_metadata: { generated_at: allAt },
+          conferences: [hidden, found],
+        }),
+      );
+      const c = client(root);
+      try {
+        for (const query of ["Distributed", "分散システム"]) {
+          const response = await c.call("search_deadlines", {
+            query,
+            ...test.filters,
+            scope: "screen",
+          });
+          expect(response.structuredContent, JSON.stringify(test)).toMatchObject({
+            total: 0,
+            returned: 0,
+            next_offset: null,
+            rows: [],
+            scope: "screen",
+            generated_at: screenAt,
+            scope_comparison: {
+              scope: "all",
+              matched_before_filters: 2,
+              total: 1,
+              generated_at: allAt,
+            },
+          });
+          const text = response.content.map((item) => item.text).join("\n");
+          expect(text).toContain("同じ絞り込み条件では 1 件です");
+          expect(text).toContain('ほかの条件を変えずに scope: "all"');
+          expect(text).not.toContain("には 1 行もありません");
+          expect(text).not.toContain("include_past / include_estimated / kinds を試してください");
+          expect(text).not.toContain("within_days を省いてください");
+          const retry = await c.call("search_deadlines", { query, ...test.filters, scope: "all" });
+          expect(keys(retry.structuredContent)).toEqual(["found"]);
+          expect(retry.structuredContent.total).toBe(
+            response.structuredContent.scope_comparison?.total,
+          );
+          expect(retry.structuredContent.scope_comparison).toBeUndefined();
+        }
+      } finally {
+        c.close();
+      }
+    }
+  } finally {
+    writeFileSync(join(root, "public/catalog.json"), catalogText);
+    writeFileSync(join(root, "data/snapshot.json"), snapshotText);
+  }
+});
+
+it("does not suggest a scope change for results, exhausted pages, or nonexistent full-collection matches", async () => {
+  const c = client(root);
+  try {
+    const positive = await c.call("search_deadlines", { query: "Alpha", scope: "screen" });
+    expect(keys(positive.structuredContent)).toEqual(["alpha"]);
+    expect(positive.structuredContent.scope_comparison).toBeUndefined();
+    const end = await c.call("search_deadlines", { query: "Alpha", scope: "screen", offset: 1 });
+    expect(end.structuredContent).toMatchObject({
+      total: 1,
+      returned: 0,
+      rows: [],
+      next_offset: null,
+    });
+    expect(end.structuredContent.scope_comparison).toBeUndefined();
+    const absent = await c.call("search_deadlines", {
+      query: "absent-venue-893104",
+      scope: "screen",
+    });
+    expect(absent.structuredContent.scope_comparison).toEqual({
+      scope: "all",
+      matched_before_filters: 0,
+      total: 0,
+      generated_at: allAt,
+    });
+    expect(absent.content.map((item) => item.text).join("\n")).not.toContain("で取得できます");
+    const excluded = await c.call("search_deadlines", { query: "closed-issue", scope: "screen" });
+    expect(excluded.structuredContent.scope_comparison).toEqual({
+      scope: "all",
+      matched_before_filters: 1,
+      total: 0,
+      generated_at: allAt,
+    });
+    expect(excluded.content.map((item) => item.text).join("\n")).toContain(
+      "収録範囲を変えるだけでは結果は増えません",
+    );
+    const explanation = await c.call("explain_word", { word: "closed-issue" });
+    expect(explanation.content.map((item) => item.text).join("\n")).toContain(
+      "同じ絞り込み条件では 0 件です",
+    );
+  } finally {
+    c.close();
+  }
+});
+
+it("shows full-scope recovery in explanations even when raw screen matches exist", async () => {
+  const hidden = dated("closed", "2029-12-20T00:00:00Z");
+  const found = dated("future", "2030-01-03T00:00:00Z");
+  writeFileSync(
+    join(root, "public/catalog.json"),
+    JSON.stringify({ generated_at: screenAt, conferences: [hidden] }),
+  );
+  writeFileSync(
+    join(root, "data/snapshot.json"),
+    JSON.stringify({ snapshot_metadata: { generated_at: allAt }, conferences: [hidden, found] }),
+  );
+  const c = client(root);
+  try {
+    for (const word of ["Distributed", "分散システム"]) {
+      const explanation = await c.call("explain_word", { word });
+      const text = explanation.content.map((item) => item.text).join("\n");
+      expect(text).toContain("素の照合で 1 行");
+      expect(text).toContain("同じ絞り込み条件では 1 件です");
+      expect(text).toContain('ほかの条件を変えずに scope: "all"');
+      const retry = await c.call("search_deadlines", { query: word, scope: "all" });
+      expect(keys(retry.structuredContent)).toEqual(["future"]);
+    }
+  } finally {
+    c.close();
+    writeFileSync(join(root, "public/catalog.json"), catalogText);
+    writeFileSync(join(root, "data/snapshot.json"), snapshotText);
+  }
+});
+
+it("keeps a valid screen search usable when scope comparison data is unavailable and retries on the same connection", async () => {
+  writeFileSync(
+    join(root, "public/catalog.json"),
+    JSON.stringify({ generated_at: screenAt, conferences: [alpha] }),
+  );
+  const snapshotPath = join(root, "data/snapshot.json");
+  try {
+    for (const reason of ["missing", "invalid-json", "invalid-shape", "unreadable"] as const) {
+      rmSync(snapshotPath, { recursive: true, force: true });
+      if (reason === "invalid-json") writeFileSync(snapshotPath, "{");
+      if (reason === "invalid-shape") writeFileSync(snapshotPath, "{}");
+      if (reason === "unreadable") mkdirSync(snapshotPath);
+      const c = client(root);
+      try {
+        const args = { query: "Distributed", kind: "paper", scope: "screen" };
+        const response = await c.call("search_deadlines", args);
+        expect(response.structuredContent).toMatchObject({
+          total: 0,
+          scope: "screen",
+          generated_at: screenAt,
+          rows: [],
+        });
+        expect(response.structuredContent.scope_comparison).toBeUndefined();
+        expect(response.structuredContent.scope_comparison_error).toEqual({
+          code: "SCOPE_COMPARISON_UNAVAILABLE",
+          reason: reason.startsWith("invalid") ? "invalid" : reason,
+          path: "data/snapshot.json",
+          retryable: true,
+          recovery_command: reason === "unreadable" ? null : "npm run build",
+        });
+        const text = response.content.map((item) => item.text).join("\n");
+        expect(text).toContain("収録全体との比較はできていません");
+        expect(text).not.toContain("同じ絞り込み条件では 0 件です");
+        rmSync(snapshotPath, { recursive: true, force: true });
+        writeFileSync(snapshotPath, snapshotText);
+        const retry = await c.call("search_deadlines", args);
+        expect(retry.structuredContent.scope_comparison_error).toBeUndefined();
+        expect(retry.structuredContent.scope_comparison).toEqual({
+          scope: "all",
+          matched_before_filters: 6,
+          total: 2,
+          generated_at: allAt,
+        });
+        const full = await c.call("search_deadlines", { ...args, scope: "all" });
+        expect(keys(full.structuredContent)).toEqual(["conference", "special-issue"]);
+      } finally {
+        c.close();
+      }
+    }
+  } finally {
+    rmSync(snapshotPath, { recursive: true, force: true });
+    writeFileSync(snapshotPath, snapshotText);
+    writeFileSync(join(root, "public/catalog.json"), catalogText);
+  }
+});
+
+it("compares the consolidated submission count rather than duplicate archival records", async () => {
+  const aliases = [
+    { key: "jip", id: "jip-compsac2027-si", year: 2027, label: "投稿締切" },
+    { key: "ipsj-27-r-compsac", id: "ipsj-27-r26", year: 2026, label: "Submission" },
+  ];
+  const official = "https://www.ipsj.or.jp/journal/cfp/27-R.html";
+  const full = aliases.map((alias) => ({
+    ...venue(alias.key, "COMPSAC 特集号"),
+    editions: [
+      {
+        id: alias.id,
+        year: alias.year,
+        estimated: false,
+        link: official,
+        deadlines: [
+          {
+            kind: "paper",
+            round: 1,
+            label: alias.label,
+            precision: "date-only",
+            local_date: "2026-12-01",
+            utc: null,
+            tz_raw: null,
+          },
+        ],
+      },
+    ],
+  }));
+  writeFileSync(
+    join(root, "public/catalog.json"),
+    JSON.stringify({ generated_at: screenAt, conferences: [] }),
+  );
+  writeFileSync(
+    join(root, "data/snapshot.json"),
+    JSON.stringify({ snapshot_metadata: { generated_at: allAt }, conferences: full }),
+  );
+  const c = client(root, "2026-08-09T00:00:00Z");
+  try {
+    const zero = await c.call("search_deadlines", { query: "COMPSAC", scope: "screen" });
+    expect(zero.structuredContent.scope_comparison).toEqual({
+      scope: "all",
+      matched_before_filters: 1,
+      total: 1,
+      generated_at: allAt,
+    });
+    const retry = await c.call("search_deadlines", { query: "COMPSAC", scope: "all" });
+    expect(keys(retry.structuredContent)).toEqual(["jip"]);
+    expect(retry.structuredContent.total).toBe(1);
+    expect(retry.structuredContent.rows[0].local_date).toBe("2026-12-01");
+  } finally {
+    c.close();
+    writeFileSync(join(root, "public/catalog.json"), catalogText);
+    writeFileSync(join(root, "data/snapshot.json"), snapshotText);
   }
 });
