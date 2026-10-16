@@ -4052,12 +4052,19 @@ it("PDF 読み込みの失敗は日本語と打ち手で出る（SPEC §7）", (
    * 日本語の利用者には何が起きたか直せない。特に `pdfjs unavailable` は、
    * 学内のプロキシで CDN が塞がれると起きる一番よくある失敗だった。 */
   const app = siteRuntime();
-  const maxBytes = 20 * 1024 * 1024;
+  const limits = ["PDF_MAX_BYTES", "PDF_MAX_PAGES"]
+    .map((name) => {
+      const declaration = new RegExp(`const ${name} = [^;]+;`).exec(app)?.[0];
+      expect(declaration, `missing runtime limit: ${name}`).toBeDefined();
+      return declaration;
+    })
+    .join("\n");
   const script = [
     "(async () => {",
     `const FAIL_SRC = ${JSON.stringify(jsFunction(app, "pdfFailureMessageJa"))};`,
-    `const MAX_BYTES = ${maxBytes};`,
-    'const f = new Function("PDF_MAX_BYTES", "PDF_MAX_PAGES", "return (" + FAIL_SRC + ")")(MAX_BYTES, 100);',
+    limits,
+    'const make = (bytes, pages) => new Function("PDF_MAX_BYTES", "PDF_MAX_PAGES", "return (" + FAIL_SRC + ")")(bytes, pages);',
+    "const f = make(PDF_MAX_BYTES, PDF_MAX_PAGES);",
 
     "const cases = {",
     "  cdn: new Error('pdfjs unavailable'),",
@@ -4072,6 +4079,8 @@ it("PDF 読み込みの失敗は日本語と打ち手で出る（SPEC §7）", (
     "const aborted = new Error(' aborted');",
     "aborted.name = 'AbortError';",
     "out.aborted = f(aborted);",
+    "const varied = [[7,37],[13,72]].map(([mb,pages]) => {const message=make(mb*1024*1024,pages);return {large:message(cases.large),pages:message(cases.pages)};});",
+    "out.varied = varied;",
     "console.log(JSON.stringify(out));",
     "})();",
   ].join("\n");
@@ -4082,7 +4091,7 @@ it("PDF 読み込みの失敗は日本語と打ち手で出る（SPEC §7）", (
   expect(proc.status, proc.stderr).toBe(0);
   const got = JSON.parse(proc.stdout.trim().split("\n").pop() || "{}");
   // 内部の英語をそのまま出さない。
-  for (const key of Object.keys(got)) {
+  for (const key of ["cdn", "large", "pages", "slow", "broken", "unknown", "aborted"]) {
     const text = got[key];
     expect(text, `${key} が日本語になっていない`).toMatch(/[ぁ-んァ-ン一-龯]/);
     expect(text, `${key} が内部の英語文字列を写している`).not.toMatch(
@@ -4092,10 +4101,14 @@ it("PDF 読み込みの失敗は日本語と打ち手で出る（SPEC §7）", (
       /貼|キャンセル|確かめる|指定して/,
     );
   }
-  // 上限値は実装の定数から出る（テスト側に数字を書き写していない証明）。
+  // 既定値と、変更した上限値の両方を実際の表示関数へ渡す。
   expect(got.large).toContain("20 MB");
   expect(got.pages).toContain("100 ページ");
-  expect(got.aborted).toBe("PDF 読込をキャンセルしました");
+  expect(got.varied[0].large).toContain("7 MB");
+  expect(got.varied[0].pages).toContain("37 ページ");
+  expect(got.varied[1].large).toContain("13 MB");
+  expect(got.varied[1].pages).toContain("72 ページ");
+  expect(got.aborted).toBe("ファイルの読み込みをキャンセルしました");
   // 未発表の論文を預ける操作なので、送信しないことを画面に書く。
   const template = readFileSync(join(REPO_ROOT, "site", "template.html"), "utf8");
   expect(template).toContain("選んだファイルは送信しません");

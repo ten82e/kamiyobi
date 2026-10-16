@@ -5713,6 +5713,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   const PDFJS_VERSION = "3.11.174";
   const PDFJS_SCRIPT = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";
   const PDFJS_WORKER = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+  const PDFJS_CMAPS = "https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/cmaps/";
   const PDF_MAX_BYTES = 20 * 1024 * 1024;
   const PDF_MAX_PAGES = 100;
   const PDF_PAGE_LIMIT = 3;
@@ -5752,7 +5753,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   function readPdf(buf: ArrayBuffer, signal: AbortSignal): Promise<PdfReadResult> {
     const runtime = window.pdfjsLib;
     if (!runtime) return Promise.reject(new Error("pdfjs unavailable"));
-    const task = runtime.getDocument({ data: buf });
+    const task = runtime.getDocument({ data: buf, cMapUrl: PDFJS_CMAPS, cMapPacked: true });
     let timeout: ReturnType<typeof setTimeout> | undefined;
     const stop = () => {
       if (task.destroy) task.destroy();
@@ -5811,7 +5812,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
    * 上限値はテスト側にも書き写さず、同じ定数から作る。 */
   function pdfFailureMessageJa(error: unknown): string {
     const name = error instanceof Error ? error.name : "";
-    if (name === "AbortError") return "PDF 読込をキャンセルしました";
+    if (name === "AbortError") return "ファイルの読み込みをキャンセルしました";
     const message = (error instanceof Error ? error.message : String(error)).toLowerCase();
     const pasteHint = "タイトルと概要を下の欄に貼り付けてください";
     /* 対応していない文書形式を「PDF が読めない」とは言わない（自分の PDF の文字化けを疑って、
@@ -6023,7 +6024,9 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     $("paperFileLabel").textContent = "未選択";
   }
   cancelPdf.addEventListener("click", () => {
-    if (pdfAbortController) pdfAbortController.abort();
+    if (!pdfAbortController) return;
+    stopPaperFileRead();
+    $("paperFileLabel").textContent = pdfFailureMessageJa(abortError());
   });
   paperFiles.addEventListener("change", (event) => {
     const target = event.currentTarget;
@@ -6046,7 +6049,10 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         )
       : Promise.resolve();
     load
-      .then(() => Promise.all(files.map((file) => readPaperFile(file, signal))))
+      .then(() => {
+        if (job !== pdfJob || signal.aborted) throw abortError();
+        return Promise.all(files.map((file) => readPaperFile(file, signal)));
+      })
       .then((records) => {
         if (job !== pdfJob || signal.aborted) throw abortError();
         // 選んだファイルを欄に反映する差し替えも、例のボタンと同じ規則を通す。以前はここで

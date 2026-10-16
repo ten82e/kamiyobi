@@ -332,6 +332,15 @@ interface PdfItem {
   str?: string;
   transform?: number[];
   height?: number;
+  width?: number;
+}
+interface PdfLine {
+  text: string;
+  x: number;
+  y: number;
+  right: number;
+  height: number;
+  items: PdfItem[];
 }
 interface EmbeddingProbe {
   text?: string;
@@ -392,9 +401,13 @@ function isPdfItem(value: unknown): value is PdfItem {
   return (
     isRecord(value) &&
     (value.str === undefined || typeof value.str === "string") &&
-    (value.height === undefined || typeof value.height === "number") &&
+    (value.height === undefined ||
+      (typeof value.height === "number" && Number.isFinite(value.height))) &&
+    (value.width === undefined ||
+      (typeof value.width === "number" && Number.isFinite(value.width))) &&
     (value.transform === undefined ||
-      (Array.isArray(value.transform) && value.transform.every((item) => typeof item === "number")))
+      (Array.isArray(value.transform) &&
+        value.transform.every((item) => typeof item === "number" && Number.isFinite(item))))
   );
 }
 
@@ -816,108 +829,182 @@ const Recommender = (() => {
     return labeled ? [labeled] : null;
   }
 
-  function pdfTextLines(pages: unknown): string[] {
-    const pageList: unknown[][] =
-      Array.isArray(pages) && Array.isArray(pages[0]) ? pages : [Array.isArray(pages) ? pages : []];
-    return pageList
-      .flatMap((items) => {
-        const groups: Record<string, Array<{ text: string; x: number }>> = {};
-        items.forEach((item) => {
-          if (!isPdfItem(item)) return;
-          const text = String(item.str || "")
+  function pdfPages(pages: unknown): unknown[][] {
+    return Array.isArray(pages) && Array.isArray(pages[0])
+      ? pages.map((page) => (Array.isArray(page) ? page : []))
+      : [Array.isArray(pages) ? pages : []];
+  }
+
+  function pdfFontSize(item: PdfItem): number {
+    return (
+      Math.hypot(Number(item.transform?.[0]) || 0, Number(item.transform?.[1]) || 0) ||
+      Math.abs(Number(item.height) || 0)
+    );
+  }
+
+  function pdfPageLines(items: unknown[]): PdfLine[] {
+    const runs = items.filter(isPdfItem).filter((item) => String(item.str || "").trim());
+    const horizontal = runs.filter(
+      (item) =>
+        Math.abs(Number(item.transform?.[1]) || 0) <=
+        Math.abs(Number(item.transform?.[0]) || 0) * 0.1,
+    );
+    const selected = horizontal.length ? horizontal : runs;
+    const positioned = selected
+      .map((item, index) => ({
+        item,
+        x: Number(item.transform?.[4]) || 0,
+        y: Number.isFinite(item.transform?.[5]) ? Number(item.transform?.[5]) : -index * 100,
+        height: pdfFontSize(item),
+      }))
+      .sort((a, b) => b.y - a.y || a.x - b.x);
+    const rows: Array<{ y: number; height: number; runs: typeof positioned }> = [];
+    for (const run of positioned) {
+      let row = rows.find(
+        (candidate) =>
+          Math.abs(candidate.y - run.y) <=
+          Math.max(2, Math.max(candidate.height, run.height) * 0.25),
+      );
+      if (!row) {
+        row = { y: run.y, height: run.height, runs: [] };
+        rows.push(row);
+      }
+      row.height = Math.max(row.height, run.height);
+      row.runs.push(run);
+    }
+    const rowLines = rows.map((row) => {
+      const segments: PdfLine[] = [];
+      let previous: (typeof positioned)[number] | undefined;
+      for (const run of row.runs.sort((a, b) => a.x - b.x)) {
+        const widthKnown = Number.isFinite(run.item.width) && Number.isFinite(previous?.item.width);
+        const gap = previous ? run.x - previous.x - Number(previous.item.width) : 0;
+        let line = segments[segments.length - 1];
+        if (!line || (widthKnown && gap > Math.max(2, row.height * 0.8))) {
+          line = { text: "", x: run.x, y: row.y, right: run.x, height: row.height, items: [] };
+          segments.push(line);
+        }
+        const space =
+          line.text &&
+          (!widthKnown ||
+            gap > Math.max(0.5, Math.min(run.height, previous?.height || run.height) * 0.15))
+            ? " "
+            : "";
+        line.text +=
+          space +
+          String(run.item.str || "")
             .replace(/\s+/g, " ")
             .trim();
-          if (!text) return;
-          const transform = item.transform || [];
-          const y = Number(transform[5]);
-          const x = Number(transform[4]);
-          const key = Number.isFinite(y) ? Math.round(y / 2) * 2 : Object.keys(groups).length;
-          const group = groups[String(key)] || [];
-          groups[String(key)] = group;
-          group.push({ text, x: Number.isFinite(x) ? x : 0 });
-        });
-        return Object.keys(groups)
-          .sort((a, b) => Number(b) - Number(a))
-          .map((key) =>
-            groups[key]
-              .sort((a, b) => a.x - b.x)
-              .map((item) => item.text)
-              .join(" ")
-              .trim(),
-          );
-      })
-      .filter(Boolean);
+        line.right = Math.max(line.right, run.x + (Number(run.item.width) || 0));
+        line.items.push(run.item);
+        previous = run;
+      }
+      return segments;
+    });
+    const all = rowLines.flat();
+    if (!all.length) return [];
+    const combine = (parts: PdfLine[]): PdfLine => ({
+      ...parts[0],
+      text: parts.map((line) => line.text).join(" "),
+      right: Math.max(...parts.map((line) => line.right)),
+      items: parts.flatMap((line) => line.items),
+    });
+    const center =
+      (Math.min(...all.map((line) => line.x)) + Math.max(...all.map((line) => line.right))) / 2;
+    const gutters = rowLines.filter((lines) =>
+      lines.some((line, index) => index > 0 && lines[index - 1].right < center && line.x > center),
+    );
+    // 繰り返し現れる中央の空白を段間とみなし、単発の広い語間とは区別する。
+    if (gutters.length < 3 || gutters.length < rowLines.length * 0.15) return rowLines.map(combine);
+    const ordered: PdfLine[] = [],
+      left: PdfLine[] = [],
+      right: PdfLine[] = [];
+    const flush = () => {
+      ordered.push(...left, ...right);
+      left.length = 0;
+      right.length = 0;
+    };
+    for (const lines of rowLines) {
+      if (lines.some((line) => line.x < center && line.right > center)) {
+        flush();
+        ordered.push(combine(lines));
+      } else {
+        const leftParts = lines.filter((line) => line.x < center);
+        const rightParts = lines.filter((line) => line.x >= center);
+        if (leftParts.length) left.push(combine(leftParts));
+        if (rightParts.length) right.push(combine(rightParts));
+      }
+    }
+    flush();
+    return ordered;
+  }
+
+  function pdfTextLines(pages: unknown): string[] {
+    return pdfPages(pages).flatMap((page) => pdfPageLines(page).map((line) => line.text));
+  }
+
+  function pdfJoinLines(lines: string[]): string {
+    return lines.filter(Boolean).reduce((text, line) => {
+      const adjacentJapanese =
+        /[\u3040-\u30ff\u3400-\u9fff]$/.test(text) || /^[\u3040-\u30ff\u3400-\u9fff]/.test(line);
+      return text + (text && !adjacentJapanese ? " " : "") + line;
+    }, "");
   }
 
   function pdfPaperRecord(metadata: unknown, pages: unknown, fallbackText: unknown): PaperRecord {
-    const pageList: unknown[][] =
-      Array.isArray(pages) && Array.isArray(pages[0]) ? pages : [Array.isArray(pages) ? pages : []];
-    const lines = pdfTextLines(pageList);
+    const pageList = pdfPages(pages);
+    const positioned = pageList.map(pdfPageLines);
+    const layout = positioned.flatMap((lines, page) => lines.map((line) => ({ ...line, page })));
+    const lines = layout.map((line) => line.text);
     const metadataRecord = isRecord(metadata) ? metadata : {};
     const info = isRecord(metadataRecord.info) ? metadataRecord.info : metadataRecord;
     let title = String(info.Title || info.title || "").trim();
     if (!title) {
-      const first = pageList[0] || [];
-      const items = first.filter(isPdfItem);
-      const sizes = items.map((item) =>
-        Math.abs(Number((item.transform || [])[0]) || Number(item.height) || 0),
-      );
-      const max = Math.max.apply(null, sizes.concat([0]));
-      if (max > 0) {
-        title = items
-          .filter((_item, index) => sizes[index] >= max * 0.9)
-          .map((item) => String(item.str || "").trim())
-          .filter(Boolean)
-          .join(" ");
-      }
+      const first = positioned[0] || [];
+      const max = Math.max(0, ...first.flatMap((line) => line.items.map(pdfFontSize)));
+      if (max > 0)
+        title = pdfJoinLines(
+          first
+            .filter((line) => line.items.some((item) => pdfFontSize(item) >= max * 0.9))
+            .map((line) => line.text),
+        );
     }
-    const fallback = String(fallbackText || "").trim();
-    if (!title) title = lines[0] || fallback.slice(0, 200);
+    if (!title) title = lines[0] || String(fallbackText || "").trim();
     title = title.replace(/\s+/g, " ").slice(0, 240);
-    const normalized = lines.map((line) => line.replace(/\s+/g, " ").trim());
-    const abstractAt = normalized.findIndex(
-      (line) => /^abstract\s*[:.]?/i.test(line) || /^概要\s*[:：]?/.test(line),
-    );
-    const keywordsAt = normalized.findIndex((line) =>
-      /^(keywords?|index terms|キーワード)\s*[:：]?/i.test(line),
-    );
-    const sectionEnd = (start: number) =>
-      normalized.findIndex(
-        (line, index) =>
-          index > start &&
-          /^(keywords?|index terms|introduction|references|参考文献|1\.?\s+introduction)\b/i.test(
-            line,
-          ),
-      );
-    let abstract = "";
-    if (abstractAt >= 0) {
-      const abstractStart = normalized[abstractAt]
-        .replace(/^abstract\s*[:.]?/i, "")
-        .replace(/^概要\s*[:：]?/, "")
-        .trim();
-      const abstractEnd = sectionEnd(abstractAt);
-      abstract = [abstractStart]
-        .concat(
-          normalized.slice(
-            abstractAt + 1,
-            abstractEnd < 0
-              ? keywordsAt > abstractAt
-                ? keywordsAt
-                : normalized.length
-              : abstractEnd,
-          ),
+    const abstractLabel = /^(?:abstract\b|概要|要旨|抄録|あらまし)\s*[:：.\-—–]?\s*/i;
+    const keywordsLabel = /^(?:keywords?\b|index terms\b|キーワード)\s*[:：.\-—–]?\s*/i;
+    const section =
+      /^(?:(?:\d+(?:\.\d+)*\.?|[IVX]+\.)\s*)?(?:introduction\b|references\b|はじめに|序論|参考文献)/i;
+    const abstractAt = lines.findIndex((line) => abstractLabel.test(line));
+    const keywordsAt = lines.findIndex((line) => keywordsLabel.test(line));
+    const content = (start: number, label: RegExp) => {
+      if (start < 0) return "";
+      const result = [lines[start].replace(label, "").trim()];
+      for (let index = start + 1; index < lines.length; index++) {
+        if (
+          section.test(lines[index]) ||
+          abstractLabel.test(lines[index]) ||
+          keywordsLabel.test(lines[index])
         )
-        .filter(Boolean)
-        .join(" ");
-    }
-    const keywords =
-      keywordsAt >= 0
-        ? normalized[keywordsAt].replace(/^(keywords?|index terms|キーワード)\s*[:：]?/i, "").trim()
-        : "";
+          break;
+        if (label === keywordsLabel) {
+          const previous = layout[index - 1];
+          const next = layout[index];
+          if (
+            next.page !== previous.page ||
+            previous.y - next.y > Math.max(3, previous.height * 1.8) ||
+            next.y > previous.y + 2 ||
+            Math.abs(next.x - previous.x) > Math.max(12, previous.height * 2)
+          )
+            break;
+        }
+        result.push(lines[index]);
+      }
+      return pdfJoinLines(result);
+    };
     return {
       title,
-      abstract: abstract.slice(0, 6000),
-      keywords: keywords.slice(0, 1000),
+      abstract: content(abstractAt, abstractLabel).slice(0, 6000),
+      keywords: content(keywordsAt, keywordsLabel).slice(0, 1000),
       venue: "",
     };
   }
@@ -5478,8 +5565,8 @@ const Recommender = (() => {
       ],
       echo: true,
       deadlineTail: true,
-      note: "は検索欄の語ではなく、論文を貼る所の操作です – ファイルを選ぶと読み取りが始まり、最中に出る『PDF読み込みをキャンセル』でやめられます（PDF は先頭3ページのタイトル・概要・キーワードだけを読み取り、選んだファイルは送信しません）。",
-      live: "は論文を貼る所の操作です – 読み込みの最中に出る『PDF読み込みをキャンセル』でやめられます",
+      note: "は論文ファイルの操作です。「投稿先を探す」の「論文の入力」でファイルを選び、読み込み中の「読み込みをキャンセル」で中断できます。PDFは先頭3ページから題名・概要・キーワードを読み取り、選んだファイルは送信しません。",
+      live: "は「投稿先を探す」の操作です。読み込み中は「読み込みをキャンセル」で中断できます",
     },
     {
       /* SPEC 第 629 回（群の理由と実測は SPEC にある – 第 699 回にここを一読に縮めた）。*/

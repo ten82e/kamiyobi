@@ -307,6 +307,8 @@ interface SiteCatalog {
 interface PdfTextItem {
   str?: string;
   transform?: number[];
+  width?: number;
+  height?: number;
 }
 
 interface PdfPage {
@@ -327,7 +329,7 @@ interface PdfLoadingTask {
 interface PdfJsRuntime {
   version?: string;
   GlobalWorkerOptions: { workerSrc: string };
-  getDocument(options: { data: ArrayBuffer }): PdfLoadingTask;
+  getDocument(options: { data: ArrayBuffer; cMapUrl: string; cMapPacked: boolean }): PdfLoadingTask;
 }
 
 interface Window {

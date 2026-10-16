@@ -2402,7 +2402,7 @@ it("読めない形式のファイルを PDF のせいにしない（SPEC §7）
     expect(byName[n], `${n} を弾いている（従来読めていたものを壊した）`).toBe("");
   }
   expect(got.invalid).toContain("PDF から文字を読み取れませんでした");
-  expect(got.cancelled).toBe("PDF 読込をキャンセルしました");
+  expect(got.cancelled).toBe("ファイルの読み込みをキャンセルしました");
   // 弾く場所: 大きさの判定より前で、ファイル名を見る（読みに行かない）。
   expect(app).toContain("unsupportedPaperFormatJa(file.name)");
   // 欄の注記にも対応形式を書いておく（押す前に分かるようにする）。

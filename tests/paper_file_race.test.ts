@@ -43,7 +43,7 @@ interface RecordInput {
   title: string;
   abstract?: string;
 }
-function harness() {
+function harness(deferPdfLoader = false) {
   let active: unknown = null;
   class Input {
     files: Array<{ name: string }> = [];
@@ -104,6 +104,7 @@ function harness() {
     }
   >();
   const written: RecordInput[] = [];
+  const loaders: Array<(ok: boolean) => void> = [];
   let applied = 0;
   runInNewContext(
     `${inputFunctions}\n${handlers}\n${source.slice(resetStart, resetEnd)}\n${swapHandlers}
@@ -143,7 +144,10 @@ function harness() {
                 ? choose
                 : label,
       unsupportedPaperFormatJa: () => "",
-      loadPdfJs: (callback: (ok: boolean) => void) => callback(true),
+      loadPdfJs: (callback: (ok: boolean) => void) => {
+        if (deferPdfLoader) loaders.push(callback);
+        else callback(true);
+      },
       readPaperFile: (file: { name: string }, signal: AbortSignal) =>
         new Promise<RecordInput>((resolve, reject) => {
           pending.set(file.name, { signal, resolve, reject });
@@ -167,6 +171,12 @@ function harness() {
     written,
     values,
     draft,
+    pendingLoaders: () => loaders.length,
+    finishPdfLoader: (ok: boolean) => {
+      const callback = loaders.shift();
+      if (!callback) throw new Error("no PDF loader is pending");
+      callback(ok);
+    },
     activeElement: () => active,
     focus: (id: string) => {
       if (id === "paperUndo") undo.focus();
@@ -294,6 +304,37 @@ it("returns focus to the input after cancelling the focused file read", async ()
   expect(ui.values.paperPrimaryTitle.value).toBe("入力済み論文");
   expect(ui.label.textContent).toBe("キャンセルしました");
 });
+
+it.each([true, false])(
+  "cancels before the PDF reader is ready and ignores its late completion: %s",
+  async (loaded) => {
+    const ui = harness(true);
+    const savedDraft = ui.draft.get("draft");
+    await ui.select("waiting.pdf");
+    expect(ui.pendingLoaders()).toBe(1);
+    expect(ui.pending.size).toBe(0);
+    ui.focus("cancelPdf");
+    ui.cancel.click();
+    expect(ui.cancel.hidden).toBe(true);
+    expect(ui.label.textContent).toBe("キャンセルしました");
+    expect(ui.activeElement()).toBe(ui.values.paperPrimaryTitle);
+    expect(ui.draft.get("draft")).toBe(savedDraft);
+    await ui.select("next.txt");
+    ui.pending.get("next.txt")!.resolve({ title: "選び直した論文", abstract: "新しい概要" });
+    await tick();
+    const chosenDraft = ui.draft.get("draft");
+    ui.finishPdfLoader(loaded);
+    await tick();
+    expect(ui.pending.has("waiting.pdf")).toBe(false);
+    expect(ui.values.paperPrimaryTitle.value).toBe("選び直した論文");
+    expect(ui.values.paperPrimaryAbstract.value).toBe("新しい概要");
+    expect(ui.draft.get("draft")).toBe(chosenDraft);
+    expect(ui.label.textContent).toBe("next.txt");
+    expect(ui.cancel.hidden).toBe(true);
+    expect(ui.written.map((record) => record.title)).toEqual(["選び直した論文"]);
+    expect(ui.applied()).toBe(1);
+  },
+);
 
 it("cancels the previous read when another paper file is selected", async () => {
   const ui = harness();

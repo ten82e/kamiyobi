@@ -1037,7 +1037,7 @@ CSV と画面からダウンロードする ICS は、絞り込み後の全行�
 
 サイトは `recommender.js` と `app.js` を同一 origin から読み、初期データは `catalog.json` と一致する。推薦インデックスと履歴は必要時に取得する。取得失敗は利用者に知らせ、既に読めたデータで継続または再試行できるようにする。
 
-意味検索には `cdn.jsdelivr.net` の固定版 `@xenova/transformers`、PDF 処理には `cdnjs.cloudflare.com` の固定版 `pdf.js` を使う。モデル取得先は `huggingface.co` と許可した CDN に限定し、CSP は必要な接続先だけ許可する。接続できないときの代替動作は語彙検索と TXT 入力である。論文本文はブラウザ内で処理し、共有 URL に含めない。
+意味検索には `cdn.jsdelivr.net` の固定版 `@xenova/transformers`、PDF 処理には `cdnjs.cloudflare.com` の固定版 `pdf.js` を使う。日本語PDFの文字対応表（CMap）は、同じ版の `pdfjs-dist` を `cdn.jsdelivr.net` から取得する。モデル取得先は `huggingface.co` と許可した CDN に限定し、CSP は必要な接続先だけ許可する。接続できないときの代替動作は語彙検索と TXT 入力である。論文本文はブラウザ内で処理し、共有 URL に含めない。
 
 生成日時と上流取得日時を分けて表示する。キャッシュ・snapshot への切り替えと取得失敗を隠さず、未確認を「情報が存在しない」と言い換えない。
 

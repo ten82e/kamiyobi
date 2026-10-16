@@ -3746,6 +3746,8 @@ it("SPEC §7 carves out recommender CDNs and the site stays on that allowlist (#
   expect(section7).toMatch(/@xenova\/transformers/);
   expect(section7).toMatch(/cdnjs\.cloudflare\.com/);
   expect(section7).toMatch(/pdf\.js/);
+  expect(section7).toContain("CMap");
+  expect(section7).toContain("pdfjs-dist");
   expect(section7).toMatch(/recommender\.js/);
   expect(section7).toMatch(/代替動作/);
 
@@ -3760,6 +3762,7 @@ it("SPEC §7 carves out recommender CDNs and the site stays on that allowlist (#
     "https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2/+esm",
     "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js",
     "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js",
+    "https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/cmaps/",
   ];
   const urls = [...(template + runtime).matchAll(/https:\/\/[^\s"'`]+/g)].map((m) => m[0]);
   const cdnLike = urls
