@@ -45,7 +45,14 @@ it.each(["search_deadlines", "list_upcoming"])(
       'import {runStdio} from "./src/mcp.ts";runStdio(Date.parse("2030-01-01T00:00:00Z"));',
     );
     const search = tool === "search_deadlines";
-    const cases = [
+    const cases: Array<{
+      args: Record<string, unknown>;
+      expected: string[];
+      unknown: boolean;
+      empty: boolean;
+      ignored: boolean;
+      unknownValue?: string;
+    }> = [
       {
         args: { kinds: ["paper"] },
         expected: ["paper"],
@@ -152,6 +159,170 @@ it.each(["search_deadlines", "list_upcoming"])(
         empty: false,
         ignored: false,
       },
+      {
+        args: { kinds: [{}] },
+        expected: [],
+        unknown: true,
+        empty: false,
+        ignored: false,
+        unknownValue: "オブジェクト",
+      },
+      {
+        args: { kinds: { paper: true } },
+        expected: [],
+        unknown: true,
+        empty: false,
+        ignored: false,
+        unknownValue: "オブジェクト",
+      },
+      {
+        args: { kind: {} },
+        expected: [],
+        unknown: true,
+        empty: false,
+        ignored: false,
+        unknownValue: "オブジェクト",
+      },
+      {
+        args: { kinds: [null] },
+        expected: [],
+        unknown: true,
+        empty: false,
+        ignored: false,
+        unknownValue: "空の値",
+      },
+      {
+        args: { kinds: [[]] },
+        expected: [],
+        unknown: true,
+        empty: false,
+        ignored: false,
+        unknownValue: "配列",
+      },
+      {
+        args: { kinds: [""] },
+        expected: [],
+        unknown: true,
+        empty: false,
+        ignored: false,
+        unknownValue: "空の文字列",
+      },
+      {
+        args: { kinds: "   " },
+        expected: [],
+        unknown: true,
+        empty: false,
+        ignored: false,
+        unknownValue: "空の文字列",
+      },
+      {
+        args: { kinds: [true] },
+        expected: [],
+        unknown: true,
+        empty: false,
+        ignored: false,
+        unknownValue: "真偽値",
+      },
+      {
+        args: { kinds: 2 },
+        expected: [],
+        unknown: true,
+        empty: false,
+        ignored: false,
+        unknownValue: "数値",
+      },
+      {
+        args: { kinds: ["paper", {}] },
+        expected: ["paper"],
+        unknown: true,
+        empty: false,
+        ignored: false,
+        unknownValue: "オブジェクト",
+      },
+      {
+        args: { kinds: ["論文締切", null] },
+        expected: ["paper"],
+        unknown: true,
+        empty: false,
+        ignored: false,
+        unknownValue: "空の値",
+      },
+      {
+        args: { kinds: ["paper", ["notification"]] },
+        expected: ["paper"],
+        unknown: true,
+        empty: false,
+        ignored: false,
+        unknownValue: "配列",
+      },
+      {
+        args: { kinds: [["paper"]] },
+        expected: [],
+        unknown: true,
+        empty: false,
+        ignored: false,
+        unknownValue: "配列",
+      },
+      {
+        args: { kinds: [{}, { a: 1 }, null, "notification"] },
+        expected: ["notification"],
+        unknown: true,
+        empty: false,
+        ignored: false,
+        unknownValue: "オブジェクト",
+      },
+      {
+        args: { kinds: ["PAPER"] },
+        expected: ["paper"],
+        unknown: false,
+        empty: false,
+        ignored: false,
+      },
+      {
+        args: { kind: " PAPER " },
+        expected: ["paper"],
+        unknown: false,
+        empty: false,
+        ignored: false,
+      },
+      {
+        args: { kinds: ["UNKNOWN"] },
+        expected: [],
+        unknown: true,
+        empty: false,
+        ignored: false,
+        unknownValue: "UNKNOWN",
+      },
+      {
+        args: { kinds: {}, kind: "paper" },
+        expected: [],
+        unknown: true,
+        empty: false,
+        ignored: true,
+        unknownValue: "オブジェクト",
+      },
+      {
+        args: { kinds: ["paper"], kind: {} },
+        expected: ["paper"],
+        unknown: false,
+        empty: false,
+        ignored: true,
+      },
+      {
+        args: { kinds: ["ALL", {}] },
+        expected: ["abstract", "paper", "notification"],
+        unknown: true,
+        unknownValue: "オブジェクト",
+        empty: false,
+        ignored: false,
+      },
+      {
+        args: { kind: ["paper", "採否通知"] },
+        expected: ["paper", "notification"],
+        unknown: false,
+        empty: false,
+        ignored: false,
+      },
     ];
     const child = spawnSync(process.execPath, ["run.ts"], {
       cwd: root,
@@ -191,8 +362,9 @@ it.each(["search_deadlines", "list_upcoming"])(
       if (!search) expect(data.event_total).toBe(1);
       const text = reply.result.content.map((part: { text: string }) => part.text).join("\n");
       expect(text.includes("知らない種別")).toBe(c.unknown);
+      expect(text).not.toMatch(/\[object Object\]|\[object Null\]|undefined|NaN/);
       if (c.unknown) {
-        expect(text).toContain("知らない種別: zzz");
+        expect(text).toContain(c.unknownValue ?? "知らない種別: zzz");
         expect(text).not.toContain("指定したままでは 0 件になります");
       }
       expect(text.includes("kinds が空なので")).toBe(c.empty);

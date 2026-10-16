@@ -618,18 +618,25 @@ function 文字として讀む(值: unknown): string {
   return "";
 }
 
-function 名乘りとして讀む(引き: unknown): string[] {
+function 種別の値を読む(引き: unknown): string[] {
   if (引き === undefined || 引き === null) return [];
-  const 列 = Array.isArray(引き) ? 引き.flat(Number.POSITIVE_INFINITY) : [引き];
-  return 列
-    .map((k) => 文字として讀む(k))
-    .map((k) => k.trim())
-    .filter((k) => k.length > 0);
+  const 列 = Array.isArray(引き) ? 引き : [引き];
+  return 列.map((value) => {
+    if (typeof value === "string") return value.trim() || "（空の文字列）";
+    if (value === undefined || value === null) return "（空の値）";
+    if (Array.isArray(value)) return "（配列）";
+    if (typeof value === "number" || typeof value === "bigint") return "（数値）";
+    if (typeof value === "boolean") return "（真偽値）";
+    if (typeof value === "object") return "（オブジェクト）";
+    return "（文字列ではない値）";
+  });
 }
 
 function 指定した種別(args: { kind?: unknown; kinds?: unknown }) {
+  const value = args.kinds ?? args.kind;
   return {
-    value: args.kinds ?? args.kind,
+    value,
+    kinds: 種別の値を読む(value).map((kind) => 種別の英語(kind)),
     ignoresKind:
       args.kinds !== undefined &&
       args.kinds !== null &&
@@ -698,30 +705,8 @@ function 畫面の既定(
   const 窓の日數 = Number(args.within_days);
   const 窓あり = Number.isFinite(窓の日數) && 窓の日數 > 0;
   const 推定も = args.include_estimated === true;
-  const { value: 引き } = 指定した種別(args);
-
-  const 種別 = Array.isArray(引き)
-    ? 引き.map((k) => 種別の英語(String(k)))
-    : typeof 引き === "string"
-      ? [種別の英語(引き)]
-      : null;
-
-  const 全部 = 種別?.some((k) => k.toLowerCase() === "all") ?? false;
-  const 知らん = (種別 ?? []).filter(
-    (k) =>
-      !投稿の種別.includes(k) &&
-      ![
-        "all",
-        "notification",
-        "camera_ready",
-        "registration",
-        "rebuttal_start",
-        "rebuttal_end",
-        "review_release",
-        "supplementary",
-        "other",
-      ].includes(k),
-  );
+  const { kinds: 種別 } = 指定した種別(args);
+  const 全部 = 種別.some((kind) => kind === "all");
 
   const ランク = Recommender.rankGradeJa((args as { rank?: unknown }).rank);
 
@@ -730,26 +715,24 @@ function 畫面の既定(
 
   const 窓の上限 = 窓あり ? Recommender.withinDaysLimitMs(窓の日數, now) : 0;
   const 窓の下限 = 窓あり && 過去も ? Recommender.withinDaysFloorMs(窓の日數, now) : 0;
-  return list
-    .filter((r) => {
-      if (!過去も && Recommender.deadlineRowIsPast(r, now)) return false;
-      if (!推定も && r.est) return false;
-      if (窓あり) {
-        if (r.kind === "journal") return false;
-        const 日 = typeof r.tShown === "number" && Number.isFinite(r.tShown) ? r.tShown : r.t;
-        if (日 >= 窓の上限) return false;
-        if (窓の下限 && 日 < 窓の下限) return false;
-      }
-      if (ランク && !Recommender.rankMatches(r.rankPairs ?? [], ランク)) return false;
-      /* 国内は**主催の區分**（日本で開かれる会議ではない）。判定は画面と同じタグ一本。 */
-      if (國內だけ && (r.tags ?? []).indexOf("domestic-jp") < 0) return false;
-      /* オンラインは会場の表記から画面と同じ関数で見る。 */
-      if (オンラインだけ && !Recommender.placeOffersOnline(r.ed.place)) return false;
-      if (全部) return true;
-      if (種別?.length) return 種別.includes(r.kind);
-      return 投稿の種別.includes(r.kind);
-    })
-    .concat(知らん.length ? [] : []);
+  return list.filter((r) => {
+    if (!過去も && Recommender.deadlineRowIsPast(r, now)) return false;
+    if (!推定も && r.est) return false;
+    if (窓あり) {
+      if (r.kind === "journal") return false;
+      const 日 = typeof r.tShown === "number" && Number.isFinite(r.tShown) ? r.tShown : r.t;
+      if (日 >= 窓の上限) return false;
+      if (窓の下限 && 日 < 窓の下限) return false;
+    }
+    if (ランク && !Recommender.rankMatches(r.rankPairs ?? [], ランク)) return false;
+    /* 国内は**主催の區分**（日本で開かれる会議ではない）。判定は画面と同じタグ一本。 */
+    if (國內だけ && (r.tags ?? []).indexOf("domestic-jp") < 0) return false;
+    /* オンラインは会場の表記から画面と同じ関数で見る。 */
+    if (オンラインだけ && !Recommender.placeOffersOnline(r.ed.place)) return false;
+    if (全部) return true;
+    if (種別.length) return 種別.includes(r.kind);
+    return 投稿の種別.includes(r.kind);
+  });
 }
 
 interface ScopeComparisonError {
@@ -917,8 +900,9 @@ function 端數と上限の斷り(使ふ値: number | null | undefined, 上限: 
 }
 
 function 種別の英語(k: string): string {
-  const key = Recommender.kindKeyJa(k);
-  return key !== "" && key !== k ? key : k;
+  const lower = k.toLowerCase();
+  if (lower === "all") return "all";
+  return Recommender.kindKeyJa(k) || Recommender.kindKeyJa(lower) || k;
 }
 
 function 種別の報べ(
@@ -1277,7 +1261,7 @@ function searchDeadlines(
     .join("");
   const { list, 名, 生成, 窓が無い } = pickSearch(args.scope, now);
 
-  const { value: 引く種別, ignoresKind: 単数種別を無視 } = 指定した種別(args);
+  const { value: 引く種別, kinds: 名乘り全部, ignoresKind: 単数種別を無視 } = 指定した種別(args);
   const 空の種別 = Array.isArray(引く種別) && 引く種別.length === 0;
   const 古さ = 古さの斷り(生成, now);
   /* 語が空（種別だけの時）は**全部に当たる**目にする。 */
@@ -1335,7 +1319,6 @@ function searchDeadlines(
     "other",
   ];
 
-  const 名乘り全部 = 名乘りとして讀む(引く種別).map((k) => 種別の英語(k));
   const 知らん = 名乘り全部.filter((k) => !知って居る種別.includes(k));
 
   const ランク = Recommender.rankGradeJa(args.rank);
@@ -1583,10 +1566,7 @@ function listUpcoming(
    * そのまま「N 日以内」（省略した人に「既定」と囘りくどく言はない）。 */
   const 日數の表現 =
     使ふ日數 === null && !日數の引數.省かれた ? `${days} 日（既定）` : `${days} 日以内`;
-  const { value: 引き, ignoresKind: 単数種別を無視 } = 指定した種別(args);
-  const 名乘り = 名乘りとして讀む(引き)
-    /* **日本語の名も受ける**。 */
-    .map((k) => 種別の英語(k));
+  const { value: 引き, kinds: 名乘り, ignoresKind: 単数種別を無視 } = 指定した種別(args);
   const 全部 = 名乘り.some((k) => k.toLowerCase() === "all");
 
   const 選ぶ = new Set(名乘り.map((k) => k.toLowerCase()));
