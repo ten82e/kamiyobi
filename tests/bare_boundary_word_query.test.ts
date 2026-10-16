@@ -58,11 +58,11 @@ describe("それより後の語を空格で離して打っても案内が届く�
 
 describe("それより前も空格混じりで案内が出る（第 447 回）", () => {
   it("『17時 JST 以前』はそれより前の案内の仲間を受ける（第 390 回からの regression 張）", () => {
-    expect(Recommender.uiWordNoteJa("17時 JST 以前")).toContain("其れより前");
+    expect(Recommender.uiWordNoteJa("17時 JST 以前")).toContain("それより前");
     expect(列("17時 JST 以前").size).toBe(0);
   });
   it("裸の『前』は塞がない – その侭当たりとして通る（第 397 回の決まり）", () => {
-    expect(Recommender.uiWordNoteJa("前")).not.toContain("其れより前");
+    expect(Recommender.uiWordNoteJa("前")).not.toContain("それより前");
     expect(列("前").size).toBeGreaterThan(0);
   });
 });

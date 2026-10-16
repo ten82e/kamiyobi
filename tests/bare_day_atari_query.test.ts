@@ -76,7 +76,7 @@ describe("案内が実物とズレない（第 432 回）", () => {
       const n = Recommender.relativeDayNotes(語, 基準).join("、");
       expect(n, 語).toContain(語);
       expect(n, 語).toMatch(/毎月\d+日の締切/);
-      expect(n, 語).toContain("他の月の其の日も含まれます");
+      expect(n, 語).toContain("他の月のその日も含まれます");
       /* 十二個の内の一つだけのやうに書いては嘘になる */
       expect(n, 語).not.toMatch(/202\d年\d+月\d+日/);
     }
@@ -114,7 +114,7 @@ describe("割りの形がビルド成果物に残る（第 432 回）", () => {
     for (const 形 of [
       "頃|ころ|ごろ|辺り",
       `並び.push(\`\${月}月\${裸日[1]}日\`);`,
-      "他の月の其の日も含まれます",
+      "他の月のその日も含まれます",
     ]) {
       expect(物.split(形).length - 1, 形.slice(0, 18)).toBeGreaterThan(0);
     }

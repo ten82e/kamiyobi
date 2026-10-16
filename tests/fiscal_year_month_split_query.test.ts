@@ -72,7 +72,7 @@ describe("其它の形は動かして居ない（第 352 回・第 484 回・第
     expect(列("来年度初め").size).toBe(31);
     expect(列("来年度中").size).toBe(50);
     expect(列("今年1月から").size).toBe(427);
-    expect(日の案内("今年1月から")).toContain("2026年1月1日以降のこと（其の年の中まで）");
+    expect(日の案内("今年1月から")).toContain("2026年1月1日以降のこと（その年の中まで）");
 
     expect(列("来年12月から").size).toBe(21);
     expect(列("来年12月から").size).toBe(列("来年 12月から").size);

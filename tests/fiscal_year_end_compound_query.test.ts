@@ -104,7 +104,7 @@ describe("割らぬと決めた形（第 352 回・第 355 回・第 466 回）"
     expect(列("ml から").size).toBe(0);
     expect(列("来月終わり").size).toBe(178);
     expect(列("来月初め").size).toBe(0);
-    expect(画面案内("来月初め")).toContain("其の十日間（「上旬」）");
+    expect(画面案内("来月初め")).toContain("その十日間（「上旬」）");
     expect(列("一 週間後").size).toBe(13);
     expect(列("半 年後").size).toBe(2);
     expect(列("締切時刻").size).toBe(181);

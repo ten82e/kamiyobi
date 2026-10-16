@@ -178,7 +178,7 @@ describe("日の語に境界を直に続けても掛け算になる（第 438 �
     const 案内 = Recommender.relativeDayNotes("明日17時以降", 基準).join(" / ");
     expect(案内).toContain("明日 = 2026年8月10日(月)");
     expect(案内).toContain("17:00〜23:59");
-    expect(案内).not.toContain("此の表の日として探せ");
+    expect(案内).not.toContain("この表の日として探せ");
   });
   it("頭が日の語でない物は割らない – それ以外の断りがその侭", () => {
     expect(列("会議17時以降").size).toBe(0);

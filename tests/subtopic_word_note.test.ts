@@ -87,7 +87,7 @@ describe("細目の主題と募集対象の斷り", () => {
     const b = readFileSync("site/recommender.ts", "utf8");
     const i = b.indexOf('        "GPU",');
     expect(i).toBeGreaterThan(0);
-    const 群 = b.slice(i, b.indexOf('note: "はこの表の行に書かれて居らん', i));
+    const 群 = b.slice(i, b.indexOf('note: "はこの表の行に書かれていない', i));
     彈いた.forEach((語) => {
       expect(群.includes(`"${語}"`), `"${語}" を群に混ぜた（彈いた理由が崩れる）`).toBe(false);
     });

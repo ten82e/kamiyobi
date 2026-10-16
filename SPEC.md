@@ -1059,6 +1059,16 @@ MCP は同じ検索・推薦処理を使う読み取り専用の stdio サーバ
 
 投稿先検索・推薦に必要な `public/recommendation-index.json` が未作成・形式不正・読込不能の場合は、候補0件の成功結果として扱わない。MCP は `isError: true` と `structuredContent.error` に、それぞれ `RECOMMENDATION_INDEX_NOT_READY`・`RECOMMENDATION_INDEX_INVALID`・`RECOMMENDATION_INDEX_UNREADABLE` を返す。エラーには相対パス `path`、`retryable: true`、`recovery_command` を含める。`recovery_command` は未作成・形式不正なら `"npm run build"`、読込不能なら null とする。CLI は標準エラー出力と終了コード1で通知する。失敗はキャッシュせず、ファイル更新のない一時的な読込障害も、同じ MCP 接続・同じ入力の次の要求で再試行する。
 
+### 画面と索引の日本語
+
+利用者と AI の両方が読む文（画面の案内、`llms.txt`、MCP の道具の説明と結果）は、現代かな遣いと常用漢字で書く。
+戦前の仮名遣い（`やうな`・`言ふ`・`居ります`）と旧かな・旧字（`其の`・`其れ`・`此の`・`夫々`）、
+促音の大書き（`載つて`・`従つて`）は使わない。同じ画面の中で `ように` と `やうに` が混ざる状態を残さない。
+
+打つ人の字をそのまま受けるための表は、この限りではない – `words:` の条目、旧字を寄せる `KANJI_VARIANT_FOLD_JA`、
+中国語や列挙の助詞を受ける正規表現は入力の揺れを吸収する物であり、画面の文ではない。
+検査は `tests/modern_japanese_prose.test.ts` が正本の文字列（註と正規表現を除く）に対して行う。
+
 ## 8. テスト（`tests/`）
 
 実装を読まずに本仕様だけから書く。
