@@ -400,12 +400,18 @@ function placeDisplayJa(value: unknown): string {
 function line(r: Row, now: number): string {
   const 常時受付 = r.kind === "journal" && !r.dl.utc && !r.dateOnly;
   const 締切未確認 = !常時受付 && !Number.isFinite(r.t);
+  /* 暦日だけの締切も**畫面の日時欄と同じ形**（`2026-10-26(月)`）で出す。曜日は出張・
+   * 作業の段取りに要る（畫面は `weekdayJaFromDate` で曜日を添へて居るのに、AI が受け取る
+   * 行だけ落として居た – 實測 2026-10-16）。正本は `Recommender.weekdayJaFromDate`。 */
+  const 曜日 = String(Recommender.weekdayJaFromDate(r.localDate) ?? "").trim();
   const 日 = 常時受付
     ? "常時受付（締切なし）"
     : 締切未確認
       ? "投稿締切未確認"
       : r.dateOnly
-        ? r.localDate
+        ? 曜日
+          ? `${r.localDate}(${曜日})`
+          : r.localDate
         : jst(r.t);
   const 日の狀態 = Recommender.dateOnlyStateJa(r, now);
   /* 残りの語は**画面の「残り」欄と同じ入口**（`Recommender.remainingLabelJa` –
@@ -3099,6 +3105,28 @@ const TOOLS = [
     },
   },
 ] as const;
+
+/** `llms.txt`（AI 向けの索引）の道具の表へ並べる一行の要約。**鍵は `TOOLS` の名で縛る** –
+ * 道具を足して此処を忘れると型検査が落ちる（書き寫すと、索引だけが古くなる。
+ * 實測 2026-10-16: 索引に `search_venues` が 1 行も無く、`recommend_venues` は
+ * 「意味検索は使はない」と實裝と逆の事を書いて居た）。 */
+export const MCP_TOOL_INDEX_JA: Record<(typeof TOOLS)[number]["name"], string> = {
+  search_deadlines:
+    "日本語検索。語を省いて kind / kinds / within_days などの条件だけでも絞れます。既定は今後の投稿締切で、推定は除きます。",
+  list_upcoming: "今日から指定日数以内の締切と開催。既定は全種別で、推定も含みます。",
+  venue_info: "会議の開催回・締切・ランク・会期。今後の物から並べ、過去の締切も表示します。",
+  collection_stats: "収録数、生成時刻、確認状態、データ源、配布ファイルの要約。",
+  search_venues:
+    "研究テーマ・題名・概要に合う会議や論文誌を検索します。締切不明・締切済みの会議も候補に入り、既定は語彙、`retrieval: semantic` で実モデルの意味検索です。締切は `search_deadlines` で引きます。",
+  recommend_venues:
+    "論文情報に合う投稿先を語彙の一致で探し、学習済みの並べ替えモデルがあれば併用します。`retrieval: semantic` で意味検索も使えます。長い論文は最初の 20 行で調べます。",
+  explain_word: "絞り込み前の照合件数と検索語への案内。代表行を最大3行表示します。",
+};
+
+/** 索引（`llms.txt`）の道具の表の行。並びは `TOOLS` の順（書き手を別々にしない）。 */
+export const MCP_LLMS_TOOLS: ReadonlyArray<{ name: string; index_ja: string }> = TOOLS.map(
+  (tool) => ({ name: tool.name, index_ja: MCP_TOOL_INDEX_JA[tool.name] }),
+);
 
 async function callTool(
   name: string,

@@ -78,6 +78,10 @@ import {
   matchesIdentitySelector,
   validateIdentityMigrationManifest,
 } from "./identity-migration.ts";
+/* 索引（`llms.txt`）の道具の表は MCP の正本から書き出す（書き寫すと、道具を足した時に
+ * 索引だけが古くなる – 實測 2026-10-16: `search_venues` が抜け、`recommend_venues` の
+ * 説明が實裝と逆だつた）。 */
+import { MCP_LLMS_TOOLS } from "./mcp.ts";
 import { DEADLINE_SELECTION_RULE } from "./merge.ts";
 import {
   addDays,
@@ -4051,15 +4055,13 @@ export function toLlmsTxt(
     "",
     "| ツール | 内容 |",
     "|---|---|",
-    "| `search_deadlines` | 日本語検索。語を省いて kind / kinds / within_days などの条件だけでも絞れます。既定は今後の投稿締切で、推定は除きます。 |",
-    "| `list_upcoming` | 今日から指定日数以内の締切と開催。既定は全種別で、推定も含みます。 |",
-    "| `venue_info` | 会議の開催回・締切・ランク・会期。今後の物から並べ、過去の締切も表示します。 |",
-    "| `explain_word` | 絞り込み前の照合件数と検索語への案内。代表行を最大3行表示します。 |",
-    "| `collection_stats` | 収録数、生成時刻、確認状態、データ源、配布ファイルの要約。 |",
-    "| `recommend_venues` | 語彙と再学習の重みで投稿先を評価。意味検索は使わず、長い論文は最初の20行で調べます。 |",
+    /* 道具の名と一行の要約は MCP の正本（`src/mcp.ts` の `TOOLS`）から書く。書き寫すと、
+     * 道具を足した時に索引だけが古くなる（實測 2026-10-16: 7 つのうち `search_venues` が
+     * 抜け、`recommend_venues` は實裝に無い「意味検索は使はない」と書いて居た）。 */
+    ...MCP_LLMS_TOOLS.map((tool) => `| \`${tool.name}\` | ${tool.index_ja} |`),
     "",
     '全種別は `kinds: ["all"]` で指定できます。`search_deadlines` の引数は `query`・`limit`・`offset`・`include_past`・`include_estimated`・`kind`・`kinds`・`rank`・`domestic`・`online`・`within_days`・`scope` です。',
-    "他のツールでは `days`・`key`・`name`・`word`・`paper` を使います。各ツールの inputSchema で受け付ける項目と既定値を確認してください。",
+    "他のツールでは `query`・`days`・`key`・`name`・`word`・`paper`・`retrieval` を使います。各ツールの inputSchema で受け付ける項目と既定値を確認してください。",
     "収録 snapshot と公開物はビルド時の統合・選択で件数が異なる場合があります。収録全体と初期一覧を同じ範囲として比較しないでください。",
     "`scope: screen` は初期一覧、`scope: all` は収録全体です。初期カタログがない場合は全体へ切り替え、その旨を返します。画面と件数を比べる場合は、期間・種別・推定・過去表示を揃えてください。",
     "`search_deadlines` の structuredContent は total・rows・next_offset を持ちます。続きは同じ条件で next_offset を offset に渡します。日付のみの行の utc・jst は null です。推定期間、確認状態、投稿トラックは別の項目です。行に `domestic`（国内の学会か。開催地が日本とは別で、日本で開かれる国際会議は false）と `full_name`（正式名。画面の一覧が会議名の下に出すのと同じ）を持たせてあります。行のテキストでは `domestic` を「国内」の札で出します。公式確認（確認した日時・確認元・確認範囲・状態・次回確認予定）は `verification_ja` に、画面の行の詳細が並べるのと同じ日本語で入ります。",

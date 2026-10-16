@@ -252,21 +252,27 @@ describe("MCP の手順が話せる（第 714 回）", () => {
 });
 
 describe("AI 向けの索引が、MCP の在り處を書いている（第 714 回）", () => {
-  it("llms.txt の組み立てに、MCP の節と道具の名がある", () => {
+  it("llms.txt に、MCP の節と実装と同じ道具の名がある", async () => {
     /* `llms.txt` はビルドの生成物なので、組み立ての側を検べる（配付物を持たない手元でも
-     * 検べられる – 第 714 回）。*/
+     * 検べられる – 第 714 回）。道具の表は正本（`src/mcp.ts` の `TOOLS`）から書くので、
+     * 名は組み立ての文字ではなく**索引その物**と `tools/list` を突き合はせる（書き寫しが
+     * 消えた後も空振りしない確かめ方にした – 実測 2026-10-16: 索引に `search_venues` が
+     * 1 行も無く、`recommend_venues` は「意味検索は使はない」と実装と逆だつた）。 */
     const build = readFileSync(join(REPO_ROOT, "src", "build.ts"), "utf8");
     expect(build, "llms.txt に AI 向けの節がない").toContain("## AI から引く（MCP）");
-    for (const 名 of [
-      "search_deadlines",
-      "list_upcoming",
-      "venue_info",
-      "explain_word",
-      "collection_stats",
-      "recommend_venues",
-    ]) {
-      expect(build, `道具の名が書かれて居ない: ${名}`).toContain(名);
+    const 索引 = readFileSync(join(site, "llms.txt"), "utf8");
+    const 節 = 索引.slice(索引.indexOf("## AI から引く（MCP）"));
+    const res = (await client.ask({ jsonrpc: "2.0", id: 96, method: "tools/list" })) as {
+      result?: { tools?: Array<{ name?: string }> };
+    };
+    const 名々 = (res.result?.tools ?? []).map((t) => String(t.name ?? "")).sort();
+    expect(名々.length, "この検査の前提（道具の一覧）が崩れた").toBeGreaterThan(0);
+    for (const 名 of 名々) {
+      expect(節, `索引が道具 ${名} を書いて居ん`).toContain(`\`${名}\``);
     }
+    /* 意味検索の入口（`retrieval: semantic`）も實装に在る – 索引が「使はない」と書くと、
+     * AI が意味検索の入口を見附けられない。 */
+    expect(節, "意味検索の入口（retrieval）を索引が書いていない").toContain("retrieval");
     /* 索引の説明が、実装とずれて居ない事。
      * 人が読む索引なので、実装に無い事を書いていたら迷はす。*/
     for (const 印 of ['["all"]', "kind", "kinds", "略称", "scope"]) {
@@ -507,12 +513,14 @@ it("道具の說明が、実装の要る所を言つている（第 766 回）",
   }
 });
 
-it("索引（llms.txt の組み立て）が、道具の説明と同じ事を言っている（第 768 回）", () => {
+it("索引（llms.txt）が、道具の説明と同じ事を言っている（第 768 回）", () => {
   /* 索引は人が読む物でもあるので、実装が増えたのに索引が古いと「できる事」が伝わらない
-   * （第 731・767 回に実際にずれた）。組み立ての側を読んで、要る語が入っているかを見る。 */
-  const build = readFileSync(join(REPO_ROOT, "src", "build.ts"), "utf8");
+   * （第 731・767 回に実際にずれた）。**建てた索引**を読み、要る語が入っているかを見る
+   * （道具の行は正本から書き出すので、組み立ての紙を讀んでも空振りする – 第 714 回と
+   * 同じ確かめ方）。 */
+  const 索引 = readFileSync(join(site, "llms.txt"), "utf8");
   for (const 語 of ["次の一手まで返す", "切り詰めは黙らない", "今後の物から"]) {
-    expect(build, `索引に「${語}」の話が無い（道具の説明とずれている）`).toContain(語);
+    expect(索引, `索引に「${語}」の話が無い（道具の説明とずれている）`).toContain(語);
   }
 });
 
@@ -5542,6 +5550,10 @@ it("時刻未確認の行は「いつ終はつたか」を言う（第 1055 回�
   for (const l of 行) {
     const row = sourceRows.find((r) => l.startsWith(String(r.localDate)));
     if (!row) throw new Error(`収録に行がありません: ${l}`);
+    /* 暦日だけの締切にも曜日を添へる（畫面の日時欄と同じ形 `2026-10-26(月)` – 出張・
+     * 作業の段取りは曜日で見込む）。正本は `weekdayJaFromDate`。 */
+    const 曜 = R.weekdayJaFromDate(row.localDate);
+    if (曜) expect(l.startsWith(`${row.localDate}(${曜})`), `曜日が無い: ${l}`).toBe(true);
     const state = R.dateOnlyStateJa(row, Date.now());
     if (state === "definitely-past") expect(l).toContain("締切日経過");
     else if (state === "uncertain-on-date")

@@ -103,6 +103,10 @@ it("時刻未確認と推定の情報を保持し、日本時間の確定時刻�
     uncertainty: { earliest_utc: row.dl.earliest_utc, latest_utc: row.dl.latest_utc },
   });
   expect(structuredDeadline({ ...row, est: true }, now).estimate).toEqual(row.ed.estimate);
+  /* 行の文字の先頭も画面の日時欄と同じ形（暦日 + 曜日）で出す – 締切の段取りは曜日で
+   * 見込む。合成した 1 行で字面を固定し、実物の方は収録を引く検査（第 1055 回）が
+   * 正本の曜日から見る。 */
+  expect(structuredDeadline(row, now).display).toContain("2026-12-01(火)");
   const exact = structuredDeadline(
     {
       ...row,
