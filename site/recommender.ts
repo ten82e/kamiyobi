@@ -742,11 +742,10 @@ const Recommender = (() => {
     if (structured) return structured;
     return String(text)
       .split(/\r?\n/)
-      .map((line) => line.trim())
-      .filter(Boolean)
+      .filter((line) => line.trim())
       .map((line) => {
         let parts = line.split(/\s*\|\s*/);
-        if (parts.length === 1) parts = line.split(/\t+/);
+        if (parts.length === 1) parts = line.split("\t");
         return {
           title: (parts[0] || "").trim(),
           keywords: (parts[1] || "").trim(),

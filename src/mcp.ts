@@ -2547,12 +2547,13 @@ function paperInput(value: unknown, field: string): string {
   if (value === undefined) return "";
   let encoded = false;
   if (typeof value === "string") {
-    const text = value.trim();
-    if (text[0] !== "{" && text[0] !== "[") return text;
+    const original = value;
+    const text = original.trim();
+    if (text[0] !== "{" && text[0] !== "[") return text ? original : "";
     try {
       value = JSON.parse(text);
     } catch {
-      return text;
+      return original;
     }
     encoded = true;
   }
