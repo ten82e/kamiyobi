@@ -3986,7 +3986,7 @@ it("buildAll emits recommender.js when custom template is in separate directory 
   /* 雛形の印は二つとも要る（データと、機械可読の自己紹介）。 */
   writeFileSync(
     customTmpl,
-    '<html><head><!--__JSONLD__--></head><body>/*__DATA__*/null</body></html>',
+    "<html><head><!--__JSONLD__--></head><body>/*__DATA__*/null</body></html>",
     "utf8",
   );
 
@@ -4039,7 +4039,7 @@ it("buildAll removes stale embeddings when local model generation fails", async 
   writeFileSync(join(outDir, "embeddings.json"), "stale", "utf8");
   writeFileSync(
     template,
-    '<html><head><!--__JSONLD__--></head><body>/*__DATA__*/null</body></html>',
+    "<html><head><!--__JSONLD__--></head><body>/*__DATA__*/null</body></html>",
     "utf8",
   );
   const originalCacheDir = env.cacheDir;
