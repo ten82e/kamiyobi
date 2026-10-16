@@ -4237,6 +4237,11 @@ export function toLlmsTxt(
     })(),
     "    - call_identity: object：{seriesId, editionId, callId, parentEventId}。呼びかけ（call）の同一性。",
     "    - legacy_ids: string[]：以前の版の識別子（改名・統合の前に使っていた物）。",
+    /* `event_segments` は README が「機械処理ではこれを参照する」と名指している欄なのに、
+     * この要約の版の箇条書きに無かった（2026-10-16 実測: 版 2,606 のうち 3 版が持つ。
+     * CSV の列の節には前から書いてあった）。`event_start`/`event_end` だけを見ると、
+     * 離れた開催日や週次セミナーを連続開催と読み違える。 */
+    "    - event_segments: array：離れた開催日・週次セミナーの各回を {start, end, label} で並べた物（実測 2026-10-16: 版 2,606 のうち 3 版）。連続開催では付かない – `event_start`/`event_end` だけでは連続開催を意味しないので、各回が要る時はこちらを見る。",
     "    - event_review: object：会期の見直しの記録（上流の原文の日付文言 source_date_text・確かめた日 reviewed_on・覚え書き note など。正本は src/model.ts の EventReview）。",
     "    - estimated: boolean：true は過去実績からの推定。実データではない。",
     "    - estimate: object|null：推定版の点推定・日付窓・根拠版・信頼度。確定版にはない。",
