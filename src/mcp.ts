@@ -665,6 +665,8 @@ function 數の引數(
   値: unknown,
   最小: number,
 ): { 使ふ: number | null; 斷り: string; 省かれた: boolean } {
+  if (値 !== null && typeof 値 === "object")
+    throw new Error(`${名} は数で指定してください。配列やオブジェクトは使えません。`);
   if (値 === undefined || 値 === null || String(値).trim() === "")
     return { 使ふ: null, 斷り: "", 省かれた: true };
   const n = Number(値);
@@ -686,6 +688,8 @@ function 數の引數(
 }
 
 function 真偽の引數(名: string, 値: unknown): { 使ふ: boolean; 斷り: string } {
+  if (値 !== null && typeof 値 === "object")
+    throw new Error(`${名} は true か false で指定してください。配列やオブジェクトは使えません。`);
   if (値 === undefined || 値 === null || String(値).trim() === "") return { 使ふ: false, 斷り: "" };
   if (typeof 値 === "boolean") return { 使ふ: 値, 斷り: "" };
   const 語 = String(値).trim().toLowerCase();
