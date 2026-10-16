@@ -384,7 +384,12 @@ const LLMS_OUTPUT_NOTES_JA: Record<string, string> = {
   "data.json":
     "正規化データ全体（機械可読の正）。画面の最初の一覧に並ぶのはこのうち `catalog.json` に" +
     "収まる分だけで、過去の全履歴とそれより先の締切はここだけにある。",
-  "health.json": "配信前ゲートにも使う確定/推定締切とソース状態の健全性レポート。",
+  "health.json":
+    "配信前ゲートにも使う確定/推定締切とソース状態の健全性レポート。" +
+    "締切の件数は**次回以降**（`latest_utc` が生成時刻より先）の物で、" +
+    "`confirmed_deadlines` と `confirmed_future_deadlines`、" +
+    "`estimated_deadlines` と `estimated_future_deadlines` は同じ値を指す（別々に数えない）。" +
+    "収録ぜんぶの締切の数は `data.json` から数える。",
   "health.md":
     "health.json の人間向け要約。載っていない公開物（`health.json` 自身・`health.md` 自身・" +
     "`publish.json`）と完全なハッシュ一覧の所在を、表の直前に書いてある。",
@@ -3123,8 +3128,12 @@ export function healthMarkdown(report: HealthReport, omittedOutputs: string[] = 
       "future_estimated_venues",
       report.future_estimated_venues,
     ),
-    metric("確定した締切", "confirmed_deadlines", report.confirmed_deadlines),
-    metric("推定締切", "estimated_deadlines", report.estimated_deadlines),
+    /* この 2 つは**次回以降**の数へ揃えてある（`healthReport` が同じ變數を
+     * `*_future_*` の鍵にも入れ、ゲートが兩者の一致を見て居る）。見出しに「次回以降」が
+     * 無いと、「確定した締切 865」を**收録ぜんぶの確定締切**と讀む – 實測 2026-10-17:
+     * 收録 4,990・確定 4,916 に對し、此の値は 865（次回以降の確定）。 */
+    metric("次回以降の確定した締切", "confirmed_deadlines", report.confirmed_deadlines),
+    metric("次回以降の推定締切", "estimated_deadlines", report.estimated_deadlines),
     metric(
       "次回以降の締切（時刻まで確定）",
       "future_exact_deadlines",
@@ -3158,6 +3167,13 @@ export function healthMarkdown(report: HealthReport, omittedOutputs: string[] = 
     metric("解析上の注意の件数", "parse_warning_count", report.parse_warning_count),
     `| 収録 snapshot で組んだか（\`snapshot_fallback\`） | ${report.snapshot_fallback ? "はい" : "いいえ"} |`,
     `| 入力プロファイルのハッシュ（\`profile_hash\`） | ${report.profile_hash} |`,
+    "",
+    /* 同じ値を 2 つの鍵で持つ理由を書く（md だけを読む人にも分かるように）。
+     * 2026-10-17 實測: 見出しに「次回以降」が無い頃は「確定した締切 865」を
+     * **収録ぜんぶの確定締切**（4,916）と読めた。 */
+    "`confirmed_deadlines` と `confirmed_future_deadlines`、`estimated_deadlines` と",
+    "`estimated_future_deadlines` は、それぞれ**同じ値**です（次回以降の締切を数えています。",
+    "別々には数えていません）。収録ぜんぶの締切の数は `data.json` から数えてください。",
     "",
     "## 上流ソースの状況",
     "",

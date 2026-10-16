@@ -2797,8 +2797,8 @@ it("health.md は日本語で書き、数値が health.json とずれていな�
   const rows: Array<[string, string]> = [
     ["収録している会議", "tracked_venues"],
     ["次回以降に確定した締切を持つ会議", "future_confirmed_venues"],
-    ["確定した締切", "confirmed_deadlines"],
-    ["推定締切", "estimated_deadlines"],
+    ["次回以降の確定した締切", "confirmed_deadlines"],
+    ["次回以降の推定締切", "estimated_deadlines"],
     ["次回以降の推定締切", "future_estimated_deadlines"],
     ["解析上の注意の件数", "parse_warning_count"],
   ];

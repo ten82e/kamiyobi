@@ -122,7 +122,9 @@ it("healthReport separates future confirmed and estimated values", () => {
     output_files: { "data.json": { bytes: 10, sha256: "a".repeat(64) } },
   });
   // md は日本語ラベル＋`health.json` のキーを併記する。
-  expect(healthMarkdown(report)).toContain("| 確定した締切（`confirmed_deadlines`） | 1 |");
+  expect(healthMarkdown(report)).toContain(
+    "| 次回以降の確定した締切（`confirmed_deadlines`） | 1 |",
+  );
   expect(healthMarkdown(report)).toContain("| data.json | 10 |");
 });
 
