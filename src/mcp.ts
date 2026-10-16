@@ -1251,6 +1251,7 @@ function searchDeadlines(
       ? `（${窓の引數.使ふ} 日は端数なので、${Math.floor(窓の引數.使ふ)} 日として切りました）`
       : "";
   const 窓の日數 = 窓の引數.使ふ !== null ? Math.floor(窓の引數.使ふ) : null;
+  args = { ...args, within_days: 窓の日數 };
   const 窓あり = 窓の日數 !== null;
   const 讀めない引數 = [
     限り.斷り,
