@@ -668,6 +668,22 @@ function 種別の値を読む(引き: unknown): string[] {
   });
 }
 
+function 指定した分野(args: { category?: unknown; categories?: unknown }) {
+  const value = args.categories ?? args.category;
+  const 値 = 種別の値を読む(value);
+  const 鍵 = 値.map(分野の鍵).filter(Boolean);
+  const 知らん = 値.filter((v) => !分野の鍵(v));
+  return {
+    鍵,
+    知らん,
+    ignoresCategory:
+      args.categories !== undefined &&
+      args.categories !== null &&
+      args.category !== undefined &&
+      args.category !== null,
+  };
+}
+
 function 指定した種別(args: { kind?: unknown; kinds?: unknown }) {
   const value = args.kinds ?? args.kind;
   return {
@@ -746,6 +762,10 @@ function 畫面の既定(
   const 窓あり = Number.isFinite(窓の日數) && 窓の日數 > 0;
   const 推定も = args.include_estimated === true;
   const { kinds: 種別 } = 指定した種別(args);
+  const { 鍵: 分野 } = 指定した分野({
+    category: (args as Record<string, unknown>).category,
+    categories: (args as Record<string, unknown>).categories,
+  });
   const 全部 = 種別.some((kind) => kind === "all");
 
   const ランク = Recommender.rankGradeJa((args as { rank?: unknown }).rank);
@@ -765,6 +785,9 @@ function 畫面の既定(
       if (窓の下限 && 日 < 窓の下限) return false;
     }
     if (ランク && !Recommender.rankMatches(r.rankPairs ?? [], ランク)) return false;
+    /* 分野は畫面のチップと同じ規則（選んだ物の**どれか**を持つ行を出す）。 */
+    if (分野.length && !分野.some((key) => (r.conf.categories ?? []).indexOf(key) >= 0))
+      return false;
     /* 国内は**主催の區分**（日本で開かれる会議ではない）。判定は画面と同じタグ一本。 */
     if (國內だけ && (r.tags ?? []).indexOf("domestic-jp") < 0) return false;
     /* オンラインは会場の表記から画面と同じ関数で見る。 */
@@ -937,6 +960,38 @@ function 端數と上限の斷り(使ふ値: number | null | undefined, 上限: 
   const 上限の文 =
     端數を切つた後 > 上限 ? `（上限 ${上限} を超えたので ${上限} として切りました）` : "";
   return 端數の文 + 上限の文;
+}
+
+/** 分野の値を鍵へ寄せる（`security` でも「セキュリティ」でも受ける）。
+ * 畫面の分野の札は鍵で動くが、AI も人も日本語で渡し得る – 會わない値は空文字で返し、
+ * 呼び手が「知らない分野」として言える樣にする。 */
+function 分野の鍵(value: string): string {
+  const text = String(value ?? "").trim();
+  if (!text) return "";
+  const lower = text.toLowerCase();
+  /* 品書の地圖（`catalog.json` の `categories`）が正本 – 畫面のチップと同じ物。
+   * 鍵（`security`）・畫面の札（`セキュリティ`）・英字の名（`Security and Privacy`）を受ける。 */
+  const 地圖 = (catalog()?.categories ?? {}) as Record<string, string>;
+  for (const key of Object.keys(地圖)) {
+    if (key.toLowerCase() === lower) return key;
+    if (Recommender.categoryLabelJa(key) === text) return key;
+    if (String(地圖[key] ?? "").toLowerCase() === lower) return key;
+  }
+  return "";
+}
+
+/** 選べる分野の一覽（畫面のチップと同じ語・同じ並び）。知らない値を言ふ時に使ふ。 */
+function 分野の一覽(): string {
+  const 地圖 = (catalog()?.categories ?? {}) as Record<string, string>;
+  return Object.keys(地圖)
+    .sort((a, b) =>
+      Recommender.categoryChipLabelJa(a, String(地圖[a] ?? "")).localeCompare(
+        Recommender.categoryChipLabelJa(b, String(地圖[b] ?? "")),
+        "ja",
+      ),
+    )
+    .map((key) => `${key}(${Recommender.categoryLabelJa(key)})`)
+    .join("・");
 }
 
 function 種別の英語(k: string): string {
@@ -1236,6 +1291,8 @@ function searchDeadlines(
     kinds?: unknown;
     kind?: unknown;
     rank?: unknown;
+    category?: unknown;
+    categories?: unknown;
     domestic?: unknown;
     online?: unknown;
     within_days?: unknown;
@@ -1279,11 +1336,13 @@ function searchDeadlines(
     (args.kind !== undefined ||
       args.kinds !== undefined ||
       args.rank !== undefined ||
+      args.category !== undefined ||
+      args.categories !== undefined ||
       args.domestic !== undefined ||
       args.online !== undefined ||
       args.within_days !== undefined);
   if (!query && !絞り込みだけ)
-    return "検索語が空です。会議名・分野・開催地・締切の語をください（語を省くなら kind / kinds / rank / domestic / online / within_days のいずれかを指定してください）。";
+    return "検索語が空です。会議名・分野・開催地・締切の語をください（語を省くなら kind / kinds / rank / category / categories / domestic / online / within_days のいずれかを指定してください）。";
   const 限り = 數の引數("limit", args.limit, 1);
 
   const limit = Math.max(1, Math.floor(Math.min(限り.使ふ ?? 20, 100)));
@@ -1372,6 +1431,12 @@ function searchDeadlines(
 
   const ランク = Recommender.rankGradeJa(args.rank);
   const 知らんランク = ランク && !Recommender.rankGradeOrderJa().includes(ランク) ? ランク : "";
+  /* 分野の絞り込み（画面のチップと同じ）。鍵へ寄せられなかった値は言う（黙って外さない）。 */
+  const 分野の引き = 指定した分野({
+    category: (args as Record<string, unknown>).category,
+    categories: (args as Record<string, unknown>).categories,
+  });
+  const 知らん分野の文 = 知らない値の文("", 分野の引き.知らん);
   /* 日付は日本時間で出す。**元の表記が別の日の事がある**ので、月で引いた時に表示の月がずれる
    * 行がある（実測 2026-10-06: `9月` で引いた行が「2026-10-16(金) 20:59 JST」と出る – 元の
    * 表記は AoE で 9 月 30 日）。AI がそのまま「10 月」と答へん樣に、頭で斷つて置く。*/
@@ -1388,7 +1453,7 @@ function searchDeadlines(
 
   /* 行が見えている時に出す注（類語・曖昧さ – 第 942・948 回）。 */
   const 見えて居る文 = 見えて居る注(query, hit.length);
-  const 頭 = `${絞り込みだけ ? "語を指定せず、絞り込みだけ" : `検索語「${query}」に当たる締切`}: ${hit.length} 件（${名} ${list.length} 行・指定条件で絞り込み。絞る前は ${素の.length} 行${ランク ? `／ランク ${ランク}` : ""}${args.domestic === true ? "／国内のみ" : ""}${args.online === true ? "／オンライン参加可のみ" : ""}${窓あり ? `／締切まで ${窓の日數} 日以内${窓の端数の斷り}` : ""}${讀めない引數}）${limit端數}${檢索語を切つた ? `（${打たれた検索語.length} 字のうち、最初の ${檢索語の截} 字で調べました – 残りの語は参考にしていません）` : ""}${知らん.length ? `／知らない種別: ${知らない値の文("", 知らん)}` : ""}${空の種別 ? `／kinds が空なので既定の投稿締切（概要・論文・常時受付）を対象にしています` : ""}${単数種別を無視 ? `／kind は kinds と共に与えられたので見ていません` : ""}${知らんランク ? `／知らないランク（等級は ${Recommender.rankGradeOrderJa().join("・")}）: ${知らんランク}${limit端數}` : ""}${日付の語 ? "\n日付は日本時間（JST）。月や日付の語は、締切の日付と「会期」の日付の両方に当たる（画面のてびきと同じ約束）ので、月で引いた時に見出しの月と違う日が出る行がある。" : ""}${窓が無い ? `\n${窓が無いの斷り(true)}` : ""}${scopeErr ? `\n${scopeErr}` : ""}${解決の文}${記号だけの文 ? `\n${記号だけの文}` : ""}${見えて居る文}`;
+  const 頭 = `${絞り込みだけ ? "語を指定せず、絞り込みだけ" : `検索語「${query}」に当たる締切`}: ${hit.length} 件（${名} ${list.length} 行・指定条件で絞り込み。絞る前は ${素の.length} 行${ランク ? `／ランク ${ランク}` : ""}${args.domestic === true ? "／国内のみ" : ""}${args.online === true ? "／オンライン参加可のみ" : ""}${窓あり ? `／締切まで ${窓の日數} 日以内${窓の端数の斷り}` : ""}${讀めない引數}）${limit端數}${檢索語を切つた ? `（${打たれた検索語.length} 字のうち、最初の ${檢索語の截} 字で調べました – 残りの語は参考にしていません）` : ""}${知らん.length ? `／知らない種別: ${知らない値の文("", 知らん)}` : ""}${空の種別 ? `／kinds が空なので既定の投稿締切（概要・論文・常時受付）を対象にしています` : ""}${単数種別を無視 ? `／kind は kinds と共に与えられたので見ていません` : ""}${知らんランク ? `／知らないランク（等級は ${Recommender.rankGradeOrderJa().join("・")}）: ${知らんランク}${limit端數}` : ""}${分野の引き.知らん.length ? `／知らない分野: ${知らん分野の文}（分野は ${分野の一覽()}）` : ""}${分野の引き.鍵.length ? `／分野 ${分野の引き.鍵.map((k) => Recommender.categoryLabelJa(k)).join("・")}` : ""}${日付の語 ? "\n日付は日本時間（JST）。月や日付の語は、締切の日付と「会期」の日付の両方に当たる（画面のてびきと同じ約束）ので、月で引いた時に見出しの月と違う日が出る行がある。" : ""}${窓が無い ? `\n${窓が無いの斷り(true)}` : ""}${scopeErr ? `\n${scopeErr}` : ""}${解決の文}${記号だけの文 ? `\n${記号だけの文}` : ""}${見えて居る文}`;
   if (!hit.length) {
     if (窓の外.error)
       return [
@@ -2944,7 +3009,7 @@ const TOOLS = [
   {
     name: "search_deadlines",
     description:
-      "日本語で投稿締切を検索する。語を省いて kind / kinds / rank / domestic / online / within_days だけでも絞れる。既定は今後の abstract / paper / journal、推定は除外。scope は screen（初期一覧）または all（収録全体）。structuredContent に total・rows・next_offset を返す。screen で 0 件のときは scope_comparison に全収録での同条件の件数・絞る前の件数・生成時刻を返す。比較データを読めない場合は検索結果を保持し、scope_comparison_error に理由と再試行の案内を返す。範囲を変えるときもほかの条件を維持する。続きは同じ条件と next_offset を offset に指定する。日付のみの行の utc・jst は null。常時受付は締切日時・精度・回次を null とし、日付のある行の後に並べます。推定期間、投稿トラック、確認状態を別に返す。公式確認（いつ・どこで・何を確かめたか）は verification_ja に画面の行の詳細と同じ日本語で返します（内部の鍵名は verification に残します）。前に出ていた締切も表示する。日付語は別ラウンドや会期にも当たるため、締切だけの期間指定には within_days を使う。会期の欄には、上流が書いた原文（`March 18-21, 2024` のような自由文）を「原表記」として添えます（画面の行の詳細と同じ）。0 件のときは画面と同じ案内と「打ち直すなら」の候補を返す。返す行の形: 日時 | 種別 | 確認状態（ある場合）| 会議名（版の識別子）| ランク | 会期 | 開催地 URL。テキストは `| ` で切り、構造化結果を優先する。構造化の行には `categories`（分野の鍵）と `categories_ja`（画面の札と同じ日本語）も入る。",
+      "日本語で投稿締切を検索する。語を省いて kind / kinds / rank / category / categories / domestic / online / within_days だけでも絞れる。既定は今後の abstract / paper / journal、推定は除外。scope は screen（初期一覧）または all（収録全体）。structuredContent に total・rows・next_offset を返す。screen で 0 件のときは scope_comparison に全収録での同条件の件数・絞る前の件数・生成時刻を返す。比較データを読めない場合は検索結果を保持し、scope_comparison_error に理由と再試行の案内を返す。範囲を変えるときもほかの条件を維持する。続きは同じ条件と next_offset を offset に指定する。日付のみの行の utc・jst は null。常時受付は締切日時・精度・回次を null とし、日付のある行の後に並べます。推定期間、投稿トラック、確認状態を別に返す。公式確認（いつ・どこで・何を確かめたか）は verification_ja に画面の行の詳細と同じ日本語で返します（内部の鍵名は verification に残します）。前に出ていた締切も表示する。日付語は別ラウンドや会期にも当たるため、締切だけの期間指定には within_days を使う。会期の欄には、上流が書いた原文（`March 18-21, 2024` のような自由文）を「原表記」として添えます（画面の行の詳細と同じ）。0 件のときは画面と同じ案内と「打ち直すなら」の候補を返す。返す行の形: 日時 | 種別 | 確認状態（ある場合）| 会議名（版の識別子）| ランク | 会期 | 開催地 URL。テキストは `| ` で切り、構造化結果を優先する。構造化の行には `categories`（分野の鍵）と `categories_ja`（画面の札と同じ日本語）も入る。",
     inputSchema: {
       type: "object",
       properties: {
@@ -2977,6 +3042,16 @@ const TOOLS = [
           type: "string",
           description:
             "ランクの等級で絞る（`A*` / `A` / `B` / `C` / `N`。画面のランク欄と同じ**厳密比較**（大文字小文字も違う – `a` は効かない） – `A` は `core:A*` を巻き込まない）。**行の出し方（`CCF A`・`CORE A*`）でも受けます** – 後ろの等級だけを見ます",
+        },
+        category: {
+          type: "string",
+          description:
+            "分野で絞る（画面の分野のチップと同じ – 選んだ物の**どれか**を持つ行を出します）。鍵（`security`）・画面の札（`セキュリティ`）・英字の名（`Security and Privacy`）のどれでも受けます。選べる値は `collection_stats` か、知らない値を渡した時の案内で返します",
+        },
+        categories: {
+          type: "array",
+          items: { type: "string" },
+          description: "分野を複数で絞る（`category` と同じ規則。両方渡した時は `categories` を使います）",
         },
         domestic: {
           type: "boolean",

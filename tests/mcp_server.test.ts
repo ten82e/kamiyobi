@@ -893,6 +893,8 @@ it("入力の形が、道具の説明と一致する（第 854 回）", async ()
       "kinds",
       "kind",
       "rank",
+      "category",
+      "categories",
       "domestic",
       "online",
       "within_days",
@@ -5940,4 +5942,51 @@ it("search_deadlines の構造化の行に、分野を持つ（第 1107 回）",
     expect(行.categories_ja as string[], `${key} の日本語が正本と違う`).toContain(
       R.categoryLabelJa(key),
     );
+});
+
+/* 畫面の分野のチップに当たる絞り込みが、MCP の引数に無かった（種別・ランク・国内・
+ * オンライン・締切までは有るのに、分野だけ抜けて居た – 2026-10-17 實測）。 */
+it("search_deadlines の category が、畫面のチップと同じ分野で絞る（第 1108 回）", async () => {
+  const 呼ぶ = async (引: Record<string, unknown>) =>
+    (await client.ask({
+      jsonrpc: "2.0",
+      id: 2,
+      method: "tools/call",
+      params: {
+        name: "search_deadlines",
+        arguments: { ...引, limit: 100, scope: "all", include_past: true },
+      },
+    })) as {
+      result?: { structuredContent?: { total?: number; rows?: Array<Record<string, unknown>> } };
+    };
+
+  /* 鍵・畫面の札・英字の名のどれでも同じ結果になる（畫面のチップは鍵で動く）。 */
+  const 鍵 = await 呼ぶ({ category: "security" });
+  const 日本語 = await 呼ぶ({ category: "セキュリティ" });
+  const 英字 = await 呼ぶ({ category: "Security and Privacy" });
+  const 件数 = 鍵.result?.structuredContent?.total ?? 0;
+  expect(件数, "分野で絞れて居ない（0 件）").toBeGreaterThan(0);
+  expect(日本語.result?.structuredContent?.total, "日本語の札で絞れて居ない").toBe(件数);
+  expect(英字.result?.structuredContent?.total, "英字の名で絞れて居ない").toBe(件数);
+  /* 返った行は、その分野を持つ物だけ。 */
+  for (const row of (鍵.result?.structuredContent?.rows ?? []).slice(0, 20))
+    expect(row.categories as string[], "別の分野の行が混ざった").toContain("security");
+  /* 別の分野とは別の行が返る（絞り込みが効いて居る事の裏取り – 語を省いた呼び出しは
+   * 「検索語が空です」で返るので、比較の土台には使へない）。 */
+  const 別 = await 呼ぶ({ category: "hpc" });
+  for (const row of (別.result?.structuredContent?.rows ?? []).slice(0, 10))
+    expect(row.categories as string[], "別の分野の行が混ざった（hpc）").toContain("hpc");
+  /* 複数は「どれか」で絞る（畫面のチップと同じ）。 */
+  const 複数 = await 呼ぶ({ categories: ["db", "hpc"] });
+  expect(複数.result?.structuredContent?.total ?? 0, "複数の分野で絞れて居ない").toBeGreaterThan(
+    件数,
+  );
+  /* 知らない値は黙って外さず、選べる値を言う。 */
+  const 知らん = await call("search_deadlines", {
+    category: "nonexistent",
+    limit: 1,
+    scope: "all",
+  });
+  expect(知らん, "知らない分野を黙って外した").toContain("知らない分野");
+  expect(知らん, "選べる分野を言って居ない").toContain("security(セキュリティ)");
 });

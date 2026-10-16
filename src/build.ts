@@ -4260,8 +4260,7 @@ export function toUpcomingMd(
     "| 日付 | 残り | 会議 | 種別 | ラウンド | 推定 | 開催地 | 会期 | 状態 | ランク |",
     "|---|---|---|---|---|---|---|---|---|---|",
   ];
-  if (rows.length === 0)
-    rows.push("| - | - | 該当なし | - | - | - | - | - | - | - |");
+  if (rows.length === 0) rows.push("| - | - | 該当なし | - | - | - | - | - | - | - |");
   /* 1,000 行を超える表なので、最後まで読んだ人にも出口を置く（`upcoming.html` と同じ言い回しを
    * 同じ正本から使う）。GitHub の生的な表示では、この名前はコードのスパンになるだけで辿れない。 */
   const tail = [
@@ -4366,7 +4365,7 @@ export function toLlmsTxt(
     "| `collection_stats` | 収録数、生成時刻、確認状態、データ源、配布ファイルの要約。 |",
     "| `recommend_venues` | 語彙と再学習の重みで投稿先を評価。意味検索は使わず、長い論文は最初の20行で調べます。 |",
     "",
-    '全種別は `kinds: ["all"]` で指定できます。`search_deadlines` の引数は `query`・`limit`・`offset`・`include_past`・`include_estimated`・`kind`・`kinds`・`rank`・`domestic`・`online`・`within_days`・`scope` です。',
+    '全種別は `kinds: ["all"]` で指定できます。`search_deadlines` の引数は `query`・`limit`・`offset`・`include_past`・`include_estimated`・`kind`・`kinds`・`rank`・`category`・`categories`・`domestic`・`online`・`within_days`・`scope` です。`category` は画面の分野のチップと同じ絞り込みで、鍵（`security`）・画面の札（`セキュリティ`）・英字の名（`Security and Privacy`）のどれでも受けます。',
     "他のツールでは `days`・`key`・`name`・`word`・`paper` を使います。各ツールの inputSchema で受け付ける項目と既定値を確認してください。",
     "収録 snapshot と公開物はビルド時の統合・選択で件数が異なる場合があります。収録全体と初期一覧を同じ範囲として比較しないでください。",
     "`scope: screen` は初期一覧、`scope: all` は収録全体です。初期カタログがない場合は全体へ切り替え、その旨を返します。画面と件数を比べる場合は、期間・種別・推定・過去表示を揃えてください。",
