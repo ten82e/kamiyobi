@@ -76,3 +76,95 @@ describe("data.json のスキーマ要約（llms.txt）", () => {
     expect(足りない, `要約が名指していない欄: \n${足りない.join("\n")}`).toEqual([]);
   });
 });
+
+/** 實データに出る「取りうる値」を集める（欄ごと）。 */
+function 値の集合(data: DataLike): Record<string, Set<string>> {
+  const 集: Record<string, Set<string>> = {};
+  const 足 = (名: string, v: unknown): void => {
+    if (v === undefined || v === null || v === "") return;
+    (集[名] ??= new Set<string>()).add(String(v));
+  };
+  for (const c of data.conferences ?? []) {
+    for (const k of Object.keys((c.rank ?? {}) as object)) 足("會議のランクの列", k);
+    for (const e of (c.editions ?? []) as Array<Record<string, unknown>>) {
+      足("開催回の狀態", e.status);
+      足("會期の確かさ", e.event_date_precision);
+      const est = e.estimate as Record<string, unknown> | undefined;
+      if (est) {
+        足("推定の作り方", est.method);
+        足("推定の信賴度", est.confidence);
+      }
+      for (const dl of (e.deadlines ?? []) as Array<Record<string, unknown>>) {
+        足("締切の種別", dl.kind);
+        足("締切の精度", dl.precision);
+        const v = dl.verification as Record<string, unknown> | undefined;
+        if (v) {
+          足("確かめた狀態", v.status);
+          足("確かめた狀態", v.source_class);
+          const pi = v.provider_identity as Record<string, unknown> | undefined;
+          if (pi) {
+            足("確かめた狀態", pi.provider);
+            足("確かめた狀態", pi.strength);
+          }
+        }
+        for (const x of (dl.evidence ?? []) as Array<Record<string, unknown>>) {
+          足("來歷の確かさ", x.confidence);
+          足("來歷の元の種類", x.sourceClass);
+          for (const f of (x.verifiedFields ?? []) as unknown[]) 足("確かめた欄", f);
+        }
+        for (const x of (dl.superseded_deadlines ?? []) as Array<Record<string, unknown>>) {
+          足("上書きの理由", x.reason);
+          足("上書きの狀態", x.status);
+        }
+        for (const x of (dl.conflicts ?? []) as Array<Record<string, unknown>>)
+          足("競合の精度", x.precision);
+      }
+    }
+  }
+  return 集;
+}
+
+/** 要約のどの行が、どの欄の値を並べているか（行を特定する印）。 */
+const 値の行: Array<[string, string]> = [
+  ["會議のランクの列", "  - rank: object："],
+  ["會期の確かさ", "    - event_date_precision: string："],
+  ["推定の作り方", "`method` は"],
+  ["推定の信賴度", "`confidence` は 'low'"],
+  ["締切の種別", "      - kind: string："],
+  ["締切の精度", "      - precision: 'exact'"],
+  ["開催回の狀態", "      - status: 'confirmed'"],
+  ["確かめた狀態", "画面の札と「確認元」はここから出る"],
+  ["來歷の確かさ", "`confidence` は 'official'"],
+  ["來歷の元の種類", "`sourceClass` が確かめた元の種類"],
+  ["確かめた欄", "`verifiedFields` が確かめた欄"],
+  ["上書きの理由", "`reason` は"],
+  ["上書きの狀態", "`status` は 'superseded'"],
+  ["競合の精度", "`precision` は 'exact'|'date-only'"],
+];
+
+describe("data.json のスキーマ要約（値の側）", () => {
+  it("實データに出る値は、要約のその欄の行に書いてある", () => {
+    const out = builtSite();
+    const 節 = 要約の節(readFileSync(join(out, "llms.txt"), "utf8"));
+    const 行々 = 節.split("\n");
+    const 足りない: string[] = [];
+    const 見た = new Set<string>();
+    const 見る = (名: string, data: DataLike): void => {
+      const 集 = 値の集合(data);
+      for (const [欄, 印] of 値の行) {
+        const 行 = 行々.find((l) => l.includes(印));
+        expect(行, `要約に「${欄}」の行が無い（印: ${印}）`).toBeTruthy();
+        for (const 値 of 集[欄] ?? [])
+          if (!String(行).includes(`'${値}'`)) 足りない.push(`${欄}: '${値}'（${名}）`);
+        見た.add(欄);
+      }
+    };
+    const 検査用 = JSON.parse(readFileSync(join(out, "data.json"), "utf8")) as DataLike;
+    見る("検査用", 検査用);
+    /* 檢查用のビルドに出ない値（'assumption' など）は本番で見る（欄を名指す検査と同じ理由）。 */
+    const 本番 = join(REPO_ROOT, "public", "data.json");
+    if (existsSync(本番)) 見る("本番", JSON.parse(readFileSync(本番, "utf8")) as DataLike);
+    expect(見た.size, "値の欄を一つも見ていない").toBeGreaterThan(10);
+    expect(足りない, `要約が書いていない値: \n${足りない.join("\n")}`).toEqual([]);
+  });
+});
