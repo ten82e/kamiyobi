@@ -318,8 +318,8 @@ export interface ScreenDeadlineInput {
  * （`ScreenDeadlineInput.uid`）。同じ締切が購読と書き出しで同じ予定になる
  * （實測 2026-10-17: 揃へる前は配付物が `kamiyobi-dl2ws2026-29b52d20@kamiyobi`・
  * 此方が `kamiyobi-dl2ws2026-abstract@kamiyobi` で、同じ日が二度並んだ）。
- * 渡されない行（購読の対象より先の締切など）だけ此処で組む – 其の行は購読の側に
- * 無いので二重にはならないが、同じ暦に入れると別の予定になり得る（説明欄で言ふ）。 */
+ * 渡されない行（購読に入つて居ない締切 – 過ぎた物など）だけ此処で組む – 其の行は
+ * 購読の側に無いので、別の予定に成つても二重には成らない。 */
 export function icsRowsFromScreen(
   items: readonly ScreenDeadlineInput[] | null | undefined,
   now: Date | null | undefined,

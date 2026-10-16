@@ -92,6 +92,31 @@ describe("書き出しの ICS と購読の ICS の識別子", () => {
     expect(catalog, "品書に UID が載っていない").toContain('"ics_uid"');
   });
 
+  it("てびきも、書き出しの説明欄と同じ事を言う（片方だけ古くならない）", () => {
+    /* 説明欄（カレンダーの情報欄）とてびき（画面の読み物）は、同じ事を言う。
+     * 2026-10-17 實測: 正典にも UID を載せて全履歴の締切が購読と同じ UID に成つた後も、
+     * てびきだけが「購読の対象より先の締切は別の識別子になる」と古い事を言つて居た
+     * （説明欄は直して居た）。 */
+    const html = readFileSync(join(builtSite(), "index.html"), "utf8");
+    const てびき = html.slice(html.indexOf('id="helpPanel"'));
+    expect(てびき, "てびきが同じ識別子を使う事を言っていない").toContain(
+      "同じ識別子（UID）を付けます",
+    );
+    expect(てびき, "購読に入っていない締切の扱いを言っていない").toContain(
+      "購読に入っていない締切",
+    );
+    expect(てびき, "古い但し書きが残っている").not.toContain("購読の対象より先の締切");
+    const 説明 = icsViewDescriptionJa(
+      [{ day: "20261017", at: 1, deadline: true, body: [] }],
+      new Date("2026-08-09T00:00:00Z"),
+    );
+    /* 同じ事を言つて居るか（語その物は違つて良い – 讀む場所が違ふ）。 */
+    for (const 語 of ["同じ識別子", "購読に入っていない締切"]) {
+      expect(てびき.includes(語), `てびきに「${語}」が無い`).toBe(true);
+      expect(説明.includes(語), `説明欄に「${語}」が無い`).toBe(true);
+    }
+  });
+
   it("書き出しの説明欄が、購読と同じ識別子を使う事と、例外を言う", () => {
     const 文 = icsViewDescriptionJa(
       [{ day: "20261017", at: 1, deadline: true, body: [] }],
