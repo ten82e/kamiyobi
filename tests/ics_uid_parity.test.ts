@@ -57,10 +57,19 @@ describe("書き出しの ICS と購読の ICS の識別子", () => {
     const 外れ = uids.filter((u) => !形.test(u));
     expect(外れ, `UID の形が違う: ${外れ.slice(0, 3).join(" / ")}`).toEqual([]);
     expect(new Set(uids).size, "UID が重なっている").toBe(uids.length);
-    /* 種別の語が ASCII の物（上流のラベルを続けた行）は、その語がそのまま入る –
-     * **上流が言葉を書き換えると UID が変わる**（追いの課題。ここでは今の形を張る）。 */
-    const ascii = uids.filter((u) => /-[A-Za-z][A-Za-z0-9._-]*@kamiyobi$/.test(u));
-    expect(ascii.length, "ASCII の種別を持つ UID が消えた（形が変わった）").toBeGreaterThan(0);
+    /* 印が SHA-1 の 8 桁（`[0-9a-f]{8}`）でない物は、**ASCII の語がそのまま入っている** –
+     * 上流のラベルを続けた行の一部である（實測 2026-10-17: 938 行のうち 12 行）。
+     * 印に上流の語が混じる行は、此の形の 12 行と、SHA-1 の中に混じる 97 行を合わせて
+     * 109 行ある（SPEC の UID の項に例外として書いてある）。回次で代用すると 250 行が
+     * 入れ替わり、同じ回次の重なりは解けない（實測）ので、今の形を張る。
+     * **頭の 1 字が英字の SHA-1 を數へない**ように、8 桁の十六進できっちり見る
+     * （`[A-Za-z]` で始まる物を數へて 431 件と誤つた。十六進の頭が英字に成るのは 6/16）。 */
+    const 上流が可見 = uids.filter((u) => !/-[0-9a-f]{8}(-[0-9]+)?@kamiyobi$/.test(u));
+    expect(上流が可見.length, "ASCII の種別を持つ UID が消えた（形が変わった）").toBeGreaterThan(0);
+    expect(
+      上流が可見.length,
+      `印が ASCII のままの UID が ${上流が可見.length} 件に増えた（安定な印の設計を見直す合図）`,
+    ).toBeLessThan(40);
   });
 
   it("正典（`data.json`）にも UID が載る（全履歴を讀み込んだ後の書き出しのため）", () => {
