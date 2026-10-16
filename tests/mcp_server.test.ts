@@ -6204,3 +6204,27 @@ it("search_deadlines の行が、画面の深いリンクを組める欄を持�
   const t = tools.result?.tools?.find((x) => x.name === "search_deadlines");
   expect(t?.description, "深いリンクの組み方を説明していない").toContain("index.html?row=");
 });
+
+/* **収録の全体の出所を名指して書く。** MCP の `scope: all` は収録の元データ
+ * （`data/snapshot.json`）を読む。公開している `data.json` は重複をまとめた後なので行数が
+ * 違う（実測 2026-10-17: 元データ 5,069 行に対し、公開の `data.json` は 4,990 行）。
+ * この違いを書かずに置くと、AI が「画面の件数と合わない」と誤った報告をする。 */
+it("collection_stats が、収録の出所と件数を元データと合わせて言う（第 1116 回）", async () => {
+  const 文 = await call("collection_stats", {});
+  expect(文, "出す所のファイルを名指していない").toContain("data/snapshot.json");
+  const 元 = JSON.parse(readFileSync(join(REPO_ROOT, "data", "snapshot.json"), "utf8")) as {
+    conferences?: Array<{ editions?: Array<{ deadlines?: unknown[] }> }>;
+  };
+  const 会議 = (元.conferences ?? []).length;
+  const 版 = (元.conferences ?? []).reduce((n, c) => n + (c.editions ?? []).length, 0);
+  const 締切 = (元.conferences ?? []).reduce(
+    (n, c) => n + (c.editions ?? []).reduce((m, e) => m + (e.deadlines ?? []).length, 0),
+    0,
+  );
+  expect(会議, "元データの会議が 100 未満（前提が崩れた）").toBeGreaterThan(100);
+  expect(文, `会議の数が元データと違う（${会議} のはず）`).toContain(`会議 ${会議} 件`);
+  expect(文, `版の数が元データと違う（${版} のはず）`).toContain(`版 ${版} 件`);
+  expect(文, `締切の行数が元データと違う（${締切} のはず）`).toContain(
+    `締切の行 ${締切.toLocaleString("en-US")} 行`,
+  );
+});
