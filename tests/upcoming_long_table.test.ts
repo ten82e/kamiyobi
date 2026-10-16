@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import Recommender from "../site/recommender.ts";
 import { effectiveCss, site } from "./built_golden_shared.ts";
 
 function page(name: string): string {
@@ -142,17 +143,25 @@ it("状態の列が、画面の一覧の札と同じ語を持つ（第 862 回�
   const 表 = md.split("\n").filter((l) => l.startsWith("|"));
   const 幅 = [...new Set(表.map((l) => l.slice(1, -1).split("|").length))];
   expect(幅, "列数が揃つて居ない").toEqual([9]);
-  /* 語は画面と同じ正本（`statusMarksJa`）から取る。 */
-  const 札の行 = 表.filter((l) => l.includes("要確認") || l.includes("延長後"));
+  /* 語は畫面と同じ正本から取る（書き寫すと、狀態の語を足した日に此處だけ古くなる –
+   * 2026-10-17 に實際に踏んだ: `読み取り失敗`・`再確認待ち` を足した後も、此の檢查は
+   * `要確認|延長後` だけを許して居た）。 */
+  const 語 = [
+    ...["manual-required", "parser-failed", "pending"]
+      .map((status) => String(Recommender.verificationStatusLabelJa({ status }) ?? "").trim())
+      .filter(Boolean),
+    String(Recommender.extendedLabelJa() ?? "").trim(),
+  ].filter(Boolean);
+  expect(語.length, "狀態の語を正本から取れない").toBeGreaterThan(2);
+  const 形 = new RegExp(`^(${語.join("|")})(・(${語.join("|")}))*$`);
+  const 札の行 = 表.filter((l) => 語.some((w) => l.includes(w)));
   expect(札の行.length, "札を持つ行がない（この検査の前提）").toBeGreaterThan(0);
   for (const l of 札の行) {
     const セル = l
       .slice(1, -1)
       .split("|")
       .map((c) => c.trim());
-    expect(セル[8], `狀態の列が空の行が在る: ${l.slice(0, 60)}`).toMatch(
-      /^(要確認|延長後)(・(要確認|延長後))*$/,
-    );
+    expect(セル[8], `狀態の列が空の行が在る: ${l.slice(0, 60)}`).toMatch(形);
   }
   /* 表の凡例（md を単体で読む人）にも、列の意味を書く。 */
   expect(md, "凡例が状態の列を説明していない").toContain(

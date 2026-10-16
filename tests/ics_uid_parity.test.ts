@@ -101,6 +101,51 @@ describe("書き出しの ICS と購読の ICS の識別子", () => {
     expect(catalog, "品書に UID が載っていない").toContain('"ics_uid"');
   });
 
+  it("配付の ICS と `upcoming.md` も、畫面と同じ確認の狀態を書く", () => {
+    /* 記録（`recordsOf`）の締切が持つ `verification` は入力と台帳が付けた物だけで、
+     * `data.json` は其れに加へて證據から狀態を足す。記録だけを讀んで居た頃は、
+     * **同じ行が出口ごとに違ふ**事に成つて居た（2026-10-17 實測: 配付の ICS は 938 行の
+     * うち 350 行・`upcoming.md` は 1,128 行のうち 348 行にしか狀態を書いて居なかつた。
+     * 確認済みは札を出さない決まりなので、數へるのは其れ以外の狀態を持つ行）。 */
+    const out = builtSite();
+    const data = JSON.parse(readFileSync(join(out, "data.json"), "utf8")) as {
+      conferences?: Array<Record<string, unknown>>;
+    };
+    /* UID → その行に出すべき狀態（`verified` は札を出さないので空）。 */
+    const 期待 = new Map<string, string>();
+    for (const c of data.conferences ?? [])
+      for (const e of (c.editions ?? []) as Array<Record<string, unknown>>)
+        for (const dl of (e.deadlines ?? []) as Array<Record<string, unknown>>) {
+          const uid = typeof dl.ics_uid === "string" ? dl.ics_uid : "";
+          const v = dl.verification as Record<string, unknown> | undefined;
+          if (!uid || !v) continue;
+          const status = String(v.status ?? "");
+          期待.set(uid, status === "verified" || !status ? "" : status);
+        }
+    expect(期待.size, "正典が UID を持つ行が少なすぎる").toBeGreaterThan(100);
+    const ics = readFileSync(join(out, "deadlines.ics"), "utf8").replace(/\r\n[ \t]/g, "");
+    const 足りない: string[] = [];
+    for (const blk of ics.split("BEGIN:VEVENT").slice(1)) {
+      const uid = (/UID:([^\r\n]+)/.exec(blk) ?? [])[1] ?? "";
+      const 望 = 期待.get(uid);
+      if (!望) continue;
+      const 本文 = (/DESCRIPTION:([\s\S]*?)\r?\n[A-Z-]+[:;]/.exec(blk) ?? [])[1] ?? "";
+      if (!本文.includes("状態: ")) 足りない.push(`${uid}（${望} の行に狀態が無い）`);
+    }
+    expect(足りない, `配付の ICS に狀態が無い行: \n${足りない.slice(0, 5).join("\n")}`).toEqual([]);
+    /* `upcoming.md` も同じ表から作る。狀態の欄を持つ行が、闇の數より極端に少なくない事。 */
+    const md = readFileSync(join(out, "upcoming.md"), "utf8").split("\n");
+    const md行 = md.filter((l) => /^\| /.test(l) && !/^\| 日付/.test(l) && !/^\|---/.test(l));
+    const md状態 = md行.filter((l) =>
+      (l.split("|").map((x) => x.trim())[9] ?? "").length ? 1 : 0,
+    );
+    expect(md行.length, "upcoming.md を讀めない").toBeGreaterThan(100);
+    expect(
+      md状態.length,
+      `upcoming.md に狀態の欄がある行が ${md状態.length} 行しか無い`,
+    ).toBeGreaterThan(md行.length * 0.3);
+  });
+
   it("てびきも、書き出しの説明欄と同じ事を言う（片方だけ古くならない）", () => {
     /* 説明欄（カレンダーの情報欄）とてびき（画面の読み物）は、同じ事を言う。
      * 2026-10-17 實測: 正典にも UID を載せて全履歴の締切が購読と同じ UID に成つた後も、

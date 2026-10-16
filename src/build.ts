@@ -3342,6 +3342,35 @@ export function verificationBySlot(
   return 表;
 }
 
+/** 記録の締切に、`data.json` が持つ確認の状態を埋める（記録が無い行だけ）。
+ *
+ * 記録（`recordsOf`）の締切が持つ `verification` は、**入力と台帳が付けた物だけ**である。
+ * `data.json` は其れに加へて證據から狀態を足す（`bootstrapVerification`）ので、其れを
+ * 讀まんと、同じ行が出口ごとに違ふ事に成る（2026-10-17 實測: 配付の ICS・`upcoming.md`・
+ * `upcoming.html` は 348 行にしか狀態を書いて居なかつた。畫面と CSV は 4,474 行）。
+ * **記録を書き換へず、寫しを差し替える**（呼び手の會議データを汚さない）。 */
+export function fillVerificationFromData(
+  records: DataRecord[] | null | undefined,
+  確認の寫?: Map<string, { status: string; source_class: string }> | null,
+): void {
+  if (!確認の寫 || !Array.isArray(records)) return;
+  for (const rec of records) {
+    const dl = rec?.deadline;
+    if (!dl || dl.verification) continue;
+    const 寫 = 確認の寫.get(
+      deadlineSlotKeyJa(rec.conf?.key ?? "", rec.edition?.edition_id ?? "", dl),
+    );
+    if (!寫?.status) continue;
+    rec.deadline = {
+      ...dl,
+      verification: {
+        ...(寫.status ? { status: 寫.status } : {}),
+        ...(寫.source_class ? { source_class: 寫.source_class } : {}),
+      },
+    } as typeof dl;
+  }
+}
+
 export function toCsv(
   records: DataRecord[] | null | undefined,
   確認の寫?: Map<string, { status: string; source_class: string }>,
@@ -4569,10 +4598,13 @@ export async function buildAll(
     written.push(name);
   };
 
+  const data = toJson(safeConfs, safeConfig, nowUtc, opts.venuePapers);
+  /* 記録にも同じ確認の状態を渡す（配付の ICS・`upcoming.md`・`upcoming.html` が、畫面や
+   * CSV と同じ事を言ふように）。カレンダーの行を組む**前**に埋める。 */
+  fillVerificationFromData(records, verificationBySlot(data));
   /* カレンダーの行は 1 回だけ作る – 件数と期間の申告（`catalog.json` 経由で画面に出す）は、
    * 同じ行から導かないと本文とズレる。UID も同じ一巡で組む。 */
   const { rows: icsRows, uids: icsUids } = icsRowsWithUids(records, nowUtc);
-  const data = toJson(safeConfs, safeConfig, nowUtc, opts.venuePapers);
   /* 締切ごとの UID は `data.json` にも載せる（畫面が全履歴を讀み込んだ後に書き出しても、
    * 購読と同じ予定になるように）。品書はこの data から作るので、そのまま受け取る。 */
   attachIcsUidsToConferences((data as { conferences?: unknown }).conferences, icsUids);
