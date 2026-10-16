@@ -5990,3 +5990,40 @@ it("search_deadlines の category が、畫面のチップと同じ分野で絞�
   expect(知らん, "知らない分野を黙って外した").toContain("知らない分野");
   expect(知らん, "選べる分野を言って居ない").toContain("security(セキュリティ)");
 });
+
+/* **MCP の既定の kind は、畫面の初期一覧より広い**（常時受付の期刊行も出す）。
+ * 畫面は概要と論文だけを出し、常時受付は「種別」で選んだ時に出す。この差は
+ * 意図した物である（常時受付も「投稿先」として探す物だから）が、**件数を畫面と
+ * 比べる時に効く**ので、書いておく – 2026-10-17 実測: 「security」で畫面 32 件・
+ * MCP 33 件（差は IEEE TDSC の常時受付）。 */
+it("search_deadlines の既定の種別は、畫面より広い（常時受付を含む・第 1109 回）", async () => {
+  const 引く = async (args: Record<string, unknown>) =>
+    (await client.ask({
+      jsonrpc: "2.0",
+      id: 2,
+      method: "tools/call",
+      params: { name: "search_deadlines", arguments: { ...args, limit: 100, scope: "screen" } },
+    })) as {
+      result?: { structuredContent?: { total?: number; rows?: Array<Record<string, unknown>> } };
+    };
+
+  const 既定 = await 引く({ query: "TDSC" });
+  const rows = 既定.result?.structuredContent?.rows ?? [];
+  expect(rows.length, "行が返らない（前提が崩れた）").toBeGreaterThan(0);
+  /* 常時受付（journal）も既定で出る（畫面は「種別」で選んだ時にだけ出す – 其の差を書いた）。 */
+  expect(
+    rows.some((r) => r.kind === "journal"),
+    "既定で常時受付を出さない（既定の kind が変わった？）",
+  ).toBe(true);
+  /* 概要と論文だけに絞れば、畫面の初期一覧と同じ範囲になる。 */
+  const 畫面と同じ = await 引く({ query: "TDSC", kinds: ["abstract", "paper"] });
+  expect(
+    (畫面と同じ.result?.structuredContent?.rows ?? []).length,
+    "kinds で絞っても常時受付が出る",
+  ).toBe(0);
+  /* 選べば出る（畫面の「種別」で「常時受付」を選ぶのと同じ）。 */
+  const 期刊 = await 引く({ query: "TDSC", kind: "journal" });
+  const 期刊行 = 期刊.result?.structuredContent?.rows ?? [];
+  expect(期刊行.length, "kind: journal で常時受付を出せない").toBeGreaterThan(0);
+  for (const r of 期刊行) expect(r.kind, "journal を指定したのに別の種別が出た").toBe("journal");
+});

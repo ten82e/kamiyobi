@@ -40,7 +40,7 @@ const SERVER_INSTRUCTIONS_JA = [
   "答え方の約束:",
   '- 日時は日本時間（JST）を主に返します。`precision: "date-only"` は時刻を確認できていない行で、`utc`・`jst` は null です。`earliest_utc`〜`latest_utc` の不確実性区間の端を、公式の締切時刻として扱わないでください。',
   "- `estimated: true` は前年までの実績から機械的に置いた未確認の値です。確定した締切として案内しないでください（既定では返しません）。",
-  "- `search_deadlines` の既定は今後の abstract / paper / journal で、過去と推定は除きます（`include_past`・`include_estimated` で足せます）。`list_upcoming` の既定は種別で絞らず、推定も含みます。両者の件数を比べるなら、種別・推定・`scope` を揃えてください。",
+  "- `search_deadlines` の既定は今後の abstract / paper / journal で、過去と推定は除きます（`include_past`・`include_estimated` で足せます）。**kind の既定は画面の初期一覧より広く、常時受付（`journal`）も含みます** – 画面は概要と論文だけを出し、常時受付は「種別」で選んだ時に出します。件数を画面と比べるときは、この分だけ違います（`kinds` に `abstract` と `paper` を渡せば画面と同じ範囲になります）。`list_upcoming` の既定は種別で絞らず、推定も含みます。両者の件数を比べるなら、種別・推定・`scope` を揃えてください。",
   "- `scope` は `screen`（画面の初期一覧。生成から 180 日先まで。`catalog.json` がある時だけ）と `all`（収録の全体）で、省くと `screen` です。0 件のときは `scope_comparison` に収録全体での件数が出ます。",
   "- 会期は締切ではありません。購読カレンダー（`deadlines.ics`）は締切だけを載せ、`list_upcoming` は締切と会期の両方を返します。",
   "- 締切は動きます。投稿の判断の前に、行の公式ページで最新の募集要項を確かめるよう案内してください。",
@@ -740,6 +740,12 @@ function 真偽の引數(名: string, 値: unknown): { 使ふ: boolean; 斷り: 
   };
 }
 
+/** 語を省いた時に出す種別。**畫面の初期一覧より廣い** – 畫面は概要と論文だけを出し、
+ * 常時受付（`journal`）は「種別」で選んだ時に出す（`site/app.ts` の `byKind`）。
+ * 此方を含めるのは、常時受付の期刊行も「投稿先」として探す物だからである。
+ * **件数を畫面と比べる時は此の分だけ違ふ**（2026-10-17 實測: 「security」で畫面 32 件・
+ * MCP 33 件。差は IEEE TDSC の常時受付）。`scope: screen` は**窓**
+ * （`catalog.json` の範圍）を指す語で、種別の既定まで同じと言ふ意味ではない。 */
 const 投稿の種別 = ["abstract", "paper", "journal"];
 
 function 畫面の既定(
@@ -3009,7 +3015,7 @@ const TOOLS = [
   {
     name: "search_deadlines",
     description:
-      "日本語で投稿締切を検索する。語を省いて kind / kinds / rank / category / categories / domestic / online / within_days だけでも絞れる。既定は今後の abstract / paper / journal、推定は除外。scope は screen（初期一覧）または all（収録全体）。structuredContent に total・rows・next_offset を返す。screen で 0 件のときは scope_comparison に全収録での同条件の件数・絞る前の件数・生成時刻を返す。比較データを読めない場合は検索結果を保持し、scope_comparison_error に理由と再試行の案内を返す。範囲を変えるときもほかの条件を維持する。続きは同じ条件と next_offset を offset に指定する。日付のみの行の utc・jst は null。常時受付は締切日時・精度・回次を null とし、日付のある行の後に並べます。推定期間、投稿トラック、確認状態を別に返す。公式確認（いつ・どこで・何を確かめたか）は verification_ja に画面の行の詳細と同じ日本語で返します（内部の鍵名は verification に残します）。前に出ていた締切も表示する。日付語は別ラウンドや会期にも当たるため、締切だけの期間指定には within_days を使う。会期の欄には、上流が書いた原文（`March 18-21, 2024` のような自由文）を「原表記」として添えます（画面の行の詳細と同じ）。0 件のときは画面と同じ案内と「打ち直すなら」の候補を返す。返す行の形: 日時 | 種別 | 確認状態（ある場合）| 会議名（版の識別子）| ランク | 会期 | 開催地 URL。テキストは `| ` で切り、構造化結果を優先する。構造化の行には `categories`（分野の鍵）と `categories_ja`（画面の札と同じ日本語）も入る。",
+      "日本語で投稿締切を検索する。語を省いて kind / kinds / rank / category / categories / domestic / online / within_days だけでも絞れる。既定は今後の abstract / paper / journal で、過去と推定は除きます（include_past・include_estimated で足せます）。既定の kind は MCP の方が広く、常時受付（journal）も含みます。scope は screen（初期一覧）または all（収録全体）。structuredContent に total・rows・next_offset を返す。screen で 0 件のときは scope_comparison に全収録での同条件の件数・絞る前の件数・生成時刻を返す。比較データを読めない場合は検索結果を保持し、scope_comparison_error に理由と再試行の案内を返す。範囲を変えるときもほかの条件を維持する。続きは同じ条件と next_offset を offset に指定する。日付のみの行の utc・jst は null。常時受付は締切日時・精度・回次を null とし、日付のある行の後に並べます。推定期間、投稿トラック、確認状態を別に返す。公式確認（いつ・どこで・何を確かめたか）は verification_ja に画面の行の詳細と同じ日本語で返します（内部の鍵名は verification に残します）。前に出ていた締切も表示する。日付語は別ラウンドや会期にも当たるため、締切だけの期間指定には within_days を使う。会期の欄には、上流が書いた原文（`March 18-21, 2024` のような自由文）を「原表記」として添えます（画面の行の詳細と同じ）。0 件のときは画面と同じ案内と「打ち直すなら」の候補を返す。返す行の形: 日時 | 種別 | 確認状態（ある場合）| 会議名（版の識別子）| ランク | 会期 | 開催地 URL。テキストは `| ` で切り、構造化結果を優先する。構造化の行には `categories`（分野の鍵）と `categories_ja`（画面の札と同じ日本語）も入る。",
     inputSchema: {
       type: "object",
       properties: {
