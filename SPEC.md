@@ -651,6 +651,8 @@ node --experimental-strip-types src/cli.ts evidence [verify|gc] [--dry-run]
 |---|---|
 | `upcoming.html` | 直近の締切と開催の静的な表 |
 | `404.html` | 存在しない URL から一覧へ戻る案内 |
+| `robots.txt` | 機械が最初に読む 1 枚（RFC 9309）。`Allow: /` と `Sitemap:`、AI の索引 `llms.txt` の絶対 URL |
+| `sitemap.xml` | 人が開く口（`/`・`upcoming.html`・`upcoming.md`・`llms.txt`）の絶対 URL と `lastmod` |
 | `deadlines.ics` | 今後の締切の購読用カレンダー（§4.2） |
 | `index.html` | 静的サイト（テンプレートに正規化データを埋め込む） |
 | `data.json` | 正規化データ全体（機械可読の正）。推定版も含む |
@@ -674,6 +676,12 @@ node --experimental-strip-types src/cli.ts evidence [verify|gc] [--dry-run]
 | `submission-identity.js` | 公式照合済みの同一募集の表示・ICS方針 |
 | `icon.svg` | サイト自前のファビコン（図形のみ。外部フォントに依存しない） |
 | `.nojekyll` | Pages の Jekyll 処理を無効化 |
+
+機械と AI の入口は三段にする。クローラは `robots.txt` を最初に読み、そこから `sitemap.xml` と
+AI の索引 `llms.txt` の絶対 URL を知る。`sitemap.xml` は人が開ける口（`/`・`upcoming.html`・
+`upcoming.md`・`llms.txt`）だけを並べ、データのファイルは索引が名指す – 頁でない物を
+site map に混ぜない。`lastmod` は生成した日（`--now` を固定したビルドではその日）にする。
+絶対 URL の正本は `site.base_url` で、`upcoming.html` の canonical と `404.html` の口と同じ値を向く。
 
 `health.json` は `profile_hash`、`confirmed_future_deadlines`、`estimated_future_deadlines`、
 `source_failures`、`snapshot_fallback`、`build_input_mode`、観測時刻・観測鮮度、

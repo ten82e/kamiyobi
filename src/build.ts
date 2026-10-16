@@ -132,6 +132,8 @@ const MANAGED_OUTPUT_FILES = [
   "upcoming.md",
   "upcoming.html",
   "404.html",
+  "robots.txt",
+  "sitemap.xml",
   "deadlines.ics",
   "llms.txt",
   "icon.svg",
@@ -421,6 +423,13 @@ const LLMS_OUTPUT_NOTES_JA: Record<string, string> = {
     "`CATEGORIES` と説明行の `分野:` の両方に載せる（第 292 回）。受信側の表示対応は kamiyobi 側では" +
     "検証していないが、説明行の語はカレンダー本文の検索に掛かる。",
   "llms.txt": "このファイル。機械が読む索引で、人間の操作説明は画面の中に書く。",
+  "robots.txt":
+    "機械が最初に読む 1 枚（RFC 9309）。収録は全て公開なので `Allow: /` だけを書き、" +
+    "同じ場所の `sitemap.xml` と、AI の索引 `llms.txt` の絶対 URL を添える。",
+  "sitemap.xml":
+    "人が開く口（`/`・`upcoming.html`・`upcoming.md`・`llms.txt`）の絶対 URL と、" +
+    "生成した日を `lastmod` に書く。データのファイルは索引 `llms.txt` が名指す – " +
+    "ここに並べるのは頁として開ける物だけにする。",
   "icon.svg": "ブラウザのタブとブックマークに出すアイコン（SVG）。",
   ".nojekyll":
     "GitHub Pages に Jekyll での処理をさせないための目印。中身は 0 バイトの空ファイルで、" +
@@ -3590,6 +3599,42 @@ export function toNotFoundHtml(styleBlock = "", baseUrl = ""): string {
   ].join("\n");
 }
 
+/** 機械が最初に読む 1 枚（RFC 9309）。AI の索引（`llms.txt`）への道もここに書く –
+ * 索引はページからも辿れるが、クローラは最初にこのファイルを読む。 */
+export function toRobotsTxt(baseUrl = ""): string {
+  const base = baseUrl.replace(/\/+$/, "");
+  const lines = [
+    "# kamiyobi - submission deadlines of CS conferences, workshops and journals",
+    `# Machine-readable index for AI agents: ${base ? `${base}/llms.txt` : "llms.txt"}`,
+    "User-agent: *",
+    "Allow: /",
+    "",
+  ];
+  /* `Sitemap` は群の外に置く（RFC 9309 の群は空行で切れる）。 */
+  if (base) lines.push(`Sitemap: ${base}/sitemap.xml`, "");
+  return `${lines.join("\n")}\n`;
+}
+
+/** 人が開く口の一覧。データのファイル（`data.json` など）は索引（`llms.txt`）が名指す –
+ * ここに並べるのは頁として開ける物だけにする。 */
+export function toSitemapXml(baseUrl = "", lastmod = ""): string {
+  const base = baseUrl.replace(/\/+$/, "");
+  const day = /^\d{4}-\d{2}-\d{2}$/.test(lastmod) ? lastmod : "";
+  const 口 = ["", "upcoming.html", "upcoming.md", "llms.txt"].map((file) =>
+    base ? `${base}/${file}` : file || "index.html",
+  );
+  return [
+    '<?xml version="1.0" encoding="UTF-8"?>',
+    '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
+    ...口.map(
+      (loc) =>
+        `  <url><loc>${escapeHtmlText(loc)}</loc>${day ? `<lastmod>${day}</lastmod>` : ""}</url>`,
+    ),
+    "</urlset>",
+    "",
+  ].join("\n");
+}
+
 export function toUpcomingHtml(markdown: string, styleBlock = "", baseUrl = ""): string {
   const inlineMd = (value: string): string =>
     escapeHtmlText(value)
@@ -4415,6 +4460,10 @@ export async function buildAll(
     write("upcoming.html", toUpcomingHtml(upcomingMd, siteStyleBlock, siteBaseUrl));
     // 無い場所を開いた人に日本語で口を渡す。画面の見た目のままにする。
     write("404.html", toNotFoundHtml(siteStyleBlock, siteBaseUrl));
+    /* 機械が最初に読む 1 枚と、人が開く口の一覧。索引（`llms.txt`）への道を
+     * ここにも書く – クローラは頁より先に robots.txt を読む。 */
+    write("robots.txt", toRobotsTxt(siteBaseUrl));
+    write("sitemap.xml", toSitemapXml(siteBaseUrl, nowUtc.toISOString().slice(0, 10)));
   } else {
     throw new Error(`required site template missing: ${templatePath}`);
   }

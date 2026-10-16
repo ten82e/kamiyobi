@@ -46,6 +46,8 @@ HPC・ネットワーク・システム・AI・セキュリティなどの国際
 
 画面の初期一覧は `catalog.json`、推薦用プロフィールは `recommendation-index.json` です。日付のみの締切は `local_date` と不確実性区間を持ち、`utc` は `null` です。区間の端を公式締切時刻として扱わないでください。
 
+クローラと AI の入口は三段です。[robots.txt](https://ten82e.github.io/kamiyobi/robots.txt) が [sitemap.xml](https://ten82e.github.io/kamiyobi/sitemap.xml) と `llms.txt` の絶対 URL を名指し、`sitemap.xml` は人が開ける口（画面・直近の表・索引）だけを並べます。データのファイルは索引が名指します。
+
 ### MCP サーバとして使う
 
 リポジトリ内で `npm ci` を実行した後に起動します。
