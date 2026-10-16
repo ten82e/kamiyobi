@@ -82,7 +82,8 @@ function 値の集合(data: DataLike): Record<string, Set<string>> {
   const 集: Record<string, Set<string>> = {};
   const 足 = (名: string, v: unknown): void => {
     if (v === undefined || v === null || v === "") return;
-    (集[名] ??= new Set<string>()).add(String(v));
+    if (!集[名]) 集[名] = new Set<string>();
+    集[名].add(String(v));
   };
   for (const c of data.conferences ?? []) {
     for (const k of Object.keys((c.rank ?? {}) as object)) 足("會議のランクの列", k);

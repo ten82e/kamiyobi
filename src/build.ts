@@ -3242,13 +3242,69 @@ function csvField(value: string | number | boolean | null | undefined): string {
   return s;
 }
 
-export function toCsv(records: DataRecord[] | null | undefined): string {
+/** 締切の枠（venue・開催回・種別・回次・トラック）の印。`data.json` の締切と
+ * `recordsOf` の締切を突き合わせるのに使う（`reverify` の `deadlineSlotId` と同じ組み方）。 */
+function deadlineSlotKeyJa(
+  venueKey: string,
+  editionId: string,
+  deadline: { kind?: string; round?: number; track?: string; label?: string },
+): string {
+  return [
+    venueKey,
+    editionId,
+    deadline.kind ?? "",
+    deadline.round ?? 1,
+    deadlineTrackKey(deadline.label ?? "", deadline.kind ?? "", deadline.track ?? ""),
+  ].join("\0");
+}
+
+/** `data.json` の締切が持つ確認の状態を、枠から引ける形にする。
+ *
+ * `data.csv` は `recordsOf` の生の締切を見るので、**保存された記録が無い行**（`toJson` が
+ * 証拠から足した `pending`・`manual-required`）が空欄になっていた（2026-10-17 実測:
+ * 2,480 行が `data.json` に状態を持ちながら CSV は空欄。畫面の札と暦は同じ状態を出している）。 */
+export function verificationBySlot(
+  data: { conferences?: unknown } | null | undefined,
+): Map<string, { status: string; source_class: string }> {
+  const 表 = new Map<string, { status: string; source_class: string }>();
+  const conferences = (data as { conferences?: unknown[] } | null | undefined)?.conferences;
+  if (!Array.isArray(conferences)) return 表;
+  for (const conf of conferences as Array<Record<string, unknown>>) {
+    const key = String(conf.key ?? "");
+    for (const ed of (conf.editions ?? []) as Array<Record<string, unknown>>) {
+      const editionId = String(ed.id ?? "");
+      for (const dl of (ed.deadlines ?? []) as Array<Record<string, unknown>>) {
+        const v = dl.verification as Record<string, unknown> | undefined;
+        if (!v) continue;
+        const status = String(v.status ?? "").trim();
+        const sourceClass = String(v.source_class ?? "").trim();
+        if (!status && !sourceClass) continue;
+        表.set(
+          deadlineSlotKeyJa(key, editionId, {
+            kind: String(dl.kind ?? ""),
+            round: Number(dl.round ?? 1),
+            track: String(dl.track ?? ""),
+            label: String(dl.label ?? ""),
+          }),
+          { status, source_class: sourceClass },
+        );
+      }
+    }
+  }
+  return 表;
+}
+
+export function toCsv(
+  records: DataRecord[] | null | undefined,
+  確認の寫?: Map<string, { status: string; source_class: string }>,
+): string {
   const lines: string[] = [];
   lines.push(CSV_COLUMNS.join(","));
   for (const rec of records ?? []) {
     if (!rec || typeof rec !== "object" || rec.type !== "deadline") continue;
     const { conf, edition: ed, deadline: dl } = rec;
     if (!conf || !ed || dl === null || dl === undefined) continue;
+    const 寫 = 確認の寫?.get(deadlineSlotKeyJa(conf.key, ed.edition_id, dl));
     lines.push(
       [
         conf.key,
@@ -3281,10 +3337,13 @@ export function toCsv(records: DataRecord[] | null | undefined): string {
         // 日付の列が締切の日を指しているかどうかは、この欄で決まる。
         String(rec.date_field ?? "").trim() || "締切",
         ed.event_segments?.length ? JSON.stringify(ed.event_segments) : "",
-        /* 確認の状態。記録が無い行は空欄（「未確認」とは書かない – この表の
-         * 空欄は「その値が分からん」の意で、状態の語をこちらが作らない）。 */
-        dl.verification?.status ?? "",
-        dl.verification?.source_class ?? "",
+        /* 確認の状態。**`data.json` と同じ値**を書く（列の説明がそう言っている）。
+         * 保存された記録が無い行は、`toJson` が証拠から足した状態を表から引く –
+         * 畫面の札と暦（`deadlines.ics`）は同じ状態を出しているので、CSV だけ空欄だと
+         * 同じ行が出口ごとに違う事になる（第 861 回の暦と同じ理由）。表にも無い行だけ
+         * 空欄にする（「未確認」とは書かない – 空欄は「その値が分からん」の意）。 */
+        寫?.status ?? dl.verification?.status ?? "",
+        寫?.source_class ?? dl.verification?.source_class ?? "",
         Recommender.isExtendedDeadline(dl) ? "true" : "false",
       ]
         .map((v) => csvField(v))
@@ -4443,7 +4502,8 @@ export async function buildAll(
       2,
     )}\n`,
   );
-  write("data.csv", toCsv(records));
+  /* `data.json` の状態を CSV にも載せる（表は `data.json` を書いた後の `data` から作る）。 */
+  write("data.csv", toCsv(records, verificationBySlot(data)));
   /* 「直近の締切と会期」の表はここが 1 本。ブラウザで読める版（下の `upcoming.html`）は
    * この文字列から作る（同じ表を二重に作らないため）。 */
   const upcomingMd = toUpcomingMd(records, nowUtc, upcomingDays使ふ);
