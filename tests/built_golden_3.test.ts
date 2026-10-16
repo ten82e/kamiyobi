@@ -2463,6 +2463,8 @@ it("条件クリアは論文の入力を消さず、消す操作は名前の書�
     "const label = { textContent: 'paper.docx' };",
     "const $ = (id) => (id === 'paperFileLabel' ? label : {});",
     "const paperFiles = { value: 'stale' };",
+    "let pdfJob = 0, pdfAbortController = null;",
+    "const cancelPdf = { hidden: true };",
     // 「論文の入力を消す」は下書きの記憶も消す（消した物が次の刷新で戻ってくる形を作らない）。
     // そこで記憶の側も本物と同じ形で生やす。
     "const PAPER_DRAFT_KEY = 'draft.key';",

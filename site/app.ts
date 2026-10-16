@@ -6657,6 +6657,10 @@ function semanticOutput(value: unknown): value is SemanticOutput {
    * 押す人也 – てびきがそう案内している）が、打ち込んだ概要を Confirmation も Undo も無く
    * 失っていた。消す操作は、そう書かれた別のボタンに寄せる。 */
   function clearPaperInput() {
+    pdfJob++;
+    if (pdfAbortController) pdfAbortController.abort();
+    pdfAbortController = null;
+    cancelPdf.hidden = true;
     valueElement("paperText").value = "";
     setPrimaryRecord();
     valueElement("paperReferences").value = "";
