@@ -107,6 +107,9 @@ const batchInput = [english, japanese].map((paper) => ({
   abstract: paper.abstract,
 }));
 const batchTools = ["search_venues", "recommend_venues"];
+const recoveryCases = [english, japanese].flatMap((paper) =>
+  batchTools.map((tool) => ({ paper, tool })),
+);
 let root: string;
 let replies: Array<{ id: number; result: Record<string, any> }>;
 const request = (id: number, tool: string, args: Record<string, unknown>) => ({
@@ -211,12 +214,55 @@ beforeAll(async () => {
         limit: 30,
       }),
     ]),
+    ...recoveryCases.flatMap(({ paper, tool }, i) =>
+      [["semantic"], [["semantic"]], ["lexical"], "semantic"].map((retrieval, j) =>
+        request(10000 + i * 10 + j, tool, {
+          [tool === "search_venues" ? "query" : "paper"]: {
+            title: paper.title,
+            abstract: paper.abstract,
+          },
+          retrieval,
+          limit: 30,
+        }),
+      ),
+    ),
   ]);
-  expect(replies).toHaveLength(cases.length * 2 + batchTools.length * 2);
+  expect(replies).toHaveLength(cases.length * 2 + batchTools.length * 2 + recoveryCases.length * 4);
 }, 600000);
 afterAll(() => {
   if (root) rmSync(root, { recursive: true, force: true });
 });
+for (const [i, { paper, tool }] of recoveryCases.entries())
+  it(`MCP ${paper.language}/${tool} rejects malformed modes then resumes actual semantic inference on the same connection`, () => {
+    for (let j = 0; j < 3; j++) {
+      const bad = replies.find((reply) => reply.id === 10000 + i * 10 + j)?.result;
+      expect(bad?.isError).toBe(true);
+      expect(bad?.structuredContent).toBeUndefined();
+      expect(bad?.content?.[0]?.text).toContain(
+        "retrieval は lexical または semantic を指定してください",
+      );
+    }
+    const baselineIndex = cases.findIndex(
+      (c) => c.paper.id === paper.id && c.tool === tool && c.mode === "title+abstract",
+    );
+    expect(baselineIndex).toBeGreaterThanOrEqual(0);
+    const baseline = replies.find((reply) => reply.id === baselineIndex * 2 + 2)?.result;
+    const recovered = replies.find((reply) => reply.id === 10000 + i * 10 + 3)?.result;
+    expect(recovered?.isError).not.toBe(true);
+    expect(recovered?.structuredContent).toMatchObject({
+      candidate_venues: 696,
+      uses_embeddings: true,
+    });
+    expect({ ...recovered?.structuredContent, evaluated_at: null }).toEqual({
+      ...baseline?.structuredContent,
+      evaluated_at: null,
+    });
+    expect(
+      recovered?.structuredContent?.rows
+        .slice(0, 5)
+        .some((row: { venue_key: string }) => paper.acceptable_venues.includes(row.venue_key)),
+    ).toBe(true);
+  });
 for (const [i, c] of cases.entries())
   it(`MCP actual model ${c.paper.id}/${c.mode}/${c.tool} retains suitable venues in the fixed top five`, () => {
     const reply = replies.find((r) => r.id === i * 2 + 1)?.result;

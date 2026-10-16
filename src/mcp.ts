@@ -2659,7 +2659,10 @@ async function recommendVenues(
   const 會議 = 索引.conferences;
   const pool = Recommender.candidatePool(行 as never, 會議, now) as unknown as Row[];
 
-  if (args.retrieval !== undefined && !["lexical", "semantic"].includes(String(args.retrieval)))
+  if (
+    args.retrieval !== undefined &&
+    (typeof args.retrieval !== "string" || !["lexical", "semantic"].includes(args.retrieval))
+  )
     throw new Error("retrieval は lexical または semantic を指定してください。");
   const semantic =
     args.retrieval === "semantic"
