@@ -1,6 +1,6 @@
 /**
  * 人が讀む三つの出口（畫面の列・`upcoming.md`・`deadlines.ics`）が、同じ欄に同じ語を
- * 書く事を見る。今はランク・会期・開催地。
+ * 書く事を見る。今はランク・会期・開催地・確認の状態。
  *
  * 2026-10-17 まで、ランクは**畫面の列と CSV にしか無かった** – JavaScript を使へない讀者
  * （`upcoming.md`・`upcoming.html`）と購読者（カレンダーしか見ない）には見えていなかつた。
@@ -18,7 +18,7 @@ function icsText(): string {
   return readFileSync(join(builtSite(), "deadlines.ics"), "utf8").replace(/\r\n[ \t]/g, "");
 }
 
-type MdRow = { url: string; rank: string; session: string; place: string };
+type MdRow = { url: string; rank: string; session: string; place: string; status: string };
 
 /** md の表の行を、素のセルに分ける（轉義を戻し、リンクは文字と行き先に分ける）。 */
 function mdRows(): MdRow[] {
@@ -35,12 +35,25 @@ function mdRows(): MdRow[] {
     if (セル[3] === "開催") continue;
     const url = /\]\(([^)\s]+)\)/.exec(セル[2])?.[1] ?? "";
     if (!url) continue;
-    出.push({ url, rank: セル[9] ?? "", session: セル[7] ?? "", place: セル[6] ?? "" });
+    出.push({
+      url,
+      rank: セル[9] ?? "",
+      session: セル[7] ?? "",
+      place: セル[6] ?? "",
+      status: セル[8] ?? "",
+    });
   }
   return 出;
 }
 
-type IcsRow = { url: string; rank: string; session: string; place: string; submission: boolean };
+type IcsRow = {
+  url: string;
+  rank: string;
+  session: string;
+  place: string;
+  status: string;
+  submission: boolean;
+};
 
 /** ICS の 1 行から、行き先の URL と本文の欄を取り出す。 */
 function icsRows(): IcsRow[] {
@@ -58,6 +71,7 @@ function icsRows(): IcsRow[] {
       rank: 欄("ランク"),
       session: 欄("会期"),
       place: 欄("開催地"),
+      status: 欄("状態"),
       submission: /掲載予定: /.test(素),
     });
   }
@@ -86,8 +100,8 @@ it("ランクの語は、md と ICS で同じ（同じ會場なら同じ語）",
   expect(ずれ, `ランクの語が出口で違う: \n${ずれ.slice(0, 5).join("\n")}`).toEqual([]);
 });
 
-it("会期と開催地の語も、md と ICS で同じ", () => {
-  /* 同じ正本（`editionSessionJa`・`placeJa` + 県名の補い）を呼んでいるが、
+it("会期・開催地・確認の状態の語も、md と ICS で同じ", () => {
+  /* 同じ正本（`editionSessionJa`・`placeJa` + 県名の補い・`statusMarksJa`）を呼んでいるが、
    * **片方だけ直した日に食い違う** – 轉義（`Copenhagen\, デンマーク`）をほどいて讀む。
    *
    * 突き合わせは**行き先の URL が 1 本に定まる會場だけ**にする: 同じリンクで複数の開催回を
@@ -114,9 +128,17 @@ it("会期と開催地の語も、md と ICS で同じ", () => {
     if (ics.session && r.session !== ics.session)
       ずれ.push(`${r.url} 会期: md「${r.session}」≠ ICS「${ics.session}」`);
     if (r.place !== ics.place) ずれ.push(`${r.url} 開催地: md「${r.place}」≠ ICS「${ics.place}」`);
+    /* 確認の狀態も同じ語（畫面の札と同じ正本）。どちらも空の事が有る（確認済みの行）。 */
+    if (r.status !== ics.status)
+      ずれ.push(`${r.url} 状態: md「${r.status || "(空)"}」≠ ICS「${ics.status || "(空)"}」`);
   }
   expect(突き合わせ, "突き合わせられる行が無い（前提が崩れた）").toBeGreaterThan(50);
-  expect(ずれ, `会期・開催地の語が出口で違う: \n${ずれ.slice(0, 5).join("\n")}`).toEqual([]);
+  expect(ずれ, `会期・開催地・状態の語が出口で違う: \n${ずれ.slice(0, 5).join("\n")}`).toEqual([]);
+  /* 狀態の照合が空回りしていない事（全部空なら、比べている物が無い）。 */
+  const 狀態付 = md.filter(
+    (r) => md一意.has(r.url) && ics一意.has(r.url) && r.status.length > 0,
+  ).length;
+  expect(狀態付, "狀態を持つ行が 1 つも突き合わされていない").toBeGreaterThan(10);
 });
 
 it("md と ICS のどちらにも、ランクを持つ行と持たない行が有る", () => {
