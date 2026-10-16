@@ -656,6 +656,12 @@ describe("購読 URL を取り出せる（第 268 回）", () => {
     expect(app, "JavaScript が動いているときに出す手続きがない").toMatch(
       /\$\("icsCopy"\)[\s\S]{0,160}addEventListener\(\s*"click"[\s\S]{0,60}copyIcsSubscribeUrl/,
     );
+    /* **隠したまま置いて、出すのを忘れていた**（2026-10-17 實測: 雛形は `hidden` で置き、
+     * 此処で外す一行が無かった。てびきは「「購読 URL をコピー」で URL を取得できます」と
+     * 案内して居たので、讀む人には見えないボタンを押せと言つて居た事に成る）。 */
+    expect(app, "JavaScript が動いているのに、押せる物が隠れたまま").toMatch(
+      /icsCopyButton\.hidden = false/,
+    );
   });
 
   it("紙にはコピーの導線を刷らない（紙から押せない）", () => {

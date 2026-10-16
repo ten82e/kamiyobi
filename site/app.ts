@@ -6406,6 +6406,13 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   icsCopyButton.addEventListener("click", () => {
     void copyIcsSubscribeUrl();
   });
+  /* 押せる物は、JavaScript が動いているときだけ出す（`hidden` のまま置いてあるのは、
+   * スクリプト無しでは何も起きないボタンを画面と紙に出さないため）。
+   *
+   * 2026-10-17 實測: 此のボタンは**一度も出て居なかった** – 雛形は `hidden` で置き、
+   * 此処で外す筈が其の一行が無く、てびきは「「購読 URL をコピー」で URL を取得できます」と
+   * 案内して居た（讀む人には見えないボタンを押せと言つて居た）。 */
+  icsCopyButton.hidden = false;
   // 印刷時は絞り込み後の全行を描画する。画面は 40 行ずつしか出さないので、
   // この措置が無いと印刷物だけ「直近 40 件」で途中までになる。印刷後に戻す。
   let printExpanded = false;
