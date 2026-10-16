@@ -6168,3 +6168,39 @@ it("list_upcoming の會期の行にも、締切と同じ欄がある（第 1114
       expect(row.categories_ja as string[]).toContain(R.categoryLabelJa(key));
   }
 });
+
+/* 行から画面の深いリンク（`index.html?row=…`）を組める事を、道具の説明に書いた。
+ * 鍵の形は `<venue key>|<year>|<kind>|<ミリ秒>` で、ミリ秒は `utc`（時刻のある行）か
+ * `uncertainty.earliest_utc`（日付のみの行）– **畫面が自分で作る鍵と同じ物**である
+ * （2026-10-17 実測: 畫面の鍵 1787565600000 は、その行の `earliest_utc` と一致した）。 */
+it("search_deadlines の行が、画面の深いリンクを組める欄を持つ（第 1115 回）", async () => {
+  const r = (await client.ask({
+    jsonrpc: "2.0",
+    id: 2,
+    method: "tools/call",
+    params: {
+      name: "search_deadlines",
+      arguments: { query: "2027", limit: 20, scope: "screen" },
+    },
+  })) as { result?: { structuredContent?: { rows?: Array<Record<string, unknown>> } } };
+  const rows = r.result?.structuredContent?.rows ?? [];
+  expect(rows.length, "行が返らない（前提が崩れた）").toBeGreaterThan(0);
+  let 組めた = 0;
+  for (const row of rows) {
+    const ミリ秒 = row.utc
+      ? Date.parse(String(row.utc))
+      : Date.parse(String((row.uncertainty as Record<string, unknown> | null)?.earliest_utc ?? ""));
+    if (!Number.isFinite(ミリ秒)) continue;
+    const 鍵 = `${row.venue_key}|${row.year}|${row.kind}|${ミリ秒}`;
+    /* 形が合っている（畫面が受け取る物と同じ形）。 */
+    expect(鍵, "深いリンクの鍵の形が違う").toMatch(/^[^|]+\|\d{4}\|[a-z_]+\|\d+$/);
+    組めた++;
+  }
+  expect(組めた, "深いリンクを組める行が 10 件未満（前提が崩れた）").toBeGreaterThan(10);
+  /* 説明にも書いてある（AI が索引を読まずに組める様に）。 */
+  const tools = (await client.ask({ jsonrpc: "2.0", id: 2, method: "tools/list" })) as {
+    result?: { tools?: Array<{ name: string; description?: string }> };
+  };
+  const t = tools.result?.tools?.find((x) => x.name === "search_deadlines");
+  expect(t?.description, "深いリンクの組み方を説明していない").toContain("index.html?row=");
+});
