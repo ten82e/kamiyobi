@@ -22,6 +22,8 @@ const inputFunctions = [
   "setPaperUndoVisible",
   "savePaperDraft",
   "clearPaperInput",
+  "readablePaperFileRecord",
+  "paperFileStatusJa",
 ]
   .map((name) => jsFunction(javascript, name))
   .join("\n");
@@ -42,6 +44,8 @@ const tick = () => new Promise<void>((resolve) => setImmediate(resolve));
 interface RecordInput {
   title: string;
   abstract?: string;
+  keywords?: string;
+  venue?: string;
 }
 function harness(deferPdfLoader = false) {
   let active: unknown = null;
@@ -190,8 +194,8 @@ function harness(deferPdfLoader = false) {
     undo: () => undo.listeners.get("click")!({ currentTarget: undo }),
     reset: () => reset.listeners.get("click")!({ currentTarget: reset }),
     applied: () => applied,
-    async select(name: string) {
-      input.files = [{ name }];
+    async select(name: string, ...more: string[]) {
+      input.files = [name, ...more].map((name) => ({ name }));
       input.listeners.get("change")!({ currentTarget: input });
       await tick();
     },
@@ -225,6 +229,103 @@ it("opens the native chooser without changing the current paper or draft", () =>
   expect(ui.written).toEqual([]);
   expect(ui.pending.size).toBe(0);
   expect(ui.applied()).toBe(0);
+});
+
+it("makes undecodable symbols in a real PDF abstract visible in the input and saved draft", async () => {
+  const fixture = JSON.parse(
+    readFileSync(new URL("./fixtures/pdf-layout-flashattention.json", import.meta.url), "utf8"),
+  );
+  const record = Recommender.pdfPaperRecord(fixture.metadata, fixture.pages, "paper.pdf");
+  expect(record.abstract).toContain("3\u0002 speedup on GPT-2");
+  const ui = harness();
+  await ui.select("paper.pdf");
+  ui.pending.get("paper.pdf")!.resolve(record);
+  await tick();
+  expect(ui.values.paperPrimaryTitle.value).toBe(fixture.expected.title);
+  expect(ui.values.paperPrimaryAbstract.value).toContain("3\uFFFD speedup on GPT-2");
+  expect(ui.values.paperPrimaryAbstract.value).toContain("2.4\uFFFD speedup on long-range arena");
+  expect(ui.values.paperPrimaryAbstract.value.endsWith(fixture.expected.abstractEnd)).toBe(true);
+  expect(ui.values.paperText.value).not.toContain("\\u0002");
+  expect(JSON.parse(ui.draft.get("draft")!).abstract).toBe(ui.values.paperPrimaryAbstract.value);
+  expect(ui.label.textContent).toContain("paper.pdf。読み取れない文字を「\uFFFD」で示しました");
+  expect(ui.label.textContent).toContain("原文と照合して入力欄を修正してください");
+  expect(ui.applied()).toBe(1);
+});
+
+it.each(["\u0000", "\u0002", "\u0008", "\u000e", "\u001f", "\u007f", "\u0081", "\u009f"])(
+  "marks an unreadable character %j in all imported fields without guessing its meaning",
+  async (character) => {
+    const ui = harness();
+    await ui.select("paper.txt");
+    ui.pending.get("paper.txt")!.resolve({
+      title: `題${character}名`,
+      abstract: `計算量${character}を測定した`,
+      keywords: `分散${character}処理`,
+      venue: `研究${character}会`,
+    });
+    await tick();
+    expect(ui.values.paperPrimaryTitle.value).toBe("題\uFFFD名");
+    expect(ui.values.paperPrimaryAbstract.value).toBe("計算量\uFFFDを測定した");
+    expect(ui.values.paperPrimaryKeywords.value).toBe("分散\uFFFD処理");
+    expect(JSON.parse(ui.draft.get("draft")!).venue).toBe("研究\uFFFD会");
+    expect(JSON.parse(ui.values.paperText.value)[0]).toEqual({
+      title: "題\uFFFD名",
+      abstract: "計算量\uFFFDを測定した",
+      keywords: "分散\uFFFD処理",
+      venue: "研究\uFFFD会",
+    });
+    expect(ui.label.textContent).toContain("読み取れない文字");
+  },
+);
+
+it("preserves valid Japanese, mathematical symbols and whitespace without a false warning", async () => {
+  const record = {
+    title: "計算量 O(n²) と α・β の比較",
+    abstract: "3×速い。\n\t比較は 2≤n≤10。\r\n実験🙂、ﬀ、é、e\u0301、\u000b\u000c\u0085区切り。",
+    keywords: "分散処理；∑；∫；→",
+    venue: "国内研究会",
+  };
+  const ui = harness();
+  await ui.select("valid\uFFFDname.txt");
+  ui.pending.get("valid\uFFFDname.txt")!.resolve(record);
+  await tick();
+  expect(ui.values.paperPrimaryTitle.value).toBe(record.title);
+  expect(ui.values.paperPrimaryAbstract.value).toBe(record.abstract);
+  expect(ui.values.paperPrimaryKeywords.value).toBe(record.keywords);
+  expect(JSON.parse(ui.draft.get("draft")!).venue).toBe(record.venue);
+  expect(ui.label.textContent).toBe("valid\uFFFDname.txt");
+});
+
+it("warns about a replacement character already present in the source and clears the warning on a clean import", async () => {
+  const ui = harness();
+  await ui.select("broken.txt");
+  ui.pending.get("broken.txt")!.resolve({ title: "読めない\uFFFD文字" });
+  await tick();
+  expect(ui.values.paperPrimaryTitle.value).toBe("読めない\uFFFD文字");
+  expect(ui.label.textContent).toContain("broken.txt。読み取れない文字");
+  await ui.select("clean.txt");
+  ui.pending.get("clean.txt")!.resolve({ title: "正常な日本語" });
+  await tick();
+  expect(ui.values.paperPrimaryTitle.value).toBe("正常な日本語");
+  expect(ui.label.textContent).toBe("clean.txt");
+});
+
+it("identifies damaged reference fields among multiple files while keeping readable references", async () => {
+  const ui = harness();
+  await ui.select("main.txt", "reference.pdf", "clean.txt");
+  ui.pending.get("main.txt")!.resolve({ title: "主論文", abstract: "概要" });
+  ui.pending.get("reference.pdf")!.resolve({ title: "参照\u0002論文", keywords: "並列処理" });
+  ui.pending
+    .get("clean.txt")!
+    .resolve({ title: "正常な参照", abstract: "入力に使わない\uFFFD概要" });
+  await tick();
+  expect(ui.values.paperPrimaryTitle.value).toBe("主論文");
+  expect(ui.values.paperReferences.value).toBe("参照\uFFFD論文 | 並列処理\n正常な参照");
+  expect(ui.label.textContent).toBe(
+    "main.txt, reference.pdf, clean.txt。reference.pdfの読み取れない文字を「\uFFFD」で示しました。原文と照合して入力欄を修正してください。",
+  );
+  const draft = JSON.parse(ui.draft.get("draft")!);
+  expect(draft.references).toBe(ui.values.paperReferences.value);
 });
 
 it("returns focus to the restored title when the focused undo button disappears", () => {

@@ -5886,6 +5886,35 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       .then((buf) => readPdf(buf, signal))
       .then((result) => Recommender.pdfPaperRecord(result.metadata, result.pages, file.name));
   }
+  function readablePaperFileRecord(record: PaperRecord): PaperRecord {
+    const readable = (text: string | undefined) =>
+      String(text || "").replace(/\p{Cc}/gu, (character) =>
+        /\p{White_Space}/u.test(character) ? character : "\uFFFD",
+      );
+    return {
+      title: readable(record.title),
+      abstract: readable(record.abstract),
+      keywords: readable(record.keywords),
+      venue: readable(record.venue),
+    };
+  }
+  function paperFileStatusJa(names: string[], records: PaperRecord[]): string {
+    const affected = names.filter((_name, index) => {
+      const record = records[index];
+      return (
+        record &&
+        [record.title, record.keywords, record.venue, index === 0 ? record.abstract : ""].some(
+          (text) => String(text || "").includes("\uFFFD"),
+        )
+      );
+    });
+    return (
+      names.join(", ") +
+      (affected.length
+        ? `。${names.length > 1 ? `${affected.join(", ")}の` : ""}読み取れない文字を「\uFFFD」で示しました。原文と照合して入力欄を修正してください。`
+        : "")
+    );
+  }
   function syncPaperText() {
     const primary: PaperRecord = {
       title: valueElement("paperPrimaryTitle").value.trim(),
@@ -6053,8 +6082,9 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         if (job !== pdfJob || signal.aborted) throw abortError();
         return Promise.all(files.map((file) => readPaperFile(file, signal)));
       })
-      .then((records) => {
+      .then((readRecords) => {
         if (job !== pdfJob || signal.aborted) throw abortError();
+        const records = readRecords.map(readablePaperFileRecord);
         // 選んだファイルを欄に反映する差し替えも、例のボタンと同じ規則を通す。以前はここで
         // 無条件に上書きしていて、打ち込んだ物や前に選んだファイル群が告げずに消えた
         // （欄に「複数可」とあるので、足し算に読む人がいても不思議ではない）。
@@ -6076,7 +6106,10 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         setPaperUndoVisible(Boolean(swap.kept));
         writePaperInput(swap.next);
         syncPaperText();
-        label.textContent = files.map((file) => file.name).join(", ");
+        label.textContent = paperFileStatusJa(
+          files.map((file) => file.name),
+          records,
+        );
         apply();
         scheduleSemantic();
       })
