@@ -80,21 +80,32 @@ describe("一覧の表が閉じ要素まで揃った HTML で出る（第 279 �
     }
   });
 
-  it("直近の締切と会期の表は、すべての行が 9 列持っている", () => {
+  it("直近の締切と会期の表は、すべての行が 10 列持っている", () => {
     const src = body("upcoming.html");
     const list = rows(src);
     expect(list.length, "行がない（組み立てが壊れた）").toBeGreaterThan(100);
-    // 見出しの行（`scope="col"` を持つ行）は別扱いで、そちらも 9 個であることを見る。
+    // 見出しの行（`scope="col"` を持つ行）は別扱いで、そちらも同じ數であることを見る。
     const headRow = list.find((r) => r.includes('scope="col"'));
     expect(headRow, "見出しの行がない").toBeTruthy();
     expect(
       [...String(headRow).matchAll(/<th\b[\s\S]*?<\/th>/g)].map((m) => cellText(m[0])),
       "列の名が変わった",
-    ).toEqual(["日付", "残り", "会議", "種別", "ラウンド", "推定", "開催地", "会期", "状態"]);
+    ).toEqual([
+      "日付",
+      "残り",
+      "会議",
+      "種別",
+      "ラウンド",
+      "推定",
+      "開催地",
+      "会期",
+      "状態",
+      "ランク",
+    ]);
     const data = list.filter((r) => r.includes("<td"));
     expect(data.length, "データの行がない").toBeGreaterThan(100);
 
-    const bad = data.filter((r) => (r.match(/<t[hd]\b/g) || []).length !== 9);
-    expect(bad.slice(0, 2), `${bad.length} 行が 9 列でない`).toEqual([]);
+    const bad = data.filter((r) => (r.match(/<t[hd]\b/g) || []).length !== 10);
+    expect(bad.slice(0, 2), `${bad.length} 行が 10 列でない`).toEqual([]);
   });
 });

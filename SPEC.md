@@ -668,7 +668,7 @@ node --experimental-strip-types src/cli.ts evidence [verify|gc] [--dry-run]
 | `catalog.json` | 締切画面向けの現在・近日期間カタログ（画面の最初の一覧に出る物）。履歴と論文プロフィールを含めず、全履歴の `history_ref` を持つ。**載る締切の件数と範囲は索引に実測で書く** |
 | `recommendation-index.json` | 投稿先推薦用の会議プロフィール、代表締切、埋め込みマニフェスト参照 |
 | `data.csv` | 1 行 1 締切の平坦な表。推定版も含む |
-| `upcoming.md` | 直近 N 日の締切と開催日の表（N は `site.upcoming_days`、既定 180） |
+| `upcoming.md` | 直近 N 日の締切と開催日の表（N は `site.upcoming_days`、既定 180）。列は 日付・残り・会議・種別・ラウンド・推定・開催地・会期・状態・**ランク**。列は**末尾に足す**（列の順序で読む下流を壊さない – `data.csv` の `kind_ja` と同じ判断） |
 | `llms.txt` | エージェント向け出力索引 |
 | `embeddings.json` | 会議スコープの埋め込み（§10）。`--no-embeddings` で省略可 |
 | `recommender.js` | `site/recommender.ts` から生成するサイトの推薦ロジック |

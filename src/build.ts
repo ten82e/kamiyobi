@@ -4084,6 +4084,15 @@ export function toUpcomingMd(
       Recommender.placeJa(Recommender.placeWithPrefectureJa(ed.place)) ||
         Recommender.unconfirmedLabelJa(),
     );
+    /* 画面のランク列と同じ入口・同じ語（`rankPairLabelJa`）。無い行は畫面と同じ「未確認」。
+     * 2026-10-17 まで此の列が無く、**JavaScript を使へない讀者だけがランクを見られなかつた**
+     * （畫面にも CSV にも有る – `rank_ccf`・`rank_core`）。 */
+    const rankText = escapeMdCell(
+      Object.entries((rec.conf?.rank ?? {}) as Record<string, string>)
+        .filter(([, grade]) => Boolean(grade))
+        .map(([scale, grade]) => Recommender.rankPairLabelJa(`${scale}:${grade}`))
+        .join("・") || Recommender.unconfirmedLabelJa(),
+    );
     if (rec.type === "deadline") {
       const dl = rec.deadline;
       if (dl === null) continue;
@@ -4144,7 +4153,7 @@ export function toUpcomingMd(
 
       const 状態 = statusMarksJa(dl).join("・");
       rows.push(
-        `| ${when} | ${left} | ${name} | ${kindText} | ${roundText} | ${ed.estimated ? "推定" : ""} | ${placeEscaped} | ${sessionText} | ${状態} |`,
+        `| ${when} | ${left} | ${name} | ${kindText} | ${roundText} | ${ed.estimated ? "推定" : ""} | ${placeEscaped} | ${sessionText} | ${状態} | ${rankText} |`,
       );
     } else {
       const start = rec.start;
@@ -4183,7 +4192,7 @@ export function toUpcomingMd(
         },
       });
       rows.push(
-        `| ${when} | ${left} | ${name} | ${escapeMdCell(rec.kind_note ? `開催（${rec.kind_note}）` : "開催")} | - | ${ed.estimated ? "推定" : ""} | ${placeEscaped} | ${when} |  |`,
+        `| ${when} | ${left} | ${name} | ${escapeMdCell(rec.kind_note ? `開催（${rec.kind_note}）` : "開催")} | - | ${ed.estimated ? "推定" : ""} | ${placeEscaped} | ${when} |  | ${rankText} |`,
       );
     }
   }
@@ -4226,16 +4235,23 @@ export function toUpcomingMd(
      * うち開催地が「未確認」182 行、日付に「（時刻未確認）」を持つ行 180 行、AoE の宣言が
      * 410 箇所）。「未確認」を「収録元が無いと決めた意味」と誤読されると、探している会議を
      * 捨ててしまう。意味の文は画面のてびき・印刷の但し書きと同じ正本から取る。 */
+    /* ランクの列の意味（2026-10-17 に足した列）。「評価なし」と「未確認」の區別は、
+     * 畫面の吹き出し（`RANK_UNRATED_TITLE_JA`）と同じ事を言ふ。 */
+    "> 「ランク」は CCF・CORE・THCPL の一覧の評価（「CCF A」の形）。「評価なし」はその一覧に",
+    "> 載っているが評価が付いていない行で、「未確認」は一覧でも確認できていない行です。",
     `> 「${Recommender.unconfirmedLabelJa()}」は${Recommender.unconfirmedMeaningJa()}です。この表では開催地の列に`,
     "> 出ます。",
     `> 日付列の「（${Recommender.timeUnconfirmedLabelJa()}）」は、その日であることだけを確認できて、何時までに`,
     "> 出すかが公式に出ていない行。",
     `> ${Recommender.aoeMeaningJa()}。`,
     "",
-    "| 日付 | 残り | 会議 | 種別 | ラウンド | 推定 | 開催地 | 会期 | 状態 |",
-    "|---|---|---|---|---|---|---|---|---|",
+    /* 列は**末尾に足す**（列の順序で讀む下流を壊さない – `kind_ja` と同じ判斷）。
+     * 畫面の列の並びとは違ふが、表としての讀み易さより、既に在る讀み手を壊さない事を取る。 */
+    "| 日付 | 残り | 会議 | 種別 | ラウンド | 推定 | 開催地 | 会期 | 状態 | ランク |",
+    "|---|---|---|---|---|---|---|---|---|---|",
   ];
-  if (rows.length === 0) rows.push("| - | - | 該当なし | - | - | - | - | - |");
+  if (rows.length === 0)
+    rows.push("| - | - | 該当なし | - | - | - | - | - | - | - |");
   /* 1,000 行を超える表なので、最後まで読んだ人にも出口を置く（`upcoming.html` と同じ言い回しを
    * 同じ正本から使う）。GitHub の生的な表示では、この名前はコードのスパンになるだけで辿れない。 */
   const tail = [

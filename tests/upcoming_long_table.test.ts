@@ -27,7 +27,7 @@ describe("縦に長い静的な一覧（第 269 回）", () => {
      * 592 行を実測）。ここでは「先頭の 1 個だけでは戻れないほど長い」と言える根拠として、
      * 画面の 1 画面ぶん（40 行）を大きく越えることを見る。 */
     expect(rows, "想定より短い表になっている（見直しの合図）").toBeGreaterThan(200);
-    expect(up.match(/<th scope="col">/g)?.length, "欄の数が変わった").toBe(9);
+    expect(up.match(/<th scope="col">/g)?.length, "欄の数が変わった").toBe(10);
   });
 
   it("終端に出口がある（最後の行よりうしろに、先頭と画面へ戻る物を出す）", () => {
@@ -138,11 +138,13 @@ it("状態の列が、画面の一覧の札と同じ語を持つ（第 862 回�
       .replace(/<[^>]*>/g, "")
       .trim(),
   );
-  expect(見出し[見出し.length - 1], "状態の列が末尾にない").toBe("状態");
+  /* 狀態の列の位置は末尾とは限らない（ランクを後ろに足した）。名前で探す。 */
+  expect(見出し.indexOf("状態"), "状態の列がない").toBeGreaterThan(-1);
+  expect(見出し[見出し.length - 1], "ランクの列が末尾にない").toBe("ランク");
   const md = readFileSync(join(site, "upcoming.md"), "utf8");
   const 表 = md.split("\n").filter((l) => l.startsWith("|"));
   const 幅 = [...new Set(表.map((l) => l.slice(1, -1).split("|").length))];
-  expect(幅, "列数が揃つて居ない").toEqual([9]);
+  expect(幅, "列数が揃つて居ない").toEqual([10]);
   /* 語は畫面と同じ正本から取る（書き寫すと、狀態の語を足した日に此處だけ古くなる –
    * 2026-10-17 に實際に踏んだ: `読み取り失敗`・`再確認待ち` を足した後も、此の檢查は
    * `要確認|延長後` だけを許して居た）。 */
