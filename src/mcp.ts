@@ -1621,6 +1621,13 @@ interface UpcomingEventRow extends ReturnType<typeof eventMetadata> {
   year: number | null;
   segment_label: string | null;
   place: string | null;
+  /* 締切の行と同じ欄（分野・正式名・ランク・國內）。會期の行だけ此れ等が無いと、
+   * 「今度開かれる私の分野の會議」を AI が答えられない（2026-10-17 實測: 締切の行には
+   * `categories`・`rank`・`domestic` が在るのに、會期の行には 1 つも無かった）。 */
+  full_name: string | null;
+  categories: string[];
+  rank: unknown;
+  domestic: boolean;
 }
 
 export function 開催の行(days: number, now: number): UpcomingEventRow[] {
@@ -1634,6 +1641,11 @@ export function 開催の行(days: number, now: number): UpcomingEventRow[] {
       acronym?: unknown;
       link?: unknown;
       editions?: unknown[];
+      /* 締切の行と同じ欄（`structuredDeadline` が讀む物と揃える）。 */
+      full_name?: unknown;
+      categories?: unknown;
+      rank?: unknown;
+      tags?: unknown;
     };
     const 略稱 = String(会議.acronym ?? "");
     for (const e of 会議.editions ?? []) {
@@ -1688,6 +1700,10 @@ export function 開催の行(days: number, now: number): UpcomingEventRow[] {
           place: typeof ed.place === "string" && ed.place.trim() ? ed.place : null,
           開催地: placeDisplayJa(ed.place) || String(Recommender.unconfirmedLabelJa() ?? "未確認"),
           link: officialLink(ed.link, 会議.link) ?? "",
+          full_name: String(会議.full_name ?? "").trim() || null,
+          categories: Array.isArray(会議.categories) ? [...(会議.categories as string[])] : [],
+          rank: 会議.rank ?? null,
+          domestic: Recommender.isDomesticTag(会議.tags as string[] | undefined),
         });
       }
     }
@@ -1794,6 +1810,12 @@ function listUpcoming(
         place: event.place,
         place_ja: event.開催地,
         official_url: event.link || null,
+        /* 締切の行と同じ欄（`search_deadlines`・`venue_info` と揃える）。 */
+        full_name: event.full_name,
+        categories: event.categories,
+        categories_ja: event.categories.map((key) => Recommender.categoryLabelJa(key)),
+        rank: event.rank,
+        domestic: event.domestic,
       },
     })),
   ];
@@ -3130,7 +3152,7 @@ const TOOLS = [
   {
     name: "list_upcoming",
     description:
-      "今日から days 日以内の締切と開催日程を返す。両方を合わせて時系列に1ページ最大100件。structuredContent.items の type は deadline または event。total・next_offset を返し、続きは同じ条件で offset に next_offset を指定する。scope と kind/kinds は締切の条件で、会期は収録全体の同期間から選ぶ。既定は種別では絞らない（全部）、推定も含む。kind / kinds は日本語の種別名と配列も受ける。推定期間・トラック・前に出ていた締切も表示する。範囲は JST の暦日で判定する。within_days と境目の切り方は同じ。search_deadlines と件数を比べる場合は種別・推定・scope を揃える。既定の条件では件数はそのままでは違う。返す行の形: 締切は日時 | 種別 | 確認状態（ある場合）| 会議名（版の識別子）| ランク | 会期 | 開催地 URL。会期の行は別の形で、開催の節に - 開始日〜終了日 | 会議名（key: 識別子・版）| 開催地 URL。会期の行の会議名は年を添えた形、開催地は締切の行と同じ日本語表記です（空でも「未確認」を出します）。",
+      "今日から days 日以内の締切と開催日程を返す。両方を合わせて時系列に1ページ最大100件。structuredContent.items の type は deadline または event。total・next_offset を返し、続きは同じ条件で offset に next_offset を指定する。scope と kind/kinds は締切の条件で、会期は収録全体の同期間から選ぶ。既定は種別では絞らない（全部）、推定も含む。kind / kinds は日本語の種別名と配列も受ける。推定期間・トラック・前に出ていた締切も表示する。範囲は JST の暦日で判定する。within_days と境目の切り方は同じ。search_deadlines と件数を比べる場合は種別・推定・scope を揃える。既定の条件では件数はそのままでは違う。返す行の形: 締切は日時 | 種別 | 確認状態（ある場合）| 会議名（版の識別子）| ランク | 会期 | 開催地 URL。会期の行は別の形で、開催の節に - 開始日〜終了日 | 会議名（key: 識別子・版）| 開催地 URL。会期の行の会議名は年を添えた形、開催地は締切の行と同じ日本語表記です（空でも「未確認」を出します）。**構造化の行は締切と同じ欄**（`full_name`・`categories`・`categories_ja`・`rank`・`domestic`）も持ちます。",
     inputSchema: {
       type: "object",
       properties: {

@@ -6135,3 +6135,36 @@ it("venue_info の締切の行にも、カレンダーの UID が付く（第 11
   for (const row of 付いた.slice(0, 5))
     expect(ics, `${row.ics_uid} がカレンダーに無い`).toContain(`UID:${row.ics_uid}`);
 });
+
+/* 會期の行（`type: event`）にも、締切の行と同じ欄を揃へる（2026-10-17 實測: 締切の行には
+ * `categories`・`rank`・`domestic` が在るのに、會期の行には 1 つも無かつた – 「今度開かれる
+ * 私の分野の會議」を AI が答えられない）。 */
+it("list_upcoming の會期の行にも、締切と同じ欄がある（第 1114 回）", async () => {
+  const r = (await client.ask({
+    jsonrpc: "2.0",
+    id: 2,
+    method: "tools/call",
+    params: { name: "list_upcoming", arguments: { days: 180, limit: 100 } },
+  })) as {
+    result?: { structuredContent?: { items?: Array<Record<string, unknown>> } };
+  };
+  const 會期 = (r.result?.structuredContent?.items ?? []).filter((x) => x.type === "event");
+  expect(會期.length, "會期の行が返らない（前提が崩れた）").toBeGreaterThan(0);
+  const 分野付き = 會期.filter(
+    (x) => Array.isArray(x.categories) && (x.categories as string[]).length,
+  );
+  expect(分野付き.length, "分野を持つ會期の行が無い（前提が崩れた）").toBeGreaterThan(10);
+  for (const row of 分野付き.slice(0, 20)) {
+    expect(Array.isArray(row.categories_ja), "categories_ja が無い").toBe(true);
+    expect((row.categories_ja as string[]).length, "categories と categories_ja の數が違う").toBe(
+      (row.categories as string[]).length,
+    );
+    expect(row, "rank の欄が無い").toHaveProperty("rank");
+    expect(typeof row.domestic, "domestic が真偽値でない").toBe("boolean");
+    expect(row, "full_name の欄が無い").toHaveProperty("full_name");
+    /* 締切の行と同じ語（正本は `categoryLabelJa`）。 */
+    const R = (await import("../site/recommender.ts")).default;
+    for (const key of row.categories as string[])
+      expect(row.categories_ja as string[]).toContain(R.categoryLabelJa(key));
+  }
+});
