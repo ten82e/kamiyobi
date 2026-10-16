@@ -31,8 +31,12 @@ const cliFile = "src/cli.ts";
 const cliOriginal = readFileSync(join(root, cliFile), "utf8");
 const ccfFile = "src/sources/ccfddl.ts";
 const aiFile = "src/sources/aideadlines.ts";
+const archiveFile = "src/sources/base.ts";
 const originals = new Map(
-  [file, cliFile, ccfFile, aiFile].map((path) => [path, readFileSync(join(root, path), "utf8")]),
+  [file, cliFile, ccfFile, aiFile, archiveFile].map((path) => [
+    path,
+    readFileSync(join(root, path), "utf8"),
+  ]),
 );
 function run(label: string, broken: boolean) {
   for (const dir of ["data", "public", ".cache"])
@@ -78,19 +82,24 @@ function run(label: string, broken: boolean) {
           : label.startsWith("cli-")
             ? ["CLI", "upstream CLI", "archive CLI"]
             : ["API", "CLI", "upstream CLI", "archive CLI"]) {
-        assert(
-          suite?.assertionResults.some(
-            (test: { fullName: string; status: string; failureMessages: string[] }) =>
-              test.fullName.startsWith(`${entry} build `) &&
-              test.status === "failed" &&
-              test.failureMessages.some(
-                (message) =>
-                  message.includes("AssertionError") &&
-                  (message.includes("llms.txt") ||
+        const transportFault = label.startsWith("archive-transport-");
+        const detected = suite?.assertionResults.filter(
+          (test: { fullName: string; status: string; failureMessages: string[] }) =>
+            test.fullName.startsWith(`${entry} build `) &&
+            test.status === "failed" &&
+            test.failureMessages.some(
+              (message) =>
+                message.includes("AssertionError") &&
+                (transportFault
+                  ? message.includes("縮退した内容を配信しないため中断する") &&
+                    message.includes("expected 2 to be +0")
+                  : message.includes("llms.txt") ||
                     message.includes("independently specified input counts")),
-              ),
-          ),
-          `${label}: ${entry} count assertions did not detect fault`,
+            ),
+        );
+        assert(
+          transportFault ? detected?.length === 2 : detected && detected.length > 0,
+          `${label}: ${entry} ${transportFault ? "CLI success" : "count"} assertions did not detect fault`,
         );
       }
     }
@@ -102,6 +111,18 @@ function run(label: string, broken: boolean) {
   );
 }
 const faults = [
+  [
+    "archive-transport-extraction-drops-input-rows",
+    'execFileSync("tar", ["-xzf", archive, "-C", staging]);',
+    'execFileSync("tar", ["-xzf", archive, "-C", staging, "--exclude=*/counts.yaml"]);',
+    archiveFile,
+  ],
+  [
+    "archive-transport-extracted-root-not-passed-to-loaders",
+    'setMetadata(repo, ref, root, "fresh", now);\n  return root;',
+    'setMetadata(repo, ref, root, "fresh", now);\n  return slot;',
+    archiveFile,
+  ],
   [
     "archive-ccf-loader-drops-editions",
     'return parseTree(join(root, "conference"));',
