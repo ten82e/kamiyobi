@@ -1183,7 +1183,8 @@ footer a:hover { text-decoration: underline; }
     <button id="icsCopy" type="button" class="btn-reset" hidden>購読 URL をコピー</button>
 
     <a id="jsonLink" class="btn-reset" href="data.json" title="収録している全ての会議・締切・出典を JSON で開きます。過去の締切や、画面の表示期間より先の締切も含みます。ファイルは画面の一覧より大きく、取得に時間がかかる場合があります。現在の絞り込み結果を表計算で使う場合は『この一覧の N 件を CSV でダウンロード』を選んでください。">全データ（JSON）</a>
-    <span class="count-hint">「詳細・投稿日程」で概要登録・論文提出と確認の根拠を見る<span class="count-kbd" style="font-family: var(--font-mono); font-size: 0.75rem;"> ｜ ショートカット: <kbd>j</kbd>/<kbd>k</kbd>・<kbd>↓</kbd>/<kbd>↑</kbd> 選択 | <kbd>Enter</kbd> 開く | <kbd>d</kbd> 詳細 | <kbd>Esc</kbd> 閉じる | <kbd>/</kbd> 検索</span></span>
+    <span class="count-hint" id="deadlineResultHint">「詳細・投稿日程」で概要登録・論文提出と確認の根拠を見る<span class="count-kbd" style="font-family: var(--font-mono); font-size: 0.75rem;"> ｜ ショートカット: <kbd>j</kbd>/<kbd>k</kbd>・<kbd>↓</kbd>/<kbd>↑</kbd> 選択 | <kbd>Enter</kbd> 開く | <kbd>d</kbd> 詳細 | <kbd>Esc</kbd> 閉じる | <kbd>/</kbd> 検索</span></span>
+    <span class="count-hint" id="recommendResultHint" hidden>会議名か「公式サイト」を開いて、募集要項を確認してください。<span class="count-kbd" style="font-family: var(--font-mono); font-size: 0.75rem;"> ｜ ショートカット: <kbd>/</kbd> 論文入力 | <kbd>Tab</kbd> 次の項目へ | <kbd>Enter</kbd> 開く</span></span>
   </div>
 
   <details id="dataScope" class="data-scope">

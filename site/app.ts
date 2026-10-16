@@ -5423,6 +5423,12 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     panel.classList.toggle("mode-deadlines", !recommend);
     $("modeRecommend").setAttribute("aria-pressed", String(recommend));
     $("modeDeadlines").setAttribute("aria-pressed", String(!recommend));
+    const resultLabel = recommend ? "投稿先の候補" : "締切の一覧";
+    $("resultsHeading").textContent = resultLabel;
+    const skip = document.querySelector<HTMLAnchorElement>(".skip-link");
+    if (skip) skip.textContent = `${resultLabel}へ進む`;
+    $("deadlineResultHint").hidden = recommend;
+    $("recommendResultHint").hidden = !recommend;
     // てびきは締切一覧の読み方を説明するもの。推薦画面では表が消えるので畳む。
     $("helpPanel").hidden = recommend;
   }
