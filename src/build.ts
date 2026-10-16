@@ -27,7 +27,9 @@ import {
   icsCalendarMeta,
   icsCalendarText,
   icsCategoryLabels,
+  icsDeadlineUidKey,
   icsEventBody,
+  icsUidDayOf,
   icsUidSafe,
   jstParts,
   statusMarksJa,
@@ -3698,16 +3700,6 @@ export function icsRowsWithUids(
 /** 締切ごとの UID を引く鍵。**配付物と畫面の両方が同じ材料で組める形**にする
  * （開催回・種別・回次・原表記・JST の暦日）。日付を入れるのは引くためだけで、
  * UID その物は日付を含まない（締切が動いても購読者の予定が入れ替わらないため）。 */
-export function icsDeadlineUidKey(
-  editionId: string,
-  kind: string,
-  round: unknown,
-  label: string,
-  day: string,
-): string {
-  return [editionId, kind, String(Number(round ?? 1) || 1), label, day].join("\u0000");
-}
-
 /* 購読先に申告する事実。行から導く – 別々に数えると、申告と中身がズレる
  * （「928 件」と書いて 927 件しか入っていない、が一番信用を失う）。 */
 /** 入口（行を作ってカレンダーの本文に組む）。行だけが必要なら `icsEventRows` を使う。 */

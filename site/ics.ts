@@ -53,6 +53,34 @@ export function jstParts(at: Date | null | undefined): { day: string; human: str
   };
 }
 
+/** カレンダーの UID を組む鍵（版・種別・回・ラベル・日）。
+ *
+ * **同じ締切には同じ UID** を付けるための鍵である。UID の本文（`kamiyobi-<版>-<種別の印>`）は
+ * 版と種別しか見ないので、同じ版の同じ種別で日だけ違ふ行（延長・複数締切）は本文が同じに
+ * なり、本文の側で通し番号を振る。**此の鍵は其の「同じ締切」を言ひ當てる側**で、組む側
+ * （配付の ICS）と引く側（書き出し・MCP）が同じ物を使ふ – 別々に書くと、片方だけ直した日に
+ * 別の予定の UID を返す（2026-10-17 に實際に起きた）。 */
+export function icsDeadlineUidKey(
+  editionId: string,
+  kind: string,
+  round: unknown,
+  label: string,
+  day: string,
+): string {
+  return [editionId, kind, String(Number(round ?? 1) || 1), label, day].join("\u0000");
+}
+
+/** UID の鍵に使ふ「日」。**時刻のある行は日本時間の暦日、日付のみの行は其の日**である
+ * （カレンダーの終日イベントが JST の暦日に置かれる事に合わせる）。 */
+export function icsUidDayOf(at: unknown, localDate: unknown): string {
+  const 日付のみ = typeof localDate === "string" ? localDate.replace(/-/g, "").slice(0, 8) : "";
+  const atMs =
+    at instanceof Date ? at.getTime() : typeof at === "string" ? Date.parse(at) : Number.NaN;
+  if (!Number.isFinite(atMs)) return /^\d{8}$/.test(日付のみ) ? 日付のみ : "";
+  const parts = jstParts(new Date(atMs));
+  return parts?.day ?? (/^\d{8}$/.test(日付のみ) ? 日付のみ : "");
+}
+
 /** JST の暦日を 1 日後ろへ（終日イベントの `DTEND` は「その日の終わり」ではないため）。 */
 export function icsNextDay(day: string): string {
   const y = Number(day.slice(0, 4));

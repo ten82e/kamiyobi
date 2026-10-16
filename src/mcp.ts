@@ -3,6 +3,7 @@
 import { readFileSync, realpathSync, statSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { icsDeadlineUidKey, icsUidDayOf } from "../site/ics.ts";
 import Recommender from "../site/recommendation.ts";
 import {
   isRecommendationAxes,
@@ -220,18 +221,6 @@ function allRows(): Row[] {
  * 品書にも載つて居るので、其ちらから引いて渡す – **同じ締切が、道具に依つて UID を持つたり
  * 持たなかつたり**しない樣にする（2026-10-17 実測: `list_upcoming` の締切の行には 1 つも
  * 無く、`search_deadlines` の初期カタログの行にだけ在つた）。 */
-/** カレンダーの UID を組む時の「日」。カレンダー（`src/build.ts` の `icsDeadlineUidKey`）と
- * **同じ規則**にする – 時刻のある行は日本時間の暦日、日付のみの行は其の日。 */
-function mcpIcsDay(dl: Record<string, unknown>): string {
-  const 日付のみ = typeof dl.local_date === "string" ? dl.local_date.trim() : "";
-  if (dl.utc === null || dl.utc === undefined) return 日付のみ.replace(/-/g, "");
-  const at = typeof dl.utc === "string" ? Date.parse(dl.utc) : Number.NaN;
-  if (!Number.isFinite(at)) return 日付のみ.replace(/-/g, "");
-  const parts = JST.formatToParts(new Date(at));
-  const get = (type: string): string => parts.find((p) => p.type === type)?.value ?? "";
-  return `${get("year")}${get("month")}${get("day")}`;
-}
-
 let uid索引: Map<string, string> | undefined;
 function 品書のUID(): Map<string, string> {
   if (uid索引 !== undefined) return uid索引;
@@ -264,14 +253,13 @@ function 品書のUID(): Map<string, string> {
           /* 鍵は**カレンダーと同じ形**（版・種別・回・ラベル・日）。日を入れないと、同じ版の
            * 同じ種別で日だけ違ふ行が同じ鍵に成り、**別の予定の UID** を返す（實測 2026-10-17:
            * VLDB 2027 で `…-3` と `…-7` を取り違へた）。 */
-          const k = [
-            venue,
+          const k = `${venue}\u0000${icsDeadlineUidKey(
             edition,
-            dl.kind ?? "",
-            dl.round ?? 1,
-            dl.label ?? "",
-            mcpIcsDay(dl),
-          ].join("\u0000");
+            String(dl.kind ?? ""),
+            dl.round,
+            String(dl.label ?? ""),
+            icsUidDayOf(dl.utc, dl.local_date),
+          )}`;
           /* 先に讀んだ方を殘す（品書 = 畫面が讀む物を優先）。 */
           if (!表.has(k)) 表.set(k, uid);
         }
@@ -1321,14 +1309,16 @@ export function structuredDeadline(r: Row, now: number): Record<string, unknown>
         typeof r.dl.ics_uid === "string" && r.dl.ics_uid
           ? r.dl.ics_uid
           : 品書のUID().get(
-              [
-                r.conf.key,
+              `${r.conf.key}\u0000${icsDeadlineUidKey(
                 r.ed.id,
                 r.kind,
-                r.dl.round ?? 1,
-                r.dl.label ?? "",
-                mcpIcsDay(r.dl as Record<string, unknown>),
-              ].join("\u0000"),
+                r.dl.round,
+                String(r.dl.label ?? ""),
+                icsUidDayOf(
+                  (r.dl as { utc?: unknown }).utc,
+                  (r.dl as { local_date?: unknown }).local_date,
+                ),
+              )}`,
             );
       return uid ? { ics_uid: uid } : {};
     })(),
