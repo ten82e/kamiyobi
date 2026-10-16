@@ -885,6 +885,9 @@ footer a:hover { text-decoration: underline; }
   .result-notes,
   #helpPanel,
   #exportCsv,
+  /* 書き出しのボタンは紙では押せない（CSV の隣だけが残っていた – 2026-10-17 実測:
+     印刷の見え方で `#exportIcs` だけ display: block、`#exportCsv` は none）。 */
+  #exportIcs,
   #more,
   #showAll,
   #historyStatus,

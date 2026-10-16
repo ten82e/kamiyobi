@@ -3760,3 +3760,22 @@ it("upcoming.md が、種別に元の呼び名を添えた形を散文で説明�
     "散文が種別の「元の呼び名」の形を説明していない",
   ).toBe(true);
 });
+
+it("紙には押せない物を刷らない（書き出しのボタンを紙に残さない・SPEC §7）", () => {
+  /* 2026-10-17 實測: 印刷の見え方で `#exportIcs`（この一覧の N 件をカレンダーで）だけが
+   * display: block の儘で、隣の `#exportCsv` は none だった。紙のうえのボタンは押せないので、
+   * 數や宛先を書いた札に成るだけである（讀む人は、その一覧を書き出せる事を紙では確かめられない）。 */
+  const html = readFileSync(join(site, "index.html"), "utf8");
+  const printBlock = /@media print\s*\{([\s\S]*?)\n\}/.exec(html);
+  expect(printBlock, "印刷の取りまとめが見つからない").not.toBeNull();
+  /* 選ぶ側の行その物を見る（註に同じ id を書いてあるので、`toContain` では素通りする –
+   * 2026-10-17 實測: 註の語に當たつて、外しても落ちなかった）。 */
+  for (const id of ["#exportCsv", "#exportIcs"])
+    expect(printBlock![1], `紙に書き出しのボタンが残る: ${id}`).toMatch(
+      new RegExp(`^\\s*${id},\\s*$`, "m"),
+    );
+  /* 押せる物を紙に殘さない – 畫面の操作部品は印刷の側で消す。 */
+  expect(printBlock![1], "操作の列が紙に殘る").toContain(".sortbar");
+  expect(printBlock![1], "絞り込みの面が紙に殘る").toContain("#controlsPanel");
+  expect(printBlock![1], "行の詳細が紙に殘る").toContain(".row-detail");
+});
