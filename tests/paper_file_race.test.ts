@@ -342,6 +342,48 @@ it("identifies damaged reference fields among multiple files while keeping reada
   expect(draft.references).toBe(ui.values.paperReferences.value);
 });
 
+it.each([
+  ["分散メモリの設計", "SC", "並列処理"],
+  ["Distributed memory design", "PPoPP", "parallel processing"],
+])(
+  "preserves empty reference keyword columns from real TXT files: %s",
+  async (title, venue, keywords) => {
+    const references = [
+      { title, keywords: "", venue },
+      { title: `${title} 2`, keywords, venue },
+      { title: `${title} 3`, keywords, venue: "" },
+      { title: `${title} 4`, keywords: "", venue: "" },
+    ];
+    const ui = harness(false, paperFileReader());
+    await ui.selectFiles([
+      new File(
+        [JSON.stringify({ title: "投稿予定論文", abstract: "分散メモリを評価する" })],
+        "main.txt",
+      ),
+      ...references.map((record, index) => new File([JSON.stringify(record)], `ref-${index}.txt`)),
+    ]);
+    expect(ui.label.textContent).not.toContain("失敗");
+    expect(Recommender.parsePaperLines(ui.values.paperReferences.value)).toEqual(references);
+    expect(JSON.parse(ui.values.paperText.value)).toEqual([
+      { title: "投稿予定論文", abstract: "分散メモリを評価する", keywords: "", venue: "" },
+      ...references,
+    ]);
+    expect(Recommender.paperWeights(JSON.parse(ui.values.paperText.value))).toEqual([
+      { role: "primary", weight: 1 },
+      { role: "reference", weight: 0.2 },
+      { role: "reference", weight: 0.2 },
+      { role: "reference", weight: 0 },
+      { role: "reference", weight: 0 },
+    ]);
+    const saved = JSON.parse(ui.draft.get("draft")!);
+    expect(Recommender.parsePaperLines(saved.references)).toEqual(references);
+    ui.sample();
+    ui.undo();
+    expect(JSON.parse(ui.draft.get("draft")!)).toEqual(saved);
+    expect(JSON.parse(ui.values.paperText.value).slice(1)).toEqual(references);
+  },
+);
+
 it("returns focus to the restored title when the focused undo button disappears", () => {
   const ui = harness();
   const originalDraft = ui.draft.get("draft");

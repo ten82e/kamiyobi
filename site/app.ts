@@ -6201,7 +6201,9 @@ function semanticOutput(value: unknown): value is SemanticOutput {
           references: records
             .slice(1)
             .map((record) =>
-              [record.title, record.keywords, record.venue].filter(Boolean).join(" | "),
+              [record.title, record.keywords, record.venue]
+                .slice(0, record.venue ? 3 : record.keywords ? 2 : 1)
+                .join(" | "),
             )
             .join("\n"),
           venue: first.venue || "",
