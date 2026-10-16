@@ -2040,7 +2040,6 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         cb(ok);
       })
       .catch(() => {
-        semProbeCache[modelKey] = false;
         cb(false);
       });
   }
