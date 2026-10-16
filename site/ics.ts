@@ -303,8 +303,14 @@ export interface ScreenDeadlineInput {
 }
 
 /** 画面の行から、カレンダーの行を組む。**見えている物だけ**を入れる（過ぎた締切を表示して
- * いればそれも入る – 画面と食い違わせない）。UID の組み方は配付物と同じにしてある
- * （同じ締切は同じ物として扱はれ、購読と併用しても二重に並ばない）。 */
+ * いればそれも入る – 画面と食い違わせない）。
+ *
+ * **UID は配付物と違ふ**（實測 2026-10-17: 配付物は `kamiyobi-dl2ws2026-29b52d20@kamiyobi`、
+ * 此方は `kamiyobi-dl2ws2026-abstract@kamiyobi`）。配付物は日本語の種別名を SHA-1 に掛けた
+ * 8 桁、此方は ASCII の種別の鍵。**同じ締切が別の物として並ぶ**ので、購読と併用した人には
+ * 二重に見える – 説明欄（`icsViewDescriptionJa`）で其の事を言ひ、どちらか一方を使ふ樣に
+ * 案内する。揃へるには配付物の UID を畫面まで運ぶ必要があり、配付物の側を變へると
+ * 既に購読して居る人の暦が入れ替はる（追ひの課題）。 */
 export function icsRowsFromScreen(
   items: readonly ScreenDeadlineInput[] | null | undefined,
   now: Date | null | undefined,
@@ -399,6 +405,10 @@ export function icsViewDescriptionJa(
     "これは購読ではなく、いまの一覧の写しです – 一覧が変わったら、もう一度この画面から",
     "書き出してください。収録の全部を購読するなら、同じ場所にある deadlines.ics を",
     "カレンダーアプリの購読先に指定します（毎日入れ替わります）。",
+    /* 同じ締切が、二つの書き出しで別の予定として扱はれる（UID が違ふ）。
+     * どちらも入れると、同じ日が二度並ぶ – 先に言ふ。 */
+    "この写しと購読の deadlines.ics は、同じ締切に別々の識別子を付けます。",
+    "両方を同じカレンダーに入れると、同じ締切が二度並びます – どちらか一方を使ってください。",
     generatedAt && !Number.isNaN(generatedAt.getTime())
       ? `データ生成: ${stampHumanJa(generatedAt)}。`
       : "",
