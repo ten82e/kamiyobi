@@ -851,6 +851,13 @@ CSV では `deadline_precision` と `deadline_local_date` に同じ区別を保�
   生 +55,393 / gzip +4,356 バイト、`index.html` が生 +523 / gzip +169 バイト
   （`catalog.json`・`data.json`・`data.csv`・`upcoming.md` は 1 バイトも同じ）。
 
+- **ランクを説明行の `ランク:` に載せる**（分野と同じ理由 – 購読した人はカレンダーしか
+  見ない）。語は画面のランク列と同じ入口（`Recommender.rankPairLabelJa`）から取り、
+  「CCF A・CORE A*」の形にする。**等級が無い会議には行を立てない** – 毎回「未確認」を
+  書くと本文が空語で埋まり、読む側の役に立たない。実測 2026-10-17: 配付の 938 行のうち
+  560 行が持ち、本文の長さの中央値は 205 → 232 文字。画面の書き出しも同じ行を出す
+  （書き出しの材料に `ScreenDeadlineInput.rank` として渡す）。
+
 ## 5. 分類とキュレーション（`config.yaml`）
 
 カテゴリは `hpc` / `networking` / `systems` / `ai` / `security` / `db` / `graphics` / `hci` / `theory` の 9 つ。

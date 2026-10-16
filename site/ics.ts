@@ -305,6 +305,8 @@ export interface ScreenDeadlineInput {
   session?: unknown;
   /** 締切の記録その物（確認の状態と延長の判定に使う。画面が持つ `dl` をそのまま渡す）。 */
   dl?: unknown;
+  /** ランクの語（畫面のランク列と同じ物。「CCF A・CORE A*」の形）。空なら行を立てない。 */
+  rank?: unknown;
   /** 配付物（`deadlines.ics`）が使った UID。品書（`catalog.json`）の締切に載っている。
    * 渡されたらそれをそのまま使う – 購読と書き出しで同じ予定にするため（渡されない行は
    * 此処で組む。購読の側に無い締切なので、二重にはならない）。 */
@@ -348,6 +350,9 @@ export function icsRowsFromScreen(
 
       `種別: ${kindShown}`,
       catsJa.length ? `分野: ${catsJa.join("・")}` : "",
+      /* ランクも本文に載せる（購読した人はカレンダーしか見ない – 狀態と同じ理由）。
+       * 語は畫面のランク列と同じ物を呼び手が渡す（此處で組み直すと、語が 2 か所に成る）。 */
+      String(item.rank ?? "").trim() ? `ランク: ${String(item.rank).trim()}` : "",
       `${String(item.dateField ?? "").trim() || "日付"}: ${String(item.whenText ?? "")}`,
       `会期: ${String(item.session ?? "").trim() || Recommender.unconfirmedLabelJa()}`,
       ...(() => {

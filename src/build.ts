@@ -3605,11 +3605,21 @@ export function icsRowsWithUids(
       Recommender.placeJa(Recommender.placeWithPrefectureJa(ed.place)) ?? "",
     ).trim();
     const catsJa = icsCategoryLabels(conf.categories);
+    /* 畫面のランク列と同じ語（`rankPairLabelJa`）。空の等級は落とす。 */
+    const rankJa = Object.entries((conf.rank ?? {}) as Record<string, string>)
+      .filter(([, grade]) => Boolean(grade))
+      .map(([scale, grade]) => Recommender.rankPairLabelJa(`${scale}:${grade}`))
+      .filter(Boolean)
+      .join("・");
     const desc = [
       `会議: ${title}`,
       `種別: ${kindShown}`,
 
       catsJa.length ? `分野: ${catsJa.join("・")}` : "",
+      /* ランクも本文に載せる（購読した人はカレンダーしか見ない – 狀態と同じ理由。
+       * 2026-10-17 まで無く、投稿先を選ぶ主要な判斷材料がカレンダーからは見えなかつた）。
+       * 無い會議には行を立てない（「未確認」を每回書くと本文が instruct で埋まる）。 */
+      rankJa ? `ランク: ${rankJa}` : "",
       `${rec.date_field}: ${whenText}`,
 
       submission
@@ -4316,6 +4326,7 @@ export function toLlmsTxt(
         `- カレンダーの購読先に指定する URL: ${base}/deadlines.ics`,
         "  （毎日朝の更新のあと、新しい一覧に置き換わります。ファイルを一度ダウンロードするだけでは",
         "  古くなります。画面の絞り込みは効きません。分野は各予定の `CATEGORIES` にも入ります）",
+        "  本文には会議・種別・分野・ランク・日付・会期・開催地・状態を書きます（ランクは等級が無い会議には立てません）",
       ];
     })(),
     "",

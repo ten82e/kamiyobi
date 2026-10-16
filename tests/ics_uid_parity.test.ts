@@ -183,3 +183,25 @@ describe("書き出しの ICS と購読の ICS の識別子", () => {
     expect(文, "古い但し書きが残っている").not.toContain("購読の対象より先の締切");
   });
 });
+
+it("配付の ICS と畫面の書き出しが、ランクも本文に書く（購読した人はカレンダーしか見ない）", () => {
+  /* 分野と狀態を本文に載せたのと同じ理由（2026-10-17 までランクだけが抜けて居た）。
+   * 等級が無い會議には行を立てない – 每回「未確認」を書くと本文が空語で埋まる。 */
+  const out = builtSite();
+  const ics = readFileSync(join(out, "deadlines.ics"), "utf8").replace(/\r\n[ \t]/g, "");
+  const 行 = ics.split("BEGIN:VEVENT").slice(1);
+  const 有 = 行.filter((b) => /ランク: /.test(b));
+  /* 検査用のビルドは収録が小さいので、割合ではなく「有る事」と「全部ではない事」を見る
+   * （全部に付いていたら、等級が無い會議にも行を立てて居る）。 */
+  expect(有.length, "配付の ICS にランクの行が無い").toBeGreaterThan(0);
+  expect(有.length, "配付の ICS の全行にランクの行が付いている").toBeLessThan(行.length);
+  for (const b of 有.slice(0, 5)) {
+    const m = /ランク: ([^\\]*)/.exec(b);
+    expect(m?.[1] ?? "", `ランクの語が畫面の形と違う: ${m?.[1]}`).toMatch(/^(CCF|CORE|THCPL) /);
+  }
+  /* 畫面の書き出しも同じ行を出す（材料は `ScreenDeadlineInput.rank`）。 */
+  const app = readFileSync(join(REPO_ROOT, "site", "app.ts"), "utf8");
+  expect(app, "畫面がランクを材料へ渡していない").toContain("rank: (r.rankPairs || [])");
+  const icsTs = readFileSync(join(REPO_ROOT, "site", "ics.ts"), "utf8");
+  expect(icsTs, "書き出しがランクの行を組んでいない").toContain("ランク: ${String(item.rank)");
+});
