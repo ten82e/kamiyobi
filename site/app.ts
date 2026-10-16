@@ -1934,6 +1934,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   let EMBEDDINGS: EmbeddingBundle | null = null; // manifest + 言語別の埋め込み表
   let semQuery: Vector | null = null; // 現在のユーザー入力の埋め込みベクトル
   let semModel: SemanticModel | null = null; // transformers.js の pipeline
+  const semModelLoads = new Map<string, Promise<SemanticModel>>();
   let semLoadedModel = ""; // ロード済みモデル ID（言語適応で切り替え）
   let semEmbeddings: VectorMap | null = null; // 言語に応じた埋め込み表（en / multi）
   let semGeneration = 0;
@@ -1995,11 +1996,17 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     // jsdelivr の素のパッケージ URL は Node 向けバンドルで window.transformers を
     // 公開しない（実行しても undefined になる）。ESM ビルド（+esm）を動的 import する。
     const transformersUrl = "https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2/+esm";
-    import(transformersUrl)
-      .then((module: unknown) => {
+    let pending = semModelLoads.get(modelKey);
+    if (!pending) {
+      pending = import(transformersUrl).then((module: unknown) => {
         if (!transformersModule(module)) throw new Error("invalid transformers module");
         return module.pipeline("feature-extraction", modelId, { revision });
-      })
+      });
+      semModelLoads.set(modelKey, pending);
+      const finished = () => semModelLoads.delete(modelKey);
+      pending.then(finished, finished);
+    }
+    pending
       .then((model) => {
         if (generation !== semGeneration) return;
         semModel = model;
