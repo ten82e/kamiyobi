@@ -2910,6 +2910,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
             _availability: recommendation.availability,
           }),
         );
+      return out;
     }
 
     /* 「過去の締切も表示」を入れると、既定の並び（残りの昇順）では 2019 年の行が画面の
@@ -2925,9 +2926,6 @@ function semanticOutput(value: unknown): value is SemanticOutput {
 
     // Custom Sorting
     out.sort((a, b) => {
-      if (pLines.length && Rec) {
-        return Rec.comparePapers(a, b, now);
-      }
       const mult = sortAsc ? 1 : -1;
       if (sortKey === "conf") {
         // 会議名順は表に出る語で並べ、同じ名前の複数版（年違い）は締切時刻でそろえる。

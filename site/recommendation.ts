@@ -158,6 +158,7 @@ export function venueRecommendations(...args: Args): Result[] {
     return Core.venueRecommendations(rows, lines, semanticScores, now, { ...options, topN });
   const named = new Set<string>();
   const text = lines
+    .slice(0, 1)
     .map((line) => `${line.title} ${line.keywords ?? ""}`)
     .join(" ")
     .toLowerCase();
