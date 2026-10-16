@@ -3127,8 +3127,9 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   /* 締切の一覧では「この一覧の N 件」、推薦の候補では「この候補 N 件」と言う（同じ物を
    * 指す語を画面ごとに変へない – 押す前に、何が入るかが分かる樣に）。 */
   function exportIcsLabelJa(total: number, recMode = false): string {
+    if (total === 0) return "カレンダーに書き出せる日付がありません";
     return recMode
-      ? `この候補 ${countJa(total)} 件をカレンダー（.ics）でダウンロード`
+      ? `この候補の締切 ${countJa(total)} 件をカレンダー（.ics）でダウンロード`
       : `この一覧の ${countJa(total)} 件をカレンダー（.ics）でダウンロード`;
   }
 
@@ -5328,19 +5329,33 @@ function semanticOutput(value: unknown): value is SemanticOutput {
           "この一覧に出ていない行（過ぎた締切や、期間より先の締切）は入りません。";
     }
     // カレンダーへの書き出しも同じ条件（候補が出ていない時は出さない・0 件でも出さない）。
+    const icsExportCount = shownIcsInput().length;
     const exportIcsBtn = $("exportIcs");
     if (exportIcsBtn) {
-      exportIcsBtn.textContent = exportIcsLabelJa(shown.length, 候補を書き出す);
+      exportIcsBtn.textContent = exportIcsLabelJa(icsExportCount, 候補を書き出す);
+      (exportIcsBtn as HTMLButtonElement).disabled = icsExportCount === 0;
       /* 推薦の候補も書き出せる。候補の締切をカレンダーに入れて比べるのが、
        * 投稿先を決める時の実際の動作 – 候補に出口が無かつた。 */
       exportIcsBtn.hidden = !shown.length || (recMode && !候補を書き出す);
       exportIcsBtn.title = 候補を書き出す
-        ? "「投稿先を探す」が挙げた候補の締切だけを、カレンダーアプリで読める形（RFC 5545）にしたファイルです。" +
+        ? `「投稿先を探す」の候補のうち、日付のある締切 ${countJa(icsExportCount)} 件をカレンダーアプリで読める形（RFC 5545）にしたファイルです。` +
           "1 件 = 1 つの日の終日で、日付だけ分かっている行は「時刻未確認」と書きます。" +
-          "候補は絞り込みではなく、論文の語との重なりで選ばれています（画面のカードと同じ順・同じ件数）。"
-        : "いまの絞り込みで残った行だけを、カレンダーアプリで読める形（RFC 5545）にしたファイルです。" +
+          "常時受付・日付未確認の候補は含みません。"
+        : `いまの一覧のうち、日付のある ${countJa(icsExportCount)} 件をカレンダーアプリで読める形（RFC 5545）にしたファイルです。` +
           "1 件 = 1 つの日の終日で、日付だけ分かっている行は「時刻未確認」と書きます。" +
           "上の『カレンダーに追加（.ics）』は収録の全部で、購読すると毎日入れ替わりますが、絞り込みは効きません。";
+    }
+    const icsNote = $("exportIcsNote");
+    if (icsNote) {
+      const omitted = shown.length - icsExportCount;
+      icsNote.hidden = omitted === 0 || !shown.length || (recMode && !候補を書き出す);
+      icsNote.textContent = icsNote.hidden
+        ? ""
+        : `日付未確認・常時受付の ${countJa(omitted)} 件はカレンダーに含みません。CSVには全 ${countJa(shown.length)} 件を書き出せます。`;
+      if (exportIcsBtn) {
+        if (icsNote.hidden) exportIcsBtn.removeAttribute("aria-describedby");
+        else exportIcsBtn.setAttribute("aria-describedby", "exportIcsNote");
+      }
     }
     const showHistoryStatus =
       !recMode &&

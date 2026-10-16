@@ -364,7 +364,7 @@ describe("画面の一覧をカレンダーに書き出す（第 856 回）", ()
     )((n: number) => String(n)) as (n: number, recMode?: boolean) => string;
     expect(文言(12), "一覧の文言が違う").toBe("この一覧の 12 件をカレンダー（.ics）でダウンロード");
     expect(文言(12, true), "候補の文言が違う").toBe(
-      "この候補 12 件をカレンダー（.ics）でダウンロード",
+      "この候補の締切 12 件をカレンダー（.ics）でダウンロード",
     );
 
     expect(app, "推薦の別を渡していない").toContain("shownIcsText(candidateScopeOnScreen())");
