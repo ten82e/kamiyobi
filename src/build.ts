@@ -4408,7 +4408,6 @@ export function toLlmsTxt(
     "      - date-only は local_date: 'YYYY-MM-DD' と earliest_utc/latest_utc を持ち、utc/aoe/tz_raw は null。",
     "      - round: integer：1 起点。複数投稿ラウンドを持つ会議がある。",
     "      - track: string：投稿のトラック（例 'research track'）。空の行が多い。",
-    "      - ics_uid: string：この締切が配付のカレンダー（`deadlines.ics`）で使う UID。載る締切だけが持つ（実測 2026-10-16: 品書の締切 871 のうち 792）。画面の書き出しもこれをそのまま使うので、同じ締切が購読と書き出しで同じ予定になる。無い締切は購読の対象外（過去・先すぎる物など）で、画面が自分で組む。",
     "      - verification: object：公式 URL を確かめた記録。{official_url, last_attempt_at, last_verified_at, next_check_at, content_hash, status, source_class, source_name, provider_identity, label_signature, selector_or_field, adapter, promotion_ref}。**画面の札と「確認元」はここから出る** – `status` は 'verified'(35)|'manual-required'(4,435)|'parser-failed'(2)|'pending'(2)、`source_class` は 'official-cfp'(39)|'publisher'(3)|'aggregator'(4,097)|'unknown'(335)（実測 2026-10-16。'unknown' は確かめた元が分からない行で、値を推測しない）。**数は語の側に付ける** – 並びだけを書くと、語を並べ替えた日に数が別の語に付く。`provider_identity` は {provider, providerKey, strength} で、`provider` は 'easychair'|'openreview'|'hotcrp'|'github-pages'|'acm'|'ieee'|'dedicated-domain'|'unknown'、`strength` は 'explicit'|'provider-scoped'|'dedicated-domain'|'weak'。実測 2026-10-16: 締切 4,990 のうち 4,474 が持つ。",
     "      - superseded_deadlines: array：上書きされた古い締切の記録。{value, precision, source, supersededBy, reason, status, supersededAt, evidenceRef}。`reason` は 'manual-resolution'(36)|'official-extension'(2)、`status` は 'superseded'（実測 2026-10-16。締切 4,990 のうち 38 行）。",
     "      - promotion_ref: object：{batch, resolution}。公開した締切から、それを載せた判断（昇格）への参照。",
@@ -4425,6 +4424,29 @@ export function toLlmsTxt(
      * `estimate_window_end` ― は `llms.txt` のどこにも出てこなかった）。Excel で開いた人は
      * 空欄と 'N' の違いを確かめようが無い。列名はビルドの列定義から書き出す（書き写すと、
      * 列を足したときに辞書だけが残る）。 */
+    /* 品書（`catalog.json`）の形。画面が最初に読むファイルで、`index.html` に埋め込む JSON も
+     * 同じ物である。data.json の節だけでは、AI が品書を読むときに欄の意味を辿れない
+     * （2026-10-17 実測: 品書だけが持つ欄は会議 6・版 1・締切 1。うち `ics_uid` は
+     * 誤って data.json の節に書いてあった）。 */
+    "## catalog.json の形",
+    "",
+    "画面が最初に読む窓（現在・近日）のカタログ。`index.html` に埋め込む JSON はこれと同じである。",
+    "会議・版・締切の欄は `data.json` と同じで、次を足す。",
+    "",
+    "- トップレベルは `data.json` の `generated_at`・`site`・`sources`・`categories`・`legacy_key_redirects`・`conferences` に加えて次を持つ。",
+    "  - window: object：窓の決め方。{lookback_days, upcoming_days}（既定 30・180）。",
+    "  - history_ref: string：全履歴のファイル名（`data.json`）。画面は「収録の全体を読み込む」で一度だけ取る。",
+    "  - history_bytes: number：`history_ref` のバイト数（画面は押す前に容量を数字で示す）。",
+    "  - recommendation_ref: string：推薦索引のファイル名（`recommendation-index.json`）。",
+    "  - deadline_summary: array：件数を数えるための軽い写し。各要素は {t, tLast, tShown, dateOnly}（最早・最遅の UTC ミリ秒、表示に使う暦日のミリ秒、時刻未確認か）。",
+    "  - reranker: object：投稿先推薦の再学習の重み（版・特徴・学習の条件）。",
+    "  - calendar: object：配付カレンダーの実測。{event_count, deadline_count, first_day, last_day}。",
+    "  - source_updates: array：上流ごとの取得の状態。{name, status, fetched_at}。",
+    "  - conferences: array：この窓に入る会議。",
+    "    - 会議は `data.json` と同じ欄に加えて `recommendation_axes`（{venue_evidence, deadline_trust, research_fit}）と `record_deadline_*`（一覧に出ない日程の申告: `record_deadline_last`・`record_deadline_next`・`record_deadline_next_kind`・`record_deadline_count`・`record_estimated_next`）を持つ。",
+    "    - 版は `data.json` と同じ欄に加えて `schedule_deadlines`（窓の外の日程。一覧には出さず、行の詳細だけが出す）を持つ。",
+    "    - 締切は `data.json` と同じ欄に加えて `ics_uid`（配付のカレンダーが使った UID。載る締切だけが持ち、画面の書き出しもこれをそのまま使うので、同じ締切が購読と書き出しで同じ予定になる）を持つ。",
+    "",
     "## data.csv の列",
     "",
     "1 行 1 締切の平坦な表で、`data.json` の `conferences[].editions[].deadlines[]` を展開した物である。",

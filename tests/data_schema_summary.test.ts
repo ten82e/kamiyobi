@@ -47,6 +47,46 @@ function 層ごとの鍵(data: DataLike): Record<string, Set<string>> {
   return 層;
 }
 
+/** `llms.txt` の「catalog.json の形」の節。 */
+function 品書の節(text: string): string {
+  const 始 = text.indexOf("## catalog.json の形");
+  const 終 = text.indexOf("## data.csv の列");
+  expect(始, "品書の節が無い").toBeGreaterThan(0);
+  expect(終, "列の節が無い").toBeGreaterThan(始);
+  return text.slice(始, 終);
+}
+
+describe("catalog.json の形（llms.txt）", () => {
+  it("品書だけが持つ欄を、要約が名指している", () => {
+    /* 品書は畫面が最初に読むファイルで、`index.html` に埋め込む JSON も同じ物である。
+     * data.json の節だけでは、AI が品書の欄を辿れない（2026-10-17 実測: 品書だけが持つ欄は
+     * 會議 6・版 1・締切 1。うち `ics_uid` は誤って data.json の節に書いてあった）。 */
+    const out = builtSite();
+    const text = readFileSync(join(out, "llms.txt"), "utf8");
+    const 文書 = 名指した鍵(品書の節(text));
+    const data = JSON.parse(readFileSync(join(out, "data.json"), "utf8")) as DataLike;
+    const 履歴 = 層ごとの鍵(data);
+    const 足りない: string[] = [];
+    const 見る = (名: string, 品書: DataLike): void => {
+      const 層 = 層ごとの鍵(品書);
+      expect([...層.締切].length, `${名} の締切の欄を読めない（前提が崩れた）`).toBeGreaterThan(5);
+      for (const [層名, 鍵] of Object.entries(層)) {
+        for (const k of 鍵) {
+          /* `data.json` と共通の欄は data.json の節が説明している（品書の節は「同じ欄に
+           * 加えて」と言っている）。品書だけの欄は品書の節が名指していなければならない。 */
+          if (履歴[層名]?.has(k)) continue;
+          if (!文書.has(k)) 足りない.push(`${名}／${層名}: ${k}`);
+        }
+      }
+    };
+    見る("検査用", JSON.parse(readFileSync(join(out, "catalog.json"), "utf8")) as DataLike);
+    /* 検査用のビルドに出ない欄は本番で見る（data.json の節の検査と同じ理由）。 */
+    const 本番 = join(REPO_ROOT, "public", "catalog.json");
+    if (existsSync(本番)) 見る("本番", JSON.parse(readFileSync(本番, "utf8")) as DataLike);
+    expect(足りない, `品書の要約が名指していない欄: \n${足りない.join("\n")}`).toEqual([]);
+  });
+});
+
 describe("data.json のスキーマ要約（llms.txt）", () => {
   it("實データに出る鍵を、どの層も書き漏らしていない", () => {
     const out = builtSite();
