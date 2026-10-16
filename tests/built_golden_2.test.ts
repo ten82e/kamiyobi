@@ -649,14 +649,14 @@ it("「締切まで N 日以内」の窓で外れた件数を件数欄に出す�
   expect(out.both).toEqual(["soon"]);
   expect(out.bothWindow, "対称窓の下限側を窓に数えていない").toBe(2);
   const app = siteRuntime();
-  expect(app).toContain(`\`「締切まで \${Number.parseInt(state.win, 10)} 日以内」を超える`);
+  expect(app).toContain(`\`「締切まで \${Number.parseInt(state.win, 10)} 日以内」の対象外`);
   // 選択欄の表記（「7 日以内」）とその戻し方を選んで書く。
   const html = siteHtmlRuntime();
   const dd = html.slice(
     html.indexOf("<dt>締切まで</dt>"),
     html.indexOf("<dt>過去の締切も表示</dt>"),
   );
-  expect(dd).toContain("「締切まで 7 日以内」を超える N 件");
+  expect(dd).toContain("「締切まで 7 日以内」の対象外 N 件");
   expect(dd).toContain("締切日からの日数で絞ります");
   expect(dd).toContain("「かまわない」");
 });

@@ -1713,7 +1713,7 @@ it("0 件の案内が、各条件で今何行が隠れているかを並べて�
     allWindow: string;
   };
   // 各項目に、件数欄と同じ名前で同じ数字が添わる。
-  expect(out.counted).toContain("「締切まで 7 日以内」を超える 438 件");
+  expect(out.counted).toContain("「締切まで 7 日以内」の対象外 438 件");
   expect(out.counted).toContain("「過去の締切も表示」をオン（過去の締切 1,231 件）");
   expect(out.counted).toContain("「推定締切を含める」をオン（推定 134 件）");
   expect(out.counted).toContain("評価「A*」を持たない行 416 件");

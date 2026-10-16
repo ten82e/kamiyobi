@@ -134,7 +134,7 @@ interface SourceUpdate {
   fetched_at: string | null;
 }
 
-type DeadlineClock = Pick<AppRow, "t" | "tLast" | "tShown" | "dateOnly">;
+type DeadlineClock = Pick<AppRow, "t" | "tLast" | "tShown" | "dateOnly"> & { kind?: string };
 
 interface Catalog {
   generated_at?: string;
@@ -932,6 +932,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
    * 経過 24 時間で区切ると、一覧が「あと 30 日」と出す行が上の数だけから落ちる
    * （2026-08-09T21:00Z 見立ての実測: 上部 176 件・一覧 177 件で `pacificvis` が足りなかった）。 */
   function rowAfter(r: DeadlineClock, dateLimit: number) {
+    if (r.kind === "journal" && Number.isFinite(dateLimit)) return true;
     // dateLimit は翌日の開始。午前0時ちょうどは次の暦日なので含めない。
     return rowShownDayMs(r) >= dateLimit;
   }
@@ -3740,7 +3741,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       tip(
         "「締切まで」を「かまわない」に変更",
         "window",
-        `「締切まで ${Number.parseInt(filter.window, 10)} 日以内」を超える`,
+        `「締切まで ${Number.parseInt(filter.window, 10)} 日以内」の対象外`,
       );
     if (!filter.past) tip("「過去の締切も表示」をオン", "past", "過去の締切");
     // 推定は既定で出さない。0 件の画面でこれに触れないと、収録にある語を「無い」と
@@ -5098,7 +5099,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       if (hidden.window && state.win !== "all") {
         // 選んだ窓の名前は選択欄の表記のまま書く（「どのボタンを戻せばいいか」が分かる形で）。
         parts.push(
-          `「締切まで ${Number.parseInt(state.win, 10)} 日以内」を超える ${countJa(hidden.window)} 件`,
+          `「締切まで ${Number.parseInt(state.win, 10)} 日以内」の対象外 ${countJa(hidden.window)} 件`,
         );
       }
       // 評価で絞った件数。選択欄の等級表記をそのまま書く（画面の語で探す人が探せる形に）。

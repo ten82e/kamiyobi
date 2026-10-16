@@ -258,6 +258,16 @@ function pick(scope: unknown): { list: Row[]; 名: string; 生成: unknown; 窓�
       };
 }
 
+function withJournals(list: Row[], conferences: unknown, now: number): Row[] {
+  return list.concat(Recommender.journalRows(conferences, now) as unknown as Row[]);
+}
+
+function pickSearch(scope: unknown, now: number): ReturnType<typeof pick> {
+  const picked = pick(scope);
+  const source = picked.窓が無い || scopeValue(scope) === "all" ? snapshot() : catalog();
+  return { ...picked, list: withJournals(picked.list, source?.conferences ?? [], now) };
+}
+
 /** 窓が無い時の斷り（一覽を返す道具の頭に付ける）。空文字の時は何も足さない。 */
 function 窓が無いの斷り(窓が無い: boolean): string {
   if (!窓が無い) return "";
@@ -713,6 +723,7 @@ function 畫面の既定(
       if (!過去も && Recommender.deadlineRowIsPast(r, now)) return false;
       if (!推定も && r.est) return false;
       if (窓あり) {
+        if (r.kind === "journal") return false;
         const 日 = typeof r.tShown === "number" && Number.isFinite(r.tShown) ? r.tShown : r.t;
         if (日 >= 窓の上限) return false;
         if (窓の下限 && 日 < 窓の下限) return false;
@@ -729,9 +740,11 @@ function 畫面の既定(
     .concat(知らん.length ? [] : []);
 }
 
-function 窓の外の件數(照合: (hay: string) => boolean, 名: string): number {
+function 窓の外の件數(照合: (hay: string) => boolean, 名: string, now: number): number {
   if (名 !== "画面が最初に読む窓") return 0;
-  return allRows().filter((r) => 照合(r.hay) === true).length;
+  return withJournals(allRows(), snapshot().conferences ?? [], now).filter(
+    (r) => 照合(r.hay) === true,
+  ).length;
 }
 
 /** 名前の殼の中で、語が**獨立に立つ**か（英数字は前後が區切りの事を要求する – `sc` が
@@ -984,7 +997,10 @@ function sortRows(list: Row[]): Row[] {
   return list
     .slice()
     .sort(
-      (a, b) => 表示の刻み(a) - 表示の刻み(b) || a.conf.title.localeCompare(b.conf.title, "ja"),
+      (a, b) =>
+        Number(a.kind === "journal") - Number(b.kind === "journal") ||
+        表示の刻み(a) - 表示の刻み(b) ||
+        a.conf.title.localeCompare(b.conf.title, "ja"),
     );
 }
 
@@ -1059,6 +1075,7 @@ function eventMetadata(ed: {
 
 /** Keep date-only and estimated deadlines separate from confirmed instants. */
 export function structuredDeadline(r: Row, now: number): Record<string, unknown> {
+  const ongoing = r.kind === "journal";
   return {
     venue_key: r.conf.key,
     title: r.conf.title,
@@ -1071,7 +1088,7 @@ export function structuredDeadline(r: Row, now: number): Record<string, unknown>
     year: r.ed.year ?? null,
     kind: r.kind,
     kind_label: Recommender.kindLabelJa(r.kind),
-    round: r.dl.round ?? 1,
+    round: ongoing ? null : (r.dl.round ?? 1),
     track: r.dl.track ?? null,
     label: r.dl.label ?? null,
     official_url: officialLink(r.ed.link, r.conf.link),
@@ -1084,9 +1101,9 @@ export function structuredDeadline(r: Row, now: number): Record<string, unknown>
     rank: r.conf.rank ?? null,
     estimated: r.est,
     estimate: r.est ? (r.ed.estimate ?? null) : null,
-    precision: r.dateOnly ? "date-only" : "exact",
-    utc: r.dateOnly ? null : (r.dl.utc ?? new Date(r.t).toISOString()),
-    jst: r.dateOnly ? null : jst(r.t),
+    precision: ongoing ? null : r.dateOnly ? "date-only" : "exact",
+    utc: ongoing || r.dateOnly ? null : (r.dl.utc ?? new Date(r.t).toISOString()),
+    jst: ongoing || r.dateOnly ? null : jst(r.t),
     local_date: r.dateOnly ? r.localDate : null,
     timezone: r.dl.tz_raw ?? null,
     uncertainty: r.dateOnly
@@ -1197,7 +1214,7 @@ function searchDeadlines(
   ]
     .filter((t) => t)
     .join("");
-  const { list, 名, 生成, 窓が無い } = pick(args.scope);
+  const { list, 名, 生成, 窓が無い } = pickSearch(args.scope, now);
 
   const 引く種別 = args.kinds ?? args.kind;
   const 空の種別 = Array.isArray(引く種別) && 引く種別.length === 0;
@@ -1208,7 +1225,7 @@ function searchDeadlines(
     ? () => true
     : Recommender.searchMatcher(Recommender.expandRelativeMonths(query, now), now);
   const 素の = list.filter((r) => 照合(r.hay) === true);
-  const 窓の外 = 素の.length ? 0 : 窓の外の件數(照合, 名);
+  const 窓の外 = 素の.length ? 0 : 窓の外の件數(照合, 名, now);
 
   const 絞り込みが効く = !Recommender.searchMatcher(query, now)("・ー()");
   const 記号だけの文 =
@@ -1266,7 +1283,7 @@ function searchDeadlines(
 
   /* 行が見えている時に出す注（類語・曖昧さ – 第 942・948 回）。 */
   const 見えて居る文 = 見えて居る注(query, hit.length);
-  const 頭 = `${絞り込みだけ ? "語を指定せず、絞り込みだけ" : `検索語「${query}」に当たる締切`}: ${hit.length} 件（${名} ${list.length} 行・画面の既定と同じ絞り込み。絞る前は ${素の.length} 行${ランク ? `／ランク ${ランク}` : ""}${args.domestic === true ? "／国内のみ" : ""}${args.online === true ? "／オンライン参加可のみ" : ""}${窓あり ? `／締切まで ${窓の日數} 日以内${窓の端数の斷り}` : ""}${讀めない引數}）${limit端數}${檢索語を切つた ? `（${打たれた検索語.length} 字のうち、最初の ${檢索語の截} 字で調べました – 残りの語は参考にしていません）` : ""}${知らん.length ? `／知らない種別: ${知らない値の文("", 知らん)}` : ""}${空の種別 ? `／kinds が空なので既定の投稿締切（概要・論文・常時受付）を対象にしています` : ""}${種別一種 ? `／kind は kinds と共に与えられたので見ていません` : ""}${知らんランク ? `／知らないランク（等級は ${Recommender.rankGradeOrderJa().join("・")}）: ${知らんランク}${limit端數}` : ""}${日付の語 ? "\n日付は日本時間（JST）。月や日付の語は、締切の日付と「会期」の日付の両方に当たる（画面のてびきと同じ約束）ので、月で引いた時に見出しの月と違う日が出る行がある。" : ""}${窓が無い ? `\n${窓が無いの斷り(true)}` : ""}${scopeErr ? `\n${scopeErr}` : ""}${解決の文}${記号だけの文 ? `\n${記号だけの文}` : ""}${見えて居る文}`;
+  const 頭 = `${絞り込みだけ ? "語を指定せず、絞り込みだけ" : `検索語「${query}」に当たる締切`}: ${hit.length} 件（${名} ${list.length} 行・指定条件で絞り込み。絞る前は ${素の.length} 行${ランク ? `／ランク ${ランク}` : ""}${args.domestic === true ? "／国内のみ" : ""}${args.online === true ? "／オンライン参加可のみ" : ""}${窓あり ? `／締切まで ${窓の日數} 日以内${窓の端数の斷り}` : ""}${讀めない引數}）${limit端數}${檢索語を切つた ? `（${打たれた検索語.length} 字のうち、最初の ${檢索語の截} 字で調べました – 残りの語は参考にしていません）` : ""}${知らん.length ? `／知らない種別: ${知らない値の文("", 知らん)}` : ""}${空の種別 ? `／kinds が空なので既定の投稿締切（概要・論文・常時受付）を対象にしています` : ""}${種別一種 ? `／kind は kinds と共に与えられたので見ていません` : ""}${知らんランク ? `／知らないランク（等級は ${Recommender.rankGradeOrderJa().join("・")}）: ${知らんランク}${limit端數}` : ""}${日付の語 ? "\n日付は日本時間（JST）。月や日付の語は、締切の日付と「会期」の日付の両方に当たる（画面のてびきと同じ約束）ので、月で引いた時に見出しの月と違う日が出る行がある。" : ""}${窓が無い ? `\n${窓が無いの斷り(true)}` : ""}${scopeErr ? `\n${scopeErr}` : ""}${解決の文}${記号だけの文 ? `\n${記号だけの文}` : ""}${見えて居る文}`;
   if (!hit.length) {
     /* 画面と同じ約束 – 案内は「素の当たりが 0」の時に出る物なので、絞り込みで 0 に成つた時は
      * その旨を書く（絞り込みを外せば出る事がある）。 */
@@ -1278,10 +1295,15 @@ function searchDeadlines(
       頭,
       "",
       素の.length
-        ? `語は当たりますが、既定の絞り込み（今後の投稿締切・推定を除く）で 0 件になりました。include_past / include_estimated / kinds${ランク ? ` / rank（いま ${ランク}）` : ""} を試してください。`
+        ? `語は当たりますが、現在の絞り込み条件で 0 件になりました。include_past / include_estimated / kinds${ランク ? ` / rank（いま ${ランク}）` : ""} を試してください。`
         : 窓の外
           ? `この語は画面が最初に読む窓（${list.length} 行）には 1 行もありませんが、**収録の全体には ${窓の外} 行あります**（scope: "all" で引けます）。`
           : (果て ?? "この語では 1 行も出ません。"),
+      ...(窓あり && 素の.some((row) => row.kind === "journal")
+        ? [
+            "常時受付には締切日がないため、within_days を指定すると対象外になります。常時受付を探すときは within_days を省いてください。",
+          ]
+        : []),
       /* 表に出さん種別の語が打たれていたら、その種別がある事を言う。
        * 打ち直す手が `kinds` なので、何を選べばいいかがそのまま分かる。 */
       ...(() => {
@@ -2168,12 +2190,12 @@ function explainWord(args: { word?: unknown; scope?: unknown }, now: number): st
   const 語の截りの文 = 語を切つた
     ? `（${打たれた語.length} 字のうち、最初の ${語の截} 字（1 つの語として）で調べました – 残りは参考にしていません）`
     : "";
-  const { list, 名, 生成, 窓が無い } = pick(args.scope);
+  const { list, 名, 生成, 窓が無い } = pickSearch(args.scope, now);
   const 古さ = 古さの斷り(生成, now);
   const 照合 = Recommender.searchMatcher(Recommender.expandRelativeMonths(word, now), now);
   const 件數 = list.filter((r) => 照合(r.hay) === true).length;
 
-  const 窓の外 = 窓の外の件數(照合, 名);
+  const 窓の外 = 窓の外の件數(照合, 名, now);
   const 案内 = guidance(word, 0, list, now);
   const 果て = 窓の外 ? "" : 果ての案内(word, list, 名);
   const 日數 = 日數幅の案内(word, list, now, {});
@@ -2210,7 +2232,7 @@ function explainWord(args: { word?: unknown; scope?: unknown }, now: number): st
       ? `この語は記号だけなので、絞り込みとして効く語がありません（すべての行を表示しています）。`
       : "";
     return [
-      `「${word}」は素の照合で ${件數} 行・画面の既定の絞り込み（今後・投稿締切の種別・推定を除く）を通すと ${畫面の行.length} 行です（${名}${切替}${語の截りの文}）。`,
+      `「${word}」は素の照合で ${件數} 行・既定の絞り込み（今後の概要・論文締切と常時受付・推定を除く）を通すと ${畫面の行.length} 行です（${名}${切替}${語の截りの文}）。`,
       ...(記号だけの文 ? [記号だけの文] : []),
       ...(見えて居る文 ? [見えて居る文.trim()] : []),
       ...行.map((r) => `- ${line(r, now)}`),
@@ -2219,7 +2241,7 @@ function explainWord(args: { word?: unknown; scope?: unknown }, now: number): st
         : []),
       /* 画面の既定で 0 件に成る時は、その**理由**を添える。 */
       ...(畫面の行.length === 0 && (指南.length || 受皿.length)
-        ? ["画面の既定の絞り込みで 0 件になる理由:", ...指南, ...受皿].map((n) =>
+        ? ["既定の絞り込みで 0 件になる理由:", ...指南, ...受皿].map((n) =>
             n === "" ? "" : `- ${n}`,
           )
         : []),
@@ -2703,7 +2725,7 @@ const TOOLS = [
   {
     name: "search_deadlines",
     description:
-      "日本語で投稿締切を検索する。語を省いて kind / kinds / rank / domestic / online / within_days だけでも絞れる。既定は今後の abstract / paper / journal、推定は除外。scope は screen（初期一覧）または all（収録全体）。structuredContent に total・rows・next_offset を返す。続きは同じ条件と next_offset を offset に指定する。日付のみの行の utc・jst は null。推定期間、投稿トラック、確認状態を別に返す。公式確認（いつ・どこで・何を確かめたか）は verification_ja に画面の行の詳細と同じ日本語で返します（内部の鍵名は verification に残します）。前に出ていた締切も表示する。日付語は別ラウンドや会期にも当たるため、締切だけの期間指定には within_days を使う。会期の欄には、上流が書いた原文（`March 18-21, 2024` のやうな自由文）を「原表記」として添えます（画面の行の詳細と同じ）。0 件のときは画面と同じ案内と「打ち直すなら」の候補を返す。返す行の形: 日時 | 種別 | 確認状態（ある場合）| 会議名（版の識別子）| ランク | 会期 | 開催地 URL。テキストは `| ` で切り、構造化結果を優先する。",
+      "日本語で投稿締切を検索する。語を省いて kind / kinds / rank / domestic / online / within_days だけでも絞れる。既定は今後の abstract / paper / journal、推定は除外。scope は screen（初期一覧）または all（収録全体）。structuredContent に total・rows・next_offset を返す。続きは同じ条件と next_offset を offset に指定する。日付のみの行の utc・jst は null。常時受付は締切日時・精度・回次を null とし、日付のある行の後に並べます。推定期間、投稿トラック、確認状態を別に返す。公式確認（いつ・どこで・何を確かめたか）は verification_ja に画面の行の詳細と同じ日本語で返します（内部の鍵名は verification に残します）。前に出ていた締切も表示する。日付語は別ラウンドや会期にも当たるため、締切だけの期間指定には within_days を使う。会期の欄には、上流が書いた原文（`March 18-21, 2024` のやうな自由文）を「原表記」として添えます（画面の行の詳細と同じ）。0 件のときは画面と同じ案内と「打ち直すなら」の候補を返す。返す行の形: 日時 | 種別 | 確認状態（ある場合）| 会議名（版の識別子）| ランク | 会期 | 開催地 URL。テキストは `| ` で切り、構造化結果を優先する。",
     inputSchema: {
       type: "object",
       properties: {
@@ -2750,7 +2772,7 @@ const TOOLS = [
         within_days: {
           type: "number",
           description:
-            "「締切まで N 日」の窓（画面の同じ名前の選択欄と同じ判定。JST の暦日で切り、`include_past: true` の時は同じ日数の過去側も含める）。語を省いてこれだけでも引ける",
+            "「締切まで N 日」の窓（画面の同じ名前の選択欄と同じ判定。JST の暦日で切り、`include_past: true` の時は同じ日数の過去側も含める）。常時受付など締切日のない行は含めない。語を省いてこれだけでも引ける",
         },
         scope: {
           type: "string",

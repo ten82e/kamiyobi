@@ -27,6 +27,11 @@ function displayCandidates(data: Parameters<typeof Recommender.candidateRows>[0]
   );
 }
 
+function searchCandidates(data: Parameters<typeof Recommender.candidateRows>[0], now: number) {
+  const conferences = (data as { conferences?: unknown[] }).conferences ?? [];
+  return [...displayCandidates(data), ...Recommender.journalRows(conferences, now)];
+}
+
 function rawSubmissionIsClosed(
   row: ReturnType<typeof Recommender.venueRecommendations>[number]["row"],
   now: number,
@@ -281,8 +286,9 @@ describe("AI 向けの索引が、MCP の在り處を書いている（第 714 �
 
 describe("数字と案内が画面と同じ（第 714 回）", () => {
   /* 同じ検索核・同じ収録から、こちらで数えて突き合はせる（数字を検査に寫さない）。 */
-  const rows = displayCandidates(
+  const rows = searchCandidates(
     JSON.parse(readFileSync(join(REPO_ROOT, "data", "snapshot.json"), "utf8")) as never,
+    Date.now(),
   ) as unknown as Array<{
     hay: string;
     t: number;
@@ -585,7 +591,7 @@ it("explain_word は、行が出る時に中身を少し見せる（第 796 回�
    * 必要があった（AI も同じ）。行は search_deadlines と同じ形（`line()`）で 3 行まで。 */
   const text = await call("explain_word", { word: "セキュリティ", scope: "all" });
   expect(text, "行数を言つていない").toMatch(
-    /素の照合で [1-9]\d* 行・画面の既定の絞り込み（[^）]*）を通すと \d+ 行/,
+    /素の照合で [1-9]\d* 行・既定の絞り込み（[^）]*）を通すと \d+ 行/,
   );
   const 行 = text.split("\n").filter((l) => l.startsWith("- 20"));
   expect(行.length, "中身を見せていない").toBeGreaterThan(0);
@@ -1149,8 +1155,9 @@ it("国内・オンラインの絞り込みが、画面のチェック欄と同�
    * **同じ判定**を引数にした。語（「国内」「オンライン参加可」）でも同じ集合に成る事は
    * 実測しているが、AI が魔法の語を知らないと使へない – 引数なら画面のボタンと同じ物が
    * その侭使へる。 */
-  const rows = displayCandidates(
+  const rows = searchCandidates(
     JSON.parse(readFileSync(join(REPO_ROOT, "data", "snapshot.json"), "utf8")) as never,
+    Date.now(),
   );
   const now = Date.now();
   const 既定 = (r: (typeof rows)[number]): boolean =>
@@ -1516,8 +1523,8 @@ it("欄の名前を打たれたら、値で打ち直す案内を返す（第 873
 
 it("「と」「や」で繋いだ打ち方に、どちらかだけで打つ案内を返す（第 873 回）", async () => {
   const snap = JSON.parse(readFileSync(join(REPO_ROOT, "data", "snapshot.json"), "utf8")) as never;
-  const 全行 = displayCandidates(snap);
   const now = Date.now();
+  const 全行 = searchCandidates(snap, now);
   const 素 = (語: string): number => {
     const m = Recommender.searchMatcher(Recommender.expandRelativeMonths(語, now), now);
     return 全行.filter((r) => m(r.hay) === true).length;
@@ -2077,7 +2084,7 @@ it("explain_word も search_deadlines と同じ案内を出す（第 888 回）"
    * 次の行に名簿の案内を出していた（「無し」と言之ながらある物を出すのは噓）。 */
   /* ① 素の照合で行があるのに、画面の既定で 0 件に成る語 – その**理由**を言う。 */
   const 種別 = await call("explain_word", { word: "カメラレディ" });
-  expect(種別, "0 件に成る理由を言つていない").toContain("画面の既定の絞り込みで 0 件になる理由");
+  expect(種別, "0 件に成る理由を言つていない").toContain("既定の絞り込みで 0 件になる理由");
   expect(種別, "種別の選び方を言つていない").toContain('kinds: ["camera_ready"]');
   /* 検索が言う件数と同じ（その指定で実際に引いた数 – 第 762 回）。 */
   const 檢索 = await call("search_deadlines", { query: "カメラレディ" });
@@ -3081,7 +3088,8 @@ it("limit は整数で、打ち切ってない時は言わない（第 924 回�
   const 全文 = (t: string): string => t;
   const 劈いた = async (l: unknown): Promise<string> =>
     全文(await call("search_deadlines", { query: "セキュリティ", limit: l }));
-  const 行數 = (t: string): number => t.split("\n").filter((l) => /^20\d\d-/.test(l)).length;
+  const 行數 = (t: string): number =>
+    t.split("\n").filter((l) => /^(?:20\d\d-|常時受付（締切なし） \|)/.test(l)).length;
 
   /* 打ち切る時は limit を言って、行数と一致する。 */
   const t = await call("search_deadlines", { query: "セキュリティ", limit: 100 });
@@ -4306,8 +4314,8 @@ it("検索の頭の「当たる件数」と「絞る前」は、両方事実と�
   const 品書 = JSON.parse(readFileSync(join(REPO_ROOT, "public", "catalog.json"), "utf8")) as {
     conferences?: unknown[];
   };
-  const 行々 = displayCandidates(品書 as never);
   const 今 = Date.now();
+  const 行々 = searchCandidates(品書 as never, 今);
   const 投稿の種別 = new Set(["abstract", "paper", "journal"]);
   const 問 = ["セキュリティ", "今月", "締切", "3月", "ICDE", "国内", "オンライン", "来月"];
   for (const q of 問) {

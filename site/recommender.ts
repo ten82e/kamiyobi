@@ -7989,9 +7989,10 @@ const Recommender = (() => {
   }
 
   function deadlineRowIsPast(
-    row: { t?: unknown; tLast?: unknown; dateOnly?: unknown },
+    row: { t?: unknown; tLast?: unknown; dateOnly?: unknown; kind?: unknown },
     nowMs: number,
   ): boolean {
+    if (row?.kind === "journal") return false;
     if (row?.dateOnly) {
       // 幅を持つ行（時刻未確認）は「表示したより前に終わった可能性がある」の間は過ぎたと呼ばない
       // （画面の「不確か」と同じ。`t`・`tLast` の両方が読めるときだけ判定する）。
