@@ -210,9 +210,7 @@ function 品書の軸(): Map<string, unknown> {
 
 /** `scope` を正本に直す（`collection` は `all` と同じ物 – 索引の語）。 */
 function scopeValue(scope: unknown): string {
-  const 語 = String(scope ?? "")
-    .trim()
-    .toLowerCase();
+  const 語 = 文字として讀む(scope, "scope").toLowerCase();
   if (!語) return "";
   if (語 === "all" || 語 === "collection" || 語 === "full") return "all";
   if (語 === "screen" || 語 === "window" || 語 === "catalog") return "screen";
@@ -626,9 +624,11 @@ function 文字として讀む(值: unknown, field: string): string {
     );
   throw new Error(
     `${field} は文字列で指定してください。${
-      paperLike
-        ? "論文の題名・概要から投稿先を探す場合は search_venues に同じ論文オブジェクトを渡せます。"
-        : "複数の語も1つの文字列にまとめて指定してください。"
+      field === "scope"
+        ? "screen（初期一覧）または all（収録全体）を指定してください。"
+        : paperLike
+          ? "論文の題名・概要から投稿先を探す場合は search_venues に同じ論文オブジェクトを渡せます。"
+          : "複数の語も1つの文字列にまとめて指定してください。"
     }`,
   );
 }
@@ -2322,6 +2322,7 @@ function explainWord(args: { word?: unknown; scope?: unknown }, now: number): st
       : "";
     return [
       `「${word}」は素の照合で ${件數} 行・既定の絞り込み（今後の概要・論文締切と常時受付・推定を除く）を通すと ${畫面の行.length} 行です（${名}${切替}${語の截りの文}）。`,
+      ...(scopeErr ? [scopeErr] : []),
       ...(記号だけの文 ? [記号だけの文] : []),
       ...(見えて居る文 ? [見えて居る文.trim()] : []),
       ...行.map((r) => `- ${line(r, now)}`),
