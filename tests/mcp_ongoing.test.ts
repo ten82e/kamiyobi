@@ -495,3 +495,133 @@ fs.rmSync(pool.raw,{recursive:true,force:true});
   expect(existsSync(join(full, ".cache"))).toBe(false);
   expect(existsSync(join(full, "public/embeddings.json"))).toBe(false);
 });
+
+it("reports how many full-collection matches survive the same filters before suggesting a scope retry", async () => {
+  const submission = (
+    key: string,
+    date: string,
+    options: {
+      kind?: string;
+      estimated?: boolean;
+      rank?: string;
+      domestic?: boolean;
+      place?: string;
+    } = {},
+  ) => ({
+    ...venue(key, `Distributed ${key}`),
+    rank: { core: options.rank ?? "A" },
+    tags: options.domestic === false ? [] : ["domestic-jp"],
+    editions: [
+      {
+        id: `${key}-2030`,
+        year: 2030,
+        place: options.place ?? "Online",
+        estimated: options.estimated ?? false,
+        deadlines: [{ kind: options.kind ?? "paper", utc: date, tz_raw: "UTC" }],
+      },
+    ],
+  });
+  const full = [
+    submission("future", "2030-01-03T00:00:00Z"),
+    submission("past", "2029-12-20T00:00:00Z"),
+    submission("estimated", "2030-01-04T00:00:00Z", { estimated: true }),
+    submission("notice", "2030-01-05T00:00:00Z", { kind: "notification" }),
+    submission("far", "2030-01-20T00:00:00Z", { rank: "B", domestic: false, place: "Paris" }),
+    venue("ongoing", "Distributed Journal", {
+      tags: ["journal", "domestic-jp"],
+      rank: { core: "A" },
+    }),
+  ];
+  writeFileSync(
+    join(root, "public/catalog.json"),
+    JSON.stringify({ generated_at: screenAt, conferences: [] }),
+  );
+  writeFileSync(
+    join(root, "data/snapshot.json"),
+    JSON.stringify({ snapshot_metadata: { generated_at: allAt }, conferences: full }),
+  );
+  const cases: Array<[Record<string, unknown>, string[]]> = [
+    [{}, ["future", "far", "ongoing"]],
+    [{ kind: "paper" }, ["future", "far"]],
+    [{ kind: "journal" }, ["ongoing"]],
+    [{ kind: "notification" }, ["notice"]],
+    [{ include_past: true }, ["past", "future", "far", "ongoing"]],
+    [{ include_estimated: true }, ["future", "estimated", "far", "ongoing"]],
+    [
+      { include_past: true, include_estimated: true, kinds: ["all"] },
+      ["past", "future", "estimated", "notice", "far", "ongoing"],
+    ],
+    [{ rank: "A" }, ["future", "ongoing"]],
+    [{ domestic: true }, ["future", "ongoing"]],
+    [{ online: true }, ["future"]],
+    [{ within_days: 7 }, ["future"]],
+    [{ within_days: 1 }, []],
+    [{ rank: "B", kind: "journal" }, []],
+    [{ kind: "paper", kinds: ["journal"] }, ["ongoing"]],
+    [{ kinds: [] }, ["future", "far", "ongoing"]],
+    [{ include_past: "true" }, ["past", "future", "far", "ongoing"]],
+    [{ include_estimated: "真" }, ["future", "estimated", "far", "ongoing"]],
+    [{ online: "yes" }, ["future"]],
+    [{ within_days: "7" }, ["future"]],
+  ];
+  const c = client(root);
+  try {
+    for (const query of ["Distributed", "分散システム"]) {
+      for (const [filters, expected] of cases) {
+        const response = await c.call("search_deadlines", { query, ...filters, scope: "screen" });
+        expect(response.structuredContent).toMatchObject({ total: 0, scope: "screen", rows: [] });
+        const text = response.content.map((item) => item.text).join("\n");
+        expect(text, JSON.stringify(filters)).toContain("収録の全体には 6 行あります");
+        expect(text, JSON.stringify(filters)).toContain(
+          `同じ絞り込み条件では ${expected.length} 件です`,
+        );
+        expect(text).toContain('scope: "all"');
+        expect(text).not.toContain("で過去の分行が出せます");
+        if (expected.length === 0) {
+          expect(text).toContain("収録範囲を変えるだけでは結果は増えません");
+          expect(text).not.toContain("で引けます");
+        }
+        const retry = await c.call("search_deadlines", {
+          query,
+          ...filters,
+          scope: "all",
+          limit: 100,
+        });
+        expect(keys(retry.structuredContent)).toEqual(expected);
+        expect(retry.structuredContent.total).toBe(expected.length);
+      }
+    }
+  } finally {
+    c.close();
+    writeFileSync(join(root, "public/catalog.json"), catalogText);
+    writeFileSync(join(root, "data/snapshot.json"), snapshotText);
+  }
+});
+
+it("explains raw full-collection matches without promising filtered-out deadlines on retry", async () => {
+  writeFileSync(
+    join(root, "public/catalog.json"),
+    JSON.stringify({ generated_at: screenAt, conferences: [] }),
+  );
+  const c = client(root);
+  try {
+    for (const [word, expected] of [
+      ["Delta", 2],
+      ["closed-issue", 0],
+      ["Gamma", 1],
+    ] as const) {
+      const response = await c.call("explain_word", { word });
+      const text = response.content.map((item) => item.text).join("\n");
+      expect(text).toContain(`同じ絞り込み条件では ${expected} 件です`);
+      if (expected === 0) {
+        expect(text).toContain("収録範囲を変えるだけでは結果は増えません");
+        expect(text).not.toContain("で引けます");
+      }
+      const retry = await c.call("search_deadlines", { query: word, scope: "all" });
+      expect(retry.structuredContent.total).toBe(expected);
+    }
+  } finally {
+    c.close();
+    writeFileSync(join(root, "public/catalog.json"), catalogText);
+  }
+});

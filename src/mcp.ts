@@ -740,11 +740,24 @@ function 畫面の既定(
     .concat(知らん.length ? [] : []);
 }
 
-function 窓の外の件數(照合: (hay: string) => boolean, 名: string, now: number): number {
-  if (名 !== "画面が最初に読む窓") return 0;
-  return withJournals(allRows(), snapshot().conferences ?? [], now).filter(
+function 窓の外の件數(
+  照合: (hay: string) => boolean,
+  名: string,
+  now: number,
+  args: Parameters<typeof 畫面の既定>[2] = {},
+): { raw: number; filtered: number } {
+  if (名 !== "画面が最初に読む窓") return { raw: 0, filtered: 0 };
+  const matches = withJournals(allRows(), snapshot().conferences ?? [], now).filter(
     (r) => 照合(r.hay) === true,
-  ).length;
+  );
+  return { raw: matches.length, filtered: 畫面の既定(matches, now, args).length };
+}
+
+function 窓の外の案内(counts: { raw: number; filtered: number }): string {
+  const countsText = `収録の全体には ${counts.raw} 行あります。同じ絞り込み条件では ${counts.filtered} 件です。`;
+  return counts.filtered
+    ? `${countsText}ほかの条件を変えずに scope: "all" で取得できます。`
+    : `${countsText}収録範囲を変えるだけでは結果は増えません。scope: "all" に切り替えたうえで、種別・期間・ランク・国内・オンライン・過去や推定を含める条件を見直してください。`;
 }
 
 /** 名前の殼の中で、語が**獨立に立つ**か（英数字は前後が區切りの事を要求する – `sc` が
@@ -977,7 +990,7 @@ function 名乘りの案内(query: string, list: Row[], now: number): string[] {
               );
             if (推定)
               return `この窓には締切の行がありませんが、**推定なら ${推定} に締切が在ります**（include_estimated で出ます – 確約ではない）`;
-            return 'この窓には締切の行がありませんが、**収録には在ります**（scope: "all" で過去の分行が出せます）';
+            return 'この窓には締切の行がありませんが、**収録には在ります**（scope: "all" に切り替え、過去・推定・種別などの絞り込み条件も確認してください）';
           })()
         : `締切の行が 1 本もありません（${eventAvailabilityNoticeJa(版々)}）`;
     return `- ${String(c.title ?? key)}（key: ${key}・版 ${版々.length} 件）: ${狀態}`;
@@ -1225,7 +1238,7 @@ function searchDeadlines(
     ? () => true
     : Recommender.searchMatcher(Recommender.expandRelativeMonths(query, now), now);
   const 素の = list.filter((r) => 照合(r.hay) === true);
-  const 窓の外 = 素の.length ? 0 : 窓の外の件數(照合, 名, now);
+  const 窓の外 = 素の.length ? { raw: 0, filtered: 0 } : 窓の外の件數(照合, 名, now, args);
 
   const 絞り込みが効く = !Recommender.searchMatcher(query, now)("・ー()");
   const 記号だけの文 =
@@ -1290,14 +1303,14 @@ function searchDeadlines(
     const 案内 = 素の.length ? [] : guidance(query, 0, list, now);
     /* 収録の果てより先の日付を打たれた時は「無い」と言はない。
      * 窓の外に行がある時はその案内が同じ事を言うので、重ねない。 */
-    const 果て = 素の.length || 窓の外 ? "" : 果ての案内(query, list, 名);
+    const 果て = 素の.length || 窓の外.raw ? "" : 果ての案内(query, list, 名);
     return [
       頭,
       "",
       素の.length
         ? `語は当たりますが、現在の絞り込み条件で 0 件になりました。include_past / include_estimated / kinds${ランク ? ` / rank（いま ${ランク}）` : ""} を試してください。`
-        : 窓の外
-          ? `この語は画面が最初に読む窓（${list.length} 行）には 1 行もありませんが、**収録の全体には ${窓の外} 行あります**（scope: "all" で引けます）。`
+        : 窓の外.raw
+          ? `この語は画面が最初に読む窓（${list.length} 行）には 1 行もありませんが、${窓の外の案内(窓の外)}`
           : (果て ?? "この語では 1 行も出ません。"),
       ...(窓あり && 素の.some((row) => row.kind === "journal")
         ? [
@@ -1328,7 +1341,7 @@ function searchDeadlines(
           `検索語は${選べる}の種別に当たります（表には投稿締切だけを出します）。kinds: ${JSON.stringify(鍵々)} で引けます（${件數} 件当たります）。`,
         ];
       })(),
-      ...語ごとの案號(query, list, now, 窓の外 > 0 ? allRows() : undefined),
+      ...語ごとの案號(query, list, now, 窓の外.raw > 0 ? allRows() : undefined),
       ...(素の.length ? [] : URLの案内(query)),
       ...案内.map((n) => `案内: ${n}`),
       /* 日数の幅（「1か月以内」）は画面の「締切まで」と同じ引数（`within_days`・第 872 回）を
@@ -1338,11 +1351,12 @@ function searchDeadlines(
        * この表が何を出す画面なのかと、分野の欄の名前を言う。 */
       ...(() => {
         if (案内.length || 日數幅の案内(query, list, now, args).length) return [];
-        if (窓の外 || 果て) return [];
+        if (窓の外.raw || 果て) return [];
         if (名乘りの案内(query, list, now).length) return [];
         if (URLの案内(query).length) return [];
         if (隱れた種別の語(query).length) return [];
-        if (語ごとの案號(query, list, now, 窓の外 > 0 ? allRows() : undefined).length) return [];
+        if (語ごとの案號(query, list, now, 窓の外.raw > 0 ? allRows() : undefined).length)
+          return [];
 
         if (hit.length && !素の.length) {
           const 常時 = String(Recommender.uiWordAlwaysNoteJa(query) ?? "").trim();
@@ -2197,7 +2211,7 @@ function explainWord(args: { word?: unknown; scope?: unknown }, now: number): st
 
   const 窓の外 = 窓の外の件數(照合, 名, now);
   const 案内 = guidance(word, 0, list, now);
-  const 果て = 窓の外 ? "" : 果ての案内(word, list, 名);
+  const 果て = 窓の外.raw ? "" : 果ての案内(word, list, 名);
   const 日數 = 日數幅の案内(word, list, now, {});
   const 種別の報 = 種別の報べ(word, list, now, {});
   const 語ごと = 語ごとの案號(word, list, now);
@@ -2252,9 +2266,9 @@ function explainWord(args: { word?: unknown; scope?: unknown }, now: number): st
     `「${word}」は 0 行です${語の截りの文}。画面がこの時に出す案内:`,
     ...(scopeErr ? [scopeErr] : []),
     ...(窓が無いの斷り(窓が無い) ? [窓が無いの斷り(窓が無い)] : []),
-    ...(窓の外
+    ...(窓の外.raw
       ? [
-          `- 画面が最初に読む窓（${list.length} 行）には 1 行もありませんが、**収録の全体には ${窓の外} 行あります**（scope: "all" で引けます）`,
+          `- 画面が最初に読む窓（${list.length} 行）には 1 行もありませんが、${窓の外の案内(窓の外)}`,
         ]
       : []),
     /* 「案内は無し」は**何も立たなんだ時だけ**。 */
