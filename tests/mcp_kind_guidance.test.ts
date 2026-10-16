@@ -46,40 +46,111 @@ it.each(["search_deadlines", "list_upcoming"])(
     );
     const search = tool === "search_deadlines";
     const cases = [
-      { args: { kinds: ["paper"] }, expected: ["paper"], unknown: false, empty: false },
-      { args: { kinds: ["paper", "zzz"] }, expected: ["paper"], unknown: true, empty: false },
-      { args: { kinds: ["論文締切", "zzz"] }, expected: ["paper"], unknown: true, empty: false },
+      {
+        args: { kinds: ["paper"] },
+        expected: ["paper"],
+        unknown: false,
+        empty: false,
+        ignored: false,
+      },
+      {
+        args: { kinds: ["paper", "zzz"] },
+        expected: ["paper"],
+        unknown: true,
+        empty: false,
+        ignored: false,
+      },
+      {
+        args: { kinds: ["論文締切", "zzz"] },
+        expected: ["paper"],
+        unknown: true,
+        empty: false,
+        ignored: false,
+      },
       {
         args: { kinds: ["all", "zzz"] },
         expected: ["abstract", "paper", "notification"],
         unknown: true,
         empty: false,
+        ignored: false,
       },
-      { args: { kinds: ["zzz"] }, expected: [], unknown: true, empty: false },
+      { args: { kinds: ["zzz"] }, expected: [], unknown: true, empty: false, ignored: false },
       {
         args: { kinds: [] },
         expected: search ? ["abstract", "paper"] : ["abstract", "paper", "notification"],
         unknown: false,
         empty: true,
+        ignored: false,
       },
       {
         args: { kinds: ["paper"], kind: "zzz" },
-        expected: search ? ["paper"] : [],
-        unknown: !search,
+        expected: ["paper"],
+        unknown: false,
         empty: false,
+        ignored: true,
       },
       {
         args: { kinds: ["zzz"], kind: "paper" },
-        expected: search ? [] : ["paper"],
-        unknown: search,
+        expected: [],
+        unknown: true,
         empty: false,
+        ignored: true,
       },
-      { args: { kinds: null, kind: "paper" }, expected: ["paper"], unknown: false, empty: false },
+      {
+        args: { kinds: null, kind: "paper" },
+        expected: ["paper"],
+        unknown: false,
+        empty: false,
+        ignored: false,
+      },
       {
         args: { kinds: [], kind: "paper" },
-        expected: search ? ["abstract", "paper"] : ["paper"],
+        expected: search ? ["abstract", "paper"] : ["abstract", "paper", "notification"],
         unknown: false,
-        empty: search,
+        empty: true,
+        ignored: true,
+      },
+      {
+        args: { kinds: ["paper"], kind: null },
+        expected: ["paper"],
+        unknown: false,
+        empty: false,
+        ignored: false,
+      },
+      {
+        args: { kinds: ["採否通知"], kind: "論文締切" },
+        expected: ["notification"],
+        unknown: false,
+        empty: false,
+        ignored: true,
+      },
+      {
+        args: { kinds: ["概要締切", "論文締切"], kind: "採否通知" },
+        expected: ["abstract", "paper"],
+        unknown: false,
+        empty: false,
+        ignored: true,
+      },
+      {
+        args: { kinds: ["notification"], kind: "all" },
+        expected: ["notification"],
+        unknown: false,
+        empty: false,
+        ignored: true,
+      },
+      {
+        args: { kinds: ["all"], kind: "notification" },
+        expected: ["abstract", "paper", "notification"],
+        unknown: false,
+        empty: false,
+        ignored: true,
+      },
+      {
+        args: { kinds: null, kind: "採否通知" },
+        expected: ["notification"],
+        unknown: false,
+        empty: false,
+        ignored: false,
       },
     ];
     const child = spawnSync(process.execPath, ["run.ts"], {
@@ -131,8 +202,7 @@ it.each(["search_deadlines", "list_upcoming"])(
             ? "kinds が空なので既定の投稿締切（概要・論文・常時受付）を対象にしています"
             : "kinds が空なので種別では絞り込んでいません",
         );
-      if (c.args.kinds === null)
-        expect(text).not.toContain("kind は kinds と共に与えられたので見ていません");
+      expect(text.includes("kind は kinds と共に与えられたので見ていません")).toBe(c.ignored);
     }
   },
 );
