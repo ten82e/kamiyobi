@@ -6057,3 +6057,31 @@ it("search_deadlines の行が、配付カレンダーの UID を持つ（第 11
   for (const row of 全)
     expect(row.ics_uid, "収録全体の行に UID を付けた（snapshot には無い）").toBeUndefined();
 });
+
+/* 分野の語は、MCP の中でも 1 つの正本（`Recommender.categoryLabelJa`）から取る。
+ * `venue_info` の「分野:」の行と `search_deadlines` の `categories_ja` が別々の語を持つと、
+ * 同じ会議について AI が 2 通りの言い方をする（画面のチップとも食い違う）。 */
+it("MCP の中でも、分野の語は 1 つの正本から取る（第 1111 回）", async () => {
+  /* 同じ正本を呼んでいる事（書き写しではない事の裏取り）。 */
+  const src = readFileSync(join(REPO_ROOT, "src", "mcp.ts"), "utf8");
+  expect(src, "venue_info の分野が正本を呼んでいない").toContain(
+    "Recommender.categoryLabelJa(key)",
+  );
+  /* 両方の道具が、同じ会議について同じ語を同じ順で言う。 */
+  for (const key of ["icde", "sc"]) {
+    const v = await call("venue_info", { key, scope: "all" });
+    const 分野 = (v.match(/分野: ([^\n]*)/) ?? [])[1] ?? "";
+    expect(分野, `${key} の分野が空`).not.toBe("");
+    const s = (await client.ask({
+      jsonrpc: "2.0",
+      id: 2,
+      method: "tools/call",
+      params: { name: "search_deadlines", arguments: { query: key, limit: 1, scope: "screen" } },
+    })) as { result?: { structuredContent?: { rows?: Array<Record<string, unknown>> } } };
+    const row = (s.result?.structuredContent?.rows ?? [])[0];
+    expect(row, `${key} の行が search_deadlines に無い（前提が崩れた）`).toBeTruthy();
+    const 語 = row!.categories_ja as string[];
+    expect(Array.isArray(語), `${key} の categories_ja が配列でない`).toBe(true);
+    expect(分野, `${key}: venue_info と search_deadlines の分野の語が違う`).toBe(語.join("・"));
+  }
+});
