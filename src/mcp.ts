@@ -609,13 +609,28 @@ function 調べる語(語: string): { 使ふ: string; 切つた: boolean } {
   return { 使ふ: 語.slice(0, 語の截), 切つた: true };
 }
 
-function 文字として讀む(值: unknown): string {
+function 文字として讀む(值: unknown, field: string): string {
   if (值 === undefined || 值 === null) return "";
   const t = typeof 值;
   if (t === "string" || t === "number" || t === "boolean" || t === "bigint") {
     return String(值).trim();
   }
-  return "";
+  const paperLike =
+    field === "query" &&
+    (Array.isArray(值) ? 值 : [值]).some(
+      (value) =>
+        value &&
+        typeof value === "object" &&
+        !Array.isArray(value) &&
+        ("title" in value || "abstract" in value),
+    );
+  throw new Error(
+    `${field} は文字列で指定してください。${
+      paperLike
+        ? "論文の題名・概要から投稿先を探す場合は search_venues に同じ論文オブジェクトを渡せます。"
+        : "複数の語も1つの文字列にまとめて指定してください。"
+    }`,
+  );
 }
 
 function 種別の値を読む(引き: unknown): string[] {
@@ -1218,7 +1233,7 @@ function searchDeadlines(
   const offset = args.offset === undefined ? 0 : args.offset;
   if (typeof offset !== "number" || !Number.isSafeInteger(offset) || offset < 0)
     throw new Error("offset は 0 以上の整数で指定してください。");
-  const 打たれた検索語 = 文字として讀む(args.query);
+  const 打たれた検索語 = 文字として讀む(args.query, "query");
 
   const 檢索語の截 = 800;
   const query =
@@ -1818,8 +1833,13 @@ function venueInfo(
   now: number,
   receive?: (result: Record<string, unknown>) => void,
 ): string {
-  const key = 文字として讀む(args.key);
-  const name = 文字として讀む(args.name);
+  const key = 文字として讀む(args.key, "key");
+  const name = key ? "" : 文字として讀む(args.name, "name");
+  const nameIgnored =
+    Boolean(key) &&
+    args.name !== undefined &&
+    args.name !== null &&
+    (typeof args.name === "object" || String(args.name).trim() !== "");
   if (!key && !name) return "key（会議の識別子）か name（会議名の一部）をください。";
   /* `名` は使はない（この道具は会議の名を自分で組み立てる）ので受け取らない。 */
   const { list, 生成, 名, 窓が無い } = pick(args.scope ?? "all");
@@ -2195,7 +2215,7 @@ function venueInfo(
   return [
     斷り +
       `（${名}・${list.length} 行から）` +
-      (key && name ? "\n注: name は key と共に与えられたので見ていません" : ""),
+      (nameIgnored ? "\n注: name は key と共に与えられたので見ていません" : ""),
     `会議: ${identity.title || identity.venue_key}（key: ${identity.venue_key}${identity.acronym ? `・${identity.acronym}` : ""}）`,
     /* 正式名も言ふ（**會議名のすぐ下** – 畫面の一覧のセルと行の詳細がどちらも
      * 略稱の下に正式名を出すその順）。實測 2026-10-16: 收録 5,039 行が正式名を持つ
@@ -2246,7 +2266,7 @@ function venueInfo(
 }
 
 function explainWord(args: { word?: unknown; scope?: unknown }, now: number): string {
-  const 打たれた語 = 文字として讀む(args.word);
+  const 打たれた語 = 文字として讀む(args.word, "word");
   if (!打たれた語) return "語をください。";
   const { 使ふ: word, 切つた: 語を切つた } = 調べる語(打たれた語);
   const 語の截りの文 = 語を切つた
