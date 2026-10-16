@@ -315,6 +315,9 @@ rollforward:
   # merge は間隔の整数倍だけ進めて(曜日は保たれる)未来に届かなければ推定を出さない。
 
 # data.json の sources 欄と NOTICE の帰属表示に使う。
+# `local` の正典は manual.yaml と curated.generated.yaml である（旧 extra.yaml は
+# 正典が無い checkout の互換入力としてだけ使う – src/sources/local.ts の localSourcePaths）。
+# 機械可読の出典に古い入力を書くと、索引（llms.txt）を読む側が別のファイルを見に行く。
 sources:
   - name: ccfddl
     repo: ccfddl/ccf-deadlines
@@ -325,7 +328,7 @@ sources:
     license: MIT
     url: https://github.com/huggingface/ai-deadlines
   - name: local
-    repo: data/extra.yaml
+    repo: data/manual.yaml + data/curated.generated.yaml
     license: MIT
     url: https://github.com/ten82e/kamiyobi
 
