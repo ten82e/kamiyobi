@@ -585,11 +585,19 @@ it("collection_stats が、収録その物の数とファイルを返す（第 7
     if (st) 數へる.set(st, (數へる.get(st) ?? 0) + 1);
     return 數へる;
   }, new Map<string, number>());
-  const 複數 = (狀態の數.get("manual-required") ?? 0) + (狀態の數.get("parser-failed") ?? 0);
-  expect(複數, "この検查の前提（複数候補が数えられない）が崩れた").toBeGreaterThan(100);
-  expect(text, "「複数候補のため要確認」の数が収録と合はん").toContain(
-    `複数候補のため要確認 ${String(複數)} 行`,
-  );
+  const 要確認 = 狀態の數.get("manual-required") ?? 0;
+  const 讀み取り失敗 = 狀態の數.get("parser-failed") ?? 0;
+  expect(
+    要確認 + 讀み取り失敗,
+    "この検查の前提（確定できなかつた行が数えられない）が崩れた",
+  ).toBeGreaterThan(100);
+  /* 二つの状態は別の語で出す（`manual-required` は理由を一つに決め打たない「要確認」、
+   * `parser-failed` は「読み取り失敗」）。数を一つにまとめると、片方の語の数が合はなくなる。 */
+  expect(text, "「要確認」の数が収録と合はん").toContain(`要確認 ${String(要確認)} 行`);
+  if (讀み取り失敗)
+    expect(text, "「読み取り失敗」の数が収録と合はん").toContain(
+      `読み取り失敗 ${String(讀み取り失敗)} 行`,
+    );
   expect(text, "「確認済み」の数が収録と合はん").toContain(
     `確認済み ${狀態の數.get("verified") ?? 0} 行`,
   );
@@ -1146,7 +1154,7 @@ it("行に会期が付く（画面の「会期」列と同じ入口・第 859 �
 
 it("行に、延長と確認の状態の札が付く（画面の一覧の札と同じ語・第 860 回）", async () => {
   /* 画面の一覧の行には札が付く（延長・確認の状態）。MCP の行には無かったので、AI は
-   * **上流に候補が複数ある締切**（複数候補のため要確認）を、確定した締切として答へていた。 */
+   * **公式ページから確定できなかつた締切**（要確認）を、確定した締切として答へていた。 */
   const rows = displayCandidates(
     JSON.parse(readFileSync(join(REPO_ROOT, "data", "snapshot.json"), "utf8")) as never,
   );
@@ -2262,7 +2270,7 @@ it("venue_info は次の投稿締切を先頭で言う（第 893 回）", async 
   expect(今後の在る, "次の投稿締切を言つていない").toContain("次の投稿締切: 20");
   /* 画面と同じ行の形（`line()`）なので、何時・どの回・札が読める。 */
   expect(今後の在る, "投稿の締切の行が細い").toContain("論文締切");
-  expect(今後の在る, "確認の札が付いていない").toContain("複数候補のため要確認");
+  expect(今後の在る, "確認の札が付いていない").toContain("要確認");
   /* 今後の投稿締切が無い会議では、**一番遲い過去**を言う（一番古い過去では「5 年前に終はつた」
    * と読めてしまふ – 実測で 2021 年が出ていた）。 */
   const 過ぎた = await call("venue_info", { key: "sigkdd", scope: "all" });
@@ -4312,7 +4320,8 @@ it("venue_info の確認の内訣は、その会議の行の数と合う（第 9
     const 版々 = ((c.editions ?? []) as Array<Record<string, unknown>>).flatMap(
       (e) => (e.deadlines ?? []) as Array<Record<string, unknown>>,
     );
-    let 複數 = 0;
+    let 要確認 = 0;
+    let 讀み取り失敗 = 0;
     let 確認済み = 0;
     let 記録なし = 0;
     for (const d of 版々) {
@@ -4322,16 +4331,18 @@ it("venue_info の確認の内訣は、その会議の行の数と合う（第 9
           : d.verification) ?? "",
       );
       if (!st) 記録なし += 1;
-      else if (st === "manual-required" || st === "parser-failed") 複數 += 1;
+      else if (st === "manual-required") 要確認 += 1;
+      else if (st === "parser-failed") 讀み取り失敗 += 1;
       else if (st === "verified") 確認済み += 1;
     }
     /* 締切が 1 本も無い会議（実測: `fgcs`）は「確認: …」を出さないのでそのまま次へ。 */
-    if (!(複數 + 確認済み + 記録なし)) {
+    if (!(要確認 + 讀み取り失敗 + 確認済み + 記録なし)) {
       expect(答, `「${key}」は締切が無いのに「確認: 」を出して居る`).not.toContain("確認: ");
       continue;
     }
-    if (複數)
-      expect(行, `「${key}」の複数候補の數が違ふ`).toContain(`複数候補のため要確認 ${複數} 行`);
+    if (要確認) expect(行, `「${key}」の要確認の數が違ふ`).toContain(`要確認 ${要確認} 行`);
+    if (讀み取り失敗)
+      expect(行, `「${key}」の読み取り失敗の數が違ふ`).toContain(`読み取り失敗 ${讀み取り失敗} 行`);
     if (記録なし)
       expect(行, `「${key}」の記録なしの數が違ふ`).toContain(`確認の記録なし ${記録なし} 行`);
     if (確認済み) expect(行, `「${key}」の確認済みの數が違ふ`).toContain(`確認済み ${確認済み} 行`);

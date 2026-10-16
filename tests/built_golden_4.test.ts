@@ -2667,7 +2667,7 @@ it("「ポスター募集」のような複合の言い方も、表に出る語�
 });
 
 it("行に出る検証状態の印が、そのまま打つと 1 件も引けなかった（SPEC §7）", async () => {
-  // 2026-08-09 生成ビルドで実測: 一覧は 863 行中 375 行に「複数候補のため要確認」の印を
+  // 2026-08-09 生成ビルドで実測: 一覧は 863 行中 375 行に「要確認」の印を
   // 出しているのに、その語を打つと 0 件だった（`確認済み` 25 行、`再確認待ち` 2 行も 0 件）。
   // 検索用の語を作る側が `verification === "unverified"` という文字列比較を見ていて、
   // 実データは `{status: "manual-required"}` のオブジェクトだったため、語が 1 つも
@@ -2706,8 +2706,8 @@ it("行に出る検証状態の印が、そのまま打つと 1 件も引けな�
   expect(alert(undefined), "状態のない行に印を出すようになった").toBeNull();
   expect(alert("verified"), "確認済みの行に印を出すようになった").toBeNull();
   // 状態ごとの語。未知の状態は機械の語をそのまま出さず「再確認待ち」にする（画面の従来動作）。
-  expect(alert("manual-required")).toBe("複数候補のため要確認");
-  expect(alert("parser-failed")).toBe("複数候補のため要確認");
+  expect(alert("manual-required")).toBe("要確認");
+  expect(alert("parser-failed")).toBe("読み取り失敗");
   expect(alert("pending")).toBe("再確認待ち");
   expect(alert("source-unreachable")).toBe("公式ページ取得不能");
   expect(alert("思いもよらない状態名"), "機械の語をそのまま画面に出した").toBe("再確認待ち");
@@ -2720,7 +2720,8 @@ it("行に出る検証状態の印が、そのまま打つと 1 件も引けな�
 
   // その印を出している行だけが当たること（件数と、当たった行の状態の一致の両方を見る）。
   const cases: Array<[string, string[]]> = [
-    ["複数候補のため要確認", ["manual-required", "parser-failed"]],
+    ["要確認", ["manual-required"]],
+    ["読み取り失敗", ["parser-failed"]],
     ["再確認待ち", ["pending"]],
     ["確認済み", ["verified"]],
   ];
@@ -2739,8 +2740,8 @@ it("行に出る検証状態の印が、そのまま打つと 1 件も引けな�
     expect(印 === "確認済み" ? table[状態] : alert(状態), `「${印}」の語が画面と違う`).toBe(印);
   }
   // 「要確認」だけでも同じ行に出会う（語の一部を打つ人は多い）。
-  expect(hit("要確認"), "「要確認」が「複数候補のため要確認」の行をよせない").toBe(
-    hit("複数候補のため要確認"),
+  expect(hit("要確認"), "「要確認」が印の行をよせない").toBe(
+    rows.filter((r) => statusOf(r) === "manual-required").length,
   );
   // 既存の状態の語は動かさない（同じ関数で組み立てている語の回帰を見る）。
   expect(hit("推定"), "「推定」の語が壊れた").toBeGreaterThan(0);
@@ -2863,7 +2864,7 @@ it("締切欄・公式表記欄に出る時刻をそのまま打つと、その�
   ).toBe(0);
   // 同じ行で壊れやすい語の回帰を見る。
   expect(hit("時刻未確認"), "「時刻未確認」の語が壊れた").toBeGreaterThan(0);
-  expect(hit("複数候補のため要確認"), "印の語が壊れた").toBeGreaterThan(0);
+  expect(hit("要確認"), "印の語が壊れた").toBeGreaterThan(0);
   expect(hit("来年"), "「来年」が壊れた").toBeGreaterThan(0);
 });
 
@@ -2980,7 +2981,7 @@ it("公式表記欄に書く AoE の日付をそのまま打つと、その行�
   const slash = `${Number(例の日.slice(5, 7))}/${Number(例の日.slice(8, 10))}`;
   expect(hitRows(slash).length, `「${slash}」の入力が壊れた`).toBeGreaterThan(0);
   expect(hitRows("時刻未確認").length, "「時刻未確認」が壊れた").toBeGreaterThan(0);
-  expect(hitRows("複数候補のため要確認").length, "印の語が壊れた").toBeGreaterThan(0);
+  expect(hitRows("要確認").length, "印の語が壊れた").toBeGreaterThan(0);
   expect(hitRows("来年").length, "「来年」が壊れた").toBeGreaterThan(0);
 });
 
@@ -3087,7 +3088,7 @@ it("一覧に出る会議名（年を後付けした形）をそのまま打つ�
   // 既存の語の回帰を見る。
   expect(hitRows("来年").length, "「来年」が壊れた").toBeGreaterThan(0);
   expect(hitRows("時刻未確認").length, "「時刻未確認」が壊れた").toBeGreaterThan(0);
-  expect(hitRows("複数候補のため要確認").length, "印の語が壊れた").toBeGreaterThan(0);
+  expect(hitRows("要確認").length, "印の語が壊れた").toBeGreaterThan(0);
 });
 
 it("締切欄のセルをコピーして貼ると、その行に出会う（SPEC §7）", async () => {
@@ -3202,7 +3203,7 @@ it("締切欄のセルをコピーして貼ると、その行に出会う（SPEC
 
   // 6. 既存の語の回帰を見る。
   expect(hitRows("来年").length, "「来年」が壊れた").toBeGreaterThan(0);
-  expect(hitRows("複数候補のため要確認").length, "印の語が壊れた").toBeGreaterThan(0);
+  expect(hitRows("要確認").length, "印の語が壊れた").toBeGreaterThan(0);
   expect(hitRows("推定").length, "「推定」が壊れた").toBeGreaterThan(0);
 });
 

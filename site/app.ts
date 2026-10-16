@@ -6714,9 +6714,9 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       `「${notApplicable}」は、常時受付の期刊行で、締切というものがない行です`,
       // 検証状態の印も紙に刷られる。第 212 回まで検索用の語と CSV の「状態」列から
       // 抜けていて、紙のうえに意味が書かれていなかった（2026-08-09 生成ビルドで実測:
-      // 状態列には 複数候補のため要確認 375 件・確認済み 25 件・再確認待ち 2 件が入る）。
+      // 状態列には 要確認 375 件・確認済み 25 件・再確認待ち 2 件が入る）。
       // 語は画面と同じ語彙表から取る（書き写すと紙と画面がズレる）。
-      `「${VERIFICATION_STATUS_LABELS["manual-required"]}」は公式ページに候補が複数あって人の確認が必要な行、「${VERIFICATION_STATUS_LABELS.pending}」は次の確認予定に回した行、「${VERIFICATION_STATUS_LABELS.verified}」は公式ページで確認した行です`,
+      `「${VERIFICATION_STATUS_LABELS["manual-required"]}」は公式ページから締切を 1 つに確定できなかった行（理由は一つではありません）、「${VERIFICATION_STATUS_LABELS.pending}」は次の確認予定に回した行、「${VERIFICATION_STATUS_LABELS.verified}」は公式ページで確認した行です`,
       // ここに並べる語は、必ずこの用紙に刷られるものだけにする。前回は画面でしか見えない
       // 語（行の詳細の「原表記:」）と、現状のデータで一度も出ない語（残り欄の横線）を
       // 説明していた（2026-08-09 実測: 詳細欄は印刷で隠れ、横線は候補行 3,235 件の CSV に
