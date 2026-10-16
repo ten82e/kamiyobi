@@ -94,6 +94,8 @@ interface Row {
     latest_utc?: string;
     /** 確認の状態（上流が付けた印。オブジェクトの事と文字列の事がある – 語は画面と同じ正本）。 */
     verification?: { status?: string } | string;
+    /** 配付のカレンダー（`deadlines.ics`）が使う UID（`data.json` の締切が持つ）。 */
+    ics_uid?: string;
   };
   submission?: SubmissionDisplay;
   kind: string;
@@ -1244,6 +1246,9 @@ export function structuredDeadline(r: Row, now: number): Record<string, unknown>
      * 聞いた時に AI が見分けを付けられるやうに、機械可読でも持つ。 */
     domestic: Recommender.isDomesticTag(r.tags),
     rank: r.conf.rank ?? null,
+    /* 配付のカレンダーの UID。**同じ締切を、AI がカレンダーの予定として名指せる**ように
+     * する（2026-10-17 まで、行からカレンダーの予定へ渡る手掛かりが無かった）。 */
+    ...(typeof r.dl.ics_uid === "string" && r.dl.ics_uid ? { ics_uid: r.dl.ics_uid } : {}),
     /* 分野。畫面は分野を札で出し、配付の ICS も本文に `分野:` を書くのに、**MCP の行だけ
      * 出して居なかつた**（2026-10-17 實測: `search_deadlines` の行の欄に `categories` が無く、
      * AI は「この締切はどの分野か」を會場の別の呼び出しでしか知れなかつた）。鍵（`security`
@@ -3015,7 +3020,7 @@ const TOOLS = [
   {
     name: "search_deadlines",
     description:
-      "日本語で投稿締切を検索する。語を省いて kind / kinds / rank / category / categories / domestic / online / within_days だけでも絞れる。既定は今後の abstract / paper / journal で、過去と推定は除きます（include_past・include_estimated で足せます）。既定の kind は MCP の方が広く、常時受付（journal）も含みます。scope は screen（初期一覧）または all（収録全体）。structuredContent に total・rows・next_offset を返す。screen で 0 件のときは scope_comparison に全収録での同条件の件数・絞る前の件数・生成時刻を返す。比較データを読めない場合は検索結果を保持し、scope_comparison_error に理由と再試行の案内を返す。範囲を変えるときもほかの条件を維持する。続きは同じ条件と next_offset を offset に指定する。日付のみの行の utc・jst は null。常時受付は締切日時・精度・回次を null とし、日付のある行の後に並べます。推定期間、投稿トラック、確認状態を別に返す。公式確認（いつ・どこで・何を確かめたか）は verification_ja に画面の行の詳細と同じ日本語で返します（内部の鍵名は verification に残します）。前に出ていた締切も表示する。日付語は別ラウンドや会期にも当たるため、締切だけの期間指定には within_days を使う。会期の欄には、上流が書いた原文（`March 18-21, 2024` のような自由文）を「原表記」として添えます（画面の行の詳細と同じ）。0 件のときは画面と同じ案内と「打ち直すなら」の候補を返す。返す行の形: 日時 | 種別 | 確認状態（ある場合）| 会議名（版の識別子）| ランク | 会期 | 開催地 URL。テキストは `| ` で切り、構造化結果を優先する。構造化の行には `categories`（分野の鍵）と `categories_ja`（画面の札と同じ日本語）も入る。",
+      "日本語で投稿締切を検索する。語を省いて kind / kinds / rank / category / categories / domestic / online / within_days だけでも絞れる。既定は今後の abstract / paper / journal で、過去と推定は除きます（include_past・include_estimated で足せます）。既定の kind は MCP の方が広く、常時受付（journal）も含みます。scope は screen（初期一覧）または all（収録全体）。structuredContent に total・rows・next_offset を返す。screen で 0 件のときは scope_comparison に全収録での同条件の件数・絞る前の件数・生成時刻を返す。比較データを読めない場合は検索結果を保持し、scope_comparison_error に理由と再試行の案内を返す。範囲を変えるときもほかの条件を維持する。続きは同じ条件と next_offset を offset に指定する。日付のみの行の utc・jst は null。常時受付は締切日時・精度・回次を null とし、日付のある行の後に並べます。推定期間、投稿トラック、確認状態を別に返す。公式確認（いつ・どこで・何を確かめたか）は verification_ja に画面の行の詳細と同じ日本語で返します（内部の鍵名は verification に残します）。前に出ていた締切も表示する。日付語は別ラウンドや会期にも当たるため、締切だけの期間指定には within_days を使う。会期の欄には、上流が書いた原文（`March 18-21, 2024` のような自由文）を「原表記」として添えます（画面の行の詳細と同じ）。0 件のときは画面と同じ案内と「打ち直すなら」の候補を返す。返す行の形: 日時 | 種別 | 確認状態（ある場合）| 会議名（版の識別子）| ランク | 会期 | 開催地 URL。テキストは `| ` で切り、構造化結果を優先する。構造化の行には `categories`（分野の鍵）と `categories_ja`（画面の札と同じ日本語）も入る。`ics_uid`（配付カレンダーの予定の UID）は**初期カタログの行にだけ**入ります（収録全体の行は収録 snapshot から組むため、カレンダーの UID を持ちません）。",
     inputSchema: {
       type: "object",
       properties: {

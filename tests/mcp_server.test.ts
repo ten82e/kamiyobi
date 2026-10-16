@@ -6027,3 +6027,33 @@ it("search_deadlines の既定の種別は、畫面より広い（常時受付�
   expect(期刊行.length, "kind: journal で常時受付を出せない").toBeGreaterThan(0);
   for (const r of 期刊行) expect(r.kind, "journal を指定したのに別の種別が出た").toBe("journal");
 });
+
+/* 配付カレンダーの UID を、AI が行から名指せるようにした（2026-10-17 まで、行から
+ * カレンダーの予定へ渡る手掛かりが無かった）。**初期カタログの行にだけ**入る –
+ * 収録全体の行は収録 snapshot（上流データ）から組むので、UID を持たない。 */
+it("search_deadlines の行が、配付カレンダーの UID を持つ（第 1110 回）", async () => {
+  const 引く = async (scope: string) =>
+    (await client.ask({
+      jsonrpc: "2.0",
+      id: 2,
+      method: "tools/call",
+      params: { name: "search_deadlines", arguments: { query: "ICDE", limit: 3, scope } },
+    })) as { result?: { structuredContent?: { rows?: Array<Record<string, unknown>> } } };
+
+  const 畫面 = (await 引く("screen")).result?.structuredContent?.rows ?? [];
+  expect(畫面.length, "行が返らない（前提が崩れた）").toBeGreaterThan(0);
+  const uid = String(畫面[0].ics_uid ?? "");
+  expect(uid, "初期カタログの行に ics_uid が無い").toMatch(/^kamiyobi-.+@kamiyobi$/);
+  /* 同じ UID が配付のカレンダーにも在る（同じ締切を指している）。 */
+  /* 配付のカレンダーは、此の検査が使つて居るのと同じ組み立て（`REPO_ROOT/public`）を讀む。 */
+  const ics = readFileSync(join(REPO_ROOT, "public", "deadlines.ics"), "utf8").replace(
+    /\r\n[ \t]/g,
+    "",
+  );
+  expect(ics, "カレンダーに同じ UID の予定が無い").toContain(`UID:${uid}`);
+  /* 収録全体の行は収録 snapshot から組むので、UID を持たない（書いてある通り）。 */
+  const 全 = (await 引く("all")).result?.structuredContent?.rows ?? [];
+  expect(全.length, "収録全体の行が返らない").toBeGreaterThan(0);
+  for (const row of 全)
+    expect(row.ics_uid, "収録全体の行に UID を付けた（snapshot には無い）").toBeUndefined();
+});
