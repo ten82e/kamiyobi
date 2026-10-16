@@ -30,6 +30,25 @@ const SERVER_VERSION = "1.0.0";
 const EVENT_ONLY_NOTICE_JA =
   "会期は収録にあります。全開催回の日程は venue_info で確認できます。直近一覧（list_upcoming / upcoming.md）は対象期間内の開催だけを扱います。購読カレンダー（deadlines.ics）は締切のみです。";
 const DEFAULT_PROTOCOL = "2025-06-18";
+/* 繋いだ AI へ一度に渡す手引き（MCP の `initialize` が返す `instructions`）。道具の説明は
+ * 一つずつの持ち物なので、**横断の約束** – 推定と確定を混ぜない事・`date-only` に時刻を
+ * 作らない事・既定で何を返すか – はここに書く。名指す道具の名は `TOOLS` と突き合はせる
+ * （検査 `tests/mcp_server.test.ts`）。 */
+const SERVER_INSTRUCTIONS_JA = [
+  "kamiyobi は CS 系の国際会議・国内研究会・ジャーナル特集号の投稿締切と会期を返す、読み取り専用のサーバです（外部への送信も書き込みもしません）。",
+  "",
+  "答え方の約束:",
+  '- 日時は日本時間（JST）を主に返します。`precision: "date-only"` は時刻を確認できていない行で、`utc`・`jst` は null です。`earliest_utc`〜`latest_utc` の不確実性区間の端を、公式の締切時刻として扱わないでください。',
+  "- `estimated: true` は前年までの実績から機械的に置いた未確認の値です。確定した締切として案内しないでください（既定では返しません）。",
+  "- `search_deadlines` の既定は今後の abstract / paper / journal で、過去と推定は除きます（`include_past`・`include_estimated` で足せます）。`list_upcoming` の既定は種別で絞らず、推定も含みます。両者の件数を比べるなら、種別・推定・`scope` を揃えてください。",
+  "- `scope` は `screen`（画面の初期一覧。生成から 180 日先まで。`catalog.json` がある時だけ）と `all`（収録の全体）で、省くと `screen` です。0 件のときは `scope_comparison` に収録全体での件数が出ます。",
+  "- 会期は締切ではありません。購読カレンダー（`deadlines.ics`）は締切だけを載せ、`list_upcoming` は締切と会期の両方を返します。",
+  "- 締切は動きます。投稿の判断の前に、行の公式ページで最新の募集要項を確かめるよう案内してください。",
+  "",
+  "道具: 締切を引く `search_deadlines` / 直近の締切と会期をまとめる `list_upcoming` / 会議を名指して開催回と締切を見る `venue_info` / 語が収録に当たるか調べる `explain_word` / 収録数とデータ源を見る `collection_stats` / 論文の題名と概要から投稿先を探す `search_venues`・`recommend_venues`。",
+  "",
+  "構造化結果（`structuredContent`）を優先し、続きは返ってきた `next_offset` を `offset` に渡してください。",
+].join("\n");
 
 /* 行の形（`Recommender.candidateRows` が返す物の内、ここで使う分だけ）。 */
 interface Row {
@@ -3204,6 +3223,7 @@ async function handle(raw: string, now: number): Promise<void> {
       protocolVersion: DEFAULT_PROTOCOL,
       capabilities: { tools: {} },
       serverInfo: { name: SERVER_NAME, version: SERVER_VERSION },
+      instructions: SERVER_INSTRUCTIONS_JA,
     });
     return;
   }

@@ -181,17 +181,48 @@ describe("MCP の手順が話せる（第 714 回）", () => {
         protocolVersion?: string;
         capabilities?: { tools?: unknown };
         serverInfo?: { name?: string; version?: string };
+        instructions?: string;
       };
     };
     expect(res.result?.protocolVersion, "版を返して居ない").toBe("2025-06-18");
     expect(res.result?.serverInfo?.name, "名乘りが違う").toBe("kamiyobi");
     expect(res.result?.capabilities?.tools, "道具の能力を名乘つて居ない").toBeTruthy();
+    /* 繋いだ AI へ渡す手引き。道具の説明は一つずつの持ち物なので、横断の約束はここに書く。 */
+    const 手引き = String(res.result?.instructions ?? "");
+    expect(手引き.length, "手引きを返して居ない").toBeGreaterThan(200);
+    for (const 約束 of ["date-only", "estimated", "scope", "structuredContent", "next_offset"])
+      expect(手引き, `手引きが ${約束} を書いて居ない`).toContain(約束);
     /* 支度の通知（返事を書かない物）を送つても、それらしい返事が來ない事。 */
     client.send({ jsonrpc: "2.0", method: "notifications/initialized" });
     const pong = (await client.ask({ jsonrpc: "2.0", id: 99, method: "ping" })) as {
       result?: unknown;
     };
     expect(pong.result, "ping に返事がない").toEqual({});
+  });
+
+  it("手引きの道具の一覧が實物と同じ（足した道具を書き漏らさない）", async () => {
+    const init = (await client.ask({
+      jsonrpc: "2.0",
+      id: 1,
+      method: "initialize",
+      params: {
+        protocolVersion: "2025-06-18",
+        capabilities: {},
+        clientInfo: { name: "test", version: "0" },
+      },
+    })) as { result?: { instructions?: string } };
+    const 手引き = String(init.result?.instructions ?? "");
+    /* 「道具:」の行が名指す物と `tools/list` が返す物を突き合はせる。片方だけ足すと、
+     * AI は在らない道具を探すか、在る道具に氣づかない。 */
+    const 行 = 手引き.split("\n").find((l) => l.startsWith("道具:"));
+    expect(行, "手引きに道具の行がない").toBeTruthy();
+    const 名指した = [...String(行).matchAll(/`([^`]+)`/g)].map((m) => m[1]).sort();
+    const listed = (await client.ask({ jsonrpc: "2.0", id: 3, method: "tools/list" })) as {
+      result?: { tools?: Array<{ name?: string }> };
+    };
+    const 實物 = (listed.result?.tools ?? []).map((t) => String(t.name)).sort();
+    expect(實物.length, "道具が七つでない").toBe(7);
+    expect(名指した, "手引きの道具の一覧が實物と違う").toEqual(實物);
   });
 
   it("道具の一覽が読める（七つ・どれも入力の形を持つ）", async () => {

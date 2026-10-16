@@ -109,6 +109,8 @@ it.each(["2025-06-18", "2024-11-05", "2099-01-01"])(
         protocolVersion: "2025-06-18",
         capabilities: { tools: {} },
         serverInfo: { name: "kamiyobi", version: "1.0.0" },
+        /* 繋いだ AI へ渡す手引き（中身の契約は `tests/mcp_server.test.ts`）。 */
+        instructions: expect.any(String),
       },
     });
     expect(replies[1].id).toBe(2);
