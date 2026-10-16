@@ -1361,7 +1361,7 @@ it("日数の幅は、同じ幅を引ける検索語に置き換へて敎へる�
   /* 画面は「1か月以内」を「『締切まで』の選擇欄で『30 日以内』を選ぶと同じ話です」と送る
    * （`dayRangeNoteJa`）が、**MCP にその欄は無い**。実測 2026-10-08（窓 870 行）: `1か月以内` は
    * 0 件で案内も無く、同じ幅の `30日以内` は 90 件だつた – AI は「1 か月以内の締切は無い」と
-   * 答へてしまふ。 */
+   * 答へてしまう。 */
   const text = await call("search_deadlines", { query: "1か月以内", scope: "all", limit: 1 });
   expect(text, "日数の幅をその侭検索語として扱つた").toContain(
     "日数の幅はそのままでは検索語に当たりません",
@@ -1670,7 +1670,7 @@ it("名簿の案内が、画面と同じ規則で名を探す（第 875 回）",
   }
   /* 英字の語は名前の中で**獨立に立つ**事を要求する（画面と同じ – `st` は多くの名前に
    * 部分として含まるが、どれにも立たない）。部分一致に戻すと、名前にその語を含むだけの
-   * 会議を「名簿にある」と言之てしまふ。 */
+   * 会議を「名簿にある」と言之てしまう。 */
   /* 前提をこの方で確かめる – `st` は名前に部分として含まるが、どれにも**語として立たん**。 */
   const 殻 = (品書の會議 ?? []).map((c) =>
     `${String((c as { acronym?: unknown }).acronym ?? "")} ${String((c as { title?: unknown }).title ?? "")} ${String((c as { full_name?: unknown }).full_name ?? "")} ${String((c as { key?: unknown }).key ?? "")}`.toLowerCase(),
@@ -1699,7 +1699,7 @@ it("key で問はれた時は、その会議の事を言う（第 876 回）", a
   /* 実測 2026-10-12: `venue_info({key: "sc", scope: "screen"})`（窓に行が無い）が、
    * **全く別の会議**（jornadas-dl2）を「その会議は収録に在りますが…」と返していた。key を
    * 受けた時に名が空の儘名前で名簿を探すと、`title.includes("")` がどれにも当たつて
-   * **先頭の会議**を拾ふため。AI は「その会議の締切は無い」と問はた会議の事として言つてしまふ。 */
+   * **先頭の会議**を拾ふため。AI は「その会議の締切は無い」と問はた会議の事として言つてしまう。 */
   const text = await call("venue_info", { key: "sc", scope: "screen" });
   expect(text, "問はた会議を名指していない").toContain("key: sc");
   expect(text, "別の会議の事を言つた").not.toContain("jornadas");
@@ -2274,7 +2274,7 @@ it("venue_info は次の投稿締切を先頭で言う（第 893 回）", async 
   expect(今後の在る, "投稿の締切の行が細い").toContain("論文締切");
   expect(今後の在る, "確認の札が付いていない").toContain("要確認");
   /* 今後の投稿締切が無い会議では、**一番遲い過去**を言う（一番古い過去では「5 年前に終はつた」
-   * と読めてしまふ – 実測で 2021 年が出ていた）。 */
+   * と読めてしまう – 実測で 2021 年が出ていた）。 */
   const 過ぎた = await call("venue_info", { key: "sigkdd", scope: "all" });
   expect(過ぎた, "今後の投稿締切がない事を言つていない").toContain(
     "次の投稿締切: 今後の収録にありません",
@@ -2289,7 +2289,7 @@ it("venue_info は次の投稿締切を先頭で言う（第 893 回）", async 
 it("推薦の pool は画面と同じ組み立て（第 894 回）", async () => {
   /* 実測 2026-10-25: `recommend_venues` は索引の行（2,458 本）をそのまま pool に使つていた。
    * その 92% は**過ぎた締切**なので、「おすすめの投稿先」の 1・2 番目に締め切つた会報が
-   * 擧がり、AI は「來年でなく今出せる」と誤つて勧めてしまふ。画面は「これからの締切 +
+   * 擧がり、AI は「來年でなく今出せる」と誤つて勧めてしまう。画面は「これからの締切 +
    * 常時受付のジャーナル + これからの締切が無い会議の過去代表 1 行」で選ぶので、それに揃へる。 */
   const 品書 = join(REPO_ROOT, "public", "recommendation-index.json");
   expect(
@@ -2386,7 +2386,7 @@ it("品書が再学習の重みを持つ – 画面の推薦が MCP と同じ順
 
 it("推薦の札の意味を、画面てびきと同じ言い回しで添える（第 896 回）", async () => {
   /* 実測 2026-10-27: 札（「候補」・「重なりうすい」）をそのまま返すだけで、何を意味するか読めなかつた。
-   * AI が「候補」を「当たる見込みが高い」と取ると、推薦の强さが変はつてしまふ – 札は**一致の
+   * AI が「候補」を「当たる見込みが高い」と取ると、推薦の强さが変はつてしまう – 札は**一致の
    * 證據の强さ**で、採択の予測ではない。強い単独一致も「候補」になる。 */
   const text = await call("recommend_venues", {
     paper:
@@ -2630,7 +2630,7 @@ it("collection_stats は data.json の容量を、測れる時にだけ書く（
   const 期待 = catalog.history_bytes
     ? `約 ${(Number(catalog.history_bytes) / (1024 * 1024)).toFixed(1)} MB`
     : `約 ${(実 / (1024 * 1024)).toFixed(1)} MB`;
-  expect(text, `容量の数字が容量の實測と違ふ（${期待} の筈）`).toContain(
+  expect(text, `容量の数字が容量の実測と違ふ（${期待} の筈）`).toContain(
     `data.json（収録の全体。機械可読の正・${期待}）`,
   );
 });
@@ -3378,7 +3378,7 @@ it("venue_info は過去の締切も出して、その札を書く（第 945 回
 /* AI が讀む行の「殘り」と、人が畫面で見る「殘り」欄が違ふと、利用者はどちらを信じて
  * いいか分からない。以前は MCP が 24 時間の floor を自分で數へて居たため、CHES の
  * 2026-10-15 20:59 JST が MCP では「殘り0日」・畫面では「あと 18 时间」だつた
- * （實測 2026-10-15）。過去の行は「殘り（過ぎた）」と言ふ意味の通らない文だつた。
+ * （実測 2026-10-15）。過去の行は「殘り（過ぎた）」と言ふ意味の通らない文だつた。
  * 畫面の `remain()` をビルド成果物から拔き出して突き合わせる（兩者が違ふたら落ちる）。 */
 it("行の殘りの語は、畫面の「殘り」欄と同じ數へ方と同じ言葉を使ふ（第 1098 回）", async () => {
   const remainSrc = jsFunction(siteRuntime(), "remain");
@@ -3445,7 +3445,7 @@ it("行の殘りの語は、畫面の「殘り」欄と同じ數へ方と同じ�
 /* 畫面は過去の行に、列の外に「締切済み」系の札を出す（`app.ts` が
  * `Recommender.pastDeadlineTagJa` を呼ぶ）。MCP は「N 日前に終了」とだけ言つて居たため、
  * AI が「もう出せない會議」として片付けて了ひ、**會期がまだ先の行**を見落して居た
- * （實測 2026-10-16: ICDE の過去 18 行のうち 3 行は會期がこれから・15 行は次回が確認できる）。
+ * （実測 2026-10-16: ICDE の過去 18 行のうち 3 行は會期がこれから・15 行は次回が確認できる）。
  * 札の語を寫さず、畫面と同じ入口を呼ぶ事も確かめる（app.js の配線と同じ決まり）。 */
 it("過ぎた行の札は、畫面が列の外に出す同じ札を言ふ（第 1101 回）", async () => {
   const R = (await import("../site/recommender.ts")).default;
@@ -3493,7 +3493,7 @@ it("過ぎた行の札は、畫面が列の外に出す同じ札を言ふ（第 
 
 /* 畫面は國內の行に列の外へ「国内」の札を出す（`domestic-jp` は構造のタグなので主題欄には
  * 出さない）。MCP は此を言つて居なかつたため、**日本で開催される國際会議**（CSFW 2027 の
- * 東京など）と國內の學會を區別できなかつた（實測 2026-10-16: 畫面は 38 行に出して居た）。
+ * 東京など）と國內の學會を區別できなかつた（実測 2026-10-16: 畫面は 38 行に出して居た）。
  * 語も判定も recommender の正本から取り、行と結構化結果の兩方で持つ。 */
 it("国内の行に「国内」の札を付ける – 國際会議の日本開催と區別する（第 1102 回）", async () => {
   const R = (await import("../site/recommender.ts")).default;
@@ -3534,7 +3534,7 @@ it("国内の行に「国内」の札を付ける – 國際会議の日本開�
 /* 畫面は行の詳細を開いた人の「主題: 」に、分野より詳しい粒度の札を出す
  * （`app.ts` が `Recommender.topicTagsJa` を呼ぶ）。MCP の venue_info は一句も出して
  * 居なかつたので、「この學會は何を扱ふ處か」を AI が答えられなかつた
- * （實測 2026-10-16: 收録 139 會社が主題を持つ・1,203 行）。 */
+ * （実測 2026-10-16: 收録 139 會社が主題を持つ・1,203 行）。 */
 it("venue_info の頭は、行の詳細の「主題」も言ふ（第 1103 回）", async () => {
   const R = (await import("../site/recommender.ts")).default;
   /* 語も共通の正本から取る（畫面の詳細も MCP も寫さない）。 */
@@ -3581,7 +3581,7 @@ it("venue_info の頭は、行の詳細の「主題」も言ふ（第 1103 回�
 
 /* 畫面は會議名の下に**正式名**を出す（一覧のセル・行の詳細の兩方）。MCP は一句も
  * 出して居なかつたので、「ICDE と何の略？」に AI が答えられなかつた
- * （實測 2026-10-16: 收録 5,069 行のうち 5,039 行が正式名を持つ）。 */
+ * （実測 2026-10-16: 收録 5,069 行のうち 5,039 行が正式名を持つ）。 */
 it("venue_info の頭と行に、正式名を持つ（第 1104 回）", async () => {
   const R = (await import("../site/recommender.ts")).default;
   /* 畫面も正式名を出す（一覧のセル・行の詳細の兩方）。 */
@@ -3668,7 +3668,7 @@ it("推薦の行にも正式名を持つ（第 1105 回）", async () => {
 
 /* 行の詳細の「公式確認」は、内部表記（`source_class`・`verified_fields`・ISO の時刻）を
  * そのまま見せない約束で、畫面が日本語に譯して居た。MCP は内部の鍵名のまま返して居たの
- * で、日本人研究者には讀めない（實測 2026-10-16）。組み立てを recommender の正本
+ * で、日本人研究者には讀めない（実測 2026-10-16）。組み立てを recommender の正本
  * （`verificationSummaryJa`）の一つに寄せ、畫面は其の部品を HTML に並べ・MCP は其の儘返す。 */
 it("公式確認の日本語は、行の詳細が並べる部品と同じ（第 1106 回）", async () => {
   /* 1) **配線** – 畫面も MCP も同じ正本を呼ぶ（此處に寫くと兩者が違ふ字面になる）。 */
@@ -3701,7 +3701,7 @@ it("公式確認の日本語は、行の詳細が並べる部品と同じ（第 
     "  const mcp = structuredDeadline(r, Date.now()).verification_ja;",
     "  const 取る = (名前) => { const m = html.match(new RegExp('<b>' + 名前 + '</b> ([^<]*)')); return m ? m[1] : null; };",
     /* 次の確認予定はHTMLの同じ書式から拔く（正規表現のリテラルを二重引用符の中で書くと
-     * `\/` が `/` に減つてflagsの誤りになる – 實測 2026-10-16）。 */
+     * `\/` が `/` に減つてflagsの誤りになる – 実測 2026-10-16）。 */
     "  const 次回 = html.includes('<b>次回確認予定</b> ') ? html.split('<b>次回確認予定</b> ')[1].split('<')[0] : null;",
     "  if (!正本) {",
     "    if (html) bad.push(['記録が無い行に HTML を出した', r.conf.key]);",
@@ -3752,7 +3752,7 @@ it("公式確認の日本語は、行の詳細が並べる部品と同じ（第 
 
 /* 會期の行は upcoming.md と同じ窓の物として居たのに、會議名は略稱（「SEC」・md は
  * 「USENIX Security 2026」）・開催地は**生の英文**（「Karlsruhe, Germany」・締切の行は
- * 「Karlsruhe, ドイツ」）を出して居た（實測 2026-10-16: 2,378 版）。日本人研究者が
+ * 「Karlsruhe, ドイツ」）を出して居た（実測 2026-10-16: 2,378 版）。日本人研究者が
  * 讀むのは締切の行と同じ日本語表記でなければならない。 */
 it("會期の行は upcoming.md と同じ會議名と同じ日本語の開催地を出す（第 1107 回）", async () => {
   /* md の側。**MCP が讀む rebuild と同じ物**を讀む – `site` は檢査用の摘データで建てた
@@ -3784,7 +3784,7 @@ it("會期の行は upcoming.md と同じ會議名と同じ日本語の開催地
 
   /* MCP の側。**md の窓の中の行は全部見つからなければならない** – 見つからない儘を
    * 「窓の外」として見逃して了ふと、改名の損が殘つたまま檢查が通つて了ふ
-   * （實測 2026-10-16: 略稱を先に出す改めを取り逃がした）。 */
+   * （実測 2026-10-16: 略稱を先に出す改めを取り逃がした）。 */
   const 答 = await call("list_upcoming", { days: 120, scope: "all", limit: 400 });
   /* 「ほか N 件」の打ち切りは會期の行では無いので外す。 */
   const 節 = 答.split("\n").filter((l) => l.startsWith("- ") && !l.startsWith("- ほか"));
@@ -3917,7 +3917,7 @@ it("會期の行は、年を添えた名・日本語の開催地・空でも「�
 
 /* 畫面の行の詳細は、上流が書いた會期の**原文**を「原表記: 」として添える
  * （公式ページで人が見る字面が其のまま殘る）。MCP は譯した値しか出して居なかつた
- * （實測 2026-10-16: 2,446 版のうち 2,374 版が原文を持つ）。 */
+ * （実測 2026-10-16: 2,446 版のうち 2,374 版が原文を持つ）。 */
 it("會期の欄に、上流が書いた原文を「原表記」として添える（第 1109 回）", async () => {
   const R = (await import("../site/recommender.ts")).default;
   const 收錄 = JSON.parse(readFileSync(join(REPO_ROOT, "data", "snapshot.json"), "utf8"));
@@ -3966,7 +3966,7 @@ it("會期の欄に、上流が書いた原文を「原表記」として添え�
 
 it("--json でも、構造化を伴はない案内を其の侭出す（第 1099 回）", async () => {
   /* 空の検索語は「省せる引數」を列挙した案内を返す。JSON を賴んだ時に汎用の斷りに
-   * すり替はると、直し方の書いてある文が消える – 實測 2026-10-15: `search "" --json` は
+   * すり替はると、直し方の書いてある文が消える – 実測 2026-10-15: `search "" --json` は
    * 「檢索語が空です…」を出さず、「構造化結果を取得できませんでした」だけを出して居た。 */
   const 空語 = spawnSync(
     process.execPath,
@@ -5945,7 +5945,7 @@ it("search_deadlines の構造化の行に、分野を持つ（第 1107 回）",
 });
 
 /* 畫面の分野のチップに当たる絞り込みが、MCP の引数に無かった（種別・ランク・国内・
- * オンライン・締切までは有るのに、分野だけ抜けて居た – 2026-10-17 實測）。 */
+ * オンライン・締切までは有るのに、分野だけ抜けて居た – 2026-10-17 実測）。 */
 it("search_deadlines の category が、畫面のチップと同じ分野で絞る（第 1108 回）", async () => {
   const 呼ぶ = async (引: Record<string, unknown>) =>
     (await client.ask({
@@ -6089,7 +6089,7 @@ it("MCP の中でも、分野の語は 1 つの正本から取る（第 1111 回
   }
 });
 
-/* `list_upcoming` の締切の行にも、同じ UID を付ける（2026-10-17 實測: 此方には 1 つも
+/* `list_upcoming` の締切の行にも、同じ UID を付ける（2026-10-17 実測: 此方には 1 つも
  * 無く、`search_deadlines` の初期カタログの行にだけ在った – 同じ締切が道具に依って
  * UID を持ったり持たなかったりすると、AI が「カレンダーのどの予定か」を言へない）。 */
 it("list_upcoming の締切の行にも、カレンダーの UID が付く（第 1112 回）", async () => {
@@ -6116,7 +6116,7 @@ it("list_upcoming の締切の行にも、カレンダーの UID が付く（第
 
 /* 三つの道具（`search_deadlines`・`list_upcoming`・`venue_info`）の構造化の行は、
  * 同じ組み立て（`structuredDeadline`）を使う。**同じ締切に同じ UID**が付く事を、
- * 會場の側からも見る（2026-10-17 實測: `venue_info` の rows にも UID が在る）。 */
+ * 會場の側からも見る（2026-10-17 実測: `venue_info` の rows にも UID が在る）。 */
 it("venue_info の締切の行にも、カレンダーの UID が付く（第 1113 回）", async () => {
   const r = (await client.ask({
     jsonrpc: "2.0",
@@ -6136,7 +6136,7 @@ it("venue_info の締切の行にも、カレンダーの UID が付く（第 11
     expect(ics, `${row.ics_uid} がカレンダーに無い`).toContain(`UID:${row.ics_uid}`);
 });
 
-/* 會期の行（`type: event`）にも、締切の行と同じ欄を揃へる（2026-10-17 實測: 締切の行には
+/* 會期の行（`type: event`）にも、締切の行と同じ欄を揃へる（2026-10-17 実測: 締切の行には
  * `categories`・`rank`・`domestic` が在るのに、會期の行には 1 つも無かつた – 「今度開かれる
  * 私の分野の會議」を AI が答えられない）。 */
 it("list_upcoming の會期の行にも、締切と同じ欄がある（第 1114 回）", async () => {
@@ -6230,4 +6230,62 @@ it("collection_stats が、収録の出所と件数を実際のファイルと�
   expect(文, `締切の行数が元データと違う（${締切} のはず）`).toContain(
     `締切の行 ${締切.toLocaleString("en-US")} 行`,
   );
+});
+
+/* カレンダーの UID は、**カレンダーに予定がある締切**に付く。遠い締切（初期カタログの窓の
+ * 外）は公開の `data.json` にしか UID が無いので、そちらからも引く（実測 2026-10-17:
+ * 元データの 5,069 行に UID は 1 つも無く、公開の側から 928 行へ補へた）。 */
+it("窓の外の締切にも、カレンダーの UID が付く（第 1117 回）", async () => {
+  /* 窓（生成から 180 日）の外にある締切を、公開の `data.json` から 1 つ選ぶ。 */
+  const 公開 = JSON.parse(readFileSync(join(REPO_ROOT, "public", "data.json"), "utf8")) as {
+    window?: { upcoming_days?: number };
+    generated_at?: string;
+    conferences?: Array<{
+      key?: string;
+      title?: string;
+      editions?: Array<{
+        id?: string;
+        estimated?: boolean;
+        deadlines?: Array<Record<string, unknown>>;
+      }>;
+    }>;
+  };
+  const 窓の果て =
+    Date.parse(String(公開.generated_at ?? "")) + (公開.window?.upcoming_days ?? 180) * 86400000;
+  let 見本: { 語: string; 版: string; 種別: string; 回: number; uid: string } | null = null;
+  for (const c of 公開.conferences ?? [])
+    for (const e of c.editions ?? [])
+      for (const dl of e.deadlines ?? []) {
+        /* 推定の版は既定で出ない（檢索の既定と同じ條件にする）。 */
+        if (e.estimated === true) continue;
+        const t = typeof dl.utc === "string" ? Date.parse(dl.utc) : Number.NaN;
+        if (!Number.isFinite(t) || t <= 窓の果て) continue;
+        if (typeof dl.ics_uid !== "string" || !dl.ics_uid) continue;
+        見本 = {
+          語: String(c.title ?? c.key ?? ""),
+          版: String(e.id ?? ""),
+          種別: String(dl.kind ?? ""),
+          回: Number(dl.round ?? 1),
+          uid: dl.ics_uid,
+        };
+        break;
+      }
+  expect(見本, "窓の外に UID を持つ締切が無い（前提が崩れた）").not.toBeNull();
+
+  const r = (await client.ask({
+    jsonrpc: "2.0",
+    id: 2,
+    method: "tools/call",
+    params: {
+      name: "search_deadlines",
+      arguments: { query: 見本!.語, limit: 100, scope: "all" },
+    },
+  })) as { result?: { structuredContent?: { rows?: Array<Record<string, unknown>> } } };
+  /* **同じ行**を選ぶ（版だけで選ぶと、同じ版の別の回を拾って別の UID と比べてしまう –
+   * 実測 2026-10-17 に VLDB 2027 でそれをやった）。 */
+  const 行 = (r.result?.structuredContent?.rows ?? []).find(
+    (x) => x.edition_id === 見本!.版 && x.kind === 見本!.種別 && Number(x.round ?? 1) === 見本!.回,
+  );
+  expect(行, `窓の外の版（${見本!.版}）が返らない`).toBeTruthy();
+  expect(String(行!.ics_uid ?? ""), "窓の外の締切に UID が付かない").toBe(見本!.uid);
 });

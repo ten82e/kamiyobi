@@ -218,26 +218,63 @@ function allRows(): Row[] {
  *
  * 収録全体の行は收録 snapshot（上流データ）から組むので UID を持たない。近い期間の締切は
  * 品書にも載つて居るので、其ちらから引いて渡す – **同じ締切が、道具に依つて UID を持つたり
- * 持たなかつたり**しない樣にする（2026-10-17 實測: `list_upcoming` の締切の行には 1 つも
+ * 持たなかつたり**しない樣にする（2026-10-17 実測: `list_upcoming` の締切の行には 1 つも
  * 無く、`search_deadlines` の初期カタログの行にだけ在つた）。 */
+/** カレンダーの UID を組む時の「日」。カレンダー（`src/build.ts` の `icsDeadlineUidKey`）と
+ * **同じ規則**にする – 時刻のある行は日本時間の暦日、日付のみの行は其の日。 */
+function mcpIcsDay(dl: Record<string, unknown>): string {
+  const 日付のみ = typeof dl.local_date === "string" ? dl.local_date.trim() : "";
+  if (dl.utc === null || dl.utc === undefined) return 日付のみ.replace(/-/g, "");
+  const at = typeof dl.utc === "string" ? Date.parse(dl.utc) : Number.NaN;
+  if (!Number.isFinite(at)) return 日付のみ.replace(/-/g, "");
+  const parts = JST.formatToParts(new Date(at));
+  const get = (type: string): string => parts.find((p) => p.type === type)?.value ?? "";
+  return `${get("year")}${get("month")}${get("day")}`;
+}
+
 let uid索引: Map<string, string> | undefined;
 function 品書のUID(): Map<string, string> {
   if (uid索引 !== undefined) return uid索引;
   const 表 = new Map<string, string>();
-  const 會議 = Array.isArray(catalog()?.conferences)
-    ? (catalog()!.conferences as Array<Record<string, unknown>>)
-    : [];
-  for (const c of 會議) {
-    const venue = String(c.key ?? "");
-    for (const e of (c.editions ?? []) as Array<Record<string, unknown>>) {
-      const edition = String(e.id ?? "");
-      for (const dl of (e.deadlines ?? []) as Array<Record<string, unknown>>) {
-        const uid = typeof dl.ics_uid === "string" ? dl.ics_uid : "";
-        if (!uid) continue;
-        表.set(
-          [venue, edition, dl.kind ?? "", dl.round ?? 1, dl.label ?? ""].join("\u0000"),
-          uid,
-        );
+  /* 2 つの出所を讀む。**品書（初期カタログ）**は近い期間だけ、**公開の `data.json`** は
+   * 窓の外（180 日より先）の締切まで含む – カレンダー（`deadlines.ics`）は今後の締切を
+   * 全部載せるので、遠い締切の UID は公開の側にしか無い（実測 2026-10-17: 元データの
+   * 5,069 行に UID は 1 つも無く、公開の側から **928 行**へ補へた）。 */
+  const 出所: Array<Array<Record<string, unknown>>> = [];
+  if (Array.isArray(catalog()?.conferences))
+    出所.push(catalog()!.conferences as Array<Record<string, unknown>>);
+  try {
+    const 公開: unknown = JSON.parse(readFileSync(join(ROOT, "public", "data.json"), "utf8"));
+    const 會議 =
+      公開 && typeof 公開 === "object" && !Array.isArray(公開)
+        ? (公開 as Record<string, unknown>).conferences
+        : null;
+    if (Array.isArray(會議)) 出所.push(會議 as Array<Record<string, unknown>>);
+  } catch {
+    /* まだ建てて居ない手元では、公開のデータは無い（品書だけで足りる分を返す）。 */
+  }
+  for (const 會議 of 出所) {
+    for (const c of 會議) {
+      const venue = String(c.key ?? "");
+      for (const e of (c.editions ?? []) as Array<Record<string, unknown>>) {
+        const edition = String(e.id ?? "");
+        for (const dl of (e.deadlines ?? []) as Array<Record<string, unknown>>) {
+          const uid = typeof dl.ics_uid === "string" ? dl.ics_uid : "";
+          if (!uid) continue;
+          /* 鍵は**カレンダーと同じ形**（版・種別・回・ラベル・日）。日を入れないと、同じ版の
+           * 同じ種別で日だけ違ふ行が同じ鍵に成り、**別の予定の UID** を返す（實測 2026-10-17:
+           * VLDB 2027 で `…-3` と `…-7` を取り違へた）。 */
+          const k = [
+            venue,
+            edition,
+            dl.kind ?? "",
+            dl.round ?? 1,
+            dl.label ?? "",
+            mcpIcsDay(dl),
+          ].join("\u0000");
+          /* 先に讀んだ方を殘す（品書 = 畫面が讀む物を優先）。 */
+          if (!表.has(k)) 表.set(k, uid);
+        }
       }
     }
   }
@@ -462,7 +499,7 @@ function line(r: Row, now: number): string {
   const 日の狀態 = Recommender.dateOnlyStateJa(r, now);
   /* 残りの語は**画面の「残り」欄と同じ入口**（`Recommender.remainingLabelJa` –
    * app.ts の `remain()` と同じ語・同じ JST の暦日差）。此処で 24 時間の floor を
-   * 自分で数へて居たため、畫面と AI の答へが違ふ日に成って居た（實測 2026-10-15: CHES の
+   * 自分で数へて居たため、畫面と AI の答へが違ふ日に成って居た（実測 2026-10-15: CHES の
    * 2026-10-15 20:59 JST は MCP が「残り0日」・畫面が「あと 18 時間」。過去の行は
    * 「殘り（過ぎた）」と言ふ、意味の通らない文が出て居た）。 */
   const 殘り文 =
@@ -489,12 +526,12 @@ function line(r: Row, now: number): string {
   /* 過ぎた行の札。畫面は「締切済み」の外に、**會期がこれからの行**と**同じ会議の次回が
    * 確認できる行**を別の札で出す（`pastDeadlineTagJa` – 行の詳細の「今後の会期」と同じ
    * 入口）。此を言はないと、AI が「もう出せない會議」として片付けて了ひ、
-   * 會期がまだ先の行を見落とす（實測 2026-10-16: ICDE の過去 18 行のうち 17 行は
+   * 會期がまだ先の行を見落とす（実測 2026-10-16: ICDE の過去 18 行のうち 17 行は
    * 會期がこれから – MCP は「N 日前に終了」とだけ言つて居た）。 */
   const 過ぎた札 = String(Recommender.pastDeadlineTagJa(r, now) ?? "").trim();
   /* 国内の札。畫面は列の外に「国内」を出す（`domestic-jp` は構造のタグなので主題欄には
    * 出さない）。此を言はないと、**日本で開催される國際会議**（CSFW 2027 の東京など）と
-   * 國內の學會を區別できない（實測 2026-10-16: 畫面は 38 行に出して居た）。
+   * 國內の學會を區別できない（実測 2026-10-16: 畫面は 38 行に出して居た）。
    * 語も判定も recommender の正本から取る（此処に寫かない）。 */
   const 國內の札 = String(Recommender.domesticTagLabelJa(r.tags) ?? "").trim();
   const 印 = [
@@ -776,7 +813,7 @@ function 真偽の引數(名: string, 値: unknown): { 使ふ: boolean; 斷り: 
 /** 語を省いた時に出す種別。**畫面の初期一覧より廣い** – 畫面は概要と論文だけを出し、
  * 常時受付（`journal`）は「種別」で選んだ時に出す（`site/app.ts` の `byKind`）。
  * 此方を含めるのは、常時受付の期刊行も「投稿先」として探す物だからである。
- * **件数を畫面と比べる時は此の分だけ違ふ**（2026-10-17 實測: 「security」で畫面 32 件・
+ * **件数を畫面と比べる時は此の分だけ違ふ**（2026-10-17 実測: 「security」で畫面 32 件・
  * MCP 33 件。差は IEEE TDSC の常時受付）。`scope: screen` は**窓**
  * （`catalog.json` の範圍）を指す語で、種別の既定まで同じと言ふ意味ではない。 */
 const 投稿の種別 = ["abstract", "paper", "journal"];
@@ -1257,7 +1294,7 @@ export function structuredDeadline(r: Row, now: number): Record<string, unknown>
   return {
     venue_key: r.conf.key,
     title: r.conf.title,
-    /* 正式名。畫面の一覧は會議名の下に（正式名が略稱と違ふ時だけ）出す – 實測
+    /* 正式名。畫面の一覧は會議名の下に（正式名が略稱と違ふ時だけ）出す – 実測
      * 2026-10-16: 收録 5,069 行のうち 5,039 行が正式名を持つのに、MCP は一句も
      * 出して居なかつた。「ICDE と何の略？」に AI が答えられない狀態だつた。
      * 行の文字は 7 欄の形を崩さない侭、此方で機械が讀める形で持つ。 */
@@ -1284,12 +1321,19 @@ export function structuredDeadline(r: Row, now: number): Record<string, unknown>
         typeof r.dl.ics_uid === "string" && r.dl.ics_uid
           ? r.dl.ics_uid
           : 品書のUID().get(
-              [r.conf.key, r.ed.id, r.kind, r.dl.round ?? 1, r.dl.label ?? ""].join("\u0000"),
+              [
+                r.conf.key,
+                r.ed.id,
+                r.kind,
+                r.dl.round ?? 1,
+                r.dl.label ?? "",
+                mcpIcsDay(r.dl as Record<string, unknown>),
+              ].join("\u0000"),
             );
       return uid ? { ics_uid: uid } : {};
     })(),
     /* 分野。畫面は分野を札で出し、配付の ICS も本文に `分野:` を書くのに、**MCP の行だけ
-     * 出して居なかつた**（2026-10-17 實測: `search_deadlines` の行の欄に `categories` が無く、
+     * 出して居なかつた**（2026-10-17 実測: `search_deadlines` の行の欄に `categories` が無く、
      * AI は「この締切はどの分野か」を會場の別の呼び出しでしか知れなかつた）。鍵（`security`
      * など）と、畫面・ICS と同じ日本語の兩方を出す（`place`/`place_ja` と同じ作り）。 */
     categories: Array.isArray(r.conf.categories) ? [...r.conf.categories] : [],
@@ -1313,7 +1357,7 @@ export function structuredDeadline(r: Row, now: number): Record<string, unknown>
     /* 公式確認の**日本語**（畫面の行の詳細が同じ部品を HTML に並べる – 正本は
      * `Recommender.verificationSummaryJa`）。內部の鍵名（`source_class`・
      * `verified_fields`）をそのまま醫に渡すと、日本人研究者が讀めない
-     * （實測 2026-10-16: MCP は内部表記のまま出して居た）。記録が無い行は null。 */
+     * （実測 2026-10-16: MCP は内部表記のまま出して居た）。記録が無い行は null。 */
     verification_ja: Recommender.verificationSummaryJa(r.dl, now),
     verification: r.dl.verification ?? null,
     event_start: r.ed.event_start ?? null,
@@ -1622,7 +1666,7 @@ interface UpcomingEventRow extends ReturnType<typeof eventMetadata> {
   segment_label: string | null;
   place: string | null;
   /* 締切の行と同じ欄（分野・正式名・ランク・國內）。會期の行だけ此れ等が無いと、
-   * 「今度開かれる私の分野の會議」を AI が答えられない（2026-10-17 實測: 締切の行には
+   * 「今度開かれる私の分野の會議」を AI が答えられない（2026-10-17 実測: 締切の行には
    * `categories`・`rank`・`domestic` が在るのに、會期の行には 1 つも無かった）。 */
   full_name: string | null;
   categories: string[];
@@ -1680,7 +1724,7 @@ export function 開催の行(days: number, now: number): UpcomingEventRow[] {
         /* 會議名は**年を添えた形**（`titleWithYearJa` – 畫面の行の詳細と upcoming.md の
          * 正本）。略稱を先に出すと「SEC」のやうに一會社の別の名が出て、upcoming.md の
          * 「USENIX Security 2026」と別物になる。版の識別子は後に續ける（省かない）。
-         * 開催地も**日本語化した表記**（`placeJa`）。實測 2026-10-16: 生のまま出すと
+         * 開催地も**日本語化した表記**（`placeJa`）。実測 2026-10-16: 生のまま出すと
          * 2,378 版が「Karlsruhe, Germany」の儘で、締切の行（「Karlsruhe, ドイツ」）と
          * **MCP の中で違ふ表記**に成って居た。空でも「未確認」を出す（空欄にすると
          * 公式が出て居ないのと收録漏れが區別できない – upcoming.md と同じ決まり）。 */
@@ -2397,7 +2441,7 @@ function venueInfo(
       (nameIgnored ? "\n注: name は key と共に与えられたので見ていません" : ""),
     `会議: ${identity.title || identity.venue_key}（key: ${identity.venue_key}${identity.acronym ? `・${identity.acronym}` : ""}）`,
     /* 正式名も言ふ（**會議名のすぐ下** – 畫面の一覧のセルと行の詳細がどちらも
-     * 略稱の下に正式名を出すその順）。實測 2026-10-16: 收録 5,039 行が正式名を持つ
+     * 略稱の下に正式名を出すその順）。実測 2026-10-16: 收録 5,039 行が正式名を持つ
      * のに、MCP は一句も出して居なかつた – 「ICDE と何の略？」に AI が答えられない。
      * 略稱と正式名が同じ行では出さない（畫面と同じ – 重ねて書かない）。 */
     ...(() => {
@@ -2427,7 +2471,7 @@ function venueInfo(
     "",
 
     /* 丸括弧の締めと件數がくつつく（「…早い順）過去は 18 件」）と讀みにくいので、
-     * 間を空ける（第 1100 回 – 實測 2026-10-15 の venue_info の頭）。 */
+     * 間を空ける（第 1100 回 – 実測 2026-10-15 の venue_info の頭）。 */
     ...(() => {
       const 件數の註 = [
         見本.length > 60 ? `${見本.length} 件のうち 60 件` : "",
@@ -3081,7 +3125,7 @@ const TOOLS = [
   {
     name: "search_deadlines",
     description:
-      "日本語で投稿締切を検索する。語を省いて kind / kinds / rank / category / categories / domestic / online / within_days だけでも絞れる。既定は今後の abstract / paper / journal で、過去と推定は除きます（include_past・include_estimated で足せます）。既定の kind は MCP の方が広く、常時受付（journal）も含みます。scope は screen（初期一覧。`public/catalog.json`）または all（**収録の元データ** `data/snapshot.json`）。公開している `data.json` は重複をまとめた後なので、all の行数はそれより多くなります。structuredContent に total・rows・next_offset を返す。screen で 0 件のときは scope_comparison に全収録での同条件の件数・絞る前の件数・生成時刻を返す。比較データを読めない場合は検索結果を保持し、scope_comparison_error に理由と再試行の案内を返す。範囲を変えるときもほかの条件を維持する。続きは同じ条件と next_offset を offset に指定する。日付のみの行の utc・jst は null。常時受付は締切日時・精度・回次を null とし、日付のある行の後に並べます。推定期間、投稿トラック、確認状態を別に返す。公式確認（いつ・どこで・何を確かめたか）は verification_ja に画面の行の詳細と同じ日本語で返します（内部の鍵名は verification に残します）。前に出ていた締切も表示する。日付語は別ラウンドや会期にも当たるため、締切だけの期間指定には within_days を使う。会期の欄には、上流が書いた原文（`March 18-21, 2024` のような自由文）を「原表記」として添えます（画面の行の詳細と同じ）。0 件のときは画面と同じ案内と「打ち直すなら」の候補を返す。返す行の形: 日時 | 種別 | 確認状態（ある場合）| 会議名（版の識別子）| ランク | 会期 | 開催地 URL。テキストは `| ` で切り、構造化結果を優先する。**行から画面の深いリンクを組めます**: `venue_key`・`year`・`kind` と、`utc`（時刻のある行）または `uncertainty.earliest_utc`（日付のみの行）を `|` で繋いだ物が、`index.html?row=<その値>` の値です（人が開くと、その行の詳細が出ます）。構造化の行には `categories`（分野の鍵）と `categories_ja`（画面の札と同じ日本語）も入る。`ics_uid`（配付カレンダー `deadlines.ics` の予定の UID）は、**品書（初期カタログ）に載っている締切**に入ります（収録全体の行も、近い期間なら品書から引いて付けます。品書に載っていない古い締切には入りません）。",
+      "日本語で投稿締切を検索する。語を省いて kind / kinds / rank / category / categories / domestic / online / within_days だけでも絞れる。既定は今後の abstract / paper / journal で、過去と推定は除きます（include_past・include_estimated で足せます）。既定の kind は MCP の方が広く、常時受付（journal）も含みます。scope は screen（初期一覧。`public/catalog.json`）または all（**収録の元データ** `data/snapshot.json`）。公開している `data.json` は重複をまとめた後なので、all の行数はそれより多くなります。structuredContent に total・rows・next_offset を返す。screen で 0 件のときは scope_comparison に全収録での同条件の件数・絞る前の件数・生成時刻を返す。比較データを読めない場合は検索結果を保持し、scope_comparison_error に理由と再試行の案内を返す。範囲を変えるときもほかの条件を維持する。続きは同じ条件と next_offset を offset に指定する。日付のみの行の utc・jst は null。常時受付は締切日時・精度・回次を null とし、日付のある行の後に並べます。推定期間、投稿トラック、確認状態を別に返す。公式確認（いつ・どこで・何を確かめたか）は verification_ja に画面の行の詳細と同じ日本語で返します（内部の鍵名は verification に残します）。前に出ていた締切も表示する。日付語は別ラウンドや会期にも当たるため、締切だけの期間指定には within_days を使う。会期の欄には、上流が書いた原文（`March 18-21, 2024` のような自由文）を「原表記」として添えます（画面の行の詳細と同じ）。0 件のときは画面と同じ案内と「打ち直すなら」の候補を返す。返す行の形: 日時 | 種別 | 確認状態（ある場合）| 会議名（版の識別子）| ランク | 会期 | 開催地 URL。テキストは `| ` で切り、構造化結果を優先する。**行から画面の深いリンクを組めます**: `venue_key`・`year`・`kind` と、`utc`（時刻のある行）または `uncertainty.earliest_utc`（日付のみの行）を `|` で繋いだ物が、`index.html?row=<その値>` の値です（人が開くと、その行の詳細が出ます）。構造化の行には `categories`（分野の鍵）と `categories_ja`（画面の札と同じ日本語）も入る。`ics_uid`（配付カレンダー `deadlines.ics` の予定の UID）は、**カレンダーに予定がある締切**に入ります（初期カタログと公開の `data.json` から引きます。実測 2026-10-17: 今後の締切 939 のうち 938 が持ちます – 残る 1 つはカレンダーが載せない日付のみの行）。",
     inputSchema: {
       type: "object",
       properties: {
@@ -3685,7 +3729,7 @@ async function main(): Promise<void> {
   });
   if (json) {
     /* 構造化を伴はない結果（空の検索語・論文が讀めない等の**案内**）でも、其の侭の案内を
-     * 出す。汎用の断りにすり替へると、直し方の書いてある文が消える – 實測 2026-10-15:
+     * 出す。汎用の断りにすり替へると、直し方の書いてある文が消える – 実測 2026-10-15:
      * `search "" --json` は「検索語が空です…（省せる引数の列挙）」を出さず、
      * 「構造化結果を取得できませんでした」だけを出して居た。 */
     if (!page) {
