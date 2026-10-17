@@ -5300,8 +5300,16 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       }
     }
     // 過ぎた締切を下へまとめたことは、件数欄に書く（黙って並びを変えないため）。
-    if (!recMode && pastBlockTotal > 0 && pastBlockTotal < shown.length) {
-      const blockNote = ` ｜ 過ぎた締切 ${countJa(pastBlockTotal)} 件は下にまとめました`;
+    if (!recMode && pastBlockTotal > 0) {
+      let blockNote =
+        pastBlockTotal < shown.length
+          ? ` ｜ 過ぎた締切 ${countJa(pastBlockTotal)} 件は下にまとめました`
+          : "";
+      /* 塊の中は列の向きのまま（昇順なら古い順）。「去年の締切はいつか」を見に来た人は
+       * 直近の行を探すが、先頭は 2019 年の行になる（2026-10-17 実測: `NSDI` で「過去の締切も
+       * 表示」を押すと 28 行の先頭が 2020 年）。並びは変えず、次の一手を書く。 */
+      if (sortAsc && (!sortKey || sortKey === "rem" || sortKey === "date"))
+        blockNote += ` ｜ 過ぎた締切は古い順です（直近から見るには「残り」の見出しを押して降順に）`;
       cnt += blockNote;
       cntLive += blockNote;
     }
