@@ -975,23 +975,32 @@ const Recommender = (() => {
     const lines = layout.map((line) => line.text);
     const metadataRecord = isRecord(metadata) ? metadata : {};
     const info = isRecord(metadataRecord.info) ? metadataRecord.info : metadataRecord;
-    let title = String(info.Title || info.title || "").trim();
-    if (!title) {
-      const first = positioned[0] || [];
-      const max = Math.max(0, ...first.flatMap((line) => line.items.map(pdfFontSize)));
-      if (max > 0)
-        title = pdfJoinLines(
-          first
-            .filter((line) => line.items.some((item) => pdfFontSize(item) >= max * 0.9))
-            .map((line) => line.text),
-        );
-    }
-    if (!title) title = lines[0] || String(fallbackText || "").trim();
-    title = title.replace(/\s+/g, " ").slice(0, 240);
     const abstractLabel = /^(?:abstract\b|概要|要旨|抄録|あらまし)\s*[:：.\-—–]?\s*/i;
     const keywordsLabel = /^(?:keywords?\b|index terms\b|キーワード)\s*[:：.\-—–]?\s*/i;
     const section =
       /^(?:(?:\d+(?:\.\d+)*\.?|[IVX]+\.)\s*)?(?:introduction\b|references\b|はじめに|序論|参考文献)/i;
+    let title = String(info.Title || info.title || "").trim();
+    if (!title) {
+      const first = positioned[0] || [];
+      const max = Math.max(0, ...first.flatMap((line) => line.items.map(pdfFontSize)));
+      if (max > 0) {
+        const biggest = first.filter((line) =>
+          line.items.some((item) => pdfFontSize(item) >= max * 0.9),
+        );
+        /* 文字の大きさが全行同じ PDF（体裁のない版・テキストから作った版）では全行が題名に
+         * なり、概要まで題名の欄に入った（2026-10-18 に試験用の PDF で実測）。見出し語
+         * （Abstract・Keywords・Introduction）の行で題名を打ち切る。 */
+        const end = biggest.findIndex(
+          (line) =>
+            abstractLabel.test(line.text) ||
+            keywordsLabel.test(line.text) ||
+            section.test(line.text),
+        );
+        title = pdfJoinLines((end > 0 ? biggest.slice(0, end) : biggest).map((line) => line.text));
+      }
+    }
+    if (!title) title = lines[0] || String(fallbackText || "").trim();
+    title = title.replace(/\s+/g, " ").slice(0, 240);
     const abstractAt = lines.findIndex((line) => abstractLabel.test(line));
     const keywordsAt = lines.findIndex((line) => keywordsLabel.test(line));
     const content = (start: number, label: RegExp) => {
