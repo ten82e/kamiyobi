@@ -835,6 +835,7 @@ function 畫面の既定(
   const 全部 = 種別.some((kind) => kind === "all");
 
   const ランク = Recommender.rankGradeJa((args as { rank?: unknown }).rank);
+  const ランクの尺度 = Recommender.rankScaleJa((args as { rank?: unknown }).rank);
 
   const 國內だけ = args.domestic === true;
   const オンラインだけ = args.online === true;
@@ -850,7 +851,7 @@ function 畫面の既定(
       if (日 >= 窓の上限) return false;
       if (窓の下限 && 日 < 窓の下限) return false;
     }
-    if (ランク && !Recommender.rankMatches(r.rankPairs ?? [], ランク)) return false;
+    if (ランク && !Recommender.rankMatches(r.rankPairs ?? [], ランク, ランクの尺度)) return false;
     /* 分野は畫面のチップと同じ規則（選んだ物の**どれか**を持つ行を出す）。 */
     if (分野.length && !分野.some((key) => (r.conf.categories ?? []).indexOf(key) >= 0))
       return false;
@@ -1523,6 +1524,9 @@ function searchDeadlines(
   const 知らん = 名乘り全部.filter((k) => !知って居る種別.includes(k));
 
   const ランク = Recommender.rankGradeJa(args.rank);
+  const ランクの尺度Header = Recommender.rankScaleJa(args.rank)
+    ? `${Recommender.rankScaleJa(args.rank).toUpperCase()} `
+    : "";
   const 知らんランク = ランク && !Recommender.rankGradeOrderJa().includes(ランク) ? ランク : "";
   /* 分野の絞り込み（画面のチップと同じ）。鍵へ寄せられなかった値は言う（黙って外さない）。 */
   const 分野の引き = 指定した分野({
@@ -1546,7 +1550,7 @@ function searchDeadlines(
 
   /* 行が見えている時に出す注（類語・曖昧さ – 第 942・948 回）。 */
   const 見えて居る文 = 見えて居る注(query, hit.length);
-  const 頭 = `${絞り込みだけ ? "語を指定せず、絞り込みだけ" : `検索語「${query}」に当たる締切`}: ${hit.length} 件（${名} ${list.length} 行・指定条件で絞り込み。絞る前は ${素の.length} 行${ランク ? `／ランク ${ランク}` : ""}${args.domestic === true ? "／国内のみ" : ""}${args.online === true ? "／オンライン参加可のみ" : ""}${窓あり ? `／締切まで ${窓の日數} 日以内${窓の端数の斷り}` : ""}${讀めない引數}）${limit端數}${檢索語を切つた ? `（${打たれた検索語.length} 字のうち、最初の ${檢索語の截} 字で調べました – 残りの語は参考にしていません）` : ""}${知らん.length ? `／知らない種別: ${知らない値の文("", 知らん)}` : ""}${空の種別 ? `／kinds が空なので既定の投稿締切（概要・論文・常時受付）を対象にしています` : ""}${単数種別を無視 ? `／kind は kinds と共に与えられたので見ていません` : ""}${知らんランク ? `／知らないランク（等級は ${Recommender.rankGradeOrderJa().join("・")}）: ${知らんランク}${limit端數}` : ""}${分野の引き.知らん.length ? `／知らない分野: ${知らん分野の文}（分野は ${分野の一覽()}）` : ""}${分野の引き.鍵.length ? `／分野 ${分野の引き.鍵.map((k) => Recommender.categoryLabelJa(k)).join("・")}` : ""}${日付の語 ? "\n日付は日本時間（JST）。月や日付の語は、締切の日付と「会期」の日付の両方に当たる（画面のてびきと同じ約束）ので、月で引いた時に見出しの月と違う日が出る行がある。" : ""}${窓が無い ? `\n${窓が無いの斷り(true)}` : ""}${scopeErr ? `\n${scopeErr}` : ""}${解決の文}${記号だけの文 ? `\n${記号だけの文}` : ""}${見えて居る文}`;
+  const 頭 = `${絞り込みだけ ? "語を指定せず、絞り込みだけ" : `検索語「${query}」に当たる締切`}: ${hit.length} 件（${名} ${list.length} 行・指定条件で絞り込み。絞る前は ${素の.length} 行${ランク ? `／ランク ${ランクの尺度Header}${ランク}` : ""}${args.domestic === true ? "／国内のみ" : ""}${args.online === true ? "／オンライン参加可のみ" : ""}${窓あり ? `／締切まで ${窓の日數} 日以内${窓の端数の斷り}` : ""}${讀めない引數}）${limit端數}${檢索語を切つた ? `（${打たれた検索語.length} 字のうち、最初の ${檢索語の截} 字で調べました – 残りの語は参考にしていません）` : ""}${知らん.length ? `／知らない種別: ${知らない値の文("", 知らん)}` : ""}${空の種別 ? `／kinds が空なので既定の投稿締切（概要・論文・常時受付）を対象にしています` : ""}${単数種別を無視 ? `／kind は kinds と共に与えられたので見ていません` : ""}${知らんランク ? `／知らないランク（等級は ${Recommender.rankGradeOrderJa().join("・")}）: ${知らんランク}${limit端數}` : ""}${分野の引き.知らん.length ? `／知らない分野: ${知らん分野の文}（分野は ${分野の一覽()}）` : ""}${分野の引き.鍵.length ? `／分野 ${分野の引き.鍵.map((k) => Recommender.categoryLabelJa(k)).join("・")}` : ""}${日付の語 ? "\n日付は日本時間（JST）。月や日付の語は、締切の日付と「会期」の日付の両方に当たる（画面のてびきと同じ約束）ので、月で引いた時に見出しの月と違う日が出る行がある。" : ""}${窓が無い ? `\n${窓が無いの斷り(true)}` : ""}${scopeErr ? `\n${scopeErr}` : ""}${解決の文}${記号だけの文 ? `\n${記号だけの文}` : ""}${見えて居る文}`;
   if (!hit.length) {
     if (窓の外.error)
       return [
@@ -3163,7 +3167,7 @@ const TOOLS = [
         rank: {
           type: "string",
           description:
-            "ランクの等級で絞る（`A*` / `A` / `B` / `C` / `N`。画面のランク欄と同じ**厳密比較**（大文字小文字も違う – `a` は効かない） – `A` は `core:A*` を巻き込まない）。**行の出し方（`CCF A`・`CORE A*`）でも受けます** – 後ろの等級だけを見ます",
+            "ランクの等級で絞る（`A*` / `A` / `B` / `C` / `N`。画面のランク欄と同じ**厳密比較**（大文字小文字も違う – `a` は効かない） – `A` は `core:A*` を巻き込まない）。**行の出し方（`CCF A`・`CORE A*`）でも受けます** – 尺度の名（`CCF`・`CORE`・`THCPL`）を付けるとその尺度の等級だけを見ます（`A` だけならどの尺度でも当たります）",
         },
         category: {
           type: "string",

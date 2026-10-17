@@ -5061,7 +5061,9 @@ it("ランクは行の出し方（CCF A）でも絞せる（第 1031 回）", as
   ] as const) {
     const a = 件(await call("search_deadlines", { query: "セキュリティ", limit: 1, rank: 出し方 }));
     const b = 件(await call("search_deadlines", { query: "セキュリティ", limit: 1, rank: 等級 }));
-    expect(a, `「${出し方}」と「${等級}」で件數が違ふ`).toBe(b);
+    /* 尺度の名を付けるとその尺度だけ（2026-10-18）。等級だけは全尺度なので、同じか多い。 */
+    expect(a, `「${出し方}」が「${等級}」より多い`).toBeLessThanOrEqual(b);
+    expect(a, `「${出し方}」が 0 件（検査が空振り）`).toBeGreaterThan(0);
     const 答 = await call("search_deadlines", { query: "セキュリティ", limit: 1, rank: 出し方 });
     expect(答, `「${出し方}」を知らないランクとして弾いた`).not.toContain("知らないランク");
   }
@@ -6388,4 +6390,20 @@ it("推薦の並びが点の順と限らない事と、意味検索への切り�
   expect(答).toContain("同じ一致評価の中の並びは点の順とは限りません");
   // 語の一致だけで答えた時は、意味検索を使う引数を名指す（道具の説明と同じ名前）。
   expect(答).toContain('retrieval: "semantic" を指定してください');
+});
+
+it("rank に尺度の名（`CCF A`）を付けると、その尺度の等級だけで絞る", async () => {
+  /* 2026-10-18 – AI の初回利用の試しで、「CCF A」が CCF B・C の行（CORE A など別の尺度で A の行）まで
+   * 返した。尺度の名が付いていれば其の尺度だけを見る。等級だけ（`A`）はどの尺度でも当たる。 */
+  const rows = (text: string) =>
+    text.split("\n").filter((line) => /CCF .*・CORE .*・THCPL /.test(line));
+  const ccf = rows(await call("search_deadlines", { rank: "CCF A", limit: 100 }));
+  expect(ccf.length, "「CCF A」の行が無い（検査が空振り）").toBeGreaterThan(0);
+  for (const line of ccf) expect(line, "CCF が A でない行が混ざった").toMatch(/CCF A・/);
+  const any = rows(await call("search_deadlines", { rank: "A", limit: 100 }));
+  expect(any.length, "等級だけは全尺度で当たる").toBeGreaterThan(ccf.length);
+  const core = rows(await call("search_deadlines", { rank: "core:A*", limit: 100 }));
+  expect(core.length).toBeGreaterThan(0);
+  for (const line of core) expect(line).toMatch(/CORE A\*・/);
+  expect(await call("search_deadlines", { rank: "CCF A", limit: 1 })).toContain("ランク CCF A");
 });

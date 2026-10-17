@@ -1774,8 +1774,26 @@ const Recommender = (() => {
       .join("|");
   }
 
-  function rankMatches(rankPairs: readonly string[] | null | undefined, grade: string): boolean {
-    return (rankPairs || []).some((pair) => pair.slice(pair.indexOf(":") + 1) === grade);
+  function rankMatches(
+    rankPairs: readonly string[] | null | undefined,
+    grade: string,
+    scale?: string,
+  ): boolean {
+    return (rankPairs || []).some(
+      (pair) =>
+        pair.slice(pair.indexOf(":") + 1) === grade &&
+        (!scale || pair.slice(0, pair.indexOf(":")).toLowerCase() === scale),
+    );
+  }
+
+  /** 「CCF A」「core:A*」の様に尺度の名が付いていれば、その尺度の鍵（`ccf`・`core`・`thcpl`）を返す。
+   * 等級だけ（`A`）や知らない語は空文字（どの尺度でも当たる – 画面のランク欄と同じ）。
+   * 2026-10-18: 「CCF A」が CCF B・C の行まで返した（AI の初回利用の試しで実測）。 */
+  function rankScaleJa(rank: unknown): string {
+    const 打たれた = String(rank ?? "").trim();
+    const 語 = 打たれた.includes(":") ? 打たれた.split(":")[0]! : 打たれた.split(/\s+/)[0]!;
+    const 鍵 = 語.trim().toLowerCase();
+    return 打たれた !== 鍵 && ["ccf", "core", "thcpl"].includes(鍵) ? 鍵 : "";
   }
 
   function rankGradeJa(rank: unknown): string {
@@ -16161,6 +16179,7 @@ const Recommender = (() => {
     journalRows: journalRows,
     rankMatches: rankMatches,
     rankGradeJa: rankGradeJa,
+    rankScaleJa: rankScaleJa,
     candidateRows: candidateRows,
     isCandidateConference: isConference,
     categoryLabelJa: categoryLabelJa,

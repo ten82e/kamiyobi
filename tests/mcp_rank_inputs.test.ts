@@ -87,33 +87,45 @@ it("rejects rank containers and recovers to the exact grade on the same MCP conn
     }
 });
 
-it("keeps exact grades and displayed scale labels effective without mixing A and A-star", () => {
-  const expected: Record<string, string[]> = {
-    "A*": ["star", "dual"],
-    A: ["a"],
-    B: ["b", "dual"],
-    C: ["c"],
-    N: ["n"],
+it("keeps exact grades effective without mixing A and A-star, and a named scale only sees that scale", () => {
+  /* 2026-10-18 – 尺度の名（`CCF A`・`core:A*`）が付いていれば、その尺度の等級だけで絞る。
+   * 等級だけ（`A`）はどの尺度でも当たる（画面のランク欄と同じ）。 */
+  const expected: Record<string, { any: string[]; ccf: string[]; core: string[] }> = {
+    "A*": { any: ["star", "dual"], ccf: [], core: ["star", "dual"] },
+    A: { any: ["a"], ccf: ["a"], core: [] },
+    B: { any: ["b", "dual"], ccf: ["dual"], core: ["b"] },
+    C: { any: ["c"], ccf: ["c"], core: [] },
+    N: { any: ["n"], ccf: [], core: [] },
   };
   for (const query of queries) {
     for (const [grade, wanted] of Object.entries(expected)) {
-      const ranks = [grade, `CCF ${grade}`, `core:${grade}`, `  ${grade}  `];
+      const forms: Array<[string, string[]]> = [
+        [grade, wanted.any],
+        [`  ${grade}  `, wanted.any],
+        [`CCF ${grade}`, wanted.ccf],
+        [`ccf:${grade}`, wanted.ccf],
+        [`core:${grade}`, wanted.core],
+      ];
       const replies = calls(
-        ranks.map((rank) => ["search_deadlines", { query, scope: "all", rank }]),
+        forms.map(([rank]) => ["search_deadlines", { query, scope: "all", rank }]),
       );
-      for (const reply of replies) {
-        expect(reply.isError).not.toBe(true);
-        expect(keys(reply)).toEqual(wanted);
-        expect(reply.structuredContent?.total).toBe(wanted.length);
-        expect(text(reply)).not.toContain("知らないランク");
-      }
+      replies.forEach((reply, index) => {
+        const [rank, keysWanted] = forms[index] as [string, string[]];
+        expect(reply.isError, rank).not.toBe(true);
+        expect(keys(reply) ?? [], rank).toEqual(keysWanted);
+        expect(reply.structuredContent?.total, rank).toBe(keysWanted.length);
+        expect(text(reply), rank).not.toContain("知らないランク");
+      });
     }
   }
 });
 
 it("retains the same rank in full-collection comparisons when the screen has no match", () => {
   for (const query of queries) {
-    for (const rank of ["B", "THCPL B", "core:B"]) {
+    for (const [rank, wanted] of [
+      ["B", ["b", "dual"]],
+      ["core:B", ["b"]],
+    ] as Array<[string, string[]]>) {
       const [screenReply, full] = calls([
         ["search_deadlines", { query, scope: "screen", rank }],
         ["search_deadlines", { query, scope: "all", rank }],
@@ -122,11 +134,11 @@ it("retains the same rank in full-collection comparisons when the screen has no 
       expect(screenReply.structuredContent?.total).toBe(0);
       expect(screenReply.structuredContent?.scope_comparison).toEqual({
         scope: "all",
-        total: 2,
+        total: wanted.length,
         matched_before_filters: 7,
         generated_at: allAt,
       });
-      expect(keys(full)).toEqual(["b", "dual"]);
+      expect(keys(full)).toEqual(wanted);
       expect(full.structuredContent?.generated_at).toBe(allAt);
     }
   }
