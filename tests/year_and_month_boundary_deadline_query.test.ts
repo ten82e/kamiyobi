@@ -108,7 +108,11 @@ describe("年・月の切れ目の語", () => {
     /* 実測 `来月末まで` 240 行 = `来月まで` 240 行（対称差 0）。切れ目の語を `まで` の頭に足すと
      * 期間がその月に潰れる – 実際に足して既存の検査が落ちたので引いた（その事を見る）。 */
     expect(行列表("来月まで").length, "対照の `来月まで` が 0 行").toBeGreaterThan(0);
-    expect(対称差("来月末まで", "来月まで"), "`来月末まで` が範囲を潰した").toBe(0);
+    expect(対称差("来月末まで", "来月まで"), "`来月末まで` が `来月まで` と違う").toBe(0);
+    /* 2026-10-18 から「来月まで」は今月から来月末までの幅（来月だけに潰さない）。 */
+    expect(行列表("来月まで").length, "`来月まで` が `来月` 以下").toBeGreaterThan(
+      行列表("来月").length,
+    );
     const rec = readFileSync(join(builtSite(), "recommender.js"), "utf8");
     const 本文 = jsFunction(rec, "collapseRelativeDayPhrase");
     const まで宣言 = 本文.slice(本文.indexOf("期日までの言い方"));

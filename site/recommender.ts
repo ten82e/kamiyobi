@@ -7071,7 +7071,7 @@ const Recommender = (() => {
             ? `${見せ} = ${書く(末)}の締切（過ぎた月なのでその月だけ – 「過去の締切も表示」で並びます）`
             : 一月
               ? `${見せ} = ${書く(末)}の締切（今月の末まで）`
-              : `${見せ} = ${書く(初)}〜${書く(末)}の締切（今月からその月の末まで – その月だけなら「${年の冠}${月の幅[1]}月」）`,
+              : `${見せ} = ${書く(初)}〜${書く(末)}の締切（今月からその月の末まで – その月だけなら「${年の冠}${月の幅[1]}」）`,
         );
       });
     }
@@ -9998,6 +9998,11 @@ const Recommender = (() => {
       /* 相対月の語を含むときだけ書き換える。含まない語は**打たれた形のまま**返す –
        * 助詞で割った形に直すと、展開結果をそのまま画面に書く場所（件数欄の
        * 「検索語『X』」）が利用者の入力と違う文字列になり、説明がちぐはぐになる。 */
+      /* 「来月まで」は今月からの幅（`monthUntilBoundsJa`）なので、来月だけの語に直さない。 */
+      if (monthUntilBoundsJa(token, nowMs)) {
+        tokens.push(token);
+        return;
+      }
       const parts = splitQueryToken(token, nowMs);
       const terms = parts.map((part) => relativeMonthTerm(part, nowMs));
       if (terms.some((term) => term)) {
@@ -10266,7 +10271,7 @@ const Recommender = (() => {
   /* 「3月まで」「2027年3月末までに」は今月からその月の末までの幅（2026-10-18 に利用者の判断で
    * 変えた – それまでは其の月だけに寄せており、`分散システム 3月まで` が 63 件から 3 件に減った）。
    * 数字の月だけを受ける – `来月まで` などの相対月語は別の規則の侭。 */
-  const MONTH_RANGE_UNTIL = /^((?:[0-9]{4}年)?[0-9]{1,2})月末?(?:までに|まで|迄)$/;
+  const MONTH_RANGE_UNTIL = /^((?:[0-9]{4}年)?[0-9]{1,2}月|今月|来月|再来月)末?(?:までに|まで|迄)$/;
 
   /** 月の語（`9月`・相対月語）を `[年, 月]` に解決する。解決できなければ null。
    * 基準月より前の月を打たれたときは翌年として受け取る – 過ぎた月は計画の対象では
@@ -10315,7 +10320,7 @@ const Recommender = (() => {
     const until = MONTH_RANGE_UNTIL.exec(body);
     if (!until) return null;
     if (yearOffset !== undefined && /年/.test(until[1] as string)) return null;
-    let last = monthTokenToYearMonth(`${until[1]}月`, nowMs);
+    let last = monthTokenToYearMonth(until[1] as string, nowMs);
     if (!last) return null;
     const jst = new Date((Number.isFinite(nowMs) ? nowMs : Date.now()) + 9 * 3_600_000);
     const start = [jst.getUTCFullYear(), jst.getUTCMonth() + 1];
@@ -13460,7 +13465,8 @@ const Recommender = (() => {
       middleParts(raw).forEach((part) => {
         if (!hasWordChar(part)) return;
 
-        const monthTerm = relativeMonthTerm(part, now);
+        /* 「来月まで」は今月からの幅（`monthUntilBoundsJa`）。来月だけの語にしない。 */
+        const monthTerm = monthUntilBoundsJa(part, now) ? "" : relativeMonthTerm(part, now);
         if (monthTerm) {
           units.push({ token: monthTerm, whole: [] });
           return;
@@ -13596,6 +13602,8 @@ const Recommender = (() => {
 
       const period = periodMonthTermsJa(token, now);
       if (period.length) group = period.slice();
+      /* 「来月末まで」は期間の語（`来月末`）に寄せず、「まで」の幅（今月から来月末）にする。 */
+      if (monthRange.length && monthUntilBoundsJa(token, now)) group = monthRange.slice();
 
       /* 時刻の語は零詰めた形に寄せる。画面に出る 21 種はすべて `08:59` の形で
        * 無い物は無く（2026-08-09 生成ビルドで実測）、打った側を画面の形に直す。元の形も
