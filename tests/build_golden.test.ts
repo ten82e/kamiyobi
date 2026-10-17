@@ -2760,6 +2760,7 @@ it("drawer shows JST with weekday and the official timezone, viewer-timezone ind
     jsFunction(runtime, "fmtDate"),
     jsFunction(runtime, "fmtJst"),
     jsFunction(runtime, "fmtAoE"),
+    jsFunction(runtime, "officialClockJa"),
     drawerDepsSrc as string,
     // 公式表記の判定は recommender.js の正本をそのまま注入する（規則の書き写しは
     // 正本とズレるため避ける）。officialZone の依存は isRecord のみ。
@@ -2844,11 +2845,12 @@ it("table row leads with JST and guards AoE behind the official zone (SPEC §7)"
   const makeRow = jsFunction(runtime, "makeRow");
   // 日時列の最上段は JST。UTC などは公式表記の注記として後に続く。
   expect(makeRow.indexOf('line(c1, fmtJst(d), "nowrap")')).toBeLessThan(
-    makeRow.indexOf("line(c1, sub,"),
+    makeRow.indexOf("line(c1, officialClockJa(zone, d),"),
   );
   // AoE は公式表記が AoE のときだけ併記する（JST 宣言の国内締切に出さない）。
-  expect(makeRow).toContain('if (zone === "JST")');
-  expect(makeRow.indexOf('else if (zone === "AoE")')).toBeLessThan(makeRow.indexOf("fmtAoE(d)"));
+  const official = jsFunction(runtime, "officialClockJa");
+  expect(official).toContain('if (zone === "JST")');
+  expect(official.indexOf('if (zone === "AoE")')).toBeLessThan(official.indexOf("fmtAoE(d)"));
   // 列名（カード表示の列名含む）で JST であることを明示する。
   expect(makeRow).toContain('td(tr, "日時（JST）")');
   expect(template).toContain("日時（JST）");
@@ -3205,8 +3207,10 @@ it("deadline display includes AoE notation for AoE deadlines only (SPEC §7)", (
   // 表とドロワーの両方が、公式表記が AoE のときだけ AoE を出す式になっている。
   // JST 宣言の国内締切まで AoE を並記すると、実在しない AoE 締切を検知させる。
   expect(html).toContain("Recommender.officialZone(r.dl)");
+  // 表・ドロワー・推薦の次回締切は同じ officialClockJa を通す。
   expect(html).toMatch(/元の日時 \$\{fmtAoE\(d\)\}/);
-  expect(html).toMatch(/crossCheck = `元の日時 \$\{fmtAoE\(new Date\(r\.t\)\)\}`/);
+  expect(html).toContain("officialClockJa(zone, d)");
+  expect(html).toContain("crossCheck = officialClockJa(zone, new Date(r.t))");
   expect(html).toContain('"元の日時 JST"');
   // 実行検証: fmtAoE は UTC-12 の壁時計を返す（例: 12:00 UTC → 00:00 AoE）
   const src = jsFunction(html, "fmtAoE");
@@ -3341,6 +3345,7 @@ it("drawer is a keyboard-operable modal dialog with focus management (#218)", ()
     (siteRuntime("recommender.js").match(/const UNCONFIRMED_LABEL_JA = [^\n]*;/) || [""])[0],
     "const UNCONFIRMED_JA = UNCONFIRMED_LABEL_JA;",
     `const DRAWER_NAV_STUBS = ${JSON.stringify(DRAWER_NAV_STUBS)};`,
+    "globalThis.officialClockJa = () => '';",
     "const openDrawer = new Function('window', 'document', '$', 'KIND_LABEL', 'titleWithYear', 'fmtDate', 'fmtJst', 'fmtAoE', 'esc', 'safeExternalUrl', 'rowDateOnlyState', 'verificationSummary', 'Recommender', 'meetingRangeJa', 'upcomingEditionsOf', 'kindDetailJa', 'writeUrl', 'UNCONFIRMED_JA', 'fieldReasonsJa', DRAWER_NAV_STUBS + 'return (' + OPEN + ')')(window, document, $, {}, (t) => t, () => '', () => '', () => '', (s) => String(s ?? ''), (s) => String(s ?? ''), () => null, verificationSummary, { kindLabelJa: actualKindLabelJa, officialZone: () => '', placeJa: (v) => String(v ?? ''), topicTagsJa: () => [], weekdayJaFromDate: (v) => weekdayJaFromDate(v), eventCellJa: (r) => String(r?.ed?.event_start || r?.ed?.date_text || ''), meetingRangeJa: meetingRangeJa, upcomingEditionsOf: upcomingEditionsOf, laterEditionLineJa: laterEditionLineJa }, meetingRangeJa, upcomingEditionsOf, KIND_DETAIL, () => {}, UNCONFIRMED_JA, { event: () => '', place: () => '', rank: () => '', note: (t) => (t ? '<i>' + t + '</i>' : '') });",
     "document.activeElement = prevEl;",
     "openDrawer({ kind: 'journal', conf: { title: 'X' }, ed: { place: 'P', date_text: 'D' } });",
@@ -3718,6 +3723,7 @@ it("normal deadline drawer includes verification details", () => {
     (siteRuntime("recommender.js").match(/const UNCONFIRMED_LABEL_JA = [^\n]*;/) || [""])[0],
     "const UNCONFIRMED_JA = UNCONFIRMED_LABEL_JA;",
     `const DRAWER_NAV_STUBS = ${JSON.stringify(DRAWER_NAV_STUBS)};`,
+    "globalThis.officialClockJa = () => '';",
     `const openDrawer = new Function('window', 'document', '$', 'KIND_LABEL', 'titleWithYear', 'fmtDate', 'fmtJst', 'fmtAoE', 'esc', 'safeExternalUrl', 'rowDateOnlyState', 'verificationSummary', 'Recommender', 'meetingRangeJa', 'upcomingEditionsOf', 'kindDetailJa', 'writeUrl', 'UNCONFIRMED_JA', 'fieldReasonsJa', DRAWER_NAV_STUBS + 'return (' + ${JSON.stringify(openSrc)} + ')')(window, document, $, {}, (t) => t, () => '', () => '', () => '', (s) => String(s ?? ''), (s) => String(s ?? ''), () => null, verificationSummary, { kindLabelJa: actualKindLabelJa, officialZone: () => '', placeJa: (v) => String(v ?? ''), topicTagsJa: () => [], weekdayJaFromDate: (v) => weekdayJaFromDate(v), eventCellJa: (r) => String(r?.ed?.event_start || r?.ed?.date_text || ''), meetingRangeJa: meetingRangeJa, upcomingEditionsOf: upcomingEditionsOf, laterEditionLineJa: laterEditionLineJa }, meetingRangeJa, upcomingEditionsOf, (${jsFunction(runtime, "kindDetailJa")}), () => {}, UNCONFIRMED_JA, { event: () => '', place: () => '', rank: () => '', note: (t) => (t ? '<i>' + t + '</i>' : '') });`,
     "openDrawer({",
     "  kind: 'paper', conf: { key: 'demo', title: 'Demo' },",
@@ -4768,6 +4774,7 @@ it("unknown 会期・開催地・ランクを「未確認」として出す（SP
     "const fmtJst = () => 'JST';",
     "const fmtDate = () => 'DATE';",
     "const fmtAoE = () => 'AoE';",
+    "const officialClockJa = () => 'OFFICIAL';",
     "const officialZone = () => 'JST';",
     "const catLabel = (k) => k;",
     // `titleWithYear` はスタブにせず正本を使う（並び順と同じ語をセルが組むことを見るため）。
@@ -5117,6 +5124,7 @@ it("ドロワーは表の情報（分野・ランク・ラウンド）を落と�
     runtime.match(/const NOT_APPLICABLE_JA = [^\n]*;/)?.[0] ?? "",
     runtime.match(/const fieldReasonsJa = \{[\s\S]*?\n {4}\};/)?.[0] ?? "",
     `const DRAWER_NAV_STUBS = ${JSON.stringify(DRAWER_NAV_STUBS)};`,
+    "globalThis.officialClockJa = () => '';",
     `const openDrawer = new Function('window','document','$','KIND_LABEL','titleWithYear','fmtDate','fmtJst','fmtAoE','esc','safeExternalUrl','rowDateOnlyState','verificationSummary','Recommender','catLabel','meetingRangeJa','upcomingEditionsOf','UNCONFIRMED_JA','kindDetailJa', 'writeUrl', 'fieldReasonsJa', DRAWER_NAV_STUBS + 'return (' + ${JSON.stringify(openSrc)} + ')')(window, document, $, KIND_LABEL, titleWithYear, () => 'UTC', () => 'JST', () => 'AoE', esc, (u) => String(u ?? ''), () => null, verificationSummary, Recommender, catLabel, meetingRangeJa, upcomingEditionsOf, Recommender.unconfirmedLabelJa(), (${jsFunction(runtime, "kindDetailJa")}), () => {}, fieldReasonsJa);`,
     "openDrawer({",
     "  kind: 'paper', cats: ['hpc', 'systems'], rankPairs: ['ccf:B', 'core:A*', 'thcpl:N'],",

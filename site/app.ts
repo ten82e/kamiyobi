@@ -1003,6 +1003,24 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     );
   }
 
+  /* 公式が書いた時間帯での日時（表の 2 行目・ドロワー・推薦の次回締切で共有）。
+   * `UTC-7`・`GMT+2` のような数値の時差と `GMT` は一意に戻せるので、公式の壁時計で出す
+   * （「元の日時 UTC-7 ／ 2026-10-26 06:59 UTC」は、公式ページに無い時刻を読ませていた）。
+   * `PT`・`Europe/London` のような名前は夏時間の扱いが表に無いので換算せず、UTC の時刻に
+   * 公式の表記を添える。「元の日時 PT」と書くと PT が日時に読めるので、その形にはしない。 */
+  function officialClockJa(zone: string, d: Date): string {
+    if (zone === "JST") return "元の日時 JST";
+    if (zone === "AoE") return `元の日時 ${fmtAoE(d)}`;
+    if (!zone || zone === "UTC") return `${fmtDate(d)} UTC`;
+    const upper = zone.toUpperCase().replace(/\s/g, "");
+    const m = /^(?:UTC|GMT)(?:([+-])(\d{1,2})(?::?(\d{2}))?)?$/.exec(upper);
+    if (m && (!m[1] || (Number(m[2]) <= 14 && Number(m[3] ?? 0) <= 59))) {
+      const minutes = m[1] ? (m[1] === "-" ? -1 : 1) * (Number(m[2]) * 60 + Number(m[3] ?? 0)) : 0;
+      return `元の日時 ${fmtDate(new Date(d.getTime() + minutes * 60000))} ${zone}`;
+    }
+    return `${fmtDate(d)} UTC（公式は ${zone} 表記）`;
+  }
+
   // SPEC §7: 日本語 UI。分野は日本語名で示す（英表記の正本は data.json の categories）。
   function catLabel(key: string) {
     return Recommender.categoryLabelJa(key);
@@ -1239,11 +1257,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     // 表と同じ式で併記を出す。AoE は公式が AoE 締めの場合だけ見せる
     // （JST 宣言の国内締切に AoE を出すと、実在しない AoE 締切があると誤解させる）。
     const zone = Recommender.officialZone(r.dl);
-    let crossCheck = `${fmtDate(new Date(r.t))} UTC`;
-    if (zone === "AoE") crossCheck = `元の日時 ${fmtAoE(new Date(r.t))}`;
-    else if (zone === "JST") crossCheck = "元の日時 JST";
-    else if (zone && zone !== "UTC")
-      crossCheck = `元の日時 ${zone} ／ ${fmtDate(new Date(r.t))} UTC`;
+    const crossCheck = officialClockJa(zone, new Date(r.t));
 
     let html =
       '<div style="background: var(--chip); padding: 14px; border-radius: 6px; border: 1px solid var(--border); margin-bottom: 16px;">' +
@@ -4225,11 +4239,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       // （JST 宣言の国内締切に AoE を見せると、実在しない AoE 締切があると誤解させる）。
       line(c1, fmtJst(d), "nowrap");
       const zone = Recommender.officialZone(r.dl);
-      let sub = `${fmtDate(d)} UTC`;
-      if (zone === "JST") sub = "元の日時 JST";
-      else if (zone === "AoE") sub = `元の日時 ${fmtAoE(d)}`;
-      else if (zone && zone !== "UTC") sub = `元の日時 ${zone} ／ ${fmtDate(d)} UTC`;
-      line(c1, sub, "sub nowrap");
+      line(c1, officialClockJa(zone, d), "sub nowrap");
     }
 
     const c2 = td(tr, "会議", "", true);
@@ -4313,6 +4323,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       const es = document.createElement("span");
       es.className = "tag est";
       es.textContent = "推定";
+      es.title = "推定: 過去の開催から見込んだ日付（公式発表前）";
       tags.appendChild(es);
     }
     // 締切が延びていたことは、一覧に出さないと分からない（2026-09-23 実測: 上流の締切名に
@@ -4328,6 +4339,9 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       const vs = document.createElement("span");
       vs.className = "tag est";
       vs.textContent = verificationTag;
+      // 札の語だけでは何をすればよいか分からない。触ったときに、意味と次の一手を出す。
+      // 全行に出る札なので短く（支援技術と AI は札ごとに此の文を読む）。
+      vs.title = `${verificationTag}: 公式ページで未照合。投稿前に公式ページで確認を`;
       tags.appendChild(vs);
     }
     if (r.kind === "journal") {
@@ -4800,14 +4814,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       const zone = Recommender.officialZone(r.dl);
       // AoE 併記は AoE で締切る会議だけに出す（表と同じ理由。JST 宣言の締切に AoE を
       // 見せると、実在しない AoE 締切があると誤解させる）。
-      const official =
-        zone === "JST"
-          ? "（元の日時 JST）"
-          : zone === "AoE"
-            ? `（元の日時 AoE ${fmtAoE(d)}）`
-            : zone && zone !== "UTC"
-              ? `（元の日時 ${zone} ／ ${fmtDate(d)} UTC）`
-              : `（元の日時 ${fmtDate(d)} UTC）`;
+      const official = `（${officialClockJa(zone, d)}）`;
       return `次回締切: ${fmtJst(d)}${official}${a.estimated ? "（推定）" : ""}`;
     }
     if (a.status === "past") {

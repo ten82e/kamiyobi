@@ -4265,6 +4265,8 @@ it("推薦のカードの締切は表と同じ向き（JST と曜日）で出る
     "const fmtJst = new Function('WEEKDAY_JA', 'pad', 'return (' + FMTJST_SRC + ')')(WEEKDAY_JA, pad);",
     "const fmtDate = new Function('pad', 'return (' + FMTDATE_SRC + ')')(pad);",
     "const fmtAoE = new Function('pad', 'return (' + FMTAOE_SRC + ')')(pad);",
+    `const OFFICIAL_SRC = ${JSON.stringify(jsFunction(app, "officialClockJa"))};`,
+    "const officialClockJa = new Function('fmtDate', 'fmtAoE', 'return (' + OFFICIAL_SRC + ')')(fmtDate, fmtAoE);",
     // 表で使う曜日の語はビルド成果物から取る（テスト側に書き写さない）。
     `const WEEKDAY_SRC = ${JSON.stringify(jsFunction(siteRuntime("recommender.js"), "weekdayJaFromDate"))};`,
     // helper の自由変数（暦日の曜日の配列）も正本から揃える。
@@ -4284,8 +4286,8 @@ it("推薦のカードの締切は表と同じ向き（JST と曜日）で出る
     "  weekdayJaFromDate,",
     "  zone: 'AoE',",
     "};",
-    "const avail = new Function('fmtJst', 'fmtDate', 'fmtAoE', 'Recommender', 'UNCONFIRMED_JA',",
-    "  'return (' + AVAIL_SRC + ')')(fmtJst, fmtDate, fmtAoE, Recommender, UNCONFIRMED_JA);",
+    "const avail = new Function('fmtJst', 'fmtDate', 'fmtAoE', 'officialClockJa', 'Recommender', 'UNCONFIRMED_JA',",
+    "  'return (' + AVAIL_SRC + ')')(fmtJst, fmtDate, fmtAoE, officialClockJa, Recommender, UNCONFIRMED_JA);",
     // UTC では 10/5、JST では 10/6 になる締切（AoE 23:59 型の例）。
     "const ts = Date.UTC(2026, 9, 5, 15, 59);",
     "const jstShown = fmtJst(new Date(ts));",
@@ -4294,6 +4296,10 @@ it("推薦のカードの締切は表と同じ向き（JST と曜日）で出る
     "const jst = avail({ _availability: { status: 'open', timestamp: ts }, dl: {} });",
     "Recommender.zone = 'UTC';",
     "const utc = avail({ _availability: { status: 'open', timestamp: ts }, dl: {} });",
+    "Recommender.zone = 'UTC-7';",
+    "const offset = avail({ _availability: { status: 'open', timestamp: ts }, dl: {} });",
+    "Recommender.zone = 'PT';",
+    "const named = avail({ _availability: { status: 'open', timestamp: ts }, dl: {} });",
     "const dateOnly = avail({ _availability: { status: 'open', local_date: '2026-10-06' }, dl: {} });",
     // 受付状況が確認できない行の語。画面 other 箇所と同じ語に揃える。
     "const noAvail = avail({});",
@@ -4306,6 +4312,8 @@ it("推薦のカードの締切は表と同じ向き（JST と曜日）で出る
     "  aoe,",
     "  jst,",
     "  utc,",
+    "  offset,",
+    "  named,",
     "  dateOnly,",
     "  noAvail,",
     "  ongoing,",
@@ -4326,7 +4334,13 @@ it("推薦のカードの締切は表と同じ向き（JST と曜日）で出る
   expect(got.aoe, "JST の主表記が出ていない").toContain(got.jstShown);
   expect(got.aoe.startsWith(`次回締切: ${got.jstShown}`), "JST が先頭ではない").toBe(true);
   // AoE 併記は AoE 宣言の会議だけ。
-  expect(got.aoe).toContain("元の日時 AoE");
+  // AoE の壁時計は 1 回だけ「AoE」を付ける（以前は「元の日時 AoE 2026-… AoE」と二重だった）。
+  expect(got.aoe).toContain("元の日時 2026-10-05 03:59 AoE");
+  expect(got.aoe.match(/AoE/g)).toHaveLength(1);
+  // 数値の時差は公式の壁時計へ戻す。名前の時間帯は換算せず、日時と読めない形で添える。
+  expect(got.offset).toContain("元の日時 2026-10-05 08:59 UTC-7");
+  expect(got.named).toContain("2026-10-05 15:59 UTC（公式は PT 表記）");
+  expect(got.named).not.toContain("元の日時 PT");
   expect(got.jst, "JST 宣言の締切に AoE を併記している").not.toContain("AoE");
   expect(got.jst).toContain("元の日時 JST");
   expect(got.utc).toContain("UTC");
