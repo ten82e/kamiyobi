@@ -1123,9 +1123,9 @@ footer a:hover { text-decoration: underline; }
           📄 投稿予定の論文を選ぶ（PDF / TXT・複数可。1件目が投稿予定、残りは参考論文）
         </button>
         <input type="file" id="paperFiles" accept=".pdf,.txt" multiple style="display: none;">
-        <button id="cancelPdf" type="button" hidden>読み込みをキャンセル</button>
-        <button id="paperReset" type="button">論文の入力を消す</button>
-        <button id="paperUndo" type="button" hidden>直前の入力に戻す</button>
+        <button id="cancelPdf" type="button" class="btn-reset" hidden>読み込みをキャンセル</button>
+        <button id="paperReset" type="button" class="btn-reset">論文の入力を消す</button>
+        <button id="paperUndo" type="button" class="btn-reset" hidden>直前の入力に戻す</button>
         <span id="paperFileLabel" role="status" style="display: block; font-size: 0.85rem; color: var(--fg); margin-top: 8px; overflow-wrap: anywhere;">未選択</span>
       </div>
       <div style="font-size: 0.7rem; color: var(--muted); margin-top: 2px;">PDF は先頭3ページのタイトル・概要・キーワードだけを読み取ります（Word などの文書形式は読めません。TXT に保存し直すか、下の欄に貼ってください）。抽出結果は編集してから推薦できます。<strong>選んだファイルは送信しません</strong>（文字の読み取りはこの端末の中で行います。PDF を読む部品だけを初回に外部から取りにいきます）。</div>
