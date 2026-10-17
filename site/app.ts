@@ -1945,6 +1945,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   let semEmbeddings: VectorMap | null = null; // 言語に応じた埋め込み表（en / multi）
   let semGeneration = 0;
   let semState: SemanticStatus = "idle"; // idle | loading | ready | error（AI 状態の表示用）
+  let semanticRetryRequested = false;
   let semanticReason: string | null = null;
   /* 画面には日本語の理由だけを出し、識別子はこの要素の `data-semantic-reason` に残す
    * （原因追跡は #711 以来の要件なので捨てない）。*/
@@ -1968,6 +1969,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   }
 
   function invalidateSemantic() {
+    semanticRetryRequested = false;
     semGeneration += 1;
     clearSemantic("idle");
   }
@@ -2051,7 +2053,8 @@ function semanticOutput(value: unknown): value is SemanticOutput {
 
   // 復号済みの論文からモデルを選び、入力の変更後に埋め込みを再計算する。
   // 掲載先タグの言語は、論文本文の言語判定に含めない。
-  function scheduleSemantic() {
+  function scheduleSemantic(manualRetry = false) {
+    semanticRetryRequested = manualRetry;
     const generation = ++semGeneration;
     const text = currentPaperText();
     clearSemantic("idle");
@@ -2163,6 +2166,53 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         });
       });
     });
+  }
+
+  function semanticCanRetry(): boolean {
+    if (semState !== "error" || !EMBEDDINGS || !currentPaperText().trim()) return false;
+    if (semanticReason === "probe mismatch") {
+      const lines = Recommender.parsePaperLines(currentPaperText());
+      const language = Recommender.queryHasJapanese(lines) ? "multi" : "en";
+      const metadata = EMBEDDINGS.manifest.models[language];
+      return Boolean(
+        metadata && !Object.hasOwn(semProbeCache, `${metadata.model}@${metadata.revision}`),
+      );
+    }
+    return ["model load failed", "model unavailable", "query embedding failed"].includes(
+      semanticReason ?? "",
+    );
+  }
+
+  function updateSemanticRetry(recommend: boolean): void {
+    const status = $("semanticRetryStatus");
+    const button = $("semanticRetry");
+    const note = $("semanticRetryNote");
+    if (!status || !button || !note) return;
+    const requested = semanticRetryRequested && semState !== "error";
+    status.hidden = !recommend || recommendationNeedsRetry || !(semanticCanRetry() || requested);
+    if (status.hidden) {
+      if (document.activeElement === button) $("results").focus();
+      return;
+    }
+    note.textContent =
+      semState === "loading"
+        ? "意味検索を再試行中…"
+        : semState === "ready"
+          ? "意味検索が完了しました。"
+          : "入力を残したまま意味検索を再試行できます。";
+    button.setAttribute("aria-disabled", String(semState === "loading"));
+  }
+
+  function retrySemantic(): void {
+    if (
+      state.mode !== "recommend" ||
+      recommendationNeedsRetry ||
+      semState === "loading" ||
+      !(semanticCanRetry() || (semanticRetryRequested && semState === "ready"))
+    )
+      return;
+    scheduleSemantic(true);
+    render();
   }
 
   // ---- FILTERING ----
@@ -5387,6 +5437,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       (historyStatus === "loading" || historyStatus === "error");
     $("historyStatus").hidden = !showHistoryStatus;
     $("recommendationRetryStatus").hidden = !recMode || !recommendationNeedsRetry;
+    updateSemanticRetry(recMode);
     if (recMode && recommendationNeedsRetry) {
       $("recommendationRetryNote").textContent = recommendationPromise
         ? "推薦データを再読み込み中…"
@@ -6839,6 +6890,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   $("modeRecommend").addEventListener("click", () => setMode("recommend"));
   $("modeDeadlines").addEventListener("click", () => setMode("deadlines"));
   $("recommendationRetry").addEventListener("click", retryRecommendationData);
+  $("semanticRetry")?.addEventListener("click", retrySemantic);
   $("historyRetry").addEventListener("click", () => {
     if (state.mode !== "deadlines" || !state.past) return;
     loadHistoryData();
