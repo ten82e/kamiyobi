@@ -1629,6 +1629,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
 
   // Keyboard Navigation (j/k/Enter/Esc//)
   function onKeydown(e: KeyboardEvent) {
+    if (e.isComposing || e.keyCode === 229) return;
     const target = e.target;
     if (!target || !("tagName" in target) || typeof target.tagName !== "string") return;
     const tag = target.tagName;
@@ -6365,7 +6366,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     queryEditInProgress = false;
   });
   $("q").addEventListener("keydown", (e: KeyboardEvent) => {
-    if (e.key === "Enter" && !e.isComposing) {
+    if (e.key === "Enter" && !e.isComposing && e.keyCode !== 229) {
       e.preventDefault();
       apply();
       $("results").focus();
