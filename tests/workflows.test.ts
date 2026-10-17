@@ -266,6 +266,11 @@ describe("CI contracts", () => {
     // 当面は必須にしない（2026-10-17 決定）: 手順の失敗でジョブを落とさず、結果を表示する。
     expect((modelRun as Record<string, unknown>)["continue-on-error"]).toBe(true);
     expect((modelRun as Record<string, unknown>).id).toBe("models");
+    // 手順の制限はジョブの制限より短い（ジョブごと打ち切られると cancelled で判定を塞ぐ）。
+    const stepLimit = Number((modelRun as Record<string, unknown>)["timeout-minutes"]);
+    const jobLimit = Number((models as Record<string, unknown>)["timeout-minutes"]);
+    expect(stepLimit).toBeGreaterThan(0);
+    expect(jobLimit - stepLimit).toBeGreaterThanOrEqual(3);
     const shown = step(models, "Show real-model result (not required)");
     expect(String(shown.if)).toContain("always()");
     expect(String((shown as { env?: Record<string, string> }).env?.OUTCOME)).toContain(
