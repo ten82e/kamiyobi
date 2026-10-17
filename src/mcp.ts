@@ -938,8 +938,15 @@ function 語ごとの案號(query: string, list: Row[], now: number, 全部の�
   /* 上の第 1033 回の注 – **収録の全体**で数へる（窓だけで数へると「収録に見当たらない」
    * が噓に成る）。収録の全体を渡して居ない時（窓がそのまま全部の時）はそのまま。 */
   const 數へる對照 = 全部の收錄 ?? list;
+  const 寄せた問い = Recommender.expandRelativeMonths(query, now);
+  /* 問い全体に当たる行が収録に在るなら、語の話は 0 件の理由ではない（絞り込みの方が
+   * 理由）。画面は当たり 0 行の時だけ此の文を立てる – MCP も揃える（2026-10-17 実測:
+   * 「沖縄で開催」は「絞る前は 4 行」と言いながら「語をすべて含む行はありません」とも
+   * 言い、照合では外している機能語「開催」の件数を理由に挙げていた）。 */
+  const 問いの照合 = Recommender.searchMatcher(寄せた問い, now);
+  if (數へる對照.some((r) => 問いの照合(r.hay))) return [];
   const 件數 = Recommender.queryTermCounts(
-    Recommender.expandRelativeMonths(query, now),
+    寄せた問い,
     數へる對照.map((r) => r.hay),
     now,
   );
