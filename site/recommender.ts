@@ -15498,6 +15498,38 @@ const Recommender = (() => {
    * （平均重心の汎用化を避けるため埋め込みから論文を外すと、論文タイトルから
    * セマンティックに発見されないため）。
    */
+  const topicChanceCache = new WeakMap<PaperVectorMap, WeakMap<VectorMap, Map<string, number>>>();
+  /* How far a venue's strongest topic exceeds its centroid for a query unrelated to it,
+   * estimated with every other venue's profile vector standing in as such a query. */
+  function topicChanceExcess(confKey: string, topicMap: PaperVectorMap, emb: VectorMap): number {
+    let byEmb = topicChanceCache.get(topicMap);
+    if (!byEmb) {
+      byEmb = new WeakMap();
+      topicChanceCache.set(topicMap, byEmb);
+    }
+    let byKey = byEmb.get(emb);
+    if (!byKey) {
+      byKey = new Map();
+      byEmb.set(emb, byKey);
+    }
+    const cached = byKey.get(confKey);
+    if (cached !== undefined) return cached;
+    const centroid = emb[confKey] || emb[(confKey || "").toLowerCase()];
+    const topics = topicMap[confKey] ?? [];
+    let total = 0;
+    let count = 0;
+    for (const [key, other] of Object.entries(emb)) {
+      if (key === confKey || !other || !centroid) continue;
+      let best = -1;
+      for (const topic of topics) best = Math.max(best, cosine(other, topic));
+      total += best - cosine(other, centroid);
+      count++;
+    }
+    const excess = count ? Math.max(0, total / count) : 0;
+    byKey.set(confKey, excess);
+    return excess;
+  }
+
   function semanticSimilarity(
     confKey: string,
     queryVec: Vector,
@@ -15517,16 +15549,20 @@ const Recommender = (() => {
         if (pc > c) c = pc;
       }
     }
-    const topics = (topicVecs ?? topicVecsState)?.[confKey] ?? [];
+    const topicMap = topicVecs ?? topicVecsState;
+    const topics = topicMap?.[confKey] ?? [];
     const rankedTopics = topics
       .map((vector) => ({ vector, similarity: cosine(queryVec, vector) }))
       .sort((a, b) => b.similarity - a.similarity);
-    if (rankedTopics[0]) c = Math.max(c, rankedTopics[0].similarity);
+    // The best of many topics beats the venue centroid even for an unrelated query;
+    // only the part above that venue's own chance level counts as evidence.
+    const chance = rankedTopics.length && topicMap ? topicChanceExcess(confKey, topicMap, emb) : 0;
+    if (rankedTopics[0]) c = Math.max(c, rankedTopics[0].similarity - chance);
     const strongest = rankedTopics[0];
     const support =
       strongest && rankedTopics.find((topic) => cosine(topic.vector, strongest.vector) < 0.85);
     // Corroborating distinct CFP topics add coverage; repeated copies add nothing.
-    if (support) c += Math.max(0, 1 - c) * Math.max(0, support.similarity);
+    if (support) c += Math.max(0, 1 - c) * Math.max(0, support.similarity - chance);
     return c;
   }
 
