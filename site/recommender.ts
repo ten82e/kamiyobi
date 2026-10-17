@@ -15426,21 +15426,8 @@ const Recommender = (() => {
         const semanticRank = semanticRanks[key] || null;
         // 類似度を取得できるときは意味を主に使う。単語の偶然の一致で
         // 近い候補を落とさず、既存の表示スコア・学習特徴量は保つ。
-        const hasTopicEvidence = !!topicVecsState && Object.keys(topicVecsState).length > 0;
-        const lexicalRrfWeight = opts.semanticSimilarities
-          ? hasTopicEvidence
-            ? 0.2
-            : 0.4
-          : opts.fieldedLexical
-            ? 1.6
-            : 1;
-        const semanticRrfWeight = opts.semanticSimilarities
-          ? hasTopicEvidence
-            ? 1.8
-            : 1.6
-          : opts.fieldedLexical
-            ? 0.4
-            : 1;
+        const lexicalRrfWeight = opts.semanticSimilarities ? 0.4 : opts.fieldedLexical ? 1.6 : 1;
+        const semanticRrfWeight = opts.semanticSimilarities ? 1.6 : opts.fieldedLexical ? 0.4 : 1;
         // 語彙の欠落は不一致ではない。意味検索にある候補には、語彙一覧の
         // 末尾より下の中立値を使い、語彙の一致があったとは表示しない。
         const rrf =
@@ -15669,7 +15656,7 @@ const Recommender = (() => {
     queryVec: Vector,
     emb: VectorMap,
     paperVecs?: PaperVectorMap | null,
-    topicVecs?: PaperVectorMap | null,
+    _topicVecs?: PaperVectorMap | null,
   ): number {
     if (!queryVec || !emb) return 0;
     const v = emb[confKey] || emb[(confKey || "").toLowerCase()];
@@ -15683,16 +15670,6 @@ const Recommender = (() => {
         if (pc > c) c = pc;
       }
     }
-    const topics = (topicVecs ?? topicVecsState)?.[confKey] ?? [];
-    const rankedTopics = topics
-      .map((vector) => ({ vector, similarity: cosine(queryVec, vector) }))
-      .sort((a, b) => b.similarity - a.similarity);
-    if (rankedTopics[0]) c = Math.max(c, rankedTopics[0].similarity);
-    const strongest = rankedTopics[0];
-    const support =
-      strongest && rankedTopics.find((topic) => cosine(topic.vector, strongest.vector) < 0.85);
-    // Corroborating distinct CFP topics add coverage; repeated copies add nothing.
-    if (support) c += Math.max(0, 1 - c) * Math.max(0, support.similarity);
     return c;
   }
 
