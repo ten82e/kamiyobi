@@ -7,6 +7,8 @@ export class SemanticModelError extends Error {
     model: { id: string; revision: string };
     cache_directory: string;
     missing_files: string[];
+    retryable: true;
+    recovery_command: string | null;
   };
 
   constructor(
@@ -51,6 +53,8 @@ export class SemanticModelError extends Error {
       model: { id: model, revision },
       cache_directory: directory,
       missing_files: missing,
+      retryable: true,
+      recovery_command: missing.length ? "node src/prepare-models.ts" : null,
     };
   }
 }

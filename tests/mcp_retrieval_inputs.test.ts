@@ -1,6 +1,12 @@
-import { existsSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { expect, it } from "vitest";
+import {
+  EMBEDDING_MODEL,
+  EMBEDDING_MULTI_MODEL,
+  EMBEDDING_MULTI_REVISION,
+  EMBEDDING_REVISION,
+} from "../src/embedding-runtime.ts";
 import { callMcp, createMcpSandbox, type McpCall } from "./mcp_stdio.ts";
 
 const root = createMcpSandbox("kamiyobi-mcp-retrieval-inputs-", "2030-01-01T00:00:00Z");
@@ -101,10 +107,51 @@ for (const tool of ["search_venues", "recommend_venues"]) {
       expect(semantic.structuredContent?.error).toMatchObject({
         code: "MODEL_NOT_READY",
         model: { id: paper.model },
+        retryable: true,
+        recovery_command: "node src/prepare-models.ts",
       });
       expect(semantic.structuredContent?.rows).toBeUndefined();
       expect(lexical.isError).not.toBe(true);
       expect(lexical.structuredContent?.uses_embeddings).toBe(false);
+      expect(lexical.structuredContent?.rows?.[0].venue_key).toBe("gpu");
+    }
+  });
+
+  it(`${tool} distinguishes corrupt local model files and preserves lexical retry on the same connection`, () => {
+    const damaged = createMcpSandbox("kamiyobi-mcp-corrupt-model-", "2030-01-01T00:00:00Z");
+    writeFileSync(join(damaged, "public/recommendation-index.json"), JSON.stringify(index));
+    for (const [model, revision] of [
+      [EMBEDDING_MODEL, EMBEDDING_REVISION],
+      [EMBEDDING_MULTI_MODEL, EMBEDDING_MULTI_REVISION],
+    ]) {
+      const directory = join(damaged, ".cache/embedding-models", model, revision);
+      mkdirSync(join(directory, "onnx"), { recursive: true });
+      for (const name of [
+        "config.json",
+        "tokenizer.json",
+        "tokenizer_config.json",
+        "onnx/model.onnx",
+      ])
+        writeFileSync(join(directory, name), "corrupt local file");
+    }
+    for (const paper of papers) {
+      const args = { [field]: { title: paper.title } };
+      const [failed, lexical] = callMcp<Reply>(damaged, [
+        [tool, { ...args, retrieval: "semantic" }],
+        [tool, { ...args, retrieval: "lexical" }],
+      ]);
+      expect(failed.isError).toBe(true);
+      expect(failed.structuredContent?.error).toMatchObject({
+        code: "MODEL_LOAD_FAILED",
+        model: { id: paper.model },
+        missing_files: [],
+        retryable: true,
+        recovery_command: null,
+      });
+      expect(failed.structuredContent?.rows).toBeUndefined();
+      expect(text(failed)).toContain("モデルファイルの破損");
+      expect(text(failed)).not.toContain(damaged);
+      expect(lexical.isError).not.toBe(true);
       expect(lexical.structuredContent?.rows?.[0].venue_key).toBe("gpu");
     }
   });

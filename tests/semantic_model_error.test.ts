@@ -23,8 +23,11 @@ it("identifies missing or empty native model files without exposing the absolute
   expect(error.diagnostic.code).toBe("MODEL_NOT_READY");
   expect(error.diagnostic.missing_files).toEqual(["onnx/model.onnx"]);
   expect(error.diagnostic.model).toEqual({ id: model, revision });
+  expect(error.diagnostic.retryable).toBe(true);
+  expect(error.diagnostic.recovery_command).toBe("node src/prepare-models.ts");
   expect(error.message).toContain("実モデルが未準備");
   expect(error.message).not.toContain(root);
+  expect(JSON.stringify(error.diagnostic)).not.toContain(root);
   expect(error.cause).toBe(cause);
 });
 it("distinguishes a load failure from missing weights", () => {
@@ -33,6 +36,8 @@ it("distinguishes a load failure from missing weights", () => {
   const error = new SemanticModelError(root, model, revision, "load", new Error("invalid model"));
   expect(error.diagnostic.code).toBe("MODEL_LOAD_FAILED");
   expect(error.diagnostic.missing_files).toEqual([]);
+  expect(error.diagnostic.retryable).toBe(true);
+  expect(error.diagnostic.recovery_command).toBeNull();
   expect(error.message).toContain("モデルファイルの破損");
 });
 it("distinguishes query inference failure from model loading", () => {
@@ -40,5 +45,7 @@ it("distinguishes query inference failure from model loading", () => {
   ready(root);
   const error = new SemanticModelError(root, model, revision, "query", new Error("inference"));
   expect(error.diagnostic.code).toBe("SEMANTIC_INFERENCE_FAILED");
+  expect(error.diagnostic.retryable).toBe(true);
+  expect(error.diagnostic.recovery_command).toBeNull();
   expect(error.message).toContain("入力と実行環境");
 });

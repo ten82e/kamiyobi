@@ -149,6 +149,13 @@ export async function runModelRecovery(corpus: RecoveryCorpus, interruptDownload
           (r) => r.isError === true && r.structuredContent?.error?.code === "MODEL_NOT_READY",
         ),
       ).toBe(true);
+      for (const error of errors) {
+        expect(error.structuredContent?.error?.retryable).toBe(true);
+        expect(error.structuredContent?.error?.recovery_command).toBe("node src/prepare-models.ts");
+      }
+      const preparationArgs = errors[0].structuredContent.error.recovery_command
+        .split(" ")
+        .slice(1);
       expect((await request("ping")).result).toEqual({});
       const cache = join(root, ".cache/embedding-models");
       const cachedFiles = existsSync(cache)
@@ -161,7 +168,7 @@ export async function runModelRecovery(corpus: RecoveryCorpus, interruptDownload
         const preload = join(root, "interrupt.mjs");
         const log = join(root, "interrupted.json");
         cpSync(join(import.meta.dirname, "interrupted_model_download.mjs"), preload);
-        const failed = spawnSync(process.execPath, [join(root, "src/prepare-models.ts")], {
+        const failed = spawnSync(process.execPath, preparationArgs, {
           cwd: root,
           encoding: "utf8",
           timeout: 180000,
@@ -192,12 +199,16 @@ export async function runModelRecovery(corpus: RecoveryCorpus, interruptDownload
             const error = (await call(c)).result;
             expect(error.isError).toBe(true);
             expect(error.structuredContent?.error?.code).toBe("MODEL_NOT_READY");
+            expect(error.structuredContent?.error?.retryable).toBe(true);
+            expect(error.structuredContent?.error?.recovery_command).toBe(
+              "node src/prepare-models.ts",
+            );
             errors.push(error);
           }
         expect((await request("ping")).result).toEqual({});
       }
       // The command acquires pinned weights itself while the initialized MCP connection stays open.
-      const preparation = spawnSync(process.execPath, [join(root, "src/prepare-models.ts")], {
+      const preparation = spawnSync(process.execPath, preparationArgs, {
         cwd: root,
         encoding: "utf8",
         timeout: 900000,
