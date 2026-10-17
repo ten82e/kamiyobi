@@ -1462,6 +1462,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
 
   // Keep keyboard navigation inside the dialog, including Escape on its close button.
   $("drawer").addEventListener("keydown", (e: KeyboardEvent) => {
+    if (e.isComposing || e.keyCode === 229 || e.ctrlKey || e.metaKey || e.altKey) return;
     e.stopPropagation();
     if (e.key === "Escape") {
       e.preventDefault();
@@ -1630,6 +1631,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   // Keyboard Navigation (j/k/Enter/Esc//)
   function onKeydown(e: KeyboardEvent) {
     if (e.isComposing || e.keyCode === 229) return;
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
     const target = e.target;
     if (!target || !("tagName" in target) || typeof target.tagName !== "string") return;
     const tag = target.tagName;
@@ -6366,6 +6368,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     queryEditInProgress = false;
   });
   $("q").addEventListener("keydown", (e: KeyboardEvent) => {
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
     if (e.key === "Enter" && !e.isComposing && e.keyCode !== 229) {
       e.preventDefault();
       apply();

@@ -79,7 +79,13 @@ function harness() {
     fire: (
       target: keyof typeof nodes,
       key: string,
-      options: { isComposing?: boolean; keyCode?: number } = {},
+      options: {
+        isComposing?: boolean;
+        keyCode?: number;
+        ctrlKey?: boolean;
+        metaKey?: boolean;
+        altKey?: boolean;
+      } = {},
     ) => {
       active = nodes[target];
       const event = {
@@ -138,6 +144,17 @@ it("still applies ordinary Enter and focuses results", () => {
   expect(ui.calls).toEqual(["prevent", "apply", "focus:results"]);
   expect(ui.active()).toBe(ui.nodes.results);
 });
+
+it.each(["ctrlKey", "metaKey", "altKey"] as const)(
+  "leaves modified search Enter to the platform (%s)",
+  (modifier) => {
+    const ui = harness();
+    ui.fire("q", "Enter", { keyCode: 13, [modifier]: true });
+    expect(ui.calls).toEqual([]);
+    expect(ui.active()).toBe(ui.nodes.q);
+    expect(ui.nodes.q.value).toBe("機械学習");
+  },
+);
 it("still leaves the search field with ordinary Escape", () => {
   const ui = harness();
   ui.fire("q", "Escape", { keyCode: 27 });

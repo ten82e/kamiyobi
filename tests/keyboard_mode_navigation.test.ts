@@ -47,11 +47,16 @@ function harness(mode: "recommend" | "deadlines") {
     () => actions.push("close"),
     (url: string) => url,
   );
-  function fire(key: string, target: object = { tagName: "BODY" }) {
+  function fire(
+    key: string,
+    target: object = { tagName: "BODY" },
+    modifiers: { ctrlKey?: boolean; metaKey?: boolean; altKey?: boolean; shiftKey?: boolean } = {},
+  ) {
     actions.length = 0;
     let prevented = false;
     onKeydown({
       key,
+      ...modifiers,
       target,
       preventDefault() {
         prevented = true;
@@ -72,6 +77,38 @@ it("slash focuses the visible input for the current mode, including after switch
         actions: [`focus:${mode === "recommend" ? "paperPrimaryTitle" : "q"}`],
       });
     }
+  }
+});
+
+it.each(["ctrlKey", "metaKey", "altKey"] as const)(
+  "does not intercept platform shortcuts with %s",
+  (modifier) => {
+    for (const mode of ["deadlines", "recommend"] as const) {
+      const h = harness(mode);
+      for (const target of [
+        { tagName: "BODY" },
+        { tagName: "BUTTON" },
+        { tagName: "A" },
+        h.controls.q,
+        h.controls.paperPrimaryTitle,
+      ]) {
+        for (const key of ["j", "k", "d", "ArrowDown", "ArrowUp", "Enter", "Escape", "/"])
+          expect(
+            h.fire(key, target, { [modifier]: true }),
+            `${mode}/${target.tagName}/${modifier}/${key}`,
+          ).toEqual({ prevented: false, actions: [] });
+      }
+    }
+  },
+);
+
+it("preserves a shift-only slash for keyboard layouts that require it", () => {
+  for (const mode of ["deadlines", "recommend"] as const) {
+    const h = harness(mode);
+    expect(h.fire("/", { tagName: "BODY" }, { shiftKey: true })).toEqual({
+      prevented: true,
+      actions: [`focus:${mode === "recommend" ? "paperPrimaryTitle" : "q"}`],
+    });
   }
 });
 
