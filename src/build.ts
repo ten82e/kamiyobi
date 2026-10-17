@@ -29,7 +29,6 @@ import {
   icsCategoryLabels,
   icsDeadlineUidKey,
   icsEventBody,
-  icsUidDayOf,
   icsUidSafe,
   jstParts,
   statusMarksJa,

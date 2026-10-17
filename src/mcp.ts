@@ -3157,7 +3157,8 @@ const TOOLS = [
         categories: {
           type: "array",
           items: { type: "string" },
-          description: "分野を複数で絞る（`category` と同じ規則。両方渡した時は `categories` を使います）",
+          description:
+            "分野を複数で絞る（`category` と同じ規則。両方渡した時は `categories` を使います）",
         },
         domestic: {
           type: "boolean",
