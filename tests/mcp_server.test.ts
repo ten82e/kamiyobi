@@ -2958,11 +2958,24 @@ it("画面と MCP が、同じ問に同じ行を出す（第 917 回）", async 
       "const filterRows = filter();",
       "console.log(JSON.stringify([...new Set(filterRows.map((r) => r.ed.id))].sort()));",
     ].join("\n");
-    const proc = spawnSync("node", ["-e", vmSafeSource(script)], {
+    /* 台本は 230KB を超える。`node -e` の 1 引数に渡すと Linux の上限（1 引数 128KiB）で
+     * 起動その物が失敗し、CI でだけ落ちていた（2026-10-17 の PR #962 で実測 – macOS は
+     * 上限が緩く通る）。台本はファイルに書き、小さな起動役が**スクリプトとして**走らせる
+     * （モジュールとして走らせるとトップレベルの宣言が `new Function` から見えない）。 */
+    const scriptFile = join(tmpdir(), `kamiyobi-screen-probe-${process.pid}.js`);
+    writeFileSync(scriptFile, script);
+    const 起動役 =
+      "globalThis.require = require; require('node:vm').runInThisContext(" +
+      "require('node:fs').readFileSync(process.argv[1], 'utf8'), { filename: 'screen-probe.js' });";
+    const proc = spawnSync("node", ["-e", 起動役, scriptFile], {
       encoding: "utf8",
       timeout: 120_000,
     });
-    expect(proc.status, `畫面の絞り込みが動かない（${問}）: ${proc.stderr.slice(0, 300)}`).toBe(0);
+    rmSync(scriptFile, { force: true });
+    expect(
+      proc.status,
+      `畫面の絞り込みが動かない（${問}）: ${(proc.stderr ?? String(proc.error)).slice(0, 300)}`,
+    ).toBe(0);
     return JSON.parse(proc.stdout.trim()) as string[];
   };
 
