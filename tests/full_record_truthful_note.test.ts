@@ -4,7 +4,7 @@ import { jsFunction, siteRuntime } from "./runtime_extract.ts";
 const app = siteRuntime();
 const render = jsFunction(app, "render");
 const start = render.indexOf("const showFullRecordOffer =");
-const end = render.indexOf("if (showHistoryStatus)", start);
+const end = render.indexOf("if (recMode) {", start);
 if (start < 0 || end < start) throw new Error("full-record render block missing");
 const source =
   ["countJa", "bytesJa", "farthestRowDayJa", "fullRecordNoteJa"]

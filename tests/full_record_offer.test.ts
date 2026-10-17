@@ -99,7 +99,7 @@ describe("品書の果てを伝える（第 290 回）", () => {
     expect(app).toContain('$("fullRecordText").textContent');
     expect(page).toContain("収録の全体を読み込む");
     // 押したとき: 旗を立ててから品書の外を読みに行く（旗だけ立てて読まない、では伝わらない）。
-    const listeners = app.slice(app.indexOf('$("fullRecordButton")'));
+    const listeners = app.slice(app.indexOf('const fullRecordButton = $("fullRecordButton");'));
     const body = listeners.slice(0, 400);
     expect(body).toContain("fullRecordRequested = true;");
     expect(body).toContain("loadHistoryData();");

@@ -3548,7 +3548,7 @@ it("site runtime lazy-loads deadline history with retry and stale-response guard
     /if\s*\(state\.mode\s*===\s*"deadlines"\s*&&\s*fullRecordNeeded\([^)]*\)\)\s*loadHistoryData\(\);/,
   );
   expect(runtime).toMatch(
-    /if\s*\(state\.mode\s*!==\s*"deadlines"\s*\|\|\s*!state\.past\)\s*return/,
+    /state\.mode\s*!==\s*"deadlines"\s*\|\|\s*!fullRecordNeeded\(state\.past,\s*state\.win,\s*fullRecordRequested\)\s*\|\|\s*historyStatus\s*!==\s*"error"/,
   );
   expect(runtime).toMatch(
     /if\s*\(!response\.ok\)\s*throw new Error\(`history \$\{response\.status\}`\)/,

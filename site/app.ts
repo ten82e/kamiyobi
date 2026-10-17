@@ -5431,11 +5431,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         else exportIcsBtn.setAttribute("aria-describedby", "exportIcsNote");
       }
     }
-    const showHistoryStatus =
-      !recMode &&
-      fullRecordNeeded(state.past, state.win, fullRecordRequested) &&
-      (historyStatus === "loading" || historyStatus === "error");
-    $("historyStatus").hidden = !showHistoryStatus;
+    const showHistoryStatus = updateHistoryStatus(recMode);
     updateRecommendationRetry(recMode);
     updateSemanticRetry(recMode);
     /* 品書を見ている間だけ、品書の果てを伝える（読んでしまったあとは件数が増えるので黙る）。
@@ -5458,11 +5454,6 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       fullRecordOffer.hidden = !lastDay;
     }
     $("dataScope").hidden = !DATA.calendar && fullRecordOffer.hidden && !showHistoryStatus;
-    if (showHistoryStatus) {
-      $("historyStatusText").textContent =
-        historyStatus === "loading" ? HISTORY_LOADING_JA : HISTORY_ERROR_JA;
-      $("historyRetry").hidden = historyStatus !== "error";
-    }
     if (recMode) {
       $("deadlineTableWrap").hidden = true;
       $("recommendationCards").hidden = false;
@@ -5607,6 +5598,23 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     } catch (_) {
       return "";
     }
+  }
+
+  function updateHistoryStatus(recommend: boolean): boolean {
+    const show =
+      !recommend &&
+      fullRecordNeeded(state.past, state.win, fullRecordRequested) &&
+      (historyStatus === "loading" || historyStatus === "error");
+    const button = $("historyRetry");
+    if (!show && document.activeElement === button) $("results").focus();
+    $("historyStatus").hidden = !show;
+    button.hidden = !show;
+    if (!show) return false;
+    $("historyStatusText").textContent =
+      historyStatus === "loading" ? HISTORY_LOADING_JA : HISTORY_ERROR_JA;
+    button.setAttribute("aria-disabled", String(historyStatus === "loading"));
+    if (document.activeElement === $("fullRecordButton")) button.focus();
+    return true;
   }
 
   function stopHistoryLoad() {
@@ -6900,7 +6908,12 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   $("recommendationRetry").addEventListener("click", retryRecommendationData);
   $("semanticRetry")?.addEventListener("click", retrySemantic);
   $("historyRetry").addEventListener("click", () => {
-    if (state.mode !== "deadlines" || !state.past) return;
+    if (
+      state.mode !== "deadlines" ||
+      !fullRecordNeeded(state.past, state.win, fullRecordRequested) ||
+      historyStatus !== "error"
+    )
+      return;
     loadHistoryData();
     render();
   });
