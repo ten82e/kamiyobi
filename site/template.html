@@ -162,8 +162,17 @@
   .paper-file-button,
   .chips label,
   label.check,
-  button.tag {
+  button.tag,
+  #emptyReset {
     min-height: 44px;
+  }
+
+  /* 末尾の出典・リポジトリ・配布ファイルの文字リンクは、指で押せる高さにする（2026-10-18 に
+   * 375px 幅で実測: 高さ 15〜18px）。段落の中の文字リンクは行間を変えないよう余白で足す。 */
+  footer a {
+    display: inline-block;
+    padding: 13px 4px;
+    margin: -13px -4px;
   }
 }
 
