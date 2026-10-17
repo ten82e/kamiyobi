@@ -22,3 +22,13 @@ it("llms.txt の冒頭は画面と同じ分野の幅を名乗る", () => {
   const head = readFileSync(join(site, "llms.txt"), "utf8").split("\n").slice(0, 5).join("");
   for (const 分野 of ["セキュリティ", "DB", "HCI", "理論", "論文誌"]) expect(head).toContain(分野);
 });
+
+/* 2026-10-17 – AI 役の試しで、表は `search_venues` と `recommend_venues` を同じ「論文情報」の道具として並べるだけで、
+ * 引数名が違う（`query` と `paper`）ことが無かった。`search_venues` に `paper` を渡して失敗した。 */
+it("llms.txt の表は search_venues と recommend_venues の必須の引数名を言う", () => {
+  const text = readFileSync(join(site, "llms.txt"), "utf8");
+  const row = (tool: string) =>
+    text.split("\n").find((line) => line.startsWith(`| \`${tool}\` |`)) ?? "";
+  expect(row("search_venues")).toContain("`query`");
+  expect(row("recommend_venues")).toContain("`paper`");
+});

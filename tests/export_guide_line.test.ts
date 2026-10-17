@@ -25,3 +25,11 @@ it("書き出しのボタンの前に、カレンダーに入れる 2 通りと�
   const app = readFileSync(join(site, "app.js"), "utf8");
   expect(app).toMatch(/exportGuide\.hidden = exportBtn\.hidden/);
 });
+
+/* 2026-10-17 – 「投稿先を探す」の画面では実際のボタンが「この候補の締切 N 件をカレンダー（.ics）で…」なのに、
+ * 案内は「この一覧の…件」と書いたままで、どれを押すのか照らし合わせられなかった。 */
+it("投稿先の候補の画面では、案内もボタンと同じ「この候補」の語で言う", () => {
+  const app = readFileSync(join(site, "app.js"), "utf8");
+  expect(app).toContain("この候補の締切…件をカレンダー（.ics）でダウンロード");
+  expect(app).toMatch(/exportGuide\.textContent\s*=/);
+});

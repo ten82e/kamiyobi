@@ -1954,7 +1954,7 @@ function venueLookupText(value: unknown): string {
   return String(value ?? "")
     .normalize("NFKC")
     .toLowerCase()
-    .trim();
+    .replace(/\s+/g, "");
 }
 
 function venueClassification(conf: NonNullable<SnapshotFile["conferences"]>[number]) {

@@ -5426,7 +5426,21 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       /* 書き出しのボタンが 5 つ並ぶので、どれが何かを押す前に一行で言う（2026-10-18 に研究者役の試しで
        * 「カレンダーに入れたい」の迷いを実測）。ボタンと同じ条件で出す。 */
       const exportGuide = $("exportGuide");
-      if (exportGuide) exportGuide.hidden = exportBtn.hidden;
+      if (exportGuide) {
+        exportGuide.hidden = exportBtn.hidden;
+        /* 候補の画面ではボタン名が「この候補の締切 N 件…」になるので、案内も同じ語で言う
+         * （「この一覧の…件」と書いたままだと、どのボタンか照らし合わせられない）。 */
+        const 既定の案内 = exportGuide.dataset.listText ?? exportGuide.textContent ?? "";
+        exportGuide.dataset.listText = 既定の案内;
+        exportGuide.textContent = 候補を書き出す
+          ? 既定の案内
+              .replace("今の一覧だけ", "今の候補だけ")
+              .replace(
+                "「この一覧の…件をカレンダー（.ics）でダウンロード」",
+                "「この候補の締切…件をカレンダー（.ics）でダウンロード」",
+              )
+          : 既定の案内;
+      }
       exportBtn.title = 候補を書き出す
         ? "「投稿先を探す」が挙げた候補を、表計算で読める形（BOM 付き CSV）にしたファイルです。" +
           "先頭の 4 列が一致評価・一致の点・言葉の一致・意味の近さで、残りの列は締切の一覧と同じ物です。" +

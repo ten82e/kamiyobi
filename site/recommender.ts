@@ -9722,7 +9722,12 @@ const Recommender = (() => {
       }
     }
 
-    const 複合 = parts.flatMap((part) => 分野の複合に割るJa(part));
+    /* 助詞で割った後ろの語にも、末尾の全行の語（`セキュリティ会議` の「会議」）の割りを掛ける。
+     * 掛けないと `11月締切のセキュリティ会議` は `セキュリティ会議` が一語のまま 0 行だった。 */
+    const 複合 = parts.flatMap((part) => {
+      const 語尾割 = 全行の語尾に割るJa(part);
+      return 語尾割.length >= 2 ? 語尾割 : 分野の複合に割るJa(part);
+    });
 
     const 落 = 複合.map((part) => 訪ねの語尾に落とすいつJa(String(part))[0] ?? String(part));
     const 詰 = [...new Set(落.filter((part) => part !== ""))];
@@ -13749,7 +13754,7 @@ const Recommender = (() => {
    * 照合は行の `ccf a` の並びだけに当てる（`rankPhraseTermHit`）。 */
   function collapseRankPhrase(query: string): string {
     return query.replace(
-      /(^|[^A-Za-z0-9])(CCF|CORE|THCPL)\s*[:：\-－]?\s*(A\*|A＊|A|B|C)(?![A-Za-z0-9*＊])/gi,
+      /(^|[^A-Za-z0-9])(CCF|CORE|THCPL)\s*[:：\-－]?\s*(A\*|A＊|A|B|C)(?![A-Za-z0-9*＊])(?:の(?=\S))?/gi,
       (_m, head: string, scale: string, grade: string) =>
         `${head}${scale}-${grade.replace("＊", "*")} `,
     );
