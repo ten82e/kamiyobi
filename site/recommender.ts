@@ -10060,6 +10060,8 @@ const Recommender = (() => {
     const pairs: Array<[string, string]> = [];
     normalized.split(" ").forEach((token) => {
       splitQueryToken(token, nowMs).forEach((part) => {
+        /* 「来月まで」は今月からの幅で、別の説明（`relativeDayNotes`）が書く。来月だけの解釈を重ねない。 */
+        if (monthUntilBoundsJa(part, nowMs)) return;
         const term = relativeMonthTerm(part, nowMs);
         if (term) pairs.push([part, term]);
       });
@@ -13730,6 +13732,9 @@ const Recommender = (() => {
       if (group.length !== 1) return false;
       const 語 = kanaFold(group[0]);
       if (語々.indexOf(語) >= 0) return true;
+      /* ほかの語と並んだ裸の `学会` は `会議` と同じ言い換え（`セキュリティの学会`）。`学会` 一語が
+       * 当たるのは名前に学会を持つ国内の行だけで、主題と掛けると 0 行か 1 行になっていた。 */
+      if (語 === kanaFold("学会")) return true;
 
       if (語.length > 16) return false;
       return 語々.some((w) => 語.startsWith(w)) && 名々.some((n) => 語.endsWith(n));
