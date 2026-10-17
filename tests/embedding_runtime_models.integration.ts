@@ -49,3 +49,36 @@ it("initializes a fresh real extractor without remote model-list discovery", asy
   }
   expect(cosine(vectors[0], vectors[1])).toBeLessThan(0.8);
 });
+
+it("does not reuse a real extractor when a different empty cache is selected", async () => {
+  const root = join(import.meta.dirname, "..");
+  const previousFetch = env.fetch;
+  const previousRemote = env.allowRemoteModels;
+  const requests: string[] = [];
+  try {
+    env.cacheDir = join(root, ".cache/embedding-models");
+    env.allowRemoteModels = false;
+    const [vector] = await embedEach(
+      EMBEDDING_MODEL,
+      ["model cache isolation"],
+      EMBEDDING_REVISION,
+    );
+    expect(vector).toHaveLength(384);
+    expect(Math.hypot(...vector)).toBeCloseTo(1, 4);
+    env.cacheDir = join(work, "empty-cache");
+    env.allowRemoteModels = true;
+    env.fetch = async (input) => {
+      requests.push(String(input instanceof Request ? input.url : input));
+      return new Response("temporary acquisition failure", { status: 503 });
+    };
+    await expect(
+      embedEach(EMBEDDING_MODEL, ["model cache isolation"], EMBEDDING_REVISION),
+    ).rejects.toThrow("cannot load pinned tokenizer tokenizer.json: HTTP 503");
+    expect(requests).toEqual([
+      `https://huggingface.co/${EMBEDDING_MODEL}/resolve/${EMBEDDING_REVISION}/tokenizer.json`,
+    ]);
+  } finally {
+    env.fetch = previousFetch;
+    env.allowRemoteModels = previousRemote;
+  }
+});

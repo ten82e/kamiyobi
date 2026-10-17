@@ -69,7 +69,7 @@ function getExtractor(
   if (localFilesOnly && !env.cacheDir)
     return Promise.reject(new Error("transformers cache directory is unavailable"));
   const modelPath = localFilesOnly ? join(env.cacheDir!, model, revision) : model;
-  const cacheKey = `${modelPath}@${revision}:${localFilesOnly ? "local" : "remote"}`;
+  const cacheKey = JSON.stringify([env.cacheDir ?? null, modelPath, revision, localFilesOnly]);
   let p = extractorPromises.get(cacheKey);
   if (!p) {
     const options = {
@@ -77,17 +77,14 @@ function getExtractor(
       device: "cpu" as const,
       dtype: "fp32" as const,
     };
-    p = Promise.all([
-      loadPinnedTokenizer(model, revision, localFilesOnly),
-      AutoModel.from_pretrained(modelPath, options),
-    ]).then(
-      ([tokenizer, loadedModel]) =>
-        new FeatureExtractionPipeline({
-          task: "feature-extraction",
-          tokenizer,
-          model: loadedModel,
-        }),
-    );
+    p = loadPinnedTokenizer(model, revision, localFilesOnly).then(async (tokenizer) => {
+      const loadedModel = await AutoModel.from_pretrained(modelPath, options);
+      return new FeatureExtractionPipeline({
+        task: "feature-extraction",
+        tokenizer,
+        model: loadedModel,
+      });
+    });
     extractorPromises.set(cacheKey, p);
     void p.catch(() => extractorPromises.delete(cacheKey));
   }
