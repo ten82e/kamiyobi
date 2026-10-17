@@ -5284,7 +5284,18 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         /* 理由の識別子は英語なので、画面には日本語を出す – 英字の符号は利用者に
          * 読めない（2026-09-23 実測: 「原因: embeddings unavailable」）。 */
         const semCode = semanticReason || "unknown";
-        const semNote = ` ｜ 意味検索は利用不可（語彙検索のみ・原因: ${Recommender.semanticReasonJa(semCode)}）`;
+        /* 日本語だけの題名・概要は、収録の英語表記との語の一致が弱い（2026-10-18 に研究者役の試しで、
+         * 分野違いの会議が上位に並んだ）。意味検索が使えない時だけ、直し方を結果の横で言う。 */
+        /* `paperText` は JSON の文字列（英字のキー名を含む）なので、題名・概要・キーワードの値で見る。 */
+        const 入力の文 = _lines
+          .map((record) => [record.title, record.abstract, record.keywords].join(" "))
+          .join(" ");
+        const 日本語だけ =
+          /[\u3040-\u30ff\u3400-\u9fff]/.test(入力の文) && !/[A-Za-z]{3,}/.test(入力の文);
+        const 英語を足す案内 = 日本語だけ
+          ? " ｜ 日本語だけの入力は語の一致が弱くなります。専門用語の英語表記（例: LLM、scheduling）を題名かキーワードに足すと合いやすくなります"
+          : "";
+        const semNote = ` ｜ 意味検索は利用不可（語彙検索のみ・原因: ${Recommender.semanticReasonJa(semCode)}）${英語を足す案内}`;
         cnt += semNote;
         cntLive += semNote;
         countSemanticReason = semCode;
