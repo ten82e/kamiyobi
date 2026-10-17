@@ -1085,10 +1085,11 @@ footer a:hover { text-decoration: underline; }
 
     <div class="row deadline-only" style="margin-bottom: 14px;">
       <div class="search-wrap">
-        <!-- 検索欄は見出しを置いていない（placeholder だけ）。打つと placeholder は
-             消えるので、支援技術用にラベルを置く。 -->
-        <label for="q">検索</label>
-        <input type="search" id="q" placeholder="会議名・分野・開催地で検索（例: NSDI、ネットワーク、おきなわ、国内）...">
+        <!-- 何で引けるかはラベルに、例は placeholder に分ける。両方を placeholder に
+             詰めると、スマートフォン幅で「（例:」で切れて例が一つも見えなかった
+             （2026-10-17 実測: 375px 幅）。 -->
+        <label for="q">会議名・分野・開催地で検索</label>
+        <input type="search" id="q" placeholder="例: NSDI、機械学習、おきなわ">
       </div>
       <div class="field">
         <label for="kind">種別</label>
