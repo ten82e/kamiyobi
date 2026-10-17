@@ -5436,16 +5436,8 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       fullRecordNeeded(state.past, state.win, fullRecordRequested) &&
       (historyStatus === "loading" || historyStatus === "error");
     $("historyStatus").hidden = !showHistoryStatus;
-    $("recommendationRetryStatus").hidden = !recMode || !recommendationNeedsRetry;
+    updateRecommendationRetry(recMode);
     updateSemanticRetry(recMode);
-    if (recMode && recommendationNeedsRetry) {
-      $("recommendationRetryNote").textContent = recommendationPromise
-        ? "推薦データを再読み込み中…"
-        : recommendationData
-          ? "推薦用データを取得できませんでした。取得済みのデータで表示しています。"
-          : "推薦用データを取得できませんでした。入力を残したまま再試行できます。";
-      $("recommendationRetry").toggleAttribute("disabled", Boolean(recommendationPromise));
-    }
     /* 品書を見ている間だけ、品書の果てを伝える（読んでしまったあとは件数が増えるので黙る）。
      * `history_ref` が無い品書（古い差し込み）では押せる物を出さない。 */
     const showFullRecordOffer =
@@ -5540,6 +5532,22 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     $("deadlineResultHint").hidden = recommend;
     $("recommendResultHint").hidden = !recommend;
     updateHelpMode(recommend);
+  }
+
+  function updateRecommendationRetry(recommend: boolean): void {
+    const status = $("recommendationRetryStatus");
+    const button = $("recommendationRetry");
+    status.hidden = !recommend || !recommendationNeedsRetry;
+    if (status.hidden) {
+      if (document.activeElement === button) $("results").focus();
+      return;
+    }
+    $("recommendationRetryNote").textContent = recommendationPromise
+      ? "推薦データを再読み込み中…"
+      : recommendationData
+        ? "推薦用データを取得できませんでした。取得済みのデータで表示しています。"
+        : "推薦用データを取得できませんでした。入力を残したまま再試行できます。";
+    button.setAttribute("aria-disabled", String(Boolean(recommendationPromise)));
   }
 
   function loadRecommendationData() {
