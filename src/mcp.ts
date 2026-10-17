@@ -545,7 +545,9 @@ function line(r: Row, now: number): string {
   const 幅 = String(Recommender.estimateWindowJa(r.ed) ?? "").trim();
   const 推定 = r.est ? "（推定）" : "";
 
-  const 幅の但し = 幅 ? "（残りは点推定点の分）" : "";
+  /* 残りの日数は幅の終わりまでではなく、点推定の日までを数える。「残りは点推定点の分」と
+   * 語が重なって読めなかった（2026-10-17 実測）ので、何を数えたかを言う形にする。 */
+  const 幅の但し = 幅 ? "（残り日数は点推定の日までの数）" : "";
   const sourceUrl = officialLink(r.ed.link, r.conf.link);
   const 出典 = sourceUrl ? ` ${sourceUrl}` : "";
   const 募集言語 = r.submission ? `（募集言語: ${r.submission.language}）` : "";
