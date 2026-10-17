@@ -254,6 +254,7 @@ export const SEARCH_CANON = (() => {
       "relativeMonthTerm",
       "relativeMonthPairs",
       "monthTokenToYearMonth",
+      "monthUntilBoundsJa",
       "monthRangeTermsJa",
       "monthSpanTerms",
 

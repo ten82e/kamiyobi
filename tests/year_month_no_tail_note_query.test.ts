@@ -113,19 +113,28 @@ describe("相対の語がどう解けたかを名乗る（第 940 回）", () =>
       expect(注[0] ?? "", `「${語}」に其の月が書いて居ん`).toContain("その月だけ");
       expect(注[0] ?? "", `「${語}」を年全体と言つて居る（嘘）`).not.toContain("1〜12 か月");
     }
-    /* 幅の語尾（`まで`・`から`）は飛ばさない – その處の行が幅を名乘る。 */
-    for (const 語 of ["来年12月まで", "来年12月から"]) {
-      expect(Recommender.relativeDayNotes(語, now)[0] ?? "").toContain("1〜12 か月");
-    }
+    /* 幅の語尾（`から`）は飛ばさない – その處の行が幅を名乘る。`まで` は 2026-10-18 から
+     * 今月からその月の末までの幅を名乗る（年全体とは言わない）。 */
+    expect(Recommender.relativeDayNotes("来年12月から", now)[0] ?? "").toContain("1〜12 か月");
+    expect(Recommender.relativeDayNotes("来年12月まで", now)[0] ?? "").toContain(
+      "今月からその月の末まで",
+    );
+    expect(Recommender.relativeDayNotes("来年12月まで", now)[0] ?? "").not.toContain("1〜12 か月");
     /* 自分で月を打つ形は黙つていい（年は既にその文にある – 危險なのは勝手に解けた形）。 */
     expect(Recommender.relativeDayNotes("2026年11月", now)[0] ?? "").toContain("その月だけ");
   });
 
   it("幅の言い方は、その處の行に讓る（第 493 回の約束 – 潰さない）", () => {
-    for (const 語 of ["来年12月から", "来年12月まで", "来年3月まで"]) {
+    for (const 語 of ["来年12月から"]) {
       const 注 = Recommender.relativeDayNotes(語, now);
       expect(注[0] ?? "", `「${語}」の注`).toContain("1〜12 か月");
       expect(注[0] ?? "", `「${語}」を其の月だと名乗つて居る`).not.toContain("その月だけ");
+    }
+    /* `まで` は今月からの幅（その月だけとも年全体とも名乗らない）。 */
+    for (const 語 of ["来年12月まで", "来年3月まで"]) {
+      const 注 = Recommender.relativeDayNotes(語, now);
+      expect(注[0] ?? "", `「${語}」の注`).toContain("今月からその月の末まで");
+      expect(注[0] ?? "", `「${語}」を年全体と名乗つて居る`).not.toContain("1〜12 か月");
     }
   });
   it("行の数と案内の幅が合う（検算できる – 第 496 回の数え方）", () => {

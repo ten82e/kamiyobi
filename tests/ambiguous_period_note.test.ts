@@ -171,7 +171,11 @@ describe("壊していない物", () => {
     expect(Recommender.relativeDayNotes("8月上旬", 基準).join(" ")).toContain("2026年8月1日");
     expect(Recommender.uiWordNoteJa("祝日")).toContain("祝日・休日");
     expect(Recommender.uiWordNoteJa("祝日 締切")).toContain("「祝日」");
-    expect(Recommender.querySynonymNotes("8月まで").join(" ")).toContain("「8月」");
+    /* 2026-10-18 – 「X月まで」は今月からその月の末までの幅（その月だけではない）。 */
+    expect(Recommender.relativeDayNotes("8月まで", 基準).join(" ")).toContain("2026年8月の締切");
+    expect(Recommender.relativeDayNotes("3月まで", 基準).join(" ")).toContain(
+      "2026年8月〜2027年3月の締切",
+    );
     expect(行列表("土日").length, "案内が導く `土日` が 0 行").toBeGreaterThan(0);
     expect(行列表("上旬").length, "`上旬` が 0 行に落ちた").toBeGreaterThan(0);
   });

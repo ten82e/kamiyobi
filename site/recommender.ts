@@ -7017,6 +7017,38 @@ const Recommender = (() => {
       return " ";
     });
 
+    /* 「3月まで」「来年3月まで」「八月まで」は今月からその月の末までの幅（2026-10-18 に変えた）。
+     * 何として探したかを月まで書く – 其の月だけと読む人も、年全体と読む人もいる。漢数字・離した
+     * 形は寄せた後の形で書く（`八月まで` → `8月まで`）。 */
+    {
+      const 寄せた語列 = String(collapseRelativeDayPhrase(query, nowMs))
+        .replace(
+          /([0-9]{1,2})[\s\u3000]*月[\s\u3000]*(末?)[\s\u3000]*(までに|まで|迄)/g,
+          "$1月$2$3",
+        )
+        .split(/\s+/)
+        .filter((語) => 語);
+      寄せた語列.forEach((語, 位置) => {
+        const 月の幅 = MONTH_RANGE_UNTIL.exec(語);
+        if (!月の幅) return;
+        const 前 = 位置 > 0 ? (寄せた語列[位置 - 1] as string) : "";
+        const 年の冠 = /^(?:今年|来年|再来年|[0-9]{4}年)$/.test(前) ? 前 : "";
+        const 両端 = monthUntilBoundsJa(`${年の冠}${語}`, nowMs);
+        if (!両端) return;
+        const [初, 末] = 両端 as [number[], number[]];
+        const 書く = (端: number[]) => `${端[0]}年${端[1]}月`;
+        const 一月 = 初[0] === 末[0] && 初[1] === 末[1];
+        const 見せ = `「${年の冠}${語}」`;
+        notes.push(
+          一月 && 末[0] * 12 + 末[1] < 現在の年月(nowMs)
+            ? `${見せ} = ${書く(末)}の締切（過ぎた月なのでその月だけ – 「過去の締切も表示」で並びます）`
+            : 一月
+              ? `${見せ} = ${書く(末)}の締切（今月の末まで）`
+              : `${見せ} = ${書く(初)}〜${書く(末)}の締切（今月からその月の末まで – その月だけなら「${年の冠}${月の幅[1]}月」）`,
+        );
+      });
+    }
+
     const 解いた語: Array<{ 見せ: string; 解: string }> = [];
 
     const 語列 = queryTokens(collapseRelativeDayPhrase(query, nowMs), nowMs);
@@ -7384,6 +7416,17 @@ const Recommender = (() => {
         const 月 = 当 ? Number(当[1]) : Number.NaN;
         return 月 >= 1 && 月 <= 12 ? 月 : Number.NaN;
       })();
+      /* 年の語の直後が「X月まで」なら、その語ごと今月からの幅で、件数欄がその幅を書く
+       * （年全体を名乗ると嘘になる – 2026-10-18 に「X月まで」を幅に変えた時の決まり）。 */
+      const 直後の幅 = (() => {
+        const 打った = String(query ?? "");
+        const 位置 = 打った.indexOf(token);
+        if (位置 < 0) return null;
+        return /^[\s\u3000]*([0-9]{1,2}月末?(?:までに|まで|迄))/.exec(
+          打った.slice(位置 + token.length),
+        );
+      })();
+      if (直後の幅 && monthUntilBoundsJa(`${key}${直後の幅[1]}`, nowMs)) return;
       const 月の解 = Number.isFinite(直後の月) ? 直後の月 : 有月 ? 次の月數 : Number.NaN;
       const 數字の年 = /^([0-9]{4})年$/.exec(key);
       if (數字の年) {
@@ -9489,6 +9532,9 @@ const Recommender = (() => {
 
   function splitQueryToken(token: string, nowMs?: number): string[] {
     if (寄せ表の和名か(String(token || ""))) return [token];
+    /* 「来年3月まで」「2027年3月まで」は年まで含めて一つの幅（割ると年の 12 か月と掛け合わせて
+     * 今月〜年末の分を落とす）。 */
+    if (monthUntilBoundsJa(String(token || ""), nowMs ?? Date.now())) return [token];
 
     /* 両側の日が決まる幅は語ごと残す（それ以外 – `東京へ` の様な打ち方は今まで通り割る）。 */
 
@@ -10190,6 +10236,11 @@ const Recommender = (() => {
   const MONTH_RANGE_SPAN =
     /^(.+)月(?:から|より|へ|〜|～|~|－|―|‐|−|-|ー)(.+?)月(?:まで|辺り|あたり|当たり|頃|ころ)?$/;
 
+  /* 「3月まで」「2027年3月末までに」は今月からその月の末までの幅（2026-10-18 に利用者の判断で
+   * 変えた – それまでは其の月だけに寄せており、`分散システム 3月まで` が 63 件から 3 件に減った）。
+   * 数字の月だけを受ける – `来月まで` などの相対月語は別の規則の侭。 */
+  const MONTH_RANGE_UNTIL = /^((?:[0-9]{4}年)?[0-9]{1,2})月末?(?:までに|まで|迄)$/;
+
   /** 月の語（`9月`・相対月語）を `[年, 月]` に解決する。解決できなければ null。
    * 基準月より前の月を打たれたときは翌年として受け取る – 過ぎた月は計画の対象では
    * ないため（`1月以降` を 8 月に打つ人は翌年 1 月を見る）。 */
@@ -10223,8 +10274,37 @@ const Recommender = (() => {
   const MONTH_RANGE_YEAR_PREFIX =
     /^(今年|ことし|本年|来年|らいねん|再来年|さらいねん|去年|きょねん)(.+)$/;
 
+  /** JST の今の年月を `年 * 12 + 月` で返す（幅の比較用）。 */
+  function 現在の年月(nowMs: number): number {
+    const jst = new Date((Number.isFinite(nowMs) ? nowMs : Date.now()) + 9 * 3_600_000);
+    return jst.getUTCFullYear() * 12 + jst.getUTCMonth() + 1;
+  }
+
+  /** 「X月まで」の幅の両端（`[年, 月]` の組）。当たらなければ null。 */
+  function monthUntilBoundsJa(token: string, nowMs: number): number[][] | null {
+    const prefixed = MONTH_RANGE_YEAR_PREFIX.exec(token);
+    const yearOffset = prefixed ? RELATIVE_YEAR_OFFSETS_JA[prefixed[1]] : undefined;
+    const body = prefixed ? (prefixed[2] as string) : token;
+    const until = MONTH_RANGE_UNTIL.exec(body);
+    if (!until) return null;
+    if (yearOffset !== undefined && /年/.test(until[1] as string)) return null;
+    let last = monthTokenToYearMonth(`${until[1]}月`, nowMs);
+    if (!last) return null;
+    const jst = new Date((Number.isFinite(nowMs) ? nowMs : Date.now()) + 9 * 3_600_000);
+    const start = [jst.getUTCFullYear(), jst.getUTCMonth() + 1];
+    if (yearOffset !== undefined) last = [start[0] + yearOffset, last[1]];
+    const 末 = last[0] * 12 + last[1];
+    const 初 = start[0] * 12 + start[1];
+    /* 過ぎた月の「まで」は其の月だけ（幅が逆向きになる – 過去の締切の表示で見る月）。 */
+    if (末 < 初) return [last, last];
+    if (末 > 初 + 24) return null;
+    return [start, last];
+  }
+
   /** 月の範囲の語を、表に出る暦月語（`YYYY年M月`）の OR グループへ展開する。 */
   function monthRangeTermsJa(token: string, nowMs: number): string[] {
+    const untilBounds = monthUntilBoundsJa(token, nowMs);
+    if (untilBounds) return monthSpanTerms(untilBounds[0] as number[], untilBounds[1] as number[]);
     const prefixed = MONTH_RANGE_YEAR_PREFIX.exec(token);
     const yearOffset = prefixed ? RELATIVE_YEAR_OFFSETS_JA[prefixed[1]] : undefined;
     const body = prefixed ? (prefixed[2] as string) : token;
@@ -10685,8 +10765,14 @@ const Recommender = (() => {
     const pairs: Array<[string, string]> = [];
     normalized.split(" ").forEach((token) => {
       splitQueryToken(token, nowMs).forEach((part) => {
+        /* 「X月まで」の幅は日の案内（`relativeDayNotes`）が月まで書くので、ここでは重ねない。 */
+        if (monthUntilBoundsJa(part, nowMs)) return;
         const terms = monthRangeTermsJa(part, nowMs);
-        if (terms.length) pairs.push([part, `${terms[0]}から${terms[terms.length - 1]}`]);
+        if (terms.length)
+          pairs.push([
+            part,
+            terms.length === 1 ? String(terms[0]) : `${terms[0]}から${terms[terms.length - 1]}`,
+          ]);
       });
     });
     return pairs;
@@ -11667,8 +11753,9 @@ const Recommender = (() => {
     const 未定を繋げた言い方 = /(?:締切|締切り|締めしきり|締め|しめきり|〆切|〆)未定/g;
     const 未定を繋げた別の頭 = /(?:期限|日付)未定/g;
 
+    /* 数字の月の「まで」は幅の規則（`monthRangeTermsJa`）が受けるので、ここでは寄せない。 */
     const 期日までの言い方 =
-      /((?:0?[1-9]|1[0-2])月末?|(?<!週)(?:[月火水木金土日]曜(?:日)?|平日)|(?<!週)(?<![今来先再])週末)[ \u3000]*まで/g;
+      /((?<!週)(?:[月火水木金土日]曜(?:日)?|平日)|(?<!週)(?<![今来先再])週末)[ \u3000]*まで/g;
     /* 「今月いっぱい」「来週いっぱい」も同じ頼み方（実測 `今月いっぱい` **0 行** / `今月` 189 行・
      * `来週いっぱい` **0 行** / `来週` は通る）。`まで` と違い期間の語の規則が同じ行集合に寄せる
      * 語なので含めてよい（実測で対称差 0 である事を検査する）。`週末いっぱい` `金曜いっぱい` も
@@ -13371,6 +13458,17 @@ const Recommender = (() => {
       ) {
         mergedUnits.push({ token: `第${next ? next.token : ""}ラウンド`, whole: [] });
         i += 2;
+      } else if (
+        next &&
+        /年$/.test(unit.token) &&
+        MONTH_RANGE_UNTIL.test(next.token) &&
+        monthUntilBoundsJa(`${unit.token}${next.token}`, now) !== null
+      ) {
+        /* 「来年 3月まで」「2027年 3月まで」は年まで含めて一つの幅（年の 12 か月と掛け合わせると
+         * 今月〜年末の分が落ちる）。 */
+        const 繋いだ語 = `${unit.token}${next.token}`;
+        mergedUnits.push({ token: 繋いだ語, whole: monthRangeTermsJa(繋いだ語, now) });
+        i += 1;
       } else if (next && monthPartRangeJa(`${unit.token}${next.token}`, now) !== null) {
         const 繋いだ語 = `${unit.token}${next ? next.token : ""}`;
         mergedUnits.push({ token: 繋いだ語, whole: monthPartTermsJa(繋いだ語, now) || [] });
