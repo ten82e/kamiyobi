@@ -7349,11 +7349,24 @@ const Recommender = (() => {
           String(query ?? ""),
         );
       const 有月 = Number.isFinite(次の月數) && 次の月數 >= 1 && 次の月數 <= 12 && 月で終わる;
+      /* 年の語の**直後**に月が在れば、後ろに語が続いてもその月だけ（2026-10-17 実測:
+       * 「来月 セキュリティ」は「2026年11月 セキュリティ」に展開され、問いが月で終わらない
+       * ので「2026年 = 2026年の締切（1〜12 か月）」と、見ていない年全体を名乗っていた）。 */
+      const 直後の月 = (() => {
+        const 見る = token.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        // 幅の語尾（`から`・`まで`・`以降` など）が続く形は、その處の行が幅を名乗る（第 493 回）。
+        const 当 = new RegExp(
+          `${見る}[\\s\\u3000]*([0-9]{1,2})月(?![\\s\\u3000]*(?:から|まで|迄|以降|以後|以前|より|頃|ごろ|前|後|〜|~|～|-|－))`,
+        ).exec(String(query ?? ""));
+        const 月 = 当 ? Number(当[1]) : Number.NaN;
+        return 月 >= 1 && 月 <= 12 ? 月 : Number.NaN;
+      })();
+      const 月の解 = Number.isFinite(直後の月) ? 直後の月 : 有月 ? 次の月數 : Number.NaN;
       const 數字の年 = /^([0-9]{4})年$/.exec(key);
       if (數字の年) {
-        if (有月) {
+        if (Number.isFinite(月の解)) {
           notes.push(
-            `${token}${次の月數}月 = ${數字の年[1]}年${次の月數}月の締切（その月だけ – 年全体ではありません）`,
+            `${token}${月の解}月 = ${數字の年[1]}年${月の解}月の締切（その月だけ – 年全体ではありません）`,
           );
           return;
         }
@@ -7365,9 +7378,9 @@ const Recommender = (() => {
         const base = new Date((Number.isFinite(nowMs) ? nowMs : Date.now()) + 9 * 3_600_000);
         const 西暦 = base.getUTCFullYear() + yearOffset;
         /* `再来年3月` も**その月だけ** – 上と同じ。 */
-        if (有月) {
+        if (Number.isFinite(月の解)) {
           notes.push(
-            `${token}${次の月數}月 = ${西暦}年${次の月數}月の締切（その月だけ – 年全体ではありません）`,
+            `${token}${月の解}月 = ${西暦}年${月の解}月の締切（その月だけ – 年全体ではありません）`,
           );
           return;
         }
@@ -9606,7 +9619,10 @@ const Recommender = (() => {
   }
 
   function queryTokens(query: unknown, nowMs?: number): string[] {
-    const normalized = searchNormalize(query);
+    // 等級の括りは語の割りより先（`CCF Aの会議` の「の」を助詞として外せる様に）。
+    const normalized = searchNormalize(
+      typeof query === "string" ? collapseRankPhrase(query) : query,
+    );
     if (!normalized) return [];
 
     const 相対語の寄せJa: Array<[string, string, string]> = [
@@ -13039,6 +13055,7 @@ const Recommender = (() => {
   );
 
   function queryTokenGroups(query: unknown, nowMs?: number): string[][] {
+    if (typeof query === "string") query = collapseRankPhrase(query);
     if (typeof query === "string")
       query = query.replace(/([0-9０-９]{4})年の開催回/g, (_, year: string) =>
         editionYearSearchTerm(year),
@@ -13522,6 +13539,35 @@ const Recommender = (() => {
     return kept.length ? kept : groups;
   }
 
+  /* 「CCF A」「CCF:A」「CORE A*」は尺度と等級で 1 つの条件。2 語に割ると「ccf」と「a」が
+   * 行の別々の所（`ccf b` の ccf と `core a` の a）に当たり、2026-10-17 の実測では
+   * 「CCF A セキュリティ」の 55 行のうち 38 行が CCF A ではなかった。1 語に括って、
+   * 照合は行の `ccf a` の並びだけに当てる（`rankPhraseTermHit`）。 */
+  function collapseRankPhrase(query: string): string {
+    return query.replace(
+      /(^|[^A-Za-z0-9])(CCF|CORE|THCPL)\s*[:：\-－]?\s*(A\*|A＊|A|B|C)(?![A-Za-z0-9*＊])/gi,
+      (_m, head: string, scale: string, grade: string) =>
+        `${head}${scale}-${grade.replace("＊", "*")} `,
+    );
+  }
+
+  /** 括った等級の語（`ccf-a`・`ccf a`）なら行の `ccf a` の並びに当てる。等級の語でなければ null。 */
+  function rankPhraseTermHit(target: string, term: string): boolean | null {
+    const rank = /^(ccf|core|thcpl)[ -](a\*|a|b|c)$/.exec(term);
+    if (!rank) return null;
+    const phrase = `${rank[1]} ${rank[2]}`;
+    let from = 0;
+    for (;;) {
+      const at = target.indexOf(phrase, from);
+      if (at < 0) return false;
+      const before = at > 0 ? target.charAt(at - 1) : "";
+      const after = target.charAt(at + phrase.length);
+      // `core a` を `core a*` に当てない。
+      if (!/[a-z0-9]/.test(before) && !/[a-z0-9*]/.test(after)) return true;
+      from = at + 1;
+    }
+  }
+
   function searchGroups(query: unknown, nowMs?: number): string[][] {
     return withoutFunctionGroups(withoutWholeTableGroups(queryTokenGroups(query, nowMs))).map(
       (group) => group.map((term) => kanaFold(term)),
@@ -13623,6 +13669,14 @@ const Recommender = (() => {
       let hit = false;
       for (let k = 0; k < groups[i].length; k++) {
         const term = groups[i][k];
+        const rank = rankPhraseTermHit(target, term);
+        if (rank !== null) {
+          if (rank) {
+            hit = true;
+            break;
+          }
+          continue;
+        }
 
         if (LATIN_TERM_TOKEN.test(term) && /\s/.test(term)) {
           const 語列 = term.split(/\s+/).filter(Boolean);

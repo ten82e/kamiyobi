@@ -373,6 +373,8 @@ export const SEARCH_CANON = (() => {
       // 漢数字を算用数字に直す正本。
       "漢の数字に直すJa",
       "collapseRelativeDayPhrase",
+      // 尺度と等級（`CCF A`）を 1 語に括る部品。`queryTokens` と `queryTokenGroups` が呼ぶ。
+      "collapseRankPhrase",
       "numericRelativeDay",
       // 「N 日以内」の範囲展開: `relativeDayGroups` が呼ぶので注入も一緒にする。
       "withinDaysTermsJa",
@@ -397,6 +399,8 @@ export const SEARCH_CANON = (() => {
       // 英字語の当たり門は `matchFoldedGroups` が呼ぶので、注入も一緒にする
       // （ここへ足さんとしは `latinFoldedHit is not defined` で eval が落ちる – 第 257 回と同じ穴）。
       "latinFoldedHit",
+      // 括った等級の語を行の並びに当てる門（`matchFoldedGroups` が呼ぶ）。
+      "rankPhraseTermHit",
       "matchFoldedGroups",
       // `searchMatcher` は述語の組み立てを `searchGroups` に移したので、注入も一緒にする
       // （共有部品を 1 本足すたびに、ハーネスはそれを知らないまま古い形を組む – 第 257 回と同じ穴）。
