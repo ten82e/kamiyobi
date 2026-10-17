@@ -3359,7 +3359,15 @@ async function callTool(
   if (name === "recommend_venues") return recommendVenues(args, now, receive);
   if (name === "search_venues") {
     const query = paperInput(args.query, "query");
-    if (!query) throw new Error("query に研究テーマ・題名・概要を指定してください。");
+    if (!query) {
+      /* 論文情報の引数名は recommend_venues では `paper`、ここでは `query`。取り違えを名指しで返す。 */
+      const 取り違え = args.paper !== undefined && args.paper !== null && args.paper !== "";
+      throw new Error(
+        取り違え
+          ? "query に研究テーマ・題名・概要を指定してください（この道具に paper は効きません。paper は recommend_venues の引数名です）。"
+          : "query に研究テーマ・題名・概要を指定してください。",
+      );
+    }
     return recommendVenues({ ...args, paper: query }, now, receive, true);
   }
   if (name === "collection_stats") return collectionStats(args, now);
