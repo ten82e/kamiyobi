@@ -3913,12 +3913,32 @@ export function toUpcomingHtml(markdown: string, styleBlock = "", baseUrl = ""):
   let heading = "";
   /* 表を組み立てる最中にしか分からない列の名前を、head の説明にも使う。 */
   let pageColumns: string[] = [];
+  /* 表の前の但し書きは 20 行を超え、初めて開いた人は表に辿り着く前に文の壁に当たっていた
+   * （2026-10-17 実測: 800×600 の画面では表の見出しが下端にやっと出る）。生成時刻と対象期間
+   * だけを見せ、列の意味と但し書きは畳む。文はページに残すので、AI と読み上げには届く。 */
   const flushQuote = (): void => {
     if (!quote.length) return;
-    out.push(
-      `<blockquote>\n${quote.map((l) => `<p>${inlineMd(l)}</p>`).join("\n")}\n</blockquote>`,
-    );
+    const 見せる = (l: string): boolean => /^(?:生成時刻|対象期間)[:：]/.test(l.trim());
+    const 表に出す = quote.filter(見せる);
+    const 畳む = quote.filter((l) => !見せる(l));
+    const 段落 = (lines: string[]): string => lines.map((l) => `<p>${inlineMd(l)}</p>`).join("\n");
+    if (表に出す.length) out.push(`<blockquote>\n${段落(表に出す)}\n</blockquote>`);
+    // 引用の塊が幾つあっても畳みは一つ（最初の塊の場所に、全部の文をまとめて置く）。
+    if (畳む.length) {
+      if (畳みの場所 < 0) {
+        畳みの場所 = out.length;
+        out.push("");
+      }
+      畳みの文.push(...畳む);
+    }
     quote = [];
+  };
+  let 畳みの場所 = -1;
+  const 畳みの文: string[] = [];
+  const 畳みを置く = (): void => {
+    if (畳みの場所 < 0) return;
+    out[畳みの場所] =
+      `<details class="upcoming-notes">\n<summary>列の意味と但し書き（「残り」「推定」「要確認」「AoE」などの読み方）</summary>\n<blockquote>\n${畳みの文.map((l) => `<p>${inlineMd(l)}</p>`).join("\n")}\n</blockquote>\n</details>`;
   };
   const flushTable = (): void => {
     if (!table.length) return;
@@ -4010,6 +4030,7 @@ export function toUpcomingHtml(markdown: string, styleBlock = "", baseUrl = ""):
   }
   flushTable();
   flushQuote();
+  畳みを置く();
 
   return [
     "<!doctype html>",
