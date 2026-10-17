@@ -58,6 +58,9 @@ for (const query of ["parallel computing", "並列計算"])
         : "Xenova/all-MiniLM-L6-v2",
     );
     expect(result.structuredContent.error.missing_files).toContain("onnx/model.onnx");
+    expect(result.structuredContent.error.recovery_command).toBe(
+      `node src/prepare-models.ts --language ${query === "並列計算" ? "ja" : "en"}`,
+    );
     expect(result.structuredContent.rows).toBeUndefined();
     expect(result.content[0].text).toContain("実モデルが未準備");
   });

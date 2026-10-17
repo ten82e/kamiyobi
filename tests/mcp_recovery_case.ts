@@ -151,11 +151,17 @@ export async function runModelRecovery(corpus: RecoveryCorpus, interruptDownload
       ).toBe(true);
       for (const error of errors) {
         expect(error.structuredContent?.error?.retryable).toBe(true);
-        expect(error.structuredContent?.error?.recovery_command).toBe("node src/prepare-models.ts");
+        expect(error.structuredContent?.error?.recovery_command).toBe(
+          `node src/prepare-models.ts --language ${error.structuredContent.error.model.id === runtime.EMBEDDING_MODEL ? "en" : "ja"}`,
+        );
       }
-      const preparationArgs = errors[0].structuredContent.error.recovery_command
-        .split(" ")
-        .slice(1);
+      const preparationCommands = [
+        ...new Set<string>(errors.map((error) => error.structuredContent.error.recovery_command)),
+      ];
+      expect(preparationCommands).toEqual([
+        "node src/prepare-models.ts --language en",
+        "node src/prepare-models.ts --language ja",
+      ]);
       expect((await request("ping")).result).toEqual({});
       const cache = join(root, ".cache/embedding-models");
       const cachedFiles = existsSync(cache)
@@ -168,7 +174,7 @@ export async function runModelRecovery(corpus: RecoveryCorpus, interruptDownload
         const preload = join(root, "interrupt.mjs");
         const log = join(root, "interrupted.json");
         cpSync(join(import.meta.dirname, "interrupted_model_download.mjs"), preload);
-        const failed = spawnSync(process.execPath, preparationArgs, {
+        const failed = spawnSync(process.execPath, preparationCommands[0].split(" ").slice(1), {
           cwd: root,
           encoding: "utf8",
           timeout: 180000,
@@ -201,28 +207,57 @@ export async function runModelRecovery(corpus: RecoveryCorpus, interruptDownload
             expect(error.structuredContent?.error?.code).toBe("MODEL_NOT_READY");
             expect(error.structuredContent?.error?.retryable).toBe(true);
             expect(error.structuredContent?.error?.recovery_command).toBe(
-              "node src/prepare-models.ts",
+              `node src/prepare-models.ts --language ${language}`,
             );
             errors.push(error);
           }
         expect((await request("ping")).result).toEqual({});
       }
       // The command acquires pinned weights itself while the initialized MCP connection stays open.
-      const preparation = spawnSync(process.execPath, preparationArgs, {
-        cwd: root,
-        encoding: "utf8",
-        timeout: 900000,
-      });
-      expect(
-        preparation.status,
-        `preparation retry must recover from the incomplete cache: ${preparation.stderr}`,
-      ).toBe(0);
-      prepared = JSON.parse(preparation.stdout);
-      expect(prepared.ready).toBe(true);
+      prepared = { ready: true, models: [] };
+      const offlineGuard = join(root, "offline-model-guard.mjs");
+      writeFileSync(
+        offlineGuard,
+        'import {env} from "@huggingface/transformers";env.allowRemoteModels=false;env.fetch=globalThis.fetch=async()=>{throw new Error("unexpected external request")};',
+      );
+      for (const [i, command] of preparationCommands.entries()) {
+        const preparation = spawnSync(process.execPath, command.split(" ").slice(1), {
+          cwd: root,
+          encoding: "utf8",
+          timeout: 900000,
+        });
+        expect(
+          preparation.status,
+          `preparation retry must recover from the incomplete cache: ${preparation.stderr}`,
+        ).toBe(0);
+        const selected = JSON.parse(preparation.stdout);
+        expect(selected.ready).toBe(true);
+        expect(selected.models).toEqual([
+          i === 0
+            ? { id: runtime.EMBEDDING_MODEL, revision: runtime.EMBEDDING_REVISION }
+            : { id: runtime.EMBEDDING_MULTI_MODEL, revision: runtime.EMBEDDING_MULTI_REVISION },
+        ]);
+        prepared.models.push(...selected.models);
+        if (i === 0) expect(existsSync(join(cache, runtime.EMBEDDING_MULTI_MODEL))).toBe(false);
+        const offline = spawnSync(
+          process.execPath,
+          ["--import", offlineGuard, ...command.split(" ").slice(1), "--offline"],
+          { cwd: root, encoding: "utf8", timeout: 120000 },
+        );
+        expect(offline.status, offline.stderr).toBe(0);
+        expect(JSON.parse(offline.stdout)).toEqual(selected);
+      }
       expect(prepared.models).toEqual([
         { id: runtime.EMBEDDING_MODEL, revision: runtime.EMBEDDING_REVISION },
         { id: runtime.EMBEDDING_MULTI_MODEL, revision: runtime.EMBEDDING_MULTI_REVISION },
       ]);
+      const both = spawnSync(
+        process.execPath,
+        ["--import", offlineGuard, "src/prepare-models.ts", "--offline"],
+        { cwd: root, encoding: "utf8", timeout: 120000 },
+      );
+      expect(both.status, both.stderr).toBe(0);
+      expect(JSON.parse(both.stdout)).toEqual(prepared);
       for (const model of prepared.models)
         for (const file of [
           "config.json",

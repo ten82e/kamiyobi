@@ -17,6 +17,7 @@ export class SemanticModelError extends Error {
     revision: string,
     phase: "load" | "query",
     cause: unknown,
+    language: "en" | "ja" | "both" = "both",
   ) {
     const directory = join(".cache/embedding-models", model, revision);
     const missing = [
@@ -42,9 +43,10 @@ export class SemanticModelError extends Error {
       : phase === "load"
         ? "実モデルの読み込みに失敗しました。モデルファイルの破損や実行環境を確認してください。"
         : "実モデルによる推論に失敗しました。入力と実行環境を確認してください。";
+    const preparation = `node src/prepare-models.ts${language === "both" ? "" : ` --language ${language}`}`;
     super(
       `${reason}\n対象モデル: ${model}@${revision}\n保存先: ${directory}` +
-        (missing.length ? "\n準備: node src/prepare-models.ts" : ""),
+        (missing.length ? `\n準備: ${preparation}` : ""),
       { cause },
     );
     this.name = "SemanticModelError";
@@ -54,7 +56,7 @@ export class SemanticModelError extends Error {
       cache_directory: directory,
       missing_files: missing,
       retryable: true,
-      recovery_command: missing.length ? "node src/prepare-models.ts" : null,
+      recovery_command: missing.length ? preparation : null,
     };
   }
 }

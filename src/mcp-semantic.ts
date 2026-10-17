@@ -37,7 +37,7 @@ export async function semanticVenueScores(
     topics: await embedTopics(model, t.texts, t.keys, revision, true),
   }));
   const { embeddings, topics } = await pending.catch((cause: unknown) => {
-    throw new SemanticModelError(root, model, revision, "load", cause);
+    throw new SemanticModelError(root, model, revision, "load", cause, multi ? "ja" : "en");
   });
   const plan = R.semanticQueryPlan(lines);
   const vectors = await embedEach(
@@ -46,7 +46,7 @@ export async function semanticVenueScores(
     revision,
     true,
   ).catch((cause: unknown) => {
-    throw new SemanticModelError(root, model, revision, "query", cause);
+    throw new SemanticModelError(root, model, revision, "query", cause, multi ? "ja" : "en");
   });
   const vector = R.semanticQueryVector(lines, vectors);
   R.setTopicVecs(topics);

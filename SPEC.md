@@ -1112,9 +1112,9 @@ MCP は同じ検索・推薦処理を使う読み取り専用の stdio サーバ
 
 `list_upcoming` は締切と会期を時系列でまとめ、`limit`（既定・上限100）と `offset` によるページ取得に対応する。構造化結果の `items[].type` は `deadline` または `event`、`next_offset` は続きがなければ null とする。`kind` と `kinds` の両方を指定した場合は締切検索と同じく `kinds` を優先し、使わなかった `kind` を案内する。種別の空文字や文字列でない値は未知の種別として案内し、有効な種別だけを使う。不正な値だけの指定を「指定なし」に読み替えない。`scope` と `kind/kinds` は締切に適用し、会期は収録全体の同じ期間から返す（`event_scope: all`）。会期は終了日の日本時間24時まで残し、日付の確かさと分割会期を保持し、区間のラベルは文章と構造化結果の両方に示し、原表記と見直し記録もページごとの各行に保持する。`venue_info` と締切検索0件時の会期案内は共通の判定を使う。分割区間を含め、推定と不正な日付を除き、会期未発表と会期未確認を区別する。締切未収録の開催回も会期を文章で返し、構造化結果の `editions` に推定を除く全開催回の年・会期・確かさ・分割区間・開催地・各回に明示された公式URLを保持する。`rows` は選んだ範囲の締切を文章と同じ順序で返し、実際の `scope`・`catalog_fallback`・`generated_at` を添える。会期側の `event_scope`・`event_generated_at` は収録全体の出所を示し、生成時刻が未収録なら null とする。締切内の可能性がある時刻未確認の行を含め、今後の締切を先に並べ、同じ側では表示日時順とする。今後・過去の件数と次の投稿締切・直近の過去の投稿締切も構造化結果に保持する。`next_submission` と `latest_past_submission` は推定を除き、推定の見込みは `next_estimated_submission` と別の見出しで返す。推定行や期間・信頼度は落とさない。会議名・正式名・略称・会議全体の公式URLも締切の有無によらず保持し、未収録の値は null とする。開催回と締切行の構造化結果には `date_text`・`event_date_precision`・`event_segments`・`event_review` を保持し、文章には見直しの注記と原表記も添える。名前が複数の会議に当たる場合は締切の有無や表示範囲で候補を落とさず、収録全体から候補の key を返す。明示された key を名前より優先する。CLIの直近一覧でも `--json`・`--limit`・`--offset` を使える。
 
-実モデルのエラーには `retryable: true` を添え、原因を解消した後に同じ接続で再試行できることを示す。`recovery_command` は `MODEL_NOT_READY` なら `"node src/prepare-models.ts"`、読み込み・推論の失敗なら null とする。
+実モデルのエラーには `retryable: true` を添え、原因を解消した後に同じ接続で再試行できることを示す。`recovery_command` は `MODEL_NOT_READY` なら対象モデルに応じて `"node src/prepare-models.ts --language en"` または `"node src/prepare-models.ts --language ja"`、読み込み・推論の失敗なら null とする。
 
-`node src/prepare-models.ts` は固定revisionの英日モデルだけを取得し、MCPと同じローカル推論経路で384次元の正規化ベクトルを確認する。会議データを読まず、生成済みベクトルを要求・出力しない。`--offline` は取得せず、保存済みモデルだけを検証する。
+`node src/prepare-models.ts` は固定revisionの英日モデルだけを取得し、MCPと同じローカル推論経路で384次元の正規化ベクトルを確認する。`--language en` は英語、`--language ja` は日本語だけを準備・確認する。未指定と `--language both` は両方を対象とする。会議データを読まず、生成済みベクトルを要求・出力しない。`--offline` は取得せず、選択した言語の保存済みモデルだけを検証する。
 
 手元のCLIでは、投稿先検索・推薦に `--retrieval semantic` を指定して実モデルを使える。投稿先検索・推薦の `--input ファイル名` はUTF-8のテキスト・JSONを読み、`--input -` は標準入力を読む。直接入力との混在は拒否する。`--limit N` を使った場合は題名末尾の数字を件数として切り取らない。検索・推薦の `--json` は構造化結果だけを標準出力へ返し、失敗は終了コードと標準エラー出力で通知する。
 

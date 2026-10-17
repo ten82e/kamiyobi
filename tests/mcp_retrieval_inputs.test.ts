@@ -108,7 +108,7 @@ for (const tool of ["search_venues", "recommend_venues"]) {
         code: "MODEL_NOT_READY",
         model: { id: paper.model },
         retryable: true,
-        recovery_command: "node src/prepare-models.ts",
+        recovery_command: `node src/prepare-models.ts --language ${paper.model === EMBEDDING_MODEL ? "en" : "ja"}`,
       });
       expect(semantic.structuredContent?.rows).toBeUndefined();
       expect(lexical.isError).not.toBe(true);
