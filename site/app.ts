@@ -6339,7 +6339,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     delay: number,
     applyInput: () => void,
     onType?: () => void,
-  ): void {
+  ): () => void {
     let composing = false;
     let timer: ReturnType<typeof setTimeout> | undefined;
     const schedule = () => {
@@ -6358,12 +6358,13 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       schedule();
     });
     element.addEventListener("input", schedule);
+    return () => clearTimeout(timer);
   }
 
   // ---- wiring ----
   // 検索は 1 打鍵で全行を絞り込む（3234 行で約 9.6 ms）。確定・入力のたびに
   // 走らせるともたつくので、入力はまとめて 1 回だけ適用する。
-  wireDebouncedInput(valueElement("q"), 180, apply);
+  const cancelQueryUpdate = wireDebouncedInput(valueElement("q"), 180, apply);
   $("q").addEventListener("focus", () => {
     queryEditInProgress = false;
   });
@@ -6371,6 +6372,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     if (e.ctrlKey || e.metaKey || e.altKey) return;
     if (e.key === "Enter" && !e.isComposing && e.keyCode !== 229) {
       e.preventDefault();
+      cancelQueryUpdate();
       apply();
       $("results").focus();
     }

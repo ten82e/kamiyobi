@@ -7,6 +7,8 @@ const start = app.indexOf('$("q").addEventListener("keydown", (e) => {');
 const end = /\n\s*}\);/.exec(app.slice(start));
 if (start < 0 || !end) throw new Error("search keyboard wiring missing");
 const searchWiring = app.slice(start, start + end.index + end[0].length);
+const queryWiring = app.match(/const cancelQueryUpdate = wireDebouncedInput\([^;]+;/)?.[0];
+if (!queryWiring) throw new Error("search debounce wiring missing");
 const functions = ["keyBlockedByTarget", "onKeydown", "wireDebouncedInput"]
   .map((name) => jsFunction(app, name))
   .join("\n");
@@ -49,6 +51,7 @@ function harness() {
   nodes.editable.isContentEditable = true;
   const context = {
     $: (id: string) => nodes[id as keyof typeof nodes],
+    valueElement: (id: string) => nodes[id as keyof typeof nodes],
     setTimeout,
     clearTimeout,
     apply: () => calls.push("apply"),
@@ -70,7 +73,7 @@ function harness() {
     closeDrawer: () => calls.push("close"),
     onKeydown: (_event: any) => {},
   };
-  runInNewContext(`${functions}\n${searchWiring}\nwireDebouncedInput($("q"),180,apply);`, context);
+  runInNewContext(`${functions}\n${queryWiring}\n${searchWiring}`, context);
   return {
     context,
     nodes,
@@ -191,3 +194,50 @@ it("applies a committed Japanese query once without stealing its confirmation En
   expect(ui.calls).toEqual(["apply"]);
   expect(ui.nodes.q.value).toBe("機械学習");
 });
+
+it.each(["input", "compositionend"])(
+  "does not reapply a queued %s after explicit Enter and row navigation",
+  (event) => {
+    vi.useFakeTimers();
+    const ui = harness();
+    ui.nodes.q.fire(event);
+    ui.fire("q", "Enter", { keyCode: 13 });
+    expect(ui.calls).toEqual(["prevent", "apply", "focus:results"]);
+    ui.fire("body", "j");
+    const selected = ui.context.selectedIndex;
+    const calls = [...ui.calls];
+    vi.advanceTimersByTime(500);
+    expect(ui.calls).toEqual(calls);
+    expect(ui.context.selectedIndex).toBe(selected);
+    expect(ui.active()).toBe(ui.nodes.results);
+  },
+);
+
+it("continues to debounce later input after explicit Enter", () => {
+  vi.useFakeTimers();
+  const ui = harness();
+  ui.nodes.q.fire("input");
+  ui.fire("q", "Enter", { keyCode: 13 });
+  vi.advanceTimersByTime(90);
+  ui.nodes.q.value = "ネットワーク";
+  ui.nodes.q.fire("input");
+  vi.advanceTimersByTime(179);
+  expect(ui.calls.filter((call) => call === "apply")).toHaveLength(1);
+  vi.advanceTimersByTime(1);
+  expect(ui.calls.filter((call) => call === "apply")).toHaveLength(2);
+  expect(ui.nodes.q.value).toBe("ネットワーク");
+});
+
+it.each(["ctrlKey", "metaKey", "altKey"] as const)(
+  "keeps a pending query update for modified Enter (%s)",
+  (modifier) => {
+    vi.useFakeTimers();
+    const ui = harness();
+    ui.nodes.q.fire("input");
+    ui.fire("q", "Enter", { [modifier]: true });
+    expect(ui.calls).toEqual([]);
+    vi.advanceTimersByTime(180);
+    expect(ui.calls).toEqual(["apply"]);
+    expect(ui.active()).toBe(ui.nodes.q);
+  },
+);
