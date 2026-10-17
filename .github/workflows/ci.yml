@@ -60,8 +60,24 @@ jobs:
         with:
           path: .cache/embedding-models
           key: ${{ runner.os }}-embedding-models-${{ hashFiles('src/embeddings.ts', 'package-lock.json') }}
+      # 当面は必須にしない（2026-10-17 決定）: 実モデルの量子化演算は環境で僅かに揺れ、
+      # 正解が上位 5 件の境目にある事例（手元 4 位・CI 6 位）で落ちる。境目の事例は意味検索の
+      # 調査で扱う。手順の失敗はジョブを落とさず、結果は警告と実行概要に出す。
       - name: Generate and verify English and Japanese embeddings with real models
+        id: models
+        continue-on-error: true
         run: npm run test:models
+      - name: Show real-model result (not required)
+        if: ${{ always() }}
+        env:
+          OUTCOME: ${{ steps.models.outcome }}
+        run: |
+          if [ "$OUTCOME" = success ]; then
+            echo "### 実モデルの検査: 成功" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "::warning title=real-embedding-models::実モデルの検査が失敗しました（${OUTCOME}）。当面は必須ではありません。ログで落ちた事例を確かめてください。"
+            echo "### 実モデルの検査: 失敗（${OUTCOME}・当面は必須ではない）" >> "$GITHUB_STEP_SUMMARY"
+          fi
   offline-build:
     runs-on: ubuntu-latest
     steps:

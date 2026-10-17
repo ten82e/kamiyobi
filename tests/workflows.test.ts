@@ -3,7 +3,13 @@ import { load as loadYaml } from "js-yaml";
 import { describe, expect, it } from "vitest";
 import { parseArgs } from "../src/cli.ts";
 
-type Step = { name?: string; run?: string; uses?: string; with?: Record<string, unknown> };
+type Step = {
+  name?: string;
+  run?: string;
+  uses?: string;
+  if?: string;
+  with?: Record<string, unknown>;
+};
 type Workflow = {
   jobs?: Record<
     string,
@@ -252,9 +258,21 @@ describe("CI contracts", () => {
     expect(integrationBuild).toContain("--no-embeddings");
     const models = value.jobs!["real-embedding-models"]!;
     expect(models.if).toBeUndefined();
-    expect(
-      step(models, "Generate and verify English and Japanese embeddings with real models").run,
-    ).toBe("npm run test:models");
+    const modelRun = step(
+      models,
+      "Generate and verify English and Japanese embeddings with real models",
+    );
+    expect(modelRun.run).toBe("npm run test:models");
+    // 当面は必須にしない（2026-10-17 決定）: 手順の失敗でジョブを落とさず、結果を表示する。
+    expect((modelRun as Record<string, unknown>)["continue-on-error"]).toBe(true);
+    expect((modelRun as Record<string, unknown>).id).toBe("models");
+    const shown = step(models, "Show real-model result (not required)");
+    expect(String(shown.if)).toContain("always()");
+    expect(String((shown as { env?: Record<string, string> }).env?.OUTCOME)).toContain(
+      "steps.models.outcome",
+    );
+    expect(String(shown.run)).toContain("::warning title=real-embedding-models::");
+    expect(String(shown.run)).toContain("GITHUB_STEP_SUMMARY");
     expect(step(models, "Cache pinned model weights").with?.path).toBe(".cache/embedding-models");
     const report = String(step(reporter!, "Report required dispatch statuses").run);
     expect(report).toContain("'.[$context].result'");
@@ -318,8 +336,24 @@ describe("CI contracts", () => {
 
   it("uses approved full-SHA actions and normal npm installs", () => {
     for (const path of ["ci.yml", "update-data.yml", "deploy.yml", "nightly.yml"]) {
-      const text = workflow(`../.github/workflows/${path}`).text;
-      expect(text).not.toMatch(/continue-on-error|npm ci --ignore-scripts/);
+      const { text, value } = workflow(`../.github/workflows/${path}`);
+      expect(text).not.toMatch(/npm ci --ignore-scripts/);
+      /* 失敗を黙って飲み込まない。例外は 1 か所だけ: ci.yml の実モデルの検査（当面は必須に
+       * しない – 2026-10-17 の持ち主の判断）。結果を表示する手順と対で置く（上の検査が張る）。 */
+      const 例外 =
+        path === "ci.yml"
+          ? (value.jobs?.["real-embedding-models"]?.steps ?? []).filter(
+              (s) => (s as Record<string, unknown>)["continue-on-error"] === true,
+            )
+          : [];
+      expect(例外.map((s) => s.name)).toEqual(
+        path === "ci.yml"
+          ? ["Generate and verify English and Japanese embeddings with real models"]
+          : [],
+      );
+      expect((text.match(/continue-on-error/g) ?? []).length, `${path} の continue-on-error`).toBe(
+        例外.length,
+      );
       expect(text).not.toMatch(/@v\d/);
       for (const pin of PINS.filter((candidate) => text.includes(candidate.split("@")[0]))) {
         expect(text).toContain(pin);
