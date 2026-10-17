@@ -36,7 +36,7 @@ writeFileSync(
   join(root, "vitest.config.ts"),
   'import {defineConfig} from "vitest/config";export default defineConfig({test:{include:["tests/mcp_interrupted_models.integration.ts"],maxWorkers:1,hookTimeout:1200000,testTimeout:180000}});',
 );
-const files = ["src/semantic-profile-cache.ts", "src/embedding-runtime.ts"];
+const files = ["src/semantic-profile-cache.ts", "src/embedding-runtime.ts", "src/mcp-semantic.ts"];
 const originals = Object.fromEntries(
   files.map((file) => [file, readFileSync(join(repo, file), "utf8")]),
 );
@@ -84,7 +84,11 @@ function run(label: string, broken: boolean) {
               test.failureMessages.some(
                 (message) =>
                   message.includes("AssertionError") &&
-                  message.includes("preparation retry must recover"),
+                  message.includes(
+                    label === "unneeded-language-required"
+                      ? "English model must be available before Japanese preparation"
+                      : "preparation retry must recover",
+                  ),
               ),
           ),
       ),
@@ -105,6 +109,12 @@ try {
       "if (existsSync(target)) continue;",
       'if (existsSync(target)) throw new Error("injected refusal to retry incomplete cache");',
     ],
+    [
+      "unneeded-language-required",
+      files[2],
+      "  const revision = multi ? EMBEDDING_MULTI_REVISION : EMBEDDING_REVISION;",
+      '  const revision = multi ? EMBEDDING_MULTI_REVISION : EMBEDDING_REVISION;\n  if (!multi && !(await import("node:fs")).existsSync(join(root,".cache/embedding-models",EMBEDDING_MULTI_MODEL,EMBEDDING_MULTI_REVISION,"onnx/model.onnx"))) throw new SemanticModelError(root,model,revision,"load",new Error("injected unneeded language dependency"),"en");',
+    ],
   ]) {
     assert.equal(originals[file].split(needle).length, 2, `${label}: ambiguous mutation target`);
     writeFileSync(join(root, file), originals[file].replace(needle, replacement));
@@ -120,4 +130,4 @@ try {
 run("restored", false);
 for (const file of files)
   assert.equal(readFileSync(join(repo, file), "utf8"), originals[file], "workspace changed");
-console.log(`Detected 1/1 fault. Workspace unchanged. Logs: ${root}`);
+console.log(`Detected 2/2 faults. Workspace unchanged. Logs: ${root}`);

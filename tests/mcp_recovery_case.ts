@@ -238,7 +238,48 @@ export async function runModelRecovery(corpus: RecoveryCorpus, interruptDownload
             : { id: runtime.EMBEDDING_MULTI_MODEL, revision: runtime.EMBEDDING_MULTI_REVISION },
         ]);
         prepared.models.push(...selected.models);
-        if (i === 0) expect(existsSync(join(cache, runtime.EMBEDDING_MULTI_MODEL))).toBe(false);
+        if (i === 0) {
+          expect(existsSync(join(cache, runtime.EMBEDDING_MULTI_MODEL))).toBe(false);
+          for (const tool of ["search_venues", "recommend_venues"]) {
+            const english = cases.find(
+              (c) => c.paper.language === "en" && c.tool === tool && c.mode === "title+abstract",
+            )!;
+            const ready = (await call(english)).result;
+            expect(
+              ready.isError,
+              "English model must be available before Japanese preparation",
+            ).not.toBe(true);
+            expect(ready.structuredContent?.candidate_venues).toBe(corpus.candidate_count);
+            expect(ready.structuredContent?.uses_embeddings).toBe(true);
+            expect(ready.structuredContent?.embedding_model).toEqual({
+              id: runtime.EMBEDDING_MODEL,
+              revision: runtime.EMBEDDING_REVISION,
+            });
+            const keys = ready.structuredContent.rows
+              .slice(0, corpus.top_k)
+              .map((row: { venue_key: string }) => row.venue_key);
+            expect(
+              keys.some((key: string) => english.paper.acceptable_venues.includes(key)),
+              JSON.stringify(keys),
+            ).toBe(true);
+            const japanese = cases.find(
+              (c) => c.paper.language === "ja" && c.tool === tool && c.mode === "title+abstract",
+            )!;
+            const missing = (await call(japanese)).result;
+            expect(missing.isError).toBe(true);
+            expect(missing.structuredContent?.error).toMatchObject({
+              code: "MODEL_NOT_READY",
+              model: {
+                id: runtime.EMBEDDING_MULTI_MODEL,
+                revision: runtime.EMBEDDING_MULTI_REVISION,
+              },
+              retryable: true,
+              recovery_command: "node src/prepare-models.ts --language ja",
+            });
+            expect(missing.structuredContent?.rows).toBeUndefined();
+          }
+          expect(existsSync(join(cache, runtime.EMBEDDING_MULTI_MODEL))).toBe(false);
+        }
         const offline = spawnSync(
           process.execPath,
           ["--import", offlineGuard, ...command.split(" ").slice(1), "--offline"],
