@@ -1,0 +1,75 @@
+1: /** Single source of truth for the sealed-bundle content identity.
+2:  * Used by bundle sealing, reuse checks, and restore validation so the formula
+3:  * can never drift between call sites. */
+4: import { createHash } from "node:crypto";
+5: import {
+6:   EMBEDDING_MODEL,
+7:   EMBEDDING_MULTI_MODEL,
+8:   EMBEDDING_MULTI_REVISION,
+9:   EMBEDDING_REVISION,
+10:   EMBEDDING_RUNTIME_VERSION,
+11:   embeddingProfileHash,
+12: } from "./embeddings.ts";
+13: 
+14: export interface SemanticContentInputs {
+15:   profileHash: string;
+16:   rerankerHash: string;
+17:   algorithmRevision: string;
+18:   featureSchema: readonly string[];
+19:   embeddingModel: string;
+20:   embeddingRevision: string;
+21:   multilingualModel: string;
+22:   multilingualRevision: string;
+23:   runtimeVersion: string;
+24: }
+25: 
+26: export function computeSemanticContentId(inputs: SemanticContentInputs): string {
+27:   return createHash("sha256")
+28:     .update(
+29:       [
+30:         inputs.profileHash,
+31:         inputs.rerankerHash,
+32:         inputs.algorithmRevision,
+33:         inputs.featureSchema.join("\0"),
+34:         `${inputs.embeddingModel}@${inputs.embeddingRevision}`,
+35:         `${inputs.multilingualModel}@${inputs.multilingualRevision}`,
+36:         inputs.runtimeVersion,
+37:       ].join("\0"),
+38:     )
+39:     .digest("hex");
+40: }
+41: 
+42: export function semanticContentIdForArtifacts(data: unknown, rerankerRaw: Buffer): string {
+43:   const reranker = JSON.parse(rerankerRaw.toString("utf8")) as Record<string, unknown>;
+44:   const featureSchema = reranker.feature_schema;
+45:   if (
+46:     !Array.isArray(featureSchema) ||
+47:     featureSchema.length === 0 ||
+48:     featureSchema.some((value) => typeof value !== "string" || value.trim() !== value || !value) ||
+49:     new Set(featureSchema).size !== featureSchema.length
+50:   )
+51:     throw new Error("invalid reranker feature_schema");
+52:   const algorithmRevision = reranker.algorithm_revision;
+53:   if (
+54:     typeof algorithmRevision !== "string" ||
+55:     !algorithmRevision ||
+56:     algorithmRevision.trim() !== algorithmRevision
+57:   )
+58:     throw new Error("invalid reranker algorithm_revision");
+59:   const inputs = {
+60:     profileHash: embeddingProfileHash(data as Parameters<typeof embeddingProfileHash>[0]),
+61:     rerankerHash: createHash("sha256").update(rerankerRaw).digest("hex"),
+62:     algorithmRevision,
+63:     featureSchema,
+64:     embeddingModel: EMBEDDING_MODEL,
+65:     embeddingRevision: EMBEDDING_REVISION,
+66:     multilingualModel: EMBEDDING_MULTI_MODEL,
+67:     multilingualRevision: EMBEDDING_MULTI_REVISION,
+68:     runtimeVersion: EMBEDDING_RUNTIME_VERSION,
+69:   };
+70:   for (const [key, value] of Object.entries(inputs)) {
+71:     if (!value || (Array.isArray(value) && value.length === 0))
+72:       throw new Error(`semantic content input missing: ${key}`);
+73:   }
+74:   return computeSemanticContentId(inputs);
+75: }

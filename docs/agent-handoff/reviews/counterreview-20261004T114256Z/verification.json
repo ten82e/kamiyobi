@@ -1,0 +1,276 @@
+{
+  "project": "kamiyobi",
+  "snapshot": "de682df04334d5126d4a1ccbc994ebe2c30c1bf0",
+  "verification_method": "Read-only comparison of reviewer assertions with frozen original source and saved evidence. No added experiment/test/native build/job. This adjudication was not shown to either independent first-pass reviewer.",
+  "scope_note": "Frozen de682df only. The implementation branch advanced during review; see source-drift. Both independent first-pass reviews omitted full main wiring, semantic-content/build/embedding implementations, live CI/deploy logs, live publish.json and branch protection. Coordinator supplementary reads use exact frozen HEAD and are explicitly separate. Existing tests were read, not executed; no new CI run, source fix or publication occurred.",
+  "findings": [
+    {
+      "reviewer": "Claude #1 / Agy #1",
+      "disposition": "supported gate-coverage gap; no observed broken deployment",
+      "finding": "The shown required/full benchmark paths use frozen semantic scores, so they do not directly score the newly generated embeddings. Seal is called without reports and records trusted-pipeline provenance with passed flags. Frozen-HEAD main wiring read after the reviews confirms requiredFeatures is passed for full coverage too. This is a gap in what the gate attests, not proof that a damaged bundle reached production. embeddingsStale validates model/profile/key/dimension contracts; arbitrary model-revision changes may be rejected elsewhere, so the clean counterexample is changed semantic values that still satisfy those contracts.",
+      "evidence": [
+        {
+          "path": ".github/workflows/recommendation-bundle.yml",
+          "lines": [
+            60,
+            82
+          ],
+          "sha256": "928c690078732adf4237f93bfc4a1ec5fb9c2114195f7b7aade29fde49b18237",
+          "quote": "60:       - name: Generate embeddings\n61:         if: steps.bundle.outputs.reused != 'true'\n62:         run: node src/embeddings.ts public/data.json public/embeddings.json\n63:       - name: Run required gate (fast subset)\n64:         if: steps.bundle.outputs.reused != 'true'\n65:         run: node src/bench-recommender.ts --real-v2-dev data/benchmarks/real-paper-required-dev.json --real-v2-heldout data/benchmarks/real-paper-required-heldout.json --real-v2-negative data/benchmarks/real-paper-negative.json --real-v2-features data/benchmarks/real-paper-features.jsonl --real-v2-feature-baseline data/benchmarks/real-paper-feature-baseline.json --real-v2-small --json > /dev/null\n66:       # 推薦内容が変わった push だけ full benchmark を走らせ、合格後でないと seal しない。\n67:       - name: Run full real-paper benchmark before sealing\n68:         if: steps.bundle.outputs.reused != 'true'\n69:         run: |\n70:           node src/bench-recommender.ts \\\n71:             --data public/data.json \\\n72:             --real-v2-dev data/benchmarks/real-paper-dev.json \\\n73:             --real-v2-heldout data/benchmarks/real-paper-heldout.json \\\n74:             --real-v2-negative data/benchmarks/real-paper-negative.json \\\n75:             --real-v2-features data/benchmarks/real-paper-features.jsonl \\\n76:             --real-v2-feature-baseline data/benchmarks/real-paper-feature-baseline.json \\\n77:             --json > /tmp/full-bench.json\n78:           jq '{dev: .splits.dev.modes.fused.recall_at_5, heldout: .splits.heldout.modes.fused.recall_at_5}' /tmp/full-bench.json\n79:       - name: Seal recommendation bundle\n80:         if: steps.bundle.outputs.reused != 'true'\n81:         run: |\n82:           node scripts/seal-recommendation-bundle.ts public/embeddings.json public/data.json public/recommendation-bundle.json \"$GITHUB_SHA\""
+        },
+        {
+          "path": "src/bench-recommender.ts",
+          "lines": [
+            2589,
+            2603
+          ],
+          "sha256": "68fed3d9278b6d7dde5c4b9c604bdda48cd6c5e3d4991c244e2d97c6d7d8f628",
+          "quote": "2589:   const empty = (manifest: BenchmarkEmbeddingManifest): BenchmarkEmbeddingBundle => ({\n2590:     manifest,\n2591:     embeddings: {},\n2592:     multi: { embeddings: {} },\n2593:     paperVecs: {},\n2594:   });\n2595:   if (frozen)\n2596:     return {\n2597:       dev: empty(benchmarkEmbeddingManifestAtCutoff(years.dev)),\n2598:       heldout: empty(benchmarkEmbeddingManifestAtCutoff(years.heldout)),\n2599:     };\n2600:   return {\n2601:     dev: await builder(confs, catNames, years.dev),\n2602:     heldout: await builder(confs, catNames, years.heldout),\n2603:   };"
+        },
+        {
+          "path": "src/bench-recommender.ts",
+          "lines": [
+            2651,
+            2668
+          ],
+          "sha256": "68fed3d9278b6d7dde5c4b9c604bdda48cd6c5e3d4991c244e2d97c6d7d8f628",
+          "quote": "2651:   const useFrozenFeatures = requiredFeatures !== undefined;\n2652:   if (useFrozenFeatures) validateRequiredLanguageCounts(requiredFeatures, [dev, heldout]);\n2653:   const modelFor = (\n2654:     language: RealPaperLanguage,\n2655:   ): { model: string; revision: string; key: string } =>\n2656:     language === \"ja\"\n2657:       ? { model: EMBEDDING_MULTI_MODEL, revision: EMBEDDING_MULTI_REVISION, key: \"multi\" }\n2658:       : { model: EMBEDDING_MODEL, revision: EMBEDDING_REVISION, key: \"en\" };\n2659:   const extractors = new Map<RealPaperLanguage, FeatureExtractionPipeline>();\n2660:   const loadStart = performance.now();\n2661:   const catNames = data.categories ?? {};\n2662:   const benchmarkEmbeddings = await realPaperEmbeddingBundles(\n2663:     confs,\n2664:     catNames,\n2665:     { dev: dev.profile_year_max, heldout: heldout.profile_year_max },\n2666:     useFrozenFeatures,\n2667:   );\n2668:   for (const language of useFrozenFeatures ? [] : usedLanguages) {"
+        },
+        {
+          "path": "scripts/seal-recommendation-bundle.ts",
+          "lines": [
+            88,
+            117
+          ],
+          "sha256": "872559f04d4cd859a1aeffd4a2aa8cd074b3f6408d372002e9459e263a4762c1",
+          "quote": "88: const data = JSON.parse(readFileSync(dataPath, \"utf8\"));\n89: if (embeddingsStale(embedding, data)) throw new Error(\"stale or incompatible embedding bundle\");\n90: const rerankerRaw = readFileSync(new URL(\"../data/recommender-reranker.json\", import.meta.url));\n91: \n92: // seal 時に content id を再計算し、reuse 判定 (scripts/semantic-content.ts) と同じ式であることを強制する。\n93: const actualContentId = semanticContentIdForArtifacts(data, rerankerRaw);\n94: const gateProvenance = requiredGatePath\n95:   ? {\n96:       mode: \"verified-reports\",\n97:       required: readPassedReport(requiredGatePath, \"required gate\", \"required\", actualContentId),\n98:       full: readPassedReport(fullBenchmarkPath, \"full benchmark\", \"full\", actualContentId),\n99:     }\n100:   : { mode: \"trusted-pipeline\", required: null, full: null };\n101: \n102: writeFileSync(\n103:   outPath,\n104:   `${JSON.stringify(\n105:     {\n106:       // 公開 commit と生成元 commit を分離: reuse 時は origin commit のまま残る。\n107:       source_commit: sourceCommit,\n108:       bundle_origin_commit: sourceCommit,\n109:       semantic_content_id: actualContentId,\n110:       profile_hash: embeddingProfileHash(data),\n111:       model_revision: manifest.models.en.revision,\n112:       multilingual_model_revision: manifest.models.multi?.revision ?? null,\n113:       runtime_version: manifest.runtime_version,\n114:       embeddings_sha256: createHash(\"sha256\").update(bytes).digest(\"hex\"),\n115:       required_gate: \"passed\",\n116:       full_benchmark: \"passed\",\n117:       gate_provenance: gateProvenance,"
+        }
+      ],
+      "supplemental_files": [
+        "supplemental/src_bench-recommender.ts.excerpt.txt",
+        "supplemental/src_build.ts.excerpt.txt",
+        "supplemental/code-fact-manifest.json"
+      ]
+    },
+    {
+      "reviewer": "Claude #2 / Agy #2",
+      "disposition": "supported representativeness question; reject production-zero inference",
+      "finding": "The nested immutable-baseline run still enforces exact candidate features; current source data is then measured with the frozen semantic observations and quality floors. That is not wholesale removal of the integrity check. A new or renamed venue may have no frozen semantic score in this gate, so a semantically competitive new venue is a useful negative-control proposal. It does not follow that production always gives that venue zero semantic score or excludes it from top-5. The supplied test adds an unrelated venue and checks feature tampering, not the proposed semantic competition.",
+      "evidence": [
+        {
+          "path": "src/bench-recommender.ts",
+          "lines": [
+            2618,
+            2637
+          ],
+          "sha256": "68fed3d9278b6d7dde5c4b9c604bdda48cd6c5e3d4991c244e2d97c6d7d8f628",
+          "quote": "2618:   // Pin code behavior against immutable inputs, then measure current source data\n2619:   // with the same semantic observations and quality floors. Category/name/venue\n2620:   // updates legitimately change lexical features and pool-normalized base scores.\n2621:   if (featureBaselineData) {\n2622:     if (!requiredFeatures) throw new Error(\"feature baseline requires frozen semantic features\");\n2623:     const baseline = await runRealPaperBenchmark(\n2624:       dev,\n2625:       heldout,\n2626:       featureBaselineData,\n2627:       negative,\n2628:       coverage,\n2629:       requiredFeatures,\n2630:       undefined,\n2631:       undefined,\n2632:       undefined,\n2633:       false,\n2634:     );\n2635:     const failures = realPaperRegressionReasons(baseline.result, coverage);\n2636:     if (failures.length) throw new Error(`feature baseline regression: ${failures.join(\"; \")}`);\n2637:   }"
+        },
+        {
+          "path": "src/bench-recommender.ts",
+          "lines": [
+            2759,
+            2800
+          ],
+          "sha256": "68fed3d9278b6d7dde5c4b9c604bdda48cd6c5e3d4991c244e2d97c6d7d8f628",
+          "quote": "2759:     const inferredSemanticScores = useFrozenFeatures\n2760:       ? {}\n2761:       : Object.fromEntries(\n2762:           confs.map((conference) => [\n2763:             conference.key,\n2764:             Recommender.semanticScore(\n2765:               conference.key,\n2766:               vector!,\n2767:               record.language === \"ja\" ? bundle.multi.embeddings : bundle.embeddings,\n2768:             ),\n2769:           ]),\n2770:         );\n2771:     const fixed = useFrozenFeatures\n2772:       ? fixedFeatureRecord(requiredFeatures, record.paper_id, bundle.manifest, split)\n2773:       : null;\n2774:     const semanticScores = fixed?.semantic_scores ?? inferredSemanticScores;\n2775:     const recommendations = Recommender.venueRecommendations(\n2776:       rows,\n2777:       lines,\n2778:       semanticScores,\n2779:       Date.UTC(record.year, 0, 1),\n2780:       {\n2781:         topN: candidateDepth,\n2782:         venueCats: Recommender.autoDetectCats(lines),\n2783:         fieldedLexical: true,\n2784:       },\n2785:     ) as VenueRecommendation[];\n2786:     const candidateFeatures = recommendations\n2787:       .map((recommendation) => ({\n2788:         venue: recommendation.venueKey,\n2789:         base_score: recommendation.fit.baseScore,\n2790:         features: recommendation.fit.rerankerFeatures,\n2791:       }))\n2792:       .sort((left, right) => left.venue.localeCompare(right.venue));\n2793:     if (\n2794:       fixed &&\n2795:       !featureBaselineData &&\n2796:       !collectedFeatures &&\n2797:       candidateDepth === rows.length &&\n2798:       JSON.stringify(fixed.candidates) !== JSON.stringify(candidateFeatures)\n2799:     )\n2800:       throw new Error(`required production feature mismatch: ${record.paper_id}`);"
+        },
+        {
+          "path": "tests/bench_recommender.test.ts",
+          "lines": [
+            147,
+            187
+          ],
+          "sha256": "40cd3b9cd00ee741cd4b665a8fe180f9917b8bf28ee5ad6f088a4b29853c1530",
+          "quote": "147:     const changed = structuredClone(baseline);\n148:     changed.conferences.push({\n149:       key: \"new-source-venue\",\n150:       title: \"New Source Venue\",\n151:       categories: [\"systems\"],\n152:     });\n153:     // Verify every candidate and frozen input; depth-only timing sweeps repeat\n154:     // scoring at 50/100/200 without contributing to these integrity assertions.\n155:     const run = await runRealPaperBenchmark(\n156:       dev,\n157:       heldout,\n158:       changed,\n159:       negative,\n160:       \"required\",\n161:       features,\n162:       undefined,\n163:       undefined,\n164:       baseline,\n165:       false,\n166:     );\n167:     expect(realPaperRegressionReasons(run.result, \"required\")).toEqual([]);\n168:     expect(Object.keys(run.result.splits.dev.candidate_depths ?? {})).toEqual([\"all\"]);\n169:     expect(Object.keys(run.result.splits.heldout.candidate_depths ?? {})).toEqual([\"all\"]);\n170:     const tampered = structuredClone(features);\n171:     tampered.records.find(\n172:       (record) => record.paper_id === \"dev-2025-cvpr-01\",\n173:     )!.candidates[0].base_score += 1;\n174:     await expect(\n175:       runRealPaperBenchmark(\n176:         dev,\n177:         heldout,\n178:         changed,\n179:         negative,\n180:         \"required\",\n181:         tampered,\n182:         undefined,\n183:         undefined,\n184:         baseline,\n185:         false,\n186:       ),\n187:     ).rejects.toThrow(\"required production feature mismatch\");"
+        }
+      ]
+    },
+    {
+      "reviewer": "Claude #2 baseline identity / #5 reuse",
+      "disposition": "supported provenance gap with bounded implications",
+      "finding": "The baseline file is versioned but is not an input to benchmark_content_id, and the shown bundle reuse condition checks semantic_content_id and passed strings, not current gate/fixture identity. The exact frozen semantic-content implementation confirms that it hashes semantic inputs, not the benchmark gate. A gate-only change can therefore reuse a previously sealed bundle without running that workflow's new gates. Separate CI still runs its required checks; branch protection and actual workflow histories were not inspected. Jointly changing versioned fixtures is not by itself evidence of malicious tampering or inevitable degradation.",
+      "evidence": [
+        {
+          "path": ".github/workflows/recommendation-bundle.yml",
+          "lines": [
+            35,
+            65
+          ],
+          "sha256": "928c690078732adf4237f93bfc4a1ec5fb9c2114195f7b7aade29fde49b18237",
+          "quote": "35:         run: |\n36:           mkdir -p public\n37:           for run in $(gh api \"repos/${{ github.repository }}/actions/workflows/recommendation-bundle.yml/runs?branch=main&status=success&per_page=15\" --jq '.workflow_runs[] | .id'); do\n38:             rm -rf /tmp/kamiyobi-reuse && mkdir -p /tmp/kamiyobi-reuse\n39:             gh run download \"$run\" --dir /tmp/kamiyobi-reuse 2>/dev/null || continue\n40:             manifest=$(find /tmp/kamiyobi-reuse -name recommendation-bundle.json | head -1)\n41:             [ -n \"$manifest\" ] || continue\n42:             if node -e '\n43:               const fs = require(\"node:fs\");\n44:               const m = JSON.parse(fs.readFileSync(process.argv[1], \"utf8\"));\n45:               process.exit(\n46:                 m.semantic_content_id === process.env.CONTENT_ID &&\n47:                 m.required_gate === \"passed\" &&\n48:                 m.full_benchmark === \"passed\"\n49:                   ? 0 : 1);\n50:             ' \"$manifest\"; then\n51:               echo \"reusing sealed bundle from run $run (semantic content unchanged)\"\n52:               cp \"$(dirname \"$manifest\")/embeddings.json\" public/embeddings.json\n53:               cp \"$manifest\" public/recommendation-bundle.json\n54:               echo \"reused=true\" >> \"$GITHUB_OUTPUT\"\n55:               exit 0\n56:             fi\n57:           done\n58:           echo \"reused=false\" >> \"$GITHUB_OUTPUT\"\n59:           echo \"no reusable sealed bundle; embeddings and full benchmark required\"\n60:       - name: Generate embeddings\n61:         if: steps.bundle.outputs.reused != 'true'\n62:         run: node src/embeddings.ts public/data.json public/embeddings.json\n63:       - name: Run required gate (fast subset)\n64:         if: steps.bundle.outputs.reused != 'true'\n65:         run: node src/bench-recommender.ts --real-v2-dev data/benchmarks/real-paper-required-dev.json --real-v2-heldout data/benchmarks/real-paper-required-heldout.json --real-v2-negative data/benchmarks/real-paper-negative.json --real-v2-features data/benchmarks/real-paper-features.jsonl --real-v2-feature-baseline data/benchmarks/real-paper-feature-baseline.json --real-v2-small --json > /dev/null"
+        },
+        {
+          "path": "src/bench-recommender.ts",
+          "lines": [
+            3529,
+            3550
+          ],
+          "sha256": "68fed3d9278b6d7dde5c4b9c604bdda48cd6c5e3d4991c244e2d97c6d7d8f628",
+          "quote": "3529:       const regressions = realPaperRegressionReasons(run.result, run.result.coverage);\n3530:       const semanticContentId = semanticContentIdForArtifacts(\n3531:         data,\n3532:         readFileSync(new URL(\"../data/recommender-reranker.json\", import.meta.url)),\n3533:       );\n3534:       const benchmarkContentId = realPaperBenchmarkContentId(\n3535:         run.result.coverage,\n3536:         dev,\n3537:         heldout,\n3538:         negative,\n3539:         requiredFeatures,\n3540:       );\n3541:       console.log(\n3542:         JSON.stringify(\n3543:           {\n3544:             ...run.result,\n3545:             ...(args.realV2FeatureBaseline\n3546:               ? { feature_baseline: { path: args.realV2FeatureBaseline, verified: true } }\n3547:               : {}),\n3548:             benchmark_content_id: benchmarkContentId,\n3549:             semantic_content_id: semanticContentId,\n3550:             passed: regressions.length === 0,"
+        },
+        {
+          "path": ".github/workflows/ci.yml",
+          "lines": [
+            149,
+            161
+          ],
+          "sha256": "ab4fab68217d9d772751872fdd8a324100a907699ed12f279f22cae8c55acb7c",
+          "quote": "149:       - name: Run fixed semantic-score recommendation gate\n150:         run: node src/bench-recommender.ts --v2 tests/fixtures/bench-v2.json --json > /tmp/recommendation-required.json\n151:       - name: Run deterministic real-paper production gate\n152:         run: |\n153:           node src/bench-recommender.ts \\\n154:             --data /tmp/kamiyobi-current-recommendation/data.json \\\n155:             --real-v2-dev data/benchmarks/real-paper-required-dev.json \\\n156:             --real-v2-heldout data/benchmarks/real-paper-required-heldout.json \\\n157:             --real-v2-negative data/benchmarks/real-paper-negative.json \\\n158:             --real-v2-features data/benchmarks/real-paper-features.jsonl \\\n159:             --real-v2-feature-baseline data/benchmarks/real-paper-feature-baseline.json \\\n160:             --real-v2-small \\\n161:             --json > /tmp/real-paper-required.json"
+        }
+      ],
+      "supplemental_files": [
+        "supplemental/src_semantic-content.ts.excerpt.txt",
+        "supplemental/src_bench-recommender.ts.excerpt.txt",
+        "supplemental/code-fact-manifest.json"
+      ]
+    },
+    {
+      "reviewer": "Claude #3",
+      "disposition": "conditional fallback concern; date mismatch alone not established",
+      "finding": "Restore can return false and the CLI still exit successfully with a lexical-only message; post-deploy attestation does not compare semantic_status. However, the exact frozen embeddingProfileHash uses semantic conference fields, not deadlines, active/est flags or the current time. Different --now arguments alone therefore do not establish a broken semantic deployment. Whether build changes the semantic venue set with time, and the actual deployed status, remain unread.",
+      "evidence": [
+        {
+          "path": ".github/workflows/recommendation-bundle.yml",
+          "lines": [
+            21,
+            22
+          ],
+          "sha256": "928c690078732adf4237f93bfc4a1ec5fb9c2114195f7b7aade29fde49b18237",
+          "quote": "21:       - name: Build site without embeddings\n22:         run: node src/cli.ts build --out public --offline --no-embeddings --cache .cache --now 2026-08-09T00:00:00Z"
+        },
+        {
+          "path": ".github/workflows/deploy.yml",
+          "lines": [
+            70,
+            83
+          ],
+          "sha256": "4243a32800dc9cb6c1cdec07978a2c1e2b4f06529569c9cc1270d88f320b4cd9",
+          "quote": "70:       - name: Capture build time\n71:         run: echo \"BUILD_NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)\" >> \"$GITHUB_ENV\"\n72:       - name: Build merged site\n73:         run: node src/cli.ts build --out public --offline --no-embeddings --cache .cache --now \"$BUILD_NOW\"\n74:       - name: Restore immutable recommendation bundle\n75:         if: ${{ github.event_name == 'workflow_run' }}\n76:         env:\n77:           GH_TOKEN: ${{ github.token }}\n78:         run: |\n79:           mkdir -p /tmp/kamiyobi-recommendation-bundle\n80:           gh run download \"${{ github.event.workflow_run.id }}\" \\\n81:             --name \"recommendation-bundle-${{ github.event.workflow_run.head_sha }}\" \\\n82:             --dir /tmp/kamiyobi-recommendation-bundle\n83:           node scripts/restore-recommendation-bundle.ts /tmp/kamiyobi-recommendation-bundle public"
+        },
+        {
+          "path": "scripts/restore-recommendation-bundle.ts",
+          "lines": [
+            19,
+            39
+          ],
+          "sha256": "7e47a2f314f40efc34a4453f93f9eb38d57cee81f18e54500e3fab76f8d70615",
+          "quote": "19:   const currentContentId = semanticContentIdForArtifacts(\n20:     data,\n21:     readFileSync(new URL(\"../data/recommender-reranker.json\", import.meta.url)),\n22:   );\n23:   if (\n24:     // semantic 公開には required gate と full benchmark の両方の合格が必要。\n25:     attestation.required_gate !== \"passed\" ||\n26:     attestation.full_benchmark !== \"passed\" ||\n27:     attestation.semantic_content_id !== currentContentId ||\n28:     attestation.embeddings_sha256 !== hash\n29:   )\n30:     return false;\n31:   if (embeddingsStale(bundle, data)) return false;\n32:   copyFileSync(embeddingsPath, join(outdir, \"embeddings.json\"));\n33:   writePublishManifest(\n34:     outdir,\n35:     [...Object.keys(publish.artifacts), \"embeddings.json\"],\n36:     new Date(publish.generated_at),\n37:     \"ready\",\n38:   );\n39:   return true;"
+        },
+        {
+          "path": "scripts/restore-recommendation-bundle.ts",
+          "lines": [
+            42,
+            51
+          ],
+          "sha256": "7e47a2f314f40efc34a4453f93f9eb38d57cee81f18e54500e3fab76f8d70615",
+          "quote": "42: if (process.argv[1] && basename(process.argv[1]) === \"restore-recommendation-bundle.ts\") {\n43:   const [bundle, outdir = \"public\"] = process.argv.slice(2);\n44:   if (!bundle)\n45:     throw new Error(\"usage: node scripts/restore-recommendation-bundle.ts <bundle> [out]\");\n46:   console.log(\n47:     restoreRecommendationBundle(resolve(bundle), resolve(outdir))\n48:       ? \"restored compatible recommendation bundle\"\n49:       : \"compatible recommendation bundle unavailable; publishing lexical-only\",\n50:   );\n51: }"
+        },
+        {
+          "path": ".github/workflows/deploy.yml",
+          "lines": [
+            189,
+            195
+          ],
+          "sha256": "4243a32800dc9cb6c1cdec07978a2c1e2b4f06529569c9cc1270d88f320b4cd9",
+          "quote": "189:           cat > /tmp/kamiyobi-check-deployed.mjs <<'NODE'\n190:           import { readFileSync } from \"node:fs\";\n191:           const expected = JSON.parse(readFileSync(\"/tmp/kamiyobi-expected/publish.json\", \"utf8\"));\n192:           const deployed = JSON.parse(readFileSync(\"/tmp/kamiyobi-deployed.json\", \"utf8\"));\n193:           for (const key of [\"source_commit\", \"content_id\", \"build_id\"]) {\n194:             if (!expected[key] || deployed[key] !== expected[key]) throw new Error(`deployed ${key} mismatch`);\n195:           }"
+        }
+      ],
+      "supplemental_files": [
+        "supplemental/src_embeddings.ts.excerpt.txt",
+        "supplemental/code-fact-manifest.json"
+      ]
+    },
+    {
+      "reviewer": "Claude #4",
+      "disposition": "supported conditional liveness counterexample; occurrence unverified",
+      "finding": "Default GitHub concurrency can replace an already pending run even when cancel-in-progress is false. A late stale workflow_run can therefore displace a newer pending push and then be skipped, leaving publication delayed if no subsequent successful bundle/event recovers it. This is a liveness possibility, not a observed outage or proof that main publication is always monotonic. Absence of a past canceled run would not refute the structural counterexample. Retain exact-current-SHA checks while considering queue policy.",
+      "evidence": [
+        {
+          "path": ".github/workflows/deploy.yml",
+          "lines": [
+            15,
+            44
+          ],
+          "sha256": "4243a32800dc9cb6c1cdec07978a2c1e2b4f06529569c9cc1270d88f320b4cd9",
+          "quote": "15: concurrency:\n16:   group: pages-main\n17:   # A late workflow_run must not cancel the newer main push before its stale-SHA\n18:   # gate runs.  Pages deployments are serialized; both SHA gates below make the\n19:   # resulting publication monotonic with main.\n20:   cancel-in-progress: false\n21: \n22: jobs:\n23:   gate:\n24:     if: ${{ github.event_name == 'push' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main') }}\n25:     runs-on: ubuntu-latest\n26:     outputs:\n27:       current: ${{ steps.main.outputs.current }}\n28:     steps:\n29:       - id: main\n30:         name: Check trigger is current main\n31:         env:\n32:           TRIGGER_SHA: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}\n33:         run: |\n34:           current_main=\"$(git ls-remote \"https://github.com/${{ github.repository }}.git\" refs/heads/main | cut -f1)\"\n35:           if [ \"$current_main\" = \"$TRIGGER_SHA\" ]; then\n36:             echo \"current=true\" >> \"$GITHUB_OUTPUT\"\n37:           else\n38:             echo \"current=false\" >> \"$GITHUB_OUTPUT\"\n39:             echo \"stale trigger; no build or deployment will run\"\n40:           fi\n41: \n42:   build:\n43:     needs: gate\n44:     if: ${{ needs.gate.outputs.current == 'true' }}"
+        }
+      ],
+      "external_source": "https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#concurrency"
+    },
+    {
+      "reviewer": "Agy #3",
+      "disposition": "supported failure-to-skip path with corrected shell rationale",
+      "finding": "The early git ls-remote | cut pipeline can mask git failure because default bash has -e but not pipefail. An empty current_main is then reported as a stale trigger and skips publication. The later equality test fails on an empty SHA, so this is a missed-publication/diagnostic issue, not evidence of stale deployment. Agy's proposal to accept an ancestor instead of exact current main weakens the existing policy and is not adopted.",
+      "evidence": [
+        {
+          "path": ".github/workflows/deploy.yml",
+          "lines": [
+            29,
+            44
+          ],
+          "sha256": "4243a32800dc9cb6c1cdec07978a2c1e2b4f06529569c9cc1270d88f320b4cd9",
+          "quote": "29:       - id: main\n30:         name: Check trigger is current main\n31:         env:\n32:           TRIGGER_SHA: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}\n33:         run: |\n34:           current_main=\"$(git ls-remote \"https://github.com/${{ github.repository }}.git\" refs/heads/main | cut -f1)\"\n35:           if [ \"$current_main\" = \"$TRIGGER_SHA\" ]; then\n36:             echo \"current=true\" >> \"$GITHUB_OUTPUT\"\n37:           else\n38:             echo \"current=false\" >> \"$GITHUB_OUTPUT\"\n39:             echo \"stale trigger; no build or deployment will run\"\n40:           fi\n41: \n42:   build:\n43:     needs: gate\n44:     if: ${{ needs.gate.outputs.current == 'true' }}"
+        },
+        {
+          "path": ".github/workflows/deploy.yml",
+          "lines": [
+            177,
+            184
+          ],
+          "sha256": "4243a32800dc9cb6c1cdec07978a2c1e2b4f06529569c9cc1270d88f320b4cd9",
+          "quote": "177:       - name: Refuse stale main before deploy\n178:         run: |\n179:           expected=$(node -p 'JSON.parse(require(\"node:fs\").readFileSync(\"/tmp/kamiyobi-expected/publish.json\")).source_commit')\n180:           current_main=\"$(git ls-remote \"https://github.com/${{ github.repository }}.git\" refs/heads/main | cut -f1)\"\n181:           test \"$current_main\" = \"$expected\"\n182:       - name: Deploy to GitHub Pages\n183:         id: deployment\n184:         uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128 # v5.0.0"
+        }
+      ],
+      "external_source": "https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#defaultsrun-shell",
+      "supplemental_files": [
+        "supplemental/github-actions-shell-fact.json"
+      ]
+    },
+    {
+      "reviewer": "Agy #4",
+      "disposition": "supported conditional baseline provenance risk",
+      "finding": "When a previous deploy health artifact cannot be obtained, HEAD^ is built as a fallback. It need not be the last successfully deployed revision. This changes the meaning of the comparison and deserves an explicit fallback policy. The packet does not establish a quality degradation cascade or a historical failure; the script still requires a usable baseline and calls the health evaluator.",
+      "evidence": [
+        {
+          "path": ".github/workflows/deploy.yml",
+          "lines": [
+            90,
+            117
+          ],
+          "sha256": "4243a32800dc9cb6c1cdec07978a2c1e2b4f06529569c9cc1270d88f320b4cd9",
+          "quote": "90:           mkdir -p /tmp/kamiyobi-health-baseline\n91:           current_sha=$(git rev-parse HEAD)\n92:           run_id=$(gh run list --workflow deploy.yml --branch main --status success --limit 5 --json databaseId,headSha | jq -r --arg sha \"$current_sha\" 'map(select(.headSha != $sha))[0].databaseId // empty')\n93:           if [ -n \"$run_id\" ]; then\n94:             if ! gh run download \"$run_id\" --name deploy-health-baseline --dir /tmp/kamiyobi-health-baseline; then\n95:               echo \"previous deploy health artifact unavailable; building parent baseline\"\n96:             fi\n97:           fi\n98:           if [ ! -s /tmp/kamiyobi-health-baseline/health.json ]; then\n99:             git worktree add --detach /tmp/kamiyobi-parent HEAD^\n100:             cd /tmp/kamiyobi-parent\n101:             npm ci\n102:             node src/cli.ts build --out /tmp/kamiyobi-parent-public --offline --no-embeddings --cache /tmp/kamiyobi-parent-cache --now \"$BUILD_NOW\"\n103:             cp /tmp/kamiyobi-parent-public/health.json /tmp/kamiyobi-health-baseline/health.json\n104:             cd \"$GITHUB_WORKSPACE\"\n105:           fi\n106:           # bash -e の下でも失敗時に後続の診断保存へ到達できるよう if で捕捉する。\n107:           gate_status=0\n108:           if ! node scripts/health-gate.ts public/health.json --require-baseline \\\n109:             /tmp/kamiyobi-health-baseline/health.json /tmp/next-last-known-good-health.json; then\n110:             gate_status=1\n111:           fi\n112:           # Save current + baseline for diagnostics even on failure.\n113:           mkdir -p /tmp/kamiyobi-deploy-diagnostics\n114:           cp public/health.json /tmp/kamiyobi-deploy-diagnostics/current-health.json\n115:           cp /tmp/kamiyobi-health-baseline/health.json /tmp/kamiyobi-deploy-diagnostics/baseline-health.json\n116:           echo \"$gate_status\" > /tmp/kamiyobi-deploy-diagnostics/gate-status\n117:           exit \"$gate_status\""
+        },
+        {
+          "path": "scripts/health-gate.ts",
+          "lines": [
+            91,
+            108
+          ],
+          "sha256": "bed321027daae1603115985b6f5c675459f8f1ddaa75ead8d829db02dd60873d",
+          "quote": "91:   if (args.requireBaseline && !hasUsableBaseline) {\n92:     console.error(\"health gate blocked deployment: usable baseline is unavailable\");\n93:     writeReport({\n94:       ok: false,\n95:       exit_status: 1,\n96:       reasons: [\"usable baseline is unavailable\"],\n97:       warnings: [],\n98:       baseline_available: false,\n99:       current_path: args.currentPath,\n100:       previous_path: args.previousPath ?? null,\n101:     });\n102:     return 1;\n103:   }\n104:   try {\n105:     const currentText = readFileSync(args.currentPath, \"utf8\");\n106:     const current = JSON.parse(currentText) as HealthReport;\n107:     const previous = hasUsableBaseline\n108:       ? (JSON.parse(readFileSync(args.previousPath!, \"utf8\")) as HealthReport)"
+        }
+      ]
+    },
+    {
+      "reviewer": "Coordinator follow-up on Claude proposed verified-reports switch",
+      "disposition": "new static qualification, not an external reviewer finding",
+      "finding": "Do not apply the suggested verified-reports switch mechanically. In this frozen code, full-mode realPaperBenchmarkContentId includes provided frozen features, but canonicalRealPaperBenchmarkContentId(full) supplies undefined for features. The full frozen workflow report would therefore need a compatible canonical identity before that seal mode could accept it. This is a post-review source observation; no workflow or test was run.",
+      "evidence": [
+        {
+          "path": "scripts/seal-recommendation-bundle.ts",
+          "lines": [
+            63,
+            76
+          ],
+          "sha256": "872559f04d4cd859a1aeffd4a2aa8cd074b3f6408d372002e9459e263a4762c1",
+          "quote": "63:   const benchmarkContentId = canonicalRealPaperBenchmarkContentId(coverage);\n64:   const regressions =\n65:     !report || Array.isArray(report)\n66:       ? [\"report must be an object\"]\n67:       : realPaperRegressionReasons(report, coverage, benchmarkContentId);\n68:   if (report?.semantic_content_id !== semanticContentId)\n69:     regressions.push(\"semantic content does not match the sealed data\");\n70:   if (report?.passed !== true || regressions.length)\n71:     throw new Error(\n72:       `${label} must be a passed ${coverage} real-paper report: ${regressions.join(\"; \")}`,\n73:     );\n74:   return {\n75:     report_sha256: createHash(\"sha256\").update(bytes).digest(\"hex\"),\n76:     benchmark_content_id: benchmarkContentId,"
+        }
+      ],
+      "supplemental_files": [
+        "supplemental/src_bench-recommender.ts.excerpt.txt",
+        "supplemental/code-fact-manifest.json"
+      ]
+    }
+  ]
+}

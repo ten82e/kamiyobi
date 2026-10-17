@@ -1,0 +1,53 @@
+{
+  "init_model": "claude-opus-5-5",
+  "response_models": [
+    "claude-opus-5-5"
+  ],
+  "model_usage": {
+    "claude-opus-5-5": {
+      "inputTokens": 2,
+      "outputTokens": 17377,
+      "cacheReadInputTokens": 1170,
+      "cacheCreationInputTokens": 49764,
+      "webSearchRequests": 0,
+      "costUSD": 0.7458940000000001,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 11705,
+      "canonicalModel": "claude-opus-5-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  },
+  "rate_limit_events": [
+    {
+      "status": "allowed",
+      "resetsAt": 1791131400,
+      "rateLimitType": "five_hour",
+      "overageStatus": "rejected",
+      "overageDisabledReason": "org_level_disabled",
+      "isUsingOverage": false,
+      "unifiedWindows": {
+        "five_hour": {
+          "utilization": 0.06,
+          "resetsAt": 1791131400
+        },
+        "seven_day": {
+          "utilization": 0.15,
+          "resetsAt": 1791662400
+        }
+      }
+    }
+  ],
+  "tools_used": [],
+  "permission_denials": [],
+  "is_error": false,
+  "finished_utc": "2026-10-04T12:06:46.496282+00:00",
+  "wall_seconds": 204.32837516699874,
+  "exit_code": 0,
+  "success": true,
+  "head": "de682df04334d5126d4a1ccbc994ebe2c30c1bf0",
+  "packet_sha256": "05d2ab9ef29caaf47feede2cdef449d1888c5b0f5189b09e9a2a36b7f6daabb3",
+  "response_sha256": "4439a2ba782c437eccdba5492290e6fcc99767189693dcf469e7e715196ba714",
+  "review_scope": "supplied packet only; no experiments executed"
+}

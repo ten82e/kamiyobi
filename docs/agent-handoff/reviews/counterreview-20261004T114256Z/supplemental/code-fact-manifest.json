@@ -1,0 +1,66 @@
+{
+  "read_utc": "2026-10-04T12:08:24.451788+00:00",
+  "purpose": "Coordinator-only read of exact frozen-HEAD source outside original excerpt ranges; not sent to first-pass reviewers.",
+  "files": [
+    {
+      "path": "src/semantic-content.ts",
+      "source_head": "de682df04334d5126d4a1ccbc994ebe2c30c1bf0",
+      "source_sha256": "c409f62d2fb92eed5e5d0ee4dd5eb5f1130dcf82eca0ba3c2bbda910426c8c0a",
+      "ranges": [
+        [
+          1,
+          90
+        ]
+      ],
+      "saved_as": "src_semantic-content.ts.excerpt.txt",
+      "excerpt_sha256": "1617c9a2d03d334da01ad1e7f15010429c0ad7c90d0b2204d30ee1887fe1324f",
+      "matches_current_worktree": true
+    },
+    {
+      "path": "src/embeddings.ts",
+      "source_head": "de682df04334d5126d4a1ccbc994ebe2c30c1bf0",
+      "source_sha256": "c5d41a21441920b49f7257858357f84707cb1df1fcd7c063ca3d992d6098c779",
+      "ranges": [
+        [
+          819,
+          890
+        ]
+      ],
+      "saved_as": "src_embeddings.ts.excerpt.txt",
+      "excerpt_sha256": "1caa226e52a79f0f73479dd1b9883a5dcb9e3192ab21197875c937102790f34b",
+      "matches_current_worktree": true
+    },
+    {
+      "path": "src/build.ts",
+      "source_head": "de682df04334d5126d4a1ccbc994ebe2c30c1bf0",
+      "source_sha256": "77d6ded8c03aeb6c088dc3a19680013ad66632ab20cc334fc93cda62af358903",
+      "ranges": [
+        [
+          501,
+          558
+        ]
+      ],
+      "saved_as": "src_build.ts.excerpt.txt",
+      "excerpt_sha256": "38c5d6544d6e1a2965e4fc52adca9db18bac5068892f06ad2e2b32ee3a896251",
+      "matches_current_worktree": true
+    },
+    {
+      "path": "src/bench-recommender.ts",
+      "source_head": "de682df04334d5126d4a1ccbc994ebe2c30c1bf0",
+      "source_sha256": "68fed3d9278b6d7dde5c4b9c604bdda48cd6c5e3d4991c244e2d97c6d7d8f628",
+      "ranges": [
+        [
+          940,
+          975
+        ],
+        [
+          3423,
+          3443
+        ]
+      ],
+      "saved_as": "src_bench-recommender.ts.excerpt.txt",
+      "excerpt_sha256": "0c2e089e26761aff86508b05c81f9334538af3b796428ca1c10dd015042bf6ba",
+      "matches_current_worktree": true
+    }
+  ]
+}

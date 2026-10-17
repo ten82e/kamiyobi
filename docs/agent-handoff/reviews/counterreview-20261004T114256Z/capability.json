@@ -1,0 +1,31 @@
+{
+  "checked_utc": "2026-10-04T11:36Z",
+  "claude": {
+    "version": "2.1.289",
+    "loggedIn": true,
+    "authMethod": "claude.ai",
+    "subscriptionType": "max",
+    "smoke_result": "REVIEW_READY",
+    "response_model": "claude-opus-5-5",
+    "isUsingOverage": false,
+    "overageDisabledReason": "org_level_disabled",
+    "sandbox_auth_false_resolved": "official auth status outside sandbox returned loggedIn true; no credential extraction"
+  },
+  "agy": {
+    "cli_language_server_version": "1.2.16",
+    "supported_background_path": "official --print CLI",
+    "model_list_contains": "gemini-3.1-pro-high",
+    "smoke_init_model": "gemini-3.1-pro-high",
+    "smoke_result": "SUCCESS / REVIEW_READY",
+    "existing_authenticated_use_verified": true,
+    "remote_control_daemon": "not running, not needed",
+    "auth_metadata_limit": "CLI provides authenticated model-list/response evidence, not account email/subscription status; no credential files read"
+  },
+  "exclusions": [
+    "masque-lab",
+    "ACT-X"
+  ],
+  "gui_operations": 0,
+  "new_credentials": 0,
+  "new_contracts_or_purchases": 0
+}

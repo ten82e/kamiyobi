@@ -1,0 +1,14 @@
+{
+  "project": "kamiyobi",
+  "checked_utc": "2026-10-04T12:10:26.173207+00:00",
+  "snapshot_head": "de682df04334d5126d4a1ccbc994ebe2c30c1bf0",
+  "current_head": "036e924f866ac3a2551c9f2e4db425bf757a5abb",
+  "files_changed_after_snapshot": [
+    {
+      "path": "SPEC.md",
+      "snapshot_sha256": "4c66c0a264b734cebc65cd2765b1fcacdce1937b6bd2f26cd53dba20430c04bb",
+      "current_sha256": "85e77c2d9e22a0ddda3b97eaa758f446e96ab2646128a59c72019b81a449c553"
+    }
+  ],
+  "note": "Independent reviews remain bound to their original packet. Concurrent later changes were not sent for first-pass review."
+}

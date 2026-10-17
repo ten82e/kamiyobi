@@ -1,0 +1,11 @@
+{
+  "checked_utc": "2026-10-04T12:06:38.382205+00:00",
+  "not_sent_to_reviewers": true,
+  "source_url": "https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax",
+  "purpose": "Coordinator fact-check of the default shell behavior used in Agy finding 3",
+  "facts": {
+    "unspecified_Linux_shell": "bash -e {0}",
+    "explicit_bash_shell": "bash --noprofile --norc -eo pipefail {0}"
+  },
+  "scope": "The first stale-SHA gate can classify a failed git ls-remote | cut pipeline as an empty SHA because pipefail is absent, not because -e is absent. No network failure was simulated."
+}

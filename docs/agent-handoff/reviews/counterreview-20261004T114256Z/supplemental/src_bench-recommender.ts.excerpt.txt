@@ -1,0 +1,58 @@
+940: export function realPaperBenchmarkContentId(
+941:   coverage: RealPaperCoverage,
+942:   dev: RealPaperFixture,
+943:   heldout: RealPaperFixture,
+944:   negative: RealPaperNegativeFixture,
+945:   requiredFeatures?: RequiredSemanticFeatures,
+946: ): string {
+947:   const stableFeatures = requiredFeatures
+948:     ? {
+949:         ...requiredFeatures,
+950:         provenance: requiredFeatures.provenance
+951:           ? {
+952:               generator: requiredFeatures.provenance.generator,
+953:               model: requiredFeatures.provenance.model,
+954:               revision: requiredFeatures.provenance.revision,
+955:             }
+956:           : undefined,
+957:       }
+958:     : undefined;
+959:   return createHash("sha256")
+960:     .update(JSON.stringify({ coverage, dev, heldout, negative, requiredFeatures: stableFeatures }))
+961:     .digest("hex");
+962: }
+963: 
+964: export function canonicalRealPaperBenchmarkContentId(coverage: RealPaperCoverage): string {
+965:   const fixture = (name: string) => JSON.parse(readFileSync(realPaperFixture(name), "utf8"));
+966:   return realPaperBenchmarkContentId(
+967:     coverage,
+968:     fixture(coverage === "required" ? "real-paper-required-dev.json" : "real-paper-dev.json"),
+969:     fixture(
+970:       coverage === "required" ? "real-paper-required-heldout.json" : "real-paper-heldout.json",
+971:     ),
+972:     fixture("real-paper-negative.json"),
+973:     coverage === "required"
+974:       ? readFeatureStore(fileURLToPath(realPaperFixture("real-paper-features.jsonl")))
+975:       : undefined,
+
+3423:       const data = JSON.parse(readFileSync(args.data, "utf8")) as {
+3424:         conferences: Conf[];
+3425:         categories?: Record<string, string>;
+3426:       };
+3427:       const requiredFeatures = args.realV2Features
+3428:         ? readFeatureStore(args.realV2Features)
+3429:         : undefined;
+3430:       const collectedFeatures: RequiredSemanticFeatures["records"] = [];
+3431:       const run = await runRealPaperBenchmark(
+3432:         dev,
+3433:         heldout,
+3434:         data,
+3435:         negative,
+3436:         args.realV2Small ? "required" : "full",
+3437:         requiredFeatures,
+3438:         args.writeRequiredFeatures ? collectedFeatures : undefined,
+3439:         args.taxonomyDetail,
+3440:         args.realV2FeatureBaseline
+3441:           ? JSON.parse(readFileSync(args.realV2FeatureBaseline, "utf8"))
+3442:           : undefined,
+3443:       );

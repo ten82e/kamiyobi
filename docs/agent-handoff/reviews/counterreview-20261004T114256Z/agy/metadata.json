@@ -1,0 +1,28 @@
+{
+  "init_model": "gemini-3.1-pro-high",
+  "conversation_id": "c3d14155-1f96-43b2-9d73-7512f0beb596",
+  "status": "SUCCESS",
+  "step_types": [
+    "agent_response",
+    "unknown",
+    "user_input"
+  ],
+  "unexpected_steps": [],
+  "usage": {
+    "input_tokens": 49115,
+    "output_tokens": 21578,
+    "thinking_tokens": 19577,
+    "cache_read_tokens": 8170,
+    "total_tokens": 70693
+  },
+  "permission_mode": "request-review",
+  "model_verification_limit": "CLI init model verified; result schema does not expose a second provider response model ID",
+  "finished_utc": "2026-10-04T11:52:46.521805+00:00",
+  "wall_seconds": 169.71956616600073,
+  "exit_code": 0,
+  "success": true,
+  "head": "de682df04334d5126d4a1ccbc994ebe2c30c1bf0",
+  "packet_sha256": "05d2ab9ef29caaf47feede2cdef449d1888c5b0f5189b09e9a2a36b7f6daabb3",
+  "response_sha256": "dcdcc9595398c0a517cb746bcfe30d65cf53299f6c1e8cca7b781a03cc859e79",
+  "review_scope": "supplied packet only; no experiments executed"
+}

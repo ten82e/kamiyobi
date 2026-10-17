@@ -1,0 +1,27 @@
+{
+  "source_response_sha256": "dcdcc9595398c0a517cb746bcfe30d65cf53299f6c1e8cca7b781a03cc859e79",
+  "selection": "CLI init, actual model envelopes, rate/status/usage only. Answer is preserved in review.md; internal reasoning/signatures and service logs are not copied.",
+  "events": [
+    {
+      "event": "init",
+      "init": {
+        "model": "gemini-3.1-pro-high",
+        "permission_mode": "request-review"
+      }
+    },
+    {
+      "event": "result",
+      "result": {
+        "status": "SUCCESS",
+        "conversation_id": "c3d14155-1f96-43b2-9d73-7512f0beb596",
+        "usage": {
+          "input_tokens": 49115,
+          "output_tokens": 21578,
+          "thinking_tokens": 19577,
+          "cache_read_tokens": 8170,
+          "total_tokens": 70693
+        }
+      }
+    }
+  ]
+}

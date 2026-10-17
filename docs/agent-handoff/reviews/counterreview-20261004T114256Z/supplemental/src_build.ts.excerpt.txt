@@ -1,0 +1,58 @@
+501: /** 既存 embeddings.json が profile/model/vector 契約を満たすか判定する。 */
+502: export function embeddingsStale(
+503:   existing: EmbeddingFile | null | undefined,
+504:   data: Parameters<typeof embeddingProfileHash>[0],
+505: ): boolean {
+506:   if (!existing || typeof existing !== "object") return true;
+507:   const expected = embeddingManifest(data);
+508:   const manifest = existing.manifest;
+509:   const en = manifest?.models?.en;
+510:   const multi = manifest?.models?.multi;
+511:   if (!manifest || !en || !multi) return true;
+512:   if (
+513:     manifest.schema !== expected.schema ||
+514:     manifest.runtime_version !== expected.runtime_version ||
+515:     manifest.profile_hash !== expected.profile_hash
+516:   )
+517:     return true;
+518:   if (manifest.profile_hash !== embeddingProfileHash(data)) return true;
+519:   if (
+520:     !sameKeys(existing.embeddings, expected.keys) ||
+521:     !sameKeys(existing.multi?.embeddings, expected.keys)
+522:   ) {
+523:     return true;
+524:   }
+525:   if (JSON.stringify(manifest.keys) !== JSON.stringify(expected.keys)) return true;
+526:   if (manifest.venue_papers_hash !== expected.venue_papers_hash) return true;
+527:   if (existing.venuePapersHash !== venuePapersHash()) return true;
+528:   if (
+529:     existing.model !== EMBEDDING_MODEL ||
+530:     existing.dim !== EMBEDDING_DIM ||
+531:     existing.multi?.model !== EMBEDDING_MULTI_MODEL ||
+532:     existing.multi?.dim !== EMBEDDING_DIM
+533:   ) {
+534:     return true;
+535:   }
+536:   if (
+537:     en.model !== expected.models.en.model ||
+538:     en.revision !== expected.models.en.revision ||
+539:     en.dim !== EMBEDDING_DIM ||
+540:     multi.model !== expected.models.multi.model ||
+541:     multi.revision !== expected.models.multi.revision ||
+542:     multi.dim !== EMBEDDING_DIM ||
+543:     !Array.isArray(en.probe?.vector) ||
+544:     en.probe.vector.length !== EMBEDDING_DIM ||
+545:     !Array.isArray(multi.probe?.vector) ||
+546:     multi.probe.vector.length !== EMBEDDING_DIM
+547:   ) {
+548:     return true;
+549:   }
+550:   if (!flatVectorMapHasDim(existing.embeddings, EMBEDDING_DIM)) return true;
+551:   if (!flatVectorMapHasDim(existing.multi?.embeddings, EMBEDDING_DIM)) return true;
+552:   if (!sameKeys(existing.paperVecs, expected.paper_vecs.keys)) return true;
+553:   if (!nestedVectorMapHasDim(existing.paperVecs, EMBEDDING_DIM)) return true;
+554:   if (JSON.stringify(manifest.paper_vecs?.keys) !== JSON.stringify(expected.paper_vecs.keys))
+555:     return true;
+556:   if (manifest.paper_vecs?.dim !== EMBEDDING_DIM) return true;
+557:   return false;
+558: }

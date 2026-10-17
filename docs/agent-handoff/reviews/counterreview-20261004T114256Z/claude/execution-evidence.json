@@ -1,0 +1,79 @@
+{
+  "source_response_sha256": "4439a2ba782c437eccdba5492290e6fcc99767189693dcf469e7e715196ba714",
+  "selection": "CLI init, actual model envelopes, rate/status/usage only. Answer is preserved in review.md; internal reasoning/signatures and service logs are not copied.",
+  "events": [
+    {
+      "type": "system",
+      "subtype": "init",
+      "model": "claude-opus-5-5",
+      "claude_code_version": "2.1.289",
+      "permissionMode": "auto",
+      "tools": [],
+      "mcp_servers": []
+    },
+    {
+      "type": "assistant",
+      "response_model": "claude-opus-5-5",
+      "message_id": "msg_011CfhAUKTaSC2sHizAwczFt",
+      "request_id": "req_011CfhAUJAhhAZpDSNeNfMUF",
+      "content_types": [
+        "thinking"
+      ]
+    },
+    {
+      "type": "assistant",
+      "response_model": "claude-opus-5-5",
+      "message_id": "msg_011CfhAUKTaSC2sHizAwczFt",
+      "request_id": "req_011CfhAUJAhhAZpDSNeNfMUF",
+      "content_types": [
+        "text"
+      ]
+    },
+    {
+      "type": "rate_limit_event",
+      "rate_limit_info": {
+        "status": "allowed",
+        "resetsAt": 1791131400,
+        "rateLimitType": "five_hour",
+        "overageStatus": "rejected",
+        "overageDisabledReason": "org_level_disabled",
+        "isUsingOverage": false,
+        "unifiedWindows": {
+          "five_hour": {
+            "utilization": 0.06,
+            "resetsAt": 1791131400
+          },
+          "seven_day": {
+            "utilization": 0.15,
+            "resetsAt": 1791662400
+          }
+        }
+      },
+      "uuid": "3bf607af-fdcb-4ac3-b5ad-73a009fed677",
+      "session_id": "d4f758eb-70ee-45b9-93e6-f42646713787"
+    },
+    {
+      "type": "result",
+      "subtype": "success",
+      "is_error": false,
+      "duration_ms": 203666,
+      "modelUsage": {
+        "claude-opus-5-5": {
+          "inputTokens": 2,
+          "outputTokens": 17377,
+          "cacheReadInputTokens": 1170,
+          "cacheCreationInputTokens": 49764,
+          "webSearchRequests": 0,
+          "costUSD": 0.7458940000000001,
+          "contextWindow": 1000000,
+          "maxOutputTokens": 128000,
+          "thinkingTokens": 11705,
+          "canonicalModel": "claude-opus-5-5",
+          "provider": "firstParty",
+          "costBasis": "list"
+        }
+      },
+      "permission_denials": []
+    }
+  ]
+}

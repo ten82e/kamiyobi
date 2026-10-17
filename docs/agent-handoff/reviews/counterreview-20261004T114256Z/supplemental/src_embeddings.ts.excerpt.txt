@@ -1,0 +1,72 @@
+819: function dataConferences(data: EmbeddingData | null | undefined): Array<Record<string, unknown>> {
+820:   return (data?.conferences ?? [])
+821:     .filter((c): c is Record<string, unknown> => Boolean(c && typeof c === "object"))
+822:     .map((c) => ({
+823:       key: String(c.key ?? "").trim(),
+824:       title: String(c.title ?? ""),
+825:       full_name: String(c.full_name ?? ""),
+826:       categories: toStringArray(c.categories),
+827:       tags: toStringArray(c.tags),
+828:       scope:
+829:         typeof c.scope === "string"
+830:           ? c.scope
+831:           : Array.isArray(c.scope)
+832:             ? toStringArray(c.scope)
+833:             : "",
+834:       official_scope:
+835:         typeof c.official_scope === "string"
+836:           ? c.official_scope
+837:           : Array.isArray(c.official_scope)
+838:             ? toStringArray(c.official_scope)
+839:             : "",
+840:     }))
+841:     .filter((c) => c.key)
+842:     .sort((a, b) => String(a.key).localeCompare(String(b.key)));
+843: }
+844: 
+845: function expectedPaperKeys(data: EmbeddingData | null | undefined): string[] {
+846:   return dataConferences(data)
+847:     .map((c) => String(c.key))
+848:     .filter(
+849:       (key) =>
+850:         (PAPER_VEC_KEYS as readonly string[]).includes(key) && (VENUE_PAPERS[key]?.length ?? 0) > 0,
+851:     )
+852:     .sort();
+853: }
+854: 
+855: function modelManifest(model: string, revision: string, probe: number[]): EmbeddingModelManifest {
+856:   return {
+857:     model,
+858:     revision,
+859:     dim: EMBEDDING_DIM,
+860:     probe: { text: EMBEDDING_PROBE, vector: probe },
+861:   };
+862: }
+863: 
+864: /** Hash every input that changes profile vectors, not only the output key set. */
+865: export function embeddingProfileHash(data: EmbeddingData | null | undefined): string {
+866:   const profile = {
+867:     schema: EMBEDDING_SCHEMA_VERSION,
+868:     runtime_version: EMBEDDING_RUNTIME_VERSION,
+869:     models: {
+870:       en: modelManifest(EMBEDDING_MODEL, EMBEDDING_REVISION, []),
+871:       multi: modelManifest(EMBEDDING_MULTI_MODEL, EMBEDDING_MULTI_REVISION, []),
+872:     },
+873:     categories: data?.categories ?? {},
+874:     conferences: dataConferences(data).map((c) => ({
+875:       ...c,
+876:       papers: VENUE_PAPERS[String(c.key)] ?? [],
+877:     })),
+878:     profile_rules: {
+879:       jp_category_keywords: JP_CAT_KW,
+880:       skip_embedding_keys: [...SKIP_EMB_KEYS].sort(),
+881:       paper_vector_keys: [...PAPER_VEC_KEYS].sort(),
+882:       excluded_attribute_tags: [...ATTRIBUTE_TAGS].sort(),
+883:       english_papers: "first-eight-concatenated",
+884:       multilingual_papers: "excluded",
+885:     },
+886:   };
+887:   return createHash("sha256")
+888:     .update(JSON.stringify(stableValue(profile)))
+889:     .digest("hex")
+890:     .slice(0, 16);

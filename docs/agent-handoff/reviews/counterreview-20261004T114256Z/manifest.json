@@ -1,0 +1,264 @@
+{
+  "project": "kamiyobi",
+  "source_root": "/Users/ten82e/kamiyobi",
+  "head": "de682df04334d5126d4a1ccbc994ebe2c30c1bf0",
+  "branch": "fix/site-ja-usability",
+  "captured_utc": "2026-10-04T11:42:56.291485+00:00",
+  "scope": "現在の公開CI修正と運用範囲。immutable feature baseline追加が修正として正しいか、品質gate・bundle再利用・branch/commit・publicationの境界が穴を隠していないか。全UI改善を読んだと主張しない。",
+  "files": [
+    {
+      "path": "SPEC.md",
+      "sha256": "4c66c0a264b734cebc65cd2765b1fcacdce1937b6bd2f26cd53dba20430c04bb",
+      "bytes": 2738820,
+      "ranges": [
+        [
+          1,
+          140
+        ]
+      ],
+      "packet_excerpt_sha256": "9fffbb0d24d246122d6a9e95e5d786513a3bd27c43255c0ee97d55741d67bdae",
+      "redactions": [
+        "email addresses",
+        "local home prefix"
+      ],
+      "origin": null
+    },
+    {
+      "path": ".github/workflows/ci.yml",
+      "sha256": "ab4fab68217d9d772751872fdd8a324100a907699ed12f279f22cae8c55acb7c",
+      "bytes": 10390,
+      "ranges": [
+        [
+          1,
+          200
+        ]
+      ],
+      "packet_excerpt_sha256": "293dfc0ead5a9409155ea88157809f6cd52bcd1b3d1351fbf64c7984df531c31",
+      "redactions": [
+        "email addresses",
+        "local home prefix"
+      ],
+      "origin": null
+    },
+    {
+      "path": ".github/workflows/nightly.yml",
+      "sha256": "d064dbc010b6b238c891f8e969463c490ca5f57704a619f3d838d2b02ea65bef",
+      "bytes": 2375,
+      "ranges": [
+        [
+          1,
+          54
+        ]
+      ],
+      "packet_excerpt_sha256": "e4c1be7c71322888cd583c6b456cbab569f875f80ae9c3555c65a5c7fe1718b8",
+      "redactions": [
+        "email addresses",
+        "local home prefix"
+      ],
+      "origin": null
+    },
+    {
+      "path": ".github/workflows/recommendation-bundle.yml",
+      "sha256": "928c690078732adf4237f93bfc4a1ec5fb9c2114195f7b7aade29fde49b18237",
+      "bytes": 4898,
+      "ranges": [
+        [
+          1,
+          89
+        ]
+      ],
+      "packet_excerpt_sha256": "9a3b344e1ebbe70d8ad4f8962ad5cfbdf5b70d5add5b5aea83b05b94b03dfa43",
+      "redactions": [
+        "email addresses",
+        "local home prefix"
+      ],
+      "origin": null
+    },
+    {
+      "path": ".github/workflows/update-data.yml",
+      "sha256": "f5870d3faf8f8b08c572d3642e05263c37740a9ff28df76f29d5c5077b14eec1",
+      "bytes": 19438,
+      "ranges": [
+        [
+          1,
+          358
+        ]
+      ],
+      "packet_excerpt_sha256": "ea1d5175a82a31ce3019ec781000c28d669517ffbaf027c00a4a8c76f24cd337",
+      "redactions": [
+        "email addresses",
+        "local home prefix"
+      ],
+      "origin": null
+    },
+    {
+      "path": ".github/workflows/deploy.yml",
+      "sha256": "4243a32800dc9cb6c1cdec07978a2c1e2b4f06529569c9cc1270d88f320b4cd9",
+      "bytes": 9110,
+      "ranges": [
+        [
+          1,
+          208
+        ]
+      ],
+      "packet_excerpt_sha256": "4a9467259f57449c4852bc9df873126b9d86703b1438e541f333b16663ca0515",
+      "redactions": [
+        "email addresses",
+        "local home prefix"
+      ],
+      "origin": null
+    },
+    {
+      "path": "src/bench-recommender.ts",
+      "sha256": "68fed3d9278b6d7dde5c4b9c604bdda48cd6c5e3d4991c244e2d97c6d7d8f628",
+      "bytes": 150067,
+      "ranges": [
+        [
+          130,
+          200
+        ],
+        [
+          2560,
+          2860
+        ],
+        [
+          3480,
+          3570
+        ]
+      ],
+      "packet_excerpt_sha256": "71eaa39811c0d0c9b04e240fb8422ad04f7ffd11e0085838741f9e1824061b49",
+      "redactions": [
+        "email addresses",
+        "local home prefix"
+      ],
+      "origin": null
+    },
+    {
+      "path": "tests/bench_recommender.test.ts",
+      "sha256": "40cd3b9cd00ee741cd4b665a8fe180f9917b8bf28ee5ad6f088a4b29853c1530",
+      "bytes": 9279,
+      "ranges": [
+        [
+          1,
+          220
+        ]
+      ],
+      "packet_excerpt_sha256": "52672418b6a8323e0643a8db3c86a83e4339b7cfcc5f810bef1b31be7781bf89",
+      "redactions": [
+        "email addresses",
+        "local home prefix"
+      ],
+      "origin": null
+    },
+    {
+      "path": "scripts/health-gate.ts",
+      "sha256": "bed321027daae1603115985b6f5c675459f8f1ddaa75ead8d829db02dd60873d",
+      "bytes": 6667,
+      "ranges": [
+        [
+          1,
+          194
+        ]
+      ],
+      "packet_excerpt_sha256": "3731973fd3d71f1d20a669cfc43ed8abb1610d3acd2d8397665acc7efb37bea9",
+      "redactions": [
+        "email addresses",
+        "local home prefix"
+      ],
+      "origin": null
+    },
+    {
+      "path": "scripts/restore-recommendation-bundle.ts",
+      "sha256": "7e47a2f314f40efc34a4453f93f9eb38d57cee81f18e54500e3fab76f8d70615",
+      "bytes": 2657,
+      "ranges": [
+        [
+          1,
+          51
+        ]
+      ],
+      "packet_excerpt_sha256": "71fd185c90e61f330571d6e78c4d938e857e7650b9ce1751c0a9fcf23a5ce86f",
+      "redactions": [
+        "email addresses",
+        "local home prefix"
+      ],
+      "origin": null
+    },
+    {
+      "path": "scripts/seal-recommendation-bundle.ts",
+      "sha256": "872559f04d4cd859a1aeffd4a2aa8cd074b3f6408d372002e9459e263a4762c1",
+      "bytes": 4805,
+      "ranges": [
+        [
+          1,
+          122
+        ]
+      ],
+      "packet_excerpt_sha256": "24f92bc7c9fece1838cbcad28fc28e9318bac531de83633d1f3d74fc1434df4d",
+      "redactions": [
+        "email addresses",
+        "local home prefix"
+      ],
+      "origin": null
+    },
+    {
+      "path": "tests/update_data_fast_forward.test.ts",
+      "sha256": "04bbff0f29f4afb6420609941c4bee0bca3405319fa4dc9cef76b86e13e688c2",
+      "bytes": 4900,
+      "ranges": [
+        [
+          1,
+          124
+        ]
+      ],
+      "packet_excerpt_sha256": "3cab8c39907bd5974d4382f70965655016c59b3a988f09bd794b6639194615e1",
+      "redactions": [
+        "email addresses",
+        "local home prefix"
+      ],
+      "origin": null
+    },
+    {
+      "path": "data/benchmarks/real-paper-feature-baseline.json",
+      "sha256": "a9dfcff7c8f46cbbf3437c94e66021cf661751111251a2461e2a0062536cf0d6",
+      "bytes": 164194,
+      "ranges": [
+        [
+          1,
+          16
+        ]
+      ],
+      "packet_excerpt_sha256": "97b0384ea447442bfa0241cb08b3cc1a57556985d19f2d25f0f1c4d68e78a172",
+      "redactions": [
+        "email addresses",
+        "local home prefix"
+      ],
+      "origin": {
+        "scope": "schema/comment/categories only; all records excluded from prompt"
+      }
+    },
+    {
+      "path": "derived/b8a7ba2-workflow.diff",
+      "sha256": "efc50a604bafba951cdabc47f5415617699bdf14cb9bcf6ca695c96bfc66ba60",
+      "bytes": 2673,
+      "ranges": [
+        [
+          1,
+          33
+        ]
+      ],
+      "packet_excerpt_sha256": "76acb10753a63abd47c725940324fbfee05be3dd6fbe20c459b388f568d128ae",
+      "redactions": [
+        "email addresses",
+        "local home prefix"
+      ],
+      "origin": {
+        "method": "git show b8a7ba2 --format= -- .github/workflows"
+      }
+    }
+  ],
+  "selected_tracked_status": "",
+  "packet_sha256": "05d2ab9ef29caaf47feede2cdef449d1888c5b0f5189b09e9a2a36b7f6daabb3",
+  "packet_bytes": 117550,
+  "independence": "identical packet delivered separately; no reviewer response included"
+}
