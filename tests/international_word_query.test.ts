@@ -40,12 +40,32 @@ function 畫面の案内(文: string): string {
     .join(" ∥ ");
 }
 
-describe("『国際』を日本語で打つ人が原文の行に出会える", () => {
+/* 国内研究会・国内シンポジウム以外の会議に付く印（`internationalFacetSearchTerms`）。 */
+const 国際の印 = "〔国際〕";
+
+describe("『国際』を日本語で打つ人が国内以外の会議に出会える", () => {
+  it("「国際会議」は国内研究会・国内シンポジウム以外の会議（名前の International に頼らない）", () => {
+    const 行 = 行列表("国際会議");
+    expect(行.length, "`国際会議` が 0 行").toBeGreaterThan(0);
+    // 印の付いた行と一字も違わない（名前に International の無い会議も入る）。
+    expect(行.sort()).toEqual(字面列(国際の印).sort());
+    expect(
+      行.some((行) => !行.includes("international")),
+      "名前に International の無い会議が入っていない（以前の狭い意味のまま）",
+    ).toBe(true);
+    // 国内研究会・国内シンポジウムは入らない。
+    expect(行.some((行) => 行.includes("国内研究会") || 行.includes("国内シンポジウム"))).toBe(
+      false,
+    );
+  });
+
+  it("素の『国際』は国内以外の会議と、原文に international と書く行の和", () => {
+    const 和 = [...new Set([...字面列(国際の印), ...行列表("international")])].sort();
+    expect(行列表("国際").sort()).toEqual(和);
+  });
+
   it("寄せた語は原文の英文字語を書く行と一字も違わない", () => {
-    for (const [打ち方, 原文] of [
-      ["国際", "international"],
-      ["年次", "annual"],
-    ] as const) {
+    for (const [打ち方, 原文] of [["年次", "annual"]] as const) {
       expect(件数(打ち方), `\`${打ち方}\` が 0 行`).toBeGreaterThan(0);
       expect(行列表(打ち方).sort(), `\`${打ち方}\` の行集合が "${原文}" の行と違う`).toEqual(
         字面列(原文).sort(),
@@ -102,8 +122,12 @@ describe("『国際』を日本語で打つ人が原文の行に出会える", (
         `\`${打ち方}\` が "${原文}" を連なりで書く行を落とした`,
       ).toEqual([]);
       const 語 = 原文.split(/\s+/);
+      // 原文の連なりを書く行か、国内以外の会議でその種別の語を持つ行（`国際` と種別語に割れる）。
+      const 種別語 = 語[語.length - 1];
       expect(
-        打.filter((x) => !語.every((w) => x.includes(w))),
+        打.filter(
+          (x) => !語.every((w) => x.includes(w)) && !(x.includes(国際の印) && x.includes(種別語)),
+        ),
         `\`${打ち方}\` が語を揃へん行を拾つた`,
       ).toEqual([]);
       /* その方の語を名指さない行まで出さない（`国際` だけの寄せは頼み過ぎ）。 */
@@ -126,12 +150,22 @@ describe("『国際』を日本語で打つ人が原文の行に出会える", (
 
 describe("案内（黙つた 0 件を直した事が画面に出る）", () => {
   it("寄せた語は打ち込んだ語と原文の語を名指す", () => {
+    for (const 打ち方 of [
+      "国際会議",
+      "国際学会",
+      "国際カンファレンス",
+      "国際",
+      "こくさい",
+      "國際",
+    ]) {
+      expect(畫面の案内(打ち方), `\`${打ち方}\` が何で探したかを言っていない`).toContain(
+        "国内研究会・国内シンポジウム以外の会議",
+      );
+    }
     for (const [打ち方, 原文] of [
       ["国際", "international"],
       ["こくさい", "international"],
       ["國際", "international"],
-      ["国際学会", "international"],
-      ["国際カンファレンス", "international"],
       ["国際シンポジウム", "international symposium"],
       ["国際ワークショップ", "international workshop"],
       ["年次", "annual"],
@@ -165,8 +199,8 @@ describe("寄せない物（黙つて意味を広げない – 四つの門）",
 
   it("`国際研究会` は寄せない（品書にない行を作らない）", () => {
     expect(件数("国際研究会")).toBe(0);
-    // その方の語単体は動く（寄せは `国際` の侭 – 頭の語を剥ぐ仕組みは以て居ない）。
-    expect(件数("国際")).toBe(字面列("international").length);
+    // その方の語単体は動く。
+    expect(件数("国際")).toBeGreaterThan(0);
   });
 
   it("`春季` `秋季` `夏季` `冬季` `グローバル` は薄い語へ寄せない（第 232 回の `panel`）", () => {
@@ -217,10 +251,15 @@ describe("第 514 回以前の決まりを壊して居ない", () => {
 
 describe("ビルドの組み込み", () => {
   it("寄せ語の条目は二重に置いて居ない（正本は一つ）", () => {
-    const 品 = readFileSync(join(builtSite(), "recommender.js"), "utf8");
+    // 長い条目は整形で折り返される（末尾にカンマも付く）ので、空白と閉じ括弧前のカンマを除いて数える。
+    const 空白なし = (文: string) => 文.replace(/\s+/g, "").replace(/,\]/g, "]");
+    const 品 = 空白なし(readFileSync(join(builtSite(), "recommender.js"), "utf8"));
     for (const [見出し, 回] of [
-      ['["国際", "原文の international という語", ["international"]]', 1],
-      ['["国際会議", "原文の international という語", ["international"]]', 1],
+      [
+        '["国際", "国内研究会・国内シンポジウム以外の会議と、原文の international という語", ["〔国際〕", "international"]]',
+        1,
+      ],
+      ['["国際会議", "国内研究会・国内シンポジウム以外の会議", ["〔国際〕"]]', 1],
       ['["年次", "原文の annual という語", ["annual"]]', 1],
       ['["シンポジウム", "原文の symposium という語", ["symposium"]]', 1],
       [
@@ -229,17 +268,23 @@ describe("ビルドの組み込み", () => {
       ],
     ] as const) {
       let 数 = 0;
-      let 所 = 品.indexOf(見出し);
+      const 探す = 空白なし(見出し);
+      let 所 = 品.indexOf(探す);
       while (所 >= 0) {
         数 += 1;
-        所 = 品.indexOf(見出し, 所 + 1);
+        所 = 品.indexOf(探す, 所 + 1);
       }
       expect(数, `組み込みに \`${見出し}\` が ${数} 本並んだ`).toBe(回);
     }
   });
 
-  it("打ち方の語を品書の字面に足して居ない（行を作って居ない）", () => {
-    expect(字面列("国際").length, "品書に『国際』の字面を足した").toBe(0);
+  it("打ち方の語を品書の字面に足して居ない（足すのは人が打たない印だけ）", () => {
+    // 「国際会議」その物を足すと「会議」単体が其の部分に当たり、全行の語ではなくなる。
+    expect(字面列("国際会議").length, "品書に『国際会議』の字面を足した").toBe(0);
+    expect(件数("会議"), "「会議」単体が行を持つようになった").toBe(0);
     expect(字面列("年次").length, "品書に『年次』の字面を足した").toBe(0);
+    expect(字面列("〔国際〕").length, "国内以外の会議の印が無い（検査が空振り）").toBeGreaterThan(
+      0,
+    );
   });
 });

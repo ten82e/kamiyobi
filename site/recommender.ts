@@ -2340,17 +2340,37 @@ const Recommender = (() => {
       ["特別セッション", "原文の special session という語", ["special session"]],
       ["学生セッション", "原文の student という語", ["student"]],
 
-      ["国際", "原文の international という語", ["international"]],
-      ["こくさい", "原文の international という語", ["international"]],
-      ["國際", "原文の international という語", ["international"]],
-      ["国際的", "原文の international という語", ["international"]],
-      ["国際的な", "原文の international という語", ["international"]],
+      [
+        "国際",
+        "国内研究会・国内シンポジウム以外の会議と、原文の international という語",
+        ["〔国際〕", "international"],
+      ],
+      [
+        "こくさい",
+        "国内研究会・国内シンポジウム以外の会議と、原文の international という語",
+        ["〔国際〕", "international"],
+      ],
+      [
+        "國際",
+        "国内研究会・国内シンポジウム以外の会議と、原文の international という語",
+        ["〔国際〕", "international"],
+      ],
+      [
+        "国際的",
+        "国内研究会・国内シンポジウム以外の会議と、原文の international という語",
+        ["〔国際〕", "international"],
+      ],
+      [
+        "国際的な",
+        "国内研究会・国内シンポジウム以外の会議と、原文の international という語",
+        ["〔国際〕", "international"],
+      ],
 
-      ["国際会議", "原文の international という語", ["international"]],
-      ["国際大会", "原文の international という語", ["international"]],
-      ["国際学会", "原文の international という語", ["international"]],
-      ["国際カンファレンス", "原文の international という語", ["international"]],
-      ["国際コンファレンス", "原文の international という語", ["international"]],
+      ["国際会議", "国内研究会・国内シンポジウム以外の会議", ["〔国際〕"]],
+      ["国際大会", "国内研究会・国内シンポジウム以外の会議", ["〔国際〕"]],
+      ["国際学会", "国内研究会・国内シンポジウム以外の会議", ["〔国際〕"]],
+      ["国際カンファレンス", "国内研究会・国内シンポジウム以外の会議", ["〔国際〕"]],
+      ["国際コンファレンス", "国内研究会・国内シンポジウム以外の会議", ["〔国際〕"]],
       ["国際シンポジウム", "原文の international symposium という語", ["international symposium"]],
       ["国際ワークショップ", "原文の international workshop という語", ["international workshop"]],
       ["年次", "原文の annual という語", ["annual"]],
@@ -14263,6 +14283,21 @@ const Recommender = (() => {
     return words.join(" ");
   }
 
+  /* 「国際会議」と打つ研究者は「国内研究会・国内シンポジウム以外の会議」を探している。
+   * 会議名の International で引くと、NSDI・OSDI・SOSP・NeurIPS・CCS・CHI・SIGMOD など
+   * 名前に International を持たない会議が決して出なかった（2026-10-17 実測: 国内でない
+   * 会議 619 件のうち 259 件）。国内のタグを持たない会議の行に印を入れる。論文誌と
+   * 特集号は会議ではないので入れない。印は人が打たない形（〔〕付き）にする – 「国際会議」
+   * その物を入れると、「会議」単体が其の部分に当たり、全行に当たる語として外していた
+   * 「会議」が国内でない会議だけを出すように変わった（実測 0 → 822 行）。 */
+  const INTERNATIONAL_FACET_WORD_JA = "〔国際〕";
+  function internationalFacetSearchTerms(tags: readonly string[] | null | undefined): string {
+    const list = tags || [];
+    if (["domestic-jp", "journal", "special-issue"].some((tag) => list.indexOf(tag) >= 0))
+      return "";
+    return INTERNATIONAL_FACET_WORD_JA;
+  }
+
   /* 「オンライン参加可」はチェックボックスに出る語（=表示語）なので、ここで1回だけ書き、
    * 検索の語・行の検索用文字列・おしらせで同じ字面を使う。 */
   const ONLINE_PARTICIPATION_LABEL_JA = "オンライン参加可";
@@ -14408,7 +14443,7 @@ const Recommender = (() => {
           .filter(Boolean)
           .join(" ")
           .toLowerCase();
-        const catHay = `${laterEditionSearchWords(conf, String(ed.event_start || ""), ed.id)} ${categorySearchTerms(conf.categories, confTags)} ${placeJa(ed.place)} ${placePrefectureJa(ed.place)} ${participationSearchTerms(ed.place)} ${domesticFacetSearchTerms(confTags, conf.title)}`;
+        const catHay = `${laterEditionSearchWords(conf, String(ed.event_start || ""), ed.id)} ${categorySearchTerms(conf.categories, confTags)} ${placeJa(ed.place)} ${placePrefectureJa(ed.place)} ${participationSearchTerms(ed.place)} ${domesticFacetSearchTerms(confTags, conf.title)} ${internationalFacetSearchTerms(confTags)}`;
         (ed.deadlines || []).forEach((dl) => {
           const dateOnly = dl.precision === "date-only";
           const window = dateOnly ? dateOnlyWindowMs(dl.local_date) : null;

@@ -6342,3 +6342,44 @@ it("月の語の後ろに語が続いても、判定はその月だけと言う�
   // 以前は問いが月で終わらないため「2026年 = 2026年の締切（1〜12 か月）」と出していた。
   expect(判定).not.toContain("1〜12 か月");
 });
+
+it("「国際会議」は国内研究会・国内シンポジウム以外の会議として引く（名前の International に頼らない）", async () => {
+  type 行 = {
+    venue_key?: string;
+    edition_id?: string;
+    domestic?: boolean;
+    kind?: string;
+    utc?: string;
+  };
+  const 引く = async (query: string, id: number): Promise<行[]> => {
+    const 答 = (await client.ask({
+      jsonrpc: "2.0",
+      id,
+      method: "tools/call",
+      params: { name: "search_deadlines", arguments: { query, limit: 400, scope: "all" } },
+    })) as { result?: { structuredContent?: { rows?: 行[] } } };
+    return 答.result?.structuredContent?.rows ?? [];
+  };
+  const 鍵 = (r: 行) => `${r.venue_key}|${r.edition_id}|${r.kind}|${r.utc}`;
+  const 全部 = await 引く("ネットワーク", 31);
+  const 国際 = await 引く("ネットワークの国際会議", 32);
+  expect(
+    全部.some((r) => r.domestic),
+    "前提（ネットワークに国内の行がある）が崩れた",
+  ).toBe(true);
+  expect(国際.length, "国際会議で 0 行").toBeGreaterThan(0);
+  // 国内の行と論文誌（会議ではない）を除いた物と同じ（SenSys・NOMS の様に名前に
+  // International の無い会議も残る）。
+  expect(
+    全部.some((r) => r.kind === "journal"),
+    "前提（論文誌の行がある）が崩れた",
+  ).toBe(true);
+  expect(国際.map(鍵).sort()).toEqual(
+    全部
+      .filter((r) => !r.domestic && r.kind !== "journal")
+      .map(鍵)
+      .sort(),
+  );
+  const 本文 = await call("search_deadlines", { query: "ネットワークの国際会議", limit: 1 });
+  expect(本文).toContain("「国際会議」は国内研究会・国内シンポジウム以外の会議で探しています");
+});

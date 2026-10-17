@@ -311,7 +311,9 @@ describe("磁石と旧の決まりが其侭通る（第 505 回・第 513 回・
     expect(案内("締切一覧")).toContain("では絞り込めません");
     expect(件数("AI会議")).toBe(件数("AI"));
     expect(件数("査読締切日")).toBe(件数("査読 締切日"));
-    expect(件数("国際")).toBe(件数("international"));
+    // 「国際」は国内以外の会議と原文の international の和（名前の International だけではない）。
+    expect(件数("国際")).toBeGreaterThanOrEqual(件数("international"));
+    expect(件数("国際会議")).toBe(件数("国際 会議"));
     expect(件数("国内会議")).toBe(件数("国内"));
   });
 });
