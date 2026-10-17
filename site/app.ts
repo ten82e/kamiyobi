@@ -5412,6 +5412,10 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     if (exportBtn) {
       exportBtn.textContent = exportCsvLabelJa(shown.length, 候補を書き出す);
       exportBtn.hidden = !shown.length || (recMode && !候補を書き出す);
+      /* 書き出しのボタンが 5 つ並ぶので、どれが何かを押す前に一行で言う（2026-10-18 に研究者役の試しで
+       * 「カレンダーに入れたい」の迷いを実測）。ボタンと同じ条件で出す。 */
+      const exportGuide = $("exportGuide");
+      if (exportGuide) exportGuide.hidden = exportBtn.hidden;
       exportBtn.title = 候補を書き出す
         ? "「投稿先を探す」が挙げた候補を、表計算で読める形（BOM 付き CSV）にしたファイルです。" +
           "先頭の 4 列が一致評価・一致の点・言葉の一致・意味の近さで、残りの列は締切の一覧と同じ物です。" +
