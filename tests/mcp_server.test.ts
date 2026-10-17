@@ -6383,3 +6383,14 @@ it("「国際会議」は国内研究会・国内シンポジウム以外の会�
   const 本文 = await call("search_deadlines", { query: "ネットワークの国際会議", limit: 1 });
   expect(本文).toContain("「国際会議」は国内研究会・国内シンポジウム以外の会議で探しています");
 });
+
+it("推薦の並びが点の順と限らない事と、意味検索への切り替え方を言う", async () => {
+  const 答 = await call("recommend_venues", {
+    paper: "GPUクラスタにおける深層学習ジョブのスケジューリング",
+    limit: 5,
+  });
+  // 同じ一致評価の中は点の順に並ぶとは限らない – 言わないと AI が並びの壊れと読む。
+  expect(答).toContain("同じ一致評価の中の並びは点の順とは限りません");
+  // 語の一致だけで答えた時は、意味検索を使う引数を名指す（道具の説明と同じ名前）。
+  expect(答).toContain('retrieval: "semantic" を指定してください');
+});
