@@ -3555,8 +3555,6 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       );
     }
     const base = "該当する締切はありません。";
-    if (filter.scheduleOnlyCount && filter.scheduleOnlyCount > 0)
-      return `${base} 投稿締切が未収録の開催回が ${countJa(filter.scheduleOnlyCount)} 件見つかりました。会期情報は下に表示しています。`;
     const trimmedQuery = filter.query.trim();
     /* 検索語が採否通知・査読結果公開など、表に出さない種別に当たっていることがある。
      * 外せる条件とは別枠の「なぜ 0 件か」なので、先に文として立てる。 */
@@ -3595,6 +3593,11 @@ function semanticOutput(value: unknown): value is SemanticOutput {
               ? ` 常時受付のジャーナル ${countJa(filter.queryMatch.journal)} 件は「種別」で選べます。`
               : "")
         : "";
+    /* 会期だけの開催回が当たったときも、打った語が収録に当たっている事を先に言う
+     * （2026-10-17 実測: `SIGCOMM` は 0 件で、案内は主催の同じ IMC・CoNEXT の会期だけを
+     * 並べ、SIGCOMM その物が収録にある事も過去の締切がある事も言わなかった）。 */
+    if (filter.scheduleOnlyCount && filter.scheduleOnlyCount > 0)
+      return `${base}${catalogNote} 投稿締切が未収録の開催回が ${countJa(filter.scheduleOnlyCount)} 件見つかりました。会期情報は下に表示しています。`;
     /* 語を並べて打ったのに 0 件のとき、どの語が足りなかったのかを言う（2026-09-23 実測:
      * 「ネットワーク 福岡 GPU」も「人工知能 だけ」も 0 件なのに、画面は原因の語を言わず
      * 「検索語を短くする」しか出さなかった）。収録データに無い語があればそれを名指す

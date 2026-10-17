@@ -109,3 +109,28 @@ it("passes the actual filtered schedule count to the empty-state explanation", (
   );
   expect(received).toMatchObject({ ...filter, scheduleOnlyCount: 3 });
 });
+
+it("still says the typed venue is in the collection when only other venues' schedules match", () => {
+  const hint = deadlineHintFunction();
+  const input = {
+    ...filter,
+    query: "SIGCOMM",
+    queryMatch: { catalog: 12, journal: 0 },
+    termCounts: [{ term: "SIGCOMM", count: 12 }],
+    window: "all",
+    past: false,
+    cats: 0,
+    domestic: false,
+    online: false,
+    rank: "",
+    kind: "paper",
+    est: false,
+    scheduleOnlyCount: 2,
+  };
+  const text = hint(input);
+  // 主催の同じ会議の会期だけを並べて、打った会議その物が収録に無いように読ませない。
+  expect(text).toContain("検索語「SIGCOMM」は収録済みで 12 件に当たります");
+  expect(text).toContain("開催回が 2 件見つかりました");
+  expect(text.indexOf("収録済み")).toBeLessThan(text.indexOf("開催回が"));
+  expect(hint({ ...input, queryMatch: { catalog: 0, journal: 0 } })).not.toContain("収録済み");
+});
