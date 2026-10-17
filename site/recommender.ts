@@ -1431,7 +1431,7 @@ const Recommender = (() => {
     const fields: FieldScores = {
       acronym: overlapScore(title, conf.acronym),
       full_name: overlapScore(all, [conf.title, conf.full]),
-      scope: overlapScore(all, conf.scope),
+      scope: Math.max(0, ...conf.scope.map((topic) => overlapScore(all, [topic]))),
       tags: overlapScore(all, conf.tags),
       categories: overlapScore(catQuery, conf.categories),
       representative_papers: overlapScore(all, conf.papers),

@@ -51,7 +51,12 @@ export function venueLexicalScores(
   const queryPhrases = phrases(queryText);
   const documents = new Map<
     string,
-    { names: Set<string>; topics: Set<string>; phrases: Set<string> }
+    {
+      names: Set<string>;
+      topics: Set<string>;
+      phrases: Set<string>;
+      entries: Array<{ topics: Set<string>; phrases: Set<string> }>;
+    }
   >();
   for (const row of rows) {
     if (!row || typeof row !== "object" || !("conf" in row)) continue;
@@ -59,17 +64,18 @@ export function venueLexicalScores(
     const conf = row.conf as Record<string, unknown>;
     const key = typeof conf.key === "string" ? conf.key : "";
     if (!key || documents.has(key)) continue;
-    const topicText = [text(conf.scope), text(conf.official_scope), text(conf.keywords)].join(" ");
+    const entries = [conf.scope, conf.official_scope, conf.keywords]
+      .flatMap((value) => (Array.isArray(value) ? value.map(text) : [text(value)]))
+      .filter((entry) => entry.trim());
+    const topicText = entries.join(" ");
     documents.set(key, {
       names: new Set(terms([text(conf.title), text(conf.full_name), key].join(" "))),
       topics: new Set(terms(topicText)),
       phrases: phrases(topicText),
+      entries: entries.map((entry) => ({ topics: new Set(terms(entry)), phrases: phrases(entry) })),
     });
   }
   const frequency = new Map<string, number>();
-  const topicLengths = [...documents.values()].map((doc) => doc.topics.size).filter(Boolean);
-  const averageTopicLength =
-    topicLengths.reduce((sum, size) => sum + size, 0) / Math.max(1, topicLengths.length);
   for (const doc of documents.values())
     for (const word of new Set([...doc.names, ...doc.topics, ...doc.phrases]))
       frequency.set(word, (frequency.get(word) ?? 0) + 1);
@@ -81,26 +87,29 @@ export function venueLexicalScores(
           const count = frequency.get(word) ?? 0;
           return score + weight * Math.log(1 + (documents.size - count + 0.5) / (count + 0.5));
         }, 0);
-      const phraseScore = [...queryPhrases].reduce(
-        (score, phrase) =>
-          !doc.phrases.has(phrase)
-            ? score
-            : score +
-              4 *
-                Math.log(
-                  1 +
-                    (documents.size - (frequency.get(phrase) ?? 0) + 0.5) /
-                      ((frequency.get(phrase) ?? 0) + 0.5),
-                ),
+      const phraseScore = (entryPhrases: Set<string>) =>
+        [...queryPhrases].reduce(
+          (score, phrase) =>
+            !entryPhrases.has(phrase)
+              ? score
+              : score +
+                4 *
+                  Math.log(
+                    1 +
+                      (documents.size - (frequency.get(phrase) ?? 0) + 0.5) /
+                        ((frequency.get(phrase) ?? 0) + 0.5),
+                  ),
+          0,
+        );
+      // Each documented topic is judged on its own, so a long topic list neither
+      // collects scattered words nor is diluted by its length.
+      const topicScore = Math.max(
         0,
+        ...doc.entries.map((entry) => overlap(entry.topics, 2) + phraseScore(entry.phrases)),
       );
-      const topicNormalization = doc.topics.size
-        ? 0.25 + 0.75 * (doc.topics.size / averageTopicLength)
-        : 1;
       return [
         key,
-        overlap(new Set([...doc.names].filter((word) => nameQuery.has(word))), 1) +
-          (overlap(doc.topics, 2) + phraseScore) / topicNormalization,
+        overlap(new Set([...doc.names].filter((word) => nameQuery.has(word))), 1) + topicScore,
       ];
     }),
   );
