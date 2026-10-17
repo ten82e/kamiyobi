@@ -6460,6 +6460,14 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   /* てびきを開閉したら URL も揃える。閉じた `<details>` の中はブラウザのページ内検索に
    * 出ないので、開いた人一緒の画面をそのまま共有できるようにする（読み取り側は `readUrl`）。 */
   $("helpPanel").addEventListener("toggle", () => writeUrl());
+  // 上の入口から、てびきを開いてそこへ移る（開閉は上の toggle が URL に書く）。
+  $("helpJump").addEventListener("click", (e) => {
+    e.preventDefault();
+    const help = $("helpPanel") as HTMLDetailsElement;
+    help.open = true;
+    help.scrollIntoView({ block: "start" });
+    help.querySelector("summary")?.focus();
+  });
   $("more").addEventListener("click", drawMore);
   $("showAll").addEventListener("click", drawAll);
   // 0 件時の「条件をまとめて外す」。早め絞り込みのボタンは自分の条件だけを出し入れする

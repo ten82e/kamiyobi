@@ -213,3 +213,33 @@ it("marks only the existing fit and semantic-failure topics for recommendation m
   ]);
   expect(html.match(/id="helpPanel"/g) || []).toHaveLength(1);
 });
+
+it("締切一覧の Enter は何を開くかを名指す（行を押すと開く詳細と取り違えない）", () => {
+  const template = readFileSync(join(REPO_ROOT, "site", "template.html"), "utf8");
+  const hint =
+    /<span class="count-hint" id="deadlineResultHint">[\s\S]*?<\/span><\/span>/.exec(
+      template,
+    )?.[0] ?? "";
+  expect(hint, "締切一覧の案内が見つからない").not.toBe("");
+  // てびきと同じ言い方（「Enter で公式ページを開き、d で行の詳細を出します」）。
+  expect(hint).toContain("<kbd>Enter</kbd> 公式ページ");
+  expect(hint).toContain("<kbd>d</kbd> 詳細");
+  expect(hint).not.toContain("<kbd>Enter</kbd> 開く");
+  expect(template).toContain("<code>Enter</code> で公式ページを開き");
+});
+
+it("見方のてびきへの入口をページの上に置き、押すと開いてそこへ移る", () => {
+  const template = readFileSync(join(REPO_ROOT, "site", "template.html"), "utf8");
+  const link = template.indexOf('id="helpJump"');
+  expect(link, "てびきへの入口が無い").toBeGreaterThan(0);
+  // 入口は表より上（てびき本体は締切一覧では表の後ろにある）。
+  expect(link).toBeLessThan(template.indexOf('id="results"'));
+  expect(template).toMatch(/<a href="#helpPanel" id="helpJump">見方のてびきを開く/);
+  const app = siteRuntime();
+  const at = app.indexOf('$("helpJump").addEventListener("click"');
+  expect(at, "入口の動作が無い").toBeGreaterThan(0);
+  const 動作 = app.slice(at, at + 400);
+  expect(動作).toContain("help.open = true");
+  expect(動作).toContain("scrollIntoView");
+  expect(動作).toContain('querySelector("summary")');
+});
