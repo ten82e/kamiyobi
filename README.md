@@ -72,7 +72,7 @@ stdio の読み取り専用サーバです。外部への送信は行わない�
 
 `search_venues` と `recommend_venues` は `retrieval: "semantic"` で英日実モデルを使えます。`node src/prepare-models.ts` でモデルだけを `.cache/embedding-models` に準備できます。`--offline` を付けると外部接続せずに読込・推論を確認します。未準備ならエラーを返します。指定しない場合は従来の語彙検索です。
 
-`search_deadlines` は画面と同じ検索処理を使います。`scope: "screen"` は初期一覧、`scope: "all"` は収録全体です。初期一覧のファイルがない場合は全体へ切り替え、その旨を返します。
+`search_deadlines` は画面と同じ検索処理を使います。`scope: "screen"` は初期一覧（`catalog.json`）、`scope: "all"` は**収録の元データ**（`data/snapshot.json`）です。初期一覧のファイルがない場合は全体へ切り替え、その旨を返します。**件数を画面と比べるときは注意してください**: 公開している `data.json` は重複をまとめた後なので、`all` の行数はそれより多くなります（画面の「収録の全体を読み込む」が読むのは `data.json` の方です）。
 
 結果の `structuredContent` は `total`・`rows`・`next_offset` を持ちます。続きは同じ検索条件で `next_offset` の値を `offset` に指定します。日付のみの締切の `utc`・`jst` は `null` で、推定期間と確認状態も別に返します。検索の注意点はテキスト結果に含まれます。
 

@@ -6289,3 +6289,18 @@ it("窓の外の締切にも、カレンダーの UID が付く（第 1117 回�
   expect(行, `窓の外の版（${見本!.版}）が返らない`).toBeTruthy();
   expect(String(行!.ics_uid ?? ""), "窓の外の締切に UID が付かない").toBe(見本!.uid);
 });
+
+/* README は人（研究者）が読む。MCP の `scope` の説明が索引と道具の説明にだけ直って、
+ * README が古いままだと、**「収録の全体」という同じ語で違う数を答える**状態に戻る
+ * （第 55 回に直した型）。README の文が、実際に読んでいるファイルを名指しているかを見る。 */
+it("README の scope の説明が、実際に読んでいるファイルを名指している（第 1118 回）", async () => {
+  const 文 = await call("collection_stats", {});
+  const 出所 = /収録（([^）]+)）/.exec(文)?.[1] ?? "";
+  expect(出所, "collection_stats が収録の出所を名指していない").not.toBe("");
+  const readme = readFileSync(join(REPO_ROOT, "README.md"), "utf8");
+  const 行 = readme.split("\n").find((l) => l.includes('scope: "all"')) ?? "";
+  expect(行, "README に scope の説明が無い").not.toBe("");
+  expect(行, `README が ${出所} を名指していない`).toContain(出所);
+  /* 画面が読む物（公開の `data.json`）との違いも書いてある（数を比べる時のため）。 */
+  expect(行, "公開のデータと違う事を書いていない").toContain("data.json");
+});
