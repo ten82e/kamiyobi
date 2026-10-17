@@ -1,4 +1,4 @@
-import { spawn, spawnSync } from "node:child_process";
+import { spawn } from "node:child_process";
 import {
   copyFileSync,
   existsSync,
@@ -18,6 +18,9 @@ import { consolidateReviewedSubmissions } from "../site/submission-identity.ts";
 import { structuredDeadline } from "../src/mcp.ts";
 import { FILTER_RUNTIME_STUBS, site } from "./built_golden_shared.ts";
 import { REPO_ROOT, tempWork } from "./helpers.ts";
+/* 生成した台本は標準入力で渡す（Linux は argv の 1 値を 128KiB に限る – 第 917・944 回の
+ * 検査は 230KB を超え、CI でだけ起動に失敗していた）。`node -e` 以外はそのまま通る。 */
+import { spawnScript as spawnSync } from "./node_script.ts";
 import { jsFunction, siteRuntime, vmSafeSource } from "./runtime_extract.ts";
 
 function displayCandidates(data: Parameters<typeof Recommender.candidateRows>[0]) {
@@ -2958,20 +2961,10 @@ it("画面と MCP が、同じ問に同じ行を出す（第 917 回）", async 
       "const filterRows = filter();",
       "console.log(JSON.stringify([...new Set(filterRows.map((r) => r.ed.id))].sort()));",
     ].join("\n");
-    /* 台本は 230KB を超える。`node -e` の 1 引数に渡すと Linux の上限（1 引数 128KiB）で
-     * 起動その物が失敗し、CI でだけ落ちていた（2026-10-17 の PR #962 で実測 – macOS は
-     * 上限が緩く通る）。台本はファイルに書き、小さな起動役が**スクリプトとして**走らせる
-     * （モジュールとして走らせるとトップレベルの宣言が `new Function` から見えない）。 */
-    const scriptFile = join(tmpdir(), `kamiyobi-screen-probe-${process.pid}.js`);
-    writeFileSync(scriptFile, script);
-    const 起動役 =
-      "globalThis.require = require; require('node:vm').runInThisContext(" +
-      "require('node:fs').readFileSync(process.argv[1], 'utf8'), { filename: 'screen-probe.js' });";
-    const proc = spawnSync("node", ["-e", 起動役, scriptFile], {
+    const proc = spawnSync("node", ["-e", vmSafeSource(script)], {
       encoding: "utf8",
       timeout: 120_000,
     });
-    rmSync(scriptFile, { force: true });
     expect(
       proc.status,
       `畫面の絞り込みが動かない（${問}）: ${(proc.stderr ?? String(proc.error)).slice(0, 300)}`,
