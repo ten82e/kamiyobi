@@ -46,9 +46,10 @@ jobs:
       - run: npm test
   real-embedding-models:
     runs-on: ubuntu-latest
-    # 手順の制限（25 分）をジョブの制限より短くする。ジョブごと打ち切られると cancelled に
+    # 手順の制限（45 分）をジョブの制限より短くする。実モデルの検査ファイルが増え、25 分では
+    # 最後まで走らなかった（2026-10-17 の PR #963 で実測: 25 分で時間切れ）。ジョブごと打ち切られると cancelled に
     # なり、下の手順の「失敗しても先へ進める」設定が効かずに必須の判定を塞ぐ（2026-10-17 実測: 20 分で打ち切り）。
-    timeout-minutes: 30
+    timeout-minutes: 50
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with: { persist-credentials: false }
@@ -68,7 +69,7 @@ jobs:
       - name: Generate and verify English and Japanese embeddings with real models
         id: models
         continue-on-error: true
-        timeout-minutes: 25
+        timeout-minutes: 45
         run: npm run test:models
       - name: Show real-model result (not required)
         if: ${{ always() }}
