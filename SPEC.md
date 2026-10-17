@@ -529,6 +529,12 @@ slot は `kind`・`round`・正規化した非汎用 `track` で識別し、異�
 | **同じ源** | `at_utc` が完全一致し、かつ空白と大小文字を正規化した `label` も一致 |
 
 この時刻幅は `exact` 同士に適用する。
+
+label から読んだ track が食い違っても、異なる源の 2 件が次をすべて満たすときは同じ slot として畳む。
+どちらの源も此の `kind` の締切を 1 件しか持たない、`exact` 同士で差が 60 秒未満、
+少なくとも片方が汎用 label（"Paper submission" など）。
+`23:59:00` と `23:59:59` の丸め違いで、"Technical Papers Abstract" と "Abstract submission" が 2 行並ぶのを防ぐ。
+ERA と SEIP のように両方がトラック名のものは畳まない。
 `date-only` 同士は `local_date` が同じ場合に畳む。
 `exact` と `date-only` は exact が date-only の不確実性区間内にある場合に同一の締切として精度差に畳み、
 exact を採用して双方の evidence を保持する。区間外なら競合として保持する。

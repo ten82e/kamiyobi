@@ -913,6 +913,32 @@ function sameGenericSubmissionSlot(left: Deadline, right: Deadline): boolean {
   return isGenericSubmissionLabel(left.label, kind) && isGenericSubmissionLabel(right.label, kind);
 }
 
+/**
+ * 源ごとに此の kind の締切を 1 件しか持たず、exact 同士で 1 分未満しか違わず、片方が
+ * 汎用 label なら、もう片方の書き方（"Technical Papers Abstract" と "Abstract submission"
+ * など）が違っても同じ締切である。ERA と SEIP のように両方がトラック名なら畳まない。23:59:00 と 23:59:59 の丸め違いで同じ締切が 2 行並んでいた。
+ */
+function sameMinuteSoleDeadline(
+  held: Deadline,
+  incoming: Deadline,
+  origins: Set<string>,
+  source: string,
+  heldPerSource: Map<string, number>,
+): boolean {
+  if (held.track?.trim() || incoming.track?.trim()) return false;
+  const kind = normLabel(held.kind || "other");
+  if (
+    !isGenericSubmissionLabel(held.label, kind) &&
+    !isGenericSubmissionLabel(incoming.label, kind)
+  )
+    return false;
+  if (!isExactDeadline(held) || !isExactDeadline(incoming)) return false;
+  if (Math.abs(held.at_utc.getTime() - incoming.at_utc.getTime()) >= 60_000) return false;
+  return [...origins, source].every(
+    (name) => (heldPerSource.get(`${name}\u0000${incoming.kind}`) ?? 0) === 1,
+  );
+}
+
 /** Re-apply the SPEC.md 3.6 fold after roll-forward. */
 export function dedupDeadlinesAfterRollforward(
   confs: Conference[],
@@ -967,7 +993,9 @@ function dedupDeadlines(
       const sameSource = origins.has(source);
       if (
         deadlineSlotKey(held) !== deadlineSlotKey(deadline) &&
-        (sameSource || !sameGenericSubmissionSlot(held, deadline))
+        (sameSource ||
+          (!sameGenericSubmissionSlot(held, deadline) &&
+            !sameMinuteSoleDeadline(held, deadline, origins, source, heldPerSource)))
       )
         continue;
       const gap =

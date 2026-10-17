@@ -1552,6 +1552,37 @@ describe("merge_sources", () => {
     },
   );
 
+  it("folds a verbose sole label and a terse sole label one rounding second apart", () => {
+    const local = sigcomm("local", [
+      makeDeadline("abstract", "Technical Papers Abstract", utc(2026, 9, 21, 11, 59, 0)),
+      makeDeadline(
+        "paper",
+        "Paper submission deadline (main/special sessions)",
+        utc(2026, 9, 24, 11, 59, 0),
+      ),
+    ]);
+    const ccf = sigcomm("ccfddl", [
+      makeDeadline("abstract", "Abstract submission", utc(2026, 9, 21, 11, 59, 59)),
+      makeDeadline("paper", "Paper submission", utc(2026, 9, 24, 11, 59, 59)),
+    ]);
+    const dls = deadlinesOf(mergeSources([[local], [ccf]], PRIORITY)[0]);
+    expect(dls.map((d) => [d.kind, d.label])).toEqual([
+      ["abstract", "Technical Papers Abstract"],
+      ["paper", "Paper submission deadline (main/special sessions)"],
+    ]);
+  });
+
+  it("keeps differently labelled deadlines apart when a source files several of that kind", () => {
+    const local = sigcomm("local", [
+      makeDeadline("paper", "Technical Papers", utc(2026, 9, 24, 11, 59, 0)),
+      makeDeadline("paper", "Industry Track", utc(2026, 9, 24, 11, 59, 0)),
+    ]);
+    const ccf = sigcomm("ccfddl", [
+      makeDeadline("paper", "Workshop Papers", utc(2026, 9, 24, 11, 59, 59)),
+    ]);
+    expect(deadlinesOf(mergeSources([[local], [ccf]], PRIORITY)[0])).toHaveLength(3);
+  });
+
   it("one source filing several tracks at one instant keeps them all", () => {
     const at = utc(2026, 4, 21, 22, 0, 0);
     const conf = sigcomm("aideadlines", [
