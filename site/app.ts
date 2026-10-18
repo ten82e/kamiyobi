@@ -5268,6 +5268,20 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     }
   }
 
+  /* 締切一覧で、既定から絞っている条件が 1 つでも入っているか（件数欄を開くかの判断）。 */
+  function deadlineFiltersOnJa(): boolean {
+    return Boolean(
+      state.kind ||
+        state.rank ||
+        state.cats.length ||
+        state.domestic ||
+        state.online ||
+        state.est ||
+        state.past ||
+        (state.win && state.win !== "all"),
+    );
+  }
+
   function renderActiveFilters(): void {
     const box = $("activeFilters");
     /* この札の列は締切一覧のための物で、推薦モードでは箱ごと隠す。推薦モードだけの条件
@@ -5652,7 +5666,16 @@ function semanticOutput(value: unknown): value is SemanticOutput {
      * 詳しい内訳は `#count` に残す。 */
     $("resultSummary").hidden = false;
     $("resultSummary").textContent = recMode ? cnt : `締切の検索結果 ${countJa(shown.length)} 件`;
-    $("resultNotes").toggleAttribute("open", shown.length === 0 || Boolean(state.q.trim()));
+    /* 件数欄（絞りの内訳）は、0 件のとき・検索語があるとき・**絞り込みが入っているとき**に
+     * 開く。絞った時にこそ「何件をのぞいたか」を読む物で、既定のまま開けても長い文が増える
+     * だけ（2026-10-18 実測: ランクを「A*」にすると 41 件になるが、訳の
+     * 「評価「A*」を持たない行 142 件」は畳まれた中に在って読めなかった）。 */
+    $("resultNotes").toggleAttribute(
+      "open",
+      shown.length === 0 ||
+        Boolean(state.q.trim()) ||
+        (state.mode === "deadlines" && deadlineFiltersOnJa()),
+    );
     if (shown.length === 0) ($("dataScope") as HTMLDetailsElement).open = true;
     $("count").textContent = cnt;
     $("count").setAttribute("data-semantic-state", semState);
