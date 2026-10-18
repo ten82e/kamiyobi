@@ -1461,6 +1461,7 @@ it("推薦画面の印刷見出しは、用紙に載る枚数と候補の総数�
     "describeFilters",
     "recommendationList",
     "recommendExcludedClosed",
+    "recommendFitMatches",
     "readPaperInput",
   ];
   const used = names.filter((name) =>
@@ -1491,6 +1492,7 @@ it("推薦画面の印刷見出しは、用紙に載る枚数と候補の総数�
       describeFilters: () => "",
       recommendationList: { length: total },
       recommendExcludedClosed: 0,
+      recommendFitMatches: 0,
     };
     class FixedDate extends Date {
       static now() {

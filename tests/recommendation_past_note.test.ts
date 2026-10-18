@@ -251,6 +251,7 @@ function 描いた文(excluded: number, excludedRank = 0): string[] {
      const valueElement = () => ({ value: "Distributed Systems" });
      ${件数の関数}
      let recommendExcludedClosed = ${excluded};
+     let recommendFitMatches = 0;
      ${描く関数}
      renderRecommendationCards([], 0);
      shown;`,
@@ -273,6 +274,7 @@ function 紙に刷る文(excluded: number, order = "fit", paper = "", rank = "")
   return runInNewContext(
     `let recommendationList = [], cardsDrawn = 0;
      let recommendExcludedClosed = ${excluded};
+     let recommendFitMatches = 0;
      const state = { mode: "recommend", win: "all", order: ${JSON.stringify(order)}, rank: ${JSON.stringify(rank)} };
      const DATA = {};
      /* 用紙の見出しは論文の題名も読む（どの論文の候補かを紙に残す – 2026-10-18）。 */

@@ -2700,6 +2700,9 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   let recommendExcludedClosed = 0;
   /* 推薦モードのランクの絞り込みで外した件数（同上）。 */
   let recommendExcludedRank = 0;
+  /* 締切の一覧で、論文に合う行に印を付けた数（`filter()` が数え、件数欄と印刷物が読む –
+   * 札は行ごとに付くが、一覧のどこに何行あるかは数えないと分からない）。 */
+  let recommendFitMatches = 0;
 
   function categoryCounts(): Record<string, number> {
     return catFacetCounts;
@@ -2862,6 +2865,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     venueLookupMiss = pLines.length && Rec ? Rec.unmatchedVenues(pLines, rows) : [];
     recommendExcludedClosed = 0;
     recommendExcludedRank = 0;
+    recommendFitMatches = 0;
     const venueCats = [...new Set([...(state.cats || []), ...detectedVenueCats, ...autoCats])];
 
     // 論文モードおよび常時受付モード: 未来締切 + 常時受付ジャーナル + 未来締切の無い会議の過去代表行
@@ -3098,6 +3102,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         const 索引 = new Map(
           一致.map((recommendation) => [recommendation.venueKey, recommendation]),
         );
+        recommendFitMatches = 一致.length;
         out = out.map((row) => {
           const hit = 索引.get(row.conf.key);
           if (!hit) return row;
@@ -5546,6 +5551,13 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         );
       }
       if (parts.length) cnt += ` ｜ のぞく: ${parts.join("・")}`;
+      /* 論文を入れているときは、その論文に合う行が何行あるかも書く（行ごとの札だけでは、
+       * 一覧のどこに何行あるかは分からない）。 */
+      if (recommendFitMatches) {
+        const fitNote = ` ｜ この論文に合う行 ${countJa(recommendFitMatches)} 件（一致評価の札）`;
+        cnt += fitNote;
+        cntLive += fitNote;
+      }
       /* 会期情報がある開催回の件数。これまでは表が 0 件のときにだけ
        * 出していたので、表に 1 行でも出た人は「これで全部だ」と受け取ってしまう
        * （2026-09-23 実測: 「研究会」は表 16 件に対し会期だけの該当 28 件、
@@ -5761,7 +5773,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       "open",
       shown.length === 0 ||
         Boolean(state.q.trim()) ||
-        (state.mode === "deadlines" && deadlineFiltersOnJa()),
+        (state.mode === "deadlines" && (deadlineFiltersOnJa() || recommendFitMatches > 0)),
     );
     if (shown.length === 0) ($("dataScope") as HTMLDetailsElement).open = true;
     $("count").textContent = cnt;
@@ -7377,7 +7389,14 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         winLabel,
         { key: sortKey, asc: sortAsc },
         sortColumnLabel,
-      )}` + ` ／ 表示 ${countJa(shown.length)} 件${printedTail}。${printLegendJa()}`;
+      )}` +
+      ` ／ 表示 ${countJa(shown.length)} 件` +
+      /* 論文を入れているときは、その論文に合う行の数も紙に書く（札は行ごとに付くが、
+       * 紙の上では数えにくい）。 */
+      (recommendFitMatches
+        ? ` ／ この論文に合う行 ${countJa(recommendFitMatches)} 件（一致評価の札）`
+        : "") +
+      `${printedTail}。${printLegendJa()}`;
   }
   window.addEventListener("beforeprint", () => {
     /* 推薦画面も表と同じ扱い: 用紙には候補を全部載せる。ここが表の枝にしか無く、

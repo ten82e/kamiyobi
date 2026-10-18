@@ -2264,6 +2264,8 @@ it("投稿先を探す画面で印刷すると、紙に出る但し書きが実�
       /* 推薦の候補から締切が過ぎた会議を外した数（この検査は既定＝外していない側を見る。
        * 外したときの但し書きは recommendation_past_note.test.ts が見る）。 */
       "let recommendExcludedClosed = 0;",
+      /* 締切の一覧の「論文に合う行」の数（この検査は 0 で見る）。 */
+      "let recommendFitMatches = 0;",
       `let state = { mode: ${JSON.stringify(mode)}, win: '30d', kind: '', cats: [], rank: '', past: false };`,
       // 条件の書き下ろしに渡すラベル関数（この検査は describeFilters をスタブにするので
       // 呼ばれないが、名前だけは必要）。語の正本は注入済みの Recommender 側にある。
@@ -4390,6 +4392,8 @@ it("「評価なし」で印刷すると、紙の条件にも同じ語が出る�
     "const sortColumnLabel = (k) => ({ date: '日時（JST）', rem: '残り', event: '会期' })[k] || '';",
     "let shown = [null, null];",
     "let state = { mode: 'deadlines', q: 'HPC', win: '30d', kind: '', rank: 'N', est: false, domestic: false, online: false, past: false, cats: [] };",
+    /* 締切の一覧の「論文に合う行」の数（この検査は 0 で見る）。 */
+    "let recommendFitMatches = 0;",
     // 印刷の但し書きは本物の 3 関数を繋いで走らせる（配線を確かめるため）。
     jsFunction(app, "rankFilterLabelJa"),
     jsFunction(app, "describeFilters"),

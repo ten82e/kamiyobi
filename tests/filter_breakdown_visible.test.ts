@@ -34,9 +34,15 @@ it("絞り込みを入れたら、件数欄を開いて「のぞいた数」を�
   ] as Array<[string, unknown]>) {
     expect(判定({ ...素, [名]: 値 }), `${名} を入れても開かない`).toBe(true);
   }
+  /* 論文を入れているときは、合う行の数も件数欄と紙に書く（行ごとの札だけでは、一覧の
+   * どこに何行あるかは分からない）。数えるのは締切の一覧の枝だけ。 */
+  expect(app, "件数欄に合う行の数を書いていない").toContain("この論文に合う行");
+  expect(app, "合う行の数を数えていない").toContain("recommendFitMatches = 一致.length;");
+  expect(app, "合う行が在っても件数欄を開かない").toContain("recommendFitMatches > 0");
+
   /* 画面の組み立ても、この判定を通して開いている（条件を書き写していない）。 */
   expect(app, "件数欄の開閉が判定を通していない").toContain(
-    '(state.mode === "deadlines" && deadlineFiltersOnJa())',
+    '(state.mode === "deadlines" && (deadlineFiltersOnJa() || recommendFitMatches > 0))',
   );
   expect(app, "0 件のときに開かない").toContain("shown.length === 0 ||");
   expect(app, "検索語があるときに開かない").toContain("Boolean(state.q.trim()) ||");
