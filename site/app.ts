@@ -4858,6 +4858,21 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     return order === "deadline" ? " ｜ 並び順: 締切が近い順（日付の無い候補は後ろ）" : "";
   }
 
+  /* 推薦のカードに出す残り（`あと N 日`）。一覧の「残り」列と**同じ数え方**を使う:
+   * 時刻のある締切だけを `remain` で数え、日付だけの締切（時刻未確認）は数えない
+   * （一覧の「残り」列も、日付だけの行には日数を出さず「時刻未確認」と書いている）。
+   * 並びを「締切が近い順」にしたとき、どれが近いかをカードだけで読めるようにする。 */
+  function recommendationRemainingJa(
+    availability: { status?: string; timestamp?: number | null } | null | undefined,
+  ): { text: string; cls: string } | null {
+    const status = availability?.status;
+    if (status !== "open" && status !== "uncertain") return null;
+    const stamp = availability?.timestamp;
+    if (typeof stamp !== "number" || !Number.isFinite(stamp)) return null;
+    const 残り = remain(stamp);
+    return 残り.text && 残り.text !== "―" ? 残り : null;
+  }
+
   /* 外した件数を候補の数の隣で言う（黙って消さない – 画面の他の絞り込みと同じ約束）。
    * 外す入口の名前をそのまま書く（条件を外す場所を探させない）。 */
   function recommendationExcludedNoteJa(count: number): string {
@@ -4973,6 +4988,15 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     fit.className = "tag match";
     fit.textContent = `一致評価 ${r._fitLabel || "評価保留"}`;
     meta.appendChild(fit);
+    /* 残りは一覧の「残り」列と同じ語で、一致評価の札の隣に出す（一覧も残りが左端）。
+     * 日付を読んで今日から数えるのは利用者の仕事にしない。 */
+    const remaining = recommendationRemainingJa(r._availability);
+    if (remaining) {
+      const left = document.createElement("span");
+      left.className = `tag ${remaining.cls}`.trim();
+      left.textContent = remaining.text;
+      meta.appendChild(left);
+    }
     const availability = document.createElement("span");
     availability.className = "tag";
     availability.textContent = recommendationAvailability(r);

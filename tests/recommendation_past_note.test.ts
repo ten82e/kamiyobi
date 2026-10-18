@@ -126,6 +126,61 @@ it("入口と繋がりが画面にある（チェック欄・状態・URL・候�
   expect(source, "届かない札を足している").not.toContain('label: "締切が過ぎた候補を除く"');
 });
 
+/* カードの残り（`あと N 日`）は、一覧の「残り」列と同じ数え方にする。
+ * 時刻のある締切だけを数え、日付だけの締切（時刻未確認）は数えない。 */
+const 残りの関数 = 切り出す("  function remain(", "  // Paper Text Matching Score");
+const カード残りの関数 = 切り出す(
+  "  function recommendationRemainingJa(",
+  "  /* 外した件数を候補の数の隣で言う",
+);
+const DAY = 86400000;
+const NOW = Date.parse("2026-10-18T05:00:00Z");
+const カードの残り = (() => {
+  class FixedDate extends Date {
+    static now() {
+      return NOW;
+    }
+  }
+  return runInNewContext(
+    `const DAY = ${DAY};\n${残りの関数}\n${カード残りの関数}\nrecommendationRemainingJa;`,
+    { Date: FixedDate },
+  ) as (availability: unknown) => { text: string; cls: string } | null;
+})();
+
+it("カードの残りは、時刻のある締切だけを一覧と同じ語で数える", () => {
+  expect(カードの残り({ status: "open", timestamp: NOW + 3 * DAY })?.text).toBe("あと 3 日");
+  expect(カードの残り({ status: "open", timestamp: NOW + 2 * 3600000 })?.text).toBe("あと 2 時間");
+  expect(カードの残り({ status: "uncertain", timestamp: NOW + 40 * DAY })?.text).toBe("あと 40 日");
+  expect(
+    カードの残り({ status: "open", timestamp: NOW + 40 * DAY })?.cls,
+    "14 日より先に「そろそろ」の印を付けている",
+  ).toBe("");
+  expect(カードの残り({ status: "open", timestamp: NOW + 3 * DAY })?.cls).toBe("soon");
+});
+
+it("日付だけの締切・過ぎた締切・日付の無い候補には残りを出さない", () => {
+  /* 一覧の「残り」列も、日付だけの行には日数を出さず「時刻未確認」と書いている。 */
+  expect(カードの残り({ status: "open", local_date: "2026-10-23", timestamp: null })).toBeNull();
+  expect(カードの残り({ status: "past", timestamp: NOW - DAY })).toBeNull();
+  expect(カードの残り({ status: "ongoing", timestamp: null })).toBeNull();
+  expect(カードの残り({ status: "unknown" })).toBeNull();
+  expect(カードの残り(undefined)).toBeNull();
+  expect(カードの残り({})).toBeNull();
+});
+
+it("カードが残りを一致評価の隣に出す（一覧と同じく残りを先に読む）", () => {
+  const template = readFileSync(new URL("../site/template.html", import.meta.url), "utf8");
+  for (const 色 of [".tag.soon {", ".tag.today {"])
+    expect(template, `残りの色が無い: ${色}`).toContain(色);
+  const カード = source.slice(source.indexOf("  function makeRecommendationCard("));
+  expect(カード, "カードが残りを出していない").toContain(
+    "const remaining = recommendationRemainingJa(r._availability);",
+  );
+  expect(カード, "残りが一致評価の札より後ろにある").toMatch(
+    /recommendationRemainingJa\(r\._availability\)[\s\S]*?meta\.appendChild\(left\)[\s\S]*?availability\.className = "tag";/,
+  );
+});
+
 /* 候補が 0 件になった画面の文は、原因（語が重ならない / 外した）で変える。
  * カードを描く関数そのものを切り出して動かす（文を書き写すと実装とズレる）。 */
 const 描く関数 = 切り出す("  function renderRecommendationCards(", "  const TABLE_SCROLL_LABEL_JA");
