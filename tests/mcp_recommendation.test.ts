@@ -77,6 +77,8 @@ interface Reply {
     content: Array<{ text: string }>;
     structuredContent?: {
       total: number;
+      candidate_venues: number;
+      ignored_filters: string[];
       offset: number;
       limit: number;
       returned: number;
@@ -127,6 +129,47 @@ const input = [
   venue("gpu-memory", "GPU memory", "gpu memory management"),
   venue("gpu-kernels", "GPU kernels", "gpu kernel optimization"),
 ];
+
+it.each(
+  ["search_venues", "recommend_venues"].flatMap((tool) =>
+    ["GPU parallel programming", "GPUの並列プログラミング"].map((text) => ({ tool, text })),
+  ),
+)("reports ignored category filters for $tool ($text)", ({ tool, text }) => {
+  const root = sandbox([
+    venue("gpu-systems", "GPU parallel programming systems", "gpu parallel programming"),
+    venue("gpu-db", "GPU parallel programming databases", "gpu parallel programming", ["db"]),
+  ]);
+  try {
+    const args = { [tool === "search_venues" ? "query" : "paper"]: text, limit: 5 };
+    const filters = [
+      { category: "db" },
+      { categories: ["db"] },
+      { category: "systems", categories: ["db"] },
+    ];
+    const replies = callSequence(
+      root,
+      [args, ...filters.map((filter) => ({ ...args, ...filter }))],
+      tool,
+    );
+    const baseline = replies[0].result!;
+    expect(baseline.isError).not.toBe(true);
+    expect(baseline.structuredContent!.candidate_venues).toBe(2);
+    expect(baseline.structuredContent!.total).toBe(2);
+    expect(baseline.structuredContent!.ignored_filters).toEqual([]);
+    for (const [index, filter] of filters.entries()) {
+      const result = replies[index + 1].result!;
+      expect(result.isError).not.toBe(true);
+      expect(result.structuredContent!.ignored_filters).toEqual(Object.keys(filter));
+      expect(result.structuredContent!.candidate_venues).toBe(2);
+      expect(result.structuredContent!.rows).toEqual(baseline.structuredContent!.rows);
+      expect(result.content.map((block) => block.text).join("\n")).toContain(
+        `無視した絞り込み ${Object.keys(filter).join("・")}`,
+      );
+    }
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
 
 describe("MCP recommendation results with independent raw fixtures", () => {
   it("reports missing retrieval history even when cached axes claim fresh", () => {

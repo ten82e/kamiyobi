@@ -2850,6 +2850,8 @@ async function recommendVenues(
     "kinds",
     "kind",
     "rank",
+    "category",
+    "categories",
     "domestic",
     "online",
   ].filter((k) => args[k] !== undefined && args[k] !== null && String(args[k]).trim() !== "");
