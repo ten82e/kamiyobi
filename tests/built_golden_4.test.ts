@@ -126,6 +126,8 @@ it("印刷した紙が、紙に出る語を紙の説明だけで読ませる（S
     `const { default: Recommender } = await import(${JSON.stringify(`file://${join(site, "recommender.js")}`)});`,
     `const DATA = JSON.parse(readFileSync(${JSON.stringify(join(site, "data.json"))}, 'utf8'));`,
     jsFunction(app, "printLegendJa"),
+    /* 論文を入れていない紙では「一致評価」の札の説明を刷らない（0 で見る）。 */
+    "const recommendFitMatches = 0;",
     "const legend = printLegendJa();",
     "const now = Date.parse('2026-08-09T00:00:00Z');",
     "const rows = Recommender.candidateRows(DATA, now);",
@@ -280,6 +282,8 @@ it("紙に刷られない語を、紙の但し書きが説明していない（S
     `const DATA = JSON.parse(readFileSync(${JSON.stringify(join(site, "data.json"))}, 'utf8'));`,
     verificationLabelsSource(),
     jsFunction(app, "printLegendJa"),
+    /* 論文を入れていない紙では「一致評価」の札の説明を刷らない（0 で見る）。 */
+    "const recommendFitMatches = 0;",
     "const legend = printLegendJa();",
     "const now = Date.parse('2026-08-09T00:00:00Z');",
     "const cr = String.fromCharCode(13, 10);",
@@ -1568,7 +1572,7 @@ it("印刷の但し書きは「公式表記」列の実物を説明している�
   const legend = (
     new Function(
       "Recommender",
-      `${verificationLabelsSource()}\n${jsFunction(app, "printLegendJa")}\nreturn printLegendJa;`,
+      `${verificationLabelsSource()}\nconst recommendFitMatches = 0;\n${jsFunction(app, "printLegendJa")}\nreturn printLegendJa;`,
     )(R) as () => string
   )();
   const built = R.candidateRows(

@@ -3102,10 +3102,14 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         const 索引 = new Map(
           一致.map((recommendation) => [recommendation.venueKey, recommendation]),
         );
-        recommendFitMatches = 一致.length;
+        /* 数えるのは**行**（会場の数ではない）。同じ会場の複数の締切（概要と論文、複数
+         * ラウンド）にも同じ印が付くので、会場の数とは違う（実測 2026-10-18: 会場 18・
+         * 行 25）。 */
+        let 印を付けた = 0;
         out = out.map((row) => {
           const hit = 索引.get(row.conf.key);
           if (!hit) return row;
+          印を付けた += 1;
           return {
             ...row,
             _boosted: hit.boosted,
@@ -3116,6 +3120,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
             _availability: hit.availability,
           };
         });
+        recommendFitMatches = 印を付けた;
       }
     }
 
@@ -7319,6 +7324,13 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       // 「状態」が空欄の行は注記が無いという意味（2026-08-09 実測: 既定の印刷対象 478 行の
       // うち 189 行が空欄で、その 189 行はランク・会期・開催地の列にも空欄が無かった）。
       "「状態」が空欄の行は、この行に注記がない行です",
+      /* 論文を入れたまま印刷すると、締切の一覧の行にも「一致評価」の札が刷られる。
+       * **出る時だけ**説明を足す（この用紙の表記は「必ず刷られる語」だけ、が約束）。 */
+      ...(recommendFitMatches
+        ? [
+            "「一致評価」の札は、入力した論文とその会議の一致の強さの区分です（受付の状態ではなく、点数を足した物でもありません）",
+          ]
+        : []),
       Recommender.aoeMeaningJa(),
     ];
     return `この用紙の表記: ${parts.join("。")}。`;

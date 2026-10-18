@@ -37,8 +37,17 @@ it("絞り込みを入れたら、件数欄を開いて「のぞいた数」を�
   /* 論文を入れているときは、合う行の数も件数欄と紙に書く（行ごとの札だけでは、一覧の
    * どこに何行あるかは分からない）。数えるのは締切の一覧の枝だけ。 */
   expect(app, "件数欄に合う行の数を書いていない").toContain("この論文に合う行");
-  expect(app, "合う行の数を数えていない").toContain("recommendFitMatches = 一致.length;");
+  /* 数えるのは行（会場ではない – 同じ会場の複数の締切にも同じ印が付く）。 */
+  expect(app, "合う行の数を数えていない").toContain("recommendFitMatches = 印を付けた;");
+  expect(app, "印を会場の数で数えている").toContain("印を付けた += 1;");
   expect(app, "合う行が在っても件数欄を開かない").toContain("recommendFitMatches > 0");
+
+  /* 紙に刷られる「一致評価」の札も、出る時だけ説明する（この用紙の表記は「必ず刷られる語」
+   * だけ、が約束）。 */
+  expect(app, "紙の札の説明が無い").toContain(
+    "「一致評価」の札は、入力した論文とその会議の一致の強さの区分",
+  );
+  expect(app, "札が出ない紙にも説明を刷っている").toContain("...(recommendFitMatches");
 
   /* 画面の組み立ても、この判定を通して開いている（条件を書き写していない）。 */
   expect(app, "件数欄の開閉が判定を通していない").toContain(

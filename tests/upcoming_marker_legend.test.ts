@@ -123,7 +123,7 @@ ${labelNames.map((n) => `      ${n}: () => ${JSON.stringify(labelValue(rec, n))}
     };`;
     const legend = new Function(
       "VERIFICATION_STATUS_LABELS",
-      `${stub}\nreturn (${jsFunction(app, "printLegendJa")});`,
+      `const recommendFitMatches = 0;\n${stub}\nreturn (${jsFunction(app, "printLegendJa")});`,
     )(verificationLabelsSource())();
     // 「…行です」の語尾を「…です」に直したので、繋がって読める。
     expect(legend).toContain("収録元が無いと決めた意味ではない）です");
