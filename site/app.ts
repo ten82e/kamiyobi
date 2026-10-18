@@ -2408,6 +2408,8 @@ function semanticOutput(value: unknown): value is SemanticOutput {
    * 意図した絞り込みが外れた画面を相手に見せる（送った人は自分が映った画面を信じている）。
    * 種別だけ特別扱いしていたのは、他の値でも同じ問題が起きるのに気づけていなかったから。 */
   let urlNotices: string[] = [];
+  /* ランクの断り（推薦モードでも出す – ランクは両方の画面の欄だから）。 */
+  let urlRankNotice = "";
 
   function urlFlagJa(raw: unknown): { on: boolean; readable: boolean } {
     const value = String(raw == null ? "" : raw)
@@ -5606,6 +5608,12 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       cnt += noticeText;
       cntLive += noticeText;
     }
+    /* 推薦モードでも、ランクの欄に無い値は落とした事を言う（欄が在る画面で黙らない）。 */
+    if (recMode && urlRankNotice) {
+      const noticeText = ` ｜ ${urlRankNotice}`;
+      cnt += noticeText;
+      cntLive += noticeText;
+    }
     if (
       !recMode &&
       fullRecordNeeded(state.past, state.win, fullRecordRequested) &&
@@ -6099,6 +6107,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     // 案内は読み取りのつど作り直す（項目を集めたあとで初期化すると、最初に集めた分が
     // 消える。2026-09-23 に実発生）。
     urlNotices = [];
+    urlRankNotice = "";
     const rawMode = p.get("mode");
     state.mode = rawMode === "recommend" ? "recommend" : "deadlines";
     if (rawMode && rawMode !== "recommend" && rawMode !== "deadlines") {
@@ -6112,7 +6121,10 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     // 許す値は選択肢の正本と同じ（書き写すと URL だけ通る値が生まれる）。
     state.rank = RANK_GRADE_OPTIONS.indexOf(rawRank || "") >= 0 ? rawRank || "" : "";
     if (rawRank && !state.rank) {
-      urlNotices.push(urlValueNoticeJa("ランク", rawRank, "ランクの絞り込みは外れています"));
+      /* ランクは推薦モードにも欄が在るので、断りも両方の画面で出す（締切の一覧の
+       * `urlNotices` は締切向けの条件をまとめて出す物で、推薦モードでは出さない）。 */
+      urlRankNotice = urlValueNoticeJa("ランク", rawRank, "ランクの絞り込みは外れています");
+      urlNotices.push(urlRankNotice);
     }
     const rawWin = p.get("win");
     // 受け付ける値はセレクトの選択肢と表裏一体にする（選択肢に無い値を通すと、その値で

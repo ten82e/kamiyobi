@@ -49,6 +49,11 @@ it("絞り込みを入れたら、件数欄を開いて「のぞいた数」を�
   );
   expect(app, "札が出ない紙にも説明を刷っている").toContain("...(recommendFitMatches");
 
+  /* 選択肢に無いランクを URL から受け取ったときの断りは、推薦モードでも出す
+   * （ランクは両方の画面の欄なので、片方で黙らない）。 */
+  expect(app, "ランクの断りを覚えていない").toContain("urlRankNotice = urlValueNoticeJa(");
+  expect(app, "推薦モードで黙っている").toContain("if (recMode && urlRankNotice)");
+
   /* 画面の組み立ても、この判定を通して開いている（条件を書き写していない）。 */
   expect(app, "件数欄の開閉が判定を通していない").toContain(
     '(state.mode === "deadlines" && (deadlineFiltersOnJa() || recommendFitMatches > 0))',
