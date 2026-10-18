@@ -87,7 +87,7 @@ function renderer() {
     "Recommender",
     "document",
     "$",
-    `return (${jsFunction(runtime, "renderNextMeetingNote")});`,
+    `${jsFunction(runtime, "fillScheduleOnlyList")}\n    return (${jsFunction(runtime, "renderNextMeetingNote")});`,
   )(Recommender, document, () => box);
   return { box, render };
 }

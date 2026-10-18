@@ -1014,6 +1014,18 @@ footer a:hover { text-decoration: underline; }
   }
 }
 
+/* 表の下に置く「投稿締切が未収録の開催回」（会期だけ分かっている物）。 */
+.schedule-only-panel {
+  margin: 14px 0 0;
+  padding: 10px 12px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  background: var(--panel);
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+.schedule-only-panel > summary { cursor: pointer; font-weight: 600; color: var(--fg); }
+.schedule-only-panel[hidden] { display: none; }
 .schedule-only-list { margin: 8px 0; padding-left: 1.5em; text-align: left; }
 .schedule-only-list li { margin: 6px 0; }
 </style>
@@ -1302,6 +1314,14 @@ footer a:hover { text-decoration: underline; }
     </table>
   </div>
 
+  <!-- 表に出ない（投稿締切が未収録の）開催回は、件数だけ言っても行き先に迷う。表に 1 行でも
+       出ているときは、会期だけ分かっている物をここに折りたたんで置く
+       （0 件の画面は `#emptyMeeting` が同じ一覧を出す – 中身は app.js の同じ関数）。 -->
+  <details class="schedule-only-panel" id="scheduleOnlyPanel" hidden>
+    <summary id="scheduleOnlySummary">投稿締切が未収録の開催回</summary>
+    <div id="scheduleOnlyBody"></div>
+  </details>
+
   <div id="recommendationRetryStatus" class="scrollhint" aria-live="polite" hidden>
     <span id="recommendationRetryNote"></span>
     <button id="recommendationRetry" type="button">推薦データの読み込みを再試行</button>
@@ -1547,7 +1567,7 @@ footer a:hover { text-decoration: underline; }
       </div>
       <div>
         <dt>会期情報あり・投稿締切未収録</dt>
-        <dd>投稿締切が未収録の開催回は、締切一覧には出ません。直近の会期は<a href="upcoming.html" title="生成時点から一定期間の一覧です。期間外の開催回は載りません。"><code>upcoming.html</code></a>で確認できます。検索結果が0件でも、同じ条件で会期情報が見つかればその場に案内します。締切一覧に行がある場合も、件数欄に「会期情報がある開催回」の件数を併記します。月のみ判明・日付未確認・未発表の区別は会期の表示で確認してください。期間の指定は会期に適用します。情報があれば、行の詳細の「今後の会期」に別の開催回も表示します。</dd>
+        <dd>投稿締切が未収録の開催回は、締切一覧（表）には出ません。表に 1 行でも出ているときは、<strong>表の下に「投稿締切が未収録の開催回」の一覧</strong>を折りたたんで置きます（会期だけ分かっている物です）。検索結果が0件のときは、同じ条件で会期情報が見つかればその場に案内します。どちらの場合も、件数欄に「会期情報がある開催回」の件数を併記します。直近の会期は<a href="upcoming.html" title="生成時点から一定期間の一覧です。期間外の開催回は載りません。"><code>upcoming.html</code></a>でも確認できます。月のみ判明・日付未確認・未発表の区別は会期の表示で確認してください。期間の指定は会期に適用します。情報があれば、行の詳細の「今後の会期」に別の開催回も表示します。</dd>
       </div>
       <div>
         <dt>ランク</dt>

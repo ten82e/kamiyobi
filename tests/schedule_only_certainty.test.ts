@@ -96,7 +96,7 @@ function render(rows: ReturnType<typeof matches>) {
     "document",
     "$",
     "rows",
-    `${jsFunction(runtime, "renderNextMeetingNote")}\nrenderNextMeetingNote(rows);`,
+    `${jsFunction(runtime, "fillScheduleOnlyList")}\n${jsFunction(runtime, "renderNextMeetingNote")}\nrenderNextMeetingNote(rows);`,
   )(Recommender, document, () => box, rows);
   return box;
 }

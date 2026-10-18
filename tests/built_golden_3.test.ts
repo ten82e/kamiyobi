@@ -112,13 +112,13 @@ it("表に行が出ていても、会期だけ確定の該当件数が件数欄�
        * 表に出ない開催回を「件数だけ」言われても、どこで見るか分からない。 */
       for (const text of [counts.cnt, ...(shown.length ? [counts.cntLive] : [])]) {
         expect(text).toContain(`会期情報がある開催回 ${schedules.length} 件`);
-        expect(text, "行き先（upcoming.html）を書いていない").toContain(
-          "（投稿締切は未収録。upcoming.html に載せています）",
+        expect(text, "行き先（下の一覧）を書いていない").toContain(
+          "（投稿締切は未収録。会期だけの一覧も下に出しています）",
         );
         expect(text.match(/会期情報がある開催回/g)).toHaveLength(1);
       }
       /* 0 件の画面の読み上げは、短い形のまま（60 字の上限は zero_schedule_notice が見る）。 */
-      if (!shown.length) expect(counts.cntLive).not.toContain("upcoming.html");
+      if (!shown.length) expect(counts.cntLive).not.toContain("会期だけの一覧");
     }
     const empty = summarize(shown, [], Recommender, String);
     expect(empty.cnt).not.toContain("会期情報がある開催回");

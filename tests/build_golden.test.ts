@@ -4406,6 +4406,7 @@ it("the next-meeting note formats the schedule-only edition for a Japanese reade
     "const document = { createElement: (tag) => ({ tagName: tag, textContent: '', href: '', target: '', rel: '', appendChild(node) { this.textContent += node.textContent || ''; } }), createTextNode: (text) => ({ textContent: text }) };",
     "const $ = () => box;",
     jsFunction(siteRuntime("app.js"), "scheduleOnlyMatches"),
+    jsFunction(siteRuntime("app.js"), "fillScheduleOnlyList"),
     jsFunction(siteRuntime("app.js"), "renderNextMeetingNote"),
     // 数え上げ（`scheduleOnlyMatches`）と文の組み立て（`renderNextMeetingNote`）を
     // 実際に繋いで動かす（画面と同じ繋ぎ方）。

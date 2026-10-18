@@ -4008,13 +4008,16 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       .sort((a, b) => a.eventStart.localeCompare(b.eventStart)) as unknown as ScheduleOnlyMatch[];
   }
 
-  function renderNextMeetingNote(matches: ScheduleOnlyMatch[], limit = 3): void {
-    const box = $("emptyMeeting");
-    if (!box) return;
-    box.textContent = "";
-    box.hidden = true;
+  /* 会期だけ分かっている開催回（投稿締切が未収録の物）の一覧を、渡された箱に描く。
+   * 0 件の画面（`#emptyMeeting`）と、表の下の折りたたみ（`#scheduleOnlyBody`）が同じ物を使う
+   * （同じ情報を 2 通りの書き方で出さない – 語も並びもここが正本）。 */
+  function fillScheduleOnlyList(
+    box: HTMLElement,
+    matches: ScheduleOnlyMatch[],
+    limit: number,
+  ): number {
     const found = matches.slice(0, limit);
-    if (!found.length) return;
+    if (!found.length) return 0;
     const lead = document.createElement("strong");
     lead.textContent = "投稿締切が未収録の開催回:";
     box.appendChild(lead);
@@ -4054,7 +4057,8 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       more.className = "filter-remove";
       more.textContent = `残り ${(matches.length - found.length).toLocaleString("ja-JP")} 開催回を表示`;
       more.addEventListener("click", () => {
-        renderNextMeetingNote(matches, matches.length);
+        box.textContent = "";
+        fillScheduleOnlyList(box, matches, matches.length);
         box.tabIndex = -1;
         box.focus();
       });
@@ -4066,7 +4070,36 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     upcoming.textContent = "直近の締切と会期の一覧";
     upcoming.title = "生成時点から一定期間の一覧です。期間外の開催回は載りません。";
     box.appendChild(upcoming);
+    return found.length;
+  }
+
+  function renderNextMeetingNote(matches: ScheduleOnlyMatch[], limit = 3): void {
+    const box = $("emptyMeeting");
+    if (!box) return;
+    box.textContent = "";
+    box.hidden = true;
+    if (!fillScheduleOnlyList(box, matches, limit)) return;
     box.hidden = false;
+  }
+
+  /* 表に行が出ているときも、投稿締切が未収録の開催回（会期だけ分かっている物）を
+   * 折りたたみで表の下に置く。件数だけ言われても、その会がどこにあるか分からず、
+   * `upcoming.html` を開いても絞り込めない（2026-10-18 に実測した行き止まり）。
+   * 表が 0 件のときは `#emptyMeeting` が同じ一覧を出すので、こちらは隠す。 */
+  function renderScheduleOnlyPanel(matches: ScheduleOnlyMatch[]): void {
+    const panel = $("scheduleOnlyPanel") as HTMLDetailsElement | null;
+    const summary = $("scheduleOnlySummary");
+    const body = $("scheduleOnlyBody");
+    if (!panel || !summary || !body) return;
+    body.textContent = "";
+    if (!matches.length) {
+      panel.hidden = true;
+      panel.open = false;
+      return;
+    }
+    summary.textContent = `投稿締切が未収録の開催回（会期だけ分かっている物）${countJa(matches.length)} 件`;
+    fillScheduleOnlyList(body, matches, 3);
+    panel.hidden = false;
   }
 
   /** 0 件時に「条件をまとめて外す」を出すべきか（既に全部外れていれば出さない）。 */
@@ -5360,7 +5393,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
        * （2026-09-23 実測: 「研究会」は表 16 件に対し会期だけの該当 28 件、
        * 「ネットワーク」は 39 件に対し 31 件が画面に出ていなかった）。 */
       if (scheduleOnly.length) {
-        const scheduleNote = ` ｜ 会期情報がある開催回 ${countJa(scheduleOnly.length)} 件（投稿締切は未収録。upcoming.html に載せています）`;
+        const scheduleNote = ` ｜ 会期情報がある開催回 ${countJa(scheduleOnly.length)} 件（投稿締切は未収録。会期だけの一覧も下に出しています）`;
         cnt += scheduleNote;
         if (shown.length) cntLive += scheduleNote;
       }
@@ -5655,6 +5688,9 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       $("deadlineTableWrap").hidden = true;
       $("recommendationCards").hidden = false;
       $("empty").hidden = true;
+      /* 会期だけの一覧は締切の一覧の物（推薦の画面には出さない）。 */
+      const schedulePanel = $("scheduleOnlyPanel");
+      if (schedulePanel) schedulePanel.hidden = true;
       renderRecommendationCards(paperMode ? shown : []);
       // 件数欄は総数を出すので、打ち切ったぶんは「さらに表示」に載せ直す
       // （数の言い切りと画面の食い違いを残さない）。
@@ -5681,6 +5717,9 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         $("empty").hidden = true;
       }
       drawMore();
+      /* 行が出ていても、投稿締切が未収録の開催回は件数にしか出ない。その一覧を表の下に
+       * 置く（0 件の画面では `#emptyMeeting` が同じ物を出すので、こちらは隠れる）。 */
+      renderScheduleOnlyPanel(shown.length ? scheduleOnly : []);
     }
     syncTableScroll();
     updatePresetActive();

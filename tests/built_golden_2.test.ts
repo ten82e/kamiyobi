@@ -2270,6 +2270,7 @@ it("会期だけの会の案内と行の詳細の開催地は、表と同じ書�
   expect(runtime).not.toContain(`＠\${m.place}`);
   expect(runtime).not.toContain(`＠\${next.place}`);
   const noteSrc = jsFunction(runtime, "renderNextMeetingNote");
+  const fillNoteSrc = jsFunction(runtime, "fillScheduleOnlyList");
   const matchSrc = jsFunction(runtime, "scheduleOnlyMatches");
   const limitSrc = jsFunction(runtime, "windowLimitMs");
   // 会期の書き方は recommender.js の正本へ移したので、この検査は import した本物を使う。
@@ -2304,6 +2305,7 @@ it("会期だけの会の案内と行の詳細の開催地は、表と同じ書�
     `${limitSrc}`,
     `${rangeSrc}`,
     `${matchSrc}`,
+    `${fillNoteSrc}`,
     `${noteSrc}`,
     "renderNextMeetingNote(scheduleOnlyMatches({ window: 'all', cats: [], domestic: false, online: false }));",
     "const flat = (n) => (n.textContent || '') + n.children.map(flat).join('');",
@@ -2322,6 +2324,59 @@ it("会期だけの会の案内と行の詳細の開催地は、表と同じ書�
   expect(out.titles, "原表記をどこにも残していない").toContain("Kyoto, Japan");
   // 会期の書き方も表と同じ（暦日 + 曜日）。
   expect(out.text).toContain("2026-09-30(水)");
+});
+
+it("表に行が出ていても、投稿締切が未収録の開催回は表の下の一覧に出す（SPEC §7）", () => {
+  /* 件数だけ言われても、その会がどこにあるか分からず、`upcoming.html` を開いても
+   * 絞り込めない（2026-10-18 に実測した行き止まり）。0 件の画面と同じ一覧を、
+   * 表の下の折りたたみにも出す。中身は同じ関数（`fillScheduleOnlyList`）が描く。 */
+  const runtime = siteRuntime();
+  const panelSrc = jsFunction(runtime, "renderScheduleOnlyPanel");
+  const fillSrc = jsFunction(runtime, "fillScheduleOnlyList");
+  const script = [
+    "(async () => {",
+    `const { default: Recommender } = await import(${JSON.stringify(`file://${join(site, "recommender.js")}`)});`,
+    "function node(text) { return { textContent: text || '', title: '', tag: 'span', hidden: false, open: false, children: [], appendChild(c) { this.children.push(c); return c; } }; }",
+    "const panel = node(); panel.hidden = true; panel.open = true;",
+    "const summary = node();",
+    "const body = node();",
+    "const document = { createElement: (tag) => { const n = node(); n.tag = tag; return n; }, createTextNode: (t) => node(t) };",
+    "const $ = (id) => id === 'scheduleOnlyPanel' ? panel : id === 'scheduleOnlySummary' ? summary : id === 'scheduleOnlyBody' ? body : null;",
+    "const countJa = (n) => String(n);",
+    `${fillSrc}`,
+    `${panelSrc}`,
+    "const matches = [{ name: 'Demo Conf', year: 2026, link: 'https://example.org/', place: 'Kyoto, Japan',",
+    "  eventStart: '2026-09-30', eventEnd: '2026-10-02', eventDatePrecision: 'exact-range', eventSegments: [] }];",
+    "renderScheduleOnlyPanel(matches);",
+    "const flat = (n) => (n.textContent || '') + n.children.map(flat).join('');",
+    "const on = { hidden: panel.hidden, summary: summary.textContent, text: flat(body) };",
+    "panel.hidden = false; panel.open = true; body.textContent = ''; body.children = [];",
+    "renderScheduleOnlyPanel([]);",
+    "const off = { hidden: panel.hidden, open: panel.open };",
+    "console.log(JSON.stringify({ on, off }));",
+    "})();",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", script], { encoding: "utf8", timeout: 60_000 });
+  expect(proc.status, proc.stderr).toBe(0);
+  const out = JSON.parse(proc.stdout) as {
+    on: { hidden: boolean; summary: string; text: string };
+    off: { hidden: boolean; open: boolean };
+  };
+  expect(out.on.hidden, "表に行が出ているとき、会期だけの一覧を出していない").toBe(false);
+  expect(out.on.summary, "見出しに件数が無い").toContain("投稿締切が未収録の開催回");
+  expect(out.on.summary).toContain("（会期だけ分かっている物）1 件");
+  expect(out.on.text, "会期が表と同じ書き方で出ていない").toContain("2026-09-30(水)");
+  expect(out.on.text).toContain("Demo Conf");
+  expect(out.on.text, "開催地が表と同じ書き方で出ていない").toContain("＠Kyoto, 日本");
+  expect(out.off.hidden, "当たりが無いのに一覧を残している").toBe(true);
+  expect(out.off.open, "当たりが無いのに折りたたみを開いたままにしている").toBe(false);
+  /* 画面の組み立てから呼ばれ、推薦の画面では隠れる。 */
+  expect(runtime, "表の下の一覧を組み立てていない").toContain(
+    "renderScheduleOnlyPanel(shown.length ? scheduleOnly : []);",
+  );
+  expect(runtime, "推薦の画面に会期だけの一覧を残している").toContain(
+    'const schedulePanel = $("scheduleOnlyPanel");',
+  );
 });
 
 it("日本開催の行は、開催地の市区郡・会場を日本語で打つとその行に出会える（SPEC §7）", () => {
