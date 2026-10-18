@@ -568,6 +568,21 @@ it("collection_stats が、収録その物の数とファイルを返す（第 7
   const 數 = (收錄.conferences ?? []).length;
   expect(text, "会議の数が収録と合はん").toContain(`会議 ${數} 件`);
 
+  /* 画面の「収録状況」が名乗っている集まり（穴場・国内研究会）も、AI に名指す。
+   * 数は会議のタグから数える（画面と同じ数え方）ので、その場で数えて突き合わせる。 */
+  const 會議々 = (收錄.conferences ?? []) as Array<{ tags?: unknown[] }>;
+  const 集まりの數 = (鍵: string) =>
+    會議々.filter((c) => (Array.isArray(c.tags) ? c.tags : []).map(String).indexOf(鍵) >= 0).length;
+  expect(集まりの數("niche"), "この検查の前提（穴場が収録にある）が崩れた").toBeGreaterThan(0);
+  expect(text, "穴場の数を返していない").toContain(`穴場 ${集まりの數("niche")}`);
+  expect(text, "国内研究会の数を返していない").toContain(
+    `国内研究会・国内シンポジウム ${集まりの數("domestic-jp")}`,
+  );
+  expect(text, "その語で引ける事を書いていない").toContain("検索語としても引けます");
+  /* 名指した語は本当に引ける（`search_deadlines` に渡して行が出る）。 */
+  const 穴場 = await call("search_deadlines", { query: "穴場", limit: 1, scope: "all" });
+  expect(穴場, "穴場が検索語として引けない（案内が空振り）").not.toContain("0 件");
+
   const 全ての版 = ((收錄.conferences ?? []) as Array<{ editions?: unknown[] }>).flatMap(
     (c) => (c.editions ?? []) as Array<{ deadlines?: unknown[] }>,
   );

@@ -2691,6 +2691,29 @@ function collectionStats(args: Record<string, unknown> = {}, now: number): strin
         .map(([k, n]) => `${Recommender.categoryLabelJa(k) ?? k} ${n}`);
       return [`分野別の会議数（多い順・会議 1 件は複数の分野に数える）: ${並び.join("・")}`];
     })(),
+    /* 画面の「収録状況」が数えている集まり（穴場・国内研究会）と同じ集まりを、AI にも
+     * 名指す。**その語が検索語になる**ので、数を言うだけでは足りない（2026-10-18:
+     * 収録の規模は返していたが、画面が名乗っている穴場の集まりと引き方が無かった）。 */
+    ...((): string[] => {
+      const 集まり: Array<[string, string]> = [
+        ["niche", "穴場"],
+        ["domestic-jp", "国内研究会・国内シンポジウム"],
+        ["workshop", "ワークショップ"],
+        ["journal", "常時受付（ジャーナル）"],
+      ];
+      const 會議 = (收錄.conferences ?? []) as Array<{ tags?: unknown }>;
+      const 數 = 集まり
+        .map(([鍵, 名]) => {
+          const n = 會議.filter((c) => (Array.isArray(c.tags) ? c.tags : []).indexOf(鍵) >= 0).length;
+          return n ? `${名} ${n}` : "";
+        })
+        .filter(Boolean);
+      if (!數.length) return [];
+      return [
+        `集まり別の会議数（多い順ではなく、画面の「収録状況」と同じ数え方。会議 1 件は複数のタグに数えます）: ${數.join("・")}`,
+        "これらの語は検索語としても引けます（`search_deadlines` の `query` に「穴場」を渡すと、穴場の会議の締切が出ます）。タグその物は data.json の conferences[].tags に在ります。",
+      ];
+    })(),
     ...ソースの狀態(),
     ...(古さ ? ["", 古さ] : []),
     "",
