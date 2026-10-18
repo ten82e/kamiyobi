@@ -1851,6 +1851,23 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     rankSel.appendChild(opt);
   });
   rankSel.title = RANK_FILTER_NOTE_JA;
+  /* 推薦モードのランクの絞り込みも同じ選択肢（値は `data` の grade のまま。URL の `rank` を
+   * 共用する）。未設定なら何もしない（テンプレートに欄が無い版でも動くように）。 */
+  const recRankSel = document.getElementById("recRank") as HTMLSelectElement | null;
+  if (recRankSel) {
+    const optAll = document.createElement("option");
+    optAll.value = "";
+    optAll.textContent = "すべて";
+    recRankSel.appendChild(optAll);
+    RANK_GRADE_OPTIONS.forEach((r) => {
+      const opt = document.createElement("option");
+      opt.value = r;
+      opt.textContent = rankFilterLabelJa(r);
+      opt.title = r === "N" ? RANK_UNRATED_TITLE_JA : RANK_FILTER_NOTE_JA;
+      recRankSel.appendChild(opt);
+    });
+    recRankSel.title = RANK_FILTER_NOTE_JA;
+  }
 
   // ---- DATA FLATTENING ----
   function buildRows(data: Catalog): AppRow[] {
@@ -2639,6 +2656,8 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   /* 「締切が過ぎた候補を除く」で候補から外した件数（`filter()` が数え、件数欄と 0 件の
    * 案内が読む。黙って消さない – 画面の他の絞り込みと同じ約束）。 */
   let recommendExcludedClosed = 0;
+  /* 推薦モードのランクの絞り込みで外した件数（同上）。 */
+  let recommendExcludedRank = 0;
 
   function categoryCounts(): Record<string, number> {
     return catFacetCounts;
@@ -2798,6 +2817,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     // 検索対象 863 行に RTSS は 0 行。候補は 44 件出るので、画面は動いている）。
     venueLookupMiss = pLines.length && Rec ? Rec.unmatchedVenues(pLines, rows) : [];
     recommendExcludedClosed = 0;
+    recommendExcludedRank = 0;
     const venueCats = [...new Set([...(state.cats || []), ...detectedVenueCats, ...autoCats])];
 
     // 論文モードおよび常時受付モード: 未来締切 + 常時受付ジャーナル + 未来締切の無い会議の過去代表行
@@ -2815,9 +2835,10 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       pool = rows.concat(Rec.journalRows(activeData.conferences, now));
     }
 
-    // 推薦モード（論文入力あり）では締切画面用の絞り込みを一切適用しない。
-    // 検索・種別・ランク・期間・推定・過去に加え、分野チップ・国内・オンラインも
-    // このモードでは非表示なので適用しない（効かない制御を残さない）。
+    // 推薦モード（論文入力あり）では締切画面用の絞り込みを適用しない（検索・種別・期間・
+    // 推定・過去・分野チップ・国内・オンラインは非表示なので効かせない）。ただし**ランク**は
+    // 推薦モードにも欄があり（「ランク」）、候補に掛ける（下の推薦の枝で `rankMatches`）。
+    // 同じ `state.rank` を両方の欄が映すので、モードを切り替えても条件が揃う。
     // 分野は絞らず `venueCats` によるスコアの寄せにだけ使う。
     // pool は既に未来締切 + 常時受付ジャーナル + 過去代表行で構成済み。
     const inRecommend = state.mode === "recommend" && pLines.length > 0;
@@ -2998,6 +3019,14 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       if (state.openOnly) {
         const kept = withoutClosedCandidates(out);
         recommendExcludedClosed = out.length - kept.length;
+        out = kept;
+      }
+      /* ランクの絞り込み（任意）。締切一覧の「ランク」と同じ値・同じ判定を使い、
+       * 推薦モードでは候補に掛ける（`filter()` の締切一覧用の判定は推薦モードでは
+       * 効かないようにしてある）。 */
+      if (state.rank && Rec) {
+        const kept = out.filter((row) => Rec.rankMatches(row.rankPairs, state.rank));
+        recommendExcludedRank = out.length - kept.length;
         out = kept;
       }
       /* 並べ替えは最後に一度だけ（外した数は一致順の候補から数える）。 */
@@ -4919,6 +4948,12 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     return 残り.text && 残り.text !== "―" ? 残り : null;
   }
 
+  /* ランクの絞り込みで外した件数。外す入口（「ランク」と「すべて」）をそのまま書く。 */
+  function recommendationRankExcludedNoteJa(count: number, rank: string): string {
+    if (!count || !rank) return "";
+    return ` ｜ ランク「${rankFilterLabelJa(rank)}」の候補 ${countJa(count)} 件を除いています（「ランク」を「すべて」に戻すと出ます）`;
+  }
+
   /* 外した件数を候補の数の隣で言う（黙って消さない – 画面の他の絞り込みと同じ約束）。
    * 外す入口の名前をそのまま書く（条件を外す場所を探させない）。 */
   function recommendationExcludedNoteJa(count: number): string {
@@ -5160,6 +5195,24 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       // 実際に打てる手（論文の情報量、入力形式の見本）だけを書く。
       /* 締切が過ぎた候補を外した結果 0 件になったなら、その事を先に言う（「語と重なる
        * 投稿先が無い」と読むと、打ち直しに走って候補の存在に気づけない）。 */
+      /* 0 件の理由を、効いている絞り込みの名指しで書く（片方だけなら、その入口を名指す。
+       * 両方なら両方を書く – 片方だけを直しても出ないため）。 */
+      if (recommendExcludedRank && recommendExcludedClosed) {
+        line(
+          cards,
+          `絞り込みで 0 件でした（ランク「${rankFilterLabelJa(state.rank)}」の候補 ${countJa(recommendExcludedRank)} 件・締切が過ぎた会議 ${countJa(recommendExcludedClosed)} 件を除いています）。「ランク」を「すべて」に戻すか「締切が過ぎた候補を除く」を外すと出ます。`,
+          "recommendation-card",
+        );
+        return;
+      }
+      if (recommendExcludedRank) {
+        line(
+          cards,
+          `ランク「${rankFilterLabelJa(state.rank)}」では 0 件でした（「ランク」を「すべて」に戻すと ${countJa(recommendExcludedRank)} 件出ます）。`,
+          "recommendation-card",
+        );
+        return;
+      }
       if (recommendExcludedClosed) {
         line(
           cards,
@@ -5485,6 +5538,11 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       if (excludedNote) {
         cnt += excludedNote;
         cntLive += excludedNote;
+      }
+      const rankExcludedNote = recommendationRankExcludedNoteJa(recommendExcludedRank, state.rank);
+      if (rankExcludedNote) {
+        cnt += rankExcludedNote;
+        cntLive += rankExcludedNote;
       }
       const orderNote = recommendationOrderNoteJa(state.order);
       if (orderNote) {
@@ -6055,6 +6113,9 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     valueElement("q").value = state.q;
     valueElement("kind").value = state.kind;
     valueElement("rank").value = state.rank;
+    /* 推薦モードのランク欄は同じ状態を映す（片方だけ古い値になると、欄と結果が食い違う）。 */
+    const recRankSel = document.getElementById("recRank") as HTMLSelectElement | null;
+    if (recRankSel) recRankSel.value = state.rank;
     valueElement("win").value = state.win;
     inputElement("est").checked = state.est;
     inputElement("domestic").checked = state.domestic;
@@ -6071,7 +6132,13 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   function fromForm() {
     state.q = valueElement("q").value;
     state.kind = valueElement("kind").value;
-    state.rank = valueElement("rank").value;
+    /* ランクは締切一覧と推薦の両方の欄が持つ（同じ `state.rank`）。見えている方の欄を読む
+     * （隠れた欄の古い値を読むと、触っていない条件が戻る）。 */
+    {
+      const recRankSel = document.getElementById("recRank") as HTMLSelectElement | null;
+      state.rank =
+        state.mode === "recommend" && recRankSel ? recRankSel.value : valueElement("rank").value;
+    }
     state.win = valueElement("win").value;
     state.est = inputElement("est").checked;
     state.domestic = inputElement("domestic").checked;
@@ -6704,11 +6771,22 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     apply();
     scheduleSemantic();
   });
-  ["kind", "rank", "win", "est", "domestic", "online", "past", "openOnly", "recOrder"].forEach(
-    (id) => {
-      $(id).addEventListener("change", apply);
-    },
-  );
+  /* 条件の欄（種別・ランク・期間・チェック・推薦モードの並び順とランク）は、変えたら
+   * すぐ適用する。推薦モードの 2 つも同じ経路（`fromForm` が見えている欄を読む）。 */
+  [
+    "kind",
+    "rank",
+    "win",
+    "est",
+    "domestic",
+    "online",
+    "past",
+    "openOnly",
+    "recOrder",
+    "recRank",
+  ].forEach((id) => {
+    $(id).addEventListener("change", apply);
+  });
   catsBox.addEventListener("change", apply);
   /* てびきを開閉したら URL も揃える。閉じた `<details>` の中はブラウザのページ内検索に
    * 出ないので、開いた人一緒の画面をそのまま共有できるようにする（読み取り側は `readUrl`）。 */

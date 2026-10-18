@@ -32,7 +32,7 @@ const resetStart = source.indexOf('  $("paperReset").addEventListener');
 const resetEnd = source.indexOf('  $("reset").addEventListener', resetStart);
 if (resetStart < 0 || resetEnd < 0) throw new Error("paper reset handler not found");
 const swapStart = source.indexOf('  document.querySelectorAll<HTMLElement>(".sample-btn")');
-const swapEnd = source.indexOf('  ["kind", "rank", "win",', swapStart);
+const swapEnd = source.indexOf("  /* 条件の欄（", swapStart);
 if (swapStart < 0 || swapEnd < 0) throw new Error("paper swap handlers not found");
 const swapHandlers = stripTypeScriptTypes(source.slice(swapStart, swapEnd));
 const sample = {

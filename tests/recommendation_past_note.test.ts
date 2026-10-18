@@ -113,7 +113,7 @@ it("入口と繋がりが画面にある（チェック欄・状態・URL・候�
     'state.openOnly = inputElement("openOnly").checked;',
     'p.set("open", "1")',
     'p.get("open")',
-    '"past", "openOnly"',
+    '"openOnly",',
   ])
     expect(source, `画面の繋がりが無い: ${繋がり}`).toContain(繋がり);
   expect(source, "候補を絞っていない").toContain("const kept = withoutClosedCandidates(out);");
@@ -229,12 +229,15 @@ it("カードが残りを一致評価の隣に出す（一覧と同じく残り�
 /* 候補が 0 件になった画面の文は、原因（語が重ならない / 外した）で変える。
  * カードを描く関数そのものを切り出して動かす（文を書き写すと実装とズレる）。 */
 const 描く関数 = 切り出す("  function renderRecommendationCards(", "  const TABLE_SCROLL_LABEL_JA");
-function 描いた文(excluded: number): string[] {
+function 描いた文(excluded: number, excludedRank = 0): string[] {
   const shown: string[] = [];
   const cards = { textContent: "", appendChild: () => {} };
   return runInNewContext(
     `let recommendationList = [], cardsDrawn = 0;
+     let recommendExcludedRank = ${excludedRank};
+     const state = { rank: ${JSON.stringify(excludedRank ? "A*" : "")} };
      const recommendationData = {};
+     const rankFilterLabelJa = (grade) => grade;
      const line = (_parent, text) => shown.push(String(text));
      const makeRecommendationCard = () => ({});
      const $ = () => cards;
@@ -353,6 +356,47 @@ it("既定の並びでは何も足さず、締切が近い順のときだけ件�
   expect(note, "日付の無い候補の行き先を書く").toContain("日付の無い候補は後ろ");
 });
 
+/* 推薦モードのランクの絞り込み（`state.rank` を共用）。 */
+const ランク外し案内の関数 = 切り出す(
+  "  function recommendationRankExcludedNoteJa(",
+  "  /* 外した件数を候補の数の隣で言う",
+);
+const ランク外し案内 = runInNewContext(
+  `${件数の関数}\n${ランク外し案内の関数}\nrecommendationRankExcludedNoteJa;`,
+  { rankFilterLabelJa: (grade: string) => (grade === "N" ? "評価なし" : grade) },
+) as (count: number, rank: string) => string;
+
+it("ランクで外した候補の件数を、外す入口の名前そのままで言う", () => {
+  const note = ランク外し案内(12, "A*");
+  expect(note).toContain("ランク「A*」の候補 12 件を除いています");
+  expect(note, "戻し方を書いていない").toContain("「ランク」を「すべて」に戻すと出ます");
+  expect(ランク外し案内(12, "N")).toContain("ランク「評価なし」");
+  expect(ランク外し案内(0, "A*"), "外していないのに断っている").toBe("");
+  expect(ランク外し案内(12, ""), "ランクが無いのに断っている").toBe("");
+});
+
+it("ランクの絞り込みが、画面と URL に繋がっている", () => {
+  const template = readFileSync(new URL("../site/template.html", import.meta.url), "utf8");
+  expect(template, "推薦モードにランクの欄が無い").toContain('id="recRank"');
+  expect(template, "ランクの欄が推薦モードの外にある").toMatch(
+    /<div class="recommend-only"[\s\S]*id="recRank"[\s\S]*?<textarea id="paperText"/,
+  );
+  for (const 繋がり of [
+    "if (recRankSel) recRankSel.value = state.rank;",
+    'state.mode === "recommend" && recRankSel',
+    '"recRank",',
+    "Rec.rankMatches(row.rankPairs, state.rank)",
+    "recommendExcludedRank = out.length - kept.length;",
+    "recommendationRankExcludedNoteJa(",
+  ])
+    expect(source, `画面の繋がりが無い: ${繋がり}`).toContain(繋がり);
+  /* 0 件の案内はランクの絞り込みも見る（文言その物ではなく、外した件数を読む式で見る）。 */
+  const 零件の案内 = source.slice(source.indexOf("if (recommendExcludedRank) {"));
+  expect(零件の案内, "0 件の案内がランクの絞り込みを無視している").toContain(
+    "countJa(recommendExcludedRank)",
+  );
+});
+
 it("並び順の入口が画面と URL に繋がっている", () => {
   const template = readFileSync(new URL("../site/template.html", import.meta.url), "utf8");
   expect(template, "並び順の選択欄が無い").toContain('id="recOrder"');
@@ -366,7 +410,8 @@ it("並び順の入口が画面と URL に繋がっている", () => {
     'state.order = valueElement("recOrder").value === "deadline" ? "deadline" : "fit";',
     'p.set("order", "deadline")',
     'p.get("order")',
-    '"past", "openOnly", "recOrder"',
+    '"openOnly",',
+    '"recOrder",',
     'if (state.order === "deadline") out = orderCandidatesByDeadline(out);',
     "const orderNote = recommendationOrderNoteJa(state.order);",
   ])
@@ -384,4 +429,14 @@ it("0 件の画面は、外した結果なら外した数を言う（語が重�
   const 重ならない = 描いた文(0).join(" ");
   expect(重ならない).toContain("この論文の語と重なる投稿先が見つかりませんでした");
   expect(重ならない).not.toContain("除くと 0 件");
+  /* ランクだけで 0 件になったときは、ランクの欄を名指す。 */
+  const ランクだけ = 描いた文(0, 7).join(" ");
+  expect(ランクだけ).toContain("ランク「A*」では 0 件でした");
+  expect(ランクだけ).toContain("「ランク」を「すべて」に戻すと 7 件出ます");
+  expect(ランクだけ, "締切の方を名指している").not.toContain("締切が過ぎた候補を除く");
+  /* 両方で 0 件なら、両方を名指す（片方だけ直しても出ない）。 */
+  const 両方 = 描いた文(5, 7).join(" ");
+  expect(両方).toContain("ランク「A*」の候補 7 件");
+  expect(両方).toContain("締切が過ぎた会議 5 件");
+  expect(両方).toContain("「ランク」を「すべて」に戻すか「締切が過ぎた候補を除く」を外すと出ます");
 });

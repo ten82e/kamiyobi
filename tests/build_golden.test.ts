@@ -3081,15 +3081,20 @@ it("recommendation filter ignores deadline-only state", () => {
     "const deadline = filter().length;",
     "state.mode = 'recommend';",
     "paper.value = 'topic';",
+    /* 締切一覧だけの条件（検索・分野・種別・期間・国内など）は推薦モードでは効かない。 */
+    "state.rank = '';",
     "const recommend = filter().length;",
-    "console.log(deadline + '|' + recommend);",
+    /* ランクだけは 2026-10-18 から推薦モードにも欄があり、候補に効く（同じ `state.rank`）。 */
+    "state.rank = 'A';",
+    "const recommendRanked = filter().length;",
+    "console.log(deadline + '|' + recommend + '|' + recommendRanked);",
   ].join("\n");
   const proc = spawnSync("node", ["-e", vmSafeSource(script)], {
     encoding: "utf8",
     timeout: 60_000,
   });
   expect(proc.status, proc.stderr).toBe(0);
-  expect(proc.stdout.trim()).toBe("1|2");
+  expect(proc.stdout.trim()).toBe("1|2|1");
 });
 
 it("列見出しは並び替えの目印（aria-sort と語尾の矢印）を持つ（キーで押せることは別の検査で見る・SPEC §7）", () => {
