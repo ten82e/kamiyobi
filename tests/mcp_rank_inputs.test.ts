@@ -52,6 +52,7 @@ interface Reply {
     scope?: string;
     generated_at?: string;
     candidate_venues?: number;
+    ignored_filters?: string[];
     rows?: Array<{ venue_key: string }>;
     scope_comparison?: {
       scope: string;
@@ -176,20 +177,38 @@ it("preserves unknown scalar grades, empty ranks and the no-query guidance", () 
   expect(keys(filterOnly)).toEqual(["a"]);
 });
 
-it("continues to ignore unused rank arguments in venue search and recommendation", () => {
-  for (const tool of ["search_venues", "recommend_venues"]) {
-    const args = { [tool === "search_venues" ? "query" : "paper"]: { title: "Distributed a" } };
-    const [baseline, extra] = calls([
-      [tool, args],
-      [tool, { ...args, rank: { ccf: "A" } }],
-    ]);
-    expect(baseline.isError).not.toBe(true);
-    expect(extra.isError).not.toBe(true);
-    expect(extra.structuredContent).toEqual({
-      ...baseline.structuredContent,
-      ignored_filters: ["rank"],
-    });
-    expect(extra.structuredContent?.candidate_venues).toBe(7);
-    expect(text(extra)).toContain("無視した絞り込み rank");
-  }
+it("ignores rank in venue search, and types it in recommendation", () => {
+  /* 会場のランクの絞り込みは推薦には 2026-10-18 から在る（画面の推薦モードと同じ欄）。
+   * 検索（search_venues）には無いので、渡されても「無視した」と名指す。
+   * 推薦では文字列だけを受け、オブジェクトは型エラーにする（黙って無視しない – SPEC の方針）。 */
+  const 検索 = { query: { title: "Distributed a" } };
+  const [検索素, 検索ランク] = calls([
+    ["search_venues", 検索],
+    ["search_venues", { ...検索, rank: { ccf: "A" } }],
+  ]);
+  expect(検索素.isError).not.toBe(true);
+  expect(検索ランク.isError).not.toBe(true);
+  expect(検索ランク.structuredContent).toEqual({
+    ...検索素.structuredContent,
+    ignored_filters: ["rank"],
+  });
+  expect(text(検索ランク)).toContain("無視した絞り込み rank");
+
+  const 推薦 = { paper: { title: "Distributed a" } };
+  const [推薦素, 文字列のランク] = calls([
+    ["recommend_venues", 推薦],
+    ["recommend_venues", { ...推薦, rank: "A" }],
+  ]);
+  expect(推薦素.isError).not.toBe(true);
+  expect(文字列のランク.isError).not.toBe(true);
+  expect(text(文字列のランク), "文字列の rank を無視した絞り込みとして名指した").not.toContain(
+    "無視した絞り込み",
+  );
+  expect(
+    文字列のランク.structuredContent?.ignored_filters ?? [],
+    "rank を今も無視している",
+  ).not.toContain("rank");
+  const [型違い] = calls([["recommend_venues", { ...推薦, rank: { ccf: "A" } }]]);
+  expect(型違い.isError, "オブジェクトの rank を黙って受けた").toBe(true);
+  expect(text(型違い), "型の直し方を書いていない").toContain("rank は文字列で指定してください");
 });

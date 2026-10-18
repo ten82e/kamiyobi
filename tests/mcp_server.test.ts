@@ -905,7 +905,7 @@ it("入力の形が、道具の説明と一致する（第 854 回）", async ()
     ],
     list_upcoming: ["days", "limit", "offset", "kind", "kinds", "scope"],
     venue_info: ["key", "name", "scope"],
-    recommend_venues: ["paper", "limit", "offset", "retrieval"],
+    recommend_venues: ["paper", "rank", "limit", "offset", "retrieval"],
     search_venues: ["query", "limit", "offset", "retrieval"],
     explain_word: ["word", "scope"],
     collection_stats: [],
@@ -3073,17 +3073,17 @@ it("recommend_venues は、効かない絞り込みの引数を名指す（第 9
   const 題 = "Time-Sensitive Networking | tsn";
   const 素 = await call("recommend_venues", { paper: 題, limit: 2 });
   expect(素.split("\n")[0] ?? "", "絞り込みがない時に名指した").not.toContain("無視した絞り込み");
-  for (const 鍵 of ["rank", "domestic", "online", "scope", "within_days", "include_past"]) {
-    const 答 = await call("recommend_venues", {
-      paper: 題,
-      limit: 2,
-      [鍵]: 鍵 === "rank" ? "A" : true,
-    });
+  for (const 鍵 of ["domestic", "online", "scope", "within_days", "include_past"]) {
+    const 答 = await call("recommend_venues", { paper: 題, limit: 2, [鍵]: true });
     expect(答, `\`${鍵}\` を渡しても名指して居ん`).toContain("無視した絞り込み");
     expect(答.split("\n")[0] ?? "", `\`${鍵}\` の名前が出て居ん`).toContain(鍵);
     /* 絞り込まないことを文字でも示す（順位で選ぶ）。 */
     expect(答, "順位で選ぶ謀を言つていない").toContain("順位と点で選びます");
   }
+  /* `rank` は 2026-10-18 から推薦の引数（画面の推薦モードと同じ欄）。無視しない。 */
+  const ランク付き = await call("recommend_venues", { paper: 題, limit: 2, rank: "A" });
+  expect(ランク付き, "`rank` を今も無視している").not.toContain("無視した絞り込み");
+  expect(ランク付き.split("\n")[0] ?? "", "頭にランクを書いていない").toContain("／ランク A");
   /* 空文字の絞り込みは「渡して無い」と見る（混入した空値で騒音を増やさない）。 */
   const 空 = await call("recommend_venues", { paper: 題, limit: 2, rank: "" });
   expect(空.split("\n")[0] ?? "", "空文字列で名指した").not.toContain("無視した絞り込み");
@@ -6442,4 +6442,49 @@ it("recommend_venues の構造化の行に、会場のランクを持つ（`rank
   const 説明 =
     (一覧.result?.tools ?? []).find((tool) => tool.name === "recommend_venues")?.description ?? "";
   expect(説明, "説明に venue_rank を書いていない").toContain("venue_rank");
+});
+
+/* 画面の推薦モードには「ランク」の欄がある（2026-10-18）。MCP の推薦だけが rank を
+ * 「無視した絞り込み」として返していたので、同じ判定（`rankGradeJa`・`rankScaleJa`・
+ * `rankMatches`）で候補を絞る。 */
+it("recommend_venues の rank は、会場のランクで候補を絞る（尺度の名も受ける）", async () => {
+  const 論文 = "Distributed Systems | distributed, systems";
+  const 件数 = (text: string) =>
+    Number(/に合う投稿先: ([\d,]+) 件/.exec(text)?.[1]?.replace(/,/g, "") ?? -1);
+  const 全部 = await call("recommend_venues", { paper: 論文, limit: 30 });
+  const 絞つた = await call("recommend_venues", { paper: 論文, limit: 30, rank: "A*" });
+  const 尺度付き = await call("recommend_venues", { paper: 論文, limit: 30, rank: "CCF A" });
+  expect(件数(全部), "前提（候補がある）が崩れた").toBeGreaterThan(0);
+  expect(件数(絞つた), "rank で絞れていない").toBeLessThan(件数(全部));
+  expect(絞つた, "頭にランクを書いていない").toContain("／ランク A*");
+  expect(尺度付き).toContain("／ランク CCF A");
+  // 構造化の行も、その等級を持つ会議だけになる（`venue_rank` で確かめる）。
+  const 構造 = (await client.ask({
+    jsonrpc: "2.0",
+    id: 71,
+    method: "tools/call",
+    params: { name: "recommend_venues", arguments: { paper: 論文, limit: 30, rank: "A*" } },
+  })) as {
+    result?: {
+      structuredContent?: { ignored_filters?: string[]; rows?: Array<Record<string, unknown>> };
+    };
+  };
+  const rows = 構造.result?.structuredContent?.rows ?? [];
+  expect(rows.length, "構造化の行が無い").toBeGreaterThan(0);
+  for (const row of rows) {
+    const rank = row.venue_rank as Record<string, string> | null;
+    const 等級 = Object.values(rank ?? {});
+    expect(
+      等級.some((grade) => grade.replace("＊", "*") === "A*"),
+      "A* でない会議が混ざった",
+    ).toBe(true);
+  }
+  expect(
+    構造.result?.structuredContent?.ignored_filters ?? [],
+    "rank を今も無視している",
+  ).not.toContain("rank");
+  // 知らない等級は、締切検索と同じ断り方で 0 件。
+  const 知らない = await call("recommend_venues", { paper: 論文, limit: 30, rank: "Z" });
+  expect(知らない).toContain("知らないランク（等級は");
+  expect(件数(知らない)).toBe(0);
 });

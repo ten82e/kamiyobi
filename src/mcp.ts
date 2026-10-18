@@ -2876,14 +2876,17 @@ async function recommendVenues(
     ].join("\n");
   const 索引 = recommendation();
 
+  /* 会場のランクで絞れるのは `recommend_venues` だけ（`search_venues` の形には無いので、
+   * 渡されたら「無視した絞り込み」として名指す – 他の締切向けの引数と同じ扱い）。 */
+  const ランクを絞る = !search;
   const 無視した = [
+    ...(ランクを絞る ? [] : ["rank"]),
     "scope",
     "within_days",
     "include_past",
     "include_estimated",
     "kinds",
     "kind",
-    "rank",
     "category",
     "categories",
     "domestic",
@@ -2950,6 +2953,26 @@ async function recommendVenues(
         )
       : null;
   if (!semantic) Recommender.setTopicVecs(null);
+  /* rank は文字列だけを受ける（オブジェクトや配列を黙って無視すると、絞ったつもりで
+   * 絞れていない – SPEC の方針「使う引数に配列・オブジェクトが来たら型エラー」）。 */
+  if (
+    ランクを絞る &&
+    args.rank !== undefined &&
+    args.rank !== null &&
+    typeof args.rank !== "string"
+  )
+    throw new Error("rank は文字列で指定してください（例: `A*`・`CCF A`・`CORE A*`）。");
+  /* 会場のランクで絞る（画面の推薦モードの「ランク」と同じ判定・同じ語）。
+   * 等級の厳密比較と尺度の指定は `search_deadlines` と同じ入口（`rankGradeJa`・
+   * `rankScaleJa`・`rankMatches`）を使う。 */
+  const ランク = ランクを絞る ? Recommender.rankGradeJa(args.rank) : "";
+  const ランクの尺度 = ランクを絞る ? Recommender.rankScaleJa(args.rank) : "";
+  const 知らんランク = ランク && !Recommender.rankGradeOrderJa().includes(ランク) ? ランク : "";
+  const ランクの文 = ランク
+    ? `／ランク ${ランクの尺度 ? `${ランクの尺度.toUpperCase()} ` : ""}${ランク}`
+    : "";
+  const 候補から外した數 = (r: { row: { rankPairs?: string[] } }) =>
+    Boolean(ランク) && !Recommender.rankMatches(r.row.rankPairs ?? [], ランク, ランクの尺度);
   const 候補 = Recommender.venueRecommendations(pool, 論文ごとの行, semantic?.scores ?? null, now, {
     fieldedLexical: true,
     ...(semantic
@@ -2958,7 +2981,9 @@ async function recommendVenues(
           venueCats: Recommender.autoDetectCats(論文ごとの行),
         }
       : {}),
-  }).filter((r) => r.fit.score >= 10);
+  })
+    .filter((r) => r.fit.score >= 10)
+    .filter((r) => !候補から外した數(r));
   if (search && semantic)
     候補.sort(
       (a, b) => (semantic.similarities[b.venueKey] ?? 0) - (semantic.similarities[a.venueKey] ?? 0),
@@ -2980,13 +3005,18 @@ async function recommendVenues(
 
   const 過ぎた件數 = 候補.filter((r) => r.availability.status === "past").length;
   const 頭 =
-    `${題の見出し}に合う投稿先: ${候補.length} 件（${semantic ? "実モデルの意味検索を基に評価" : "語の一致を基に評価"}${無視の斷り}${截りの文}${limit端數} – ` +
+    `${題の見出し}に合う投稿先: ${候補.length} 件（${semantic ? "実モデルの意味検索を基に評価" : "語の一致を基に評価"}${ランクの文}${無視の斷り}${截りの文}${limit端數} – ` +
     `${semantic ? "英語・日本語のモデルで全収録会議を評価しました" : "意味検索の埋め込みは読まないので、埋め込みを使える画面とは点が動く事があります"}${限り.斷り}）` +
     /* 過ぎた候補は「次回の開催に向けた参考」として件数を分けて書く（黙っていると AI が
      * 今出せるように勧めてしまふ – 画面の「締切済み」と同じ出し分け）。 */
     (過ぎた件數 > 0
       ? `（うち ${過ぎた件數} 件は締切が過ぎた会議です – 次回の開催に向けた参考に載せています）`
       : "");
+  /* 知らない等級は、締切検索と同じ扱い（その等級では 0 件になる）と、同じ断り方にする
+   * （「絞っていません」と書くと、絞った結果 0 件なのに条件を外したと読める）。 */
+  const 知らんランクの文 = 知らんランク
+    ? `知らないランク（等級は ${Recommender.rankGradeOrderJa().join("・")}）: ${知らんランク}`
+    : "";
   const 見本 = 候補.slice(offset, offset + limit);
   const axesFor = (r: (typeof 候補)[number]) => {
     const stored = 品書の軸().get(String(r.row.conf.key ?? ""));
@@ -3061,8 +3091,17 @@ async function recommendVenues(
   if (!候補.length)
     return [
       頭,
+      ...(知らんランクの文 ? [知らんランクの文] : []),
       "",
-      "この題名の語と重なる投稿先は見つかりませんでした。題名に加えて、分野の語やキーワード（`tsn, real-time, scheduling` のように）を添えると当たりやすくなります。",
+      /* ランクで絞った結果 0 件なら、語の打ち直しを勧めない（語は当たっていて、絞り込みで
+       * 落ちている）。 */
+      ...(ランク
+        ? [
+            `ランク ${ランクの尺度 ? `${ランクの尺度.toUpperCase()} ` : ""}${ランク} では候補が 0 件でした。rank を外すか、別の等級（${Recommender.rankGradeOrderJa().join("・")}）で試してください。`,
+          ]
+        : [
+            "この題名の語と重なる投稿先は見つかりませんでした。題名に加えて、分野の語やキーワード（`tsn, real-time, scheduling` のように）を添えると当たりやすくなります。",
+          ]),
     ].join("\n");
   if (offset >= 候補.length)
     return `${頭}\nこの位置には結果がありません（offset: ${offset}／全 ${候補.length} 件）。`;
@@ -3070,6 +3109,7 @@ async function recommendVenues(
    * 過去の行を埋めないように – 頭で件数を分けて言う）。 */
   return [
     頭,
+    ...(知らんランクの文 ? [知らんランクの文] : []),
 
     "「候補」は投稿先として適合を確認する対象で、強い一致も含みます。「重なりうすい」は言葉や意味の一致が弱い候補です。数値は並べ替えの目安で、採択の予測ではありません。",
     ...(semantic
@@ -3332,7 +3372,7 @@ const TOOLS = [
   {
     name: "recommend_venues",
     description:
-      "論文情報に合う投稿先を語彙の一致で探す。学習済みの並べ替えモデルがある場合は併用する。retrieval: semantic を指定すると実モデルを使う。候補の範囲は画面と共通。順位表に入るのは実質的な一致がある候補だけで、証拠がない会議を分野だけの一致で推薦しない。長い入力は最初の 20 行と各行の長さ制限で切り、切った旨を返す。返す行の形: 順位と一致評価、選定理由、締切の確認状況に続いて締切行。1ページ最大30件。structuredContent の rows は 1 行 = 1 候補で、`rank` は**順位**（1 起点。会場のランクではない – 他の道具の `rank`（`ccf`・`core`・`thcpl`）とは別の物です）、`fit` は一致評価とその内訳、`availability` は受付状態、`deadlines` は締切、`verification` は確認情報、`venue_rank` は会場のランク（`ccf`・`core`・`thcpl`。他の道具の `rank` と同じ形）。続きは同じ論文情報と next_offset を offset に指定する。",
+      "論文情報に合う投稿先を語彙の一致で探す。学習済みの並べ替えモデルがある場合は併用する。rank を指定すると会場のランク（`A*`・`A`・`B`・`C`・`N`、または `CCF A` のように尺度の名を付けた形）で候補を絞ります（画面の推薦モードの「ランク」と同じ判定。知らない等級はその等級では 0 件になり、その旨を返します）。retrieval: semantic を指定すると実モデルを使う。候補の範囲は画面と共通。順位表に入るのは実質的な一致がある候補だけで、証拠がない会議を分野だけの一致で推薦しない。長い入力は最初の 20 行と各行の長さ制限で切り、切った旨を返す。返す行の形: 順位と一致評価、選定理由、締切の確認状況に続いて締切行。1ページ最大30件。structuredContent の rows は 1 行 = 1 候補で、`rank` は**順位**（1 起点。会場のランクではない – 他の道具の `rank`（`ccf`・`core`・`thcpl`）とは別の物です）、`fit` は一致評価とその内訳、`availability` は受付状態、`deadlines` は締切、`verification` は確認情報、`venue_rank` は会場のランク（`ccf`・`core`・`thcpl`。他の道具の `rank` と同じ形）。続きは同じ論文情報と next_offset を offset に指定する。",
     inputSchema: {
       type: "object",
       properties: {
@@ -3346,6 +3386,11 @@ const TOOLS = [
           ...PAPER_INPUT_SCHEMA,
           description:
             "投稿予定の論文。題名 | キーワード | 投稿先、Title/Abstract や タイトル/概要 のテキスト、title・abstract・keywords・venue を持つ論文オブジェクト、またはその配列を受ける。title か abstract は空でない文字列が必要。従来のJSON文字列も使えます。",
+        },
+        rank: {
+          type: "string",
+          description:
+            "会場のランクで候補を絞る（`A*` / `A` / `B` / `C` / `N`。`CCF A`・`CORE A*` のように尺度の名を付けるとその尺度の等級だけを見る。画面の推薦モードの「ランク」と同じ判定）",
         },
         limit: { type: "number", description: "返す候補の数（既定 10・最大 30）" },
         offset: {
