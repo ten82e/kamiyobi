@@ -100,7 +100,8 @@ describe("他のの拒否群も締切らしい語尾を受ける（第 506 回�
     expect(物.split("deadlineTail: true").length - 1).toBe(42);
     /* 第 648 回で日をまたぐ重なりを数へる羣（祝日級の次に置いた）を增やしたので 14 → 15。*/
     /* 第 649 回で分野の一覽の羣（語尾を問わん印を開いた）を增やしたので 15 → 16。*/
-    expect(物.split("anyTail: true").length - 1).toBe(16);
+    /* 2026-10-18 に『締切が無い・未確認』の群（カードの「締切未確認」「締切なし」）を増やしたので 16 → 17。*/
+    expect(物.split("anyTail: true").length - 1).toBe(17);
     expect(物).toContain("UI_WORD_DEADLINE_TAILS_JA");
     /* 足場（tests/runtime_extract.ts）が新しい一覧を注入している事 – 第 504 回で四十一本落ちた
      * 落とし穴の再発防止。*/
