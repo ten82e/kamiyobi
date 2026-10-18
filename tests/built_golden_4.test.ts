@@ -1461,13 +1461,14 @@ it("推薦画面の印刷見出しは、用紙に載る枚数と候補の総数�
     "describeFilters",
     "recommendationList",
     "recommendExcludedClosed",
+    "readPaperInput",
   ];
   const used = names.filter((name) =>
     name === "$" ? body.includes("$(") : new RegExp(`\\b${name.replace("$", "\\$")}\\b`).test(body),
   );
   const build = new Function(...used, "Date", body) as (...args: unknown[]) => () => void;
 
-  const header = (drawn: number, total: number): string => {
+  const header = (drawn: number, total: number, paper = "", rank = ""): string => {
     const box: { textContent: string } = { textContent: "" };
     const env: Record<string, unknown> = {
       $: (id: string) =>
@@ -1477,14 +1478,15 @@ it("推薦画面の印刷見出しは、用紙に載る枚数と候補の総数�
             ? { children: { length: drawn } }
             : null,
       DATA: { generated_at: "2026-08-09T00:00:00Z" },
-      state: { mode: "recommend", win: "all" },
+      state: { mode: "recommend", win: "all", rank },
+      readPaperInput: () => ({ title: paper, abstract: "", keywords: "", references: "" }),
       valueElement: () => null,
       shown: [],
       sortKey: "deadline",
       sortAsc: true,
       sortColumnLabel: "",
       KIND_LABEL: {},
-      rankFilterLabelJa: () => "",
+      rankFilterLabelJa: (grade: string) => grade,
       Recommender: R,
       describeFilters: () => "",
       recommendationList: { length: total },
@@ -1510,6 +1512,20 @@ it("推薦画面の印刷見出しは、用紙に載る枚数と候補の総数�
   expect(ぜんぶ).toContain("候補 3 件");
   expect(ぜんぶ, "全部載っている紙に「この用紙に」を足さない").not.toContain("この用紙に");
   expect(すくない === ぜんぶ, "載る枚数が違っても同じ見出しになる（検査が空振り）").toBe(false);
+
+  /* どの論文の候補か、どのランクで絞ったかを用紙に書く（2026-10-18 実測: 推薦の紙には
+   * どちらも無く、2 枚刷ると見分けが付かなかった）。 */
+  const 題付き = header(3, 3, "低遅延ミドルウェアの設計と評価", "A*");
+  expect(題付き, "論文の題名を紙に書いていない").toContain(
+    "論文「低遅延ミドルウェアの設計と評価」",
+  );
+  expect(題付き, "ランクの絞り込みを紙に書いていない").toContain("ランク: A*");
+  /* 長い題名は画面と同じ 40 字で切る（紙の 1 行が際限なく伸びない）。 */
+  const 長い = header(3, 3, "あ".repeat(60));
+  expect(長い, "長い題名を切っていない").toContain(`論文「${"あ".repeat(39)}…」`);
+  /* 題名が無いとき（概要だけ・未入力）は、題名の欄を作らない。 */
+  expect(header(3, 3, ""), "題名が無いのに欄を作った").not.toContain("論文「");
+  expect(header(3, 3, "", ""), "ランクを選んでいないのに書いた").not.toContain("ランク:");
 });
 
 it("印刷前に推薦のカードを候補ぶんぜんぶ出している（SPEC §7）", () => {

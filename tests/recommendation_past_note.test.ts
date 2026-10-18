@@ -260,14 +260,16 @@ function 描いた文(excluded: number, excludedRank = 0): string[] {
 /* 紙には候補を全部載せるが、外した物は載らない。紙だけを受け取った人に
  * 「これが候補の全部」と読ませないよう、外した数も紙に書く。 */
 const 印刷の関数 = 切り出す("  function fillPrintMeta(", '  window.addEventListener("beforeprint"');
-function 紙に刷る文(excluded: number, order = "fit"): string {
+function 紙に刷る文(excluded: number, order = "fit", paper = "", rank = ""): string {
   const box = { textContent: "" };
   const cards = { children: [] };
   return runInNewContext(
     `let recommendationList = [], cardsDrawn = 0;
      let recommendExcludedClosed = ${excluded};
-     const state = { mode: "recommend", win: "all", order: ${JSON.stringify(order)} };
+     const state = { mode: "recommend", win: "all", order: ${JSON.stringify(order)}, rank: ${JSON.stringify(rank)} };
      const DATA = {};
+     /* 用紙の見出しは論文の題名も読む（どの論文の候補かを紙に残す – 2026-10-18）。 */
+     const readPaperInput = () => ({ title: ${JSON.stringify(paper)}, abstract: "", keywords: "", references: "" });
      const $ = (id) => (id === "printMeta" ? box : id === "recommendationCards" ? cards : null);
      const valueElement = () => ({ options: [], selectedIndex: -1 });
      ${件数の関数}
@@ -278,6 +280,8 @@ function 紙に刷る文(excluded: number, order = "fit"): string {
       box,
       cards,
       fmtJst: () => "2026-10-18 15:00 JST",
+      /* ランクの語は画面と同じ入口（この検査は値をそのまま返す）。 */
+      rankFilterLabelJa: (grade: string) => (grade === "N" ? "評価なし" : grade),
       generatedAtLabel: () => "データ生成: 2026-08-09(日) 09:00 JST",
       printLegendJa: () => "この用紙の表記: 未確認。",
     },
@@ -294,6 +298,13 @@ it("印刷物にも、外した候補の数と並び順を書く（紙だけで�
   const 並べた紙 = 紙に刷る文(0, "deadline");
   expect(並べた紙, "紙に並び順が残っていない").toContain("並び順: 締切が近い順");
   expect(全部の紙, "既定の並びなのに断っている").not.toContain("並び順:");
+  /* どの論文の候補か、どのランクで絞ったかも紙に残す（2 枚刷ると見分けが付かない）。 */
+  const 題付きの紙 = 紙に刷る文(0, "fit", "低遅延ミドルウェアの設計と評価", "A*");
+  expect(題付きの紙, "論文の題名が紙に残っていない").toContain(
+    "論文「低遅延ミドルウェアの設計と評価」",
+  );
+  expect(題付きの紙, "ランクの絞り込みが紙に残っていない").toContain("ランク: A*");
+  expect(全部の紙, "題名が無いのに欄を作った").not.toContain("論文「");
 });
 
 /* 「並び順: 締切が近い順」（`order=deadline`）。締切の段取りを立てる人向けの並べ替え。

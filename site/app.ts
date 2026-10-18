@@ -7237,7 +7237,21 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       /* 並びも紙に書く（紙は並べ替えられないので、何の順かが分からないと読めない）。 */
       const orderOnPaper =
         state.order === "deadline" ? " ／ 並び順: 締切が近い順（日付の無い候補は後ろ）" : "";
-      box.textContent = `この印刷物: 投稿先を探す画面 ／ ${listed}${excludedOnPaper}${orderOnPaper}${printedTail}。${printLegendJa()}`;
+      /* どの論文の候補かを用紙に書く（2 枚刷ると見分けが付かない – 2026-10-18 実測:
+       * 推薦の紙には論文の題名もランクの絞り込みも書いていなかった。締切の枝は
+       * `describeFilters` で条件を書いている）。長い題名は画面と同じ 40 字で切る。 */
+      const 入力 = readPaperInput();
+      const 題の一行 =
+        String(入力.title || 入力.abstract || "")
+          .split("\n")
+          .map((line) => line.trim())
+          .filter((line) => line.length > 0)[0] ?? "";
+      const 論文OnPaper =
+        題の一行 === ""
+          ? ""
+          : ` ／ 論文「${題の一行.length > 40 ? `${題の一行.slice(0, 39)}…` : 題の一行}」`;
+      const rankOnPaper = state.rank ? ` ／ ランク: ${rankFilterLabelJa(state.rank)}` : "";
+      box.textContent = `この印刷物: 投稿先を探す画面${論文OnPaper}${rankOnPaper} ／ ${listed}${excludedOnPaper}${orderOnPaper}${printedTail}。${printLegendJa()}`;
       return;
     }
     box.textContent =

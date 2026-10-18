@@ -2270,6 +2270,8 @@ it("投稿先を探す画面で印刷すると、紙に出る但し書きが実�
       jsFunction(app, "rankFilterLabelJa"),
       verificationLabelsSource(),
       jsFunction(app, "printLegendJa"),
+      /* 用紙の見出しは論文の題名も読む（推薦の枝）。この検査は題名なしで見る。 */
+      "const readPaperInput = () => ({ title: '', abstract: '', keywords: '', references: '' });",
       jsFunction(app, "fillPrintMeta"),
       "fillPrintMeta();",
       "console.log(JSON.stringify({ out: meta.textContent }));",
@@ -4393,6 +4395,8 @@ it("「評価なし」で印刷すると、紙の条件にも同じ語が出る�
     jsFunction(app, "describeFilters"),
     verificationLabelsSource(),
     jsFunction(app, "printLegendJa"),
+    /* 用紙の見出しは論文の題名も読む（推薦の枝）。この検査は題名なしで見る。 */
+    "const readPaperInput = () => ({ title: '', abstract: '', keywords: '', references: '' });",
     jsFunction(app, "fillPrintMeta"),
     "fillPrintMeta();",
     // 選択肢のラベルも同じ式を使う（規則を 2 箇所に書かない）。

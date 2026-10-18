@@ -4430,7 +4430,7 @@ export function toLlmsTxt(
      * 絞り込んだ一覧のリンクを自分で組めなかった）。値は画面が受け取る物と同じ。 */
     "画面の URL には、絞り込みを次の名前で載せます: " +
       "`mode`（`deadlines`・`recommend`）・`q`（検索語）・`kind`（種別。`abstract`・`paper`・`journal`）・`cats`（分野の鍵を `,` で。`security` など）・" +
-      "`rank`（`A*`・`A`・`B`・`C`・`N`）・`win`（`7d`・`30d`・`90d`・`180d`）・`est`・`past`・`domestic`・`online`（`1` で入）・" +
+      "`rank`（`A*`・`A`・`B`・`C`・`N`。締切の一覧では行を、`mode=recommend` では候補の会場を絞ります）・`win`（`7d`・`30d`・`90d`・`180d`）・`est`・`past`・`domestic`・`online`（`1` で入）・" +
       "`open`（`1` で「投稿先を探す」の候補から締切が過ぎた会議を除く。締切の一覧では効きません）・" +
       "`order`（`deadline` で「投稿先を探す」の候補を締切の近い順に並べる。既定は論文との一致順。締切の一覧では効きません）・" +
       "`sort`（`rem`・`date`・`event`・`conf`・`rank`）・`dir=desc`・`help=1`・`row`（1 行の詳細を開く）。",
