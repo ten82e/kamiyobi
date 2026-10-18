@@ -239,7 +239,8 @@ describe("schedule-only UI respects date certainty and selected filters", () => 
       `let cnt='',cntLive='';${block};return {cnt,cntLive};`,
     );
     const count = countFor(rows, String, [{}]);
-    expect(count.cnt).toContain("開催回 1 件（投稿締切は未収録）");
+    /* 件数の後ろは行き先（upcoming.html）まで書くので、括弧の閉じまでは縛らない。 */
+    expect(count.cnt).toContain("開催回 1 件（投稿締切は未収録");
     expect(count.cntLive).toBe(count.cnt);
     expect(count.cnt).not.toContain("確定");
     expect(countFor(rows, String, []).cnt).toBe(count.cnt);

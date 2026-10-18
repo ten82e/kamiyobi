@@ -5360,7 +5360,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
        * （2026-09-23 実測: 「研究会」は表 16 件に対し会期だけの該当 28 件、
        * 「ネットワーク」は 39 件に対し 31 件が画面に出ていなかった）。 */
       if (scheduleOnly.length) {
-        const scheduleNote = ` ｜ 会期情報がある開催回 ${countJa(scheduleOnly.length)} 件（投稿締切は未収録）`;
+        const scheduleNote = ` ｜ 会期情報がある開催回 ${countJa(scheduleOnly.length)} 件（投稿締切は未収録。upcoming.html に載せています）`;
         cnt += scheduleNote;
         if (shown.length) cntLive += scheduleNote;
       }
