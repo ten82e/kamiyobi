@@ -1572,6 +1572,19 @@ it("欄の名前を打たれたら、値で打ち直す案内を返す（第 873
   /* **案内の例で打つと行が出る**（行き止まりへ送つて居ない）。 */
   const 値 = await call("search_deadlines", { query: "論文締切", scope: "all", limit: 1 });
   expect(値, "案内の例で行が出ん").toMatch(/に当たる締切: [1-9]\d* 件/);
+  /* 種別・会期の下に出る「原表記: …」も欄の名前（2026-10-18 に足した）。値の例で行が出る
+   * 事も同じく確かめる（案内が行き止まりでない）。 */
+  const 原表記 = await call("search_deadlines", { query: "原表記", scope: "all", limit: 1 });
+  expect(原表記, "原表記を欄の名前と言っていない").toContain(
+    "この表の欄の名前で、値そのものではありません",
+  );
+  expect(原表記, "原表記の値の例を名指していない").toContain("Paper submission");
+  const 原表記の値 = await call("search_deadlines", {
+    query: "Paper submission",
+    scope: "all",
+    limit: 1,
+  });
+  expect(原表記の値, "原表記の例で行が出ん").toMatch(/に当たる締切: [1-9]\d* 件/);
   /* 行が出る語には付けない（要らない斷りを増やさない）。 */
   const 有 = await call("search_deadlines", { query: "締切", scope: "all", limit: 1 });
   expect(有, "行が出る語に欄の案内を付けた").not.toContain("欄の名前で");
