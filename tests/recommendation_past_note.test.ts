@@ -193,6 +193,18 @@ it("カードのランクは一覧と同じ札で、無い会議は「ランク�
   expect(ランク札({})).toEqual([{ text: "ランク未確認", title: "収録に無い" }]);
 });
 
+it("カードが会期と開催地を一覧と同じ語で出し、てびきが説明している", () => {
+  const template = readFileSync(new URL("../site/template.html", import.meta.url), "utf8");
+  const カード = source.slice(source.indexOf("  function makeRecommendationCard("));
+  expect(カード, "カードが会期を出していない").toContain("Recommender.eventCellJa(r)");
+  expect(カード, "カードが開催地を出していない").toContain("Recommender.placeJa(r.ed.place)");
+  expect(カード, "会期と開催地が別の行に割れている").toMatch(/会期: [\s\S]{0,40}／ 開催地:/);
+  expect(カード, "値の無い会議に「該当なし」「未確認」を出していない").toContain(
+    "value || (Recommender.fieldNotApplicableJa(r) ? NOT_APPLICABLE_JA : UNCONFIRMED_JA)",
+  );
+  expect(template, "てびきがカードの会期・開催地を書いていない").toContain("会期と開催地");
+});
+
 it("カードがランクの札を出し、てびきが同じ語で説明している", () => {
   const template = readFileSync(new URL("../site/template.html", import.meta.url), "utf8");
   expect(template, "てびきがランク未確認を説明していない").toContain("ランク未確認");

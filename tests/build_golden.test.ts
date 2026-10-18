@@ -4962,11 +4962,12 @@ it("unknown 会期・開催地・ランクを「未確認」として出す（SP
   expect(guideText, "てびきが延長の語を説明していない").toContain(`<dt>${out.extendedWord}</dt>`);
   // ドロワーも同じ語を使う（表とドロワーで言い方が割れないようにする）。
   // 常時受付の行は「未確認」ではなく「該当なし」を出すので、式ごと見る（SPEC §7）。
+  // 推薦のカードの会期・開催地も同じ式を使う（2026-10-18 に足した）。
   expect(app).toContain("placeNa ? NOT_APPLICABLE_JA : UNCONFIRMED_JA");
   expect(
     (app.match(/fieldNotApplicableJa\(r\) \? NOT_APPLICABLE_JA : UNCONFIRMED_JA/g) || []).length,
-    "ドロワーの開催地・会期が「該当なし」を区別していない",
-  ).toBe(2);
+    "ドロワー・カードの開催地・会期が「該当なし」を区別していない",
+  ).toBeGreaterThanOrEqual(2);
 });
 
 it("「未確認」と出した行はそのまま検索できる（SPEC §7）", () => {

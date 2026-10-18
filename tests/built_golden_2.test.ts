@@ -4168,6 +4168,8 @@ it("推薦のカードの行が、てびきの数と名前と合う（SPEC §7�
     /* ランクの札の説明は行の詳細と同じ入口（`fieldReasonsJa`）から取る。この検査は
      * カードの行の作りを見る物なので、説明の文は空でよい。 */
     "recommendationRankTagsJa",
+    "UNCONFIRMED_JA",
+    "NOT_APPLICABLE_JA",
     "KIND_LABEL",
     "trustLabel",
     "freshnessLabel",
@@ -4187,6 +4189,8 @@ it("推薦のカードの行が、てびきの数と名前と合う（SPEC §7�
       "Recommender",
       `return (${jsFunction(app, "recommendationRankTagsJa")});`,
     )({ rank: () => "" }, Recommender),
+    Recommender.unconfirmedLabelJa(),
+    Recommender.notApplicableLabelJa(),
     Recommender.kindLabelTable(),
     table("trustLabel"),
     table("freshnessLabel"),

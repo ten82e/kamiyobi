@@ -5043,6 +5043,17 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       "card-section recommendation-axes",
     );
 
+    /* 会期と開催地は一覧の列と同じ語で出す（その年の予定を重ねる・出張の段取りを立てるのに
+     * 要る。MCP の `recommend_venues` の文には出ているので、画面と AI で材料を揃える）。
+     * 値の無い会議は一覧と同じく「該当なし」「未確認」で、空欄にしない。 */
+    const 場所の語 = (value: string) =>
+      value || (Recommender.fieldNotApplicableJa(r) ? NOT_APPLICABLE_JA : UNCONFIRMED_JA);
+    line(
+      card,
+      `会期: ${場所の語(Recommender.eventCellJa(r))} ／ 開催地: ${場所の語(Recommender.placeJa(r.ed.place))}`,
+      "card-section",
+    );
+
     const agg = r._match?.agg ?? {
       domain: 0,
       venueName: 0,
