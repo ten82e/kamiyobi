@@ -296,27 +296,40 @@ describe("推薦の候補を CSV で持ち出す（第 870 回）", () => {
     /* 一覧の時は一覧の名前と欄（同じ関数が画面の別で書き分ける）。 */
     落ちた.length = 0;
     本文 = "";
-    const 一覧で走らせる = new Function(
-      "shown",
-      "state",
-      "Recommender",
-      "Blob",
-      "URL",
-      "document",
-      "candidateScopeOnScreen",
-      vmSafeSource(`${src}\nreturn exportShownCsv;`),
-    )(
-      [候補()],
-      { mode: "deadlines" },
-      Recommender,
-      Blob,
-      URL,
-      document,
-      候補の別(document, "deadlines"),
-    ) as () => void;
-    一覧で走らせる();
+    const 一覧で走らせる = (rows: Array<Record<string, unknown>>) =>
+      new Function(
+        "shown",
+        "state",
+        "Recommender",
+        "Blob",
+        "URL",
+        "document",
+        "candidateScopeOnScreen",
+        vmSafeSource(`${src}\nreturn exportShownCsv;`),
+      )(
+        rows,
+        { mode: "deadlines" },
+        Recommender,
+        Blob,
+        URL,
+        document,
+        候補の別(document, "deadlines"),
+      ) as () => void;
+    /* 論文を入れていない一覧の行（一致評価の印を持たない）は、一覧の欄のまま。 */
+    const 印なし = { ...候補(), _fitLabel: "", _matchScore: undefined, _vocabScore: undefined };
+    本文 = "";
+    一覧で走らせる([印なし])();
     expect(落ちた[0], "一覧の名前が違う").toMatch(/^kamiyobi-deadlines-\d{8}\.csv$/);
     expect(本文, "一覧の見出しでない").not.toContain("一致の点");
+    /* 論文を入れたままの一覧（画面に一致評価の札が出ている）は、先頭に同じ 4 列を付ける
+     * （画面に在る物を書き出しから落とさない – 2026-10-18）。 */
+    落ちた.length = 0;
+    本文 = "";
+    一覧で走らせる([候補(), 印なし])();
+    expect(落ちた[0], "一覧の名前が変わった").toMatch(/^kamiyobi-deadlines-\d{8}\.csv$/);
+    expect(本文, "印のある行が在るのに 4 列が無い").toContain(
+      "一致評価,一致の点,言葉の一致,意味の近さ",
+    );
   });
 
   it("索引（llms.txt）が、候補の欄の意味を書いている", () => {

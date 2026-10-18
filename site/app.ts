@@ -3313,7 +3313,12 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   function exportShownCsv() {
     const recMode = candidateScopeOnScreen();
     const rows = shown as unknown as Record<string, unknown>[];
-    const csv = recMode
+    /* 論文を入れたまま締切の一覧を書き出すと、画面には一致評価の札が付いている。CSV にも
+     * 同じ 4 列（一致評価・一致の点・言葉の一致・意味の近さ）を先頭に付ける – 画面に在る
+     * 物が書き出しに無いと、表計算に持って行ってから探し直すことになる（2026-10-18）。 */
+    const 一致評価の列 =
+      recMode || rows.some((row) => String((row as { _fitLabel?: string })._fitLabel || "").trim());
+    const csv = 一致評価の列
       ? Recommender.candidateRowsToCsv(rows, Date.now())
       : Recommender.deadlinesToCsv(rows, Date.now());
     if (typeof Blob === "undefined" || typeof URL === "undefined" || !URL.createObjectURL) return;
