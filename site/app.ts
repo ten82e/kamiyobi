@@ -171,6 +171,8 @@ interface UiState {
   /** 会場表記にオンライン参加の記述がある行だけを出す（対面の判定はしない）。 */
   online: boolean;
   past: boolean;
+  /** 推薦の候補から、受付状況が「締切済み」と確認できた会議を除く（URL では `open=1`）。 */
+  openOnly: boolean;
 }
 
 type LoadStatus = "idle" | "loading" | "ready" | "error";
@@ -829,6 +831,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     domestic: false,
     online: false,
     past: false,
+    openOnly: false,
   };
 
   function $(id: string): HTMLElement {
@@ -2629,6 +2632,10 @@ function semanticOutput(value: unknown): value is SemanticOutput {
 
   let venueLookupMiss: string[] = [];
 
+  /* 「締切が過ぎた候補を除く」で候補から外した件数（`filter()` が数え、件数欄と 0 件の
+   * 案内が読む。黙って消さない – 画面の他の絞り込みと同じ約束）。 */
+  let recommendExcludedClosed = 0;
+
   function categoryCounts(): Record<string, number> {
     return catFacetCounts;
   }
@@ -2786,6 +2793,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     // 黙って消える（2026-08-09 生成ビルドの実測: 例の 1 件は掲載先を `IEEE RTSS` と指定し、
     // 検索対象 863 行に RTSS は 0 行。候補は 44 件出るので、画面は動いている）。
     venueLookupMiss = pLines.length && Rec ? Rec.unmatchedVenues(pLines, rows) : [];
+    recommendExcludedClosed = 0;
     const venueCats = [...new Set([...(state.cats || []), ...detectedVenueCats, ...autoCats])];
 
     // 論文モードおよび常時受付モード: 未来締切 + 常時受付ジャーナル + 未来締切の無い会議の過去代表行
@@ -2981,6 +2989,13 @@ function semanticOutput(value: unknown): value is SemanticOutput {
             _availability: recommendation.availability,
           }),
         );
+      /* 締切が過ぎた候補を外す（任意の絞り込み）。順位は変えない – 候補の並びは論文との
+       * 一致の順のままにして、出す・出さないだけを決める。 */
+      if (state.openOnly) {
+        const kept = withoutClosedCandidates(out);
+        recommendExcludedClosed = out.length - kept.length;
+        out = kept;
+      }
       return out;
     }
 
@@ -4805,6 +4820,19 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     );
   }
 
+  /* 推薦の候補から、受付状況が「締切済み」と確認できた会議を除く（任意の絞り込み）。
+   * 受付状況が未確認の候補は残す – 分からない物を「過ぎた」側に寄せない（推測しない）。 */
+  function withoutClosedCandidates(rows: readonly AppRow[]): AppRow[] {
+    return rows.filter((row) => row._availability?.status !== "past");
+  }
+
+  /* 外した件数を候補の数の隣で言う（黙って消さない – 画面の他の絞り込みと同じ約束）。
+   * 外す入口の名前をそのまま書く（条件を外す場所を探させない）。 */
+  function recommendationExcludedNoteJa(count: number): string {
+    if (!count) return "";
+    return ` ｜ 締切が過ぎた候補 ${countJa(count)} 件を除いています（「締切が過ぎた候補を除く」を外すと出ます）`;
+  }
+
   function recommendationAvailability(r: AppRow) {
     const a = r._availability;
     // 画面の「分からない」の語は 未確認 / 該当なし / 評価なし に揃えてある（てびきの
@@ -5010,6 +5038,16 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       // 推薦モードでは締切画面の絞り込み（検索・分野・国内など）を見せていないので、
       // 「条件を変えてみてください」は画面に無いものを探す案内になる。
       // 実際に打てる手（論文の情報量、入力形式の見本）だけを書く。
+      /* 締切が過ぎた候補を外した結果 0 件になったなら、その事を先に言う（「語と重なる
+       * 投稿先が無い」と読むと、打ち直しに走って候補の存在に気づけない）。 */
+      if (recommendExcludedClosed) {
+        line(
+          cards,
+          `締切が過ぎた会議を除くと 0 件でした（「締切が過ぎた候補を除く」を外すと ${countJa(recommendExcludedClosed)} 件出ます）。`,
+          "recommendation-card",
+        );
+        return;
+      }
       line(
         cards,
         "この論文の語と重なる投稿先が見つかりませんでした。タイトル・概要・キーワードを足すと当たりやすくなります。上のサンプルボタンで入力の形を確かめられます。",
@@ -5055,6 +5093,10 @@ function semanticOutput(value: unknown): value is SemanticOutput {
 
   function renderActiveFilters(): void {
     const box = $("activeFilters");
+    /* この札の列は締切一覧のための物で、推薦モードでは箱ごと隠す。推薦モードだけの条件
+     * （「締切が過ぎた候補を除く」）はここに並べない – 効かない画面に札を出しても、
+     * 条件が外れたようにしか見えない。其の条件の入口は推薦モードでも見えている
+     * チェック欄なので、入っているかどうかは其ちらで分かる。 */
     box.hidden = state.mode !== "deadlines";
     box.textContent = "";
     if (box.hidden) return;
@@ -5318,6 +5360,11 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       if (pastNote) {
         cnt += pastNote;
         cntLive += pastNote;
+      }
+      const excludedNote = recommendationExcludedNoteJa(recommendExcludedClosed);
+      if (excludedNote) {
+        cnt += excludedNote;
+        cntLive += excludedNote;
       }
     }
     // 「来月」で検索したとき、何月に絞ったのかを利用者が確認できるようにする
@@ -5772,6 +5819,12 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     state.domestic = domesticFlag.on;
     state.online = onlineFlag.on;
     state.past = pastFlag.on;
+    /* 推薦の候補から締切が過ぎた会議を除く（任意）。締切一覧の「過去の締切も表示」とは
+     * 別の条件 – あちらは過ぎた行を出す側で、こちらは候補から外す側。 */
+    const openOnlyRaw = p.get("open");
+    const openOnlyFlag = urlFlagJa(openOnlyRaw);
+    if (!openOnlyFlag.readable) flagNoticeJa("締切が過ぎた候補を除く", openOnlyRaw);
+    state.openOnly = openOnlyFlag.on;
     /* 「見方のてびき」を開いた状態もリンクで引き継ぐ。閉じた `<details>` の中は
      * ブラウザのページ内検索（Ctrl+F）で出てこない（WebKit の既知の制限:
      * https://bugs.webkit.org/show_bug.cgi?id=239940）。てびきを探している人が
@@ -5824,6 +5877,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     if (state.domestic) p.set("domestic", "1");
     if (state.online) p.set("online", "1");
     if (state.past) p.set("past", "1");
+    if (state.openOnly) p.set("open", "1");
     if (state.cats.length) p.set("cats", state.cats.join(","));
     // 並び順も URL に入れる。「国内研究会を締切の新しい順で」のような共有が、
     // 開いた人の画面で元の並びにならないのは惜しい。既定の並びなら引数を足さない。
@@ -5860,6 +5914,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     inputElement("domestic").checked = state.domestic;
     inputElement("online").checked = state.online;
     inputElement("past").checked = state.past;
+    inputElement("openOnly").checked = state.openOnly;
     catsBox.querySelectorAll<HTMLInputElement>("input").forEach((chk) => {
       chk.checked = state.cats.indexOf(chk.value) >= 0;
     });
@@ -5875,6 +5930,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     state.domestic = inputElement("domestic").checked;
     state.online = inputElement("online").checked;
     state.past = inputElement("past").checked;
+    state.openOnly = inputElement("openOnly").checked;
     state.cats = [];
     catsBox.querySelectorAll<HTMLInputElement>("input").forEach((chk) => {
       if (chk.checked) state.cats.push(chk.value);
@@ -6500,7 +6556,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     apply();
     scheduleSemantic();
   });
-  ["kind", "rank", "win", "est", "domestic", "online", "past"].forEach((id) => {
+  ["kind", "rank", "win", "est", "domestic", "online", "past", "openOnly"].forEach((id) => {
     $(id).addEventListener("change", apply);
   });
   catsBox.addEventListener("change", apply);
@@ -6533,6 +6589,8 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       domestic: false,
       online: false,
       past,
+      /* 候補が 0 件になった原因そのものなので、まとめて外す側で外す。 */
+      openOnly: false,
     };
     stopHistoryLoad();
     if (state.mode === "deadlines") setDeadlineProfile(DATA);
@@ -6942,7 +7000,12 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         total > drawn
           ? `候補 ${countJa(total)} 件のうちこの用紙に ${countJa(drawn)} 件（続きは画面の「さらに表示」）`
           : `候補 ${countJa(drawn)} 件`;
-      box.textContent = `この印刷物: 投稿先を探す画面 ／ ${listed}${printedTail}。${printLegendJa()}`;
+      /* 締切が過ぎた候補を外しているときは、その事も紙に書く（紙だけを受け取った人に
+       * 「これが候補の全部」と読ませない – 表の枝の `describeFilters` と同じ約束）。 */
+      const excludedOnPaper = recommendExcludedClosed
+        ? ` ／ 締切が過ぎた候補 ${countJa(recommendExcludedClosed)} 件は「締切が過ぎた候補を除く」で除いています`
+        : "";
+      box.textContent = `この印刷物: 投稿先を探す画面 ／ ${listed}${excludedOnPaper}${printedTail}。${printLegendJa()}`;
       return;
     }
     box.textContent =
@@ -7032,6 +7095,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       domestic: false,
       online: false,
       past: false,
+      openOnly: false,
     };
     stopHistoryLoad();
     if (state.mode === "deadlines") setDeadlineProfile(DATA);

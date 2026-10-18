@@ -2219,7 +2219,7 @@ it("the shared URL keeps the sort order the sender was looking at (SPEC §7)", (
     sortable as string,
     defaultKey as string,
     "let sortKey = DEFAULT_SORT_KEY, sortAsc = true;",
-    "const state = { mode: 'deadlines', q: '', kind: '', rank: '', win: 'all', est: false, domestic: false, past: false, cats: [] };",
+    "const state = { mode: 'deadlines', q: '', kind: '', rank: '', win: 'all', est: false, domestic: false, past: false, openOnly: false, cats: [] };",
     "const DATA = { categories: { hpc: {}, systems: {} } };",
     "const KIND_LABEL = { abstract: '概要締切', paper: '論文締切', notification: '採否通知' };",
     runtime.match(/const SELECTABLE_KINDS = \[[^\]]*\];/)?.[0] ?? "",
@@ -2276,6 +2276,13 @@ it("the shared URL keeps the sort order the sender was looking at (SPEC §7)", (
     // 入りなしも明に書ける（`0` / `false` で注意を出さない）。
     "urlNotices = []; state.past = true; window.location.search = '?past=0&domestic=false'; readUrl();",
     "const offFlags = [state.past, state.domestic, urlNotices.join(' ／ ')];",
+    // 推薦の候補から締切が過ぎた会議を除く条件（`open=1`）も、同じ読み書きの対になる。
+    "urlNotices = []; state.openOnly = false; window.location.search = '?open=1'; readUrl();",
+    "const openOn = [state.openOnly, urlNotices.join(' ／ ')];",
+    "state.openOnly = true; state.domestic = false; writeUrl();",
+    "const openSent = written;",
+    "state.openOnly = false; window.location.search = openSent.slice(1); readUrl();",
+    "const openRound = [openSent, state.openOnly];",
     // 読めない値は入りなしにして、画面上の語（ラベルそのもの）で理由を出す。
     "urlNotices = []; state.online = true; window.location.search = '?online=maybe'; readUrl();",
     "const unreadableFlag = [state.online, urlNotices.join(' ／ ')];",
@@ -2323,6 +2330,8 @@ it("the shared URL keeps the sort order the sender was looking at (SPEC §7)", (
     "  cleanNotices,",
     "  trueFlags,",
     "  offFlags,",
+    "  openOn,",
+    "  openRound,",
     "  unreadableFlag,",
     "  unreadableMode,",
     "  explicitMode,",
@@ -2347,6 +2356,8 @@ it("the shared URL keeps the sort order the sender was looking at (SPEC §7)", (
     cleanNotices,
     trueFlags,
     offFlags,
+    openOn,
+    openRound,
     unreadableFlag,
     unreadableMode,
     explicitMode,
@@ -2368,6 +2379,8 @@ it("the shared URL keeps the sort order the sender was looking at (SPEC §7)", (
     [boolean, boolean, string],
     [boolean, boolean, string],
     [boolean, string],
+    [boolean, string],
+    [string, boolean],
     [string, string],
     [string, string],
     [string, boolean, string, string],
@@ -2416,6 +2429,9 @@ it("the shared URL keeps the sort order the sender was looking at (SPEC §7)", (
   // 「1 以外を黙って切り捨てる」実装に戻っていないことをここで止める）。
   expect(trueFlags, "true と書いたチェックが効いていない").toEqual([true, true, ""]);
   expect(offFlags, "明示的な解除で注意を出している").toEqual([false, false, ""]);
+  expect(openOn, "open=1 で推薦の候補の絞り込みが入らない").toEqual([true, ""]);
+  expect(openRound[0], "open=1 が URL に残っていない").toContain("open=1");
+  expect(openRound[1], "リンクを開いた側で「締切が過ぎた候補を除く」が入らない").toBe(true);
   expect(unreadableFlag[0], "読めない値でチェックが入っている").toBe(false);
   expect(unreadableFlag[1]).toContain("リンクのオンライン参加可のみ「maybe」");
   expect(unreadableFlag[1]).toContain("チェックは入りませんでした");

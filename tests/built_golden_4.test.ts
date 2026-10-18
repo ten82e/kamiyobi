@@ -1460,6 +1460,7 @@ it("推薦画面の印刷見出しは、用紙に載る枚数と候補の総数�
     "Recommender",
     "describeFilters",
     "recommendationList",
+    "recommendExcludedClosed",
   ];
   const used = names.filter((name) =>
     name === "$" ? body.includes("$(") : new RegExp(`\\b${name.replace("$", "\\$")}\\b`).test(body),
@@ -1487,6 +1488,7 @@ it("推薦画面の印刷見出しは、用紙に載る枚数と候補の総数�
       Recommender: R,
       describeFilters: () => "",
       recommendationList: { length: total },
+      recommendExcludedClosed: 0,
     };
     class FixedDate extends Date {
       static now() {

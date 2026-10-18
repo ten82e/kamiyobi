@@ -2254,6 +2254,9 @@ it("投稿先を探す画面で印刷すると、紙に出る但し書きが実�
       "const DATA = { generated_at: '2026-08-09T09:00:00Z' };",
       "let sortKey = 'deadline', sortAsc = true, sortColumnLabel = '日時（JST）';",
       `let shown = ${JSON.stringify(new Array(shownCount).fill(null))};`,
+      /* 推薦の候補から締切が過ぎた会議を外した数（この検査は既定＝外していない側を見る。
+       * 外したときの但し書きは recommendation_past_note.test.ts が見る）。 */
+      "let recommendExcludedClosed = 0;",
       `let state = { mode: ${JSON.stringify(mode)}, win: '30d', kind: '', cats: [], rank: '', past: false };`,
       // 条件の書き下ろしに渡すラベル関数（この検査は describeFilters をスタブにするので
       // 呼ばれないが、名前だけは必要）。語の正本は注入済みの Recommender 側にある。
