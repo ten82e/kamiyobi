@@ -2830,11 +2830,13 @@ function semanticOutput(value: unknown): value is SemanticOutput {
      * 「あと 30 日」と出す行が上の数から落ちて画面が自己矛盾する）。 */
     const limit = windowLimitMs(state.win, now);
     const floor = state.past ? windowFloorMs(state.win, now) : Number.NEGATIVE_INFINITY;
+    /* 論文の下書きは**両方の画面**で読む。推薦モードでは候補の並びを作るのに使い、締切の
+     * 一覧では「その論文に合う行」に印を付けるのに使う（並びも絞り込みも変えない –
+     * 2026-10-18 に、締切の一覧の一致評価の札が出ていない事に気づいた。てびきと検査は
+     * 前から在った）。 */
     const pElem = typeof document !== "undefined" ? $("paperText") : null;
     const pText =
-      state.mode === "recommend" && pElem && "value" in pElem && typeof pElem.value === "string"
-        ? pElem.value.trim()
-        : "";
+      pElem && "value" in pElem && typeof pElem.value === "string" ? pElem.value.trim() : "";
     // 単体抽出テスト（node probe）でも動くよう、filter 内では window 経由で解決する
     const Rec = Recommender;
 
@@ -2865,7 +2867,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     // 論文モードおよび常時受付モード: 未来締切 + 常時受付ジャーナル + 未来締切の無い会議の過去代表行
     // （過去行は代表 1 行のみに限定し、全過去版で埋めない）
     let pool = rows;
-    if (pLines.length && Rec) {
+    if (state.mode === "recommend" && pLines.length && Rec) {
       pool = Rec.candidatePool(rows, activeData.conferences, now);
       recommendationCandidateCount = new Set(
         pool.flatMap((row) => [
@@ -2890,12 +2892,12 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     const matchesExceptCats = (r: AppRow): boolean => {
       // 既定の条件で何件が落ちたかを数える。「N 件 / 全 M 件」の差を読み手が説明できる
       // ようにするためで、条件式を外に書き出して二重実装する代わりにここで名前を付ける。
-      const byEst = !inRecommend && !state.est && r.est && !pLines.length;
+      const byEst = !inRecommend && !state.est && r.est;
       // 過去行は通常モードで除外（「過去の締切も表示」トグルで表示）。
       // 論文モード（論文の投稿先を探す画面）では過ぎた締切の行も候補にする –
       // ここでは「次回予定がある」とは判定しない（第 225 回: 一覧の印で同じ語を根拠なく
       // 使っていたので、コメントから外した）。
-      const byPast = isPast(r) && !pLines.length && !state.past;
+      const byPast = isPast(r) && !inRecommend && !state.past;
       // 推定日程がすでに過ぎた行は「推定を含める」でも出さない（未来の約束ではない）。
       const byEstimatedPast = r.est && isPast(r);
       // このサイトは「これから投稿できるところ」を探すもの。
@@ -2904,7 +2906,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       const byKind =
         r.kind !== "abstract" &&
         r.kind !== "paper" &&
-        !((pLines.length || state.kind === "journal") && r.kind === "journal") &&
+        !((inRecommend || state.kind === "journal") && r.kind === "journal") &&
         !(inRecommend && r.kind === "venue");
       // 各条件は**独立に**数える（1 行が過去かつ投稿締切以外なら両方に立つ）。
       // なので内訳を足しても全件にはならない — 表示文でもそう書く。
@@ -3018,23 +3020,29 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       return true;
     });
 
-    if (pLines.length && Rec) {
+    /* 意味検索の点（会場ごとに 1 度だけ数える）。候補の並びにも、締切の一覧の印にも
+     * 同じ点を使う（同じ画面の中で評価が 2 通りになってはいけない）。 */
+    const 意味の點 = (
+      query: Vector,
+      embeddings: VectorMap,
+    ): { semanticScores: Record<string, number>; semanticSimilarities: Record<string, number> } => {
+      const scores: Record<string, number> = {};
+      const similarities: Record<string, number> = {};
+      out.forEach((r) => {
+        const key = r.conf?.key;
+        if (key && !Object.hasOwn(scores, key)) {
+          scores[key] = Rec.semanticScore(key, query, embeddings, null);
+          similarities[key] = Rec.semanticSimilarity(key, query, embeddings, null);
+        }
+      });
+      return { semanticScores: scores, semanticSimilarities: similarities };
+    };
+
+    if (inRecommend && Rec) {
       let semanticScores: Record<string, number> | null = null;
       let semanticSimilarities: Record<string, number> | null = null;
       if (semQuery && semEmbeddings) {
-        const scores: Record<string, number> = {};
-        const similarities: Record<string, number> = {};
-        const query = semQuery;
-        const embeddings = semEmbeddings;
-        out.forEach((r) => {
-          const key = r.conf?.key;
-          if (key && !Object.hasOwn(scores, key)) {
-            scores[key] = Rec.semanticScore(key, query, embeddings, null);
-            similarities[key] = Rec.semanticSimilarity(key, query, embeddings, null);
-          }
-        });
-        semanticScores = scores;
-        semanticSimilarities = similarities;
+        ({ semanticScores, semanticSimilarities } = 意味の點(semQuery, semEmbeddings));
       }
       out = Rec.venueRecommendations(out, pLines, semanticScores, now, {
         venueCats: venueCats,
@@ -3074,6 +3082,36 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       /* 並べ替えは最後に一度だけ（外した数は一致順の候補から数える）。 */
       if (state.order === "deadline") out = orderCandidatesByDeadline(out);
       return out;
+    }
+
+    /* 締切の一覧でも、論文を入れていれば「その論文に合う行」に印（一致評価の札）を付ける。
+     * **並びも絞り込みも変えない** – 一覧は締切の順のまま、合う行だけが分かる（札を押すと
+     * その行の中で当たった要素の内訳が開く）。点は候補と同じ計算を使う。 */
+    if (pLines.length && Rec) {
+      const 意味 = semQuery && semEmbeddings ? 意味の點(semQuery, semEmbeddings) : null;
+      const 一致 = Rec.venueRecommendations(out, pLines, 意味?.semanticScores ?? null, now, {
+        venueCats: venueCats,
+        fieldedLexical: true,
+        ...(意味 ? { semanticSimilarities: 意味.semanticSimilarities } : {}),
+      }).filter((recommendation) => recommendation.fit.score >= 10);
+      if (一致.length) {
+        const 索引 = new Map(
+          一致.map((recommendation) => [recommendation.venueKey, recommendation]),
+        );
+        out = out.map((row) => {
+          const hit = 索引.get(row.conf.key);
+          if (!hit) return row;
+          return {
+            ...row,
+            _boosted: hit.boosted,
+            _match: hit.match,
+            _vocabScore: hit.fit.lexicalScore,
+            _matchScore: hit.fit.score,
+            _fitLabel: hit.fit.label,
+            _availability: hit.availability,
+          };
+        });
+      }
     }
 
     /* 「過去の締切も表示」を入れると、既定の並び（残りの昇順）では 2019 年の行が画面の

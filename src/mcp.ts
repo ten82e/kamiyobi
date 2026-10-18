@@ -2704,7 +2704,9 @@ function collectionStats(args: Record<string, unknown> = {}, now: number): strin
       const 會議 = (收錄.conferences ?? []) as Array<{ tags?: unknown }>;
       const 數 = 集まり
         .map(([鍵, 名]) => {
-          const n = 會議.filter((c) => (Array.isArray(c.tags) ? c.tags : []).indexOf(鍵) >= 0).length;
+          const n = 會議.filter(
+            (c) => (Array.isArray(c.tags) ? c.tags : []).indexOf(鍵) >= 0,
+          ).length;
           return n ? `${名} ${n}` : "";
         })
         .filter(Boolean);
