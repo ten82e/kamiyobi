@@ -1083,7 +1083,11 @@ it("投稿先の推薦が、画面と同じ核で出る（第 857 回）", async
     Recommender.parsePaperLines(題),
     null,
     now,
-    { fieldedLexical: true },
+    /* 画面と同じく分野の寄せを渡す（MCP も語彙だけで同じ物を渡す – 2026-10-18）。 */
+    {
+      fieldedLexical: true,
+      venueCats: Recommender.autoDetectCats(Recommender.parsePaperLines(題)),
+    },
   ).filter((r) => r.fit.score >= 10);
   expect(正.length, "この検査の前提（候補が出る題名）が崩れた").toBeGreaterThan(0);
   const text = await call("recommend_venues", { paper: 題, limit: 5 });
@@ -2360,7 +2364,11 @@ it("推薦の pool は画面と同じ組み立て（第 894 回）", async () =>
     Recommender.parsePaperLines(題),
     null,
     now,
-    { fieldedLexical: true },
+    /* 画面と同じく分野の寄せを渡す（MCP も語彙だけで同じ物を渡す – 2026-10-18）。 */
+    {
+      fieldedLexical: true,
+      venueCats: Recommender.autoDetectCats(Recommender.parsePaperLines(題)),
+    },
   ).filter((r) => r.fit.score >= 10);
   expect(正.length, "画面と同じ pool で候補が出ない（この検查の前提が崩れた）").toBeGreaterThan(0);
   const text = await call("recommend_venues", { paper: 題, limit: 5 });
@@ -2408,6 +2416,7 @@ it("品書が再学習の重みを持つ – 画面の推薦が MCP と同じ順
     now,
     {
       fieldedLexical: true,
+      venueCats: Recommender.autoDetectCats(Recommender.parsePaperLines(paper)),
     },
   )
     .filter((r) => r.fit.score >= 10)
@@ -2471,7 +2480,11 @@ it("推薦の行に、画面と同じ選定理由が付く（第 897 回）", as
     Recommender.parsePaperLines(paper),
     null,
     now,
-    { fieldedLexical: true },
+    /* 画面と同じく分野の寄せを渡す（MCP も語彙だけで同じ物を渡す – 2026-10-18）。 */
+    {
+      fieldedLexical: true,
+      venueCats: Recommender.autoDetectCats(Recommender.parsePaperLines(paper)),
+    },
   ).filter((r) => r.fit.score >= 10);
   expect(正.length, "この検査の前提（候補が出る題名）が崩れた").toBeGreaterThan(0);
   const 理由の形 = (r: { match?: { agg?: Record<string, number> }; boosted?: boolean }): string => {
@@ -4529,8 +4542,10 @@ it("MCPの候補件数は共有推薦処理と一致し、終了件数は元の�
       Recommender.undatedVenueRows(品書.conferences ?? [], pool as never) as never,
     );
     const lines = Recommender.parsePaperLines(題);
+    /* 画面（と MCP）は分野の寄せも渡す（2026-10-18 に MCP も語彙だけで渡すようにした）。 */
     const 候補 = Recommender.venueRecommendations(pool, lines, null, 今, {
       fieldedLexical: true,
+      venueCats: Recommender.autoDetectCats(lines),
     }).filter((r) => r.fit.score >= 10);
     return { 候補: 候補.length, 過去: 候補.filter((r) => rawSubmissionIsClosed(r.row, 今)).length };
   };
