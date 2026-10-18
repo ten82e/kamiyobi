@@ -26,6 +26,25 @@ const workshop = rows("local-ml", "国内ML研究会", "機械学習研究会", 
 const lines = (title: string) => [{ title, abstract: "", keywords: "", venue: "" }];
 
 describe("shared word-only recommendation fallback", () => {
+  /* 並びは**画面に出している一致評価（fit.score）の強い順**。語の重なりの点（lexical）で
+   * 並べ替えると、点の低い候補が点の高い候補より上に来て、カードの札
+   * （「候補」「重なりうすい」）と順が食い違う（2026-10-18 実測: TSN の例で RTSS 80 点が
+   * 9 番目、COLT 16 点が 1 番目）。 */
+  it("orders candidates by the fit score shown on the card, not by lexical overlap", () => {
+    const input = [...journal, ...workshop];
+    const 結果 = Recommendation.venueRecommendations(
+      input,
+      lines("機械学習 大規模 分散 systems"),
+      null,
+      now,
+      {},
+    );
+    const 点 = 結果.map((r) => r.fit.score);
+    expect(点.length, "候補が出ていない（検査が空振り）").toBeGreaterThan(1);
+    for (let i = 1; i < 点.length; i += 1)
+      expect(点[i - 1], `点の順が崩れている: ${JSON.stringify(点)}`).toBeGreaterThanOrEqual(点[i]);
+  });
+
   it("keeps an explicitly named venue ahead of broader topic matches without increasing confidence", () => {
     const input = [...workshop, ...journal];
     const result = Recommendation.venueRecommendations(
