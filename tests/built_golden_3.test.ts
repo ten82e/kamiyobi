@@ -222,9 +222,9 @@ it("検索欄で Esc を押すと、語を消さずに欄を出て選択行に�
     "}",
     "const rows = [row('row0'), row('row1')];",
     // 検索欄（id は q）。フォーカスを戻す対象と区別できるので、blur を数える。
-    "const search = { tagName: 'INPUT', blur() { calls.push('blur:q'); }, focus() {} };",
+    "const search = { tagName: 'INPUT', value: 'ネットワーク', blur() { calls.push('blur:q'); }, focus() {} };",
     "const paper = { tagName: 'TEXTAREA', blur() { calls.push('blur:paper'); }, focus() {} };",
-    "const els = { q: search, tbody: { querySelectorAll: () => rows } };",
+    "const els = { q: search, results: { focus() { calls.push('focus:results'); } }, tbody: { querySelectorAll: () => rows } };",
     "const document = { activeElement: null, getElementById: (id) => els[id] || null };",
     "function $(id) { return document.getElementById(id); }",
     "const window = { matchMedia: () => ({ matches: false }) };",
@@ -255,14 +255,14 @@ it("検索欄で Esc を押すと、語を消さずに欄を出て選択行に�
     "calls.length = 0;",
     "make(1)({ key: 'x', preventDefault() {}, target: search });",
     "const other = calls.slice();",
-    "console.log(JSON.stringify({ fromSearch, fromPaper, noRow, other }));",
+    "console.log(JSON.stringify({ fromSearch, fromPaper, noRow, other, query: [search.value] }));",
   ].join("\n");
   const proc = spawnSync("node", ["-e", script], { encoding: "utf8", timeout: 60_000 });
   expect(proc.status, proc.stderr).toBe(0);
   const out = JSON.parse(proc.stdout) as Record<string, string[]>;
   expect(out.fromSearch, "検索欄から出られていない").toContain("blur:q");
   expect(out.fromSearch, "選択行にフォーカスが戻っていない").toContain("focus:row1");
-  // 検索語を消す実装に戻っていないこと（blur 以外の操作を足していない）。
+  expect(out.query).toEqual(["ネットワーク"]);
   expect(out.fromSearch.filter((c) => c.startsWith("blur:"))).toEqual(["blur:q"]);
   // 他の入力欄では表の行を奪わない（論文の本文に打っていて Esc を押した人が、表の行に
   // 飛ばされることがあってはいけない）。
@@ -271,8 +271,8 @@ it("検索欄で Esc を押すと、語を消さずに欄を出て選択行に�
     out.fromPaper.filter((c) => c.startsWith("focus:")),
     "他の入力欄で Esc を押した人が表の行に飛ばされている",
   ).toEqual([]);
-  // 行が未選択のときはフォーカスを移さない（存在しない行を触らない）。
-  expect(out.noRow.filter((c) => c.startsWith("focus:"))).toEqual([]);
+  // 行が未選択なら、存在しない行ではなく結果領域に戻す。
+  expect(out.noRow.filter((c) => c.startsWith("focus:"))).toEqual(["focus:results"]);
   // 他の鍵は入力欄では素通り（文字が入るだけ）。
   expect(out.other).toEqual([]);
   // 手引きが二つの導線を説明している（ショートカットの一覧は件数欄にもある）。

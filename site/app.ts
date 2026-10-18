@@ -1658,12 +1658,11 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       isContentEditable;
     if (onControl && e.key === "Escape") {
       if ("blur" in target && typeof target.blur === "function") target.blur();
-      /* `/` で検索欄に入って Esc で出た人は、そのまま `j` / `k` を打ちたい。
-       * フォーカスが body に落ちると、支援技術ではどこを読めばいいのか分からない
-       * （2026-09-23 実測: 選択行に返していなかった – 行の詳細を閉じたときだけ
-       * 戻す形になっていた）。選択行があるときだけ返す。検索語は消さない
-       * （消すと打ち直しが発生して却って困る）。 */
-      if (target === $("q") && selectedIndex >= 0 && shown.length) updateRowSelection();
+      // 検索欄から一覧へ戻り、続けて j / k で移動できるようにする。
+      if (target === $("q")) {
+        if (selectedIndex >= 0 && selectedIndex < shown.length) updateRowSelection();
+        else $("results").focus();
+      }
       return;
     }
     if (keyBlockedByTarget(tag, e.key, isContentEditable)) return;
@@ -6372,18 +6371,27 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     delay: number,
     applyInput: () => void,
     onType?: () => void,
-  ): () => void {
+  ): () => boolean {
     let composing = false;
     let timer: ReturnType<typeof setTimeout> | undefined;
+    const cancel = () => {
+      const pending = timer !== undefined;
+      clearTimeout(timer);
+      timer = undefined;
+      return pending;
+    };
     const schedule = () => {
       if (onType) onType();
-      clearTimeout(timer);
+      cancel();
       if (composing) return;
-      timer = setTimeout(applyInput, delay);
+      timer = setTimeout(() => {
+        timer = undefined;
+        applyInput();
+      }, delay);
     };
     element.addEventListener("compositionstart", () => {
       composing = true;
-      clearTimeout(timer);
+      cancel();
       if (onType) onType();
     });
     element.addEventListener("compositionend", () => {
@@ -6391,7 +6399,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       schedule();
     });
     element.addEventListener("input", schedule);
-    return () => clearTimeout(timer);
+    return cancel;
   }
 
   // ---- wiring ----
@@ -6402,13 +6410,17 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     queryEditInProgress = false;
   });
   $("q").addEventListener("keydown", (e: KeyboardEvent) => {
-    if (e.ctrlKey || e.metaKey || e.altKey) return;
-    if (e.key === "Enter" && !e.isComposing && e.keyCode !== 229) {
+    if (e.ctrlKey || e.metaKey || e.altKey || e.isComposing || e.keyCode === 229) return;
+    if (e.key === "Escape") {
+      e.preventDefault();
+      if (!cancelQueryUpdate()) return;
+      e.stopPropagation();
+    } else if (e.key === "Enter") {
       e.preventDefault();
       cancelQueryUpdate();
-      apply();
-      $("results").focus();
-    }
+    } else return;
+    apply();
+    $("results").focus();
   });
 
   wireDebouncedInput(

@@ -91,6 +91,7 @@ function harness() {
       } = {},
     ) => {
       active = nodes[target];
+      let stopped = false;
       const event = {
         key,
         keyCode: 0,
@@ -98,9 +99,13 @@ function harness() {
         ...options,
         target: nodes[target],
         preventDefault: () => calls.push("prevent"),
+        stopPropagation: () => {
+          stopped = true;
+          calls.push("stop");
+        },
       };
       nodes[target].fire("keydown", event);
-      context.onKeydown(event);
+      if (!stopped) context.onKeydown(event);
     },
   };
 }
@@ -161,7 +166,7 @@ it.each(["ctrlKey", "metaKey", "altKey"] as const)(
 it("still leaves the search field with ordinary Escape", () => {
   const ui = harness();
   ui.fire("q", "Escape", { keyCode: 27 });
-  expect(ui.calls).toEqual(["blur:q", "selection", "focus:results"]);
+  expect(ui.calls).toEqual(["prevent", "blur:q", "selection", "focus:results"]);
 });
 it("still opens the selected venue with ordinary Enter", () => {
   const ui = harness();
@@ -227,6 +232,69 @@ it("continues to debounce later input after explicit Enter", () => {
   expect(ui.calls.filter((call) => call === "apply")).toHaveLength(2);
   expect(ui.nodes.q.value).toBe("ネットワーク");
 });
+
+it.each(["input", "compositionend"])(
+  "applies a pending %s before leaving search with Escape",
+  (event) => {
+    vi.useFakeTimers();
+    const ui = harness();
+    ui.nodes.q.fire(event);
+    ui.fire("q", "Escape");
+    expect(ui.calls).toEqual(["prevent", "stop", "apply", "focus:results"]);
+    expect(ui.nodes.q.value).toBe("機械学習");
+    ui.fire("body", "j");
+    const calls = [...ui.calls];
+    vi.advanceTimersByTime(500);
+    expect(ui.calls).toEqual(calls);
+    ui.nodes.q.fire("input");
+    vi.advanceTimersByTime(180);
+    expect(ui.calls.filter((call) => call === "apply")).toHaveLength(2);
+  },
+);
+
+it("preserves the selected row when Escape follows an already applied query", () => {
+  vi.useFakeTimers();
+  const ui = harness();
+  ui.nodes.q.fire("input");
+  vi.advanceTimersByTime(180);
+  ui.calls.length = 0;
+  ui.fire("q", "Escape");
+  expect(ui.calls).toEqual(["prevent", "blur:q", "selection", "focus:results"]);
+  expect(ui.context.selectedIndex).toBe(1);
+});
+
+it.each(["none", "empty", "out-of-range"])(
+  "focuses results when Escape has no valid selected row (%s)",
+  (selection) => {
+    const ui = harness();
+    if (selection === "empty") ui.context.shown = [];
+    else ui.context.selectedIndex = selection === "none" ? -1 : 10;
+    ui.fire("q", "Escape");
+    expect(ui.calls).toEqual(["prevent", "blur:q", "focus:results"]);
+    expect(ui.nodes.q.value).toBe("機械学習");
+    expect(ui.active()).toBe(ui.nodes.results);
+  },
+);
+
+it.each([
+  { ctrlKey: true },
+  { metaKey: true },
+  { altKey: true },
+  { isComposing: true },
+  { keyCode: 229 },
+])(
+  "does not flush pending search for protected Escape ($ctrlKey/$metaKey/$altKey/$isComposing/$keyCode)",
+  (flags) => {
+    vi.useFakeTimers();
+    const ui = harness();
+    ui.nodes.q.fire("input");
+    ui.fire("q", "Escape", flags);
+    expect(ui.calls).toEqual([]);
+    vi.advanceTimersByTime(180);
+    expect(ui.calls).toEqual(["apply"]);
+    expect(ui.active()).toBe(ui.nodes.q);
+  },
+);
 
 it.each(["ctrlKey", "metaKey", "altKey"] as const)(
   "keeps a pending query update for modified Enter (%s)",
