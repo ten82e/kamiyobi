@@ -346,7 +346,9 @@ describe("画面の一覧をカレンダーに書き出す（第 856 回）", ()
 
   it("押した時の動きが、見えている行だけを渡す（配付物を読み直さない）", () => {
     /* `app.js` の関数を拔き出して走らせ、渡した行だけが材料に成る事を見る（DOM は眞似する）。 */
-    const src = jsFunction(siteRuntime(), "shownIcsInput");
+    const runtime = siteRuntime();
+    /* 1 行分の組み立ては切り出してある（一覧と行の詳細が同じ物を使う）。 */
+    const src = `${jsFunction(runtime, "icsInputForRow")}\n${jsFunction(runtime, "shownIcsInput")}`;
     const 行 = [
       {
         conf: { key: "sc", title: "SC", categories: ["systems"], link: "https://sc.example/" },
@@ -439,7 +441,8 @@ it("推薦候補の ICS にも投稿トラックを書き出す", () => {
 });
 
 it("never turns ongoing acceptance or an undated venue into a calendar event", () => {
-  const source = jsFunction(siteRuntime(), "shownIcsInput");
+  const runtime = siteRuntime();
+  const source = `${jsFunction(runtime, "icsInputForRow")}\n${jsFunction(runtime, "shownIcsInput")}`;
   const dated = {
     conf: { key: "dated", title: "Dated" },
     ed: { id: "dated-2027", year: 2027 },

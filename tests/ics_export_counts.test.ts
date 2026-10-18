@@ -67,6 +67,8 @@ function harness(initial: Row[], mode: "recommend" | "deadlines" = "deadlines") 
     [
       jsFunction(app, "countJa"),
       jsFunction(app, "exportIcsLabelJa"),
+      /* 1 行分の組み立ては切り出してある（一覧と行の詳細が同じ物を使う）。 */
+      jsFunction(app, "icsInputForRow"),
       jsFunction(app, "shownIcsInput"),
       jsFunction(app, "shownIcsText"),
       `function refresh(){const recMode=state.mode==="recommend";const 候補を書き出す=candidateScopeOnScreen();${controlsSource}}`,

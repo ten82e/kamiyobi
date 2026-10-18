@@ -1309,6 +1309,9 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         esc(officialLink) +
         '" target="_blank" style="display: block; text-align: center; background: var(--accent); color: var(--on-accent); text-decoration: none; padding: 10px; border-radius: 6px; font-weight: 600; margin-bottom: 20px;">公式サイトを開く</a>';
     }
+    /* この 1 件だけを持ち出す入口（中身は描いた後に組み立てる – 押した時に走る関数は
+     * 文字列には書けない）。 */
+    html += '<div id="drawerRowActions"></div>';
 
     const placeRaw = String(r.ed.place || "");
     const placeShown = Recommender.placeJa(placeRaw);
@@ -1443,9 +1446,48 @@ function semanticOutput(value: unknown): value is SemanticOutput {
 
     $("drawerBody").innerHTML = html;
     renderEditionSchedule(r);
+    renderDrawerRowActions(r);
     const closeBtn = $("drawerClose");
     if (closeBtn) focusDrawerAfterRender(r, closeBtn);
   }
+  /* 行の詳細から、その 1 件だけをカレンダーに持ち出せるようにする（一覧の書き出しは
+   * 絞り込みごと入るので、「この締切だけ」を持ち出すには 1 件に絞る手間が要った –
+   * 2026-10-18）。予定の UID は購読の ICS と同じ物を使う（二重に並ばない）。 */
+  function exportRowIcs(r: AppRow): void {
+    const one = icsInputForRow(r);
+    if (!one) return;
+    const generated = typeof DATA.generated_at === "string" ? new Date(DATA.generated_at) : null;
+    const text = icsViewText([one], new Date(), generated, {
+      scopeJa: "行の詳細から入れた 1 件",
+      calName: ICS_VIEW_CAL_NAME_JA,
+    });
+    if (typeof Blob === "undefined" || typeof URL === "undefined" || !URL.createObjectURL) return;
+    const url = URL.createObjectURL(new Blob([text], { type: "text/calendar;charset=utf-8" }));
+    /* 同じ日に何件も落としても上書きしないよう、会議の鍵と日（画面に出ている日）を名前に入れる。 */
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = `kamiyobi-${String(r.conf.key || "deadline")}-${one.day}.ics`;
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
+    setTimeout(() => URL.revokeObjectURL(url), 0);
+  }
+
+  function renderDrawerRowActions(r: DrawerRow): void {
+    const box = $("drawerRowActions");
+    if (!box) return;
+    box.textContent = "";
+    if (!icsInputForRow(r as unknown as AppRow)) return;
+    const ics = document.createElement("button");
+    ics.type = "button";
+    ics.className = "drawer-action";
+    ics.textContent = "この締切をカレンダー（.ics）に入れる";
+    ics.title =
+      "この 1 件だけを .ics で持ち出します。予定の UID は購読のカレンダー（deadlines.ics）と同じなので、両方に入れても同じ締切が二度並びません。";
+    ics.addEventListener("click", () => exportRowIcs(r as unknown as AppRow));
+    box.appendChild(ics);
+  }
+
   window.openDrawer = (row: unknown) => {
     if (isDrawerRow(row)) openDrawer(row);
   };
@@ -3258,56 +3300,63 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       : `この一覧の ${countJa(total)} 件をカレンダー（.ics）でダウンロード`;
   }
 
-  /** いまの一覧（`shown`）を、カレンダーの材料へ写す（組み立ては `site/ics.ts` が持つ）。
-   * 値は**画面に出ている物と同じ入口**から取る（会議名は年を添えた形・種別・日付欄・会期・
-   * 開催地）。画面と食い違う 1 本を書き出さないため。 */
+  /** 1 行を、カレンダーの材料へ写す（組み立ては `site/ics.ts` が持つ）。値は**画面に出ている
+   * 物と同じ入口**から取る（会議名は年を添えた形・種別・日付欄・会期・開催地・ランク）。一覧の
+   * 書き出しと行の詳細からの 1 件が同じ物を使う – 同じ締切が別の予定として並ばないよう、
+   * カレンダーの UID も同じ入口から渡す。 */
+  function icsInputForRow(r: AppRow): ScreenDeadlineInput | null {
+    if (r.kind === "journal" && !r.dl.utc && !r.dateOnly) return null;
+    const at = Number(r.t);
+    if (!Number.isFinite(at)) return null;
+    const ed = r.ed || {};
+    const conf = r.conf || {};
+    const 時 = jstParts(new Date(at));
+    const day = r.dateOnly
+      ? String(r.localDate ?? "")
+          .replace(/-/g, "")
+          .slice(0, 8)
+      : (時?.day ?? "");
+    if (!/^\d{8}$/.test(day)) return null;
+    return {
+      key: String(conf.key ?? ""),
+      editionId: String(ed.id ?? ""),
+      year: ed.year ?? null,
+      title: Recommender.titleWithYearJa(conf.title || conf.key || "", ed.year),
+      kind: String(r.kind ?? ""),
+      kindWord: String(Recommender.kindLabelJa(r.kind) ?? r.kind ?? "").trim(),
+      /* 計画の計画– CLOSER の 2 つは別の募集なのに摘要が同じだつた。 */
+      kindNote: String((r.dl as { track?: unknown }).track ?? "").trim(),
+      dateField: String(Recommender.kindDateFieldJa(r.dl?.kind) ?? "").trim(),
+      day,
+      whenText: r.dateOnly
+        ? `${String(r.localDate ?? "")}（時刻未確認）`
+        : `${時?.human ?? ""}（JST）`,
+      at,
+      estimated: Boolean(r.est),
+      categories: conf.categories,
+      place: ed.place,
+      link: ed.link || conf.link,
+      session: Recommender.eventCellJa(r),
+      /* 締切の記録その物も渡す（確認の状態と延長の札を、配付する ICS と同じ語で本文に
+       * 書くため – 語は共通の `statusMarksJa` が画面の正本から取る）。 */
+      dl: r.dl,
+      /* 配付物の ICS が使った UID（品書の締切に載っている）。渡さないと、書き出しの
+       * 予定が購読の予定と別の物になり、両方を入れた人に同じ締切が二度並ぶ。 */
+      uid: (r.dl as { ics_uid?: unknown } | undefined)?.ics_uid,
+      /* ランクも渡す（畫面の列と同じ語 • 同じ入口。購読した人はカレンダーしか見ない）。 */
+      rank: (r.rankPairs || [])
+        .map((pair) => String(Recommender.rankPairLabelJa(pair) ?? "").trim())
+        .filter(Boolean)
+        .join("・"),
+    };
+  }
+
+  /* 一覧に出ている行を、書き出しの形にまとめる（行の詳細からの 1 件と同じ入口）。 */
   function shownIcsInput(): ScreenDeadlineInput[] {
     const out: ScreenDeadlineInput[] = [];
     for (const r of shown) {
-      if (r.kind === "journal" && !r.dl.utc && !r.dateOnly) continue;
-      const at = Number(r.t);
-      if (!Number.isFinite(at)) continue;
-      const ed = r.ed || {};
-      const conf = r.conf || {};
-      const 時 = jstParts(new Date(at));
-      const day = r.dateOnly
-        ? String(r.localDate ?? "")
-            .replace(/-/g, "")
-            .slice(0, 8)
-        : (時?.day ?? "");
-      if (!/^\d{8}$/.test(day)) continue;
-      out.push({
-        key: String(conf.key ?? ""),
-        editionId: String(ed.id ?? ""),
-        year: ed.year ?? null,
-        title: Recommender.titleWithYearJa(conf.title || conf.key || "", ed.year),
-        kind: String(r.kind ?? ""),
-        kindWord: String(Recommender.kindLabelJa(r.kind) ?? r.kind ?? "").trim(),
-        /* 計画の計画– CLOSER の 2 つは別の募集なのに摘要が同じだつた。 */
-        kindNote: String((r.dl as { track?: unknown }).track ?? "").trim(),
-        dateField: String(Recommender.kindDateFieldJa(r.dl?.kind) ?? "").trim(),
-        day,
-        whenText: r.dateOnly
-          ? `${String(r.localDate ?? "")}（時刻未確認）`
-          : `${時?.human ?? ""}（JST）`,
-        at,
-        estimated: Boolean(r.est),
-        categories: conf.categories,
-        place: ed.place,
-        link: ed.link || conf.link,
-        session: Recommender.eventCellJa(r),
-        /* 締切の記録その物も渡す（確認の状態と延長の札を、配付する ICS と同じ語で本文に
-         * 書くため – 語は共通の `statusMarksJa` が画面の正本から取る）。 */
-        dl: r.dl,
-        /* 配付物の ICS が使った UID（品書の締切に載っている）。渡さないと、書き出しの
-         * 予定が購読の予定と別の物になり、両方を入れた人に同じ締切が二度並ぶ。 */
-        uid: (r.dl as { ics_uid?: unknown } | undefined)?.ics_uid,
-        /* ランクも渡す（畫面の列と同じ語 • 同じ入口。購読した人はカレンダーしか見ない）。 */
-        rank: (r.rankPairs || [])
-          .map((pair) => String(Recommender.rankPairLabelJa(pair) ?? "").trim())
-          .filter(Boolean)
-          .join("・"),
-      });
+      const one = icsInputForRow(r);
+      if (one) out.push(one);
     }
     return out;
   }

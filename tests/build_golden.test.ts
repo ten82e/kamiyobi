@@ -2205,6 +2205,9 @@ const DRAWER_NAV_STUBS =
   'let drawerRow = null, drawerOriginKey = ""; const history = { state: null }; ' +
   'const rowShareKeyJa = () => "test-row"; const setDrawerModal = () => {}; ' +
   "const renderEditionSchedule = () => {}; const requestAnimationFrame = () => {}; " +
+  /* 行の詳細の「この 1 件をカレンダーへ」は、材料の組み立てと押した時の動きを
+     `drawer_row_ics.test.ts` と `ics_view_export.test.ts` が見る。ここは周辺の DOM だけ。 */
+  "const renderDrawerRowActions = () => {}; " +
   jsFunction(siteRuntime(), "focusDrawerAfterRender") +
   ";";
 
