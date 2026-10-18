@@ -373,6 +373,8 @@ export const SEARCH_CANON = (() => {
       // `queryTokenGroups` が呼ぶので、定義順で先に置く。
       // 漢数字を算用数字に直す正本。
       "漢の数字に直すJa",
+      // 時計を渡された時だけ通る道（先の年月の幅・時間の言い方）が読む。
+      "暦年Ja",
       "collapseRelativeDayPhrase",
       // 尺度と等級（`CCF A`）を 1 語に括る部品。`queryTokens` と `queryTokenGroups` が呼ぶ。
       "collapseRankPhrase",

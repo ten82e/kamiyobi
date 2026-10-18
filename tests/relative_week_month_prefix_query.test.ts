@@ -109,6 +109,57 @@ describe("「あと N 週間」「あと N か月」「あと N 日以内」の�
     expect(Recommender.relativeDayNotes("3週間以内", 基準).join(" ")).toContain("=");
   });
 
+  it("時間の言い方（`あと 6 時間`）は、その締切のある日（JST の暦日）として引く", () => {
+    /* 一覧の「残り」列は 24 時間未満の行に「あと 6 時間」と書く。そのまま貼ると 0 件だった
+     * （2026-10-18 実測: `あと 1 時間`・`あと 2 時間` とも 0 件）。日より細かい幅は
+     * この表が持たないので、その瞬間のある日（JST の暦日）の締切として引く。 */
+    /* 収録にその日の行がある日を選ぶ（0 行の日で試すと検査が空振りする）。 */
+    const 朝 = Date.parse("2026-08-11T00:00:00Z"); // JST 09:00
+    const 夜 = Date.parse("2026-08-11T14:00:00Z"); // JST 23:00
+    const 行 = (語: string, nowMs: number) => {
+      const matches = Recommender.searchMatcher(語, nowMs);
+      const catalog = JSON.parse(
+        readFileSync(join(builtSite(), "catalog.json"), "utf8"),
+      ) as unknown as never;
+      const rows = Recommender.candidateRows(catalog) as unknown as Array<{ hay: string }>;
+      return new Set(rows.filter((r) => matches(String(r.hay)) === true).map((r) => r.hay));
+    };
+    const 差 = (x: Set<string>, y: Set<string>) =>
+      [...x].filter((k) => !y.has(k)).length + [...y].filter((k) => !x.has(k)).length;
+    for (const [時間, 今, 日] of [
+      ["あと1時間", 朝, "今日"],
+      ["あと6時間", 朝, "今日"],
+      ["残り6時間", 朝, "今日"],
+      ["あと6時間", 夜, "明日"],
+      ["あと 6 時間", 夜, "明日"],
+    ] as Array<[string, number, string]>) {
+      const 日側 = 行(日, 今);
+      expect(日側.size, `対照「${日}」が 0 行（検査が空振り）`).toBeGreaterThan(0);
+      expect(差(行(時間, 今), 日側), `「${時間}」が「${日}」と違う行を出した`).toBe(0);
+    }
+    /* 時間の幅（`以内`）は寄せない（今まで通り 0 件のまま・別の規則の領分）。 */
+    expect(行("あと6時間以内", 朝).size, "時間の幅を日に寄せてしまった").toBe(0);
+    const 案内 = Recommender.querySynonymNotes("あと1時間").join(" ");
+    expect(案内, "日まで寄せた事を書いていない").toContain("時間の幅では絞れない");
+    expect(案内).toContain("その締切のある日");
+  });
+
+  it("画面の照合にも時計を渡している（渡さないと 0 件になり、件数欄の日付と食い違う）", () => {
+    /* 時間の言い方は、打たれた時点の日へ寄せる規則なので時計が要る。画面が
+     * `searchMatcher(searchQuery)` と呼んでいたため、件数欄は「今日 = 2026年10月18日(日)」と
+     * 書くのに表は 0 件、という食い違いが出ていた（2026-10-18 実測）。 */
+    const app = readFileSync(new URL("../site/app.ts", import.meta.url), "utf8");
+    const 呼び出し = [...app.matchAll(/Recommender\.searchMatcher\(/g)].map((m) =>
+      app.slice((m.index ?? 0) + m[0].length, app.indexOf(");", m.index ?? 0)),
+    );
+    expect(呼び出し.length, "照合の呼び出しが減った（検査が空振り）").toBeGreaterThanOrEqual(3);
+    for (const 引数 of 呼び出し) {
+      expect(引数, `時計を渡していない呼び出し: ${引数.replace(/\s+/g, " ").slice(0, 60)}`).toMatch(
+        /,\s*(now|今)\s*(?:,|$)/,
+      );
+    }
+  });
+
   it("過ぎた側の言い方（前）は動かさない", () => {
     /* `7日前` はそのまま過去の日付として引く（日付の側へ寄せない）。 */
     expect(対称差("7日前", "7日前"), "過去の言い方が動いた").toBe(0);

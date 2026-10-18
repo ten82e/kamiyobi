@@ -2388,8 +2388,12 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   function queryMatchCounts(query: string): { catalog: number; journal: number } {
     const trimmed = query.trim();
     if (!trimmed) return { catalog: 0, journal: 0 };
+    /* 時計を渡す – 時間の言い方（`あと 6 時間`）は、打たれた時点の日へ寄せる規則がある
+     * （渡さないと寄らずに 0 件になり、件数欄の「今日 = …」と食い違う）。 */
+    const 今 = Date.now();
     const matches = Recommender.searchMatcher(
-      Recommender.expandRelativeMonths(trimmed, Date.now()),
+      Recommender.expandRelativeMonths(trimmed, 今),
+      今,
     );
     let catalog = 0;
     rows.forEach((row) => {
@@ -2761,7 +2765,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     if (問ひ !== undefined) searchQuery = Recommender.expandRelativeMonths(問ひ, now);
     // 検索語の分解は 1 描画に 1 回で足りる。行ごとに `hayMatches` を呼ぶと、そのたびに
     // 語を分解し直す（3234 行で 1 打鍵あたり約 83 ms かかっていた）。
-    const matchesQuery = Recommender.searchMatcher(searchQuery);
+    const matchesQuery = Recommender.searchMatcher(searchQuery, now);
     const isPast = (row: AppRow) => (row.dateOnly ? now > row.tLast : row.t < now);
     /* 窓の比較は「表示している暦日」でやる（`rowShownDayMs`・`rowAfter` がその正本で、
      * 画面上部の「これからの30日間の締切」も同じ関数を見る。基準を分けると、一覧が
@@ -3970,7 +3974,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   }): ScheduleOnlyMatch[] {
     const now = Date.now();
     const limit = windowLimitMs(filter.window, now);
-    const meetsQuery = Recommender.searchMatcher(searchQuery);
+    const meetsQuery = Recommender.searchMatcher(searchQuery, now);
     return Recommender.scheduleOnlyEditions(DATA)
       .filter((m) => {
         // 同じ会議の重なる会期に投稿締切があるなら、別出典の空の回を「未定」と案内しない。
