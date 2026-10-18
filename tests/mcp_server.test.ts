@@ -3377,13 +3377,25 @@ describe("list_upcoming の行が画面と同じ（第 944 回）", () => {
     };
 
     for (const days of [7, 30]) {
+      /* 比べる相手は**画面**なので、収録範囲も画面と同じ（`scope: "screen"`）にする。
+       * 既定の `all` は snapshot まで含むため、画面（catalog）だけが持たない会場
+       * （catalog の絞り込みで落ちた物）が入り、日付が進むと差が出る（2026-10-19 実測:
+       * 30 日の窓で snapshot だけの会場 1 件が画面側に無く、深夜に落ちた）。 */
+      /* 種別は画面の既定（投稿締切 = 概要・論文）に揃える。`list_upcoming` の既定は
+       * 全部（常時受付のジャーナルも足す）だが、画面の一覧は「投稿締切」か「常時受付」の
+       * どちらかで、両方を混ぜた表示が無い（2026-10-19 実測: ジャーナルを混ぜると、
+       * 画面の一覧に無いジャーナルの行（`regular`）が MCP だけに出て食い違った）。 */
       const 答 = await upcomingText({
         days,
-        kinds: ["abstract", "paper", "journal"],
+        kinds: ["abstract", "paper"],
         limit: 400,
+        scope: "screen",
       });
+      /* 会場の行の版の識別子だけを拾う。丸括弧は**トラック名**にも付く（実測 2026-10-19:
+       * CLOSER の論文締切に「（regular）」= トラック名が付き、締切が 30 日の窓に入った日に
+       * 画面側（`r.ed.id` を集める）と食い違った）。会場の版は行の中で「）|」と続く。 */
       const mcp = [
-        ...new Set([...答.matchAll(/（([a-z0-9][a-z0-9.'-]*)）/g)].map((m) => m[1])),
+        ...new Set([...答.matchAll(/（([a-z0-9][a-z0-9.'-]*)）\|/g)].map((m) => m[1])),
       ].sort();
       const 畫面 = 畫面の行(`${days}d`);
       if (process.env.DBG_UPCOMING) {
