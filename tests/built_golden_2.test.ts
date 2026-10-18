@@ -4226,6 +4226,7 @@ it("推薦のカードの行が、てびきの数と名前と合う（SPEC §7�
     "UNCONFIRMED_JA",
     "NOT_APPLICABLE_JA",
     "KIND_LABEL",
+    "catLabel",
     "trustLabel",
     "freshnessLabel",
     `return (${card});`,
@@ -4247,6 +4248,8 @@ it("推薦のカードの行が、てびきの数と名前と合う（SPEC §7�
     Recommender.unconfirmedLabelJa(),
     Recommender.notApplicableLabelJa(),
     Recommender.kindLabelTable(),
+    /* 分野の札の語は分野の正本から（この検査は値がそのまま出る事だけ見る）。 */
+    (key: string) => Recommender.categoryLabelJa(key),
     table("trustLabel"),
     table("freshnessLabel"),
   );

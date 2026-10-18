@@ -203,6 +203,13 @@ it("カードが会期と開催地を一覧と同じ語で出し、てびきが�
     "value || (Recommender.fieldNotApplicableJa(r) ? NOT_APPLICABLE_JA : UNCONFIRMED_JA)",
   );
   expect(template, "てびきがカードの会期・開催地を書いていない").toContain("会期と開催地");
+  /* 分野も同じ行に出す（会議名だけで当たった候補は、これが無いと分野を確かめられない）。 */
+  expect(カード, "カードが分野を出していない").toContain("分野の札");
+  expect(カード, "分野の語が一覧の札と別の入口").toContain("catLabel(key)");
+  expect(カード, "分野の無い会議に「未確認」を出していない").toContain(
+    '分野の札.length ? 分野の札.join("・") : UNCONFIRMED_JA',
+  );
+  expect(template, "てびきがカードの分野を書いていない").toContain("<strong>分野</strong>");
 });
 
 it("カードがランクの札を出し、てびきが同じ語で説明している", () => {

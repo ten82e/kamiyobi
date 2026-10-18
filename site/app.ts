@@ -5121,6 +5121,10 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       `会期: ${場所の語(Recommender.eventCellJa(r))} ／ 開催地: ${場所の語(Recommender.placeJa(r.ed.place))}`,
       "card-section",
     );
+    /* 会場の分野も出す（一覧の会議の欄にある札と同じ語）。会議名だけで当たった候補は、
+     * これが無いと自分の分野かどうかを確かめるのにカードから離れることになる。 */
+    const 分野の札 = (r.cats || []).map((key) => catLabel(key)).filter((label) => label !== "");
+    line(card, `分野: ${分野の札.length ? 分野の札.join("・") : UNCONFIRMED_JA}`, "card-section");
 
     const agg = r._match?.agg ?? {
       domain: 0,
