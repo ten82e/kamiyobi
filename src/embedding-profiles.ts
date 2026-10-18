@@ -110,7 +110,13 @@ export function profileTexts(
   return { keys, texts };
 }
 
-/** Separate CFP topics preserve the coverage of venues with a broad call. */
+/** Separate CFP topics preserve the coverage of venues with a broad call.
+ *
+ * topic 文に会議名を足す案は実測で却下した（2026-10-18）。topic 文の集合が別の会議と
+ * 完全一致する会議は全 696 会議で 0 件（重複するのは 31 文だけで、識別力は失われていない）。
+ * 実モデルで確認用 14 本を評価すると、英語モデルは平均順位 2.00→1.43 と改善する一方、
+ * 多言語モデルは 2.00→2.14 と悪化した（sigops-atc の日本語論文が 1 位→3 位、
+ * 類似度 0.867→0.806）。名前は会議プロファイル側（profileTexts）が既に持っている。 */
 export function topicProfileTexts(
   confs: unknown[],
   catNames: Record<string, string> = {},
