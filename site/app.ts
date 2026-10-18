@@ -4790,6 +4790,21 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     keepFocusAfterMoreDraw();
   }
 
+  /* 候補に締切が過ぎた会議が混ざる理由と件数を、候補の数の隣で言う（2026-10-18 に研究者役の
+   * 試しで、日本語の論文を入れると上位に `締切済み` の会議が並び、まだ出せる候補と読めた）。
+   * MCP の `recommend_venues` は同じ事を返している（「うち N 件は締切が過ぎた会議です –
+   * 次回の開催に向けた参考に載せています」）。数えるのは**締切が過ぎたと確認できた行**だけで、
+   * 受付状況が未確認の行は「これから」とも「過ぎた」とも数えない（推測しない – AGENTS.md）。
+   * 画面に出る語はカードの札と同じ `締切済み`。 */
+  function recommendationPastNoteJa(rows: readonly AppRow[]): string {
+    const past = rows.filter((r) => r._availability?.status === "past").length;
+    if (!past) return "";
+    return (
+      ` ｜ うち ${countJa(past)} 件は締切が過ぎた会議です` +
+      "（カードでは「締切済み」。次回の開催に向けた参考に載せています）"
+    );
+  }
+
   function recommendationAvailability(r: AppRow) {
     const a = r._availability;
     // 画面の「分からない」の語は 未確認 / 該当なし / 評価なし に揃えてある（てびきの
@@ -5298,6 +5313,11 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         cnt += semNote;
         cntLive += semNote;
         countSemanticReason = semCode;
+      }
+      const pastNote = recommendationPastNoteJa(shown);
+      if (pastNote) {
+        cnt += pastNote;
+        cntLive += pastNote;
       }
     }
     // 「来月」で検索したとき、何月に絞ったのかを利用者が確認できるようにする

@@ -13,6 +13,12 @@ npm test            # vitest
 node src/cli.ts build --out public --offline --no-embeddings --cache .cache --now 2026-08-09T00:00:00Z
 ```
 
+- 検証に使う `public/` は、上のコマンドの**固定時計 `--now 2026-08-09T00:00:00Z`** で作る。
+  `public/` を直接読む検査（`tests/static_page_head.test.ts` の `upcoming.md` の行数、
+  `tests/mcp_server.test.ts` の窓の外の版など）は、別の時計で作った公開物では落ちる
+  （2026-10-18 に実発生 – `--now 2026-10-18T05:00:00Z` で作り直したら落ち、固定時計で
+  作り直したら通った）。今の時計で見た目を確かめたい時は、確かめた後に固定時計で
+  作り直してからテストを走らせる。
 - 整形は対象を絞って掛ける（`npx biome check --write site tests src` など）。リポジトリ全体に
   `--write .` を掛けると `data/**` の JSON まで再整形され、`data/recommender-reranker.json` の
   `input_hashes` 固定（`pins the reranker development inputs by hash`）が壊れる
