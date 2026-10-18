@@ -2219,7 +2219,7 @@ it("the shared URL keeps the sort order the sender was looking at (SPEC §7)", (
     sortable as string,
     defaultKey as string,
     "let sortKey = DEFAULT_SORT_KEY, sortAsc = true;",
-    "const state = { mode: 'deadlines', q: '', kind: '', rank: '', win: 'all', est: false, domestic: false, past: false, openOnly: false, cats: [] };",
+    "const state = { mode: 'deadlines', q: '', kind: '', rank: '', win: 'all', est: false, domestic: false, past: false, openOnly: false, order: 'fit', cats: [] };",
     "const DATA = { categories: { hpc: {}, systems: {} } };",
     "const KIND_LABEL = { abstract: '概要締切', paper: '論文締切', notification: '採否通知' };",
     runtime.match(/const SELECTABLE_KINDS = \[[^\]]*\];/)?.[0] ?? "",
@@ -2283,6 +2283,16 @@ it("the shared URL keeps the sort order the sender was looking at (SPEC §7)", (
     "const openSent = written;",
     "state.openOnly = false; window.location.search = openSent.slice(1); readUrl();",
     "const openRound = [openSent, state.openOnly];",
+    // 推薦の候補の並び（`order=deadline`）も同じ読み書きの対になる。
+    "urlNotices = []; state.order = 'fit'; window.location.search = '?order=deadline'; readUrl();",
+    "const orderOn = [state.order, urlNotices.join(' ／ ')];",
+    "state.openOnly = false; writeUrl();",
+    "const orderSent = written;",
+    "state.order = 'fit'; window.location.search = orderSent.slice(1); readUrl();",
+    "const orderRound = [orderSent, state.order];",
+    // 知らない並び順は既定へ戻して理由を残す（黙って条件を変えない）。
+    "urlNotices = []; state.order = 'deadline'; window.location.search = '?order=fitsoon'; readUrl();",
+    "const orderDropped = [state.order, urlNotices.join(' ／ ')];",
     // 読めない値は入りなしにして、画面上の語（ラベルそのもの）で理由を出す。
     "urlNotices = []; state.online = true; window.location.search = '?online=maybe'; readUrl();",
     "const unreadableFlag = [state.online, urlNotices.join(' ／ ')];",
@@ -2332,6 +2342,9 @@ it("the shared URL keeps the sort order the sender was looking at (SPEC §7)", (
     "  offFlags,",
     "  openOn,",
     "  openRound,",
+    "  orderOn,",
+    "  orderRound,",
+    "  orderDropped,",
     "  unreadableFlag,",
     "  unreadableMode,",
     "  explicitMode,",
@@ -2358,6 +2371,9 @@ it("the shared URL keeps the sort order the sender was looking at (SPEC §7)", (
     offFlags,
     openOn,
     openRound,
+    orderOn,
+    orderRound,
+    orderDropped,
     unreadableFlag,
     unreadableMode,
     explicitMode,
@@ -2381,6 +2397,9 @@ it("the shared URL keeps the sort order the sender was looking at (SPEC §7)", (
     [boolean, string],
     [boolean, string],
     [string, boolean],
+    [string, string],
+    [string, string],
+    [string, string],
     [string, string],
     [string, string],
     [string, boolean, string, string],
@@ -2432,6 +2451,12 @@ it("the shared URL keeps the sort order the sender was looking at (SPEC §7)", (
   expect(openOn, "open=1 で推薦の候補の絞り込みが入らない").toEqual([true, ""]);
   expect(openRound[0], "open=1 が URL に残っていない").toContain("open=1");
   expect(openRound[1], "リンクを開いた側で「締切が過ぎた候補を除く」が入らない").toBe(true);
+  expect(orderOn, "order=deadline で並び順が入らない").toEqual(["deadline", ""]);
+  expect(orderRound[0], "order=deadline が URL に残っていない").toContain("order=deadline");
+  expect(orderRound[1], "リンクを開いた側で「締切が近い順」にならない").toBe("deadline");
+  expect(orderDropped[0], "知らない並び順が適用されている").toBe("fit");
+  expect(orderDropped[1]).toContain("リンクの並び順「fitsoon」");
+  expect(orderDropped[1]).toContain("論文との一致順に戻しました");
   expect(unreadableFlag[0], "読めない値でチェックが入っている").toBe(false);
   expect(unreadableFlag[1]).toContain("リンクのオンライン参加可のみ「maybe」");
   expect(unreadableFlag[1]).toContain("チェックは入りませんでした");

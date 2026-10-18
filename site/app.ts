@@ -173,6 +173,8 @@ interface UiState {
   past: boolean;
   /** 推薦の候補から、受付状況が「締切済み」と確認できた会議を除く（URL では `open=1`）。 */
   openOnly: boolean;
+  /** 推薦の候補の並び。`fit` は論文との一致順、`deadline` は締切の近い順（URL では `order`）。 */
+  order: "fit" | "deadline";
 }
 
 type LoadStatus = "idle" | "loading" | "ready" | "error";
@@ -832,6 +834,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     online: false,
     past: false,
     openOnly: false,
+    order: "fit",
   };
 
   function $(id: string): HTMLElement {
@@ -2996,6 +2999,8 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         recommendExcludedClosed = out.length - kept.length;
         out = kept;
       }
+      /* 並べ替えは最後に一度だけ（外した数は一致順の候補から数える）。 */
+      if (state.order === "deadline") out = orderCandidatesByDeadline(out);
       return out;
     }
 
@@ -4826,6 +4831,33 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     return rows.filter((row) => row._availability?.status !== "past");
   }
 
+  /* 候補を「締切が近い順」に並べ替える（任意）。三つの群に分ける:
+   *   0. 締切がまだ来ていない候補（日付のある物）– 近い順
+   *   1. 日付を持たない候補（常時受付の論文誌・締切未確認）– 論文との一致順のまま
+   *   2. 締切が過ぎた候補 – 最後（`open=1` を入れていれば、そもそも残っていない）
+   * 群の中は元の並び（論文との一致順）を保つ – `sort` は安定なので 0 を返すだけでよい。
+   * 日付の比較は締切一覧と同じ `compareDeadlineRows`（表示している暦日 `tShown` で見る）。 */
+  function orderCandidatesByDeadline(rows: readonly AppRow[]): AppRow[] {
+    const 群 = (row: AppRow): number => {
+      const status = row._availability?.status;
+      if (status === "past") return 2;
+      if (status === "open" || status === "uncertain") return 0;
+      return 1;
+    };
+    return rows.slice().sort((a, b) => {
+      const diff = 群(a) - 群(b);
+      if (diff) return diff;
+      if (群(a) !== 0) return 0;
+      return compareDeadlineRows(a, b, 1);
+    });
+  }
+
+  /* 候補の並びが既定（論文との一致順）でないときは、件数欄で言う（黙って並べ替えない –
+   * 締切の一覧が `sortNoteJa` で並びを書くのと同じ約束）。 */
+  function recommendationOrderNoteJa(order: string): string {
+    return order === "deadline" ? " ｜ 並び順: 締切が近い順（日付の無い候補は後ろ）" : "";
+  }
+
   /* 外した件数を候補の数の隣で言う（黙って消さない – 画面の他の絞り込みと同じ約束）。
    * 外す入口の名前をそのまま書く（条件を外す場所を探させない）。 */
   function recommendationExcludedNoteJa(count: number): string {
@@ -5366,6 +5398,11 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         cnt += excludedNote;
         cntLive += excludedNote;
       }
+      const orderNote = recommendationOrderNoteJa(state.order);
+      if (orderNote) {
+        cnt += orderNote;
+        cntLive += orderNote;
+      }
     }
     // 「来月」で検索したとき、何月に絞ったのかを利用者が確認できるようにする
     // （相対指定が裏でどう解決されたかを見せないのは誤信を生む）。
@@ -5496,7 +5533,10 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       exportBtn.title = 候補を書き出す
         ? "「投稿先を探す」が挙げた候補を、表計算で読める形（BOM 付き CSV）にしたファイルです。" +
           "先頭の 4 列が一致評価・一致の点・言葉の一致・意味の近さで、残りの列は締切の一覧と同じ物です。" +
-          "「一致の点」は候補を並べた点（大きいほど上）、「一致評価」の札は別の計算（当たった証拠の強さ）で、" +
+          /* 並び順を「締切が近い順」にすると、点の大きい順には並ばない（点は一致の順位を
+           * 決める値のままで、並べ替えでは変わらない）。「大きいほど上」と言い切らない。 */
+          "「一致の点」は候補の一致の順位を決める値（「論文との一致順」では大きいほど上）、" +
+          "「一致評価」の札は別の計算（当たった証拠の強さ）で、" +
           "同じ行でも点が高いのに札が「候補」のことがあります。" +
           "意味検索が使えない環境では「意味の近さ」は空になります（0 とは書きません）。" +
           "候補は絞り込みではなく、論文の語との重なりで選ばれています（画面のカードと同じ順・同じ件数）。"
@@ -5825,6 +5865,17 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     const openOnlyFlag = urlFlagJa(openOnlyRaw);
     if (!openOnlyFlag.readable) flagNoticeJa("締切が過ぎた候補を除く", openOnlyRaw);
     state.openOnly = openOnlyFlag.on;
+    /* 推薦の候補の並び。締切の一覧の `sort` とは別の欄 – あちらは表の列の並びで、
+     * こちらは候補（カード）の並び。知らない値は既定へ戻して理由を残す。 */
+    const orderRaw = p.get("order");
+    if (orderRaw == null || orderRaw === "" || orderRaw === "fit") {
+      state.order = "fit";
+    } else if (orderRaw === "deadline") {
+      state.order = "deadline";
+    } else {
+      state.order = "fit";
+      urlNotices.push(urlValueNoticeJa("並び順", orderRaw, "論文との一致順に戻しました"));
+    }
     /* 「見方のてびき」を開いた状態もリンクで引き継ぐ。閉じた `<details>` の中は
      * ブラウザのページ内検索（Ctrl+F）で出てこない（WebKit の既知の制限:
      * https://bugs.webkit.org/show_bug.cgi?id=239940）。てびきを探している人が
@@ -5878,6 +5929,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     if (state.online) p.set("online", "1");
     if (state.past) p.set("past", "1");
     if (state.openOnly) p.set("open", "1");
+    if (state.order === "deadline") p.set("order", "deadline");
     if (state.cats.length) p.set("cats", state.cats.join(","));
     // 並び順も URL に入れる。「国内研究会を締切の新しい順で」のような共有が、
     // 開いた人の画面で元の並びにならないのは惜しい。既定の並びなら引数を足さない。
@@ -5915,6 +5967,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     inputElement("online").checked = state.online;
     inputElement("past").checked = state.past;
     inputElement("openOnly").checked = state.openOnly;
+    valueElement("recOrder").value = state.order;
     catsBox.querySelectorAll<HTMLInputElement>("input").forEach((chk) => {
       chk.checked = state.cats.indexOf(chk.value) >= 0;
     });
@@ -5931,6 +5984,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     state.online = inputElement("online").checked;
     state.past = inputElement("past").checked;
     state.openOnly = inputElement("openOnly").checked;
+    state.order = valueElement("recOrder").value === "deadline" ? "deadline" : "fit";
     state.cats = [];
     catsBox.querySelectorAll<HTMLInputElement>("input").forEach((chk) => {
       if (chk.checked) state.cats.push(chk.value);
@@ -6556,9 +6610,11 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     apply();
     scheduleSemantic();
   });
-  ["kind", "rank", "win", "est", "domestic", "online", "past", "openOnly"].forEach((id) => {
-    $(id).addEventListener("change", apply);
-  });
+  ["kind", "rank", "win", "est", "domestic", "online", "past", "openOnly", "recOrder"].forEach(
+    (id) => {
+      $(id).addEventListener("change", apply);
+    },
+  );
   catsBox.addEventListener("change", apply);
   /* てびきを開閉したら URL も揃える。閉じた `<details>` の中はブラウザのページ内検索に
    * 出ないので、開いた人一緒の画面をそのまま共有できるようにする（読み取り側は `readUrl`）。 */
@@ -6591,6 +6647,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       past,
       /* 候補が 0 件になった原因そのものなので、まとめて外す側で外す。 */
       openOnly: false,
+      order: "fit",
     };
     stopHistoryLoad();
     if (state.mode === "deadlines") setDeadlineProfile(DATA);
@@ -7005,7 +7062,10 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       const excludedOnPaper = recommendExcludedClosed
         ? ` ／ 締切が過ぎた候補 ${countJa(recommendExcludedClosed)} 件は「締切が過ぎた候補を除く」で除いています`
         : "";
-      box.textContent = `この印刷物: 投稿先を探す画面 ／ ${listed}${excludedOnPaper}${printedTail}。${printLegendJa()}`;
+      /* 並びも紙に書く（紙は並べ替えられないので、何の順かが分からないと読めない）。 */
+      const orderOnPaper =
+        state.order === "deadline" ? " ／ 並び順: 締切が近い順（日付の無い候補は後ろ）" : "";
+      box.textContent = `この印刷物: 投稿先を探す画面 ／ ${listed}${excludedOnPaper}${orderOnPaper}${printedTail}。${printLegendJa()}`;
       return;
     }
     box.textContent =
@@ -7096,6 +7156,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       online: false,
       past: false,
       openOnly: false,
+      order: "fit",
     };
     stopHistoryLoad();
     if (state.mode === "deadlines") setDeadlineProfile(DATA);

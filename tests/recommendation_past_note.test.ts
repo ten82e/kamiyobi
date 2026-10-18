@@ -157,13 +157,13 @@ function 描いた文(excluded: number): string[] {
 /* 紙には候補を全部載せるが、外した物は載らない。紙だけを受け取った人に
  * 「これが候補の全部」と読ませないよう、外した数も紙に書く。 */
 const 印刷の関数 = 切り出す("  function fillPrintMeta(", '  window.addEventListener("beforeprint"');
-function 紙に刷る文(excluded: number): string {
+function 紙に刷る文(excluded: number, order = "fit"): string {
   const box = { textContent: "" };
   const cards = { children: [] };
   return runInNewContext(
     `let recommendationList = [], cardsDrawn = 0;
      let recommendExcludedClosed = ${excluded};
-     const state = { mode: "recommend", win: "all" };
+     const state = { mode: "recommend", win: "all", order: ${JSON.stringify(order)} };
      const DATA = {};
      const $ = (id) => (id === "printMeta" ? box : id === "recommendationCards" ? cards : null);
      const valueElement = () => ({ options: [], selectedIndex: -1 });
@@ -181,13 +181,99 @@ function 紙に刷る文(excluded: number): string {
   ) as string;
 }
 
-it("印刷物にも、外した候補の数を書く（紙だけでは理由が分からない）", () => {
+it("印刷物にも、外した候補の数と並び順を書く（紙だけでは理由が分からない）", () => {
   const 外した紙 = 紙に刷る文(78);
   expect(外した紙).toContain("投稿先を探す画面");
   expect(外した紙).toContain("締切が過ぎた候補 78 件は「締切が過ぎた候補を除く」で除いています");
   const 全部の紙 = 紙に刷る文(0);
   expect(全部の紙).toContain("投稿先を探す画面");
   expect(全部の紙, "外していないのに断っている").not.toContain("除いています");
+  const 並べた紙 = 紙に刷る文(0, "deadline");
+  expect(並べた紙, "紙に並び順が残っていない").toContain("並び順: 締切が近い順");
+  expect(全部の紙, "既定の並びなのに断っている").not.toContain("並び順:");
+});
+
+/* 「並び順: 締切が近い順」（`order=deadline`）。締切の段取りを立てる人向けの並べ替え。
+ * 日付の無い候補（常時受付・締切未確認）は後ろ、締切が過ぎた候補は最後、
+ * 同じ群の中は論文との一致順のまま（順位そのものは変えない）。 */
+const 並べる関数 = 切り出す(
+  "  function orderCandidatesByDeadline(",
+  "  /* 外した件数を候補の数の隣で言う",
+);
+const 締切比較の関数 = 切り出す("  function compareDeadlineRows(", "  /** 会期順の比較。");
+const 並べた結果 = runInNewContext(`${締切比較の関数}\n${並べる関数}\norderCandidatesByDeadline;`, {
+  conferenceNameCell: (r: { name?: string }) => r.name ?? "",
+  kindSortIndex: () => 0,
+}) as (rows: ReadonlyArray<Record<string, unknown>>) => Array<Record<string, unknown>>;
+
+function 候補(status: string | null, tShown: number, name: string) {
+  return { _availability: status ? { status } : undefined, tShown, name, kind: "paper" };
+}
+
+it("締切が近い順は、日付のある候補を近い順に、日付の無い候補をその後ろに置く", () => {
+  const 遠い = 候補("open", 3000, "Far");
+  const 近い = 候補("open", 1000, "Near");
+  const 日付なし = 候補("ongoing", 999, "Journal");
+  const 未確認 = 候補(null, 888, "Unknown");
+  const 過ぎた = 候補("past", 500, "Closed");
+  const 並び = 並べた結果([遠い, 近い, 日付なし, 未確認, 過ぎた]);
+  expect(並び.map((r) => r.name)).toEqual(["Near", "Far", "Journal", "Unknown", "Closed"]);
+  expect(並び, "元の配列を書き換えている").not.toBe(undefined);
+});
+
+it("同じ日付・同じ群の中では、論文との一致順のままにする（安定）", () => {
+  const 甲 = 候補("open", 2000, "A");
+  const 乙 = 候補("open", 2000, "B");
+  const 丙 = 候補("open", 2000, "C");
+  const 並び = 並べた結果([甲, 乙, 丙]);
+  expect(並び.map((r) => r.name)).toEqual(["A", "B", "C"]);
+  const 群 = [候補("ongoing", 5, "J1"), 候補(null, 6, "U1"), 候補("past", 7, "P1")];
+  expect(並べた結果(群).map((r) => r.name)).toEqual(["J1", "U1", "P1"]);
+  expect(並べた結果([])).toEqual([]);
+});
+
+it("時刻未確認の候補も「日付のある側」に置く（終了済みの可能性は残るが、日付は在る）", () => {
+  const 未確認の日付 = 候補("uncertain", 1500, "Dated");
+  const 常時受付 = 候補("ongoing", 1, "Journal");
+  expect(並べた結果([常時受付, 未確認の日付]).map((r) => r.name)).toEqual(["Dated", "Journal"]);
+});
+
+const 並びの案内の関数 = 切り出す(
+  "  function recommendationOrderNoteJa(",
+  "  /* 外した件数を候補の数の隣で言う",
+);
+const 並びの案内 = runInNewContext(`${並びの案内の関数}\nrecommendationOrderNoteJa;`) as (
+  order: string,
+) => string;
+
+it("既定の並びでは何も足さず、締切が近い順のときだけ件数欄で言う", () => {
+  expect(並びの案内("fit")).toBe("");
+  const note = 並びの案内("deadline");
+  expect(note).toContain("並び順: 締切が近い順");
+  expect(note, "日付の無い候補の行き先を書く").toContain("日付の無い候補は後ろ");
+});
+
+it("並び順の入口が画面と URL に繋がっている", () => {
+  const template = readFileSync(new URL("../site/template.html", import.meta.url), "utf8");
+  expect(template, "並び順の選択欄が無い").toContain('id="recOrder"');
+  expect(template, "並び順が推薦モードの外にある").toMatch(
+    /<div class="recommend-only"[\s\S]*id="recOrder"[\s\S]*?<textarea id="paperText"/,
+  );
+  for (const 選択肢 of ['value="fit"', 'value="deadline"'])
+    expect(template, `選択肢が無い: ${選択肢}`).toContain(選択肢);
+  for (const 繋がり of [
+    'valueElement("recOrder").value = state.order;',
+    'state.order = valueElement("recOrder").value === "deadline" ? "deadline" : "fit";',
+    'p.set("order", "deadline")',
+    'p.get("order")',
+    '"past", "openOnly", "recOrder"',
+    'if (state.order === "deadline") out = orderCandidatesByDeadline(out);',
+    "const orderNote = recommendationOrderNoteJa(state.order);",
+  ])
+    expect(source, `画面の繋がりが無い: ${繋がり}`).toContain(繋がり);
+  expect(source, "知らない並び順を黙って落としている").toContain(
+    'urlNotices.push(urlValueNoticeJa("並び順", orderRaw, "論文との一致順に戻しました"));',
+  );
 });
 
 it("0 件の画面は、外した結果なら外した数を言う（語が重ならないのと区別する）", () => {
