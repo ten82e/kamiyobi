@@ -6407,3 +6407,39 @@ it("rank に尺度の名（`CCF A`）を付けると、その尺度の等級だ�
   for (const line of core) expect(line).toMatch(/CORE A\*・/);
   expect(await call("search_deadlines", { rank: "CCF A", limit: 1 })).toContain("ランク CCF A");
 });
+
+/* 「投稿先を探す」のカードは会場のランク（CCF・CORE・THCPL）を札で出す。MCP の構造化の行に
+ * はランクが無く、AI は会場ごとに `venue_info` を呼ばないとランクを知れなかった
+ * （本文の行には出ていた）。`rank` は 1 起点の順位なので、会場のランクは別の名前にする。 */
+it("recommend_venues の構造化の行に、会場のランクを持つ（`rank` は順位のまま）", async () => {
+  const 答 = (await client.ask({
+    jsonrpc: "2.0",
+    id: 61,
+    method: "tools/call",
+    params: {
+      name: "recommend_venues",
+      arguments: { paper: "Low-Latency Networking | network", limit: 10 },
+    },
+  })) as { result?: { structuredContent?: { rows?: Array<Record<string, unknown>> } } };
+  const rows = 答.result?.structuredContent?.rows ?? [];
+  expect(rows.length, "行が返らない（前提が崩れた）").toBeGreaterThan(0);
+  rows.forEach((row, index) => {
+    expect(row.rank, "`rank` が順位でなくなった").toBe(index + 1);
+    expect("venue_rank" in row, "行に venue_rank が無い").toBe(true);
+    const rank = row.venue_rank as Record<string, unknown> | null;
+    if (!rank) return;
+    for (const scale of Object.keys(rank))
+      expect(["ccf", "core", "thcpl"], `知らない尺度: ${scale}`).toContain(scale);
+  });
+  expect(
+    rows.some((row) => row.venue_rank && Object.keys(row.venue_rank as object).length > 0),
+    "ランクのある会議が 1 件も無い（検査が空振り）",
+  ).toBe(true);
+  // 説明文にも欄を書く（構造化の欄は説明が契約 – 第 1008 回と同じ約束）。
+  const 一覧 = (await client.ask({ jsonrpc: "2.0", id: 62, method: "tools/list" })) as {
+    result?: { tools?: Array<{ name?: string; description?: string }> };
+  };
+  const 説明 =
+    (一覧.result?.tools ?? []).find((tool) => tool.name === "recommend_venues")?.description ?? "";
+  expect(説明, "説明に venue_rank を書いていない").toContain("venue_rank");
+});

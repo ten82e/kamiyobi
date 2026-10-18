@@ -3043,6 +3043,10 @@ async function recommendVenues(
         lexical_score: r.fit.lexicalScore,
         evidence: r.fit.evidence,
       },
+      /* 会場のランク（他の道具の `rank` と同じ形 – `ccf`・`core`・`thcpl`）。
+       * ここの `rank` は順位なので、名前を分ける（説明文で区別している所）。
+       * 文の側には「CCF A・CORE A*」として出ているが、構造化にも同じ事を載せる。 */
+      venue_rank: r.row.conf.rank ?? null,
       availability:
         r.availability.status === "ongoing"
           ? { ...r.availability, timestamp: null }
@@ -3328,7 +3332,7 @@ const TOOLS = [
   {
     name: "recommend_venues",
     description:
-      "論文情報に合う投稿先を語彙の一致で探す。学習済みの並べ替えモデルがある場合は併用する。retrieval: semantic を指定すると実モデルを使う。候補の範囲は画面と共通。順位表に入るのは実質的な一致がある候補だけで、証拠がない会議を分野だけの一致で推薦しない。長い入力は最初の 20 行と各行の長さ制限で切り、切った旨を返す。返す行の形: 順位と一致評価、選定理由、締切の確認状況に続いて締切行。1ページ最大30件。structuredContent の rows は 1 行 = 1 候補で、`rank` は**順位**（1 起点。会場のランクではない – 他の道具の `rank`（`ccf`・`core`・`thcpl`）とは別の物です）、`fit` は一致評価とその内訳、`availability` は受付状態、`deadlines` は締切、`verification` は確認情報。続きは同じ論文情報と next_offset を offset に指定する。",
+      "論文情報に合う投稿先を語彙の一致で探す。学習済みの並べ替えモデルがある場合は併用する。retrieval: semantic を指定すると実モデルを使う。候補の範囲は画面と共通。順位表に入るのは実質的な一致がある候補だけで、証拠がない会議を分野だけの一致で推薦しない。長い入力は最初の 20 行と各行の長さ制限で切り、切った旨を返す。返す行の形: 順位と一致評価、選定理由、締切の確認状況に続いて締切行。1ページ最大30件。structuredContent の rows は 1 行 = 1 候補で、`rank` は**順位**（1 起点。会場のランクではない – 他の道具の `rank`（`ccf`・`core`・`thcpl`）とは別の物です）、`fit` は一致評価とその内訳、`availability` は受付状態、`deadlines` は締切、`verification` は確認情報、`venue_rank` は会場のランク（`ccf`・`core`・`thcpl`。他の道具の `rank` と同じ形）。続きは同じ論文情報と next_offset を offset に指定する。",
     inputSchema: {
       type: "object",
       properties: {

@@ -2082,9 +2082,10 @@ it("「未確認」と「該当なし」の理由が、行の詳細の本文に�
    * 同じ入口を使うので、数は 2 以上（表と行の詳細の両方が使っていること）。 */
   (["event", "place", "rank"] as const).forEach((field) => {
     const wired = (app.match(new RegExp(`fieldReasonsJa\\.${field}\\(r\\)`, "g")) || []).length;
-    expect(wired, `${field} の理由が表と行の詳細のどちらかからしか見えていない`).toBeGreaterThanOrEqual(
-      2,
-    );
+    expect(
+      wired,
+      `${field} の理由が表と行の詳細のどちらかからしか見えていない`,
+    ).toBeGreaterThanOrEqual(2);
   });
   // てびきが同じ出し方を書いているか（画面の語を文書で言い換えない）。
   expect(siteHtmlRuntime(), "てびきに行の詳細の出し方を書いていない").toContain(

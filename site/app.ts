@@ -2391,10 +2391,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     /* 時計を渡す – 時間の言い方（`あと 6 時間`）は、打たれた時点の日へ寄せる規則がある
      * （渡さないと寄らずに 0 件になり、件数欄の「今日 = …」と食い違う）。 */
     const 今 = Date.now();
-    const matches = Recommender.searchMatcher(
-      Recommender.expandRelativeMonths(trimmed, 今),
-      今,
-    );
+    const matches = Recommender.searchMatcher(Recommender.expandRelativeMonths(trimmed, 今), 今);
     let catalog = 0;
     rows.forEach((row) => {
       if (matches(row.hay)) catalog += 1;
