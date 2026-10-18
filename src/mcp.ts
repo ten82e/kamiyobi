@@ -1451,16 +1451,15 @@ function searchDeadlines(
   const 窓の日數 = 窓の引數.使ふ !== null ? Math.floor(窓の引數.使ふ) : null;
   args = { ...args, within_days: 窓の日數 };
   const 窓あり = 窓の日數 !== null;
-  const 讀めない引數 = [
+  const argumentNotices = [
     限り.斷り,
     窓の引數.斷り,
     真偽.include_past.斷り,
     真偽.include_estimated.斷り,
     真偽.domestic.斷り,
     真偽.online.斷り,
-  ]
-    .filter((t) => t)
-    .join("");
+  ].filter(Boolean);
+  const 讀めない引數 = argumentNotices.join("");
   const { list, 名, 生成, 窓が無い } = pickSearch(args.scope, now);
 
   const { value: 引く種別, kinds: 名乘り全部, ignoresKind: 単数種別を無視 } = 指定した種別(args);
@@ -1483,31 +1482,7 @@ function searchDeadlines(
     : 窓の外の件數(照合, 名, now, args);
   const page = hit.slice(offset, offset + limit);
   const nextOffset = offset + page.length < hit.length ? offset + page.length : null;
-  receive?.({
-    query,
-    total: hit.length,
-    offset,
-    limit,
-    returned: page.length,
-    next_offset: nextOffset,
-    scope: 窓が無い || scopeValue(args.scope) === "all" ? "all" : "screen",
-    catalog_fallback: 窓が無い,
-    ...catalogFailureFields(窓が無い),
-    generated_at: 生成 ?? null,
-    evaluated_at: new Date(now).toISOString(),
-    rows: page.map((r) => structuredDeadline(r, now)),
-    ...(窓の外.error ? { scope_comparison_error: 窓の外.error } : {}),
-    ...(名 === "画面が最初に読む窓" && hit.length === 0 && !窓の外.error
-      ? {
-          scope_comparison: {
-            scope: "all",
-            matched_before_filters: 窓の外.raw,
-            total: 窓の外.filtered,
-            generated_at: 窓の外.generated_at,
-          },
-        }
-      : {}),
-  });
+
   const 知って居る種別 = [
     "all",
     ...投稿の種別,
@@ -1550,7 +1525,66 @@ function searchDeadlines(
 
   /* 行が見えている時に出す注（類語・曖昧さ – 第 942・948 回）。 */
   const 見えて居る文 = 見えて居る注(query, hit.length);
-  const 頭 = `${絞り込みだけ ? "語を指定せず、絞り込みだけ" : `検索語「${query}」に当たる締切`}: ${hit.length} 件（${名} ${list.length} 行・指定条件で絞り込み。絞る前は ${素の.length} 行${ランク ? `／ランク ${ランクの尺度Header}${ランク}` : ""}${args.domestic === true ? "／国内のみ" : ""}${args.online === true ? "／オンライン参加可のみ" : ""}${窓あり ? `／締切まで ${窓の日數} 日以内${窓の端数の斷り}` : ""}${讀めない引數}）${limit端數}${檢索語を切つた ? `（${打たれた検索語.length} 字のうち、最初の ${檢索語の截} 字で調べました – 残りの語は参考にしていません）` : ""}${知らん.length ? `／知らない種別: ${知らない値の文("", 知らん)}` : ""}${空の種別 ? `／kinds が空なので既定の投稿締切（概要・論文・常時受付）を対象にしています` : ""}${単数種別を無視 ? `／kind は kinds と共に与えられたので見ていません` : ""}${知らんランク ? `／知らないランク（等級は ${Recommender.rankGradeOrderJa().join("・")}）: ${知らんランク}${limit端數}` : ""}${分野の引き.知らん.length ? `／知らない分野: ${知らん分野の文}（分野は ${分野の一覽()}）` : ""}${分野の引き.鍵.length ? `／分野 ${分野の引き.鍵.map((k) => Recommender.categoryLabelJa(k)).join("・")}` : ""}${日付の語 ? "\n日付は日本時間（JST）。月や日付の語は、締切の日付と「会期」の日付の両方に当たる（画面のてびきと同じ約束）ので、月で引いた時に見出しの月と違う日が出る行がある。" : ""}${窓が無い ? `\n${窓が無いの斷り(true)}` : ""}${scopeErr ? `\n${scopeErr}` : ""}${解決の文}${記号だけの文 ? `\n${記号だけの文}` : ""}${見えて居る文}`;
+  const queryNotice = 檢索語を切つた
+    ? `（${打たれた検索語.length} 字のうち、最初の ${檢索語の截} 字で調べました – 残りの語は参考にしていません）`
+    : "";
+  const kindNotice = 知らん.length ? `知らない種別: ${知らない値の文("", 知らん)}` : "";
+  const emptyKindsNotice = 空の種別
+    ? "kinds が空なので既定の投稿締切（概要・論文・常時受付）を対象にしています"
+    : "";
+  const ignoredKindNotice = 単数種別を無視 ? "kind は kinds と共に与えられたので見ていません" : "";
+  const rankNotice = 知らんランク
+    ? `知らないランク（等級は ${Recommender.rankGradeOrderJa().join("・")}）: ${知らんランク}`
+    : "";
+  const categoryNotice = 分野の引き.知らん.length
+    ? `知らない分野: ${知らん分野の文}（分野は ${分野の一覽()}）`
+    : "";
+  const ignoredCategoryNotice = 分野の引き.ignoresCategory
+    ? "category は categories と共に与えられたので見ていません"
+    : "";
+  const warnings = [
+    ...argumentNotices,
+    limit端數,
+    窓の端数の斷り,
+    queryNotice,
+    kindNotice,
+    emptyKindsNotice,
+    ignoredKindNotice,
+    rankNotice,
+    categoryNotice,
+    ignoredCategoryNotice,
+    scopeErr,
+    記号だけの文,
+  ]
+    .map((notice) => notice.replace(/^／/, "").trim())
+    .filter(Boolean);
+  receive?.({
+    query,
+    warnings,
+    total: hit.length,
+    offset,
+    limit,
+    returned: page.length,
+    next_offset: nextOffset,
+    scope: 窓が無い || scopeValue(args.scope) === "all" ? "all" : "screen",
+    catalog_fallback: 窓が無い,
+    ...catalogFailureFields(窓が無い),
+    generated_at: 生成 ?? null,
+    evaluated_at: new Date(now).toISOString(),
+    rows: page.map((r) => structuredDeadline(r, now)),
+    ...(窓の外.error ? { scope_comparison_error: 窓の外.error } : {}),
+    ...(名 === "画面が最初に読む窓" && hit.length === 0 && !窓の外.error
+      ? {
+          scope_comparison: {
+            scope: "all",
+            matched_before_filters: 窓の外.raw,
+            total: 窓の外.filtered,
+            generated_at: 窓の外.generated_at,
+          },
+        }
+      : {}),
+  });
+  const 頭 = `${絞り込みだけ ? "語を指定せず、絞り込みだけ" : `検索語「${query}」に当たる締切`}: ${hit.length} 件（${名} ${list.length} 行・指定条件で絞り込み。絞る前は ${素の.length} 行${ランク ? `／ランク ${ランクの尺度Header}${ランク}` : ""}${args.domestic === true ? "／国内のみ" : ""}${args.online === true ? "／オンライン参加可のみ" : ""}${窓あり ? `／締切まで ${窓の日數} 日以内${窓の端数の斷り}` : ""}${讀めない引數}）${limit端數}${queryNotice}${kindNotice ? `／${kindNotice}` : ""}${emptyKindsNotice ? `／${emptyKindsNotice}` : ""}${ignoredKindNotice ? `／${ignoredKindNotice}` : ""}${rankNotice ? `／${rankNotice}${limit端數}` : ""}${categoryNotice ? `／${categoryNotice}` : ""}${ignoredCategoryNotice ? `／${ignoredCategoryNotice}` : ""}${分野の引き.鍵.length ? `／分野 ${分野の引き.鍵.map((k) => Recommender.categoryLabelJa(k)).join("・")}` : ""}${日付の語 ? "\n日付は日本時間（JST）。月や日付の語は、締切の日付と「会期」の日付の両方に当たる（画面のてびきと同じ約束）ので、月で引いた時に見出しの月と違う日が出る行がある。" : ""}${窓が無い ? `\n${窓が無いの斷り(true)}` : ""}${scopeErr ? `\n${scopeErr}` : ""}${解決の文}${記号だけの文 ? `\n${記号だけの文}` : ""}${見えて居る文}`;
   if (!hit.length) {
     if (窓の外.error)
       return [
