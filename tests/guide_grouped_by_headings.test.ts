@@ -17,7 +17,7 @@ function guideOf(src: string): string {
 
 /** 見出しと群れの入れ物だけを退けた本文（語と説明の全文）。 */
 function bodyText(guide: string): string {
-  const t = guide.replace(/<h3>[\s\S]*?<\/h3>/g, "").replace(/<\/?(dl|div)\b[^>]*>/g, "");
+  const t = guide.replace(/<h3[^>]*>[\s\S]*?<\/h3>/g, "").replace(/<\/?(dl|div)\b[^>]*>/g, "");
   return t.replace(/\s+/g, " ").trim();
 }
 
@@ -25,7 +25,7 @@ function bodyText(guide: string): string {
 function groups(guide: string): Array<{ title: string; terms: string[] }> {
   const out: Array<{ title: string; terms: string[] }> = [];
   let current: { title: string; terms: string[] } | null = null;
-  for (const m of guide.matchAll(/<h3>([\s\S]*?)<\/h3>|<dt[^>]*>([\s\S]*?)<\/dt>/g)) {
+  for (const m of guide.matchAll(/<h3[^>]*>([\s\S]*?)<\/h3>|<dt[^>]*>([\s\S]*?)<\/dt>/g)) {
     if (m[1] !== undefined) {
       current = { title: m[1].replace(/<[^>]*>/g, "").trim(), terms: [] };
       out.push(current);

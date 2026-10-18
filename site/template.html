@@ -551,6 +551,21 @@ a.btn-reset {
   font-weight: 700;
 }
 .help h3 + dl { margin-top: 10px; }
+/* てびきの目次。長いので、頭から節へ飛べるようにする（節の h3 の id と対で保つ）。 */
+.help-index { margin: 10px 0 0; font-size: 0.8rem; color: var(--muted); }
+.help-index > span { font-weight: 600; }
+.help-index ul {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 14px;
+}
+.help-index a { color: var(--accent); }
+/* 節の終わりから目次へ戻る（節が長いので、上まで戻らせない）。 */
+.help-back { margin: 8px 0 0; font-size: 0.8rem; }
+.help-back a { color: var(--accent); }
 /* 画面には見せず、支援技術にだけ読む語（`display: none` は読み上げも消してしまう）。 */
 .only-sr {
   position: absolute;
@@ -1316,7 +1331,23 @@ footer a:hover { text-decoration: underline; }
   <!-- 見方のてびき: 締切一覧の用語をその場で説明する（外部の解説ページを必要としない） -->
   <details class="help" id="helpPanel">
     <summary>見方のてびき（「推定」「未確認」「該当なし」の意味・過去の締切の見方・CSV と印刷）</summary>
-      <h3>日時・残り・AoE・時刻</h3>
+      <!-- てびきは長いので、頭に目次を置く。節の h3 の id と対で保つ
+           （tests/guide_index.test.ts が、目次と節の食い違いを見る）。 -->
+      <nav class="help-index" aria-label="てびきの目次">
+        <span>目次</span>
+        <ul>
+          <li><a href="#help-time">日時・残り・AoE・時刻</a></li>
+          <li><a href="#help-estimate">推定・未確認・延長</a></li>
+          <li><a href="#help-window">締切まで・件数・過去</a></li>
+          <li><a href="#help-export">CSV・並び順・共有・印刷・キーボード</a></li>
+          <li><a href="#help-search">検索・日付・分野</a></li>
+          <li><a href="#help-domestic">国内・種別・行の詳細</a></li>
+          <li><a href="#help-fit">一致評価・意味検索・印</a></li>
+          <li><a href="#help-venue">開催地・オンライン参加可・ランク・会期</a></li>
+          <li><a href="#help-data">データ源・更新・会期・論文・カレンダー</a></li>
+        </ul>
+      </nav>
+      <h3 id="help-time">日時・残り・AoE・時刻</h3>
     <dl>
       <div>
         <dt>日時</dt>
@@ -1336,7 +1367,8 @@ footer a:hover { text-decoration: underline; }
       </div>
       <div>    </div>
   </dl>
-      <h3>推定・未確認・延長</h3>
+  <p class="help-back"><a href="#helpPanel">↑ てびきの目次へ</a></p>
+      <h3 id="help-estimate">推定・未確認・延長</h3>
       <dl>
     <div>
 
@@ -1357,7 +1389,8 @@ footer a:hover { text-decoration: underline; }
       </div>
       <div>    </div>
   </dl>
-      <h3>締切まで・件数・過去</h3>
+  <p class="help-back"><a href="#helpPanel">↑ てびきの目次へ</a></p>
+      <h3 id="help-window">締切まで・件数・過去</h3>
       <dl>
     <div>
 
@@ -1372,7 +1405,8 @@ footer a:hover { text-decoration: underline; }
       </div>
       <div>    </div>
   </dl>
-      <h3>CSV・並び順・共有・印刷・キーボード</h3>
+  <p class="help-back"><a href="#helpPanel">↑ てびきの目次へ</a></p>
+      <h3 id="help-export">CSV・並び順・共有・印刷・キーボード</h3>
       <dl>
     <div>
 
@@ -1412,7 +1446,8 @@ footer a:hover { text-decoration: underline; }
       </div>
       <div>    </div>
   </dl>
-      <h3>検索・日付・分野</h3>
+  <p class="help-back"><a href="#helpPanel">↑ てびきの目次へ</a></p>
+      <h3 id="help-search">検索・日付・分野</h3>
       <dl>
     <div>
 
@@ -1437,7 +1472,8 @@ footer a:hover { text-decoration: underline; }
       </div>
       <div>    </div>
   </dl>
-      <h3>国内・種別・行の詳細</h3>
+  <p class="help-back"><a href="#helpPanel">↑ てびきの目次へ</a></p>
+      <h3 id="help-domestic">国内・種別・行の詳細</h3>
       <dl>
     <div>
 
@@ -1452,7 +1488,8 @@ footer a:hover { text-decoration: underline; }
                 <dt>行の詳細</dt>
         <dd>行を押す（タップする）と、右から詳細の出る欄が開きます。行の文字をドラッグして選んだときは開きません（会議名・会場・公式ページの名前をコピーしたいときに、選んだ物が詳細の欄に隠れていたためです）。閉じるときは、開いた欄の右上にある ✕（閉じる）を押します。<span class="only-keyboard">キーボードなら <code>j</code> / <code>k</code> で選択行を動かしてから <code>d</code> で開け、<code>Esc</code> で閉じられます。</span>中身は、公式ページへのリンク、開催地と会期（JST と曜日）、分野、評価、締切の確認状況（いつ・何を公式で確認したかと、次回確認の予定）、日付だけが分かっている締切のただし書き、同じ研究会のこれからの回（研究会は毎月開くので、行をめくらなくても次の回が分かります）。一覧に出ない情報はこの欄に有りますが、<strong>投稿前に公式サイトで最新の募集要項を確認してください</strong>。</dd>    </div>
   </dl>
-      <h3>一致評価・意味検索・印</h3>
+  <p class="help-back"><a href="#helpPanel">↑ てびきの目次へ</a></p>
+      <h3 id="help-fit">一致評価・意味検索・印</h3>
       <dl data-recommend-help>
     <div data-recommend-help>
 
@@ -1488,7 +1525,8 @@ footer a:hover { text-decoration: underline; }
       </div>
       <div>    </div>
   </dl>
-      <h3>開催地・オンライン参加可・ランク・会期</h3>
+  <p class="help-back"><a href="#helpPanel">↑ てびきの目次へ</a></p>
+      <h3 id="help-venue">開催地・オンライン参加可・ランク・会期</h3>
       <dl>
     <div>
 
@@ -1518,7 +1556,8 @@ footer a:hover { text-decoration: underline; }
       </div>
       <div>    </div>
   </dl>
-      <h3>データ源・更新・会期・論文・カレンダー</h3>
+  <p class="help-back"><a href="#helpPanel">↑ てびきの目次へ</a></p>
+      <h3 id="help-data">データ源・更新・会期・論文・カレンダー</h3>
       <dl>
     <div>
 
@@ -1549,6 +1588,7 @@ footer a:hover { text-decoration: underline; }
       <p>絞り込んだ締切だけを保存するには「この一覧の N 件をカレンダー（.ics）でダウンロード」を押します。「投稿先を探す」では「この候補 N 件をカレンダー（.ics）でダウンロード」となり、カードと同じ候補の締切を書き出します。候補は「この候補 N 件を CSV でダウンロード」でも保存できます。これらも保存時点の写しなので、一覧が変わったら保存し直してください。<strong>同じ締切には、購読の <code>deadlines.ics</code> と同じ識別子（UID）を付けます</strong> – 両方を同じカレンダーに入れても、同じ予定として扱われます（購読に入っていない締切 – 過ぎた物など – には、この写しだけの識別子を付けます）。</p></dd>
   </div>
 </dl>
+<p class="help-back"><a href="#helpPanel">↑ てびきの目次へ</a></p>
   </details>
 
   <!-- Footer -->
