@@ -3143,7 +3143,7 @@ async function recommendVenues(
         ]),
     /* 同じ一致評価の中は点の順に並ぶとは限らない（2026-10-17 実測: 2 位 32 点・3 位 48 点）。
      * 言わないと AI が並びの壊れと読む。語の一致だけで答えた時は、意味検索への切り替え方も書く。 */
-    `（${search && semantic ? "意味検索の類似度が高い順" : "一致評価（点）の高い順。同じ点どうしは語の重なりの強い順"}${offset > 0 ? `。${offset + 1} 件目から ${見本.length} 件表示・残り ${Math.max(0, 候補.length - offset - 見本.length)} 件` : 候補.length > limit ? `。${limit} 件まで表示・残り ${候補.length - limit} 件` : ""}）`,
+    `（${search && semantic ? "意味検索の類似度が高い順" : "一致の点の高い順。同じ点どうしは語の重なりの強い順"}${offset > 0 ? `。${offset + 1} 件目から ${見本.length} 件表示・残り ${Math.max(0, 候補.length - offset - 見本.length)} 件` : 候補.length > limit ? `。${limit} 件まで表示・残り ${候補.length - limit} 件` : ""}）`,
     "",
     ...見本.map((r, i) => {
       const 評價 = `${String(r.fit.label ?? "評価保留")}（${Number(r.fit.score) || 0} 点）`;
