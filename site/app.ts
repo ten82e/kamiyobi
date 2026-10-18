@@ -4862,6 +4862,18 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     return order === "deadline" ? " ｜ 並び順: 締切が近い順（日付の無い候補は後ろ）" : "";
   }
 
+  /* 推薦のカードに出すランクの札。一覧の「ランク」列と同じ札（`rankPairLabelJa`）で、
+   * 投稿先を選ぶときの主な手掛かりなのに、カードには出ていなかった。
+   * 収録にランクが無い会議は 1 つだけ「ランク未確認」を返す（空欄にしない – 一覧の
+   * 「未確認」と同じ意味。MCP の文も同じ語）。札の説明は行の詳細と同じ
+   * `fieldReasonsJa.rank` から取る（同じ説明を二度書かない）。 */
+  function recommendationRankTagsJa(r: AppRow): Array<{ text: string; title: string }> {
+    const reason = fieldReasonsJa.rank(r);
+    const pairs = r.rankPairs || [];
+    if (!pairs.length) return [{ text: "ランク未確認", title: reason }];
+    return pairs.map((pair) => ({ text: Recommender.rankPairLabelJa(pair), title: reason }));
+  }
+
   /* 推薦のカードに出す残り（`あと N 日`）。一覧の「残り」列と**同じ数え方**を使う:
    * 時刻のある締切だけを `remain` で数え、日付だけの締切（時刻未確認）は数えない
    * （一覧の「残り」列も、日付だけの行には日数を出さず「時刻未確認」と書いている）。
@@ -5000,6 +5012,13 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       left.className = `tag ${remaining.cls}`.trim();
       left.textContent = remaining.text;
       meta.appendChild(left);
+    }
+    for (const rank of recommendationRankTagsJa(r)) {
+      const tag = document.createElement("span");
+      tag.className = "tag";
+      tag.textContent = rank.text;
+      if (rank.title) tag.title = rank.title;
+      meta.appendChild(tag);
     }
     const availability = document.createElement("span");
     availability.className = "tag";

@@ -2078,10 +2078,13 @@ it("「未確認」と「該当なし」の理由が、行の詳細の本文に�
   expect(内訳.評価なし, "「評価なし」の説明が出る行が 1 もない").toBeGreaterThan(0);
   expect(内訳.ランク無し, "ランクを行その物で出す行が 1 もない").toBeGreaterThan(0);
   /* 条件と語が一か所であること（表のセルの注記と行の詳細の本文が同じ入口を見る）。
-   * どちらかだけ直して言い方が分かれる事故を、ここで落とす。 */
+   * どちらかだけ直して言い方が分かれる事故を、ここで落とす。推薦のカードのランクの札も
+   * 同じ入口を使うので、数は 2 以上（表と行の詳細の両方が使っていること）。 */
   (["event", "place", "rank"] as const).forEach((field) => {
     const wired = (app.match(new RegExp(`fieldReasonsJa\\.${field}\\(r\\)`, "g")) || []).length;
-    expect(wired, `${field} の理由が表と行の詳細のどちらかからしか見えていない`).toBe(2);
+    expect(wired, `${field} の理由が表と行の詳細のどちらかからしか見えていない`).toBeGreaterThanOrEqual(
+      2,
+    );
   });
   // てびきが同じ出し方を書いているか（画面の語を文書で言い換えない）。
   expect(siteHtmlRuntime(), "てびきに行の詳細の出し方を書いていない").toContain(

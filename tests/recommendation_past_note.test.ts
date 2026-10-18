@@ -168,6 +168,39 @@ it("日付だけの締切・過ぎた締切・日付の無い候補には残り�
   expect(カードの残り({})).toBeNull();
 });
 
+/* カードのランクの札。一覧の「ランク」列と同じ札を出し、収録に無い会議は
+ * 「ランク未確認」を 1 つ返す（空欄にしない）。 */
+const ランク札の関数 = 切り出す(
+  "  function recommendationRankTagsJa(",
+  "  /* 推薦のカードに出す残り",
+);
+const ランク札 = (() => {
+  const 呼び出し = runInNewContext(`${ランク札の関数}\nrecommendationRankTagsJa;`, {
+    fieldReasonsJa: {
+      rank: (r: { rankPairs?: string[] }) => (r.rankPairs?.length ? "" : "収録に無い"),
+    },
+    Recommender: { rankPairLabelJa: (pair: string) => pair.replace(":", " ") },
+  }) as (r: { rankPairs?: string[] }) => Array<{ text: string; title: string }>;
+  return 呼び出し;
+})();
+
+it("カードのランクは一覧と同じ札で、無い会議は「ランク未確認」1 つにする", () => {
+  expect(ランク札({ rankPairs: ["ccf:A", "core:A*"] })).toEqual([
+    { text: "ccf A", title: "" },
+    { text: "core A*", title: "" },
+  ]);
+  expect(ランク札({ rankPairs: [] })).toEqual([{ text: "ランク未確認", title: "収録に無い" }]);
+  expect(ランク札({})).toEqual([{ text: "ランク未確認", title: "収録に無い" }]);
+});
+
+it("カードがランクの札を出し、てびきが同じ語で説明している", () => {
+  const template = readFileSync(new URL("../site/template.html", import.meta.url), "utf8");
+  expect(template, "てびきがランク未確認を説明していない").toContain("ランク未確認");
+  expect(source, "カードがランクの札を出していない").toContain(
+    "for (const rank of recommendationRankTagsJa(r)) {",
+  );
+});
+
 it("カードが残りを一致評価の隣に出す（一覧と同じく残りを先に読む）", () => {
   const template = readFileSync(new URL("../site/template.html", import.meta.url), "utf8");
   for (const 色 of [".tag.soon {", ".tag.today {"])
