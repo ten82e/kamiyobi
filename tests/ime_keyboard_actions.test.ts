@@ -7,6 +7,10 @@ const start = app.indexOf('$("q").addEventListener("keydown", (e) => {');
 const end = /\n\s*}\);/.exec(app.slice(start));
 if (start < 0 || !end) throw new Error("search keyboard wiring missing");
 const searchWiring = app.slice(start, start + end.index + end[0].length);
+const buttonWiring = app.match(
+  /\$\("showResults"\)\.addEventListener\("click", \(\) => \{[\s\S]*?\n\s*\}\);/,
+)?.[0];
+if (!buttonWiring) throw new Error("search results button wiring missing");
 const queryWiring = app.match(/const cancelQueryUpdate = wireDebouncedInput\([^;]+;/)?.[0];
 if (!queryWiring) throw new Error("search debounce wiring missing");
 const functions = ["keyBlockedByTarget", "onKeydown", "wireDebouncedInput"]
@@ -42,6 +46,7 @@ function harness() {
   }
   const nodes = {
     q: new Element("q", "INPUT"),
+    showResults: new Element("showResults", "BUTTON"),
     abstract: new Element("abstract", "TEXTAREA"),
     editable: new Element("editable", "DIV"),
     body: new Element("body", "BODY"),
@@ -73,7 +78,7 @@ function harness() {
     closeDrawer: () => calls.push("close"),
     onKeydown: (_event: any) => {},
   };
-  runInNewContext(`${functions}\n${queryWiring}\n${searchWiring}`, context);
+  runInNewContext(`${functions}\n${queryWiring}\n${buttonWiring}\n${searchWiring}`, context);
   return {
     context,
     nodes,
@@ -309,3 +314,15 @@ it.each(["ctrlKey", "metaKey", "altKey"] as const)(
     expect(ui.active()).toBe(ui.nodes.q);
   },
 );
+
+it("shows results from the button once, without a delayed second update", () => {
+  vi.useFakeTimers();
+  const ui = harness();
+  ui.nodes.q.fire("input");
+  ui.nodes.showResults.fire("click");
+  expect(ui.calls).toEqual(["apply", "focus:results"]);
+  expect(ui.nodes.q.value).toBe("機械学習");
+  vi.advanceTimersByTime(500);
+  expect(ui.calls).toEqual(["apply", "focus:results"]);
+  expect(ui.active()).toBe(ui.nodes.results);
+});

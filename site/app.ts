@@ -6849,6 +6849,11 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   // 検索は 1 打鍵で全行を絞り込む（3234 行で約 9.6 ms）。確定・入力のたびに
   // 走らせるともたつくので、入力はまとめて 1 回だけ適用する。
   const cancelQueryUpdate = wireDebouncedInput(valueElement("q"), 180, apply);
+  $("showResults").addEventListener("click", () => {
+    cancelQueryUpdate();
+    apply();
+    $("results").focus();
+  });
   $("q").addEventListener("focus", () => {
     queryEditInProgress = false;
   });

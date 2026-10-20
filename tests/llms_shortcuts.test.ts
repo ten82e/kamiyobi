@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { expect, it } from "vitest";
+import { toLlmsTxt } from "../src/build.ts";
 import { site } from "./built_golden_shared.ts";
 
 function sections(text: string): Map<string, string> {
@@ -41,5 +42,18 @@ it("points every llms.txt shortcut at a file and a section that exist", () => {
   for (const param of ["q", "cats", "row"]) {
     expect(shortcuts).toContain(`\`${param}\``);
     expect(siteSection, `近道の URL の名前 ${param} がサイトの節に無い`).toContain(`\`${param}\``);
+  }
+});
+
+it("uses the actual upcoming window in AI shortcuts", () => {
+  for (const [configured, days] of [
+    [30, 30],
+    [900, 400],
+    [0, 180],
+  ]) {
+    const text = toLlmsTxt({ site: { upcoming_days: configured } });
+    const shortcuts = sections(text).get("用途別の近道");
+    expect(shortcuts).toContain(`直近 ${days} 日の締切と開催の表`);
+    expect(sections(text).get("出力一覧")).toContain(`直近 ${days} 日の締切と開催の表`);
   }
 });

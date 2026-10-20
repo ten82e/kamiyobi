@@ -42,7 +42,7 @@ const SERVER_INSTRUCTIONS_JA = [
   '- 日時は日本時間（JST）を主に返します。`precision: "date-only"` は時刻を確認できていない行で、`utc`・`jst` は null です。`earliest_utc`〜`latest_utc` の不確実性区間の端を、公式の締切時刻として扱わないでください。',
   "- `estimated: true` は前年までの実績から機械的に置いた未確認の値です。確定した締切として案内しないでください（既定では返しません）。",
   "- `search_deadlines` の既定は今後の abstract / paper / journal で、過去と推定は除きます（`include_past`・`include_estimated` で足せます）。**kind の既定は画面の初期一覧より広く、常時受付（`journal`）も含みます** – 画面は概要と論文だけを出し、常時受付は「種別」で選んだ時に出します。件数を画面と比べるときは、この分だけ違います（`kinds` に `abstract` と `paper` を渡せば画面と同じ範囲になります）。`list_upcoming` の既定は種別で絞らず、推定も含みます。両者の件数を比べるなら、種別・推定・`scope` を揃えてください。",
-  "- `scope` は `screen`（画面の初期一覧。生成から 180 日先まで。`catalog.json` がある時だけ）と `all`（**収録の元データ** `data/snapshot.json`）で、省くと `screen` です。**公開している `data.json` は重複をまとめた後**なので、`all` の行数はそれより多くなります（AI が件数を画面と比べるときは、この違いを見てください）。0 件のときは `scope_comparison` に収録全体での件数が出ます。",
+  "- `scope` は `screen`（画面の初期一覧。期間は `catalog.json` の `window` に記載。ファイルがある時だけ）と `all`（**収録の元データ** `data/snapshot.json`）です。省いたときは `search_deadlines`・`explain_word` は `screen`、`list_upcoming`・`venue_info` は `all` です。**公開している `data.json` は重複をまとめた後**なので、`all` の行数はそれより多くなります（AI が件数を画面と比べるときは、この違いを見てください）。0 件のときは `scope_comparison` に収録全体での件数が出ます。",
   "- 会期は締切ではありません。購読カレンダー（`deadlines.ics`）は締切だけを載せ、`list_upcoming` は締切と会期の両方を返します。",
   "- 締切は動きます。投稿の判断の前に、行の公式ページで最新の募集要項を確かめるよう案内してください。",
   "",
@@ -2658,7 +2658,7 @@ function collectionStats(args: Record<string, unknown> = {}, now: number): strin
   })();
   const ファイル = [
     "index.html（画面。絞り込みと検索）",
-    "upcoming.md / upcoming.html（直近 180 日の表）",
+    "upcoming.md / upcoming.html（直近の締切と開催の表。対象期間は各ファイルに記載）",
     "data.csv（1 行 1 締切の平坦な表）",
     "deadlines.ics（カレンダー。1 日 1 件の終日）",
     `data.json（収録の全体。機械可読の正${全体容量 ? `・${全体容量}` : ""}）`,
@@ -3235,11 +3235,15 @@ const PAPER_INPUT_SCHEMA = {
   ],
 } as const;
 
+const READ_ONLY_ANNOTATIONS = { readOnlyHint: true, openWorldHint: false } as const;
+
 const TOOLS = [
   {
     name: "search_deadlines",
+    title: "投稿締切を検索",
+    annotations: READ_ONLY_ANNOTATIONS,
     description:
-      "日本語で投稿締切を検索する。語を省いて kind / kinds / rank / category / categories / domestic / online / within_days だけでも絞れる。既定は今後の abstract / paper / journal で、過去と推定は除きます（include_past・include_estimated で足せます）。既定の kind は MCP の方が広く、常時受付（journal）も含みます。scope は screen（初期一覧。`public/catalog.json`）または all（**収録の元データ** `data/snapshot.json`）。公開している `data.json` は重複をまとめた後なので、all の行数はそれより多くなります。structuredContent に total・rows・next_offset を返す。screen で 0 件のときは scope_comparison に全収録での同条件の件数・絞る前の件数・生成時刻を返す。比較データを読めない場合は検索結果を保持し、scope_comparison_error に理由と再試行の案内を返す。範囲を変えるときもほかの条件を維持する。続きは同じ条件と next_offset を offset に指定する。日付のみの行の utc・jst は null。常時受付は締切日時・精度・回次を null とし、日付のある行の後に並べます。推定期間、投稿トラック、確認状態を別に返す。公式確認（いつ・どこで・何を確かめたか）は verification_ja に画面の行の詳細と同じ日本語で返します（内部の鍵名は verification に残します）。前に出ていた締切も表示する。日付語は別ラウンドや会期にも当たるため、締切だけの期間指定には within_days を使う。会期の欄には、上流が書いた原文（`March 18-21, 2024` のような自由文）を「原表記」として添えます（画面の行の詳細と同じ）。0 件のときは画面と同じ案内と「打ち直すなら」の候補を返す。返す行の形: 日時 | 種別 | 確認状態（ある場合）| 会議名（版の識別子）| ランク | 会期 | 開催地 URL。テキストは `| ` で切り、構造化結果を優先する。**行から画面の深いリンクを組めます**: `venue_key`・`year`・`kind` と、`utc`（時刻のある行）または `uncertainty.earliest_utc`（日付のみの行）を `|` で繋いだ物が、`index.html?row=<その値>` の値です（人が開くと、その行の詳細が出ます）。構造化の行には `categories`（分野の鍵）と `categories_ja`（画面の札と同じ日本語）も入る。`ics_uid`（配付カレンダー `deadlines.ics` の予定の UID）は、**カレンダーに予定がある締切**に入ります（初期カタログと公開の `data.json` から引きます。実測 2026-10-17: 今後の締切 939 のうち 938 が持ちます – 残る 1 つはカレンダーが載せない日付のみの行）。",
+      "日本語で投稿締切を検索する。語を省いて kind / kinds / rank / category / categories / domestic / online / within_days だけでも絞れる。既定は今後の abstract / paper / journal で、過去と推定は除きます（include_past・include_estimated で足せます）。既定の kind は MCP の方が広く、常時受付（journal）も含みます。scope は screen（初期一覧。`public/catalog.json`）または all（**収録の元データ** `data/snapshot.json`）。公開している `data.json` は重複をまとめた後なので、all の行数はそれより多くなります。structuredContent に total・rows・next_offset を返す。screen で 0 件のときは scope_comparison に全収録での同条件の件数・絞る前の件数・生成時刻を返す。比較データを読めない場合は検索結果を保持し、scope_comparison_error に理由と再試行の案内を返す。範囲を変えるときもほかの条件を維持する。続きは同じ条件と next_offset を offset に指定する。日付のみの行の utc・jst は null。常時受付は締切日時・精度・回次を null とし、日付のある行の後に並べます。推定期間、投稿トラック、確認状態を別に返す。公式確認（いつ・どこで・何を確かめたか）は verification_ja に画面の行の詳細と同じ日本語で返します（内部の鍵名は verification に残します）。前に出ていた締切も表示する。日付語は別ラウンドや会期にも当たるため、締切だけの期間指定には within_days を使う。会期の欄には、上流が書いた原文（`March 18-21, 2024` のような自由文）を「原表記」として添えます（画面の行の詳細と同じ）。0 件のときは画面と同じ案内と「打ち直すなら」の候補を返す。返す行の形: 日時 | 種別 | 確認状態（ある場合）| 会議名（版の識別子）| ランク | 会期 | 開催地 URL。テキストは `| ` で切り、構造化結果を優先する。**行から画面の深いリンクを組めます**: `venue_key`・`year`・`kind` と、`utc`（時刻のある行）または `uncertainty.earliest_utc`（日付のみの行）を `|` で繋いだ物が、`index.html?row=<その値>` の値です（人が開くと、その行の詳細が出ます）。構造化の行には `categories`（分野の鍵）と `categories_ja`（画面の札と同じ日本語）も入る。`ics_uid`（配付カレンダー `deadlines.ics` の予定の UID）は、**カレンダーに予定がある締切**に入ります（初期カタログと公開の `data.json` から引きます）。カレンダーに予定がない行には付きません。",
     inputSchema: {
       type: "object",
       properties: {
@@ -3260,8 +3264,9 @@ const TOOLS = [
         include_estimated: { type: "boolean", description: "推定の締切も含める（既定 false）" },
         kinds: {
           type: "array",
+          items: { type: "string" },
           description:
-            "種別のキーで絞る（既定は画面と同じ abstract / paper / journal）。**日本語の種別名でも受けます**（論文締切＝paper・採否通知＝notification のように – 行に出す言葉と同じ）。kind と両方指定した場合は kinds を使います",
+            "種別のキーで絞る（既定は abstract / paper / journal。画面の初期一覧は abstract / paper）。**日本語の種別名でも受けます**（論文締切＝paper・採否通知＝notification のように – 行に出す言葉と同じ）。kind と両方指定した場合は kinds を使います",
         },
         kind: {
           type: "string",
@@ -3303,13 +3308,15 @@ const TOOLS = [
           type: "string",
           enum: ["screen", "all", "collection", "full", "window", "catalog"],
           description:
-            "見る窓。screen＝画面が最初に読む窓（180 日。catalog.json がある時だけ）／all＝収録の全体（過去と先の締切も含む）。**collection・full＝all／window・catalog＝screen**（他の三つの道具と同じエイリアス）。省いた時は screen",
+            "見る窓。screen＝画面が最初に読む窓（期間は catalog.json の window に記載。ファイルがある時だけ）／all＝収録の全体（過去と先の締切も含む）。**collection・full＝all／window・catalog＝screen**（他の三つの道具と同じエイリアス）。省いた時は screen",
         },
       },
     },
   },
   {
     name: "list_upcoming",
+    title: "直近の締切と開催を確認",
+    annotations: READ_ONLY_ANNOTATIONS,
     description:
       "今日から days 日以内の締切と開催日程を返す。両方を合わせて時系列に1ページ最大100件。structuredContent.items の type は deadline または event。total・next_offset を返し、続きは同じ条件で offset に next_offset を指定する。scope と kind/kinds は締切の条件で（scope の出所は search_deadlines と同じ）、会期は収録全体の同期間から選ぶ。既定は種別では絞らない（全部）、推定も含む。kind / kinds は日本語の種別名と配列も受ける。推定期間・トラック・前に出ていた締切も表示する。範囲は JST の暦日で判定する。within_days と境目の切り方は同じ。search_deadlines と件数を比べる場合は種別・推定・scope を揃える。既定の条件では件数はそのままでは違う。返す行の形: 締切は日時 | 種別 | 確認状態（ある場合）| 会議名（版の識別子）| ランク | 会期 | 開催地 URL。会期の行は別の形で、開催の節に - 開始日〜終了日 | 会議名（key: 識別子・版）| 開催地 URL。会期の行の会議名は年を添えた形、開催地は締切の行と同じ日本語表記です（空でも「未確認」を出します）。**構造化の行は締切と同じ欄**（`full_name`・`categories`・`categories_ja`・`rank`・`domestic`）も持ちます。",
     inputSchema: {
@@ -3347,6 +3354,8 @@ const TOOLS = [
   },
   {
     name: "venue_info",
+    title: "会議の詳細を確認",
+    annotations: READ_ONLY_ANNOTATIONS,
     description:
       "会議の開催回、締切、会期、ランク、主題、正式名を返す。structuredContent の editions に推定を除く全開催回の会期・確かさ・公式URL、rows に締切を返す。key は小文字の識別子、name は略称・正式名・名前の一部。開催回の識別子は lookup_status: edition_key と retry_arguments で関連会議へ案内する。見つからない識別子は lookup_status: not_found と略称の候補を返す。曖昧な名前や古いkeyは lookup_status: ambiguous と candidates を返す。候補の venue_key を key に指定して再照会する。表示範囲外の締切は lookup_status: out_of_scope と再照会用の retry_arguments で案内する。scope の既定は all で（出所は search_deadlines と同じ）、過ぎた分も全部出る。今後の物から並べ、推定以外の次の投稿締切を next_submission、推定の見込みを next_estimated_submission で分けて返す。主題は分野より詳しい札で、収録にある会議だけに出します（画面の行の詳細の「主題」と同じ）。返す行の形: 会議の要約に続いて、日時 | 種別 | 確認状態（ある場合）| 会議名（版の識別子）| ランク | 会期 | 開催地 URL。**構造化の rows は `search_deadlines` と同じ欄**を持ちます（`categories`・`categories_ja`・`ics_uid` を含む。`ics_uid` は品書に載っている締切だけ）。",
     inputSchema: {
@@ -3365,12 +3374,16 @@ const TOOLS = [
   },
   {
     name: "collection_stats",
+    title: "収録状況を確認",
+    annotations: READ_ONLY_ANNOTATIONS,
     description:
       "収録件数、分野別の会議数、データ生成時刻、締切の確認状態、データ源の取得状態、配布ファイルを返す。返る文の形: 収録全体と初期一覧の件数を分けた日本語の要約。",
     inputSchema: { type: "object", properties: {} },
   },
   {
     name: "search_venues",
+    title: "研究テーマから投稿先を検索",
+    annotations: READ_ONLY_ANNOTATIONS,
     description:
       "全収録の投稿先プロフィールから、研究テーマ・論文の題名・概要に合う会議や論文誌を検索する。締切不明や締切済みの会議も候補に含む。retrieval: semantic で実モデル、lexical で語彙と公式トピックを用いる。締切日時を探す場合は search_deadlines を使う。構造化結果の candidate_venues は検索した収録会議数、total は一致した候補数。limit と offset でページ送りできる。",
     inputSchema: {
@@ -3395,6 +3408,8 @@ const TOOLS = [
   },
   {
     name: "recommend_venues",
+    title: "論文に合う投稿先を探す",
+    annotations: READ_ONLY_ANNOTATIONS,
     description:
       "論文情報に合う投稿先を語彙の一致で探す。学習済みの並べ替えモデルがある場合は併用する。rank を指定すると会場のランク（`A*`・`A`・`B`・`C`・`N`、または `CCF A` のように尺度の名を付けた形）で候補を絞ります（画面の推薦モードの「ランク」と同じ判定。知らない等級はその等級では 0 件になり、その旨を返します）。retrieval: semantic を指定すると実モデルを使う。候補の範囲は画面と共通（推薦索引から作るため、同じ論文でも画面と点がわずかに動く事があります）。順位表に入るのは実質的な一致がある候補だけで、証拠がない会議を分野だけの一致で推薦しない。長い入力は最初の 20 行と各行の長さ制限で切り、切った旨を返す。返す行の形: 順位と一致評価、選定理由、締切の確認状況に続いて締切行。1ページ最大30件。structuredContent の rows は 1 行 = 1 候補で、`rank` は**順位**（1 起点。会場のランクではない – 他の道具の `rank`（`ccf`・`core`・`thcpl`）とは別の物です）、`fit` は一致評価とその内訳、`availability` は受付状態、`deadlines` は締切、`verification` は確認情報、`venue_rank` は会場のランク（`ccf`・`core`・`thcpl`。他の道具の `rank` と同じ形）。続きは同じ論文情報と next_offset を offset に指定する。",
     inputSchema: {
@@ -3428,6 +3443,8 @@ const TOOLS = [
   },
   {
     name: "explain_word",
+    title: "検索語の一致と探し方を確認",
+    annotations: READ_ONLY_ANNOTATIONS,
     description:
       "検索語に当たる行数と、0 件のときの案内を返す。件数は絞り込み前の素の照合で数えるため、search_deadlines の結果と異なる場合がある。返す行の形: 行数と案内、代表的な締切を最大3行。0 件では「打ち直すなら」の候補を示す。",
     inputSchema: {

@@ -829,6 +829,9 @@ tr.detail-row td {
 .source-update-warning { margin-top: 12px; color: var(--warn); font-size: 0.85rem; }
 .source-update-details { margin-top: 8px; color: var(--muted); font-size: 0.85rem; }
 .source-update-details summary { cursor: pointer; padding: 8px 0; color: var(--accent); }
+.resource-links { display: flex; flex-wrap: wrap; gap: 8px 20px; margin: 8px 0; font-size: 0.85rem; }
+.resource-links a { display: inline-block; padding: 12px 0; color: var(--accent); }
+.mode-guide { color: var(--muted); font-size: 0.85rem; margin: 0 0 12px; line-height: 1.7; }
 .help-jump { margin: 4px 0 0; font-size: 0.85rem; }
 .help-jump a { display: inline-block; padding: 6px 0; color: var(--accent); }
 .catalog-stats > summary { cursor: pointer; padding: 8px 0; color: var(--accent); }
@@ -949,7 +952,7 @@ footer a:hover { text-decoration: underline; }
   .sortbar,
   .recommend-only,
   footer .btn-reset { display: none !important; }
-  .skip-link { display: none !important; }
+  .skip-link, .resource-links, .mode-guide { display: none !important; }
   /* 条件・件数・日時を紙に残す見出し（画面では `display: none`）。 */
   .print-meta {
     display: block !important;
@@ -1112,6 +1115,12 @@ footer a:hover { text-decoration: underline; }
          なかった（2026-10-17 実測: 上から約 11,700px）。上に入口を置く。 -->
     <p class="help-jump"><a href="#helpPanel" id="helpJump">見方のてびきを開く（「要確認」「推定」・時刻・キーボード操作の読み方）</a></p>
 
+    <nav class="resource-links" aria-label="一覧・AI向けデータの入口">
+      <a href="upcoming.html">直近の締切と開催を読む</a>
+      <a href="upcoming.md" title="直近の締切と開催をまとめたマークダウンの表です。ブラウザでは整形されずに表示されるか、ダウンロードされます。">AIに渡す一覧（Markdown）</a>
+      <a href="llms.txt">AI・プログラム向けの利用案内</a>
+    </nav>
+
     <!-- 収録状況の四つ組。単位を各ラベルに書く（会議の数と締切の件数を並べておいて
          単位を書かないと、680 と 176 が同じ物だと読めてしまう。2026-09-23 実測で
          「穴場/特化誌」は実数（穴場タグの会議だけ）とラベルが食い違っていた。 -->
@@ -1130,10 +1139,12 @@ footer a:hover { text-decoration: underline; }
     </details>
   </header>
 
-  <nav class="mode-switch" aria-label="表示モード">
+  <nav class="mode-switch" aria-label="表示モード" aria-describedby="modeGuide">
     <button id="modeRecommend" type="button" aria-pressed="false">投稿先を探す</button>
     <button id="modeDeadlines" type="button" aria-pressed="true">締切を検索</button>
   </nav>
+
+  <p class="mode-guide" id="modeGuide">会議名や分野が決まっているなら「締切を検索」。論文の題名・概要から候補を比べるなら「投稿先を探す」。日時は日本時間（JST）です。投稿前に公式サイトで募集要項を確認してください。</p>
 
   <!-- Filter & Controls Toolbar -->
   <div class="panel mode-deadlines" id="controlsPanel">
@@ -1152,7 +1163,7 @@ footer a:hover { text-decoration: underline; }
              詰めると、スマートフォン幅で「（例:」で切れて例が一つも見えなかった
              （2026-10-17 実測: 375px 幅）。 -->
         <label for="q">会議名・分野・開催地で検索</label>
-        <input type="search" id="q" placeholder="例: NSDI、機械学習、おきなわ">
+        <input type="search" id="q" enterkeyhint="search" placeholder="例: NSDI、機械学習、おきなわ">
       </div>
       <div class="field">
         <label for="kind">種別</label>
@@ -1252,6 +1263,10 @@ footer a:hover { text-decoration: underline; }
       <label class="check"><input type="checkbox" id="past"> <span>過去の締切も表示</span></label>
     </div>
     </details>
+    <div class="deadline-only" style="margin-top: 14px;">
+      <button id="showResults" class="btn-reset" type="button" aria-controls="results">結果を見る</button>
+      <span class="count-hint">入力すると自動で絞り込みます。このボタンで一覧へ移動します。</span>
+    </div>
   </div>
 
   <div id="activeFilters" class="active-filters" role="group" aria-label="適用中の検索条件（押すとその条件だけを外します）" hidden></div>

@@ -193,6 +193,9 @@ describe("MCP の手順が話せる（第 714 回）", () => {
     /* 繋いだ AI へ渡す手引き。道具の説明は一つずつの持ち物なので、横断の約束はここに書く。 */
     const 手引き = String(res.result?.instructions ?? "");
     expect(手引き.length, "手引きを返して居ない").toBeGreaterThan(200);
+    expect(手引き).toContain("`catalog.json` の `window`");
+    expect(手引き).toContain("`search_deadlines`・`explain_word` は `screen`");
+    expect(手引き).toContain("`list_upcoming`・`venue_info` は `all`");
     for (const 約束 of ["date-only", "estimated", "scope", "structuredContent", "next_offset"])
       expect(手引き, `手引きが ${約束} を書いて居ない`).toContain(約束);
     /* 支度の通知（返事を書かない物）を送つても、それらしい返事が來ない事。 */
@@ -230,7 +233,15 @@ describe("MCP の手順が話せる（第 714 回）", () => {
 
   it("道具の一覽が読める（七つ・どれも入力の形を持つ）", async () => {
     const res = (await client.ask({ jsonrpc: "2.0", id: 3, method: "tools/list" })) as {
-      result?: { tools?: Array<{ name?: string; description?: string; inputSchema?: unknown }> };
+      result?: {
+        tools?: Array<{
+          name?: string;
+          title?: string;
+          description?: string;
+          annotations?: { readOnlyHint?: boolean; openWorldHint?: boolean };
+          inputSchema?: { properties?: Record<string, { type?: string; items?: unknown }> };
+        }>;
+      };
     };
     const tools = res.result?.tools ?? [];
     expect(tools.map((t) => t.name).sort()).toEqual([
@@ -245,6 +256,15 @@ describe("MCP の手順が話せる（第 714 回）", () => {
     for (const tool of tools) {
       expect(String(tool.description ?? "").length, `説明が空: ${tool.name}`).toBeGreaterThan(20);
       expect(tool.inputSchema, `入力の形が無い: ${tool.name}`).toBeTruthy();
+      expect(tool.title, `日本語の表示名が無い: ${tool.name}`).toMatch(/[ぁ-んァ-ヶ一-龠]/);
+      expect(tool.description, `過去の検証記録が説明に残っている: ${tool.name}`).not.toMatch(
+        /実測 \d{4}-\d{2}-\d{2}/,
+      );
+      expect(tool.annotations).toEqual({ readOnlyHint: true, openWorldHint: false });
+      for (const [name, property] of Object.entries(tool.inputSchema?.properties ?? {})) {
+        if (property.type === "array")
+          expect(property.items, `${tool.name}.${name} の要素の型が無い`).toBeDefined();
+      }
     }
   });
 
