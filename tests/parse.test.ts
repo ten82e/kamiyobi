@@ -1860,6 +1860,33 @@ describe("eventDatePrecisionOf (#746)", () => {
         new Date(Date.UTC(2026, 9, 10)),
       ),
     ).toBe("single-day");
+
+    expect(
+      eventDatePrecisionOf(
+        undefined,
+        "May 15th, 2026",
+        new Date(Date.UTC(2026, 4, 15)),
+        new Date(Date.UTC(2026, 4, 15)),
+      ),
+    ).toBe("single-day");
+
+    expect(
+      eventDatePrecisionOf(
+        undefined,
+        "May 15th-17th, 2026",
+        new Date(Date.UTC(2026, 4, 15)),
+        new Date(Date.UTC(2026, 4, 17)),
+      ),
+    ).toBe("exact-range");
+
+    expect(
+      eventDatePrecisionOf(
+        undefined,
+        "15th-17th May, 2026",
+        new Date(Date.UTC(2026, 4, 15)),
+        new Date(Date.UTC(2026, 4, 17)),
+      ),
+    ).toBe("exact-range");
   });
 
   it("classifies not-announced and unverified dates correctly", () => {
