@@ -12,7 +12,7 @@ function uidsOf(ics: string): string[] {
 }
 
 describe("書き出しの ICS と購読の ICS の識別子", () => {
-  it("同じ締切には同じ UID を付ける（両方を同じカレンダーに入れても二重にならない）", () => {
+  it("同じ締切には購読カレンダーと同じ UID を付ける", () => {
     /* 2026-10-17 實測: 揃える前は配付物が `kamiyobi-dl2ws2026-29b52d20@kamiyobi`（種別の
      * 日本語名の SHA-1 の 8 桁）、畫面が `kamiyobi-dl2ws2026-abstract@kamiyobi`（ASCII の
      * 種別の鍵）で、同じ日が二度並んだ。今は品書の `ics_uid` をそのまま使う。 */

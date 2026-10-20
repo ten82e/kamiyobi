@@ -1483,7 +1483,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     ics.className = "drawer-action";
     ics.textContent = "この締切をカレンダー（.ics）に入れる";
     ics.title =
-      "この 1 件だけを .ics で持ち出します。予定の UID は購読のカレンダー（deadlines.ics）と同じなので、両方に入れても同じ締切が二度並びません。";
+      "この 1 件だけを .ics で持ち出します。予定の UID は購読のカレンダー（deadlines.ics）と共通です。重複の扱いはカレンダーアプリによって異なります。";
     ics.addEventListener("click", () => exportRowIcs(r as unknown as AppRow));
     box.appendChild(ics);
   }
