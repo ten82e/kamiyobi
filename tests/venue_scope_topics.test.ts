@@ -122,7 +122,11 @@ it("adds Japanese field vocabulary to international CFP topics without altering 
   };
   const english = topicProfileTexts([venue], { hci: "Human-Computer Interaction" }, false);
   const japanese = topicProfileTexts([venue], { hci: "Human-Computer Interaction" }, true);
-  expect(english.texts[0]).toBe("Tangible and ubiquitous computing. Human-Computer Interaction");
+  expect(english.texts[0]).toBe(
+    "International Interface Conference. Tangible and ubiquitous computing. Human-Computer Interaction",
+  );
+  expect(japanese.texts[0]).toMatch(/^Tangible and ubiquitous computing\./);
+  expect(japanese.texts[0]).toMatch(/International Interface Conference$/);
   expect(japanese.texts[0]).toContain("ユーザインタフェース");
   expect(japanese.texts[0]).toContain("Tangible and ubiquitous computing");
   expect(venue).toEqual({

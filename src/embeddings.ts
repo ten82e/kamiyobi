@@ -717,7 +717,7 @@ export function embeddingProfileHash(
       excluded_attribute_tags: [...ATTRIBUTE_TAGS].sort(),
       english_papers: "first-eight-concatenated",
       multilingual_papers: "excluded",
-      official_topics: "separate-clause-vectors-with-bilingual-category-context-v1",
+      official_topics: "separate-clause-vectors-with-language-ordered-venue-context-v2",
     },
   };
   return createHash("sha256")

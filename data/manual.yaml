@@ -7076,6 +7076,26 @@ schema_version: 1
 
 # 公式CFP・研究会の案内に記載された対象分野。開催回や締切、採択論文は含めない。
 venue_scopes:
+  mlsys:
+    source_url: https://mlsys.org/Conferences/2026/CallForPapers
+    topics:
+      - "Computer systems supporting machine learning, and machine learning applied to system design."
+      - "Training efficiency and deployment of models for prediction services."
+      - "Language model pretraining, adaptation and inference infrastructure."
+      - "Scaling reinforcement learning for large language models."
+      - "Infrastructure for autonomous AI agents and multimodal applications."
+      - "Storage infrastructure serving training, inference and reinforcement learning workloads."
+      - "Distributed learning and federated training algorithms."
+      - "Security and privacy protections in deployed ML applications."
+      - "Applying machine learning to compute-job placement and scheduling."
+      - "Diagnosing, testing and monitoring ML software."
+      - "System support for fair, explainable and interpretable ML applications."
+      - "Preparing and cleaning training data."
+      - "Abstractions, programming languages, compilers and runtime software for ML."
+      - "Visual exploration of model behavior, predictions and datasets."
+      - "Hardware specialization and hardware-efficient ML algorithms."
+      - "Using language models to optimize hardware or computing systems."
+      - "Tools, benchmarks and datasets for evaluating ML systems."
   ipsj-sighpc:
     source_url: https://www.sighpc.ipsj.or.jp/hpc_chater.html
     topics:
@@ -7352,9 +7372,19 @@ venue_scopes:
     topics:
       - Foundations of computer science, algorithms, complexity theory, discrete mathematics, computational learning and theoretical computation.
   sc:
-    source_url: https://sc24.supercomputing.org/program/papers/
+    source_url: https://sc26.supercomputing.org/program/papers/
     topics:
-      - High performance computing, parallel algorithms, supercomputers, large scale simulation, scientific computing, performance and parallel architectures.
+      - "High performance computing, parallel algorithms, supercomputers, large scale simulation, scientific computing, performance and parallel architectures."
+      - "Scalable numerical and graph algorithms, scheduling algorithms, load balancing and energy-aware parallel algorithms."
+      - "Parallel scientific applications and high-performance simulation in biology, medicine, materials, physics and engineering."
+      - "Heterogeneous processor and accelerator architectures, interconnects, memory hierarchies and hardware-software co-design."
+      - "Large-scale analytics, visualization, parallel storage and data-intensive scientific workflows."
+      - "HPC infrastructure for distributed model training and inference, model parallelism, accelerated ML and deployment at scale."
+      - "Measuring and modeling the performance of parallel computers, accelerators and software."
+      - "Quantum, neuromorphic and other post-Moore technologies for high-performance computing."
+      - "Parallel compilers, languages, programming models, communication libraries and runtime software."
+      - "Operating supercomputing facilities, scientific software deployment, energy use, emissions and production workloads."
+      - "Cloud and HPC system software, task scheduling, resource allocation, load balancing, reliability, carbon-aware computing and accelerator support."
   ipsj-css:
     source_url: https://www.iwsec.org/css/2024/cfp.html
     topics:
