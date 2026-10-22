@@ -413,8 +413,10 @@ const LLMS_OUTPUT_NOTES_JA: Record<string, string> = {
     "日付の列が**締切の日を指すかその他の予定日かを区別する欄は `date_field`**（2026-10-06 の" +
     "実測で 4,984 行のうち 311 行が締切ではない日 – 締切として数えると間違える。収録が増えれば" +
     "この数も動く）。",
+  /* 出力一覧では `upcoming.md` だけ専用の組み立てが動的な日数（`site.upcoming_days`）で
+   * 書くので、この註は使わない（同じ事を 2 箇所に書くと片方だけ古くなる）。 */
   "upcoming.md":
-    "直近 180 日の締切と開催の表。MCP の `list_upcoming` でも会期を取得できます。MCP の対象期間は `days` で指定します。購読カレンダー `deadlines.ics` は締切のみです。",
+    "直近の締切と開催の表。MCP の `list_upcoming` でも会期を取得できます。MCP の対象期間は `days` で指定します。購読カレンダー `deadlines.ics` は締切のみです。",
   "upcoming.html":
     "`upcoming.md` と同じ表を、ブラウザでそのまま読める形にしたもの（第 263 回）。Markdown の" +
     " 方は機械が読む用のまま残してある。",
@@ -3780,7 +3782,11 @@ export function toNotFoundHtml(styleBlock = "", baseUrl = ""): string {
     row("deadlines.ics", "カレンダー（deadlines.ics）", " – 収録している今後の締切を全て"),
 
     row("data.csv", "表計算のための表（data.csv）", " – 1 行 1 締切。過去の分も入っている"),
-    row("upcoming.md", "文字だけの表（upcoming.md）", " – 直近 180 日。grep や他ツールに渡せる形"),
+    row(
+      "upcoming.md",
+      "文字だけの表（upcoming.md）",
+      " – 直近の締切と開催（対象期間は表の先頭）。grep や他ツールに渡せる形",
+    ),
     row(
       "data.json",
       "機械可読のデータ（data.json）",
