@@ -7319,7 +7319,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
    * 公開している名前）から組み立てる – 手コピーすると画面の語とズレる。
    * 2026-08-09 実測: 既定の印刷対象 478 行のうち 280 行が「ランク未確認」を刷っていたが、
    * 紙のうえにはその意味がどこにも書かれていなかった（受け取った人は画面を開かないと読めない）。 */
-  function printLegendJa(): string {
+  function printLegendJa(カードも刷るか = false): string {
     const unconfirmed = Recommender.unconfirmedLabelJa();
     const unrated = Recommender.rankUnratedLabelJa();
     const extended = Recommender.extendedLabelJa();
@@ -7350,6 +7350,15 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       // 「状態」が空欄の行は注記が無いという意味（2026-08-09 実測: 既定の印刷対象 478 行の
       // うち 189 行が空欄で、その 189 行はランク・会期・開催地の列にも空欄が無かった）。
       "「状態」が空欄の行は、この行に注記がない行です",
+      /* 「投稿先を探す」の紙には候補のカードが刷られる。カードの語（一致評価・点・受付状況・
+       * 次回締切）は締切の一覧の但し書きに無く、点は 2026-10-18 から札に添えている。カードを
+       * 刷る時だけ説明を足す（出ない語を説明しない、が約束）。 */
+      ...(カードも刷るか
+        ? [
+            "「一致評価」の札は、入力した論文とその会議の一致の証拠の形の区分です（採択の見込みではありません）。札のあとの「N 点」は候補の並びを決める点で、札とは別の計算です",
+            "「受付状況」は締切の状態（締切済み・受付中など）で、「次回締切」は次に来る募集の締切です。日時は日本時間（JST）です",
+          ]
+        : []),
       /* 論文を入れたまま印刷すると、締切の一覧の行にも「一致評価」の札が刷られる。
        * **出る時だけ**説明を足す（この用紙の表記は「必ず刷られる語」だけ、が約束）。 */
       ...(recommendFitMatches
@@ -7415,7 +7424,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
           ? ""
           : ` ／ 論文「${題の一行.length > 40 ? `${題の一行.slice(0, 39)}…` : 題の一行}」`;
       const rankOnPaper = state.rank ? ` ／ ランク: ${rankFilterLabelJa(state.rank)}` : "";
-      box.textContent = `この印刷物: 投稿先を探す画面${論文OnPaper}${rankOnPaper} ／ ${listed}${excludedOnPaper}${orderOnPaper}${printedTail}。${printLegendJa()}`;
+      box.textContent = `この印刷物: 投稿先を探す画面${論文OnPaper}${rankOnPaper} ／ ${listed}${excludedOnPaper}${orderOnPaper}${printedTail}。${printLegendJa(true)}`;
       return;
     }
     box.textContent =

@@ -54,6 +54,13 @@ it("絞り込みを入れたら、件数欄を開いて「のぞいた数」を�
   expect(app, "ランクの断りを覚えていない").toContain("urlRankNotice = urlValueNoticeJa(");
   expect(app, "推薦モードで黙っている").toContain("if (recMode && urlRankNotice)");
 
+  /* 「投稿先を探す」の紙には候補のカードが刷られ、札に点が添えてある。カードの語は締切の
+   * 但し書きに無いので、カードを刷る時だけ足す（2026-10-22 実測: 推薦の紙に「（80 点）」が
+   * 出るのに、凡例は点も受付状況も説明していなかった）。 */
+  expect(app, "カードを刷る時の但し書きが無い").toContain("カードも刷るか");
+  expect(app, "点の説明が無い").toContain("候補の並びを決める点で、札とは別の計算");
+  expect(app, "推薦の紙でカードの但し書きを渡していない").toContain("printLegendJa(true)");
+
   /* 画面の組み立ても、この判定を通して開いている（条件を書き写していない）。 */
   expect(app, "件数欄の開閉が判定を通していない").toContain(
     '(state.mode === "deadlines" && (deadlineFiltersOnJa() || recommendFitMatches > 0))',
