@@ -3453,6 +3453,66 @@ it("索引（llms.txt）が、ランクを受ける道具を漏らさず書い�
     expect(行, "索引が " + 道具 + " の rank を書いていない").toContain("`" + 道具 + "`");
 });
 
+it("list_upcoming のランクの絞り込みは、締切の検索と同じ（同じ種別・同じ窓 – 第 41 回）", async () => {
+  /* 同じ日の窓・同じ種別・同じ rank なら、締切の件数と最後の 1 件は両方の道具で一致する。
+   * 片方だけ境目の切り方や等級の比べ方が違うと、AI が「どちらの数が正しいのか」を言えなく
+   * なる（2026-10-23 実測: paper 10/10・abstract 5/5・最後の締切 2026-11-19(木) 10:00 JST で一致）。 */
+  const 數 = async (道具: string, args: Record<string, unknown>) => {
+    const res = (await client.ask({
+      jsonrpc: "2.0",
+      id: 2,
+      method: "tools/call",
+      params: { name: 道具, arguments: args },
+    })) as {
+      result?: {
+        structuredContent?: {
+          total?: number;
+          deadline_total?: number;
+          rows?: Array<{ deadline?: { jst?: string } }>;
+          items?: Array<{ type?: string; jst?: string }>;
+        };
+      };
+    };
+    const sc = res.result?.structuredContent ?? {};
+    const 最後 = (sc.rows ?? [])
+      .map((r) => r.deadline?.jst ?? "")
+      .filter(Boolean)
+      .sort()
+      .slice(-1)[0];
+    const 締切の最後 = (sc.items ?? [])
+      .filter((i) => i.type === "deadline")
+      .map((i) => i.jst ?? "")
+      .filter(Boolean)
+      .sort()
+      .slice(-1)[0];
+    /* 締切の数だけを比べる（`list_upcoming` の total は会期も混ぜた数なので使わない）。 */
+    return { 件数: sc.deadline_total ?? sc.total ?? -1, 最後: 最後 ?? 締切の最後 ?? "-" };
+  };
+  for (const kinds of [["paper"], ["abstract"], ["paper", "abstract"]]) {
+    const 検索 = await 數("search_deadlines", {
+      within_days: 30,
+      scope: "all",
+      rank: "A*",
+      kinds,
+      limit: 100,
+    });
+    const 一覧 = await 數("list_upcoming", {
+      days: 30,
+      scope: "all",
+      rank: "A*",
+      kinds,
+      limit: 100,
+    });
+    expect(
+      一覧.件数,
+      `${JSON.stringify(kinds)} で件数が違う（検索 ${検索.件数} ／ 一覧 ${一覧.件数}）`,
+    ).toBe(検索.件数);
+    /* 窓の端（最後の 1 件）も同じ。片方だけ境目の切り方が違うと、ここで日付がずれる。 */
+    if (検索.最後 !== "-" && 一覧.最後 !== "-")
+      expect(一覧.最後, `${JSON.stringify(kinds)} で最後の締切が違う`).toBe(検索.最後);
+  }
+});
+
 it("list_upcoming は会場のランクでも絞れる（締切と会期の両方 – 第 39 回）", async () => {
   /* 締切の検索と推薦には前から `rank` が在るのに、直近の一覧だけ持っていなかった
    * （「来月の CCF A の締切と會期」を 1 回で聞けない）。同じ判定・同じ語を使う。 */
