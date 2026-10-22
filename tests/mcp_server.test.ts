@@ -3555,6 +3555,50 @@ it("list_upcoming は会場のランクでも絞れる（締切と会期の両�
   expect(配列, "配列を黙って受けた").toContain("rank は文字列で指定してください");
 });
 
+it("構造化の行が、画面の深いリンクの値をそのまま返す（第 43 回）", async () => {
+  /* 説明は前から「`venue_key`・`year`・`kind` と `utc` を `|` で繋ぐ」と書いていたが、畫面の
+   * 鍵の 4 つ目は **ミリ秒**で、ISO の文字列ではない（2026-10-23 實測: 説明どほりに組んだ URL を
+   * 開いても詳細が開かなかつた）。組み立て直させず、出來合ひの値を返す。 */
+  const res = (await client.ask({
+    jsonrpc: "2.0",
+    id: 2,
+    method: "tools/call",
+    params: { name: "search_deadlines", arguments: { query: "PODS", scope: "all", limit: 1 } },
+  })) as {
+    result?: {
+      structuredContent?: {
+        rows?: Array<{
+          venue_key?: string;
+          year?: number;
+          kind?: string;
+          utc?: string;
+          screen_row_key?: string;
+        }>;
+      };
+    };
+  };
+  const row = res.result?.structuredContent?.rows?.[0];
+  expect(row, "この検査の前提（PODS の行）が崩れた").toBeTruthy();
+  const 部 = String(row?.screen_row_key ?? "").split("|");
+  expect(部, "screen_row_key が 4 つの部に分かれない").toHaveLength(4);
+  expect(部[0], "會場の鍵が違う").toBe(row?.venue_key);
+  expect(部[1], "年が違う").toBe(String(row?.year));
+  expect(部[2], "種別が違う").toBe(row?.kind);
+  expect(部[3], "4 つ目がミリ秒でない").toBe(String(Date.parse(String(row?.utc))));
+  /* 道具の説明が、その欄を名指している（組み立て方を書かない）。 */
+  const 説明 = (await client.ask({
+    jsonrpc: "2.0",
+    id: 2,
+    method: "tools/list",
+    params: {},
+  })) as { result?: { tools?: Array<{ name?: string; description?: string }> } };
+  const 検索 = 説明.result?.tools?.find((t) => t.name === "search_deadlines");
+  expect(検索?.description, "説明が screen_row_key を名指していない").toContain("screen_row_key");
+  expect(検索?.description, "説明が古い組み立て方を残している").not.toContain(
+    "`uncertainty.earliest_utc`（日付のみの行）を `|` で繋いだ物",
+  );
+});
+
 it("venue_info は過去の締切も出して、その札を書く（第 945 回）", async () => {
   const 答 = await call("venue_info", { key: "icde" });
   const 行 = 答.split("\n").filter((l) => /^20\d\d-/.test(l));
