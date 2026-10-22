@@ -1267,7 +1267,10 @@ function semanticOutput(value: unknown): value is SemanticOutput {
 
     let html =
       '<div style="background: var(--chip); padding: 14px; border-radius: 6px; border: 1px solid var(--border); margin-bottom: 16px;">' +
-      '<div style="font-size: 0.78rem; color: var(--muted);">種別・日時</div>' +
+      /* 節の名は見出しにする（読み上げで節を飛ばせる – 「投稿日程」は前から h3。2026-10-22
+       * 実測: 行の詳細は h2 の会議名の下、「種別・日時」だけが div だった）。見た目は
+       * クラスで前のまま（小さめの灰色）。 */
+      '<h3 class="drawer-label">種別・日時</h3>' +
       '<div style="font-size: 1.1rem; font-weight: 600; color: var(--fg); margin-top: 2px;">' +
       esc(Recommender.kindLabelJa(r.kind)) +
       "</div>" +
