@@ -17,7 +17,7 @@ import {
   embeddingManifest,
   venuePapersHash,
 } from "../src/embeddings.ts";
-import { NOW, runCli, tempWork } from "./helpers.ts";
+import { NOW, REPO_ROOT, runCli, tempWork } from "./helpers.ts";
 
 function sha256(text: string): string {
   return createHash("sha256").update(text, "utf8").digest("hex");
@@ -214,4 +214,26 @@ describe("publish manifest", () => {
       build: lexicalManifest.build,
     });
   });
+});
+
+/* 公開の目録（`publish.json` の `artifacts`）のハッシュが、実際に置いてあるファイルと合うか。
+ * ここがずれると、配布物を検めた人が「改ざんされた」と読む（ビルド後に何かが書き換えた、
+ * 別の時計で作り直した、fixture が混ざった、のいずれか）。 */
+it("公開の目録のハッシュが、置いてあるファイルと合う", () => {
+  const publicDir = join(REPO_ROOT, "public");
+  const manifest = JSON.parse(readFileSync(join(publicDir, "publish.json"), "utf8")) as {
+    artifacts?: Record<string, { sha256?: string; bytes?: number }>;
+  };
+  const artifacts = manifest.artifacts ?? {};
+  const names = Object.keys(artifacts);
+  expect(names.length, "目録にファイルが載っていない（空振り）").toBeGreaterThan(10);
+  for (const name of names) {
+    const meta = artifacts[name] ?? {};
+    const path = join(publicDir, name);
+    expect(existsSync(path), `目録にある ${name} が置かれていない`).toBe(true);
+    const body = readFileSync(path);
+    expect(sha256(body.toString("utf8")), `${name} のハッシュが目録と違う`).toBe(meta.sha256);
+    if (typeof meta.bytes === "number")
+      expect(body.length, `${name} の大きさが目録と違う`).toBe(meta.bytes);
+  }
 });
