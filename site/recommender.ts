@@ -14886,8 +14886,12 @@ const Recommender = (() => {
           cats: conf.categories || [],
           tags: confTags,
           hay: searchNormalize(
-            /* 会期だけの行も、公式ページの URL で引けるようにする（上の締切行と同じ理由）。 */
-            `${baseHay} ${titleWithYearJa(conf.title || conf.key, ed.year)} ${ed.place || ""} ${eventSourceSearchText(ed)} ${linkSearchTerms(ed.link)} ` +
+            /* 会期だけの行は、会議の名前・会期・開催地で引く。**URL のホストは入れない** –
+             * 同じ親サイトの下に別の会議が并ぶと、その會議の名前で別の會議が「締切未収録の
+             * 開催回」として出る（2026-10-23 實測: `SIGCOMM` の 0 件の畫面に、IMC 2027
+             * （https://conferences.sigcomm.org/imc/…）が出た）。締切の行の側は URL で引ける
+             * ままにしてある。 */
+            `${baseHay} ${titleWithYearJa(conf.title || conf.key, ed.year)} ${ed.place || ""} ${eventSourceSearchText(ed)} ` +
               `${categorySearchTerms(conf.categories, confTags)} ${tagSearchTerms(confTags)} ` +
               `${placeJa(ed.place)} ${placePrefectureJa(ed.place)} ` +
               `${ed.event_date_precision === "not-announced" ? "" : `${monthTermsJa(start)} ${monthTermsJa(end)}`} ${["month-only", "not-announced"].includes(String(ed.event_date_precision)) ? "" : weekdaySearchTerms(start)} ${eventDaySearchWords({ ed })}`,
