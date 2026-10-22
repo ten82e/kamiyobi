@@ -386,9 +386,12 @@ select {
 }
 /* 期間・種別・ランクの <select> は `outline: none` だけで焦点の目印を書いていなかった
    （入力欄は border-color が変わるが、select は変わらない）。 */
+/* リンクと `<summary>`（てびき・畳み）も同じ印にする。前はブラウザ既定の 1px の輪だけで、
+   ボタンや入力欄の 2px と揃っていなかった（2026-10-23 実測: Tab で動かすとリンクだけ
+   `auto 1px`）。 */
 input[type=search]:focus-visible, input[type=text]:focus-visible,
 textarea:focus-visible, select:focus-visible,
-button:focus-visible, [tabindex]:focus-visible {
+button:focus-visible, a:focus-visible, summary:focus-visible, [tabindex]:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
