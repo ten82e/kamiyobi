@@ -5938,10 +5938,14 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     const help = $("helpPanel");
     help.hidden = false;
     const summary = help.querySelector("summary");
-    if (summary)
-      summary.textContent = recommend
-        ? "投稿先候補の見方・意味検索が使えないとき"
-        : "見方のてびき（「推定」「未確認」「該当なし」の意味・過去の締切の見方・CSV と印刷）";
+    /* 見出しは summary の中の h2 が持つ（読み上げの見出しの並びを h1 → h2 → その下の h3 に
+     * するため）。summary ごと textContent で書き換えると h2 が消える（2026-10-22 実測:
+     * 画面を開くと `.help-title` が無くなり、てびきの h3 が「締切の一覧」の下に付いていた）。 */
+    const 見出し = summary?.querySelector("h2") ?? summary;
+    if (見出し) 見出し.textContent = recommend ? "投稿先候補の見方" : "見方のてびき";
+    /* 詳しい説明は見出しの外（締切の一覧の話なので、推薦の画面では出さない）。 */
+    const 説明 = summary?.querySelector<HTMLElement>(".help-title-rest");
+    if (説明) 説明.hidden = recommend;
     for (const section of Array.from(help.children) as HTMLElement[]) {
       const shared = section.hasAttribute("data-recommend-help");
       section.hidden = recommend && section.tagName !== "SUMMARY" && !shared;

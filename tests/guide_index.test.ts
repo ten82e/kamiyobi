@@ -14,6 +14,19 @@ function てびき(src: string): string {
 
 const 札を外す = (html: string): string => html.replace(/<[^>]*>/g, "").trim();
 
+/* てびきの見出しは summary の中の h2（読み上げの見出しの並びを h1 → h2 → その下の h3 に
+ * するため）。画面を開くと JS が題を差し替えるが、その時も h2 を残す（2026-10-22 実測:
+ * summary ごと textContent で書き換えていて、開くと `.help-title` が消えていた）。 */
+it("てびきの見出しは h2（開いた後も残る）", () => {
+  const online = てびき(readFileSync(join(builtSite(), "index.html"), "utf8"));
+  expect(online, "てびきの題が h2 でない").toContain('<summary><h2 class="help-title">');
+  const app = readFileSync(join(import.meta.dirname, "..", "site", "app.ts"), "utf8");
+  expect(app, "題の差し替えが summary ごと書き換えている").not.toContain(
+    "summary.textContent = recommend",
+  );
+  expect(app, "題の差し替えが h2 を見ていない").toContain('summary?.querySelector("h2")');
+});
+
 function 節々(guide: string): Array<{ id: string; text: string }> {
   return [...guide.matchAll(/<h3\b([^>]*)>([\s\S]*?)<\/h3>/g)].map((m) => ({
     id: /id="([^"]+)"/.exec(m[1])?.[1] ?? "",

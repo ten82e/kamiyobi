@@ -86,7 +86,8 @@ function 画面の正本(): { 生成: string; 源: string; てびき: string } {
   const app = readFileSync(join(REPO_ROOT, "site", "app.ts"), "utf8");
   const ラベル有 = /「データ生成」|>データ生成</.test(app) && /id="genat"/.test(html);
   const 源有 = /<dt>データ源<\/dt>/.test(html) && /id="sources"/.test(html);
-  const summary = /<summary>(見方のてびき[^<]*)<\/summary>/.exec(html);
+  /* てびきの題は summary の中の h2（2026-10-22 から）。 */
+  const summary = /<summary><h2 class="help-title">(見方のてびき[^<]*)<\/h2>/.exec(html);
   return {
     生成: ラベル有 ? "データ生成" : "",
     源: 源有 ? "データ源" : "",

@@ -53,7 +53,12 @@ function harness(mode: "recommend" | "deadlines") {
     children,
     hasAttribute: (name) => shared && name === "data-recommend-help",
   });
-  const summary = element("SUMMARY");
+  /* summary の中の h2 が題を持つ（画面の実物と同じ形）。 */
+  const summaryTitle = element("H2");
+  const summary = Object.assign(element("SUMMARY"), {
+    querySelector: (selector: string) =>
+      selector === "h2" ? summaryTitle : selector === ".help-title-rest" ? element("SPAN") : null,
+  });
   const topics = [element("DIV", true), element("DIV"), element("DIV", true), element("DIV")];
   const sections = [summary, element("H3"), element("DL", true, topics), element("DL")];
   const help = Object.assign(nodes.helpPanel, {
@@ -132,10 +137,8 @@ function check(h: ReturnType<typeof harness>, mode: "recommend" | "deadlines") {
   expect(h.nodes.recommendResultHint.hidden).toBe(!recommend);
   expect(h.nodes.helpPanel.hidden).toBe(false);
   expect(h.summary.hidden).toBe(false);
-  expect(h.summary.textContent).toBe(
-    recommend
-      ? "投稿先候補の見方・意味検索が使えないとき"
-      : /<summary>([^<]+)<\/summary>/.exec(html.slice(html.indexOf('id="helpPanel"')))![1],
+  expect(h.summary.querySelector("h2").textContent).toBe(
+    recommend ? "投稿先候補の見方" : "見方のてびき",
   );
   expect(h.sections.map((section) => section.hidden)).toEqual(
     recommend ? [false, true, false, true] : [false, false, false, false],
