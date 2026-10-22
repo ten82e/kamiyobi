@@ -31,3 +31,39 @@ it("畫面が URL に載せる引数が、索引に書いてある", () => {
    * 行の長さで緩く見る（引数 14 個 + 值の一覽で 300 字を超える）。 */
   expect(行!.length, "索引の行が短すぎる（引数が消えた？）").toBeGreaterThan(200);
 });
+
+/* 索引には「名前=値」の形で値の一覧も書いてある。値が実装（画面の選択肢・並べ替えの印）と
+ * ずれると、リンクを組んだ人の画面で別の物が選ばれる（第 44 回に URL を 1 つずつ開いて
+ * 実測: `mode`・`kind`・`win`・`sort`・`dir` は画面の選択肢と一致していた）。 */
+it("索引に書いた値の一覧が、画面の選択肢と一致する", () => {
+  const template = readFileSync(join(REPO_ROOT, "site", "template.html"), "utf8");
+  const 索引 = readFileSync(join(REPO_ROOT, "public", "llms.txt"), "utf8");
+  const 行 = 索引.split("\n").find((l) => l.includes("絞り込みを次の名前で載せます")) ?? "";
+  const 選択肢 = (id: string): string[] => {
+    const at = template.indexOf(`id="${id}"`);
+    const box = template.slice(at, template.indexOf("</select>", at));
+    return [...box.matchAll(/value="([^"]*)"/g)].map((m) => m[1]).filter(Boolean);
+  };
+  const 書かれた値 = (name: string): string[] => {
+    const m = new RegExp(`\`${name}\`（([^）]*)`).exec(行);
+    return m ? [...m[1].matchAll(/`([^`]+)`/g)].map((x) => x[1]) : [];
+  };
+  /* 種別の選択肢はテンプレートでなく JS が作る（`SELECTABLE_KINDS`）。 */
+  const app = readFileSync(join(REPO_ROOT, "site", "app.ts"), "utf8");
+  const 種別の選択肢 = (/const SELECTABLE_KINDS = \[([^\]]+)\]/.exec(app)?.[1] ?? "")
+    .split(",")
+    .map((v) => v.trim().replace(/"/g, ""))
+    .filter(Boolean);
+  expect(種別の選択肢.length, "種別の選択肢が読めない").toBeGreaterThan(0);
+  expect(書かれた値("kind").sort(), "kind の値が画面と違う").toEqual(種別の選択肢.sort());
+  /* `all` は「かまわない」（既定）なので、索引には載せない。 */
+  expect(書かれた値("win").sort(), "win の値が画面と違う").toEqual(
+    選択肢("win")
+      .filter((v) => v !== "all")
+      .sort(),
+  );
+  for (const key of 書かれた値("sort")) {
+    expect(template, `sort の値 ${key} が画面の並べ替えに無い`).toContain(`data-sort="${key}"`);
+  }
+  expect(書かれた値("sort").length, "sort の値が索引に書かれていない").toBeGreaterThan(3);
+});
