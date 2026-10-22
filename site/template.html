@@ -565,6 +565,9 @@ a.btn-reset {
   cursor: pointer;
   font-weight: 600;
   color: var(--fg);
+  /* 押せる所を 24px 以上に（WCAG 2.5.8 の目安）。行の高さだけだと 20px で、すぐ下の
+     目次や説明と 5px しか離れていなかった（2026-10-23 実測）。 */
+  padding: 6px 0;
 }
 .help dl { margin-top: 12px; display: grid; gap: 12px; }
 .help dt { font-weight: 600; }
