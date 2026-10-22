@@ -3429,6 +3429,30 @@ describe("list_upcoming の行が画面と同じ（第 944 回）", () => {
   });
 });
 
+it("索引（llms.txt）が、ランクを受ける道具を漏らさず書いている（第 39 回）", async () => {
+  /* 「どの道具が ランクを受けるか」を索引で知りたい AI が居る。索引の文と inputSchema が
+   * ずれると、在る物を使わない・無い物を送る。道具の一覧から作って突き合わせる。 */
+  const 一覧 = (await client.ask({
+    jsonrpc: "2.0",
+    id: 2,
+    method: "tools/list",
+    params: {},
+  })) as { result?: { tools?: Array<{ name?: string; inputSchema?: { properties?: object } }> } };
+  const ランクを受ける = (一覧.result?.tools ?? [])
+    .filter((t) => t.inputSchema?.properties && "rank" in t.inputSchema.properties)
+    .map((t) => String(t.name))
+    .sort();
+  expect(ランクを受ける, "ランクを受ける道具が変わった（索引の文も直す）").toEqual([
+    "list_upcoming",
+    "recommend_venues",
+    "search_deadlines",
+  ]);
+  const llms = readFileSync(join(REPO_ROOT, "public", "llms.txt"), "utf8");
+  const 行 = llms.split("\n").find((l) => l.includes("`rank` は")) ?? "";
+  for (const 道具 of ランクを受ける)
+    expect(行, "索引が " + 道具 + " の rank を書いていない").toContain("`" + 道具 + "`");
+});
+
 it("list_upcoming は会場のランクでも絞れる（締切と会期の両方 – 第 39 回）", async () => {
   /* 締切の検索と推薦には前から `rank` が在るのに、直近の一覧だけ持っていなかった
    * （「来月の CCF A の締切と會期」を 1 回で聞けない）。同じ判定・同じ語を使う。 */
