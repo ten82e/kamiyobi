@@ -58,6 +58,31 @@ const REQUIRED_JA = [
   "Content-Security-Policy",
 ];
 
+/* JavaScript なしの面（upcoming.html）は、表の前に 2 つの h2 を置く（但し書きの題と、表の題）。
+ * 2026-10-23 実測: 見出しは h1 だけで、1,122 行の表に読み上げで飛ぶ手が無かった。 */
+it("upcoming.html は、表の題を表の外の見出しとして持つ", () => {
+  const html = page("upcoming.html");
+  const 見出し = [...html.matchAll(/<h([12])\b[^>]*>([\s\S]*?)<\/h\1>/g)].map((m) => ({
+    level: Number(m[1]),
+    text: m[2].replace(/<[^>]+>/g, "").trim(),
+  }));
+  expect(見出し[0], "先頭が見出しでない").toMatchObject({ level: 1 });
+  expect(
+    見出し.filter((h) => h.level === 2).map((h) => h.text),
+    "表の題と但し書きの題が無い（または h2 でない）",
+  ).toEqual(
+    expect.arrayContaining([
+      expect.stringContaining("列の意味と但し書き"),
+      expect.stringContaining("の一覧"),
+    ]),
+  );
+  /* 表の題は `<table>` の中に置かない（不正な HTML になる）。 */
+  const 表の題 = html.indexOf('class="only-sr"');
+  const 表 = html.indexOf("<table");
+  expect(表の題, "表の題が無い").toBeGreaterThan(-1);
+  expect(表の題, "表の題が表の後ろにある").toBeLessThan(表);
+});
+
 describe("静的な一覧の入口情報（第 286 回）", () => {
   it("画面と同じ項目が、静的な一覧にも並んでいる", () => {
     const index = headNames(headOf(page("index.html")));

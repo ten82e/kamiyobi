@@ -3944,7 +3944,7 @@ export function toUpcomingHtml(markdown: string, styleBlock = "", baseUrl = ""):
   const 畳みを置く = (): void => {
     if (畳みの場所 < 0) return;
     out[畳みの場所] =
-      `<details class="upcoming-notes">\n<summary>列の意味と但し書き（「残り」「推定」「要確認」「AoE」などの読み方）</summary>\n<blockquote>\n${畳みの文.map((l) => `<p>${inlineMd(l)}</p>`).join("\n")}\n</blockquote>\n</details>`;
+      `<details class="upcoming-notes">\n<summary><h2 class="upcoming-notes-title">列の意味と但し書き（「残り」「推定」「要確認」「AoE」などの読み方）</h2></summary>\n<blockquote>\n${畳みの文.map((l) => `<p>${inlineMd(l)}</p>`).join("\n")}\n</blockquote>\n</details>`;
   };
   const flushTable = (): void => {
     if (!table.length) return;
@@ -3960,6 +3960,9 @@ export function toUpcomingHtml(markdown: string, styleBlock = "", baseUrl = ""):
     const rest = body.slice(1);
     const parts: string[] = [];
     if (head) {
+      /* 表の題は**表の外**に置く（`<table>` の中に置くと不正な HTML）。表その物には
+       * 上の `caption` が付く。 */
+      out.push(`<h2 class="only-sr">${inlineMd(heading || "直近の締切と会期")}の一覧</h2>`);
       /* 支援技術には「何の表か」「何が何列並ぶか」が先に入ってほしい。この表は
        * 1,127 行あるので、名前の無い表では現在地が分からない（2026-08-09 生成ビルドで
        * 実測: `upcoming.html` の `<table>` に `<caption>` は 0 個で、一覧の側には有った）。

@@ -867,6 +867,9 @@ body.drawer-open { overflow: hidden; }
 .edition-schedule h3 { font-size: 1rem; margin-bottom: 8px; }
 /* 行の詳細の節の名（見出し要素にするが、見た目は小さめの灰色のまま）。 */
 .drawer-label { margin: 0; font-size: 0.78rem; font-weight: 600; color: var(--muted); }
+/* JavaScript なしの面（upcoming.html）の但し書きの題。summary の中の h2 なので、
+   見た目は前の文字のまま（h2 の既定の大きさにしない）。 */
+.upcoming-notes-title { margin: 0; font: inherit; display: inline; }
 .edition-schedule p { font-size: 0.85rem; color: var(--muted); margin: 8px 0; }
 .edition-schedule ul { list-style: none; }
 .past-edition-schedule > summary { cursor: pointer; min-height: 44px; padding: 12px 0; }
