@@ -962,6 +962,10 @@ footer a:hover { text-decoration: underline; }
   .recommend-only,
   footer .btn-reset { display: none !important; }
   .skip-link, .resource-links, .mode-guide { display: none !important; }
+  /* JavaScript なしの面（upcoming.html）の但し書きは畳んである（画面では開いて読む）。
+   * 紙では開けないので、中身を刷る – 列の意味が無いと「残り」「状態」が読めない
+   * （2026-10-23 実測: 印刷の模擬で `.upcoming-notes` の中身が display: none のまま）。 */
+  .upcoming-notes > *:not(summary) { display: block !important; }
   /* 条件・件数・日時を紙に残す見出し（画面では `display: none`）。 */
   .print-meta {
     display: block !important;
