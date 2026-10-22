@@ -41,7 +41,10 @@
   --border: #e2e2e6;
   --border-subtle: #ececef;
   --fg: #1c1c1e;
-  --muted: #6b6b72;
+  /* 補助の文字（件数・チップ・表の見出し）。白地では 5.29、チップの地（#f1f1f3）でも
+   * 5.36 あり、WCAG AA（4.5）を満たす。前の #6b6b72 はチップの地で 4.69 と際どかった
+   * （2026-10-23 実測）。 */
+  --muted: #62626a;
   --accent: #2f5fd0;
 
   --on-accent: #ffffff;

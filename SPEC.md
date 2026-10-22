@@ -789,6 +789,8 @@ schema 4 は `source_commit`、`data_commit`、`workflow_run_id`、`dirty_worktr
 }
 ```
 
+トップレベルには上のほかに `legacy_key_redirects`（旧会議 key → 現在の正規 key）と `identity_migrations`（旧 slot → 現在の slot の移行契約）を持つ。形は `llms.txt` の「data.json のスキーマ要約」に書く。
+
 日付のみの締切は `precision: "date-only"`、`local_date: "YYYY-MM-DD"`、`earliest_utc`、`latest_utc`、`utc: null`、`aoe: null`、`tz_raw: null` として出力する。
 `earliest_utc` は UTC+14 における当日 00:00、`latest_utc` は UTC-12 における当日 23:59:59.999 を UTC で表した不確実性区間であり、公式締切時刻ではない。
 CSV では `deadline_precision` と `deadline_local_date` に同じ区別を保持する。
@@ -1162,6 +1164,8 @@ MCP は同じ検索・推薦処理を使う読み取り専用の stdio サーバ
 打つ人の字をそのまま受けるための表は、この限りではない – `words:` の条目、旧字を寄せる `KANJI_VARIANT_FOLD_JA`、
 中国語や列挙の助詞を受ける正規表現は入力の揺れを吸収する物であり、画面の文ではない。
 検査は `tests/modern_japanese_prose.test.ts` が正本の文字列（註と正規表現を除く）に対して行う。
+
+文字と背景のコントラストは、明るい配色・暗い配色のどちらでも WCAG AA（通常の大きさの文字で 4.5）を満たす。補助の文字（`--muted`）は白地で 5.65、チップの地（`#f1f1f3`）でも 5.36、暗い配色で 5.6（2026-10-23 実測。前の色はチップの地で 4.69 と際どかったので暗くした）。
 
 ## 8. テスト（`tests/`）
 
