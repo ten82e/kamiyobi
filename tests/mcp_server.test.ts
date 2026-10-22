@@ -3599,6 +3599,50 @@ it("構造化の行が、画面の深いリンクの値をそのまま返す（�
   );
 });
 
+it("venue_info の行は、今後の物から・同じ側では早い順（第 47 回）", async () => {
+  /* 説明は「今後の物から並べ、同じ側では日本時間の早い順」と書いている。抜き打ちに 23 会場を
+   * 実データで見て違反 0 だった（2026-10-23）。境界（今後→過去）で時刻が戻るのは仕様なので、
+   * 側ごとに昇順を見る。 */
+  for (const key of ["sigcomm", "nsdi", "icml", "chi"]) {
+    const res = (await client.ask({
+      jsonrpc: "2.0",
+      id: 2,
+      method: "tools/call",
+      params: { name: "venue_info", arguments: { key } },
+    })) as {
+      result?: {
+        structuredContent?: {
+          rows?: Array<{ utc?: string; uncertainty?: { earliest_utc?: string } }>;
+        };
+      };
+    };
+    const rows = res.result?.structuredContent?.rows ?? [];
+    const 時 = rows
+      .map((r) =>
+        typeof r.utc === "string"
+          ? Date.parse(r.utc)
+          : typeof r.uncertainty?.earliest_utc === "string"
+            ? Date.parse(r.uncertainty.earliest_utc)
+            : Number.NaN,
+      )
+      .filter(Number.isFinite);
+    expect(時.length, `${key} の行が 2 件未満（検査が空振り）`).toBeGreaterThan(1);
+    const now = Date.now();
+    const 側 = 時.map((t) => t >= now);
+    /* 今後（true）の後ろに過去（false）が来ない。 */
+    const 最初の過去 = 側.indexOf(false);
+    if (最初の過去 >= 0)
+      expect(
+        側.slice(最初の過去).every((f) => f === false),
+        `${key}: 過去の後ろに今後の行がある`,
+      ).toBe(true);
+    /* 同じ側では昇順。 */
+    for (const 群 of [時.filter((t) => t >= now), 時.filter((t) => t < now)])
+      for (let i = 1; i < 群.length; i += 1)
+        expect(群[i - 1], `${key}: 同じ側で時刻が戻っている`).toBeLessThanOrEqual(群[i]);
+  }
+});
+
 it("venue_info は過去の締切も出して、その札を書く（第 945 回）", async () => {
   const 答 = await call("venue_info", { key: "icde" });
   const 行 = 答.split("\n").filter((l) => /^20\d\d-/.test(l));
