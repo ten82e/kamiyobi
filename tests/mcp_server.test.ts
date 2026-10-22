@@ -938,7 +938,7 @@ it("入力の形が、道具の説明と一致する（第 854 回）", async ()
       "within_days",
       "scope",
     ],
-    list_upcoming: ["days", "limit", "offset", "kind", "kinds", "scope"],
+    list_upcoming: ["days", "limit", "offset", "kind", "kinds", "rank", "scope"],
     venue_info: ["key", "name", "scope"],
     recommend_venues: ["paper", "rank", "limit", "offset", "retrieval"],
     search_venues: ["query", "limit", "offset", "retrieval"],
@@ -3427,6 +3427,48 @@ describe("list_upcoming の行が画面と同じ（第 944 回）", () => {
       expect(mcp, `list_upcoming と畫面の行が違ふ（${days} 日）`).toEqual(畫面);
     }
   });
+});
+
+it("list_upcoming は会場のランクでも絞れる（締切と会期の両方 – 第 39 回）", async () => {
+  /* 締切の検索と推薦には前から `rank` が在るのに、直近の一覧だけ持っていなかった
+   * （「来月の CCF A の締切と會期」を 1 回で聞けない）。同じ判定・同じ語を使う。 */
+  const 素 = await upcomingText({ days: 30, limit: 200 });
+  const A級 = await upcomingText({ days: 30, limit: 200, rank: "A*" });
+  const CCFA = await upcomingText({ days: 30, limit: 200, rank: "CCF A" });
+  /* 絞ると減る（會期の行にも掛かる）。 */
+  const 數 = (text: string): number => Number(/の締切: (\d+) 件/.exec(text)?.[1] ?? "-1");
+  expect(數(素), "この検査の前提（直近 30 日の締切がある）が崩れた").toBeGreaterThan(0);
+  expect(數(A級), "A* で絞っても減っていない").toBeLessThan(數(素));
+  expect(數(CCFA), "CCF A で絞っても減っていない").toBeLessThan(數(素));
+  /* 何を外したかを書く。 */
+  expect(A級, "外した件数を書いていない").toMatch(
+    /／ランク A\*（締切 \d+ 件・会期 \d+ 件を外しました）/,
+  );
+  expect(CCFA, "尺度の名を書いていない").toContain("／ランク CCF A");
+  /* 知らない等級は 0 件と、その理由を書く。 */
+  const 知らん = await upcomingText({ days: 30, rank: "Z" });
+  expect(數(知らん), "知らない等級で 0 件になっていない").toBe(0);
+  expect(知らん, "知らない等級だと言っていない").toContain(
+    "「Z」は知らない等級なので 0 件になります",
+  );
+  /* 構造化結果にも絞り込みを載せる。 */
+  const 構 = (await client.ask({
+    jsonrpc: "2.0",
+    id: 2,
+    method: "tools/call",
+    params: { name: "list_upcoming", arguments: { days: 30, rank: "A*", limit: 3 } },
+  })) as { result?: { structuredContent?: { rank?: unknown; items?: Array<{ rank?: unknown }> } } };
+  expect(構.result?.structuredContent?.rank, "構造化結果に rank が無い").toBe("A*");
+  for (const item of 構.result?.structuredContent?.items ?? []) {
+    const rank = (item.rank ?? {}) as Record<string, unknown>;
+    expect(
+      Object.values(rank),
+      `A* で絞ったのに A* を持たない行: ${JSON.stringify(rank)}`,
+    ).toContain("A*");
+  }
+  /* 文字列以外は型エラー（絞ったつもりで絞れていないを作らない）。 */
+  const 配列 = await call("list_upcoming", { days: 30, rank: ["A*"] });
+  expect(配列, "配列を黙って受けた").toContain("rank は文字列で指定してください");
 });
 
 it("venue_info は過去の締切も出して、その札を書く（第 945 回）", async () => {

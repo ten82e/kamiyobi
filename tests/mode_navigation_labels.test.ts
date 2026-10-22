@@ -137,7 +137,7 @@ function check(h: ReturnType<typeof harness>, mode: "recommend" | "deadlines") {
   expect(h.nodes.recommendResultHint.hidden).toBe(!recommend);
   expect(h.nodes.helpPanel.hidden).toBe(false);
   expect(h.summary.hidden).toBe(false);
-  expect(h.summary.querySelector("h2").textContent).toBe(
+  expect(h.summary.querySelector("h2")!.textContent).toBe(
     recommend ? "投稿先候補の見方" : "見方のてびき",
   );
   expect(h.sections.map((section) => section.hidden)).toEqual(

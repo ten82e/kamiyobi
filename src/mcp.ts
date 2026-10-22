@@ -1798,6 +1798,7 @@ function listUpcoming(
     kind?: unknown;
     kinds?: unknown;
     scope?: unknown;
+    rank?: unknown;
     limit?: unknown;
     offset?: unknown;
   },
@@ -1850,19 +1851,37 @@ function listUpcoming(
   const { list, 名, 生成, 窓が無い } = pick(args.scope ?? "all");
   const 古さ = 古さの斷り(生成, now);
 
+  /* ランクは文字列だけを受ける（`search_deadlines`・`recommend_venues` と同じ規約）。
+   * 会場のランクは締切の行にも会期の行にも在るので、同じ絞り込みを両方に掛ける。 */
+  if (args.rank !== undefined && args.rank !== null && typeof args.rank !== "string")
+    throw new Error("rank は文字列で指定してください（例: `A*`・`CCF A`）。");
+  const ランク = Recommender.rankGradeJa(args.rank);
+  const ランクの尺度 = Recommender.rankScaleJa(args.rank);
+  const 知らないランク = ランク && !Recommender.rankGradeOrderJa().includes(ランク) ? ランク : "";
+  const ランクで殘す = (pairs: readonly string[] | null | undefined): boolean =>
+    !ランク || Recommender.rankMatches(pairs, ランク, ランクの尺度);
+  /* 会期の行のランクは `{ccf: "A", …}` の形。締切の行と同じ `"ccf:A"` の対に直して使う。 */
+  const 會期のランクの對 = (rank: unknown): string[] =>
+    rank && typeof rank === "object" && !Array.isArray(rank)
+      ? Object.entries(rank as Record<string, unknown>)
+          .filter(([, value]) => typeof value === "string")
+          .map(([scale, value]) => `${scale.toLowerCase()}:${String(value)}`)
+      : [];
+
   const 限り = Recommender.withinDaysLimitMs(days, now);
   /* 表示している暦日で比べる（`tShown`。無ければ `t`）。 */
   const 暦日 = (r: Row): number =>
     typeof r.tShown === "number" && Number.isFinite(r.tShown) ? r.tShown : r.t;
-  const hit = sortRows(
-    list.filter(
-      (r) =>
-        !Recommender.deadlineRowIsPast(r, now) &&
-        暦日(r) < 限り &&
-        (全部 || 選ぶ.size === 0 || 選ぶ.has(r.kind) || 選ぶ.has(r.dl.kind)),
-    ),
+  const 種別で殘す = (r: Row): boolean =>
+    全部 || 選ぶ.size === 0 || 選ぶ.has(r.kind) || 選ぶ.has(r.dl.kind);
+  const 締切の候補 = list.filter(
+    (r) => !Recommender.deadlineRowIsPast(r, now) && 暦日(r) < 限り && 種別で殘す(r),
   );
-  const events = 開催の行(days, now);
+  const hit = sortRows(締切の候補.filter((r) => ランクで殘す(r.rankPairs)));
+  const 外した締切 = 締切の候補.length - hit.length;
+  const 會期の候補 = 開催の行(days, now);
+  const events = 會期の候補.filter((event) => ランクで殘す(會期のランクの對(event.rank)));
+  const 外した會期 = 會期の候補.length - events.length;
   const date = (value: number): string => new Date(value).toISOString().slice(0, 10);
   const timeline: Array<{
     at: number;
@@ -1911,6 +1930,7 @@ function listUpcoming(
     total: timeline.length,
     deadline_total: hit.length,
     event_total: events.length,
+    rank: ランク || null,
     days,
     offset,
     limit,
@@ -1934,7 +1954,7 @@ function listUpcoming(
       : `全 ${timeline.length} 件中 ${offset + 1}〜${offset + page.length} 件目` +
         `（このページ: 締切 ${deadlinePage.length} 件・会期 ${eventPage.length} 件）。`;
   return [
-    `今日から ${日數の表現}（JST の暦日で数える）の締切: ${hit.length} 件（${名}・日本時間の早い順）${讀めない引數}${知らんの斷り}${端数の斷り}${上限の斷り}${limitInput.斷り}${端數と上限の斷り(limitInput.使ふ, 100)}${空の種別 ? `／kinds が空なので種別では絞り込んでいません` : ""}${単数種別を無視 ? "／kind は kinds と共に与えられたので見ていません" : ""}`,
+    `今日から ${日數の表現}（JST の暦日で数える）の締切: ${hit.length} 件（${名}・日本時間の早い順）${ランク ? `／ランク ${ランクの尺度 ? `${ランクの尺度.toUpperCase()} ` : ""}${ランク}（締切 ${外した締切} 件・会期 ${外した會期} 件を外しました）` : ""}${知らないランク ? `／「${知らないランク}」は知らない等級なので 0 件になります` : ""}${讀めない引數}${知らんの斷り}${端数の斷り}${上限の斷り}${limitInput.斷り}${端數と上限の斷り(limitInput.使ふ, 100)}${空の種別 ? `／kinds が空なので種別では絞り込んでいません` : ""}${単数種別を無視 ? "／kind は kinds と共に与えられたので見ていません" : ""}`,
     ...(scopeErr ? [scopeErr] : []),
     ...(窓が無いの斷り(窓が無い) ? [窓が無いの斷り(窓が無い)] : []),
     pageNotice,
@@ -3318,7 +3338,7 @@ const TOOLS = [
     title: "直近の締切と開催を確認",
     annotations: READ_ONLY_ANNOTATIONS,
     description:
-      "今日から days 日以内の締切と開催日程を返す。両方を合わせて時系列に1ページ最大100件。structuredContent.items の type は deadline または event。total・next_offset を返し、続きは同じ条件で offset に next_offset を指定する。scope と kind/kinds は締切の条件で（scope の出所は search_deadlines と同じ）、会期は収録全体の同期間から選ぶ。既定は種別では絞らない（全部）、推定も含む。kind / kinds は日本語の種別名と配列も受ける。推定期間・トラック・前に出ていた締切も表示する。範囲は JST の暦日で判定する。within_days と境目の切り方は同じ。search_deadlines と件数を比べる場合は種別・推定・scope を揃える。既定の条件では件数はそのままでは違う。返す行の形: 締切は日時 | 種別 | 確認状態（ある場合）| 会議名（版の識別子）| ランク | 会期 | 開催地 URL。会期の行は別の形で、開催の節に - 開始日〜終了日 | 会議名（key: 識別子・版）| 開催地 URL。会期の行の会議名は年を添えた形、開催地は締切の行と同じ日本語表記です（空でも「未確認」を出します）。**構造化の行は締切と同じ欄**（`full_name`・`categories`・`categories_ja`・`rank`・`domestic`）も持ちます。",
+      "今日から days 日以内の締切と開催日程を返す。両方を合わせて時系列に1ページ最大100件。structuredContent.items の type は deadline または event。total・next_offset を返し、続きは同じ条件で offset に next_offset を指定する。scope と kind/kinds は締切の条件で（scope の出所は search_deadlines と同じ）、会期は収録全体の同期間から選ぶ。既定は種別では絞らない（全部）、推定も含む。kind / kinds は日本語の種別名と配列も受ける。推定期間・トラック・前に出ていた締切も表示する。範囲は JST の暦日で判定する。within_days と境目の切り方は同じ。search_deadlines と件数を比べる場合は種別・推定・scope を揃える（rank も同じ判定）。既定の条件では件数はそのままでは違う。返す行の形: 締切は日時 | 種別 | 確認状態（ある場合）| 会議名（版の識別子）| ランク | 会期 | 開催地 URL。会期の行は別の形で、開催の節に - 開始日〜終了日 | 会議名（key: 識別子・版）| 開催地 URL。会期の行の会議名は年を添えた形、開催地は締切の行と同じ日本語表記です（空でも「未確認」を出します）。**構造化の行は締切と同じ欄**（`full_name`・`categories`・`categories_ja`・`rank`・`domestic`）も持ちます。",
     inputSchema: {
       type: "object",
       properties: {
@@ -3348,6 +3368,11 @@ const TOOLS = [
           enum: ["screen", "all", "collection", "full", "window", "catalog"],
           description:
             "見る窓（既定 all）。collection・full＝all／window・catalog＝screen – **同じエイリアス**（省いた時は all）",
+        },
+        rank: {
+          type: "string",
+          description:
+            "会場のランクで絞る（例: `A*`・`B`・`CCF A`・`CORE A*`）。等級だけならどの尺度でも当たり、尺度の名を付けるとその尺度だけ。締切と会期の両方に掛けます",
         },
       },
     },
