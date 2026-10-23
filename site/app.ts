@@ -1480,15 +1480,29 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     const box = $("drawerRowActions");
     if (!box) return;
     box.textContent = "";
-    if (!icsInputForRow(r as unknown as AppRow)) return;
-    const ics = document.createElement("button");
-    ics.type = "button";
-    ics.className = "drawer-action";
-    ics.textContent = "この締切をカレンダー（.ics）に入れる";
-    ics.title =
-      "この 1 件だけを .ics で持ち出します。予定の UID は購読のカレンダー（deadlines.ics）と共通です。重複の扱いはカレンダーアプリによって異なります。";
-    ics.addEventListener("click", () => exportRowIcs(r as unknown as AppRow));
-    box.appendChild(ics);
+    /* 1 件だけをカレンダーへ（日付だけの行など、予定にできない行では出さない）。 */
+    if (icsInputForRow(r as unknown as AppRow)) {
+      const ics = document.createElement("button");
+      ics.type = "button";
+      ics.className = "drawer-action";
+      ics.textContent = "この締切をカレンダー（.ics）に入れる";
+      ics.title =
+        "この 1 件だけを .ics で持ち出します。予定の UID は購読のカレンダー（deadlines.ics）と共通です。重複の扱いはカレンダーアプリによって異なります。";
+      ics.addEventListener("click", () => exportRowIcs(r as unknown as AppRow));
+      box.appendChild(ics);
+    }
+    /* この会議の行だけを一覧で見る導線。会議の識別子（key）は、AI に頼むときにも使える
+     * （MCP の `venue_info` の `key`）ので、押す所の文字にも入れる（2026-10-23）。 */
+    const key = String(r.conf?.key || "").trim();
+    if (key) {
+      const all = document.createElement("a");
+      all.className = "drawer-action";
+      all.href = `?q=${encodeURIComponent(key)}`;
+      all.textContent = `この会議（${key}）の締切だけを一覧で見る`;
+      all.title =
+        "検索欄に会議の識別子を入れて、締切の一覧を開きます。この識別子は AI に渡すときにも使えます（MCP の venue_info の key）。";
+      box.appendChild(all);
+    }
   }
 
   window.openDrawer = (row: unknown) => {
