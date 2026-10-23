@@ -14,6 +14,10 @@ it("★ はこの端末にだけ覚え、会議の鍵で一覧へ渡す", () => 
   const actions = jsFunction(app, "renderDrawerRowActions");
   expect(actions, "行の詳細に ★ が無い").toContain("★ ");
   expect(actions, "★ を付け外しできない").toContain("now.includes(key)");
+  /* 一覧には次の締切を並べる（★ を付けた理由がその場で分かる）。読み込み済みの行から見るので、
+   * 過ぎた締切しか無い会議は「今後の締切なし」と書く（推測で日付を作らない）。 */
+  expect(render, "次の締切を出していない").toContain("次回 ");
+  expect(render, "無いときに推測しない").toContain("今後の締切なし");
   /* URL には載せない（状態は保存だけ）。 */
   const write = jsFunction(app, "writeUrl");
   expect(write, "★ を URL に載せている").not.toContain("watch");

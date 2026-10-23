@@ -1530,6 +1530,17 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       link.textContent = watchedVenueTitleJa(key);
       link.title = `この会議（${key}）の締切だけを一覧で見る`;
       li.appendChild(link);
+      /* 次の締切を並べる（★ を付けた理由がその場で分かる）。読み込み済みの行から見るので、
+       * 期間の外や過ぎた締切しか無い会議は「今後の締切なし」と書く（推測で日付を作らない）。 */
+      const now = Date.now();
+      const 次 = rows
+        .filter((row) => row.conf.key === key && !row.est && Number.isFinite(row.t) && row.t >= now)
+        .map((row) => row.t)
+        .sort((a2, b2) => a2 - b2)[0];
+      const when = document.createElement("span");
+      when.className = "watch-when";
+      when.textContent = 次 ? `次回 ${fmtJst(new Date(次))}` : "今後の締切なし";
+      li.appendChild(when);
       const remove = document.createElement("button");
       remove.type = "button";
       remove.textContent = "×";
