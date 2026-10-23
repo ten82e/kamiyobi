@@ -5113,6 +5113,7 @@ it("のぞいた行数を件数欄で説明する（SPEC §7）", () => {
     domestic: 0,
     online: 0,
     onlinePlaceUnknown: 0,
+    venue: 0,
     window: 0,
     // 評価でしぼるのは選択欄を動かしたときだけなので、既定では内訳に立たない。
     rank: 0,
@@ -5483,7 +5484,7 @@ it("締切までの選択肢は URL と表裏一体で、窓は入れ子にな�
     "function $(id) { return null; }",
     "const window = {};",
     "let hiddenCounts = {",
-    "  past: 0, est: 0, kind: 0, domestic: 0, online: 0, onlinePlaceUnknown: 0, window: 0, rank: 0, cats: 0,",
+    "  past: 0, est: 0, kind: 0, venue: 0, domestic: 0, online: 0, onlinePlaceUnknown: 0, window: 0, rank: 0, cats: 0,",
     "};",
     "let catFacetCounts = {};",
     "let searchQuery = '';",

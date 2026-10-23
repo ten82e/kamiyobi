@@ -164,6 +164,8 @@ interface UiState {
   q: string;
   cats: string[];
   kind: string;
+  /** 会議の鍵（`sigmod` など）で 1 会場だけに絞る（URL では `venue`）。 */
+  venue: string;
   rank: string;
   win: string;
   est: boolean;
@@ -827,6 +829,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     q: "",
     cats: [],
     kind: "",
+    venue: "",
     rank: "",
     win: "all",
     est: false,
@@ -1497,11 +1500,17 @@ function semanticOutput(value: unknown): value is SemanticOutput {
      * 「この会議だけ」を正確に絞る URL はまだ無いので、押せる物にはしない。 */
     const key = String(r.conf?.key || "").trim();
     if (key) {
+      const all = document.createElement("a");
+      all.className = "drawer-action";
+      all.href = `?venue=${encodeURIComponent(key)}`;
+      all.textContent = `この会議（${key}）の締切だけを一覧で見る`;
+      all.title =
+        "この会議の行だけに絞った一覧を開きます（URL の venue）。会議の識別子は AI に頼むときにも渡せます（MCP の venue_info の key）。";
+      box.appendChild(all);
       const id = document.createElement("p");
       id.className = "drawer-key";
       id.textContent = `会議の識別子: ${key}`;
-      id.title =
-        "AI に頼むときはこの値を渡します（MCP の venue_info の key）。検索欄に打つと、同じ語を含む別の会議も混ざります。";
+      id.title = "AI に頼むときはこの値を渡します（MCP の venue_info の key）。";
       box.appendChild(id);
     }
   }
@@ -2405,6 +2414,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     past: 0,
     est: 0,
     kind: 0,
+    venue: 0,
     domestic: 0,
     // 「オンライン参加可のみ」で落ちた行数と、そのうち開催地自体が未確認の行数。
     online: 0,
@@ -2448,6 +2458,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     past: number;
     est: number;
     kind: number;
+    venue: number;
     domestic: number;
     online: number;
     onlinePlaceUnknown: number;
@@ -2777,6 +2788,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     if (current.domestic) add("domestic", "国内のみの条件を外す", { domestic: false });
     if (current.online) add("online", "オンライン参加可の条件を外す", { online: false });
     if (current.kind) add("kind", "概要・論文の投稿締切を表示", { kind: "" });
+    if (current.venue) add("venue", "会議の絞り込みを外す", { venue: "" });
     const results = options
       .map((option) => ({ ...option, count: count({ ...current, ...option.changes }) }))
       .filter((option) => option.count > 0);
@@ -2790,6 +2802,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         domestic: false,
         online: false,
         kind: "",
+        venue: "",
       };
       const n = count({ ...current, ...changes });
       if (n > 0)
@@ -2958,6 +2971,10 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       if (!inRecommend && state.kind && r.kind !== state.kind) {
         return false;
       }
+      if (!inRecommend && state.venue && r.conf.key !== state.venue) {
+        hiddenCounts.venue += 1;
+        return false;
+      }
       // ランクはグレード厳密比較（indexOf の部分一致だと A が core:A* に誤マッチする）
       if (!inRecommend && state.rank) {
         const rankHit = Rec
@@ -3006,6 +3023,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       past: 0,
       est: 0,
       kind: 0,
+      venue: 0,
       domestic: 0,
       online: 0,
       onlinePlaceUnknown: 0,
@@ -5398,6 +5416,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   function deadlineFiltersOnJa(): boolean {
     return Boolean(
       state.kind ||
+        state.venue ||
         state.rank ||
         state.cats.length ||
         state.domestic ||
@@ -5437,6 +5456,13 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         label: KIND_LABEL[state.kind] || state.kind,
         clear: () => {
           state.kind = "";
+        },
+      });
+    if (state.venue)
+      conditions.push({
+        label: `会議: ${state.venue}`,
+        clear: () => {
+          state.venue = "";
         },
       });
     if (state.rank)
@@ -5554,6 +5580,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       const parts: string[] = [];
       if (hidden.past) parts.push(`過去の締切 ${countJa(hidden.past)} 件`);
       if (hidden.kind) parts.push(`投稿締切以外の種別 ${countJa(hidden.kind)} 件`);
+      if (hidden.venue) parts.push(`会議「${state.venue}」以外の行 ${countJa(hidden.venue)} 件`);
       // 「推定」の語は一覧の検索でも引ける（`推定` バッジの語を hay に入れている）が、
       // 既定ではここで行が落ちたままなので、出し方を同じ行に書く。
       if (hidden.est) parts.push(`推定 ${countJa(hidden.est)} 件（「推定締切を含める」で出ます）`);
@@ -6142,6 +6169,8 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     state.q = p.get("q") || "";
     const urlKind = selectableKind(p.get("kind"));
     state.kind = urlKind.kind;
+    /* 会議の鍵で 1 会場だけに絞る（行の詳細の「この会議の締切だけを見る」が使う）。 */
+    state.venue = (p.get("venue") || "").trim();
     if (urlKind.notice) urlNotices.push(urlKind.notice);
     const rawRank = p.get("rank");
     // 許す値は選択肢の正本と同じ（書き写すと URL だけ通る値が生まれる）。
@@ -6248,6 +6277,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     p.set("mode", state.mode);
     if (state.q) p.set("q", state.q);
     if (state.kind) p.set("kind", state.kind);
+    if (state.venue) p.set("venue", state.venue);
     if (state.rank) p.set("rank", state.rank);
     if (state.win !== "all") p.set("win", state.win);
     if (state.est) p.set("est", "1");
@@ -6989,6 +7019,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       mode: state.mode,
       q: "",
       cats: [],
+      venue: "",
       kind: "",
       rank: "",
       win: "all",
@@ -7536,6 +7567,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       mode: state.mode,
       q: "",
       cats: [],
+      venue: "",
       kind: "",
       rank: "",
       win: "all",
