@@ -1479,6 +1479,69 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     setTimeout(() => URL.revokeObjectURL(url), 0);
   }
 
+  /* ★ を付けた会議（この端末だけ）。共有 URL には載せない – 何を見たいかは人ごとに違い、
+   * URL に載せると他人の ★ が自分の一覧に混ざる。値は会議の鍵（`venue=` にそのまま渡せる）。 */
+  const WATCH_KEY = "kamiyobi.watchedVenues.v1";
+
+  function readWatchedVenues(): string[] {
+    try {
+      const raw = window.localStorage.getItem(WATCH_KEY);
+      if (!raw) return [];
+      const parsed = JSON.parse(raw) as unknown;
+      if (!Array.isArray(parsed)) return [];
+      const keys = parsed
+        .filter((value): value is string => typeof value === "string")
+        .map((value) => value.trim())
+        .filter((value) => value !== "");
+      return [...new Set(keys)];
+    } catch {
+      return [];
+    }
+  }
+
+  function writeWatchedVenues(keys: string[]): void {
+    try {
+      if (keys.length) window.localStorage.setItem(WATCH_KEY, JSON.stringify(keys));
+      else window.localStorage.removeItem(WATCH_KEY);
+    } catch {
+      /* 保存できない環境（シークレット等）では、その回の表示だけ変わる。 */
+    }
+    renderWatchPanel();
+  }
+
+  function watchedVenueTitleJa(key: string): string {
+    const found = rows.find((r) => r.conf.key === key);
+    return String(found?.conf.title || key);
+  }
+
+  function renderWatchPanel(): void {
+    const panel = $("watchPanel");
+    const list = $("watchList");
+    const count = $("watchCount");
+    if (!panel || !list || !count) return;
+    const keys = readWatchedVenues();
+    count.textContent = String(keys.length);
+    panel.hidden = keys.length === 0;
+    list.textContent = "";
+    for (const key of keys) {
+      const li = document.createElement("li");
+      const link = document.createElement("a");
+      link.href = `?venue=${encodeURIComponent(key)}`;
+      link.textContent = watchedVenueTitleJa(key);
+      link.title = `この会議（${key}）の締切だけを一覧で見る`;
+      li.appendChild(link);
+      const remove = document.createElement("button");
+      remove.type = "button";
+      remove.textContent = "×";
+      remove.setAttribute("aria-label", `${watchedVenueTitleJa(key)} を ★ から外す`);
+      remove.addEventListener("click", () => {
+        writeWatchedVenues(readWatchedVenues().filter((k) => k !== key));
+      });
+      li.appendChild(remove);
+      list.appendChild(li);
+    }
+  }
+
   function renderDrawerRowActions(r: DrawerRow): void {
     const box = $("drawerRowActions");
     if (!box) return;
@@ -1512,6 +1575,20 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       id.textContent = `会議の識別子: ${key}`;
       id.title = "AI に頼むときはこの値を渡します（MCP の venue_info の key）。";
       box.appendChild(id);
+      const watched = readWatchedVenues();
+      const on = watched.includes(key);
+      const star = document.createElement("button");
+      star.type = "button";
+      star.className = "drawer-action";
+      star.textContent = on ? `★ ${key} をはずす` : `★ ${key} をあとで見る`;
+      star.title = "この端末（このブラウザ）にだけ覚えます。共有 URL には入りません。";
+      star.setAttribute("aria-pressed", String(on));
+      star.addEventListener("click", () => {
+        const now = readWatchedVenues();
+        writeWatchedVenues(now.includes(key) ? now.filter((k) => k !== key) : [...now, key]);
+        renderDrawerRowActions(r);
+      });
+      box.appendChild(star);
     }
   }
 
@@ -2006,6 +2083,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     $("statDomestic").textContent = String(domCount);
   }
   renderSummaryStats();
+  renderWatchPanel();
 
   // ---- REMAIN / STATUS ----
   function remain(ms: number) {
