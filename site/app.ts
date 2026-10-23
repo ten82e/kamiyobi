@@ -1500,6 +1500,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   }
 
   function writeWatchedVenues(keys: string[]): void {
+    const 前 = readWatchedVenues().length;
     try {
       if (keys.length) window.localStorage.setItem(WATCH_KEY, JSON.stringify(keys));
       else window.localStorage.removeItem(WATCH_KEY);
@@ -1507,6 +1508,12 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       /* 保存できない環境（シークレット等）では、その回の表示だけ変わる。 */
     }
     renderWatchPanel();
+    /* 足したときに何も見えないと、★ が効いたのか分からない（畳んだ一覧は開かない）。
+     * 増えた時だけ開く。 */
+    if (keys.length > 前) {
+      const panel = $("watchPanel") as HTMLDetailsElement | null;
+      if (panel) panel.open = true;
+    }
   }
 
   function watchedVenueTitleJa(key: string): string {

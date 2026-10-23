@@ -28,6 +28,11 @@ it("★ はこの端末にだけ覚え、会議の鍵で一覧へ渡す", () => 
     "DATA.conferences || []).find((c) => c.key === key)",
   );
 
+  /* 足したときに一覧が畳まれたままだと、★ が効いたのか分からない。増えた時だけ開く
+   * （外した時は開かない – 2026-10-23 実測: 足すと open=true・count=1）。 */
+  expect(app, "足しても一覧が開かない").toContain("panel.open = true");
+  expect(app, "外した時まで開く").toContain("if (keys.length > 前) {");
+
   /* URL には載せない（状態は保存だけ）。 */
   const write = jsFunction(app, "writeUrl");
   expect(write, "★ を URL に載せている").not.toContain("watch");
