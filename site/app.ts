@@ -1591,7 +1591,9 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       const star = document.createElement("button");
       star.type = "button";
       star.className = "drawer-action";
-      star.textContent = on ? `★ ${key} をはずす` : `★ ${key} をあとで見る`;
+      /* 押す所には会議の名前を出す（鍵は小文字の識別子で、人には読みにくい）。 */
+      const 名 = watchedVenueTitleJa(key);
+      star.textContent = on ? `★ ${名} をはずす` : `★ ${名} をあとで見る`;
       star.title = "この端末（このブラウザ）にだけ覚えます。共有 URL には入りません。";
       star.setAttribute("aria-pressed", String(on));
       star.addEventListener("click", () => {
