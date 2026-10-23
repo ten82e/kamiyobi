@@ -857,6 +857,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       q: string;
       cats: string[];
       kind: string;
+      venue: string;
       rank: string;
       est: boolean;
       domestic: boolean;
@@ -874,6 +875,9 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     const query = String(s.q || "").trim();
     if (query) out.push(`検索語「${query}」`);
     if (s.kind) out.push(`種別: ${kindLabel(s.kind)}`);
+    /* 会議の絞り込みも紙に書く（書かないと、1 会場だけの紙に「絞り込みなし（収録全体の
+     * 一覧）」と刷れていた – 2026-10-23 實測）。 */
+    if (s.venue) out.push(`会議: ${s.venue}`);
     if (s.rank) out.push(`ランク: ${rankLabel(s.rank)}`);
     if (s.cats.length) out.push(`分野: ${s.cats.map((c) => categoryLabel(c)).join("・")}`);
     if (windowLabel) out.push(`締切まで: ${windowLabel}`);
