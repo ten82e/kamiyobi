@@ -1527,23 +1527,31 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     count.textContent = String(keys.length);
     panel.hidden = keys.length === 0;
     list.textContent = "";
-    for (const key of keys) {
+    /* 次に締切が来る順に並べる（★ は「近い順に見たい」物なので、付けた順では並べない）。
+     * 読み込み済みの行に無い会議（期間の外・過ぎた締切だけ）は最後に置く。 */
+    const now = Date.now();
+    const 次連 = (key: string): number => {
+      const t = rows
+        .filter((row) => row.conf.key === key && !row.est && Number.isFinite(row.t) && row.t >= now)
+        .map((row) => row.t)
+        .sort((a2, b2) => a2 - b2)[0];
+      return Number.isFinite(t) ? t : Number.POSITIVE_INFINITY;
+    };
+    const 並び = keys.map((key) => ({ key, 次: 次連(key) })).sort((a2, b2) => a2.次 - b2.次);
+    for (const { key, 次 } of 並び) {
       const li = document.createElement("li");
       const link = document.createElement("a");
       link.href = `?venue=${encodeURIComponent(key)}`;
       link.textContent = watchedVenueTitleJa(key);
       link.title = `この会議（${key}）の締切だけを一覧で見る`;
       li.appendChild(link);
-      /* 次の締切を並べる（★ を付けた理由がその場で分かる）。読み込み済みの行から見るので、
-       * 期間の外や過ぎた締切しか無い会議は「今後の締切なし」と書く（推測で日付を作らない）。 */
-      const now = Date.now();
-      const 次 = rows
-        .filter((row) => row.conf.key === key && !row.est && Number.isFinite(row.t) && row.t >= now)
-        .map((row) => row.t)
-        .sort((a2, b2) => a2 - b2)[0];
+      /* 次の締切（★ を付けた理由がその場で分かる）。読み込み済みの行から見るので、期間の外や
+       * 過ぎた締切しか無い会議は「今後の締切なし」と書く（推測で日付を作らない）。 */
       const when = document.createElement("span");
       when.className = "watch-when";
-      when.textContent = 次 ? `次回 ${fmtJst(new Date(次))}` : "今後の締切なし";
+      /* 並べ替えの印に `Infinity` を使っているので、真偽ではなく有限かどうかで分ける
+       * （`Infinity` は真なので、そのまま渡すと NaN の日付になる – 2026-10-23 實測）。 */
+      when.textContent = Number.isFinite(次) ? `次回 ${fmtJst(new Date(次))}` : "今後の締切なし";
       li.appendChild(when);
       const remove = document.createElement("button");
       remove.type = "button";
