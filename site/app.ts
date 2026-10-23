@@ -1491,17 +1491,18 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       ics.addEventListener("click", () => exportRowIcs(r as unknown as AppRow));
       box.appendChild(ics);
     }
-    /* この会議の行だけを一覧で見る導線。会議の識別子（key）は、AI に頼むときにも使える
-     * （MCP の `venue_info` の `key`）ので、押す所の文字にも入れる（2026-10-23）。 */
+    /* 会議の識別子（key）。AI に頼むときはこの値を渡す（MCP の `venue_info` の `key`）。
+     * 一覧へのリンクにはしない – 検索は語の一致で引くので、短い識別子（`chi`・`sc`）だと
+     * 別の会議（開催地が Chicago など）まで当たる（2026-10-23 実測: `chi` は 70 会場）。
+     * 「この会議だけ」を正確に絞る URL はまだ無いので、押せる物にはしない。 */
     const key = String(r.conf?.key || "").trim();
     if (key) {
-      const all = document.createElement("a");
-      all.className = "drawer-action";
-      all.href = `?q=${encodeURIComponent(key)}`;
-      all.textContent = `この会議（${key}）の締切だけを一覧で見る`;
-      all.title =
-        "検索欄に会議の識別子を入れて、締切の一覧を開きます。この識別子は AI に渡すときにも使えます（MCP の venue_info の key）。";
-      box.appendChild(all);
+      const id = document.createElement("p");
+      id.className = "drawer-key";
+      id.textContent = `会議の識別子: ${key}`;
+      id.title =
+        "AI に頼むときはこの値を渡します（MCP の venue_info の key）。検索欄に打つと、同じ語を含む別の会議も混ざります。";
+      box.appendChild(id);
     }
   }
 
