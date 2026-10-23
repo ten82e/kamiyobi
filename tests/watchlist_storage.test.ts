@@ -18,6 +18,12 @@ it("★ はこの端末にだけ覚え、会議の鍵で一覧へ渡す", () => 
    * 過ぎた締切しか無い会議は「今後の締切なし」と書く（推測で日付を作らない）。 */
   expect(render, "次の締切を出していない").toContain("次回 ");
   expect(render, "無いときに推測しない").toContain("今後の締切なし");
+  /* 名前は行ではなく会議の名簿（収録の全 696 件）から引く — 締切が過ぎた会議は行が無く、
+   * 行から引くと鍵（`rtss`）がそのまま出る（2026-10-23 実測）。 */
+  expect(app, "名前を会議の名簿から引いていない").toContain(
+    "DATA.conferences || []).find((c) => c.key === key)",
+  );
+
   /* URL には載せない（状態は保存だけ）。 */
   const write = jsFunction(app, "writeUrl");
   expect(write, "★ を URL に載せている").not.toContain("watch");

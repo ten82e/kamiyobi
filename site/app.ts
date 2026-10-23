@@ -1510,6 +1510,10 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   }
 
   function watchedVenueTitleJa(key: string): string {
+    /* 会議の名簿（収録の全 696 件）から引く。行（`rows`）から引くと、締切が過ぎた会議
+     * （RTSS など）は行が無いので鍵がそのまま出てしまう（2026-10-23 實測）。 */
+    const conf = (DATA.conferences || []).find((c) => c.key === key);
+    if (conf?.title) return String(conf.title);
     const found = rows.find((r) => r.conf.key === key);
     return String(found?.conf.title || key);
   }
