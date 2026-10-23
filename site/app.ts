@@ -6299,8 +6299,14 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     state.q = p.get("q") || "";
     const urlKind = selectableKind(p.get("kind"));
     state.kind = urlKind.kind;
-    /* 会議の鍵で 1 会場だけに絞る（行の詳細の「この会議の締切だけを見る」が使う）。 */
-    state.venue = (p.get("venue") || "").trim();
+    /* 会議の鍵で 1 会場だけに絞る（行の詳細の「この会議の締切だけを見る」が使う）。
+     * 収録に無い鍵は絞り込みを外す（残すと「会議「xyz」以外の行 183 件」とだけ出て、
+     * 何が起きたのか分からない – 2026-10-23 實測）。 */
+    const rawVenue = (p.get("venue") || "").trim();
+    const 収録の鍵 = new Set((DATA.conferences || []).map((c) => String(c.key || "")));
+    state.venue = rawVenue && 収録の鍵.has(rawVenue) ? rawVenue : "";
+    if (rawVenue && !state.venue)
+      urlNotices.push(urlValueNoticeJa("会議", rawVenue, "会議の絞り込みは外れています"));
     if (urlKind.notice) urlNotices.push(urlKind.notice);
     const rawRank = p.get("rank");
     // 許す値は選択肢の正本と同じ（書き写すと URL だけ通る値が生まれる）。
