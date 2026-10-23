@@ -33,6 +33,12 @@ it("★ はこの端末にだけ覚え、会議の鍵で一覧へ渡す", () => 
   expect(app, "足しても一覧が開かない").toContain("panel.open = true");
   expect(app, "外した時まで開く").toContain("if (keys.length > 前) {");
 
+  /* × で外すと押したボタンが描き直しで消えるので、焦点を移す（一覧が残れば見出し、空なら
+   * 検索欄）。移さないと焦点が body に落ちる（2026-10-23 実測）。 */
+  expect(render, "外した後に焦点を移していない").toContain(
+    'panel.querySelector("summary") : $("q")',
+  );
+
   /* URL には載せない（状態は保存だけ）。 */
   const write = jsFunction(app, "writeUrl");
   expect(write, "★ を URL に載せている").not.toContain("watch");

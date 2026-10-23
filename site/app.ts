@@ -1566,6 +1566,11 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       remove.setAttribute("aria-label", `${watchedVenueTitleJa(key)} を ★ から外す`);
       remove.addEventListener("click", () => {
         writeWatchedVenues(readWatchedVenues().filter((k) => k !== key));
+        /* 押したボタンは描き直しで消えるので、焦点が body に落ちないよう移す。一覧が残れば
+         * 見出しへ、空になったら検索欄へ（2026-10-23 實測: 何もしないと焦点が失われる）。 */
+        const panel = $("watchPanel");
+        const 移す = panel && !panel.hidden ? panel.querySelector("summary") : $("q");
+        (移す as HTMLElement | null)?.focus();
       });
       li.appendChild(remove);
       list.appendChild(li);
