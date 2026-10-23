@@ -5310,6 +5310,21 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       official.className = "card-section";
       card.appendChild(official);
     }
+    /* この会議の締切を、締切の一覧で 1 会場だけに絞って開く（推薦の候補から、その会議の
+     * 日程・種別を確かめられる）。検索語ではなく `venue=<鍵>` なので、同じ語を含む別の
+     * 会議は混ざらない（2026-10-23）。 */
+    const 鍵 = String(r.conf.key || "").trim();
+    if (鍵) {
+      /* 締切が過ぎた候補は、既定の一覧（今後の締切）には行が無い。過去も出す条件を添えて、
+       * 押した先が空にならないようにする（その会議の最後の締切は、次回の目安になる）。 */
+      const 過ぎた = r._availability?.status === "past";
+      const 一覧 = document.createElement("a");
+      一覧.href = `?venue=${encodeURIComponent(鍵)}${過ぎた ? "&past=1" : ""}`;
+      一覧.textContent = "この会議の締切を一覧で見る";
+      一覧.className = "card-section";
+      一覧.title = "締切の一覧を、この会議の行だけに絞って開きます。";
+      card.appendChild(一覧);
+    }
     return card;
   }
 
