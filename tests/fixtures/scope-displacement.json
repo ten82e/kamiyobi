@@ -1,0 +1,85 @@
+{
+  "purpose": "Venues without official CFP topics must not be pushed out of the top five by the venues that have them. Titles come from data/benchmarks/regression-known.json or from an observed user query; acceptable venues are chosen by subject area, not by any ranking.",
+  "top_k": 5,
+  "candidate_count": 696,
+  "protected": [
+    {
+      "fixture": "live-consumer-author-inputs",
+      "id": "category-discovery-en-original",
+      "modes": ["title+abstract"],
+      "surfaces": ["published-model-search"]
+    }
+  ],
+  "papers": [
+    {
+      "id": "green-en",
+      "language": "en",
+      "title": "GREEN: Carbon-efficient Resource Scheduling for Machine Learning Clusters",
+      "source": "data/benchmarks/regression-known.json (nsdi)",
+      "acceptable_venues": ["nsdi", "osdi", "sosp", "eurosys", "sigops-atc", "socc", "mlsys"],
+      "modes": ["title"]
+    },
+    {
+      "id": "lithos-en",
+      "language": "en",
+      "title": "LithOS: An Operating System for Efficient Machine Learning on GPUs",
+      "source": "data/benchmarks/regression-known.json (sosp)",
+      "acceptable_venues": ["sosp", "osdi", "eurosys", "sigops-atc", "asplos", "mlsys"],
+      "modes": ["title"]
+    },
+    {
+      "id": "mercury-en",
+      "language": "en",
+      "title": "Mercury: Unlocking Multi-GPU Operator Optimization for LLMs via Remote Memory Scheduling",
+      "source": "data/benchmarks/regression-known.json (sosp)",
+      "acceptable_venues": ["sosp", "osdi", "eurosys", "sigops-atc", "asplos", "mlsys", "ppopp"],
+      "modes": ["title"]
+    },
+    {
+      "id": "gpu-dl-scheduling-ja",
+      "language": "ja",
+      "title": "GPUクラスタにおける深層学習ジョブのスケジューリング",
+      "source": "observed MCP query, 2026-10-17",
+      "acceptable_venues": [
+        "hpdc",
+        "sc",
+        "osdi",
+        "sosp",
+        "nsdi",
+        "eurosys",
+        "sigops-atc",
+        "socc",
+        "mlsys",
+        "ppopp",
+        "ipdps",
+        "ccgrid",
+        "cluster",
+        "ipsj-sighpc",
+        "ipsj-sigos"
+      ],
+      "modes": ["title"]
+    },
+    {
+      "id": "gpu-dl-scheduling-en",
+      "language": "en",
+      "title": "Deep learning job scheduling on GPU clusters",
+      "source": "English form of the observed MCP query, 2026-10-17",
+      "acceptable_venues": [
+        "hpdc",
+        "sc",
+        "osdi",
+        "sosp",
+        "nsdi",
+        "eurosys",
+        "sigops-atc",
+        "socc",
+        "mlsys",
+        "ppopp",
+        "ipdps",
+        "ccgrid",
+        "cluster"
+      ],
+      "modes": ["title"]
+    }
+  ]
+}

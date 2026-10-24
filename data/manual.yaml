@@ -7405,3 +7405,156 @@ venue_scopes:
     source_url: https://conferences.sigcomm.org/sigcomm/2024/cfp/
     topics:
       - Computer communication networks, internet architecture and protocols, data center networking, congestion control, network measurement, programmable switches and network management.
+  sosp:
+    source_url: https://sigops.org/s/conferences/sosp/2025/cfp.html
+    topics:
+      - Design, implementation, analysis, evaluation and deployment of computer systems software.
+      - Operating systems
+      - File and storage systems
+      - Distributed systems
+      - Cloud computing
+      - Mobile and edge systems
+      - Secure and reliable systems
+      - Systems aspects of big data and machine learning
+      - Embedded and real-time systems
+      - Virtualization
+      - Networking as it relates to operating systems
+      - Management and troubleshooting of complex systems
+  hpdc:
+    source_url: https://hpdc.sci.utah.edu/2026/calls-cfp.html
+    topics:
+      - Design, implementation, evaluation and use of parallel and distributed systems for high-end computing.
+      - Infrastructure, including datacenter, HPC, cloud, serverless and edge/IoT computing platforms
+      - Accelerators and heterogeneous computing
+      - Memory systems
+      - File and storage systems, I/O and data management
+      - Operating systems and networks
+      - System software and middleware for parallel and distributed systems
+      - Programming languages and runtime systems
+      - Big data stacks and significant data ecosystems
+      - Parallel and distributed computing systems and software for AI
+      - Scientific applications, algorithms and workflows
+      - Resource management and scheduling
+      - Performance modeling and benchmarking
+      - Fault tolerance, reliability and availability
+      - Energy efficiency and sustainability
+      - Software engineering for parallel and distributed systems
+  eurosys:
+    source_url: https://2026.eurosys.org/cfp.html
+    topics:
+      - All areas of computer systems research.
+      - Operating systems
+      - Distributed systems
+      - Cloud computing and datacenter systems
+      - File and storage systems
+      - Networked systems
+      - Language support and runtime systems
+      - Systems security and privacy
+      - Dependable systems
+      - Analysis, testing and verification of systems
+      - Database systems and data analytics frameworks
+      - Virtualization and virtualized systems
+      - Systems for machine learning/machine learning for systems
+      - Mobile and pervasive systems
+      - Parallelism, concurrency and multicore systems
+      - Real-time, embedded and cyber-physical systems
+      - Systems for emerging hardware
+  mlsys:
+    source_url: https://mlsys.org/Conferences/2026/CallForPapers
+    topics:
+      - Research at the intersection of machine learning and computer systems; systems for machine learning and machine learning for systems.
+      - Efficient model training, inference and serving
+      - Large language model (LLM) training, fine-tuning and inference
+      - Large-scale reinforcement learning for LLMs
+      - Autonomous and agentic AI systems
+      - Storage systems for large-scale ML systems
+      - Distributed and federated learning algorithms
+      - Privacy and security for ML applications
+      - ML methods for job scheduling in computing systems
+      - Testing, debugging and monitoring of ML applications
+      - ML programming models and abstractions
+      - ML compilers and runtimes
+      - Specialized hardware for machine learning
+      - Hardware-efficient ML methods
+      - Machine learning benchmarks, datasets and tooling
+  socc:
+    source_url: https://acmsocc.org/2025/papers.html
+    topics:
+      - All aspects of cloud computing, including the research, development, practice and experience of cloud computing systems and data management.
+      - Datacenter architectures
+      - Distributed and networked systems
+      - Distributed/parallel query processing and optimization
+      - Edge and fog computing
+      - Energy efficiency, sustainability and management
+      - Fault tolerance, high availability and reliability
+      - Large-scale cloud applications
+      - Multi-tenancy in the cloud
+      - Operating systems and system support
+      - Programming models for cloud (e.g., serverless, microservices)
+      - Resource management, allocation, scheduling, provisioning and metering
+      - Storage systems and new storage technologies
+      - Machine learning for clouds and cloud-based systems
+      - Systems for machine learning
+      - Tracing and monitoring systems
+  ppopp:
+    source_url: https://ppopp26.sigplan.org/track/PPoPP-2026-papers
+    topics:
+      - All aspects of parallel and performance programming, including theoretical foundations, techniques, languages, compilers, runtime systems, tools, applications and practical experience.
+      - Languages, compilers and runtime systems for parallel programs
+      - Parallel programming frameworks and domain-specific languages
+      - Parallel programming for emerging hardware, including AI accelerators, processor-in-memory, programmable logic, non-volatile memory technologies and quantum computers
+      - High-performance libraries
+      - Parallel algorithms
+      - Parallel applications including scientific computing and enterprise workloads
+      - Artificial intelligence and machine learning for parallel systems
+      - Performance analysis, debugging and optimization
+      - Concurrent data structures
+      - Synchronization and concurrency control
+      - Fault tolerance for parallel systems
+      - Middleware for parallel systems
+  ipdps:
+    source_url: https://www.ipdps.org/ipdps2026/2026-call-for-papers.html
+    topics:
+      - Research in high performance computing (HPC) in parallel and distributed processing.
+      - Algorithms for computational and data science in parallel and distributed computing environments
+      - Real-world applications that use parallel and distributed computing concepts
+      - Existing and emerging architectures for high performance computing
+      - Parallel and distributed learning algorithms
+      - Design and implementation of ML/AI algorithms on parallel architectures
+      - Experiments and performance-oriented studies in the practice of parallel and distributed computing
+      - Parallel programming models, languages, compilers, runtime and middleware
+      - Storage and I/O systems
+      - System software for resource management, job scheduling and energy-efficiency
+      - System software support for accelerators and heterogeneous HPC computing systems
+      - System software solutions for ML/AI workloads
+      - Containers and virtual machines
+  cluster:
+    source_url: https://clustercomp.org/2025/papers/
+    topics:
+      - Clusters and closely related fields, including high-performance computing, cloud computing, machine learning training and inference systems, and big data.
+      - HPC and Big Data application studies on large-scale clusters
+      - Novel algorithms on clusters
+      - Performance evaluation tools
+      - Node and system architecture for HPC and Big Data clusters
+      - Energy-efficient cluster architectures
+      - Accelerators, reconfigurable and domain-specific hardware
+      - Heterogeneous clusters
+      - Interconnect/memory architectures
+      - Cluster system software/operating systems
+      - Programming models for converged HPC/Big Data/Machine Learning systems
+      - Management of local, center-wide and disaggregate resources and job
+      - Fault tolerance and high-availability
+      - File systems and I/O libraries
+  asplos:
+    source_url: https://www.asplos-conference.org/asplos2027/cfp/
+    topics:
+      - Practical aspects of computer architecture, programming languages and operating systems.
+      - Heterogeneous architectures and accelerators
+      - Internet services, cloud computing and datacenters
+      - Memory, storage, networking and I/O
+      - Power, energy and thermal management
+      - Profiling, debugging and testing
+      - Security, reliability and availability
+      - Systems for enabling parallelism and computation on big data
+      - Virtualization and virtualized systems
+      - Experimental methodologies

@@ -10,6 +10,7 @@ export default defineConfig({
       "tests/full_pool_models.integration.ts",
       "tests/system_ml_models.integration.ts",
       "tests/live_consumers.integration.ts",
+      "tests/scope_displacement.integration.ts",
       "tests/mcp_semantic.integration.ts",
       "tests/mcp_cli_models.integration.ts",
       "tests/mcp_cache_models.integration.ts",
