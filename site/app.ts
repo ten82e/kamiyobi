@@ -5715,7 +5715,11 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       const parts: string[] = [];
       if (hidden.past) parts.push(`過去の締切 ${countJa(hidden.past)} 件`);
       if (hidden.kind) parts.push(`投稿締切以外の種別 ${countJa(hidden.kind)} 件`);
-      if (hidden.venue) parts.push(`会議「${state.venue}」以外の行 ${countJa(hidden.venue)} 件`);
+      /* 札と同じく、人には会議の名前で見せる（鍵は行の詳細の「会議の識別子」と紙に在る）。 */
+      if (hidden.venue)
+        parts.push(
+          `会議「${watchedVenueTitleJa(state.venue)}」以外の行 ${countJa(hidden.venue)} 件`,
+        );
       // 「推定」の語は一覧の検索でも引ける（`推定` バッジの語を hay に入れている）が、
       // 既定ではここで行が落ちたままなので、出し方を同じ行に書く。
       if (hidden.est) parts.push(`推定 ${countJa(hidden.est)} 件（「推定締切を含める」で出ます）`);
