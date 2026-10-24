@@ -39,6 +39,10 @@ it("★ はこの端末にだけ覚え、会議の鍵で一覧へ渡す", () => 
     'panel.querySelector("summary") : $("q")',
   );
 
+  /* 今後の締切が無い会議は、押した先が 0 件にならないよう過去も出す条件を添える
+   * （推薦のカードと同じ規則 – 2026-10-24 実測: RTSS の ★ は 0 件に着地していた）。 */
+  expect(render, "締切の無い会議のリンクに過去の条件が無い").toContain('"&past=1"');
+
   /* URL には載せない（状態は保存だけ）。 */
   const write = jsFunction(app, "writeUrl");
   expect(write, "★ を URL に載せている").not.toContain("watch");

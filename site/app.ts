@@ -1550,7 +1550,9 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     for (const { key, 次 } of 並び) {
       const li = document.createElement("li");
       const link = document.createElement("a");
-      link.href = `?venue=${encodeURIComponent(key)}`;
+      /* 今後の締切が無い会議は、既定の一覧（今後の締切）に行が無いので、過去も出す条件を
+       * 添える（推薦のカードと同じ規則 – 2026-10-24 實測: RTSS の ★ は 0 件に着地していた）。 */
+      link.href = `?venue=${encodeURIComponent(key)}${Number.isFinite(次) ? "" : "&past=1"}`;
       link.textContent = venueTitleJa(key);
       link.title = `この会議（${key}）の締切だけを一覧で見る`;
       li.appendChild(link);
