@@ -83,7 +83,7 @@ export function parseNow(text: string | null | undefined): Date {
     const d = Number(m[3]);
     const chk = new Date(Date.UTC(y, mo - 1, d));
     if (chk.getUTCFullYear() !== y || chk.getUTCMonth() !== mo - 1 || chk.getUTCDate() !== d) {
-      throw new Error(`unparsable --now: ${JSON.stringify(text)}`);
+      throw new UsageError(`unparsable --now: ${JSON.stringify(text)}`);
     }
   }
   // Date は時刻あり・offset 無しをローカル時刻にし、T24:00:00Z を翌日へ繰り上げる。
@@ -95,15 +95,19 @@ export function parseNow(text: string | null | undefined): Date {
     const second = Number(time[3] ?? "0");
     const zone = time[4] ?? "";
     if (hour > 23 || minute > 59 || second > 59 || !/^[+-]\d{2}:?\d{2}$/.test(zone)) {
-      throw new Error(`unparsable --now: ${JSON.stringify(text)}`);
+      throw new UsageError(`unparsable --now: ${JSON.stringify(text)}`);
     }
   }
   const dt = new Date(normalized);
   if (Number.isNaN(dt.getTime())) {
-    throw new Error(`unparsable --now: ${JSON.stringify(text)}`);
+    throw new UsageError(`unparsable --now: ${JSON.stringify(text)}`);
   }
   return dt;
 }
+
+/* 利用者の打ち間違い（引数の値）を、内部の不具合と区別する。トップレベルはこれだけ
+ * メッセージで短く伝え、それ以外はスタックごと出す（2026-10-24）。 */
+class UsageError extends Error {}
 
 function loadYamlFile(path: string, opts?: { strict?: boolean }): Record<string, unknown> {
   if (!existsSync(path)) return {};
@@ -2084,7 +2088,9 @@ if (isMain) {
       process.exitCode = code;
     },
     (err) => {
-      console.error(err);
+      /* 引数の誤りは短く（スタックは打ち直す人の役に立たない）。内部の不具合はスタックごと。 */
+      if (err instanceof UsageError) console.error(err.message);
+      else console.error(err);
       process.exitCode = 1;
     },
   );
