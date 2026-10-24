@@ -3577,12 +3577,8 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     /* 説明欄にも、何の写しかを書く（候補を書き出した人と、絞り込みを書き出した人が、
      * カレンダーの情報欄で取り違へない樣に）。 */
     return icsViewText(shownIcsInput(), new Date(), generated, {
-      /* 会議で絞ったときは、どの会議かを書く（ファイルを持ち出した先で分かるように）。 */
-      scopeJa: recMode
-        ? "「投稿先を探す」が挙げた候補"
-        : state.venue
-          ? `絞り込んだ（会議: ${venueTitleJa(state.venue)}）`
-          : "絞り込んだ",
+      /* 何を書き出したかは、紙と同じ条件の文で書く（持ち出した先で条件が分かる）。 */
+      scopeJa: recMode ? "「投稿先を探す」が挙げた候補" : filtersJa(null),
       /* 暦の棚に出る名前も分ける（同じ名が 2 つ並ぶと見分けられない）。 */
       calName: recMode ? ICS_VIEW_CANDIDATE_CAL_NAME_JA : ICS_VIEW_CAL_NAME_JA,
     });
@@ -7581,10 +7577,9 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     return `この用紙の表記: ${parts.join("。")}。`;
   }
 
-  function fillPrintMeta() {
-    const box = $("printMeta");
-    if (!box) return;
-    const genAt = typeof DATA.generated_at === "string" ? DATA.generated_at : "";
+  /* 紙と書き出しで同じ条件の文を使う（片方だけ「絞り込んだ」と書くと、持ち出した物と刷った物で
+   * 条件の読み方が変わる – 2026-10-24）。並び順は紙のときだけ渡す（書き出しの並びは行の順）。 */
+  function filtersJa(sort: { key: string; asc: boolean } | null): string {
     const winSelect = valueElement("win") as HTMLSelectElement;
     const opt =
       winSelect?.options && winSelect.selectedIndex >= 0
@@ -7592,6 +7587,21 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         : null;
     const winText = opt ? String(opt.text || opt.textContent || "").trim() : "";
     const winLabel = state.win && state.win !== "all" ? winText || state.win : "";
+    return describeFilters(
+      { ...state, venue: state.venue ? venueTitleJa(state.venue) : "" },
+      (k) => KIND_LABEL[k] || k,
+      rankFilterLabelJa,
+      (c) => Recommender.categoryLabelJa(c),
+      winLabel,
+      sort ?? { key: "", asc: true },
+      sortColumnLabel,
+    );
+  }
+
+  function fillPrintMeta() {
+    const box = $("printMeta");
+    if (!box) return;
+    const genAt = typeof DATA.generated_at === "string" ? DATA.generated_at : "";
     const printedTail = ` ／ 印刷した日時 ${fmtJst(new Date())} ／ ${generatedAtLabel(genAt)}`;
     /* 投稿先を探す画面では、表の絞り込み条件も「表示 N 件」も紙に意味がない（並ぶのは
      * 候補のカードだけ）。従来は表用の文言をそのまま書いていて、カードが並んだ紙に
@@ -7638,16 +7648,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       return;
     }
     box.textContent =
-      `この印刷物: ${describeFilters(
-        /* 会議の絞り込みは、画面の札と同じく会議の名前で刷る（鍵は識別子で、行の詳細に在る）。 */
-        { ...state, venue: state.venue ? venueTitleJa(state.venue) : "" },
-        (k) => KIND_LABEL[k] || k,
-        rankFilterLabelJa,
-        (c) => Recommender.categoryLabelJa(c),
-        winLabel,
-        { key: sortKey, asc: sortAsc },
-        sortColumnLabel,
-      )}` +
+      `この印刷物: ${filtersJa({ key: sortKey, asc: sortAsc })}` +
       ` ／ 表示 ${countJa(shown.length)} 件` +
       /* 論文を入れているときは、その論文に合う行の数も紙に書く（札は行ごとに付くが、
        * 紙の上では数えにくい）。 */

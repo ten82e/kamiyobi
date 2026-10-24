@@ -61,6 +61,8 @@ function harness(initial: Row[], mode: "recommend" | "deadlines" = "deadlines") 
     "icsViewText",
     "DATA",
     "candidateScopeOnScreen",
+    /* 条件の文は紙と共有する（ここでは固定の文を渡し、説明に載る事だけ見る）。 */
+    "filtersJa",
     /* 書き出しの暦の名は画面の正本から取る（候補と一覧で分ける）。 */
     "ICS_VIEW_CAL_NAME_JA",
     "ICS_VIEW_CANDIDATE_CAL_NAME_JA",
@@ -87,6 +89,8 @@ function harness(initial: Row[], mode: "recommend" | "deadlines" = "deadlines") 
     icsViewText,
     { generated_at: "2029-12-31T00:00:00Z" },
     () => candidates,
+    /* 実物の `filtersJa` は DOM の選択欄を読むので、ここでは決まった文を返す。 */
+    () => "種別: 論文締切 ／ 会議: SIGMOD",
     ICS_VIEW_CAL_NAME_JA,
     ICS_VIEW_CANDIDATE_CAL_NAME_JA,
   );

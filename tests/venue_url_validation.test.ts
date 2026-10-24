@@ -19,8 +19,7 @@ it("URL の venue は収録の鍵に寄せて受け、合わなければ断っ�
     "if (filter.venue && m.key !== filter.venue) return false;",
   );
   expect(原文, "会期だけの一覧へ会議を渡していない").toContain("venue: state.venue,");
-  expect(原文, "ICS の説明に会議を書いていない").toContain(
-    "絞り込んだ（会議: " + "$" + "{venueTitleJa(state.venue)}）",
-  );
+  /* 書き出しの説明も、紙と同じ条件の文を使う（片方だけ「絞り込んだ」と書かない）。 */
+  expect(app, "書き出しの説明が紙と別の文").toContain("scopeJa: recMode ? ");
   expect(原文, "紙に会議の絞り込みを書いていない").toContain("if (s.venue) out.push(");
 });

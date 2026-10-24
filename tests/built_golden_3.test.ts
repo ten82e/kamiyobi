@@ -510,7 +510,7 @@ it("印刷物に、条件・並び順・件数・日時が残り、画面では�
   expect(app).toContain("fillPrintMeta();");
   expect(app).toContain('$("printMeta")');
   // 呼び出し側が、今の並びを実際に渡していること（上の抜き出し検査だけでは実画面は変わらない）。
-  expect(app).toContain("{ key: sortKey, asc: sortAsc },");
+  expect(app).toContain("filtersJa({ key: sortKey, asc: sortAsc })");
   // 列名を取り出す関数も印刷の組み立てに使っている（見出しの語を二箇所に書かない）。
   expect(app).toContain("sortColumnLabel");
   const labelSrc = jsFunction(app, "sortColumnLabel");
@@ -2275,6 +2275,7 @@ it("投稿先を探す画面で印刷すると、紙に出る但し書きが実�
       /* 用紙の見出しは論文の題名も読む（推薦の枝）。この検査は題名なしで見る。 */
       "const readPaperInput = () => ({ title: '', abstract: '', keywords: '', references: '' });",
       jsFunction(app, "fillPrintMeta"),
+      jsFunction(app, "filtersJa"),
       "fillPrintMeta();",
       "console.log(JSON.stringify({ out: meta.textContent }));",
     ].join("\n");
@@ -4402,6 +4403,7 @@ it("「評価なし」で印刷すると、紙の条件にも同じ語が出る�
     /* 用紙の見出しは論文の題名も読む（推薦の枝）。この検査は題名なしで見る。 */
     "const readPaperInput = () => ({ title: '', abstract: '', keywords: '', references: '' });",
     jsFunction(app, "fillPrintMeta"),
+    jsFunction(app, "filtersJa"),
     "fillPrintMeta();",
     // 選択肢のラベルも同じ式を使う（規則を 2 箇所に書かない）。
     "const labelOf = (g) => Recommender.rankGradeOrderJa().map((x) => (x === g ? (x === 'N' ? RANK_UNRATED : x) : null)).filter(Boolean)[0];",
