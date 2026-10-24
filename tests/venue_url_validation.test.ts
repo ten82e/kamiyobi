@@ -22,4 +22,9 @@ it("URL の venue は収録の鍵に寄せて受け、合わなければ断っ�
   /* 書き出しの説明も、紙と同じ条件の文を使う（片方だけ「絞り込んだ」と書かない）。 */
   expect(app, "書き出しの説明が紙と別の文").toContain("scopeJa: recMode ? ");
   expect(原文, "紙に会議の絞り込みを書いていない").toContain("if (s.venue) out.push(");
+  /* 推薦の候補は絞らないので、推薦モードの URL に venue を残さない（受け取った人が候補も
+   * 絞られていると読む – 2026-10-24 実測: 締切 → 推薦 で `?mode=recommend` だけになる）。 */
+  expect(原文, "推薦モードの URL に venue を残している").toContain(
+    'if (state.mode === "deadlines" && state.venue) p.set("venue", state.venue);',
+  );
 });

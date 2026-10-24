@@ -6430,7 +6430,9 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     p.set("mode", state.mode);
     if (state.q) p.set("q", state.q);
     if (state.kind) p.set("kind", state.kind);
-    if (state.venue) p.set("venue", state.venue);
+    /* 会議の絞り込みは締切の一覧だけに掛かる（推薦の候補は絞らない）。推薦モードの URL に
+     * 残すと、受け取った人が「候補も絞られている」と読む（2026-10-24）。締切に戻れば戻る。 */
+    if (state.mode === "deadlines" && state.venue) p.set("venue", state.venue);
     if (state.rank) p.set("rank", state.rank);
     if (state.win !== "all") p.set("win", state.win);
     if (state.est) p.set("est", "1");
