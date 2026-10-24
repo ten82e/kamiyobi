@@ -15,7 +15,7 @@ import { join } from "node:path";
 import { afterAll, describe, expect, it } from "vitest";
 import Recommender from "../site/recommendation.ts";
 import { consolidateReviewedSubmissions } from "../site/submission-identity.ts";
-import { structuredDeadline } from "../src/mcp.ts";
+import { structuredDeadline, 開催の行 } from "../src/mcp.ts";
 import { FILTER_RUNTIME_STUBS, site } from "./built_golden_shared.ts";
 import { REPO_ROOT, tempWork } from "./helpers.ts";
 /* 生成した台本は標準入力で渡す（Linux は argv の 1 値を 128KiB に限る – 第 917・944 回の
@@ -4695,12 +4695,16 @@ it("検索の頭の「当たる件数」と「絞る前」は、両方事実と�
   }
 });
 
-it("list_upcoming の件数は、その窓の事实と合う（第 990 回）", async () => {
+it("list_upcoming の件数は、その窓の事実と合う（第 990 回）", async () => {
   const 收錄 = JSON.parse(readFileSync(join(REPO_ROOT, "data", "snapshot.json"), "utf8")) as {
     conferences?: unknown[];
   };
   const 行々 = displayCandidates(收錄 as never);
   const 今 = Date.now();
+  /* 締切側は「今日から N 日（JST の暦日で数える）」なので日を跨ぐ所は JST の 0 時で切る。 */
+  const 今の日 = Date.parse(
+    `${new Date(今 + 9 * 3600000).toISOString().slice(0, 10)}T00:00:00+09:00`,
+  );
   const 窓 = [7, 30, 90, 180, 400];
   for (const days of 窓) {
     const 答 = await call("list_upcoming", { days, limit: 900 });
@@ -4708,38 +4712,17 @@ it("list_upcoming の件数は、その窓の事实と合う（第 990 回）", 
     const m = /の締切: ([\d,]+) 件/.exec(頭);
     expect(m, `days=${days} の頭から數が讀めない: ${頭.slice(0, 60)}`).not.toBeNull();
     const 表示 = Number(m?.[1].replace(/,/g, ""));
-    const 限り = Recommender.withinDaysLimitMs(days, 今);
+    const 限り = Recommender.withinDaysLimitMs(days, 今の日);
     const 事實 = 行々.filter(
-      (r) => !Recommender.deadlineRowIsPast(r, 今) && (r.tShown ?? r.t) < 限り,
+      (r) => !Recommender.deadlineRowIsPast(r, 今の日) && (r.tShown ?? r.t) < 限り,
     ).length;
     expect(事實, `days=${days} の事實が 0 行（この檢查の前提が崩れた）`).toBeGreaterThan(0);
     expect(表示, `days=${days} の件數が事實と違ふ（表示 ${表示} ／ 事實 ${事實}）`).toBe(事實);
   }
 
-  const 開催の事實 = (days: number): number => {
-    const 今日 = Date.parse(new Date(今 + 9 * 3600000).toISOString().slice(0, 10));
-    const 限り = Recommender.withinDaysLimitMs(days, 今);
-    let n = 0;
-    for (const c of (收錄.conferences ?? []) as Array<Record<string, unknown>>) {
-      for (const e of (c.editions ?? []) as Array<Record<string, unknown>>) {
-        if (e.estimated === true || e.event_date_precision === "not-announced") continue;
-        const segs =
-          Array.isArray(e.event_segments) && (e.event_segments as unknown[]).length
-            ? (e.event_segments as Array<Record<string, unknown>>)
-            : e.event_start
-              ? [{ start: e.event_start, end: e.event_end ?? e.event_start }]
-              : [];
-        for (const seg of segs) {
-          const 開 = Date.parse(String(seg.start ?? ""));
-          if (!Number.isFinite(開)) continue;
-          const 終 = Date.parse(String(seg.end ?? seg.start ?? "")) || 開;
-          if (終 < 今日 || 開 >= 限り) continue;
-          n += 1;
-        }
-      }
-    }
-    return n;
-  };
+  /* 開催側は實装（`開催の行`）をそのまま呼ぶ。規則を書き寫すと、起点・終端・除外の
+   * ちょっとした違いで件數がずれる（2026-10-24 實測: 書き寫しは 25 對 23）。 */
+  const 開催の事實 = (days: number): number => 開催の行(days, 今).length;
   for (const days of 窓) {
     const 答 = await call("list_upcoming", { days, limit: 900 });
     const 節 = 答.split("\n").find((l) => l.startsWith("開催（会期の行）")) ?? "";
