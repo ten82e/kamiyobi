@@ -63,6 +63,95 @@ const PRIORITY: Record<string, unknown> = {
 };
 
 describe("merge_sources", () => {
+  it.each([
+    ["colm", "AI/colm"],
+    ["ijcai", "AI/ijcai"],
+    ["interspeech", "CG/interspeech"],
+    ["iros", "AI/iros"],
+    ["sgp", "CG/SGP"],
+    ["sigir", "DB/sigir"],
+  ])("resolves the reviewed cross-source venue identity for %s", (key, ccfId) => {
+    const stats: MergeStats = { merged_deadlines: 0, merged_by_key: {} };
+    const source = (name: string, id: string) =>
+      makeConference({
+        key,
+        title: key.toUpperCase(),
+        sources: [name],
+        identity: { sourceIds: { [name]: id } },
+        editions: [],
+      });
+    const merged = mergeSources(
+      [[source("aideadlines", key)], [source("ccfddl", ccfId)]],
+      CONFIG,
+      stats,
+    );
+    expect(merged).toHaveLength(1);
+    expect(merged[0]?.key).toBe(key);
+    expect(merged[0]?.identity?.venueId).toBe(key);
+    expect(merged[0]?.identity?.sourceIds).toEqual({ aideadlines: key, ccfddl: ccfId });
+    expect(stats.identity_conflicts).toEqual([]);
+  });
+
+  it("unifies the organiser-linked EvoMUSART 2027 CFP with its upstream edition", () => {
+    const upstream = makeConference({
+      key: "evomusart",
+      title: "EvoMUSART",
+      sources: ["ccfddl"],
+      identity: { sourceIds: { ccfddl: "AI/evomusart" } },
+      editions: [
+        makeEdition({
+          year: 2027,
+          edition_id: "evomusart27",
+          identity: { sourceIds: { ccfddl: "evomusart27" } },
+          link: "https://www.evostar.org/2027/evomusart/",
+          place: "Mainz, Germany (hybrid)",
+          event_start: utc(2027, 3, 31),
+          event_end: utc(2027, 4, 2),
+        }),
+      ],
+    });
+    const local = makeConference({
+      key: "evomusart-2027",
+      title: "EvoMUSART",
+      sources: ["local"],
+      identity: { sourceIds: { local: "evomusart-2027" } },
+      editions: [
+        makeEdition({
+          year: 2027,
+          edition_id: "evomusart-202727",
+          source: "local",
+          identity: { sourceIds: { local: "evomusart-202727" } },
+          link: "https://easychair.org/cfp/evomusart2027",
+          place: "Mainz, Germany",
+          event_start: utc(2027, 3, 31),
+          event_end: utc(2027, 4, 2),
+          deadlines: [
+            {
+              kind: "abstract",
+              label: "Abstract registration deadline",
+              precision: "date-only",
+              local_date: "2026-11-01",
+              comment: null,
+              round: 1,
+            },
+          ],
+        }),
+      ],
+    });
+    const stats: MergeStats = { merged_deadlines: 0, merged_by_key: {} };
+    const merged = mergeSources([[upstream], [local]], CONFIG, stats);
+    expect(merged).toHaveLength(1);
+    expect(merged[0].key).toBe("evomusart-2027");
+    expect(merged[0].legacy_keys).toContain("evomusart");
+    expect(merged[0].editions).toHaveLength(1);
+    expect(merged[0].editions[0].identity?.editionId).toBe("evomusart-2027");
+    expect(merged[0].editions[0].deadlines.find((dl) => dl.kind === "abstract")).toMatchObject({
+      precision: "date-only",
+      local_date: "2026-11-01",
+    });
+    expect(stats.identity_conflicts).toEqual([]);
+  });
+
   it("preserves legacy keys", () => {
     const [conference] = mergeSources(
       [[makeConference({ key: "current", title: "Current", legacy_keys: ["legacy"] })]],
@@ -1462,6 +1551,37 @@ describe("merge_sources", () => {
       expect(dls.length).toBe(1);
     },
   );
+
+  it("folds a verbose sole label and a terse sole label one rounding second apart", () => {
+    const local = sigcomm("local", [
+      makeDeadline("abstract", "Technical Papers Abstract", utc(2026, 9, 21, 11, 59, 0)),
+      makeDeadline(
+        "paper",
+        "Paper submission deadline (main/special sessions)",
+        utc(2026, 9, 24, 11, 59, 0),
+      ),
+    ]);
+    const ccf = sigcomm("ccfddl", [
+      makeDeadline("abstract", "Abstract submission", utc(2026, 9, 21, 11, 59, 59)),
+      makeDeadline("paper", "Paper submission", utc(2026, 9, 24, 11, 59, 59)),
+    ]);
+    const dls = deadlinesOf(mergeSources([[local], [ccf]], PRIORITY)[0]);
+    expect(dls.map((d) => [d.kind, d.label])).toEqual([
+      ["abstract", "Technical Papers Abstract"],
+      ["paper", "Paper submission deadline (main/special sessions)"],
+    ]);
+  });
+
+  it("keeps differently labelled deadlines apart when a source files several of that kind", () => {
+    const local = sigcomm("local", [
+      makeDeadline("paper", "Technical Papers", utc(2026, 9, 24, 11, 59, 0)),
+      makeDeadline("paper", "Industry Track", utc(2026, 9, 24, 11, 59, 0)),
+    ]);
+    const ccf = sigcomm("ccfddl", [
+      makeDeadline("paper", "Workshop Papers", utc(2026, 9, 24, 11, 59, 59)),
+    ]);
+    expect(deadlinesOf(mergeSources([[local], [ccf]], PRIORITY)[0])).toHaveLength(3);
+  });
 
   it("one source filing several tracks at one instant keeps them all", () => {
     const at = utc(2026, 4, 21, 22, 0, 0);
@@ -3225,4 +3345,34 @@ describe("conferencesFromJson & defensive merge operations", () => {
     expect(ed.event_start!.toISOString().slice(0, 10)).toBe("2026-10-15");
     expect(ed.event_end!.toISOString().slice(0, 10)).toBe("2026-10-20");
   });
+});
+
+it("reviewed legacy venue keys survive normalisation without taking another canonical venue's key", () => {
+  const source = makeConference({
+    key: "old-source",
+    title: "Reviewed Series",
+    identity: { sourceIds: { local: "source-id" } },
+    editions: [
+      makeEdition({
+        year: 2024,
+        edition_id: "original-2024",
+        event_start: utc(2024, 1, 1),
+        event_end: utc(2024, 1, 2),
+      }),
+    ],
+  });
+  const config = {
+    venue_identities: {
+      "published-series": {
+        source_ids: { local: "source-id" },
+        legacy_keys: ["former-ui-series", "reserved-series"],
+      },
+      "reserved-series": { source_ids: { local: "other-id" } },
+    },
+  };
+  const result = normalizeConfiguredVenueIdentities([source], config)[0];
+  expect(result.key).toBe("published-series");
+  expect(result.legacy_keys).toEqual(["former-ui-series", "old-source"]);
+  expect(result.editions).toEqual(source.editions);
+  expect(source.legacy_keys).toBeUndefined();
 });

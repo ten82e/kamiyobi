@@ -35,13 +35,13 @@ import {
   EMBEDDING_MULTI_MODEL,
   EMBEDDING_MULTI_REVISION,
   EMBEDDING_REVISION,
-  VENUE_PAPERS,
-  VENUE_PROFILE_ARTIFACT,
+  getVenuePapers,
+  getVenueProfileArtifact,
   type VenueProfileArtifact,
 } from "./embeddings.ts";
 import { semanticContentIdForArtifacts } from "./semantic-content.ts";
 
-const Recommender = (await import("../site/recommender.ts")).default;
+const Recommender = (await import("../site/recommendation.ts")).default;
 type PaperLine = ReturnType<typeof Recommender.parsePaperLines>[number];
 type VenueRecommendation = ReturnType<typeof Recommender.venueRecommendations>[number];
 
@@ -70,6 +70,7 @@ export interface BenchArgs {
   realV2Heldout: string | null;
   realV2Negative: string | null;
   realV2Features: string | null;
+  realV2FeatureBaseline: string | null;
   writeRequiredFeatures: string | null;
   realV2Small: boolean;
   taxonomyDetail: boolean;
@@ -107,6 +108,7 @@ export function parseBenchArgs(argv: string[] | null | undefined): BenchArgs {
     realV2Heldout: null,
     realV2Negative: null,
     realV2Features: null,
+    realV2FeatureBaseline: null,
     writeRequiredFeatures: null,
     realV2Small: false,
     taxonomyDetail: false,
@@ -149,6 +151,7 @@ export function parseBenchArgs(argv: string[] | null | undefined): BenchArgs {
       "real-v2-heldout": { type: "string" },
       "real-v2-negative": { type: "string" },
       "real-v2-features": { type: "string" },
+      "real-v2-feature-baseline": { type: "string" },
       "write-required-features": { type: "string" },
       "real-v2-small": { type: "boolean" },
       "taxonomy-detail": { type: "boolean" },
@@ -190,6 +193,7 @@ export function parseBenchArgs(argv: string[] | null | undefined): BenchArgs {
   args.realV2Heldout = stringValue(values["real-v2-heldout"]) ?? null;
   args.realV2Negative = stringValue(values["real-v2-negative"]) ?? null;
   args.realV2Features = stringValue(values["real-v2-features"]) ?? null;
+  args.realV2FeatureBaseline = stringValue(values["real-v2-feature-baseline"]) ?? null;
   args.writeRequiredFeatures = stringValue(values["write-required-features"]) ?? null;
   args.realV2Small = booleanValue(values["real-v2-small"], false);
   args.taxonomyDetail = booleanValue(values["taxonomy-detail"], false);
@@ -966,9 +970,9 @@ export function canonicalRealPaperBenchmarkContentId(coverage: RealPaperCoverage
       coverage === "required" ? "real-paper-required-heldout.json" : "real-paper-heldout.json",
     ),
     fixture("real-paper-negative.json"),
-    coverage === "required"
-      ? readFeatureStore(fileURLToPath(realPaperFixture("real-paper-features.jsonl")))
-      : undefined,
+    // Both release gates run the pinned feature store. Include it in the full
+    // identity too, matching the CLI report and the bundle workflow inputs.
+    readFeatureStore(fileURLToPath(realPaperFixture("real-paper-features.jsonl"))),
   );
 }
 
@@ -1848,8 +1852,8 @@ function validateRealPaperNegativeFixture(fixture: RealPaperNegativeFixture): vo
 export function validateRealPaperFixtures(
   dev: RealPaperFixture,
   heldout: RealPaperFixture,
-  venueKeys: ReadonlySet<string> = new Set(Object.keys(VENUE_PAPERS)),
-  profiles: RealPaperProfiles = VENUE_PROFILE_ARTIFACT,
+  venueKeys: ReadonlySet<string> = new Set(Object.keys(getVenuePapers())),
+  profiles: RealPaperProfiles = getVenueProfileArtifact(),
   regressionKnown: RegressionKnownRecord[] = REGRESSION_KNOWN.records,
   negative?: RealPaperNegativeFixture,
   coverage: "full" | "required" = "full",
@@ -2608,14 +2612,36 @@ export async function runRealPaperBenchmark(
   requiredFeatures?: RequiredSemanticFeatures,
   collectedFeatures?: RequiredSemanticFeatures["records"],
   taxonomyDetail?: boolean,
+  featureBaselineData?: { conferences: Conf[]; categories?: Record<string, string> },
+  includeCandidateDepthDiagnostics = true,
 ): Promise<RealPaperRun> {
+  // Pin code behavior against immutable inputs, then measure current source data
+  // with the same semantic observations and quality floors. Category/name/venue
+  // updates legitimately change lexical features and pool-normalized base scores.
+  if (featureBaselineData) {
+    if (!requiredFeatures) throw new Error("feature baseline requires frozen semantic features");
+    const baseline = await runRealPaperBenchmark(
+      dev,
+      heldout,
+      featureBaselineData,
+      negative,
+      coverage,
+      requiredFeatures,
+      undefined,
+      undefined,
+      undefined,
+      false,
+    );
+    const failures = realPaperRegressionReasons(baseline.result, coverage);
+    if (failures.length) throw new Error(`feature baseline regression: ${failures.join("; ")}`);
+  }
   const confs = data.conferences ?? [];
   const venueKeys = new Set(confs.map((conference) => conference.key));
   validateRealPaperFixtures(
     dev,
     heldout,
     venueKeys,
-    VENUE_PROFILE_ARTIFACT,
+    getVenueProfileArtifact(),
     REGRESSION_KNOWN.records,
     negative,
     coverage,
@@ -2677,7 +2703,7 @@ export async function runRealPaperBenchmark(
 
   Recommender.setExpandEnabled(true);
   const rowsFor = (sourceYearMax: number) => {
-    const papers = profileTitlesBefore(VENUE_PROFILE_ARTIFACT, sourceYearMax);
+    const papers = profileTitlesBefore(getVenueProfileArtifact(), sourceYearMax);
     return confs.map((conference) => ({
       conf: {
         key: conference.key,
@@ -2746,6 +2772,18 @@ export async function runRealPaperBenchmark(
       ? fixedFeatureRecord(requiredFeatures, record.paper_id, bundle.manifest, split)
       : null;
     const semanticScores = fixed?.semantic_scores ?? inferredSemanticScores;
+    const semanticSimilarities = useFrozenFeatures
+      ? null
+      : Object.fromEntries(
+          confs.map((conference) => [
+            conference.key,
+            Recommender.semanticSimilarity(
+              conference.key,
+              vector!,
+              record.language === "ja" ? bundle.multi.embeddings : bundle.embeddings,
+            ),
+          ]),
+        );
     const recommendations = Recommender.venueRecommendations(
       rows,
       lines,
@@ -2755,6 +2793,7 @@ export async function runRealPaperBenchmark(
         topN: candidateDepth,
         venueCats: Recommender.autoDetectCats(lines),
         fieldedLexical: true,
+        semanticSimilarities,
       },
     ) as VenueRecommendation[];
     const candidateFeatures = recommendations
@@ -2766,6 +2805,7 @@ export async function runRealPaperBenchmark(
       .sort((left, right) => left.venue.localeCompare(right.venue));
     if (
       fixed &&
+      !featureBaselineData &&
       !collectedFeatures &&
       candidateDepth === rows.length &&
       JSON.stringify(fixed.candidates) !== JSON.stringify(candidateFeatures)
@@ -2796,7 +2836,11 @@ export async function runRealPaperBenchmark(
           left.venueKey.localeCompare(right.venueKey),
       );
     const semantic = recommendations
-      .filter((recommendation) => recommendation.fit.semanticScore > 0)
+      .filter((recommendation) =>
+        semanticSimilarities
+          ? semanticSimilarities[recommendation.venueKey] > 0
+          : recommendation.fit.semanticScore > 0,
+      )
       .sort(
         (left, right) =>
           (left.fit.semanticRank ?? Number.MAX_SAFE_INTEGER) -
@@ -2845,7 +2889,11 @@ export async function runRealPaperBenchmark(
     const confidence: Record<string, string> = {};
     const probability: Record<string, { top1: number; top5: number }> = {};
     const failures: Record<string, FailureClassification> = {};
-    const depthKeys = ["50", "100", "200", "all"] as const;
+    // Baseline checks still evaluate every frozen feature and the quality floors.
+    // Pool-depth diagnostics are measured on the current pool in the outer run.
+    const depthKeys = includeCandidateDepthDiagnostics
+      ? (["50", "100", "200", "all"] as const)
+      : (["all"] as const);
     const depthCounters = Object.fromEntries(
       depthKeys.map((depth) => [
         depth,
@@ -2892,7 +2940,7 @@ export async function runRealPaperBenchmark(
       if (split !== "negative") {
         const acceptable = new Set("acceptable_venues" in record ? record.acceptable_venues : []);
         recordDepth("all", evaluation, acceptable, elapsed);
-        for (const depth of [50, 100, 200] as const) {
+        for (const depth of includeCandidateDepthDiagnostics ? ([50, 100, 200] as const) : []) {
           const depthStart = performance.now();
           const depthEvaluation = recommend(record, rows, bundle, split, depth);
           recordDepth(
@@ -3406,6 +3454,9 @@ export async function main(
         requiredFeatures,
         args.writeRequiredFeatures ? collectedFeatures : undefined,
         args.taxonomyDetail,
+        args.realV2FeatureBaseline
+          ? JSON.parse(readFileSync(args.realV2FeatureBaseline, "utf8"))
+          : undefined,
       );
       if (args.writeRequiredFeatures) {
         const benchmarkProfiles = run.result.benchmark_embeddings;
@@ -3508,6 +3559,9 @@ export async function main(
         JSON.stringify(
           {
             ...run.result,
+            ...(args.realV2FeatureBaseline
+              ? { feature_baseline: { path: args.realV2FeatureBaseline, verified: true } }
+              : {}),
             benchmark_content_id: benchmarkContentId,
             semantic_content_id: semanticContentId,
             passed: regressions.length === 0,
@@ -3602,7 +3656,7 @@ export async function main(
         }
       }
       const seenPaper = new Set<string>();
-      for (const w of contentWords((VENUE_PAPERS[c.key] ?? []).join(" "))) {
+      for (const w of contentWords((getVenuePapers()[c.key] ?? []).join(" "))) {
         // paper 語彙の汎用語（self/general/framework 等）はスコアリングで加点されないので df にも数えない。
         if (GEN_PAPER.has(w)) continue;
         if (!seenPaper.has(w)) {
@@ -3674,7 +3728,7 @@ export async function main(
       // 代表論文語彙（embedding 側の VENUE_PAPERS と同じ出典）— 語彙一致にも効かせる。
       // 本番ではデータパイプラインが conferences に papers を載せる。
       // 無い場合は空として扱う。
-      papers: VENUE_PAPERS[c.key] ?? [],
+      papers: getVenuePapers()[c.key] ?? [],
     },
     cats: c.categories ?? [],
   });

@@ -5,6 +5,9 @@ HPC・ネットワーク・システム・AI 系会議の投稿締切と開催�
 手元の更新手順は `README.md` の「更新の仕組み」に定める。
 `.github/workflows/` の GitHub Actions は同じ検査を CI で実行し、main への push で
 Pages 配信とデータ更新 PR を扱える。
+実モデルの埋め込みの検査（CI の `real-embedding-models`、`npm run test:models`）は当面は必須にしない。
+量子化演算が環境で僅かに揺れ、正解が上位 5 件の境目にある事例で落ちるため（2026-10-17 決定）。
+結果は警告と実行概要に出し、境目の事例は意味検索の調査で扱う。
 
 この文書は実装の契約である。ここに書かれた型、関数シグネチャ、ファイル構成から逸脱しない。
 プロジェクト名は `kamiyobi` とする。
@@ -41,7 +44,7 @@ Git API のファイル単位取得はレート制限に当たるので使わな
       place: Denver, Colorado, USA
 ```
 
-**確認済みの罠（実測値つき。推測ではない）**
+**確認済みの罠（実測の数つき。推測ではない）**
 
 1. **再帰探索が必要**。`conference/*/*.yml` の 1 階層グロブでは `conference/DB/pods/pods.yml`
    を取りこぼす。`conference/**/*.yml` で辿り、`conference/types.yml`（分野定義であり
@@ -58,7 +61,7 @@ Git API のファイル単位取得はレート制限に当たるので使わな
    `UTC-5`(28) `UTC-4`(23) `PT`(10) `UTC+1`(7) `UTC+7`(3) `UTC+10`(3) `UTC+2`(2)
    `UTC+3`(2) `UTC-10`(2) `UTC-11`(2) `UTC-6`(1) `UTC+9`(1)。
    `PT` は固定オフセットにしてはならない。VLDB は毎月 1 日の締切を持ち夏時間境界をまたぐ。
-6. `date` は自由文。構造化された開始終了日は **無い**。実在形状の上位:
+6. `date` は自由文。構造化された開始終了日は **ない**。実在形状の上位:
    `July 20-23, 2026` / `September 29 - October 3, 2025` / `Oct 12-16, 2025` /
    `June 28 - July 2, 2026`。
    §3 の 6 例をそのまま正規表現化した厳密版で **96.4%**、月略記の `.`・en dash・`Sept`
@@ -100,7 +103,7 @@ Git API のファイル単位取得はレート制限に当たるので使わな
   tags: [machine-learning]
 ```
 
-**確認済みの罠（実測値つき）**
+**確認済みの罠（実測の数つき）**
 
 1. **旧形式は 13 版**（`deadlines` キー自体を持たない）。うち 8 版がトップレベルに
    `deadline` / `abstract_deadline` / `timezone` を直に持つ。
@@ -124,7 +127,7 @@ Git API のファイル単位取得はレート制限に当たるので使わな
 8. ファイルはリスト形式のこともスカラー（単一 dict）のこともある。両方受ける。
 9. トップレベルに `rebuttal_period_end` `final_decision_date` `review_release_date` が
    各 2 件ある。**これらは読まない**（`deadlines` を持つ版にのみ現れる冗長データ）。
-10. `date`/`start`/`end` が全て無い版が 1 件（`eurographics27`）。
+10. `date`/`start`/`end` が全てない版が 1 件（`eurographics27`）。
 
 ---
 
@@ -185,32 +188,58 @@ kamiyobi/
 │   ├── reverify.ts               # 公式ページ再確認と台帳更新
 │   ├── evidence.ts              # 証拠本文の検証・インデックス・回収
 │   ├── identity-migration.ts     # health gate 用の明示的 identity 移行契約
+│   ├── history.ts              # 公開済み過年度履歴の保持
 │   ├── semantic-content.ts     # sealed bundle の semantic_content_id 算出
 │   ├── embeddings.ts            # 埋め込み生成
+│   ├── embedding-profiles.ts    # 会議プロファイルの組み立て
+│   ├── embedding-runtime.ts     # 実モデルの推論とベクトル生成
 │   ├── bench-recommender.ts     # 推薦ベンチ
 │   ├── build.ts                 # JSON/CSV/MD/llms.txt/HTML 出力
+│   ├── semantic-profile-cache.ts # MCPの推論入力別キャッシュ
+│   ├── mcp-semantic.ts          # MCPの英日実モデル推論
+│   ├── semantic-model-error.ts  # 実モデルの失敗情報
+│   ├── prepare-models.ts        # 英日実モデルの準備・確認
+│   ├── mcp.ts                   # AI から引く読み取り専用の MCP サーバ（stdio）
 │   └── cli.ts                   # エントリポイント
 ├── site/
 │   ├── tsconfig.json            # strict なブラウザ TypeScript の型検査
 │   ├── tsconfig.build.json      # public/ 用 JavaScript emit
 │   ├── template.html            # コア UI（表・絞り込み。外部 CDN なし）
 │   ├── app.ts                   # ブラウザ UI 実行時処理
+│   ├── submission-identity.ts   # 公式照合済みの同一募集を元記録を保持して統合表示
+│   ├── place-aliases.ts         # 國名・都市名の打ち方を収録の表記へ寄せる表
+│   ├── topic-aliases.ts         # 主題の日本語の打ち方を會議名の英字檢索語へ寄せる表
+│   ├── latin-retype.ts          # 欧文の語を一文字違いの検索語に、収録済みの綴りを提案する表
 │   ├── recommender.ts           # 論文推薦（§10。任意 CDN）
 │   ├── recommendation-core.ts   # browser / benchmark / test 共通の推薦軸
+│   ├── recommendation.ts        # browser / benchmark 共通の語彙fallbackと掲載先指定
 │   ├── publish.ts               # publish manifest のブラウザ側検証
+│   ├── ics.ts                   # カレンダー（RFC 5545）の組み立て（配付物と画面の書き出しで共通）
 │   └── runtime.d.ts             # ブラウザ・生成データの型境界
 ├── scripts/
 │   ├── compare-head.ts          # snapshot / primary_overrides の実質差分
+│   ├── update-data-pr-body.ts    # 完全診断を保持しつつGitHubのPR本文上限内に要約
+│   ├── clean_tmp.ts              # 検査の使い捨て目録を掃く（一時間より古い物だけ）
 │   ├── health-gate.ts           # 直近の健全な公開結果との配信前健全性ゲート
+│   ├── ja-text-audit.ts        # 利用者に出る文の旧字体・中国語の候補出し
 │   ├── generate-curated.ts      # promotion 正典から local 正典を再生成
 │   ├── generate-venue-profiles.ts # 出典情報付きプロフィール成果物の再生成
 │   ├── observe-cfp.ts           # CFP 本文・応答・抽出候補の保存
+│   ├── refresh-ieice.ts         # 研究会発表申込システムから国内研究会の会期・締切を更新
 │   ├── restore-recommendation-bundle.ts # 互換推薦 artifact の検証・復元
 │   ├── seal-recommendation-bundle.ts # semantic_content_id 付き bundle 封印
+│   ├── capture-published-history.ts # 実公開 manifest/data の照合保存
 │   ├── semantic-content.ts     # semantic content id の算出 CLI
 │   ├── train-reranker.ts       # dev-only reranker 学習・CV・校正 artifact 生成
 │   ├── validate-data.ts         # 公開データの意味検査
 │   ├── verify-cfp.ts            # CFP 観測の項目別検証
+│   ├── verify-mcp-semantic.ts     # MCP実モデルの隔離破壊検証
+│   ├── verify-mcp-recovery.ts     # 同じ接続でのモデル準備・再試行の破壊検証
+│   ├── verify-mcp-interrupted.ts  # 通信失敗後の準備・再試行の破壊検証
+│   ├── verify-llms-event-counts.ts # 動的な会期件数表示の破壊検証
+│   ├── verify-live-consumers.ts     # 全収録会議の画面・MCP共通処理を隔離環境で破壊検証
+│   ├── verify-full-pool-retrieval.ts # 全収録会議・実モデルの隔離改変検査
+│   ├── verify-recommendation-retrieval.ts # 隔離環境で推薦の改変検査
 │   ├── promote-candidates.ts    # promotion batch の決定・manifest 生成
 │   ├── reverification-manifest.ts # VerificationState からの再検証マニフェスト生成
 │   └── check-reproducible-build.zsh # 固定時刻ビルドの再現性検査
@@ -233,6 +262,14 @@ export type Deadline = ExactDeadline | DateOnlyDeadline;
 export interface DeadlineEstimate { point_estimate: string; window_start: string; window_end: string; source_editions: number[]; method: "median-interval"; confidence: "low" | "medium"; }
 export interface Edition { year: number; edition_id: string; link: string; place: string; date_text: string; event_start: Date | null; event_end: Date | null; deadlines: Deadline[]; estimated: boolean; estimate?: DeadlineEstimate; source: string; }
 export interface Conference { key: string; title: string; full_name: string; link: string; rank: Record<string, string>; dblp: string | null; upstream_sub: string | null; tags: string[]; categories: string[]; editions: Edition[]; sources: string[]; }
+// Optional event metadata: event_review pins this edition's exact source wording,
+// date bounds, HTTPS evidence URL, review date and note. held_year distinguishes
+// a reviewed postponed event from its nominal edition year; changed source dates
+// must fail validation, never be overwritten to match the review.
+// event_segments: {start: string; end: string; label: string}[] represents separate
+// actual sessions. Every part remains <=31 days, ordered and non-overlapping;
+// the exact source dates or reviewed envelope must match, and a long envelope
+// must contain a real gap. event_date_precision is "split-dates" for these rows.
 ```
 
 ### 3.1 キーの決め方（衝突が実在するので規則を凍結する）
@@ -281,7 +318,8 @@ export type TzResolution =
 
 export function resolveTzStatus(tzRaw: string | null | undefined): TzResolution;
 export function isConfirmedTimezone(tzRaw: string | null | undefined): boolean;
-// 'AoE'/'aoe' -> {kind:'fixed', offsetMinutes:-720}
+// 'AoE'/'aoe' / 'Anywhere on Earth'（the / inhabited を含む表記も）-> UTC-12
+// '日本時間' / 'Japan Standard Time' は JST（Asia/Tokyo）として受ける
 // 'UTC' / 'GMT' -> {kind:'fixed', offsetMinutes:0}
 // 'UTC+8' 'UTC-08' 'GMT+02' 'UTC+0' 'UTC+05:30' -> 固定オフセット
 //   （ゼロ埋め・1〜2桁・コロン区切りの全てを受ける）
@@ -397,10 +435,41 @@ cache-fallback・snapshot-fallback・failed・offline のいずれかを含む b
 
 各データ源の新鮮な parser 出力は `data/source-snapshots/<source>.json` にも保存する。
 source snapshot は他の源と統合する前の会議・版・締切配列、source revision、取得時刻、入力 hash を持つ。
-offline build は失敗した源に対応する source snapshot を優先し、無い場合だけ統合済み snapshot の源情報へ退避する。
+offline build は失敗した源に対応する source snapshot を優先し、ない場合だけ統合済み snapshot の源情報へ退避する。
 source snapshot の parser 形式は `conferencesFromJson` が読み戻せる契約とする。
 一次ソースの手動訂正は `data/source-snapshots/primary.json` に同じ形式で保存し、
 `primary_overrides.yaml` がないオフライン build からも復元する。
+
+### 3.5.1 公開済みの過年度履歴
+
+上流取得が成功しても、公開済みの非推定・過年度 edition を無根拠に短縮・削除しない。
+`update-data` は実公開の `publish.json` と `data.json` を取得し、SHA-256 と commit identity を
+照合する。取得失敗・空データ・不一致は中断する。この同じ保存ファイルを両 build の
+`--history-baseline` に渡す。生成済み候補や再生成した main を公開履歴の代わりにしない。
+
+`src/history.ts` は、年が build 年より小さい上流 edition の会期・精度・分割会期と既存締切
+スロットを保持する。新しい edition・新しい締切スロットは取り込む。venue の確定 identity・
+公開 key を優先し、edition の明示 ID または同じ venue・年度内で一意の公式 URL で照合する。
+明示 ID で対応済みの候補は先に確保し、別の公開版への URL 照合で再利用しない。
+ID が変わった場合は `legacy_ids` に旧 ID を記録し、次回更新でも引き継ぐ。
+対応する ID・公式 URL がない過去版は別 edition として復元し、年度だけで統合しない。
+複数候補に対応する曖昧な照合や多対一は失敗させる。
+local 正典の削除や推定値は復活させない。
+CoRL 2025 の汎用 URL と年度別 URL は公式アーカイブに基づく `edition_identities` で結び、
+同一開催の二重収録と取得失敗時の復元衝突を防ぐ。
+
+候補と公開基準の両方に手動 overrides と検証済み一次ソースを適用してから照合するので、
+根拠のある訂正・延期・削除は引き続き可能である。履歴復元は rollforward の後に行い、
+復元した過去版から新しい推定版を作らない。TCC 2023・SYSTOR 2024・CSCW 2022 は公式に基づく個別訂正を持つ。
+保持の判断は baseline hash とともに `--history-report PATH` の診断 JSON に出力し、
+更新 artifact に残す。公開ディレクトリには追加しない。
+これは公式確認済みへの格上げを意味しない。ISS 2025 の保存済み2締切は集約元由来のまま残す。
+
+引数がなければ online / offline とも開始時の `data/snapshot.json` を比較に使う。
+公開用 deploy/bundle もコミット済み snapshot を明示する。
+固定入力テストの build は更新対象データを混ぜない。
+検索の旧来の実測件数は `query-reference-data.json.gz.base64` の固定入力と固定 hash で検査し、
+現行 snapshot の都市網羅性・日本語検索の同値性は別の実データ検査で維持する。
 
 ### 3.6 統合
 
@@ -442,8 +511,9 @@ export function rollforward(
 // 推定間隔は直近 2 版の実間隔の中央値、取れなければ 364 日。曜日を保つ
 // 未来の版が既に存在する会議には足さない
 export function select(confs: Conference[], config: Record<string, unknown>): Conference[];
-// カテゴリ・exclude・rank_filter に加え、締切も開催日も持たない会議を落とす
-// （全出力が日付を軸にするので、そういう会議はどこにも描画されず件数だけ増やす）
+// カテゴリ・exclude・rank_filter で収録を選ぶ。
+// taxonomy.*.venues と rank_filter.always_keep は、ランク条件と日付の有無で落とさない。
+// journal タグの会議も日付未収録で保持する。他の会議は締切・開催日のあるものを対象とする。
 export function dedupDeadlinesAfterRollforward(
   confs: Conference[],
   config: Record<string, unknown>,
@@ -462,8 +532,14 @@ slot は `kind`・`round`・正規化した非汎用 `track` で識別し、異�
 | **同じ源** | `at_utc` が完全一致し、かつ空白と大小文字を正規化した `label` も一致 |
 
 この時刻幅は `exact` 同士に適用する。
+
+label から読んだ track が食い違っても、異なる源の 2 件が次をすべて満たすときは同じ slot として畳む。
+どちらの源も此の `kind` の締切を 1 件しか持たない、`exact` 同士で差が 60 秒未満、
+少なくとも片方が汎用 label（"Paper submission" など）。
+`23:59:00` と `23:59:59` の丸め違いで、"Technical Papers Abstract" と "Abstract submission" が 2 行並ぶのを防ぐ。
+ERA と SEIP のように両方がトラック名のものは畳まない。
 `date-only` 同士は `local_date` が同じ場合に畳む。
-`exact` と `date-only` は exact が date-only の不確実性区間内にある場合に同一slotの精度差として畳み、
+`exact` と `date-only` は exact が date-only の不確実性区間内にある場合に同一の締切として精度差に畳み、
 exact を採用して双方の evidence を保持する。区間外なら競合として保持する。
 
 窓の中に候補が複数あるときは**最も近いもの**に畳む。先頭一致にすると、SIGGRAPH 2026 で
@@ -539,7 +615,7 @@ export async function buildAll(
 ```sh
 node --experimental-strip-types src/cli.ts build [--out public] [--config config.yaml]
                               [--offline] [--now 2026-08-09T00:00:00Z] [--cache .cache]
-                              [--no-embeddings]
+                              [--no-embeddings] [--history-baseline PATH] [--history-report PATH]
 node --experimental-strip-types src/cli.ts discover [--out path] [--categories hpc,systems]
                               [--candidate-out path] [--min-year year] [--dry-run] [--append]
 node --experimental-strip-types src/cli.ts review [--candidates data/discovery/active.yaml]
@@ -571,6 +647,12 @@ node --experimental-strip-types src/cli.ts evidence [verify|gc] [--dry-run]
 同じ公式 URL の複数枠は一度だけ取得し、ETag または Last-Modified がある場合は条件付き取得を行う。
 取得本文が示す日付が現行値と異なる場合は変更種別付きの resolution を記録するが、公開データを自動上書きしない。
 精度向上と本文に明示された締切延長だけを `changed` とし、前倒し、精度低下、別トラック、曖昧な候補は `manual-required` とする。
+`manual-required` は**公式ページから締切を 1 つに確定できなかった行**であり、理由は一つではない –
+公式ページを自動で見に行けない（`autoSource` が偽。実測 2026-10-16: 台帳の `manual-required` 352 件のうち 349 件）・
+候補が複数で一意に決まらない・本文が取れなかった、のいずれかである。画面の札は理由を一つに決め打たず
+「要確認」と出す（候補が複数あった事にしない）。公式ページは取れたのに締切を読み取れなかった行は
+`parser-failed`（札は「読み取り失敗」）として分ける。札の語に「公式」を入れない – 全行に出る二字は
+検索語にしない決まりがある（入れると絞れず、絞れたと誤信させる）。
 `evidence verify` は content hash、本文参照、サイズ、秘密情報を含むヘッダ、孤立本文を検査し、`evidence gc` は未参照本文を dry-run で確認した後にゴミ箱へ移す。
 
 ---
@@ -582,22 +664,47 @@ node --experimental-strip-types src/cli.ts evidence [verify|gc] [--dry-run]
 
 | ファイル | 内容 |
 |---|---|
+| `upcoming.html` | 直近の締切と開催の静的な表 |
+| `404.html` | 存在しない URL から一覧へ戻る案内 |
+| `robots.txt` | 機械が最初に読む 1 枚（RFC 9309）。`Allow: /` と `Sitemap:`、AI の索引 `llms.txt` の絶対 URL |
+| `sitemap.xml` | 人が開く口（`/`・`upcoming.html`・`upcoming.md`・`llms.txt`）の絶対 URL と `lastmod` |
+| `deadlines.ics` | 今後の締切の購読用カレンダー（§4.2） |
 | `index.html` | 静的サイト（テンプレートに正規化データを埋め込む） |
 | `data.json` | 正規化データ全体（機械可読の正）。推定版も含む |
 | `health.json` | 確定・推定締切、ソース状態、警告、カテゴリ、出力ファイルの健全性レポート |
 | `health.md` | `health.json` の人間向け要約 |
 | `publish.json` | 埋め込み復元・生成後の最終成果物ハッシュと `semantic_status` |
-| `catalog.json` | 締切画面向けの現在・近日期間カタログ。履歴と論文プロフィールを含めず、全履歴の `history_ref` を持つ |
+| `catalog.json` | 締切画面向けの現在・近日期間カタログ（画面の最初の一覧に出る物）。履歴と論文プロフィールを含めず、全履歴の `history_ref` を持つ。**載る締切の件数と範囲は索引に実測で書く** |
 | `recommendation-index.json` | 投稿先推薦用の会議プロフィール、代表締切、埋め込みマニフェスト参照 |
 | `data.csv` | 1 行 1 締切の平坦な表。推定版も含む |
-| `upcoming.md` | 直近 N 日の締切と開催日の表（N は `site.upcoming_days`、既定 180） |
+| `upcoming.md` | 直近 N 日の締切と開催日の表（N は `site.upcoming_days`、既定 180）。列は 日付・残り・会議・種別・ラウンド・推定・開催地・会期・状態・**ランク**。列は**末尾に足す**（列の順序で読む下流を壊さない – `data.csv` の `kind_ja` と同じ判断） |
 | `llms.txt` | エージェント向け出力索引 |
 | `embeddings.json` | 会議スコープの埋め込み（§10）。`--no-embeddings` で省略可 |
 | `recommender.js` | `site/recommender.ts` から生成するサイトの推薦ロジック |
+| `recommendation.js` | `site/recommendation.ts` から生成する共有の語彙fallback・掲載先指定処理 |
+| `place-aliases.js` | `site/place-aliases.ts` から生成する、開催地の寄せ先の表（`recommender.js` が import） |
+| `topic-aliases.js` | `site/topic-aliases.ts` から生成する、主題の寄せ先の表（`recommender.js` が import） |
+| `latin-retype.js` | `site/latin-retype.ts` から生成する、欧文の打ち間違いへ収録の綴りを見当として出す表（`recommender.js` が import する。検索しは広げん – 打ち手の提案だけ）
 | `recommendation-core.js` | `site/recommendation-core.ts` から生成する共有推薦軸 |
 | `publish.js` | `site/publish.ts` から生成する publish manifest 検証 |
 | `app.js` | `site/app.ts` から生成するブラウザ UI 実行時処理 |
+| `submission-identity.js` | 公式照合済みの同一募集の表示・ICS方針 |
+| `icon.svg` | サイト自前のファビコン（図形のみ。外部フォントに依存しない） |
 | `.nojekyll` | Pages の Jekyll 処理を無効化 |
+
+`index.html` には機械可読の自己紹介を 1 つ置く（`<script type="application/ld+json">` の
+schema.org `Dataset`）。題と説明は雛形の `<title>` と `<meta name="description">` から取り
+（同じ文を二か所に書かない）、`dateModified` は `data.json` の `generated_at`、`temporalCoverage` は
+締切を数え直した最初と最後の JST の暦日、`distribution` は毎回書く 4 本
+（`data.json`・`data.csv`・`deadlines.ics`・`llms.txt`）にする。`--no-embeddings` で消える
+`embeddings.json` は並べない（無い物を名指さない）。雛形の印（`<!--__JSONLD__-->`）が無ければ
+ビルドは止まる。中身は `</` を退避して頁を割らない。
+
+機械と AI の入口は三段にする。クローラは `robots.txt` を最初に読み、そこから `sitemap.xml` と
+AI の索引 `llms.txt` の絶対 URL を知る。`sitemap.xml` は人が開ける口（`/`・`upcoming.html`・
+`upcoming.md`・`llms.txt`）だけを並べ、データのファイルは索引が名指す – 頁でない物を
+site map に混ぜない。`lastmod` は生成した日（`--now` を固定したビルドではその日）にする。
+絶対 URL の正本は `site.base_url` で、`upcoming.html` の canonical と `404.html` の口と同じ値を向く。
 
 `health.json` は `profile_hash`、`confirmed_future_deadlines`、`estimated_future_deadlines`、
 `source_failures`、`snapshot_fallback`、`build_input_mode`、観測時刻・観測鮮度、
@@ -628,6 +735,7 @@ schema version の増加だけでは緩和しない。移行先欠落、同一 s
 `publish.json` は最終的な公開セットを検査する。`semantic_status` は埋め込みが有効なとき
 `ready`、省略または検証に失敗したとき `lexical-only` になる。成果物一覧の `artifacts` は `publish.json`
 自身を除く各公開ファイルのバイト数と SHA-256 を持つ。
+Pages 用アーカイブも `.nojekyll` を含む同じ一覧にするため、upload action の `include-hidden-files` を `true` にする。
 schema 4 は `source_commit`、`data_commit`、`workflow_run_id`、`dirty_worktree`、ビルド入力の SHA-256、promotion batch の SHA-256、build 時刻、Node 版、offline/cache 方針、再実行コマンドを持つ。
 `content_id` は source commit・入力・promotion・profile・モデル revision から計算し、
 `build_id` は `content_id` と生成時刻から計算する。
@@ -642,14 +750,8 @@ schema 4 は `source_commit`、`data_commit`、`workflow_run_id`、`dirty_worktr
 サイトの通常起動では `data.json` を取得せず、締切モードで過去の締切を表示するときだけ
 `history_ref` を同一 origin から一度だけ遅延取得する。取得中は状態を表示し、非 2xx・不正 JSON・
 不正な `conferences` 配列の場合は埋め込み済みカタログを使い続けて再試行を可能にする。
-推薦モードは URL に `past=1` があっても履歴を取得しない。推定の表示切替はサイト側の絞り込みで行う。
-`upcoming.md` には締切と開催日の両方を載せる。締切を持たない会議も開催行で確認できる。
-
-**`upcoming.md` の行の選び方**: `exact` の締切行は `at_utc` が `now` から N 日以内のもの、`date-only` の締切行は不確実性区間が `now` から N 日以内と重なるもの。
-`date-only` には時刻単位の残り時間を表示しない。
-不確実性区間より前は「時刻未確認」、区間内は「締切日」と表示し、区間を過ぎた行は除く。
-開催行は開始日が N 日以内で、最終日をまだ過ぎていないものを載せる。
-開催行の「残り」欄は開始前が日数、開始日が `本日開催`、会期中が `開催中(残りN日)`。
+推薦モードは URL に `past=1` があっても履歴を取得しない。推定の表示切替はサイト側の絞り込みで行う。`catalog.json` は設定した期間の一覧であり、全履歴や期間外の確定締切は `data.json` を参照する。画面は一覧・カレンダーの収録範囲を表示する。
+推薦モードの候補は既定で締切が過ぎた会議も含み（MCP の `recommend_venues` と同じ候補）、受付状況が「締切済み」と確認できた会議を外す条件は `open=1` として URL と同期する。外した件数は候補の数と並べて示し、カード・CSV・ICS は同じ絞り込みに従う。受付状況が未確認の候補は、これからとも過ぎたとも数えず、外す側にも入れない。候補の並びは既定で論文との一致の点（`fit.score`）の強い順とし、同じ点どうしは語の重なりの強い順に並べる（「一致評価」の札は証拠の形の区分で、点とは別 – 札の順ではない）。論文の題名・キーワードで会場を名指した場合は、その会場を先頭に置く。`order=deadline` で締切の近い順（日付の無い候補は後ろ、締切が過ぎた候補は最後、同じ群の中は一致順のまま）に並べ替える。候補は「ランク」でも絞れ、`rank` を URL と同期する（締切の一覧のランクと同じ判定。外した件数は候補の数と並べて示す。知らない等級は URL から落として案内する）。
 
 ### 4.1 `data.json` の形
 
@@ -666,7 +768,7 @@ schema 4 は `source_commit`、`data_commit`、`workflow_run_id`、`dirty_worktr
      "editions":[{"year":2026,"id":"sigcomm26","place":"...","link":"...",
        "event_start":"2026-08-17","event_end":"2026-08-21","estimated":false,
        "deadlines":[{"kind":"paper","label":"...","precision":"exact",
-                     "utc":"2026-02-06T23:59:59Z",
+                     "utc":"2026-02-07T11:59:59Z",
                      "aoe":"2026-02-06 23:59:59 AoE","tz_raw":"AoE","round":1,
                      "status":"confirmed",
                      "selection_rule":"source_priority_then_nearest_within_configured_window",
@@ -687,11 +789,86 @@ schema 4 は `source_commit`、`data_commit`、`workflow_run_id`、`dirty_worktr
 }
 ```
 
+トップレベルには上のほかに `legacy_key_redirects`（旧会議 key → 現在の正規 key）と `identity_migrations`（旧 slot → 現在の slot の移行契約）を持つ。形は `llms.txt` の「data.json のスキーマ要約」に書く。
+
 日付のみの締切は `precision: "date-only"`、`local_date: "YYYY-MM-DD"`、`earliest_utc`、`latest_utc`、`utc: null`、`aoe: null`、`tz_raw: null` として出力する。
 `earliest_utc` は UTC+14 における当日 00:00、`latest_utc` は UTC-12 における当日 23:59:59.999 を UTC で表した不確実性区間であり、公式締切時刻ではない。
 CSV では `deadline_precision` と `deadline_local_date` に同じ区別を保持する。
 
 ---
+### 4.2 `deadlines.ics` の形
+
+1 個の `VEVENT` は 1 個の締切。**会期（開催行）は載せない** – カレンダー側に終日が並ぶと
+締切の行が見えなくなる。
+
+- `DTSTART;VALUE=DATE` / `DTEND;VALUE=DATE` は **JST の暦日**の終日イベント（締切に継続時間は
+  ない。`DTEND` は翌日）。`TRANSP:TRANSPARENT`（締切は予定を埋めない）。
+- `SUMMARY` は「会議名：種別」。推定の行は「（推定）」を種別のかたに添える。
+- `DESCRIPTION` は `会議:` `種別:` `締切:` `開催地:`（+ 推定の注記・`詳細:` URL・`収録:`）を
+  `\n` で繋ぐ。`締切:` の値は JST（`2026-08-11 08:59（JST）`）で、時刻を確認できていない行は
+  「（時刻未確認）」を添える。開催地が出ていない行は `開催地: 未確認`（画面と同じ語）。
+- **本文に `会期:` を 1 本書く**。値は「2027-04-06(火) 〜 2027-04-09(金)」の
+  形で、1 日なら範囲を書かず、上流が推定とした会期には「（推定）」を添え、分かっていない日は
+  `会期: 未確認`（画面と同じ語）。語と形は `upcoming.md` の会期欄と同じ正本（`fmtDate` +
+  `calendarDayJa`）を呼ぶ。会期その物の `VEVENT` は立てないので（上）、出張の段取りはこの行で読む。
+- 出口の言い方（`X-WR-CALDESC`・`llms.txt`・導線の説明・画面の注記）は、**会期を並べない事と本文に
+  書く事**を同じ事実で言う。
+- **`LOCATION` は開催地が判っている行だけ**に載せる。カレンダーは場所欄を
+  そのまま旅行の段取りに使うので、「未確認」を場所として渡さない – ない場所を渡すより
+  空しい方がマシで、本当のことは `DESCRIPTION` の `開催地:` に書く。
+  語は `upcoming.md` の開催地欄と同じ正本（`Recommender.placeJa` + 県名の補い）を呼ぶ。
+- `UID` は締切日を含まない `kamiyobi-<edition_id>-<種別の印>[@kamiyobi]`。種別の印は
+  ASCII に落とせる語（`paper` など）ならそのまま、落とせない語（日本語の種別名）は
+  **同じ語の SHA-1 の先頭 8 桁**にする。**読めるかより、ビルドをまたいで同じ値になる事**を
+  取る（締切が動いても購読者の予定が入れ替わらないため）。同じ版で印が重なる行には
+  `-2`・`-3` を足す。**画面が書き出す ICS は、配付物と同じ UID を使う** – ビルドが
+  `data.json` の締切に `ics_uid` を載せ（鍵は開催回・種別・回次・原表記・JST の暦日。
+  品書は `data.json` から作るのでそのまま受け取る）、画面はそれをそのまま使う。
+  画面は SHA-1 を持たないので自分では同じ UID を組めない。**正典にも載せる**のは、
+  画面が「収録の全体を読み込む」で `data.json` を読んだ後に書き出しても同じ UID に
+  なるようにするため（品書だけに載せていた頃は、全履歴を読み込んだ後の書き出し
+  221 件が 1 つも購読側と一致しなかった – 2026-10-17 実測）。
+  `ics_uid` を持たない締切（購読の対象外）だけ画面が自分で組む – 購読の側に無いので
+  二重にはならない。
+- **種別の印が上流の自由文に依る行がある**（実測 2026-10-17: 配付の 938 行のうち 109 行）。
+  同じ版で同じ種別の日が重なる行は、種別の名に**上流のラベルを続けて**印を作る
+  （`概要締切: Abstract submission (full papers)`。画面の札が 2 つの募集を見分けるため）。
+  上流がその言葉を書き換えると、その行の UID が変わり、購読者の予定が入れ替わる
+  （読めるかより同じ値になる事を取る、という上の原則の**例外**）。揃えるには
+  ビルドをまたいで UID を覚える台帳が要る（回次で代用すると 250 行が入れ替わり、
+  しかも同じ回次の重なりは解けない – 実測）。
+  **この例外が実際に予定を入れ替えた事は、まだ観測していない**: 2026-10-11 の
+  `data/snapshot.json` と 2026-10-17 のビルドを、同じ版・種別・回次の組で 1 対 1 に
+  突き合わせると 4,736 組あり、**印が変わった組は 0**（消えた 89 件は収録から外れた行で、
+  印が変わった物ではない）。台帳を足すかどうかは、此の観測が動いてからで足りる。
+- TEXT 値は転義（`\,` `\;` `\\` `\n`）し、1 行 75 オクテット以内へ畳む。折り返しで 2 文字の
+  転義の途中を割らない。
+- **`X-WR-CALDESC` は、値を空白で始めない**。RFC 5545 §3.1 は名前とコロンとの間に
+  空白を置かないと定めており、相手は残した空白を値の一部として情報欄に出す。
+- 説明欄には **入る件数と、収録している最初・最後の締切日**を実測の値で書く。
+  カレンダー側に「画面上の全件」のような位置の語は通じない上、収録の期間は画面に並べる
+  期間より長い（2026-08-09 生成のビルドで 928 件・2026-08-09 〜 2028-03-30、画面の既定窓は
+  生成から 180 日）。同じ期間を想像して購読すると、予定の方が 2 年分になる。
+  同じ申告は `catalog.json` の `calendar`（`event_count`・`first_day`・`last_day`）にも載り、
+  画面の「カレンダーに追加（.ics）」の下の注記がそれを読む – **数はビルドが行から導く一度きりで、
+  画面は数え直さない**（別々に数えた物は必ずズレる）。
+- **分野を `CATEGORIES` と説明行の `分野:` の両方に載せる**。実測
+  （2026-08-09 生成ビルド）で、928 個の `VEVENT` のうち `CATEGORIES` を持つ物は **0 個**、
+  `DESCRIPTION` は 会議 / 種別 / 締切 / 開催地 / 詳細 / 収録 の 6 項目だけだった –
+  セキュリティの会議だけを予定に入れたい人は 928 件を丸ごと購読するしかなく、カレンダーの
+  検索で分野の語を引く術も無かった。語は画面の分野列と同じ入口（`Recommender.categoryLabelJa`）
+  から取り、**受信側に英字の内部表記だけを見せない**（未知の語は画面と同じく原文のまま）。
+  説明行の側は、受信側が分類欄を表示しなくても本文の検索に掛かる – 表示対応は kamiyobi 側では
+  検証していないので、検証できる側の経路を必ず持つ。費用は実測で `deadlines.ics` が
+  生 +55,393 / gzip +4,356 バイト、`index.html` が生 +523 / gzip +169 バイト
+  （`catalog.json`・`data.json`・`data.csv`・`upcoming.md` は 1 バイトも同じ）。
+
+- **ランクを説明行の `ランク:` に載せる**（分野と同じ理由 – 購読した人はカレンダーしか
+  見ない）。語は画面のランク列と同じ入口（`Recommender.rankPairLabelJa`）から取り、
+  「CCF A・CORE A*」の形にする。**等級が無い会議には行を立てない** – 毎回「未確認」を
+  書くと本文が空語で埋まり、読む側の役に立たない。実測 2026-10-17: 配付の 938 行のうち
+  560 行が持ち、本文の長さの中央値は 205 → 232 文字。画面の書き出しも同じ行を出す
+  （書き出しの材料に `ScreenDeadlineInput.rank` として渡す）。
 
 ## 5. 分類とキュレーション（`config.yaml`）
 
@@ -831,11 +1008,47 @@ conferences:
   vldb.org / bigdataieee.org 等）は静的 HTML に締切が無く現行抽出では 0 件になる
   ため登録しない。必要になったら個別の抽出ルールを `src/fetch-primary.ts` に足す。
 
+### 国内研究会のスケジュール表（`scripts/refresh-ieice.ts`）
+
+- 情報処理学会・電子情報通信学会の研究会は、個別イベントページの URL だけが `data/manual.yaml`
+  に残りがちで、会期が追加されても締切が増えない。`scripts/refresh-ieice.ts` は研究会別の
+  スケジュール表（`ken.ieice.org/ken/program/?tgid=IEICE-<略称>`）を巡回して、会期と
+  「発表申込締切日」を `data/manual.yaml` に反映する。既定は dry-run、`--apply` で書き込む。
+- **項目が日付しか持たない**ので `precision: date-only` で収録し、時刻（23:59 など）は補わない。
+  会期のみ・締切 `[未定]` の回は会期だけを追記する。
+- 反映は **空の `deadlines: []` の充填と、未登録の会期の追記だけ**。既存の締切値は書き換えない
+  （人手で確定済みの値を上流の下記修正で壊さない）。版をまたいだ前方検索は事故になる
+  （過ぎた回へ次回の締切を登録してしまう。2026-09-22 の dry-run で実検出し、版単位の
+  置換に直した）。
+- 会議ブロック自体は人が足す（`editions: []` の空リストで置く）。そのとき **空のインライン
+  リストへ直接項を挿すと YAML が壊れる**（`editions: []` の直下に 6 字下げの項が来る）。
+  ブロック表記へ直してから追記する（2026-09-22 の dry-run で実検出）。
+- 収録済みは NS・IN・ISEC・CPSY・RCS・NV に加え、2026-09-22 に NWS・DC・ICSS・IBISML・DE・SS を
+  追加した（公式ページの `<title>` から研究会名を取り、`full_name` の裏を取っている）。
+  SUSC と AI は公式ページに開催が 1 件も出ていないので未登録のまま（空の会議を作らない）。
+- 収録していない研究会は自動で増やさない。名指しでの収録は人の判断なので、実行時には
+  「公式に N 回分の開催が出ている」という報告だけを出す。
+- 書込み前に変更後の YAML を読み直し、会議キーの増加・版の消失を検出したら中止する。
+- **情報処理学会の研究会も同じシステムに乗っている**（`?tgid=IPSJ-HPC` など）。`www.ipsj.or.jp`
+  は機械取得に 403 を返すので（2026-09-22 現在も）、収録済みの IPSJ 研究会はここから更新する。
+  巡回するのは HPC・CSEC・ARC・EMB・SE・DPS・UBI に、2026-09-22 に追加した DBS・AL・IFAT・
+  CGVI・IOT（いずれも公式ページに今後の開催が出ていたものだけ。CN・ICS・MBL・HCI は
+  開催が 0 件だったので空の会議を作らず未収録）。
+  学会名付き tgid は `TGID_BY_KEY` に名指しで持ち、`-` を含む tgid はそのまま URL に使う
+  （`IEICE-` を二重に付けると空ページになる）。対応表にない tgid は IEICE の略称とみなす。
+- **版 id の接頭語は会議キーと限らない**（会議キー `ipsj-sighpc` / 版 id `ipsj-hpc-2026-12`）。
+  会議キーで id を組み立てると既存版に届かず、**締切が黙って取りこぼされる**（「更新なし」で
+  通った。2026-09-22 に実データで発見）。接頭語は既存の版 id から導く。
+- `ken.ieice.org` は既知のブラウザ UA 以外に 403 を返し、間隔を詰めると 503 を返す。
+  取得は逐次 + `--interval`（既定 12 秒）で、`--cache-dir` を併用すれば取得済み HTML から
+  オフラインで再実行できる。
+- スケジュール表の解釈は実ページの fixture（`tests/fixtures/ieice/`）で検査する。
+
 ### CFP 候補の証拠付き昇格
 
 - `scripts/observe-cfp.ts` は `--body` を必須とし、取得先と最終 URL、HTTP 状態、応答ヘッダ、取得時刻、本文 SHA-256、parser version、本文抜粋、抽出候補、source revision、保存本文を一つの capture として記録する。
 - `scripts/verify-cfp.ts` は保存本文を再読して候補を再抽出し、本文 hash、抜粋、公式ドメイン、日付候補、取得時刻、前回 capture より新しい revision を検証する。capture 内の候補配列だけでは昇格できない。
-- 公式 CFP または出版社の capture が無い観測、本文と一致しない観測、会議レビューまたはカテゴリレビューが未完了の観測は昇格しない。
+- 公式 CFP または出版社の capture がない観測、本文と一致しない観測、会議レビューまたはカテゴリレビューが未完了の観測は昇格しない。
 - `scripts/promote-candidates.ts` は参照本文を共通 CAS の `data/evidence/blobs/` へ保存し、本文参照、observations、resolutions の SHA-256 と決定一覧を `manifest.json` に封印する。本文は batch ごとに複製しない。
 - provider-aware canonicalization の最良候補と第2候補の許容差は `config.yaml` の `promotion.canonicalization_margin` で設定し、差が未満なら `hold` にする。
 - `npm run generate:curated` は各 resolution に安定した ID を割り当て、batch の決定を `curated.generated.yaml` と `promotion_ref` で参照可能にする。
@@ -866,49 +1079,95 @@ conferences:
 
 ## 7. 静的サイト（`site/template.html`）
 
-- **コア UI は静的テンプレートと strict TypeScript 実行時処理に分離**。表・絞り込み・テーマ・フォントは外部 CDN・
-  Web フォント・外部画像を使わない（#223）。`site/app.ts` は `recommender.ts`、
-  `recommendation-core.ts`、`publish.ts` を明示 import し、ビルドは同階層の
-  `app.js`、`recommender.js`、`recommendation-core.js`、`publish.js` を生成する。
-- 推薦機能だけ、オフライン時の代替動作を備えた任意 CDN を遅延ロードしてよい。
-  許可するのは次の 3 URL に限る。
-  `https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2/+esm`、
-  `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js`、
-  `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js`。
-  CDN または `embeddings.json` が使えないときは画面に意味検索を利用できないことを表示し、
-  語彙スコアと TXT 入力だけで動く。締切モードは推薦用埋め込みの有無に依存しない。
-- `index.html` は `Content-Security-Policy` を持ち、script / worker / model 接続を上記の
-  固定 origin に限定する。`unsafe-inline` は単一テンプレート内の既存 inline script/style
-  を維持するためだけに使い、外部 origin の wildcard は許可しない。
-- ビルド時に、テンプレート中の文字列 **`/*__DATA__*/null`** が
-  `data.json` 相当の JSON リテラルに置換される。これが唯一のマーカーである。
-  ビルドは JSON を JS ソースへ埋めるので `</` を `<\/` に、`<!--` を `\u003c!--` に置換し、
-  U+2028 / U+2029 をエスケープすること（実データに `&` を含む文字列が 17 箇所ある）。
-  テンプレートが無ければ警告して index.html をスキップする（テストのため）。
-- 表示: 締切までの残り時間（ブラウザのローカル時刻）と AoE 表記を併記。
-- 絞り込み: カテゴリ / 締切種別 / ランク / フリーテキスト / 推定の表示切替 / 期間(7・30・90・180・全)。
-  「締切直近 (7日以内)」プリセットは 7 日窓（`win=7d`）で動作する。
-  絞り込み状態は URL のクエリに反映する（`replaceState` で履歴を汚さない）。
-- **サイト表は投稿締切のみ表示する。** サイトの表は投稿締切（`abstract`・`paper`。
-  論文モードのみ常時受付ジャーナル `journal`）だけを描き、
-  開催・採否通知・カメラレディ等の行は出さない（種別の絞り込みにも含めない）。
-  開催日だけを持つ会議（ISC High Performance・HOTI・情報処理学会 HPC 研究会・
-  P4 Workshop・Netdev・LPC など）がサイト表から消えるのは仕様であり、利用者は
-  `upcoming.md`（§4）で開催日を追う。
-  開催行の過去判定（終了日 + 1 日）と残り日数の表示規則は §4 に定める。
-  推定版には開催日を持たせないので、開催行が推定になることはない。
-- 一覧には確認済みでない締切の警告だけを表示し、確認済みの根拠本文や変更履歴は詳細画面に限定する。
-  詳細画面では確認元、確認範囲、状態、次回確認予定、根拠本文の抜粋を表示し、未確認の値を確認済みと表示しない。
-- 過去の締切は既定で非表示、トグルで表示。トグルを締切モードで有効にしたときだけ
-  `catalog.json.history_ref` の全履歴を遅延取得し、既定の並びは締切が近い順。
-- ライト/ダーク両対応（`prefers-color-scheme`）。表は `overflow-x: auto` の中でだけ
-  横スクロールし、body は横スクロールさせない。狭い画面ではカード表示に落とす。
-- 日本語 UI。ラテン文字の英単語を不必要に混ぜない
-  （「フィルタ」ではなく「絞り込み」、「デッドライン」ではなく「締切」）。
-- 1000 件規模でも操作が引っかからないこと。コア UI に依存ライブラリは置かない
-  （推薦の任意 CDN は上の例外）。
+### 投稿締切の探索と詳細
 
----
+- 初期一覧は投稿締切を表示し、過去の締切と推定を既定で除く。種別・分野・ランク・開催地・期間・国内研究会・オンライン参加の条件は URL と同期する。
+- 上部の「これからの30日間の締切」は、モードや絞り込みに左右されず、収録全体の確定した概要・論文締切を現在時刻で数える。初期表示期間が30日未満でも同じ範囲を集計し、推定・採否通知・常時受付は数えない。集計用の `catalog.json.deadline_summary` は、生成時点で過ぎていない対象行の `t`（最早UTCミリ秒）・`tLast`（最遅UTCミリ秒）・`tShown`（暦日比較用）・`dateOnly`（時刻未確認）を持つ。個別の公式な締切日時の代わりには使わない。集計用情報のない旧データで初期表示期間が30日未満の場合は、取得済みの件数を「少なくとも」と示す。
+- 検索は `site/recommender.ts` の共通処理を使う。日本語の分野名や日付表現を解釈し、期間に解けた語は判定範囲を表示する。数字の月と今月・来月・再来月に「まで」「までに」を付けた語（`3月まで`・`来月まで`・`来年3月末まで`）は、今月からその月の末までの幅に解く（基準月より前の月を打った場合だけその月に限る。二年を超える幅は解かない）。件数欄には解いた年月の範囲を書き、「その月だけ」を見る語は月だけの語（`3月`）とする。未収録の情報や意味の定まらない期間を推測して絞らない。検索が別ラウンドや会期の日付にも当たることと、「締切まで」による絞り込みの違いを案内する。
+- 「国際会議」「国際学会」「国際カンファレンス」「国際大会」「国際コンファレンス」は、国内研究会・国内シンポジウム（`domestic-jp`）以外の会議として引く。論文誌（`journal`）と特集号（`special-issue`）は会議ではないので含めない。会議名の International では引かない（名前に International を持たない NSDI・SOSP・CHI などが落ちるため）。素の「国際」は、これに原文の international を書く行を足した和で引く。行の検索用文字列には人が打たない印 `〔国際〕` を入れる（「国際会議」その物を入れると「会議」単体が其の部分に当たる）。「CCF A」「CORE A*」のような尺度と等級は 1 つの条件として引く。
+- 行の詳細から「この会議の締切だけを一覧で見る」で、`venue=<会議の鍵>` の一覧を開ける。`venue` と `row` を同時に渡したときは `row`（1 行の詳細）が勝つ（詳細は 1 行を指す物で、一覧の絞り込みは掛からない）。`venue` は締切の一覧だけに掛かり（推薦の候補は絞らない）、件数欄に外した行数と会議の鍵を書き、適用中の条件の札と「条件クリア」で外せる。検索語と違って語の一致ではないので、短い鍵（`chi`）でも別の会議は混ざらない。
+- 画面に出ている欄の名前（`原表記` など）を打たれたら、それは値ではないと伝え、値の例を添えて打ち直しを案内する。例は実際に行が返る物にする。
+- 締切の行の検索用の文字列には公式 URL のホストも入れる（貼った URL や、同じ親サイトの一族で引けるため）。そのため**短い略称が、別の会議のドメインの一部に当たることがある**（2026-10-23 実測: `ICCV` が `iccvm.org` の cvm に当たり、ICCV 自身は 0 行なので「似た名前の会議」として案内される）。ホストを外すと日本語の下位分野の寄せ（`生体認証` → `biometrics` を含むホスト）が 6 行以上から 3 行に減り、53 本の検査が落ちたので、外さない。会期だけの行は、この理由でホストを入れていない（別の会議の名前で別の会議が出るのを避ける）。右端も閉じる案（6 文字以下の語で `foldedLetterAtWordBoundary` の `leftOnly` を切る）も試したが、`HPC`・`DB` のような略語が `hpc2027` のような繋がった形に当たらなくなり、再現率が落ちて 29 本の検査が落ちた（2026-10-23 実測）。左端だけ閉じる今の形を保つ。
+- 分野のチップには、**分野以外の条件を通った行数**を書く（選ぶ前に「何が残りそうか」「その分野が収録に無いか」が分かる。0 の分野も消さずに薄く残す）。選んだときの件数と一致することを実測で確かめる（2026-10-23: `?q=HPC&win=90d` で graphics 0・systems 2・security 1・hpc 8・ai 1 が、それぞれ選んだときの件数と一致）。
+- 0件時は、検索語を残して候補が戻る条件変更だけを件数付きで操作できる。単独の変更で戻らない場合は条件の組み合わせも調べる。全履歴が未読の過去表示は、取得済みデータの件数を下限として示す。
+- 日時は `YYYY-MM-DD(曜) HH:MM JST` を主表示とし、元の時刻とタイムゾーンを併記する。閲覧者のタイムゾーンで表示を変えない。AoE は UTC-12 として換算する。
+- `date-only` は公式の暦日を表示し、JST・UTC・AoE の時刻を作らない。不確実性区間に基づき、未到来・終了の可能性あり・締切日経過を区別する。推定は推定期間と点推定を区別する。
+- 同じ種別でも投稿トラック・ラウンド・募集が異なる締切は別に保持し、表示名と共有リンクで区別する。旧 URL が複数行に当たる場合は候補を選べるようにする。
+- 詳細では同じ開催回の全日程を確認できる。一覧の期間外の日程も表示し、前後関係だけで同じ投稿枠とは判定しない。締切の変更、確認状態、公式ページ、会期の見直し理由を示す。
+- 論文情報を入れたまま締切の一覧へ移ると、その論文に合う行に一致評価の札を付ける。並びと絞り込みは一覧のものをそのまま使い、行は消さない。合う行の数は件数欄（「この論文に合う行 N 件」）と印刷物の見出しに書き、その数が 1 件以上なら件数欄を開く。札を押すと、その行の中で当たった要素の内訳を開閉する。論文は共有 URL に含めないので、この印は URL では再現しない（紙と CSV には出る）。
+- 会期だけが分かっている開催回は、検索した語に当たれば件数欄に件数を出し、表の下に折りたたみで並べる（会期・会議名・開催地・購読一覧への導線）。0 件の画面では同じ一覧をその場に出す。件数の案内は、その一覧が下に在る事を書く。
+- 適用中の条件を個別に外せる。「条件クリア」は論文入力を消さない。戻る・進むで一覧条件と詳細を復元する。
+- 日本語 IME の変換開始時には予約済みの検索を止め、確定後に適用する。検索欄の Enter は変換中には結果へ移動しない。
+- 表・入力欄・ボタンに読み上げ用の名前を付ける。追加表示の最後にフォーカスを失わせず、件数の変化を通知する。狭い画面では追加条件を開閉できる。
+
+### 一覧の書き出し
+
+CSV と画面からダウンロードする ICS は、絞り込み後の全行を対象とする。画面に描画済みの行数で切らない。推薦候補の出力では順位と投稿トラックを保持する。購読用 `deadlines.ics` は収録全体の今後の締切であり、絞り込みを引き継がない。
+
+推薦候補の CSV は先頭に一致評価・一致の点・言葉の一致・意味の近さの 4 列を置く。締切の一覧でも、一致評価の札が付いた行が 1 つでもあれば同じ 4 列を先頭に置く（印の無い行は空欄、ファイル名は一覧のもの）。画面に出ている物を書き出しから落とさない。
+
+### 印刷
+
+紙には、画面の状態を読めない人でも読める形で出す。`#printMeta` に「この印刷物」の条件・並び順・件数・印刷した日時・データ生成時刻を書き、`printLegendJa` に紙に刷られる語の意味を並べる。但し書きは**その紙に出る語だけ**を説明する（カードを刷る推薦の紙にはカードの語（一致評価・点・受付状況・次回締切）を、論文を入れたままの締切の一覧には一致評価の札を、それぞれ出る時だけ足す）。表は全行に展開し、操作の欄（絞り込み・書き出し・並び替え）は刷らない。JavaScript なしの面（`upcoming.html`）の但し書きは画面では畳むが、紙では開いて刷る（紙では開けない）。
+
+行の詳細からは、その 1 件だけの ICS を書き出せる。予定の UID は購読用 ICS と同じ物を使い、両方を同じカレンダーに入れても同じ締切が二度並ばない。ファイル名は会議の鍵と画面に出ている日で分け、同じ日に何件落としても上書きしない。
+
+### 読み込みと外部接続
+
+サイトは `recommender.js` と `app.js` を同一 origin から読み、初期データは `catalog.json` と一致する。推薦インデックスと履歴は必要時に取得する。取得失敗は利用者に知らせ、既に読めたデータで継続または再試行できるようにする。
+
+意味検索には `cdn.jsdelivr.net` の固定版 `@xenova/transformers`、PDF 処理には `cdnjs.cloudflare.com` の固定版 `pdf.js` を使う。日本語PDFの文字対応表（CMap）は、同じ版の `pdfjs-dist` を `cdn.jsdelivr.net` から取得する。モデル取得先は `huggingface.co` と許可した CDN に限定し、CSP は必要な接続先だけ許可する。接続できないときの代替動作は語彙検索と TXT 入力である。論文本文はブラウザ内で処理し、共有 URL に含めない。
+
+生成日時と上流取得日時を分けて表示する。キャッシュ・snapshot への切り替えと取得失敗を隠さず、未確認を「情報が存在しない」と言い換えない。
+
+### MCP の名乗り
+
+`initialize` は `protocolVersion`・`capabilities`・`serverInfo` に加えて `instructions` を返す。
+道具の説明は一つずつの持ち物なので、横断の約束（`date-only` に時刻を作らない・`estimated` を確定として
+案内しない・既定で何を返すか・`scope` の二つ・会期と締切の別・投稿前に公式ページを確かめる事）を
+ここへ一度に書く。文は現代かな遣いで書く（「画面と索引の日本語」と同じ）。
+
+`instructions` の「道具:」の行は、`tools/list` が返す道具の名を漏れなく挙げる。
+道具を足したらこの行も直す – 片方だけ足すと、AI は在らない道具を探すか、在る道具に気づかない。
+`tests/mcp_server.test.ts` が両者を突き合わせる。
+
+`tools/list` の各ツールには日本語の `title` と、`annotations` の `readOnlyHint: true`・
+`openWorldHint: false` を付ける。保存済みの収録データとローカルモデルを読む処理であり、
+データの変更や外部通信を行わないことを接続先へ伝える。配列の入力定義には要素の型も記載する。
+
+### MCP の検索契約
+
+`search_deadlines` の構造化結果は、入力の読み替え・切り捨て・無視した指定などの注意を `warnings` に返す。文章の結果と同じ説明を使い、注意がなければ空配列とする。次の要求には引き継がない。
+
+件数・日数・真偽値の引数に配列やオブジェクトが渡された場合は、暗黙に変換せず型エラーを返す。未指定値と、従来対応している文字列の数値・真偽値は引き続き受け付ける。
+
+MCP は同じ検索・推薦処理を使う読み取り専用の stdio サーバである。締切検索・会議照会・語の説明で使う文字列引数や、使う範囲指定に配列やオブジェクトが渡された場合は、値を消さずに型エラーを返す。`search_deadlines` は `scope: screen/all`、絞り込み（`rank` は等級だけならどの尺度でも当たり、`CCF A`・`core:A*` のように尺度の名を付けるとその尺度の等級だけで絞る）、`limit`（既定20、最大100）、`offset`（0以上の安全な整数）を受ける。構造化結果には件数・取得位置・次の取得位置・生成時刻・判定時刻・検索行を含め、従来のテキスト結果も返す。日付のみの行の `utc`・`jst` は null とし、推定・確認状態・投稿トラックを独立した項目にする。 常時受付のジャーナルは選択した収録範囲の会議から補い、締切日時・精度・回次を null として、日付のある行の後に並べる。締切までの日数を指定した検索には含めない。画面と同じ募集の統合処理を使い、確認済みの特集号には掲載予定・投稿言語・元の出典を `submission` に保持する。初期一覧の検索が0件のときは、同じ条件で収録全体を検索した件数・絞る前の一致数・生成時刻を `scope_comparison` に返す。比較用データを読めない場合も初期一覧の結果は保持し、`scope_comparison_error` で理由と再試行方法を示す。次ページは同じ条件で `next_offset` を `offset` に渡す。 `search_venues` は締切の有無によらず全収録会議を候補に、研究テーマ・題名・概要で投稿先を検索する。`recommend_venues` と共通の処理を使い、`retrieval: semantic` はローカルの実モデルで英日推論し、未指定は語彙検索とする。意味検索は現行プロフィールから推論し、生成済みベクトルを要求しない。モデル未準備時はエラーを返す。実モデルの失敗は `isError: true` と日本語の案内、`structuredContent.error` のコード（`MODEL_NOT_READY`・`MODEL_LOAD_FAILED`・`SEMANTIC_INFERENCE_FAILED`）、モデルID・revision、相対保存先、不足ファイルを返す。プロフィールの再推論はモデルや推論対象の文章が変わった場合に行い、締切だけの更新では再利用する。保持する結果は最大2組とし、失敗した推論は再試行できる。`candidate_venues` に検索した会議数を返す。`recommend_venues` は `offset` によるページ送りと構造化結果を返し、`rank`（`A*` などの等級、`CCF A`・`CORE A*` のような尺度付き）で候補を絞れる。判定は画面の推薦モードの「ランク」と同じで、知らない等級はその等級で 0 件になった事を文章で言う。`search_venues` の形には `rank` が無いため、そちらへ渡されたら無視した指定として案内する。構造化結果の行は `rank` を順位（1 起点）に使い、会場のランクは `venue_rank`（`ccf`・`core`・`thcpl`）に分けて持つ。語彙だけの推薦でも、画面と同じく論文から自動判定した分野（`venueCats`）を推薦核へ渡す（渡さないと同じ論文で候補の数・点・順が画面と変わる – 2026-10-18 に MCP だけ渡していなかったのを直した）。投稿先検索と推薦は、従来の文字列に加え、title・abstract・keywords・venue を持つ論文オブジェクトとその配列を受ける。題名か概要を必須とし、項目の型と未知の項目を検査する。入力の形を変えても既存の解析・件数制限・検索・推薦処理は共通とする。順位・一致評価・受付状態・締切の確認情報を保持し、常時受付の論文誌には締切日時を作らない。語彙のみの推薦では画面と同じ処理を使う。 推薦の `venue_evidence` は収録開催年数、論文サンプル数、DBLP情報・出版社情報・ランクの記載の有無を返す。創設年、会議の年齢、査読品質は推測しない。
+
+`list_upcoming` は締切と会期を時系列でまとめ、`limit`（既定・上限100）と `offset` によるページ取得、`rank`（等級。`search_deadlines` と同じ判定で、締切の行と会期の行の両方に掛ける。外した件数と知らない等級は文章で言う）に対応する。構造化結果の `items[].type` は `deadline` または `event`、`next_offset` は続きがなければ null とする。`kind` と `kinds` の両方を指定した場合は締切検索と同じく `kinds` を優先し、使わなかった `kind` を案内する。種別の空文字や文字列でない値は未知の種別として案内し、有効な種別だけを使う。不正な値だけの指定を「指定なし」に読み替えない。`scope` と `kind/kinds` は締切に適用し、会期は収録全体の同じ期間から返す（`event_scope: all`）。会期は終了日の日本時間24時まで残し、日付の確かさと分割会期を保持し、区間のラベルは文章と構造化結果の両方に示し、原表記と見直し記録もページごとの各行に保持する。`venue_info` と締切検索0件時の会期案内は共通の判定を使う。分割区間を含め、推定と不正な日付を除き、会期未発表と会期未確認を区別する。締切未収録の開催回も会期を文章で返し、構造化結果の `editions` に推定を除く全開催回の年・会期・確かさ・分割区間・開催地・各回に明示された公式URLを保持する。`rows` は選んだ範囲の締切を文章と同じ順序で返し、実際の `scope`・`catalog_fallback`・`generated_at` を添える。会期側の `event_scope`・`event_generated_at` は収録全体の出所を示し、生成時刻が未収録なら null とする。締切内の可能性がある時刻未確認の行を含め、今後の締切を先に並べ、同じ側では表示日時順とする。今後・過去の件数と次の投稿締切・直近の過去の投稿締切も構造化結果に保持する。`next_submission` と `latest_past_submission` は推定を除き、推定の見込みは `next_estimated_submission` と別の見出しで返す。推定行や期間・信頼度は落とさない。会議名・正式名・略称・会議全体の公式URLも締切の有無によらず保持し、未収録の値は null とする。開催回と締切行の構造化結果には `date_text`・`event_date_precision`・`event_segments`・`event_review` を保持し、文章には見直しの注記と原表記も添える。名前が複数の会議に当たる場合は締切の有無や表示範囲で候補を落とさず、収録全体から候補の key を返す。明示された key を名前より優先する。CLIの直近一覧でも `--json`・`--limit`・`--offset` を使える。
+
+実モデルのエラーには `retryable: true` を添え、原因を解消した後に同じ接続で再試行できることを示す。`recovery_command` は `MODEL_NOT_READY` なら対象モデルに応じて `"node src/prepare-models.ts --language en"` または `"node src/prepare-models.ts --language ja"`、読み込み・推論の失敗なら null とする。
+
+`node src/prepare-models.ts` は固定revisionの英日モデルだけを取得し、MCPと同じローカル推論経路で384次元の正規化ベクトルを確認する。`--language en` は英語、`--language ja` は日本語だけを準備・確認する。未指定と `--language both` は両方を対象とする。会議データを読まず、生成済みベクトルを要求・出力しない。`--offline` は取得せず、選択した言語の保存済みモデルだけを検証する。
+
+手元のCLIでは、投稿先検索・推薦に `--retrieval semantic` を指定して実モデルを使える。投稿先検索・推薦の `--input ファイル名` はUTF-8のテキスト・JSONを読み、`--input -` は標準入力を読む。直接入力との混在は拒否する。`--limit N` を使った場合は題名末尾の数字を件数として切り取らない。検索・推薦の `--json` は構造化結果だけを標準出力へ返し、失敗は終了コードと標準エラー出力で通知する。
+
+同じ MCP 接続でも、カタログ・snapshot・推薦索引の更新を次の要求で反映する。ファイルがない場合や読めない場合も、修復後の要求で再読込する。判定時刻は要求ごとの現在時刻とし、推薦の生成日時は推薦索引の日時を返す。
+
+締切検索・直近一覧・会議詳細で画面用カタログから収録全体へ切り替えた場合は、`catalog_error` に `CATALOG_NOT_READY`（未作成）・`CATALOG_INVALID`（形式不正）・`CATALOG_UNREADABLE`（読込不能）のいずれかを返す。相対パス `path` と `retryable: true` を含め、`recovery_command` は未作成・形式不正なら `"npm run build"`、読込不能なら null とする。文章の案内も同じ区別を使い、読込不能では再試行を先に案内する。正常な画面用カタログと、明示的に収録全体を選んだ場合には `catalog_error` を付けない。
+
+投稿先検索・推薦に必要な `public/recommendation-index.json` が未作成・形式不正・読込不能の場合は、候補0件の成功結果として扱わない。MCP は `isError: true` と `structuredContent.error` に、それぞれ `RECOMMENDATION_INDEX_NOT_READY`・`RECOMMENDATION_INDEX_INVALID`・`RECOMMENDATION_INDEX_UNREADABLE` を返す。エラーには相対パス `path`、`retryable: true`、`recovery_command` を含める。`recovery_command` は未作成・形式不正なら `"npm run build"`、読込不能なら null とする。CLI は標準エラー出力と終了コード1で通知する。失敗はキャッシュせず、ファイル更新のない一時的な読込障害も、同じ MCP 接続・同じ入力の次の要求で再試行する。
+
+### 画面と索引の日本語
+
+利用者と AI の両方が読む文（画面の案内、`llms.txt`、MCP の道具の説明と結果）は、現代かな遣いと常用漢字で書く。
+戦前の仮名遣い（`やうな`・`言ふ`・`居ります`）と旧かな・旧字（`其の`・`其れ`・`此の`・`夫々`）、
+促音の大書き（`載つて`・`従つて`）は使わない。同じ画面の中で `ように` と `やうに` が混ざる状態を残さない。
+
+打つ人の字をそのまま受けるための表は、この限りではない – `words:` の条目、旧字を寄せる `KANJI_VARIANT_FOLD_JA`、
+中国語や列挙の助詞を受ける正規表現は入力の揺れを吸収する物であり、画面の文ではない。
+検査は `tests/modern_japanese_prose.test.ts` が正本の文字列（註と正規表現を除く）に対して行う。
+
+文字と背景のコントラストは、明るい配色・暗い配色のどちらでも WCAG AA（通常の大きさの文字で 4.5）を満たす。補助の文字（`--muted`）は白地で 5.65、チップの地（`#f1f1f3`）でも 5.36、暗い配色で 5.6（2026-10-23 実測。前の色はチップの地で 4.69 と際どかったので暗くした）。
 
 ## 8. テスト（`tests/`）
 
@@ -916,7 +1175,7 @@ conferences:
 
 - `timezone.test.ts`: `resolveTz` の実在値 19 + 12 種すべて。`AoE` = UTC-12。
   `UTC-08` と `UTC-8` が同じ。IANA 名。**`PT` が夏と冬で異なるオフセットになること**。
-  不明値では UTC を代替値として使うこと。
+  不明なタイムゾーンの観測を確定締切に適用しないこと。
 - `parse.test.ts`: `parseInstant` の AoE→UTC 変換
   （`2026-04-08 23:59:00 AoE` → `2026-04-09T11:59:00Z`）。`TBD` が null。
   `parseDateRange` の月跨ぎ・年跨ぎ・略記月・`Sept.`・en dash・単日。
@@ -931,7 +1190,8 @@ conferences:
   §3.6「締切の重複統合」の 3 事象（源間の丸め違い・上流内の同日ラウンド重複・
   源間の round 表現差）がそれぞれ 1 件に畳まれること。
   NSDI 型の数か月離れたラウンドと、許容幅の外側（3601 秒差）が畳まれないこと。
-  締切も開催日も持たない会議が `select` で落ちること。
+  日付を持たない一般の会議は `select` で落とし、taxonomy で名指しした会議・
+  always_keep・journal は保持すること。名指しでも exclude と分野の条件は適用すること。
 - `snapshot.test.ts`: build の最後に `data.json` → `snapshot.json` のコピーで
   情報が落ちないこと。全データ源が失敗したとき snapshot から復旧すること。
 - `build_golden.test.ts`: 小さな固定入力から `--now` 固定でビルドし、
@@ -940,6 +1200,9 @@ conferences:
   サイト表は投稿締切のみ（`index.html has no meeting rows`）。締切を持たない会議
   （ISC High Performance・HOTI・情報処理学会 HPC 研究会）の開催日は
   `upcoming.md` に出し、index.html の表には開催行を出さない。
+  サイト UI の回帰もここで押さえる: 日時列の JST 主表記（`TZ` を変えても同一出力・曜日付き）、
+  JS 組み立て inline style への `let(--` 混入阻止、検索語に含まれる分野の日本語名と「国内」、
+  「見方のてびき」と「日時（JST）」ヘッダーの存在。
 
 `tests/fixtures/` に上流 YAML の**縮小版**を置く（ネットワーク不要）。
 実物から次のエッジケースを含む代表を抜く:
@@ -951,12 +1214,16 @@ aaai（**rebuttal_start と rebuttal_end が別日**）、hf 旧形式 1 本、
 
 ---
 
+検証は `npm run typecheck`、`npm run check`、`npm test` と固定時刻の offline build を使う。必須テストではネットワークを使わず、異常入力は隔離したコピーかメモリ内で検証する。改ざん中のソースをビルドと別のテストで同時に読まない。データを含むリポジトリ全体への一括整形は行わない。
+
+文書のテストは現行の API・利用手順・表示との整合を検査する。作業回数や変更日記の存在を必須にしない。ソースのサイズ制限と、正常例・異常例の両方に反応する文字化け検査を維持する。
+
 ## 9. 非目標
 
 - WikiCFP など HTML スクレイピング（壊れやすく、利得が小さい）。
 - 会議の採択率・査読統計。
 - ユーザ登録・購読管理。
-- 上流に無い会議の締切を推測で確定値として書くこと（推定は `estimated` フラグで区別する）。
+- 上流にない会議の締切を推測で確定値として書くこと（推定は `estimated` フラグで区別する）。
 - ANCS の収録（2021 年以降開催されていない）。
 - README の締切テーブル自動更新（ビルドが手書きのファイルを書き換える設計を避ける。
   README からは `public/upcoming.md` へリンクする）。
@@ -971,6 +1238,12 @@ aaai（**rebuttal_start と rebuttal_end が別日**）、hf 旧形式 1 本、
 ### 10.1 スコア構成
 
 - 語彙スコア（`breakdown`）: 会議名・分野シグナル・VENUE_PAPERS 語彙との一致。
+  **画面に出す文言は実装名を使わない**（利用者は実装語を読まない）。対応は
+  分野シグナル→「分野の一致」、領域タグ→「主題の一致」、カテゴリ→「分野」、
+  トピック→「主題」、同分野ブースト→「同じ分野（掲載先から推定）」、
+  語彙スコア→「言葉の一致スコア」、RRF→「2つの検索の順位を合わせて」、
+  埋め込み検索→「意味検索」、閾値→「表示の下限」。検査はビルド後の文字列列挙に
+  旧語が残っていないことを見る（コメントはビルドで消えるので、画面に出る文言だけ映る）。
 - 語彙スコアは会議名、略称、スコープ、タグ、カテゴリ、代表論文のタイトル、概要、キーワードをフィールド別に計算し、
   フィールド重みと一致根拠を保持する。
   適応ブレンド `vocabWeight`（EN: 内容語数 ≤4→0.25 / ≥5→0.4、JP: 0.6）。
@@ -1010,7 +1283,7 @@ aaai（**rebuttal_start と rebuttal_end が別日**）、hf 旧形式 1 本、
   `data/recommender-reranker.json` は training/input hash、CV、校正、閾値根拠を持ち、heldout は評価にだけ使う。
   `confidence_policy.sufficient_enabled` は dev OOF 上で precision ≥ 0.80・Wilson 95% LCB ≥ 0.65・
   coverage ≥ 0.10・positive ≥ 20 を満たすまで false であり、false の間 UI は
-  「候補 / 情報不足」の2段階のみを表示する。
+  「候補 / 重なりうすい」の2段階のみを表示する。
 - 必須検査は dev・heldout・negative の本番 semantic score と本番 reranker feature vector を固定した
   `real-paper-features.jsonl` と split 別 manifest を使う。frozen required 経路は manifest と各行の hash を決定的に検証し、
   pipeline、モデル cache、ネットワーク、埋め込み生成を一切使わず、lexical retrieval から Top-K まで本番経路を通す。
@@ -1018,17 +1291,27 @@ aaai（**rebuttal_start と rebuttal_end が別日**）、hf 旧形式 1 本、
   semantic bundle の seal には required gate と full real-paper benchmark の両方の合格が要る。
   推薦内容が不変の更新では封印済み bundle を再利用し、埋め込みモデルを読み込まない。
   bundle manifest は公開 commit (`source_commit`) と生成元 commit (`bundle_origin_commit`) を分けて記録し、
-  `semantic_content_id`・`required_gate`・`full_benchmark`・`embeddings_sha256` を持つ。
+  `semantic_content_id`・`gate_policy_id`・`required_gate`・`full_benchmark`・`embeddings_sha256` を持つ。
+  `gate_policy_id` は baseline・全 split fixture/manifest・固定 feature・品質下限/評価器・
+  推薦/埋め込み実装・seal/restore・workflow・依存 lock のファイル名と SHA-256 を束縛する。
+  再利用と復元には現行 policy の一致を要求し、policy 無しの旧 bundle も拒否する。
+  締切 snapshot 自体は policy に含めず、semantic 内容も不変なら締切だけの更新は再利用できる。
   `gate_provenance.mode` は、渡された両レポートを封緘時に再検証した `verified-reports` と、
   同じ fail-fast pipeline 内での直前合格を呼出元の責任で保証する `trusted-pipeline` を区別する。
   `verified-reports` は required / full レポートそれぞれの SHA-256 と benchmark content ID も記録する。
   復元側は現在の data から `semantic_content_id` を再計算して一致を要求し (公開 commit の一致は問わない)、
-  両 gate の `passed` も強制する。
+  両 gate の `passed` も強制する。production restore CLI の不適合は非0終了で公開を止め、
+  配信後の照合には `semantic_status` を含める。main SHA の取得失敗・空値・不正形式を
+  stale の成功 skip と扱わず失敗させ、取得に成功した正しい旧 SHA だけを skip する。
+  これは gate の来歴と公開失敗の修正であり、frozen full 経路による生成 embedding 評価の欠落、
+  trusted-pipeline の report 束縛不足、pending queue と HEAD^ baseline の問題は未解決である。
 - required と full はそれぞれ記録済みの回帰下限を持ち、heldout fused Recall@5 または negative abstention が下限を割れば失敗する。JSON レポートは検査結果としてファイルに保存する。
 - `data/benchmarks/retrieval-audit.json` は候補深度、カテゴリ、言語、会議種別、失敗分類を保存し、
   `data/benchmarks/annotation-audit.json` は受理 venue の出典、理由、注釈 revision を監査する。
 - クエリ信頼度は top-1 と top-2 の差、上位エントロピー、語彙と意味の一致、候補被覆率、入力概要の有無で記録する。
-  校正済み確率を算出できない場合、画面は確率として表示せず「候補」または「情報不足」と表示する。
+  校正済み確率を算出できない場合、画面は確率として表示せず「候補」または「重なりうすい」と表示する
+  （「情報不足」という古い語は、論文を最後まで入力してもほぼ全行に出たため、入力不足を
+  指摘する文と読まれていた – 2026-09-23 の実測を §7 に残す）。
 
 ### 10.3 会議プロファイル拡充手順（`data/venue-profiles.json`）
 
@@ -1057,3 +1340,58 @@ aaai（**rebuttal_start と rebuttal_end が別日**）、hf 旧形式 1 本、
 eurosys / ppopp。
 rtss・usenix-security は論文個別ベクトル（paperVecs）も使用する。
 paperVecs 適用条件は「1 分野に収まる + 語彙非衝突」の 2 条件であり、対象は usenix-security・rtss のみである。
+
+### 10.4 推薦の根拠と候補集合
+
+分類一致の +10 ブーストは `fused > 0`、つまり会議名・主題などに実質的な一致がある候補だけに適用する。分類だけの一致で候補を推薦せず、一致根拠がない候補のスコアは0とする。
+
+画面と MCP は同じ推薦インデックスと共通処理を使う。初期カタログには論文プロフィールがないため、それだけを推薦の根拠にしない。推薦の評価は固定された特徴量と分割で再現し、入力の更新とスコア処理の変更を区別する。
+
+### 10.5 推薦結果と論文入力
+
+候補の総数と表示済み件数を区別する。最初は `RECOMMENDATION_PAGE`（20）件を出し、「さらに表示」「すべて表示」で続きを読めるようにする。候補の書き出しも同じ順位表を使う。
+
+共有 URL にはモードと絞り込みだけを含め、論文のタイトル・概要・キーワード・参考論文は含めない。論文入力は同じタブの `sessionStorage` に保存し、入力が空なら保存済み下書きも消す。保存できない環境でも入力を続けられるようにする。URL から開いて論文欄が空の場合は、共有対象の範囲をその場で案内する。
+
+### 公式根拠と複数会期（日本語の投稿日程確認）
+
+- `Edition.year` は開催回の名称の年。延期後の開催年とは別。原文 `date_text` と元の `event_start/end` を保持する。
+- `event_review` は exact edition ID、原文、開始/終了、HTTPS公式根拠、確認日と説明を固定する。`held_year` は公式確認した実開催年（版の年または翌年）。一致しない証拠や変化した上流は検証エラーになる。収録元が実際に持つ空白違いの原文だけを `source_date_text_alternatives` に列挙でき、全候補のパース結果も固定した開始/終了と一致を要する。レビュー付きの override の `date_text` は固定値の検査用で、上流をその値に書き換えない。
+- `event_segments` は `{start, end, label}` の順序付き配列。明確な非連続日程は `split-dates` 精度で各区間を保持し、区間外を連続開催として補わない。元の期間から週次開催などに分解する場合には原文・期間に固定した公式レビューを要する。各区間の不正日付・逆順・重複・31日超は従来通り棄却する。長い連続開催を分割マーカーで許可しない。
+- 会期の確かさは一覧・詳細・CSV・ICS本文・直近一覧・MCPの文章でも保持する。`month-only` は月まで表示し、`unverified` は日付未確認、`not-announced` は会期未発表と示す。これらの開催行に「本日開催」「開催中」や確定日までの残日数を出さない。元の日付と精度はJSONに保持する。 月のみ判明の会期は、直近一覧とMCPの期間判定では開始月の初日から終了月の末日までを候補範囲とする。この範囲を確定した開催日として保存しない。 詳細の「今後の会期」も同じ確かさと分割区間を保持し、推定の開催回を混ぜない。 最初の3開催回と残りを開けるリストを出し、すべての候補に到達できるようにする。開催地の原表記は各開催回に対応させる。各回に明示された安全な公式URLがあれば、その回の公式サイトへのリンクを添える。「会期がこれから」の印は日付が確定した開催回の開始日前だけに出す。「次回予定」の判定も詳細と同じ開催回の識別子で除外する。表示中の回は識別子で除き、識別子がない旧データでは開始日で除く。延期後の開催年が開催回の年と異なる場合は、開催回の年も示す。
+- 「2030年の開催回」のような指定は、全角数字も含め、会期の暦年と分けて開催回の年を照合する。通常の年・月・年度検索を広げず、件数や検索の説明には内部の索引語を出さない。開催日を持たない特集号の掲載年を、開催回の年として照合しない。
+- 画面の締切未収録の開催回は、会期の確かさと分割区間を保持し、推定の回は含めない。検索語・分野・ランク・国内・オンラインの指定を適用し、期間は会期で判定する。開催当日・開催中は終了日の日本時間24時まで、月のみ判明はその月末まで候補に残す。未収録の締切を公式に未定と断定しない。 開催年を会議名に添え、最初の3開催回に続く候補はその場で展開できる。別一覧へのリンクは掲載期間が限られることを示し、全候補が載ると断定しない。
+- 一覧・詳細・画面CSVは共有の `eventCellJa` で各区間と参加方式を表示する。`data.csv` の末尾 `event_segments` に構造化日程を出し、元の期間欄は保持する。`upcoming.md` の開催行は各区間を別行にし、締切ICSの本文も区間を列挙する。締切ICSに開催だけの予定を混ぜない契約は維持する。
+- EvoMUSART 2027の概要登録は主催者CFP確認済みの2026-11-01、時刻未確認。時刻・タイムゾーンを推測せず、同日の論文締切とは別の種別として収録する。
+
+日時の併記は「元の日時」と呼ぶ。UTC/JST変換が正しいことと公式ページの再確認が済んだことを分け、集約サイトのexact値も公式確認済みと表示しない。
+
+### 同一の特集号募集と掲載年
+
+- 公式CFP `https://www.ipsj.or.jp/journal/cfp/27-R.html` のCOMPSAC連携特集号は、JIP（英語論文のみ）、投稿締切2026-12-01（時刻未確認）、掲載予定2027年9月号。開催日を掲載月から補わない。
+- `jip/jip-compsac2027-si` と `ipsj-27-r-compsac/ipsj-27-r26` の元の記録・年度・IDは保持する。上記CFP・ID・論文・トラック無し・date-only 2026-12-01が一致する場合だけ、画面一覧・画面CSV・締切ICSを1件にまとめる。別の日時・種別・回・トラック・CFPを黙って統合しない。
+- 表示はJIPを優先し、2027年を掲載年として明記する。旧共有リンクの行キーを別名として受け入れる。ICSは既存JIP UIDを保持する。アーカイブ用JSON/CSVの2記録は削除しない。公式根拠は `data/evidence/blobs/9972268f811c33df5e345fc94570018d6ea5ec55be146ca81b95744b7fd4f3bd.body` に保存する。
+
+### 共有リンクの同一性
+
+- 同じ会議・年度・種別・日時でも、edition ID・round・track・ラベルの違いを同一の日程としない。旧4要素キーが衝突する行だけに、これらの識別情報を含む suffix を付ける。衝突しない共有URLは維持する。
+- 複数候補がある旧URLは先頭行を黙って開かず、ラウンド・トラック付きの候補ボタンを出す。候補を選ぶと識別可能な新URLになる。元の一覧条件と日付精度は変更しない。
+- COMPSACの例外統合は各出典の元年度（JIP 2027、IPSJ 2026）・確認済みラベル（投稿締切、Submission）・明示round 1も固定する。未確認の別年度やラベルのみの別トラックは統合しない。
+
+
+### 自動更新の入力と推薦検証
+
+自動更新では `data/source-snapshots/` を生成物とデータ更新 PR に含める。offline ビルドは統合済み snapshot より先にデータ源別 snapshot を復元し、古い集約データで上書きしない。
+
+実論文の品質検査では `--real-v2-feature-baseline` を指定し、固定された入力メタデータ（main の `c06b9ff`）から候補の特徴量と基礎スコアを再現する。その後、現在の投稿先候補について同じ意味検索の観測・検索範囲・負例・品質下限を評価する。特徴量の不一致は失敗とし、入力データの変化とスコア処理の不具合を区別する。
+
+`deadline_identity_migrations` は確認済みの識別子変更を設定から公開 JSON と健全性レポートへ引き継ぐ。移行先が存在する間だけ出力し、不正な指定は拒否する。WSDM 2027 の short-paper の移行では元の確定時刻と公式 CFP を指定し、締切を作らずに上流の round-2 ラベルを訂正する。
+
+### 公開時の初回snapshotと語彙推薦の互換性
+
+- SIGMOD 2026の合同会期「May 31-June 5, 2026」と個別日程「May 31 and June 2-4, 2026」は出典の原文をそのまま保持する。個別日程のreviewを別の原文へ付けず、分割日程はparseEventSegmentsで解析する。過去の開催年・原文・会期や検証基準を書き換えてCIを通さない。
+- site/recommendation.tsはブラウザとベンチマークが共有する語彙fallback方針。入力のタイトル/keywordsに会議のkeyが単独で指定された場合、元のスコア・confidenceを変えず該当候補を優先する。部分一致・分野名は指定と見なさず、カテゴリ以外のfield根拠も主題根拠もない短い名称の誤一致は棄権する。
+- semantic推薦と固定feature artifactは従来通り。語彙fallbackのfield重み・スコアは変更せず、ブラウザが使うfieldedの語彙経路にも同じ掲載先指定方針を適用する。回帰評価の正解・閾値・heldoutによるモデル選択は変更しない。
+
+- update-data writerは既存生成branchの親履歴を保持して通常pushする。既存branchに生成データ以外の編集がある場合は停止し、同時にremoteが進んだ場合もnon-fast-forwardとして拒否する。force pushで履歴を置き換えない。
+- update-dataのPR本文はGitHubの文字数上限内に収め、長い診断は要約する。完全なcategory/deadline差分はgenerated-update artifactに保存し、その実行へのリンクを本文に含める。本文生成の確認はremote push前に行い、データ検証・health gateを省略しない。

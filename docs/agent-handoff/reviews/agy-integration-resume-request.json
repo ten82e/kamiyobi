@@ -1,0 +1,8 @@
+{
+  "conversation_id": "f64ec7d2-1064-4934-84cf-0322eec37eae",
+  "recipient": "Existing Google Antigravity CLI account; daily-cloudcode-pa.googleapis.com",
+  "exact_prompt": "Continue and finish the existing independent read-only review using only the already supplied payload. Do not use tools, inspect files, make edits, delegate, browse, or change settings. Return the requested concise JSON. Additional input record used by the UI before integration: conference evomusart-2027, edition evomusart-202727, year 2027, CFP https://easychair.org/cfp/evomusart2027; deadlines [{kind: abstract, label: Abstract registration deadline, date: 2026-11-01, precision: date-only}, {kind: paper, label: Submission deadline, date: 2026-11-01, precision: date-only}]. Do not assume any conclusion from this record.",
+  "reason": "First print process timed out while the review turn was in progress; no review was returned. Resume the same conversation without resending source.",
+  "model_or_billing_override": false,
+  "requested_at": "2026-10-03T17:59:14.952393+00:00"
+}

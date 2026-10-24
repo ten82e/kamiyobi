@@ -1,0 +1,40 @@
+{
+  "candidate_count": 696,
+  "top_k": 5,
+  "papers": [
+    {
+      "id": "gpu-interconnect-en",
+      "language": "en",
+      "source": "https://sc24.supercomputing.org/proceedings/tech_paper/tech_paper_pages/pap565.html",
+      "source_alias": "https://arxiv.org/abs/2408.14090",
+      "title": "Exploring GPU-to-GPU Communication: Insights into Supercomputer Interconnects",
+      "abstract": "Multi-GPU nodes are increasingly common in the rapidly evolving landscape of exascale supercomputers. On these systems, GPUs on the same node are connected through dedicated networks, with bandwidths up to a few terabits per second. However, gauging performance expectations and maximizing system efficiency is challenging due to different technologies, design options, and software layers. This paper comprehensively characterizes three supercomputers — Alps, Leonardo, and LUMI — each with a unique architecture and design. We focus on performance evaluation of intra-node and inter-node interconnects on up to 4096 GPUs, using a mix of intra-node and inter-node benchmarks. By analyzing its limitations and opportunities, we aim to offer practical guidance to researchers, system architects, and software developers dealing with multi-GPU supercomputing. Our results show that there is untapped bandwidth, and there are still many opportunities for optimization, ranging from network to software optimization.",
+      "acceptable_venues": ["sc", "ics", "isc-hpc", "ipdps"]
+    },
+    {
+      "id": "gpu-interconnect-ja",
+      "language": "ja",
+      "source": "https://sc24.supercomputing.org/proceedings/tech_paper/tech_paper_pages/pap565.html",
+      "source_alias": "https://arxiv.org/abs/2408.14090",
+      "title": "GPU間通信の調査：スーパーコンピュータの相互接続から得られる知見",
+      "abstract": "エクサスケールのスーパーコンピュータが急速に発展する中、複数のGPUを備えたノードが一般的になっている。同じノード上のGPUは専用のネットワークで接続され、その帯域は毎秒数テラビットに達する。しかし、技術や設計の選択肢、ソフトウェアの層が異なるため、期待できる性能の把握とシステムの効率の最大化は難しい。本論文では、それぞれ異なるアーキテクチャと設計を持つAlps、Leonardo、LUMIの3台のスーパーコンピュータを包括的に評価する。ノード内とノード間のベンチマークを組み合わせ、最大4096基のGPUで相互接続の性能を調べる。制約と改善の可能性を分析し、複数GPUを用いるスーパーコンピューティングに携わる研究者、システム設計者、ソフトウェア開発者に実用的な指針を示す。結果からは、利用されていない帯域があり、ネットワークからソフトウェアまで多くの最適化の余地が残されていることが分かった。",
+      "acceptable_venues": ["sc", "ics", "isc-hpc", "ipdps"]
+    },
+    {
+      "id": "ananke-en",
+      "language": "en",
+      "source": "https://www.usenix.org/conference/fast25/presentation/liu-jing",
+      "title": "Fast, Transparent Filesystem Microkernel Recovery with Ananke",
+      "abstract": "We introduce Ananke, a high-performance filesystem microkernel service that provides transparent recovery from unexpected filesystem failures. Ananke does so by leveraging the unique opportunity of the microkernels, running a small amount of recovery code coordinated by the host OS at the moment of a process crash. Ananke can record key pieces of information not usually available during full-system crash recovery, enabling fast and transparent recovery for applications. Through over 30,000 fault-injection experiments, we demonstrate that Ananke achieves lossless recovery; we also show that Ananke recovers quickly, usually in a few hundred milliseconds. Through real application workloads, we show that Ananke delivers high performance in the common case; the extra work needed to detect faults and prepare for recovery incurs minimal overheads.",
+      "acceptable_venues": ["osdi", "sosp", "fast", "eurosys"]
+    },
+    {
+      "id": "ananke-ja",
+      "language": "ja",
+      "source": "https://www.usenix.org/conference/fast25/presentation/liu-jing",
+      "title": "Anankeによる高速で透過的なファイルシステム・マイクロカーネルの復旧",
+      "abstract": "Anankeは、予期しないファイルシステムの障害から透過的に復旧する、高性能なファイルシステム・マイクロカーネルサービスである。マイクロカーネル特有の利点を利用し、プロセスがクラッシュした時点で、ホストOSと連携する少量の復旧コードを実行する。Anankeはシステム全体のクラッシュからの復旧では通常得られない重要な情報を記録でき、アプリケーションを高速かつ透過的に復旧できる。3万回を超える障害注入実験により、データを失わずに復旧できることを示す。復旧は高速で、通常は数百ミリ秒で完了する。実際のアプリケーションのワークロードでも、通常時に高い性能を達成している。障害の検出と復旧の準備に必要な追加処理の負担は小さい。",
+      "acceptable_venues": ["osdi", "sosp", "fast", "eurosys"]
+    }
+  ]
+}

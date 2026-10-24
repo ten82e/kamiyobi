@@ -1,0 +1,78 @@
+{
+  "candidate_count": 696,
+  "top_k": 5,
+  "papers": [
+    {
+      "id": "s2sim-en",
+      "language": "en",
+      "source": "https://www.usenix.org/conference/nsdi26/presentation/yang",
+      "title": "Diagnosing and Repairing Distributed Routing Configurations Using Selective Symbolic Simulation",
+      "abstract": "Although substantial progress has been made in automatically verifying whether distributed routing configurations comply with certain intents, diagnosing and repairing configuration errors remains manual and time-consuming. To fill this gap, we propose S2Sim, a novel system for automatic routing configuration diagnosis and repair. Our key insight is that by deriving a set of contracts that guarantees an intent-compliant variant of the erroneous configuration, we can systematically check for all contract violations in the configuration via symbolic simulation to pinpoint and repair the errors. S2Sim also introduces a series of extensions to support complex configurations (e.g., ACL, route aggregation and multi-path routing), networks (e.g., underlay and overlay networks), and intents (e.g., k-link failure tolerance). We fully implement S2Sim and evaluate its performance using real configurations from two major providers and synthesized configurations composed from their real errors and real-world topologies with different scales O(10) to O(1000). Results show that S2Sim accurately and efficiently diagnoses and repairs real configuration errors (i.e., up to 20 seconds in real networks of O(100) nodes and up to 15 minutes in synthesized networks of O(1000) nodes).",
+      "split": "development",
+      "acceptable_venues": ["nsdi", "sigcomm", "conext", "icnp"]
+    },
+    {
+      "id": "bilevel-en",
+      "language": "en",
+      "source": "https://proceedings.mlr.press/v267/xiao25i.html",
+      "title": "A First-order Generative Bilevel Optimization Framework for Diffusion Models",
+      "abstract": "Diffusion models, which iteratively denoise data samples to synthesize high-quality outputs, have achieved empirical success across domains. However, optimizing these models for downstream tasks often involves nested bilevel structures, such as tuning hyperparameters for fine-tuning tasks or noise schedules in training dynamics, where traditional bilevel methods fail due to the infinite-dimensional probability space and prohibitive sampling costs. We formalize this challenge as a generative bilevel optimization problem and address two key scenarios: (1) fine-tuning pre-trained models via an inference-only lower-level solver paired with a sample-efficient gradient estimator for the upper level, and (2) training diffusion model from scratch with noise schedule optimization by reparameterizing the lower-level problem and designing a computationally tractable gradient estimator. Our first-order bilevel framework overcomes the incompatibility of conventional bilevel methods with diffusion processes, offering theoretical grounding and computational practicality. Experiments demonstrate that our method outperforms existing fine-tuning and hyperparameter search baselines.",
+      "split": "development",
+      "acceptable_venues": ["icml", "neurips", "iclr"]
+    },
+    {
+      "id": "slate-en",
+      "language": "en",
+      "source": "https://www.usenix.org/conference/nsdi26/presentation/lim",
+      "title": "SLATE: Service Layer Traffic Engineering",
+      "abstract": "In microservice-based applications, requests flow between many microservice instances across potentially multiple geodistributed clusters. Today, the routing of requests is limited to simple load balancing, or extensions that spill requests to nearby clusters. We argue that the problem is more subtle, and that there are significant opportunities for improvement by viewing microservice request routing as a global traffic engineering problem. We present Service Layer Traffic Engineering (SLATE), a system that optimizes request routing in microservice deployments that span multiple clusters to minimize average latency and bandwidth cost. SLATE tackles challenges unique to the service layer, including multiple request traffic classes, multi-hop call trees, and service latency profiles. To achieve this, SLATE takes a unique hybrid approach combining global optimization and local exploration. SLATE outperforms state-of-the-art global load balancing by up to 18.3× in average latency and reduces egress bandwidth cost by up to 2.64× in a Kubernetes deployment of an open-source benchmark application, and shows resilient performance against dynamic changes due to its hybrid optimization approach. Our system is completely transparent to the application and can be seamlessly plugged into existing L7 proxy deployments, specifically Envoy.",
+      "split": "holdout",
+      "acceptable_venues": ["nsdi", "sigcomm", "conext", "icnp"]
+    },
+    {
+      "id": "modiff-en",
+      "language": "en",
+      "source": "https://proceedings.mlr.press/v267/gao25d.html",
+      "title": "Modulated Diffusion: Accelerating Generative Modeling with Modulated Quantization",
+      "abstract": "Diffusion models have emerged as powerful generative models, but their high computational cost in iterative sampling remains a significant bottleneck. In this work, we present an in-depth and insightful study of state-of-the-art acceleration techniques for diffusion models, including caching and quantization, and reveal their limitations in computation error and generation quality. To break these limits, this work introduces Modulated Diffusion (MoDiff), an innovative, rigorous, and principled framework that accelerates generative modeling through modulated quantization and error compensation. MoDiff not only inherits the advantages of existing caching and quantization methods but also serves as a general framework to accelerate all diffusion models. The advantages of MoDiff are supported by solid theoretical insight and analysis. In addition, extensive experiments on CIFAR-10 and LSUN demonstrate that MoDiff significantly reduces activation quantization from 8 bits to 3 bits without performance degradation in post-training quantization (PTQ). Our code implementation is available at https://github.com/WeizhiGao/MoDiff.",
+      "split": "holdout",
+      "acceptable_venues": ["icml", "neurips", "iclr"]
+    },
+    {
+      "id": "s2sim-ja",
+      "language": "ja",
+      "source": "https://www.usenix.org/conference/nsdi26/presentation/yang",
+      "title": "選択的な記号シミュレーションによる分散ルーティング設定の診断と修復",
+      "abstract": "分散ルーティングの設定が指定された意図を満たすかどうかの自動検証は大きく進歩したが、設定ミスの診断と修復には依然として手作業と時間が必要である。この課題に対し、ルーティング設定を自動的に診断・修復するシステムS2Simを提案する。誤った設定を、意図に適合する設定へ変更できることを保証する契約の集合を導出し、記号シミュレーションで契約違反を網羅的に調べることで、誤りの位置を特定して修復する。ACL、経路集約、マルチパスルーティングなどの複雑な設定、アンダーレイとオーバーレイのネットワーク、k本のリンク障害に耐える意図を扱う拡張も導入する。S2Simを実装し、大手2事業者の実設定と、実際の誤りと実ネットワークの構成から合成した、規模O(10)からO(1000)の設定で評価した。実ネットワークのO(100)ノードでは最大20秒、合成ネットワークのO(1000)ノードでは最大15分で、実際の設定ミスを正確かつ効率的に診断・修復した。",
+      "split": "development",
+      "acceptable_venues": ["nsdi", "sigcomm", "conext", "icnp"]
+    },
+    {
+      "id": "bilevel-ja",
+      "language": "ja",
+      "source": "https://proceedings.mlr.press/v267/xiao25i.html",
+      "title": "拡散モデルのための一次生成二段階最適化フレームワーク",
+      "abstract": "拡散モデルはデータ標本のノイズを反復的に除去して高品質な出力を生成し、多くの分野で実績を上げている。しかし、下流タスク向けの最適化には、微調整のハイパーパラメータや学習時のノイズスケジュールを調整するような、入れ子の二段階構造が現れる。無限次元の確率空間と膨大なサンプリング費用のため、従来の二段階最適化手法は適用できない。この課題を生成二段階最適化問題として定式化し、二つの場合を扱う。一つは、推論のみを行う下位ソルバーと、標本効率の高い上位勾配推定器を組み合わせた事前学習モデルの微調整である。もう一つは、下位問題を再パラメータ化し、計算可能な勾配推定器を設計することで、ノイズスケジュールを最適化しながら拡散モデルを一から学習する場合である。提案する一次の二段階フレームワークは、従来手法と拡散過程の不整合を解消し、理論的根拠と計算上の実用性を備える。実験では、既存の微調整とハイパーパラメータ探索のベースラインを上回った。",
+      "split": "development",
+      "acceptable_venues": ["icml", "neurips", "iclr"]
+    },
+    {
+      "id": "slate-ja",
+      "language": "ja",
+      "source": "https://www.usenix.org/conference/nsdi26/presentation/lim",
+      "title": "SLATE：サービス層のトラフィックエンジニアリング",
+      "abstract": "マイクロサービスを使うアプリケーションでは、複数の地理的に分散したクラスタにまたがる多数のサービスインスタンス間をリクエストが流れる。現在のリクエストのルーティングは、単純な負荷分散や、近隣クラスタへリクエストを送る拡張に限られる。この問題はより複雑であり、マイクロサービス間のリクエストのルーティングを大域的なトラフィックエンジニアリングとして捉えると、大きな改善の余地がある。SLATEは複数クラスタにまたがるマイクロサービスのリクエスト経路を最適化し、平均遅延と帯域費用を最小化するシステムである。複数のリクエスト種別、多段の呼び出し木、サービスの遅延特性といった、サービス層特有の課題を扱うため、大域的な最適化と局所的な探索を組み合わせる。公開ベンチマークアプリケーションをKubernetes上に構築した評価で、最先端の大域負荷分散に対し平均遅延を最大18.3倍改善し、外向きの帯域費用を最大2.64倍削減した。最適化と探索の組み合わせにより、動的な変化に対しても頑健な性能を示した。アプリケーションの変更を必要とせず、既存のL7プロキシ、特にEnvoyへ組み込める。",
+      "split": "holdout",
+      "acceptable_venues": ["nsdi", "sigcomm", "conext", "icnp"]
+    },
+    {
+      "id": "modiff-ja",
+      "language": "ja",
+      "source": "https://proceedings.mlr.press/v267/gao25d.html",
+      "title": "変調拡散：変調量子化による生成モデルの高速化",
+      "abstract": "拡散モデルは強力な生成モデルとして普及したが、反復サンプリングの高い計算費用が大きなボトルネックである。キャッシュや量子化など、最先端の拡散モデル高速化手法を詳しく調べ、計算誤差と生成品質の限界を明らかにする。この限界を解消するため、変調量子化と誤差補償によって生成モデルを高速化するフレームワークModulated Diffusion（MoDiff）を導入する。既存のキャッシュと量子化の利点を取り入れ、すべての拡散モデルの高速化に使える汎用的な枠組みとする。その利点を理論的な考察と解析で裏付ける。CIFAR-10とLSUNの広範な実験では、学習後量子化の性能を落とさず、活性値の量子化を8ビットから3ビットへ削減できた。実装はhttps://github.com/WeizhiGao/MoDiffで公開している。",
+      "split": "holdout",
+      "acceptable_venues": ["icml", "neurips", "iclr"]
+    }
+  ]
+}

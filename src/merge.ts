@@ -18,7 +18,10 @@ import {
   deadlineTrackKey,
   type Edition,
   type EditionIdentity,
+  type EventReview,
+  type EventSegment,
   type ExactDeadline,
+  eventDatePrecisionOf,
   fmtDate,
   isDateOnlyDeadline,
   isExactDeadline,
@@ -225,6 +228,16 @@ function configuredIdentity(conf: Conference, config: Record<string, unknown>): 
     if (matches)
       return {
         ...configured,
+        ...(Array.isArray((value as Record<string, unknown>).legacy_keys)
+          ? {
+              legacy_keys: unique([
+                ...(configured.legacy_keys ?? []),
+                ...toStringArray((value as Record<string, unknown>).legacy_keys)
+                  .map(slug)
+                  .filter(Boolean),
+              ]),
+            }
+          : {}),
         identity: mergeVenueIdentity([configured.identity, { venueId }]),
       };
   }
@@ -815,8 +828,10 @@ function fillEdition(target: Edition, other: Edition): void {
   if (!target.link && other.link) target.link = other.link;
   if (!target.place && other.place) target.place = other.place;
   if (!target.date_text && other.date_text) target.date_text = other.date_text;
-  if (!target.event_start && other.event_start) target.event_start = other.event_start;
-  if (!target.event_end && other.event_end) target.event_end = other.event_end;
+  if (!target.event_segments?.length && !target.event_start && other.event_start)
+    target.event_start = other.event_start;
+  if (!target.event_segments?.length && !target.event_end && other.event_end)
+    target.event_end = other.event_end;
   if (!target.event_date_precision && other.event_date_precision)
     target.event_date_precision = other.event_date_precision;
   if (
@@ -828,6 +843,10 @@ function fillEdition(target: Edition, other: Edition): void {
     target.event_start = target.event_end;
     target.event_end = tmp;
   }
+  if (!target.event_segments && target.date_text === other.date_text && other.event_segments)
+    target.event_segments = other.event_segments;
+  if (!target.event_review && target.date_text === other.date_text && other.event_review)
+    target.event_review = other.event_review;
   const identity = mergeEditionIdentity([target.identity, other.identity]);
   if (identity) target.identity = identity;
 }
@@ -839,7 +858,7 @@ function normLabel(label: string | null | undefined): string {
 }
 
 // スロットキーの一般語(deadlineTrackKey の generic 集合)そのものに限ると、
-// "Full Paper Due"・"Submission deadline" のような常套句が非空の擬似trackに
+// "Full Paper Due"・"Submission deadline" のような常套句が非空の擬似トラックに
 // なりスロットキーが食い違うため、この救済路自体が発火条件と矛盾し到達不能
 // だった (#733)。ここでは独自に「kind 語・author/full/regular/final/extended
 // /research/metadata/contribution 等の非弁別的修飾語・ストップワードを除いた
@@ -892,6 +911,32 @@ function sameGenericSubmissionSlot(left: Deadline, right: Deadline): boolean {
   if (left.track?.trim() || right.track?.trim()) return false;
   const kind = normLabel(left.kind || "other");
   return isGenericSubmissionLabel(left.label, kind) && isGenericSubmissionLabel(right.label, kind);
+}
+
+/**
+ * 源ごとに此の kind の締切を 1 件しか持たず、exact 同士で 1 分未満しか違わず、片方が
+ * 汎用 label なら、もう片方の書き方（"Technical Papers Abstract" と "Abstract submission"
+ * など）が違っても同じ締切である。ERA と SEIP のように両方がトラック名なら畳まない。23:59:00 と 23:59:59 の丸め違いで同じ締切が 2 行並んでいた。
+ */
+function sameMinuteSoleDeadline(
+  held: Deadline,
+  incoming: Deadline,
+  origins: Set<string>,
+  source: string,
+  heldPerSource: Map<string, number>,
+): boolean {
+  if (held.track?.trim() || incoming.track?.trim()) return false;
+  const kind = normLabel(held.kind || "other");
+  if (
+    !isGenericSubmissionLabel(held.label, kind) &&
+    !isGenericSubmissionLabel(incoming.label, kind)
+  )
+    return false;
+  if (!isExactDeadline(held) || !isExactDeadline(incoming)) return false;
+  if (Math.abs(held.at_utc.getTime() - incoming.at_utc.getTime()) >= 60_000) return false;
+  return [...origins, source].every(
+    (name) => (heldPerSource.get(`${name}\u0000${incoming.kind}`) ?? 0) === 1,
+  );
 }
 
 /** Re-apply the SPEC.md 3.6 fold after roll-forward. */
@@ -948,7 +993,9 @@ function dedupDeadlines(
       const sameSource = origins.has(source);
       if (
         deadlineSlotKey(held) !== deadlineSlotKey(deadline) &&
-        (sameSource || !sameGenericSubmissionSlot(held, deadline))
+        (sameSource ||
+          (!sameGenericSubmissionSlot(held, deadline) &&
+            !sameMinuteSoleDeadline(held, deadline, origins, source, heldPerSource)))
       )
         continue;
       const gap =
@@ -1284,6 +1331,36 @@ function matches(conf: Conference, rule: Record<string, unknown>): boolean {
 // overrides
 // --------------------------------------------------------------------------
 
+/** Attach independently sourced CFP topics without creating or renaming a venue. */
+export function applyVenueScopes(confs: Conference[], raw: unknown): Conference[] {
+  if (raw === undefined || raw === null) return confs;
+  if (typeof raw !== "object" || Array.isArray(raw))
+    throw new Error("venue_scopes must be a mapping");
+  const entries = new Map<string, string[]>();
+  for (const [key, value] of Object.entries(raw)) {
+    if (!value || typeof value !== "object" || Array.isArray(value))
+      throw new Error(`invalid venue scope: ${key}`);
+    const entry = value as Record<string, unknown>;
+    if (
+      typeof entry.source_url !== "string" ||
+      !/^https:\/\//.test(entry.source_url) ||
+      !Array.isArray(entry.topics) ||
+      !entry.topics.length ||
+      entry.topics.some((t) => typeof t !== "string" || !t.trim())
+    )
+      throw new Error(`venue scope needs official source_url and nonempty topics: ${key}`);
+    entries.set(key, entry.topics as string[]);
+  }
+  return confs.map((conf) =>
+    entries.has(conf.key)
+      ? {
+          ...conf,
+          official_scope: [...new Set([...(conf.official_scope ?? []), ...entries.get(conf.key)!])],
+        }
+      : conf,
+  );
+}
+
 export function applyOverrides(
   confs: Conference[] | null | undefined,
   overrides: Record<string, unknown> | null | undefined,
@@ -1432,11 +1509,30 @@ function patchEditions(editions: Edition[], patches: Record<string, unknown>): E
     const next: Edition = { ...edition, deadlines: [...edition.deadlines] };
     if ("id" in patch) next.edition_id = String(patch.id);
     for (const field of ["link", "place", "date_text"] as const) {
-      if (field in patch) next[field] = String(patch[field]);
+      // A reviewed date is a pin, not a replacement: changed upstream dates must fail revalidation.
+      if (field in patch && !(field === "date_text" && "event_review" in patch))
+        next[field] = String(patch[field]);
     }
     for (const field of ["event_start", "event_end"] as const) {
       if (field in patch) next[field] = asDate(patch[field]);
     }
+    if ("event_date_precision" in patch) {
+      const precision = eventDatePrecisionOf(
+        patch.event_date_precision,
+        next.date_text ?? "",
+        next.event_start,
+        next.event_end,
+      );
+      if (precision !== patch.event_date_precision)
+        throw new Error(`invalid event_date_precision override: ${patchKey}`);
+      next.event_date_precision = precision;
+    }
+    if ("event_segments" in patch) {
+      next.event_segments = patch.event_segments as EventSegment[];
+      if (Array.isArray(next.event_segments) && next.event_segments.length)
+        next.event_date_precision = "split-dates";
+    }
+    if ("event_review" in patch) next.event_review = patch.event_review as EventReview;
     if ("estimated" in patch) {
       // 推定版 (rollforward 生成) を実版へ昇格 / 降格させるための上書き。
       next.estimated = Boolean(patch.estimated);
@@ -1476,11 +1572,18 @@ function patchEditions(editions: Edition[], patches: Record<string, unknown>): E
                 local_date: "1970-01-01",
                 comment: null,
                 remove: true,
+                ...(Array.isArray(item.values)
+                  ? {
+                      removeValues: item.values.filter(
+                        (value): value is string => typeof value === "string",
+                      ),
+                    }
+                  : {}),
               }))
           : [];
         next.deadlines =
           patch.mode === "merge-slots"
-            ? mergeDeadlineSlots(next.deadlines, [...semantics.accepted, ...removals])
+            ? mergeDeadlineSlots(next.deadlines, [...removals, ...semantics.accepted])
             : semantics.accepted;
       } else if (semantics.action === "clear") {
         next.deadlines = [];
@@ -1496,6 +1599,8 @@ function patchEditions(editions: Edition[], patches: Record<string, unknown>): E
     if (typeof patch !== "object" || patch === null) continue;
     const rec = patch as Record<string, unknown>;
     if (rec.drop) continue;
+    // Reviews bind an observed edition; they cannot manufacture missing source history.
+    if ("event_review" in rec) continue;
 
     const isYearKey = /^\d+$/.test(patchKey);
     const year = isYearKey
@@ -1579,7 +1684,7 @@ function exactInsideDateOnly(exact: Deadline, dateOnly: Deadline): boolean {
 }
 
 /** Apply primary observations slot-by-slot without letting lower precision erase exact data. */
-export type DeadlineSlotObservation = Deadline & { remove?: boolean };
+export type DeadlineSlotObservation = Deadline & { remove?: boolean; removeValues?: string[] };
 
 export function mergeDeadlineSlots(
   existing: Deadline[],
@@ -1589,7 +1694,20 @@ export function mergeDeadlineSlots(
   for (const incoming of observed) {
     const index = out.findIndex((held) => deadlineSlotKey(held) === deadlineSlotKey(incoming));
     if (incoming.remove) {
-      if (index >= 0) out.splice(index, 1);
+      if (index >= 0) {
+        const held = out[index];
+        const value = isDateOnlyDeadline(held) ? held.local_date : held.at_utc.toISOString();
+        const values = [
+          value,
+          ...(held.conflicts ?? []).map(
+            (conflict) => conflict.local_date ?? conflict.at_utc.toISOString(),
+          ),
+        ];
+        // A withdrawn-date review applies only to the reviewed observations.
+        // New source dates/conflicts remain visible for the next review.
+        if (!incoming.removeValues || values.every((v) => incoming.removeValues!.includes(v)))
+          out.splice(index, 1);
+      }
       continue;
     }
     if (index < 0) {

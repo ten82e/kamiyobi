@@ -52,7 +52,7 @@ export function editionYearOf(date: string): number {
  */
 export function extractObservationTime(text: string | null | undefined): string | null {
   if (!text) return null;
-  const m = TIME_RE.exec(String(text).trim());
+  const m = TIME_RE.exec(String(text).normalize("NFKC").trim());
   if (!m) return null;
   let h = Number(m[1]);
   const min = Number(m[2]);

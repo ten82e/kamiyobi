@@ -2,14 +2,20 @@
  * Conference keys: SPEC.md section 3.1.
  */
 
-import { mkdtempSync, readFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { load as loadYaml } from "js-yaml";
 import { describe, expect, it } from "vitest";
 import { applyAliases, mergeSources } from "../src/merge.ts";
 import type { Conference } from "../src/model.ts";
-import { makeConference, makeDeadline, makeEdition, REPO_ROOT, runCli } from "./helpers.ts";
+import {
+  makeConference,
+  makeDeadline,
+  makeEdition,
+  REPO_ROOT,
+  runCli,
+  tempWork,
+} from "./helpers.ts";
 
 function at(month: number, day: number): Date {
   return new Date(Date.UTC(2026, month - 1, day, 11, 59, 59));
@@ -114,7 +120,7 @@ describe("collisions", () => {
   });
 
   it("built keys are unique", () => {
-    const outdir = join(mkdtempSync(join(tmpdir(), "cfp-keys-")), "site");
+    const outdir = join(tempWork("cfp-keys-"), "site");
     // 埋め込み生成は 2 モデル（英語+多言語）で数秒かかるためキー検証ではスキップ
     const result = runCli(outdir, { extra: ["--no-embeddings"] });
     expect(result.status).toBe(0);

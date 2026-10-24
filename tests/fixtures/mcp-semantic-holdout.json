@@ -1,0 +1,24 @@
+{
+  "candidate_count": 696,
+  "top_k": 5,
+  "papers": [
+    {
+      "id": "morse-en",
+      "language": "en",
+      "source": "https://proceedings.mlr.press/v267/li25m.html",
+      "title": "Morse: Dual-Sampling for Lossless Acceleration of Diffusion Models",
+      "abstract": "In this paper, we present $Morse$, a simple dual-sampling framework for accelerating diffusion models losslessly. The key insight of Morse is to reformulate the iterative generation (from noise to data) process via taking advantage of fast jump sampling and adaptive residual feedback strategies. Specifically, Morse involves two models called $Dash$ and $Dot$ that interact with each other. The Dash model is just the pre-trained diffusion model of any type, but operates in a jump sampling regime, creating sufficient space for sampling efficiency improvement. The Dot model is significantly faster than the Dash model, which is learnt to generate residual feedback conditioned on the observations at the current jump sampling point on the trajectory of the Dash model, lifting the noise estimate to easily match the next-step estimate of the Dash model without jump sampling. By chaining the outputs of the Dash and Dot models run in a time-interleaved fashion, Morse exhibits the merit of flexibly attaining desired image generation performance while improving overall runtime efficiency. With our proposed weight sharing strategy between the Dash and Dot models, Morse is efficient for training and inference. Our method shows a lossless speedup of 1.78$\\times$ to 3.31$\\times$ on average over a wide range of sampling step budgets relative to 9 baseline diffusion models on 6 image generation tasks. Furthermore, we show that our method can be also generalized to improve the Latent Consistency Model (LCM-SDXL, which is already accelerated with consistency distillation technique) tailored for few-step text-to-image synthesis. The code and models are available at https://github.com/deep-optimization/Morse.",
+      "split": "final-holdout",
+      "acceptable_venues": ["icml", "neurips", "iclr"]
+    },
+    {
+      "id": "morse-ja",
+      "language": "ja",
+      "source": "https://proceedings.mlr.press/v267/li25m.html",
+      "title": "Morse：拡散モデルを性能低下なく高速化する二重サンプリング",
+      "abstract": "拡散モデルを性能低下なく高速化する、単純な二重サンプリングの枠組みMorseを提案する。高速なジャンプサンプリングと適応的な残差フィードバックを使い、ノイズからデータへ進む反復生成過程を組み直す。MorseではDashとDotという二つのモデルが相互に働く。Dashは任意の事前学習済み拡散モデルをジャンプサンプリングで実行し、サンプリング効率を改善する余地を作る。DotはDashより大幅に高速なモデルで、Dashの軌跡上の現在のジャンプ地点での観測を条件に、残差フィードバックを生成するよう学習する。これにより、ノイズ推定を、ジャンプなしのDashの次ステップの推定に合わせられる。DashとDotを時間的に交互に実行して出力をつなぐことで、画像生成性能を柔軟に維持しながら全体の実行効率を改善する。両モデルの重み共有により学習と推論を効率化する。6種類の画像生成タスクで9種類のベースライン拡散モデルと比較し、幅広いサンプリングステップ数で平均1.78倍から3.31倍の高速化を性能低下なく達成した。少数ステップのテキストからの画像生成を扱う、整合性蒸留で既に高速化されたLatent Consistency Model（LCM-SDXL）にも適用できる。コードとモデルはhttps://github.com/deep-optimization/Morseで公開している。",
+      "split": "final-holdout",
+      "acceptable_venues": ["icml", "neurips", "iclr"]
+    }
+  ]
+}

@@ -3,14 +3,7 @@
  */
 
 import { createHash } from "node:crypto";
-import {
-  copyFileSync,
-  existsSync,
-  mkdirSync,
-  mkdtempSync,
-  readFileSync,
-  writeFileSync,
-} from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { dump as dumpYaml, load as loadYaml } from "js-yaml";
 import { describe, expect, it, vi } from "vitest";
@@ -46,6 +39,7 @@ import {
   makeFixtureCache,
   NOW_ARG,
   REPO_ROOT,
+  tempWork,
   utc,
 } from "./helpers.ts";
 
@@ -57,7 +51,7 @@ function allUpstreamsDown(): void {
 }
 
 function isolatedRepo(): string {
-  const root = mkdtempSync("/tmp/cfp-snap-");
+  const root = tempWork("cfp-snap-");
   mkdirSync(join(root, "data"), { recursive: true });
   copyFileSync(join(REPO_ROOT, "config.yaml"), join(root, "config.yaml"));
   copyFileSync(join(REPO_ROOT, "data", "overrides.yaml"), join(root, "data", "overrides.yaml"));
@@ -70,7 +64,7 @@ function args(outdir: string, cache?: string): BuildArgs {
     config: "config.yaml",
     offline: true,
     now: NOW_ARG,
-    cache: cache ?? join(mkdtempSync("/tmp/cfp-snap-cache-"), ".cache"),
+    cache: cache ?? join(tempWork("cfp-snap-cache-"), ".cache"),
     // 埋め込み生成は 2 モデルで数秒かかるためスナップショット検証ではスキップ
     noEmbeddings: true,
   };
@@ -586,7 +580,7 @@ describe("source freshness", () => {
         sourceResult("local", "fresh", []),
       ],
     });
-    const outdir = join(mkdtempSync("/tmp/cfp-source-meta-"), "out");
+    const outdir = join(tempWork("cfp-source-meta-"), "out");
     expect(await cmdBuild({ ...args(outdir), offline: false })).toBe(0);
     const health = JSON.parse(readFileSync(join(outdir, "health.json"), "utf8")) as {
       source_status: Record<string, string>;
@@ -611,13 +605,13 @@ describe("source freshness", () => {
     expect(first.contentHash).toBe(again.contentHash);
     expect(first.revision).toBe(`sha256:${first.contentHash}`);
     expect(changed.contentHash).not.toBe(first.contentHash);
-    const slot = mkdtempSync("/tmp/cfp-cache-meta-");
+    const slot = tempWork("cfp-cache-meta-");
     writeCacheMetadata(slot, first);
     expect(cacheMetadata(slot)).toEqual(first);
   });
 
   it("uses the saved cache retrieval time for fallback age without inventing content metadata", async () => {
-    const cache = mkdtempSync("/tmp/cfp-cache-fallback-");
+    const cache = tempWork("cfp-cache-fallback-");
     const slot = cacheSlot(cache, "fixture/source", "main");
     const root = join(slot, "source-main");
     mkdirSync(root, { recursive: true });
@@ -641,7 +635,7 @@ describe("source freshness", () => {
   });
 
   it("retries transient HTTP failures but not permanent ones", { timeout: 10_000 }, async () => {
-    const cache = mkdtempSync("/tmp/cfp-cache-retry-");
+    const cache = tempWork("cfp-cache-retry-");
     for (const repo of ["fixture/transient", "fixture/permanent"]) {
       mkdirSync(join(cacheSlot(cache, repo, "main"), "source-main"), { recursive: true });
     }
@@ -669,7 +663,7 @@ describe("source freshness", () => {
   });
 
   it.each(["headers", "body"])("bounds stalled %s reads and restores the cache", async (phase) => {
-    const cache = mkdtempSync("/tmp/cfp-cache-timeout-");
+    const cache = tempWork("cfp-cache-timeout-");
     const repo = `fixture/stalled-${phase}`;
     const root = join(cacheSlot(cache, repo, "main"), "source-main");
     mkdirSync(root, { recursive: true });
@@ -721,7 +715,7 @@ describe("source freshness", () => {
   });
 
   it("clears process-global source metadata before every build", async () => {
-    const cache = mkdtempSync("/tmp/cfp-cache-reset-");
+    const cache = tempWork("cfp-cache-reset-");
     const slot = cacheSlot(cache, "fixture/source", "main");
     const cached = join(slot, "source-main");
     mkdirSync(cached, { recursive: true });
@@ -741,7 +735,7 @@ describe("source freshness", () => {
       failed: new Set(["aideadlines"]),
     });
     try {
-      expect(await cmdBuild(args(join(mkdtempSync("/tmp/cfp-cache-reset-out-"), "out")))).toBe(0);
+      expect(await cmdBuild(args(join(tempWork("cfp-cache-reset-out-"), "out")))).toBe(0);
       expect(fetchMetadataFor("fixture/source", "main")).toBeNull();
     } finally {
       hooks.collect = previous;
@@ -772,7 +766,7 @@ describe("source freshness", () => {
         sourceResult("local", "fresh", []),
       ],
     });
-    const outdir = join(mkdtempSync("/tmp/cfp-source-stale-"), "out");
+    const outdir = join(tempWork("cfp-source-stale-"), "out");
     expect(await cmdBuild({ ...args(outdir), offline: false })).toBe(2);
     expect(existsSync(join(outdir, "data.json"))).toBe(false);
   });
@@ -835,7 +829,7 @@ describe("source freshness", () => {
         sourceResult("local", "fresh", []),
       ],
     });
-    const outdir = join(mkdtempSync("/tmp/cfp-source-snapshot-"), "out");
+    const outdir = join(tempWork("cfp-source-snapshot-"), "out");
     expect(await cmdBuild(args(outdir))).toBe(0);
     const health = JSON.parse(readFileSync(join(outdir, "health.json"), "utf8")) as {
       source_status: Record<string, string>;
@@ -910,7 +904,7 @@ describe("source freshness", () => {
       ],
     });
     try {
-      const outdir = join(mkdtempSync("/tmp/cfp-source-snapshot-provenance-"), "out");
+      const outdir = join(tempWork("cfp-source-snapshot-provenance-"), "out");
       expect(await cmdBuild(args(outdir))).toBe(0);
       const health = JSON.parse(readFileSync(join(outdir, "health.json"), "utf8")) as {
         source_metadata: Record<string, SourceLoadResult>;
@@ -956,9 +950,7 @@ describe("source freshness", () => {
       failed: new Set(["aideadlines"]),
     });
     try {
-      expect(
-        await cmdBuild(args(join(mkdtempSync("/tmp/cfp-invalid-source-snapshot-"), "out"))),
-      ).toBe(0);
+      expect(await cmdBuild(args(join(tempWork("cfp-invalid-source-snapshot-"), "out")))).toBe(0);
       const warnings = stderrWrite.mock.calls.flat().map(String).join("");
       expect(warnings).toContain("source snapshot");
       expect(warnings).toContain("primary snapshot");
@@ -1000,9 +992,7 @@ describe("source freshness", () => {
       failed: new Set(["aideadlines"]),
     });
     try {
-      expect(await cmdBuild(args(join(mkdtempSync("/tmp/cfp-invalid-source-shape-"), "out")))).toBe(
-        0,
-      );
+      expect(await cmdBuild(args(join(tempWork("cfp-invalid-source-shape-"), "out")))).toBe(0);
       expect(stderrWrite.mock.calls.flat().map(String).join("")).toContain("source snapshot");
 
       for (const malformedConferences of [
@@ -1023,9 +1013,7 @@ describe("source freshness", () => {
           }),
           "utf8",
         );
-        expect(
-          await cmdBuild(args(join(mkdtempSync("/tmp/cfp-invalid-source-identity-"), "out"))),
-        ).toBe(0);
+        expect(await cmdBuild(args(join(tempWork("cfp-invalid-source-identity-"), "out")))).toBe(0);
       }
 
       writeFileSync(
@@ -1040,9 +1028,7 @@ describe("source freshness", () => {
         }),
         "utf8",
       );
-      expect(await cmdBuild(args(join(mkdtempSync("/tmp/cfp-invalid-source-time-"), "out")))).toBe(
-        0,
-      );
+      expect(await cmdBuild(args(join(tempWork("cfp-invalid-source-time-"), "out")))).toBe(0);
       expect(stderrWrite.mock.calls.flat().map(String).join("")).toContain("source snapshot");
     } finally {
       hooks.collect = previous;
@@ -1142,7 +1128,7 @@ describe("source freshness", () => {
       failed: new Set(["ccfddl", "aideadlines"]),
     });
     try {
-      const outdir = join(mkdtempSync("/tmp/cfp-override-restore-"), "out");
+      const outdir = join(tempWork("cfp-override-restore-"), "out");
       expect(await cmdBuild(args(outdir))).toBe(0);
       const data = JSON.parse(readFileSync(join(outdir, "data.json"), "utf8"));
       const editions = data.conferences.find(
@@ -1339,7 +1325,7 @@ describe("snapshot fallback", () => {
     writeFileSync(join(root, "data", "snapshot.json"), JSON.stringify(snapshot), "utf8");
 
     allUpstreamsDown();
-    const outdir = join(mkdtempSync("/tmp/cfp-snap-out-"), "out");
+    const outdir = join(tempWork("cfp-snap-out-"), "out");
     const code = await cmdBuild(args(outdir));
     expect(code).toBe(0);
 
@@ -1381,7 +1367,7 @@ describe("snapshot fallback", () => {
       "utf8",
     );
     allUpstreamsDown();
-    const outdir = join(mkdtempSync("/tmp/cfp-snap-zone-"), "out");
+    const outdir = join(tempWork("cfp-snap-zone-"), "out");
     expect(await cmdBuild(args(outdir))).toBe(0);
     const data = JSON.parse(readFileSync(join(outdir, "data.json"), "utf8")) as {
       conferences: Array<{
@@ -1432,7 +1418,7 @@ describe("snapshot fallback", () => {
     writeFileSync(join(root, "data", "snapshot.json"), JSON.stringify(snapshot), "utf8");
 
     allUpstreamsDown();
-    const outdir = join(mkdtempSync("/tmp/cfp-snap-out4-"), "out");
+    const outdir = join(tempWork("cfp-snap-out4-"), "out");
     const code = await cmdBuild(args(outdir));
     expect(code).toBe(0);
 
@@ -1578,7 +1564,7 @@ describe("snapshot fallback", () => {
       failed: new Set(["ccfddl", "aideadlines"]),
     });
 
-    const outdir = join(mkdtempSync("/tmp/cfp-snap-out8-"), "out");
+    const outdir = join(tempWork("cfp-snap-out8-"), "out");
     const code = await cmdBuild(args(outdir));
     expect(code).toBe(0);
 
@@ -1682,7 +1668,7 @@ describe("snapshot fallback", () => {
       failed: new Set(["ccfddl", "aideadlines"]),
     });
 
-    const outdir = join(mkdtempSync("/tmp/cfp-snap-ghost-"), "out");
+    const outdir = join(tempWork("cfp-snap-ghost-"), "out");
     const code = await cmdBuild(args(outdir));
     expect(code).toBe(0);
 
@@ -1714,7 +1700,7 @@ describe("snapshot fallback", () => {
     writeFileSync(join(root, "config.yaml"), dumpYaml(conf), "utf8");
 
     allUpstreamsDown();
-    const outdir = join(mkdtempSync("/tmp/cfp-snap-ex-"), "out");
+    const outdir = join(tempWork("cfp-snap-ex-"), "out");
     const code = await cmdBuild(args(outdir));
     expect(code).toBe(0);
 
@@ -1731,7 +1717,7 @@ describe("snapshot fallback", () => {
     const root = isolatedRepo();
     setRoot(root);
     allUpstreamsDown();
-    const outdir = join(mkdtempSync("/tmp/cfp-snap-out2-"), "out");
+    const outdir = join(tempWork("cfp-snap-out2-"), "out");
     const code = await cmdBuild(args(outdir));
     expect(code).not.toBe(0);
     expect(existsSync(join(outdir, "data.json"))).toBe(false);
@@ -1776,7 +1762,7 @@ describe("snapshot fallback", () => {
       groups: [[live], [], []],
       failed: new Set(["aideadlines"]),
     });
-    const outdir = join(mkdtempSync("/tmp/cfp-snap-partial-"), "out");
+    const outdir = join(tempWork("cfp-snap-partial-"), "out");
     const code = await cmdBuild(args(outdir));
     expect(code).toBe(0);
     const data = JSON.parse(readFileSync(join(outdir, "data.json"), "utf8")) as {
@@ -1850,7 +1836,7 @@ describe("snapshot fallback", () => {
       groups: [[live, live2], [], []],
       failed: new Set(["aideadlines"]),
     });
-    const outdir = join(mkdtempSync("/tmp/cfp-snap-partial-merge-"), "out");
+    const outdir = join(tempWork("cfp-snap-partial-merge-"), "out");
     const code = await cmdBuild(args(outdir));
     expect(code).toBe(0);
     const data = JSON.parse(readFileSync(join(outdir, "data.json"), "utf8")) as {
@@ -1868,7 +1854,7 @@ describe("snapshot fallback", () => {
       "conferences:\n  ccgrid: [unclosed\n",
       "utf8",
     );
-    const outdir = join(mkdtempSync("/tmp/cfp-snap-out5-"), "out");
+    const outdir = join(tempWork("cfp-snap-out5-"), "out");
     await expect(cmdBuild(args(outdir))).rejects.toThrow(/cannot parse .*overrides\.yaml/);
     expect(existsSync(join(outdir, "data.json"))).toBe(false);
   });
@@ -1881,7 +1867,7 @@ describe("snapshot fallback", () => {
       "conferences:\n  fmas-2026: [unclosed\n",
       "utf8",
     );
-    const outdir = join(mkdtempSync("/tmp/cfp-snap-out7-"), "out");
+    const outdir = join(tempWork("cfp-snap-out7-"), "out");
     await expect(cmdBuild(args(outdir))).rejects.toThrow(/cannot parse .*extra\.yaml/);
     expect(existsSync(join(outdir, "data.json"))).toBe(false);
   });
@@ -1891,7 +1877,7 @@ describe("snapshot fallback", () => {
     const originalRoot = ROOT;
     setRoot(root);
     writeFileSync(join(root, "data", "manual.yaml"), "not_conferences: true\n", "utf8");
-    const outdir = join(mkdtempSync("/tmp/cfp-snap-out-shape-"), "out");
+    const outdir = join(tempWork("cfp-snap-out-shape-"), "out");
     try {
       await expect(cmdBuild(args(outdir))).rejects.toThrow(/conferences must be an array/);
       expect(existsSync(join(outdir, "data.json"))).toBe(false);
@@ -1904,7 +1890,7 @@ describe("snapshot fallback", () => {
     const root = isolatedRepo();
     setRoot(root);
     writeFileSync(join(root, "config.yaml"), "categories:\n  hpc: [unclosed\n", "utf8");
-    const outdir = join(mkdtempSync("/tmp/cfp-snap-out6-"), "out");
+    const outdir = join(tempWork("cfp-snap-out6-"), "out");
     await expect(cmdBuild(args(outdir))).rejects.toThrow(/cannot parse .*config\.yaml/);
     expect(existsSync(join(outdir, "data.json"))).toBe(false);
   });
@@ -1914,7 +1900,7 @@ describe("snapshot fallback", () => {
     const originalRoot = ROOT;
     setRoot(root);
     writeFileSync(join(root, "config.yaml"), "- invalid-root\n", "utf8");
-    const outdir = join(mkdtempSync("/tmp/cfp-snap-config-shape-"), "out");
+    const outdir = join(tempWork("cfp-snap-config-shape-"), "out");
     try {
       await expect(cmdBuild(args(outdir))).rejects.toThrow(/YAML mapping/);
       expect(existsSync(join(outdir, "data.json"))).toBe(false);
@@ -1936,7 +1922,7 @@ describe("snapshot fallback", () => {
       "utf8",
     );
     // 自動生成ファイルの破損は警告のみで続行（2026-08-12 whpc の趣旨）。
-    const outdir = join(mkdtempSync("/tmp/cfp-snap-out7-"), "out");
+    const outdir = join(tempWork("cfp-snap-out7-"), "out");
     const code = await cmdBuild(args(outdir));
     expect(code).toBe(0);
   });
@@ -1948,8 +1934,8 @@ describe("snapshot fallback", () => {
     const target = join(root, "data", "snapshot.json");
     writeFileSync(target, JSON.stringify(kept), "utf8");
 
-    const cache = makeFixtureCache(mkdtempSync("/tmp/cfp-snap-fix-"));
-    const outdir = join(mkdtempSync("/tmp/cfp-snap-out3-"), "out");
+    const cache = makeFixtureCache(tempWork("cfp-snap-fix-"));
+    const outdir = join(tempWork("cfp-snap-out3-"), "out");
     const code = await cmdBuild(args(outdir, cache));
     expect(code).toBe(0);
     expect(JSON.parse(readFileSync(target, "utf8"))).toEqual(kept);
@@ -1961,7 +1947,7 @@ describe("snapshot fallback", () => {
     // fixture キャッシュから上流取得成功（failed 空）を模した healthy build で検証する。
     const root = isolatedRepo();
     setRoot(root);
-    const cache = makeFixtureCache(mkdtempSync("/tmp/cfp-snap-online-"));
+    const cache = makeFixtureCache(tempWork("cfp-snap-online-"));
     // 上流を実 fetch せず fixture キャッシュ（offline 収集）で healthy な groups を作り、
     // 呼び出し側は offline: false（= 健全な online build の書き込み条件）にする。
     // collect の型: (cacheDir, options) => Promise<{groups, failed}>。
@@ -1979,7 +1965,7 @@ describe("snapshot fallback", () => {
       return { groups, failed: new Set<string>() };
     };
     try {
-      const outdir = join(mkdtempSync("/tmp/cfp-snap-out-online-"), "out");
+      const outdir = join(tempWork("cfp-snap-out-online-"), "out");
       const code = await cmdBuild({ ...args(outdir, cache), offline: false });
       expect(code).toBe(0);
       const snapshot = JSON.parse(
@@ -2022,7 +2008,7 @@ describe("snapshot fallback", () => {
     try {
       expect(
         await cmdBuild({
-          ...args(join(mkdtempSync("/tmp/cfp-cache-no-snapshot-"), "out")),
+          ...args(join(tempWork("cfp-cache-no-snapshot-"), "out")),
           offline: false,
         }),
       ).toBe(0);

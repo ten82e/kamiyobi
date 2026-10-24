@@ -1,0 +1,78 @@
+{
+  "sampling": "Before evaluating these papers or editing the query expansion, select the first title containing 'Quantile' and the first containing 'Local Differential Privacy' in PMLR 235 publisher order, and the first title containing 'Boosting' in PMLR 238 publisher order. English author abstracts and Japanese translations/summaries are disjoint from all existing evaluation sources. Labels are assigned from the publication and official venue scopes before scoring.",
+  "profile_policy": "Use the unchanged 27 official-CFP-only profiles from real-model-evaluation.json. None of these evaluation papers enters the profiles.",
+  "papers": [
+    {
+      "id": "jia24a",
+      "language": "en",
+      "title": "Simulation-Based Inference with Quantile Regression",
+      "abstract": "We present Neural Quantile Estimation (NQE), a novel Simulation-Based Inference (SBI) method based on conditional quantile regression. NQE autoregressively learns individual one dimensional quantiles for each posterior dimension, conditioned on the data and previous posterior dimensions. Posterior samples are obtained by interpolating the predicted quantiles using monotonic cubic Hermite spline, with specific treatment for the tail behavior and multi-modal distributions. We introduce an alternative definition for the Bayesian credible region using the local Cumulative Density Function (CDF), offering substantially faster evaluation than the traditional Highest Posterior Density Region (HPDR). In case of limited simulation budget and/or known model misspecification, a post-processing calibration step can be integrated into NQE to ensure the unbiasedness of the posterior estimation with negligible additional computational cost. We demonstrate that NQE achieves state-of-the-art performance on a variety of benchmark problems.",
+      "abstract_sha256": "0988c5c7eb8c548200b71ef6b8673ea0c9be1984d1d6eeffb88697942e08d44f",
+      "primary_venue": "icml",
+      "acceptable_venues": ["icml", "aistats", "uai", "neurips"],
+      "source": "https://proceedings.mlr.press/v235/jia24a.html",
+      "publication": "PMLR 235 (2024)",
+      "abstract_kind": "author abstract"
+    },
+    {
+      "id": "jia24a-ja",
+      "language": "ja",
+      "title": "分位点回帰を用いたシミュレーションベースの推論",
+      "abstract": "条件付き分位点回帰を使うニューラル分位点推定を提案する。観測データと先行する事後分布の次元を条件として、各次元の分位点を自己回帰的に学習し、単調三次エルミート補間で事後サンプルを得る。分布の裾と多峰性も扱う。局所累積分布関数に基づくベイズ信用領域を定義し、従来の最高事後密度領域より速く評価する。シミュレーション数が限られる場合やモデルに誤りがある場合には、後処理の校正で推定の偏りを抑える。複数のベンチマークで性能を評価している。",
+      "abstract_sha256": "481e18c1c16b0f19375efd25c3b91d6789275472f4dacc297d8f4f44c1d1befa",
+      "primary_venue": "icml",
+      "acceptable_venues": ["icml", "aistats", "uai", "neurips"],
+      "source": "https://proceedings.mlr.press/v235/jia24a.html",
+      "publication": "PMLR 235 (2024)",
+      "abstract_kind": "Japanese title translation and summary of author abstract; not a native-Japanese publication"
+    },
+    {
+      "id": "liu24z",
+      "language": "en",
+      "title": "Tuning-free Estimation and Inference of Cumulative Distribution Function under Local Differential Privacy",
+      "abstract": "We introduce a novel algorithm for estimating Cumulative Distribution Function (CDF) values under Local Differential Privacy (LDP) by exploiting an unexpected connection between LDP and the current status problem, a classical survival data problem in statistics. This connection leads to the development of tools for constrained isotonic estimation based on binary queries. Through mathematical proofs and extensive numerical testing, we demonstrate that our method achieves uniform and $L_2$ error bounds when estimating the entire CDF curve. By employing increasingly dense grids, the error bound can be improved, exhibiting an asymptotic normal distribution of the proposed estimator. Theoretically, we show that the error bound smoothly changes as the number of grids increases relative to the sample size $n$. Computationally, we demonstrate that our constrained isotonic estimator can be efficiently computed deterministically, eliminating the need for hyperparameters or random optimization.",
+      "abstract_sha256": "8af1d11dd7634bd8561ccc76099a3cc84bef418c5b008917e68f2aef07235e44",
+      "primary_venue": "icml",
+      "acceptable_venues": ["icml", "aistats", "colt", "neurips"],
+      "source": "https://proceedings.mlr.press/v235/liu24z.html",
+      "publication": "PMLR 235 (2024)",
+      "abstract_kind": "author abstract"
+    },
+    {
+      "id": "liu24z-ja",
+      "language": "ja",
+      "title": "局所差分プライバシー下で累積分布関数を推定・推論する調整不要な手法",
+      "abstract": "局所差分プライバシー下で累積分布関数を推定する手法を提案する。生存データ解析の現在状態問題との対応を使い、二値クエリに基づく制約付き単調推定を構成する。累積分布曲線全体の一様誤差と二乗積分誤差の上界を示す。格子を密にすると誤差が改善し、推定量は漸近的な正規分布に従う。格子数と標本数の関係も解析する。推定量は決定的に計算でき、ハイパーパラメーターや確率的な最適化を必要としない。",
+      "abstract_sha256": "a1d637e2bfacb4b78e7c08f92e08c29f4a8204f96b039415b64b3f80455a9207",
+      "primary_venue": "icml",
+      "acceptable_venues": ["icml", "aistats", "colt", "neurips"],
+      "source": "https://proceedings.mlr.press/v235/liu24z.html",
+      "publication": "PMLR 235 (2024)",
+      "abstract_kind": "Japanese title translation and summary of author abstract; not a native-Japanese publication"
+    },
+    {
+      "id": "yang24b",
+      "language": "en",
+      "title": "Orthogonal Gradient Boosting for Simpler Additive Rule Ensembles",
+      "abstract": "Gradient boosting of prediction rules is an efficient approach to learn potentially interpretable yet accurate probabilistic models. However, actual interpretability requires to limit the number and size of the generated rules, and existing boosting variants are not designed for this purpose. Though corrective boosting refits all rule weights in each iteration to minimise prediction risk, the included rule conditions tend to be sub-optimal, because commonly used objective functions fail to anticipate this refitting. Here, we address this issue by a new objective function that measures the angle between the risk gradient vector and the projection of the condition output vector onto the orthogonal complement of the already selected conditions. This approach correctly approximates the ideal update of adding the risk gradient itself to the model and favours the inclusion of more general and thus shorter rules. As we demonstrate using a wide range of prediction tasks, this significantly improves the comprehensibility/accuracy trade-off of the fitted ensemble. Additionally, we show how objective values for related rule conditions can be computed incrementally to avoid any substantial computational overhead of the new method.",
+      "abstract_sha256": "666a2ad47234712b29d6b8937a50d201d2dd087cd253b4e9520f51600d674a7b",
+      "primary_venue": "aistats",
+      "acceptable_venues": ["aistats", "icml", "neurips"],
+      "source": "https://proceedings.mlr.press/v238/yang24b.html",
+      "publication": "PMLR 238 (2024)",
+      "abstract_kind": "author abstract"
+    },
+    {
+      "id": "yang24b-ja",
+      "language": "ja",
+      "title": "加法的ルールアンサンブルを簡潔にする直交勾配ブースティング",
+      "abstract": "予測ルールの勾配ブースティングで、精度を保ちながらルールの数と長さを抑える手法を提案する。補正型ブースティングでは各反復で全ルールの重みを再最適化するが、従来の目的関数ではその更新を十分に考慮できない。リスクの勾配と、既存のルールに直交する成分へ射影した出力ベクトルとの角度を測る目的関数を使い、より一般的で短い条件を選ぶ。複数の予測課題で解釈のしやすさと精度の両立を評価し、関連する条件の目的値を逐次計算して計算量の増加を抑える。",
+      "abstract_sha256": "1f757a9705b2eb9a6039289289afebacb4b17c0419eb0a7974d3db98e68ae5f2",
+      "primary_venue": "aistats",
+      "acceptable_venues": ["aistats", "icml", "neurips"],
+      "source": "https://proceedings.mlr.press/v238/yang24b.html",
+      "publication": "PMLR 238 (2024)",
+      "abstract_kind": "Japanese title translation and summary of author abstract; not a native-Japanese publication"
+    }
+  ]
+}

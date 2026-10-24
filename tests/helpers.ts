@@ -3,7 +3,7 @@
  */
 
 import { spawnSync } from "node:child_process";
-import { cpSync, mkdirSync, mkdtempSync } from "node:fs";
+import { cpSync, mkdirSync, mkdtempSync, readdirSync, rmSync, statSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
@@ -114,8 +114,80 @@ export function makeFixtureCache(dir: string): string {
   return dir;
 }
 
+/**
+ * 名前に埋めた PID が生きているかを見る（読め無い名は null）。
+ *
+ * `scripts/clean_tmp.ts` と同じ判じ方 – 死んでいる PID の目録は誰も使つて居ないので、時間を
+ * 待たずに消して良い。生存を見るので、同時に走る検査は壊さない。
+ */
+function 生きて居る(目録名: string): boolean | null {
+  const マッチ = /p(\d+)-/.exec(目録名);
+  if (!マッチ) return null;
+  try {
+    process.kill(Number(マッチ[1]), 0); // 何も送らずに存在だけ見る
+    return true;
+  } catch (誤) {
+    return (誤 as NodeJS.ErrnoException).code === "EPERM"; // あるが触れぬ → 生きている
+  }
+}
+
+export function 古い一時目録を掃く(): void {
+  const 猶予 = 60 * 60 * 1000;
+  const 今 = Date.now();
+  let 名前々: string[];
+  try {
+    名前々 = readdirSync(tmpdir());
+  } catch {
+    return;
+  }
+  for (const 名前 of 名前々) {
+    if (!/^(kamiyobi|cfp|build-now-test|tracked-test|aideadlines-shape|ccfddl-shape)-/.test(名前))
+      continue;
+    const 道 = join(tmpdir(), 名前);
+    try {
+      const 状態 = 生きて居る(名前);
+      if (状態 === true) continue; // 走つている検査の目録
+      const 期限 = 状態 === false ? 0 : 猶予; // PID が死んで居れば直ぐに消す
+      if (今 - statSync(道).mtimeMs <= 期限) continue;
+      rmSync(道, { recursive: true, force: true });
+    } catch {
+      /* 掃けなければ見送る – 検査の結果を変へない */
+    }
+  }
+}
+
+const 作った一時目録 = new Set<string>();
+let 退出の用意有り = false;
+let 掃除の用意有り = false;
+
+export function tempWork(prefix: string): string {
+  if (!掃除の用意有り) {
+    掃除の用意有り = true;
+    古い一時目録を掃く();
+  }
+
+  const dir = mkdtempSync(join(tmpdir(), `${prefix}p${process.pid}-`));
+  作った一時目録.add(dir);
+  if (!退出の用意有り) {
+    退出の用意有り = true;
+    const 掃除 = () => {
+      for (const 目録 of 作った一時目録) {
+        try {
+          rmSync(目録, { recursive: true, force: true });
+        } catch {
+          /* 片付けは最善を尽くす – 落ちても検査の結果を変へない */
+        }
+      }
+      作った一時目録.clear();
+    };
+    process.on("exit", 掃除);
+    process.on("beforeExit", 掃除);
+  }
+  return dir;
+}
+
 export function tempCache(): string {
-  return makeFixtureCache(mkdtempSync(join(tmpdir(), "cfp-cache-")));
+  return makeFixtureCache(tempWork("cfp-cache-"));
 }
 
 // --- run the CLI ---------------------------------------------------------------
@@ -129,9 +201,14 @@ export interface RunResult {
 /** Run `node src/cli.ts build` offline against the fixture cache. */
 export function runCli(
   outdir: string,
-  options: { now?: string; cache?: string; extra?: string[] } = {},
+  options: { now?: string; cache?: string; extra?: string[]; root?: string } = {},
 ): RunResult {
-  const cache = options.cache ?? tempCache();
+  let 使い捨てのキャッシュ = "";
+  let cache = options.cache ?? "";
+  if (cache === "") {
+    使い捨てのキャッシュ = makeFixtureCache(mkdtempSync(join(tmpdir(), "cfp-cache-")));
+    cache = 使い捨てのキャッシュ;
+  }
   const cmd = [
     "node",
     join(REPO_ROOT, "src", "cli.ts"),
@@ -145,10 +222,27 @@ export function runCli(
     options.now ?? NOW_ARG,
     ...(options.extra ?? []),
   ];
+  if (options.root) {
+    cmd.splice(
+      1,
+      1,
+      "--input-type=module",
+      "-e",
+      `import { main, setRoot } from ${JSON.stringify(join(REPO_ROOT, "src/cli.ts"))}; setRoot(process.argv[1]); process.exitCode = await main(process.argv.slice(2));`,
+      options.root,
+    );
+  }
   const proc = spawnSync(cmd[0], cmd.slice(1), {
     cwd: REPO_ROOT,
     encoding: "utf8",
     timeout: 300_000,
   });
+  if (使い捨てのキャッシュ) {
+    try {
+      rmSync(使い捨てのキャッシュ, { recursive: true, force: true });
+    } catch {
+      /* 片付けは最善を尽くす – 検査の結果を変へない */
+    }
+  }
   return { status: proc.status, stdout: proc.stdout, stderr: proc.stderr };
 }

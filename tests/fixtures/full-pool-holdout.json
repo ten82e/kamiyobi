@@ -1,0 +1,78 @@
+{
+  "sampling": "Three further real papers selected and labels fixed without reading their rankings; excluded from all prior quality experiments. English and Japanese summaries preserve the author abstracts. No later relabeling or acceptance-floor changes.",
+  "profile_policy": "Official venue calls only; none of these papers may be included in profiles.",
+  "papers": [
+    {
+      "id": "reuter25a-en",
+      "language": "en",
+      "title": "Can Transformers Learn Full Bayesian Inference in Context?",
+      "abstract": "Transformers can learn from examples supplied in their input without additional training. This paper investigates whether that ability extends to Bayesian inference over entire posterior distributions. The proposed framework combines prior-fitted networks with continuous normalizing flows to infer posteriors for generalized linear and latent factor models. Experiments use real-world datasets and compare the resulting posterior samples with conventional Markov chain Monte Carlo and variational inference. The in-context method produces samples of similar quality to these established approaches.",
+      "abstract_sha256": "723e086d49a7227d690e5d8f6db1be95390e559e6f33e5d52151a83fd120d34b",
+      "primary_venue": "icml",
+      "acceptable_venues": ["icml", "uai", "aistats", "neurips"],
+      "source": "https://proceedings.mlr.press/v267/reuter25a.html",
+      "publication": "ICML 2025",
+      "abstract_kind": "English summary of author abstract"
+    },
+    {
+      "id": "reuter25a-ja",
+      "language": "ja",
+      "title": "Transformerは文脈内で完全なベイズ推論を学習できるか",
+      "abstract": "Transformerは追加の訓練をせず、入力として与えられた例から学習する。本論文は、この文脈内学習によって事後分布全体を求められるかを調べる。事前に訓練したネットワークと連続正規化フローを組み合わせ、一般化線形モデルや潜在因子モデルの複雑な事後分布を推論する枠組みを提案する。実データで得られた事後標本を、文脈内で動作しない従来のマルコフ連鎖モンテカルロ法や変分推論と比較し、同程度の品質を確認した。",
+      "abstract_sha256": "b6f94082d96d7ce793b4f2f3e5c1b860c1e818b59a571f907d04b567b166898d",
+      "primary_venue": "icml",
+      "acceptable_venues": ["icml", "uai", "aistats", "neurips"],
+      "source": "https://proceedings.mlr.press/v267/reuter25a.html",
+      "publication": "ICML 2025",
+      "abstract_kind": "Japanese summary of author abstract"
+    },
+    {
+      "id": "lu25hdtx-en",
+      "language": "en",
+      "title": "Fast Distributed Transactions for RDMA-based Disaggregated Memory",
+      "abstract": "Disaggregating datacenter memory improves utilization and scalability, but remote accesses make distributed transactions expensive. HDTX implements distributed transaction processing over RDMA-based disaggregated memory. Its commit protocol combines transaction phases to reduce network exchanges. An offloading mechanism coordinates RDMA operations to avoid unnecessary transfers between compute and memory nodes. Decentralized priority-based locking schedules critical transactions. Experiments compare latency and throughput with FaRM and FORD and show that the proposed system reduces transaction latency and increases throughput.",
+      "abstract_sha256": "48f61fecd22377cf234440e6fb33dda8d0da4784856dac4853808762bedca8b0",
+      "primary_venue": "sigops-atc",
+      "acceptable_venues": ["sigops-atc", "osdi", "nsdi"],
+      "source": "https://www.usenix.org/conference/atc25/presentation/lu",
+      "publication": "USENIX ATC 2025",
+      "abstract_kind": "English summary of author abstract"
+    },
+    {
+      "id": "lu25hdtx-ja",
+      "language": "ja",
+      "title": "RDMAによる分離メモリの高速な分散トランザクション",
+      "abstract": "データセンタのメモリを計算ノードから分離すると、メモリの利用率と拡張性が高まる一方、遠隔メモリへのアクセス遅延が分散トランザクションの負担になる。HDTXはRDMAを使った分離メモリ向けの分散トランザクション処理システムである。処理の複数段階をまとめるコミット方式でネットワーク往復を減らし、RDMA操作を組み合わせたオフロードで計算ノードとメモリノード間の転送を抑える。さらに分散した優先度付きロックで重要なトランザクションを先に処理する。FaRMとFORDに対する実験では、遅延の減少とスループットの向上を確認した。",
+      "abstract_sha256": "35a927edfbae7307c16c592cc821966c3ca69dc243ddc2be308cbc32783fe43a",
+      "primary_venue": "sigops-atc",
+      "acceptable_venues": ["sigops-atc", "osdi", "nsdi"],
+      "source": "https://www.usenix.org/conference/atc25/presentation/lu",
+      "publication": "USENIX ATC 2025",
+      "abstract_kind": "Japanese summary of author abstract"
+    },
+    {
+      "id": "lain25url-en",
+      "language": "en",
+      "title": "URL Inspection Tasks: Helping Users Detect Phishing Links in Emails",
+      "abstract": "Phishing emails remain effective partly because users fail to pay attention to links. This work asks users to complete a small URL inspection task before opening a website. Three alternatives require choosing the correct URL, highlighting its domain, or typing the domain again. These barriers direct attention to URL structure and follow security interface design practices. An online study involves 2,673 participants across three cultures and writing systems. The tasks reduce successful phishing compared with the baseline, with particularly strong improvements for difficult addresses such as typo-squatted domains.",
+      "abstract_sha256": "e2e3243e931580ae5c668eae2b00988cbcde5bd36a2cf1e608a4bfc59911acb3",
+      "primary_venue": "usenix-security",
+      "acceptable_venues": ["usenix-security", "css", "ndss"],
+      "source": "https://www.usenix.org/conference/usenixsecurity25/presentation/lain",
+      "publication": "USENIX Security 2025",
+      "abstract_kind": "English summary of author abstract"
+    },
+    {
+      "id": "lain25url-ja",
+      "language": "ja",
+      "title": "URL確認課題：メールのフィッシングリンクに気づくための支援",
+      "abstract": "メールのフィッシング攻撃が成功する要因の一つは、利用者がリンクに注意を向けないことである。本研究は、Webサイトを開く前にURLの構造を確認する小さな課題を挟む防御方法を提案する。正しいURLを選ぶ、ドメイン部分をマウスで示す、ドメイン名を再入力する、という三つの方法を実装した。三つの文化・言語・文字体系に属する2,673人を対象にオンライン実験を行い、対照条件よりフィッシングの成功率が低下することを確認した。特に、正規のドメインとよく似た綴りの紛らわしいURLで効果が高かった。",
+      "abstract_sha256": "8ab5693ed23335f1a488abc2dd0a96ff810236d1d8daddc55be129e500f78817",
+      "primary_venue": "usenix-security",
+      "acceptable_venues": ["usenix-security", "css", "ndss"],
+      "source": "https://www.usenix.org/conference/usenixsecurity25/presentation/lain",
+      "publication": "USENIX Security 2025",
+      "abstract_kind": "Japanese summary of author abstract"
+    }
+  ]
+}

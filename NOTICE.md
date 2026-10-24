@@ -23,8 +23,13 @@
 
 ## 上記以外のデータ
 
-`data/extra.yaml` に収録した会議は本リポジトリで独自に整備したものであり、
+`data/manual.yaml` と `data/curated.generated.yaml` に収録した会議は本リポジトリで独自に整備したものであり、
 本リポジトリの MIT ライセンスに従う。
+
+`data/extra.yaml` は旧データからの移行入力であり、正典ではない。正典（`manual.yaml`・
+`curated.generated.yaml`）が無い checkout でだけ互換入力として読む
+（`src/sources/local.ts` の `localSourcePaths`）。配布物の出典欄（`data.json` の `sources`）には
+正典の側を書く。
 
 ## MIT License (両上流に共通の本文)
 

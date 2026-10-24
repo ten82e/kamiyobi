@@ -12,7 +12,14 @@ import { parseArgs as parseNodeArgs } from "node:util";
 import { decode } from "html-entities";
 import { dump as dumpYaml, load as loadYaml } from "js-yaml";
 import { booleanValue, normalizeShortEquals, stringValue } from "./args.ts";
-import { deadlineTrackKey, monthOf, resolveTzStatus, roundOf, warn } from "./model.ts";
+import {
+  deadlineTrackKey,
+  isNonPaperWorkshopLabel,
+  monthOf,
+  resolveTzStatus,
+  roundOf,
+  warn,
+} from "./model.ts";
 import { extractObservationTime } from "./sources/primary.ts";
 
 export let ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -29,7 +36,7 @@ const BLOCK_RE =
 const DELETED_RE = /<(del|s|strike)\b[^>]*>[\s\S]*?<\/\1\s*>/gi;
 const TAG_RE = /<[^>]+>/g;
 const TZ_RE =
-  /\b(PDT|PST|EDT|EST|CDT|CST|MDT|MST|AKDT|AKST|HST|HAST|HADT|UTC(?:[+-]\d{1,2}(?::?\d{2})?)?|GMT(?:[+-]\d{1,2}(?::?\d{2})?)?|CET|CEST|WET|WEST|JST|KST|SGT|HKT|BOT|COT|FJT|GET|PKT|TRT|BRT|CAT|WAT|NZST|NZDT|WIB|WITA|WIT|IDT|MSK|CHST|EAT|SAST|ACST|ACDT|AEDT|AEST|AWST|AoE|PT|ET|CT|MT)\b|anywhere on (?:the )?(?:inhabited )?earth/gi;
+  /\b(PDT|PST|EDT|EST|CDT|CST|MDT|MST|AKDT|AKST|HST|HAST|HADT|UTC(?:[+-]\d{1,2}(?::?\d{2})?)?|GMT(?:[+-]\d{1,2}(?::?\d{2})?)?|CET|CEST|WET|WEST|JST|KST|SGT|HKT|BOT|COT|FJT|GET|PKT|TRT|BRT|CAT|WAT|NZST|NZDT|WIB|WITA|WIT|IDT|MSK|CHST|EAT|SAST|ACST|ACDT|AEDT|AEST|AWST|AoE|PT|ET|CT|MT)\b|anywhere on (?:the )?(?:inhabited )?earth|\bJapan Standard Time\b|日本時間/gi;
 const LABELS: Record<string, string> = {
   paper: "Paper submission",
   abstract: "Abstract submission",
@@ -59,6 +66,10 @@ export function toLines(htmlText: string | null | undefined): string[] {
     .map((l) => l.trim())
     .filter(Boolean);
 }
+
+// 要旨提出開始は期限ではない。日付付きの提出ラベルと独立した見出しだけを受ける。
+const ABSTRACT_DEADLINE_JA =
+  /要旨(?:の)?(?:締切|〆切|期限|期日|提出(?=\s*(?:締切|〆切|期限|期日|[:：]?\s*(?:\d{4}(?:年|[-/.])|$))))/;
 
 export function isDeadlineLine(text: string | null | undefined): boolean {
   const low = String(text ?? "").toLowerCase();
@@ -92,6 +103,7 @@ export function isDeadlineLine(text: string | null | undefined): boolean {
     low.includes("cut-off") ||
     low.includes("cutoff") ||
     low.includes("締切") ||
+    ABSTRACT_DEADLINE_JA.test(low) ||
     low.includes("〆切") ||
     low.includes("必着") ||
     low.includes("締め切り") ||
@@ -107,6 +119,7 @@ function kindOf(window: string | null | undefined): string {
   if (
     low.includes("abstract") ||
     low.includes("概要") ||
+    ABSTRACT_DEADLINE_JA.test(low) ||
     low.includes("アブストラクト") ||
     low.includes("題目") ||
     low.includes("発表申込") ||
@@ -116,7 +129,7 @@ function kindOf(window: string | null | undefined): string {
   }
   if (
     low.includes("camera") ||
-    low.includes("カメラレディ") ||
+    /カメラ・?レディ/.test(low) ||
     low.includes("最終原稿") ||
     low.includes("採択原稿")
   ) {
@@ -151,7 +164,7 @@ function kindOf(window: string | null | undefined): string {
   ) {
     return "rebuttal_end";
   }
-  return "paper";
+  return isNonPaperWorkshopLabel(String(window ?? "")) ? "other" : "paper";
 }
 
 export interface PrimaryDeadline {
@@ -268,11 +281,16 @@ export function extractDeadline(
   if (dt.getUTCMonth() !== month - 1 || dt.getUTCDate() !== day) return null;
   const kind = kindOf(kindHint || window);
   const roundNo = roundOf(window, 1);
-  let label = LABELS[kind];
+  let label = kind === "other" ? (kindHint || window).trim() : LABELS[kind];
   if (roundNo > 1) label = `Round ${roundNo} ${label}`;
+  const timeSrc = kindHint && parsePrimaryDate(kindHint) ? kindHint : window;
+  // Own dated row wins. A neighboring deadline's zone cannot fill a missing zone.
+  const contextHasOtherDate = Boolean(kindHint && parsePrimaryDate(window.replace(kindHint, "")));
   let tz: string | undefined;
   TZ_RE.lastIndex = 0;
-  const tzM = TZ_RE.exec(window);
+  const ownTz = TZ_RE.exec(timeSrc.normalize("NFKC"));
+  TZ_RE.lastIndex = 0;
+  const tzM = ownTz ?? (contextHasOtherDate ? null : TZ_RE.exec(window.normalize("NFKC")));
   if (tzM) {
     const raw = tzM[0];
     if (/^(?:bot|cot|get|cat|wat|wit|eat|wet|west)$/i.test(raw) && raw !== raw.toUpperCase()) {
@@ -281,12 +299,13 @@ export function extractDeadline(
       tz =
         raw.toLowerCase().includes("anywhere") || raw.toUpperCase() === "AOE"
           ? "AoE"
-          : raw.toUpperCase();
+          : /^(?:日本時間|Japan Standard Time)$/i.test(raw)
+            ? "JST"
+            : raw.toUpperCase();
     }
   }
   // 日付を含む側の行から壁時計の時刻を取る。
   // 無ければ time を載せない。
-  const timeSrc = kindHint && parsePrimaryDate(kindHint) ? kindHint : window;
   const obsTime = extractObservationTime(timeSrc);
   const out: PrimaryDeadline = {
     kind,

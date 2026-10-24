@@ -10,7 +10,10 @@ import {
 } from "../src/bench-recommender.ts";
 import { embeddingsStale } from "../src/build.ts";
 import { embeddingProfileHash } from "../src/embeddings.ts";
-import { semanticContentIdForArtifacts } from "../src/semantic-content.ts";
+import {
+  recommendationGatePolicyId,
+  semanticContentIdForArtifacts,
+} from "../src/semantic-content.ts";
 
 const positional: string[] = [];
 let requiredGatePath = "";
@@ -78,8 +81,11 @@ function readPassedReport(
 }
 
 const bytes = readFileSync(embeddingsPath);
-const embedding = JSON.parse(bytes) as {
-  manifest?: { runtime_version?: unknown; models?: { en?: { revision?: unknown } } };
+const embedding = JSON.parse(bytes.toString("utf8")) as {
+  manifest?: {
+    runtime_version?: unknown;
+    models?: { en?: { revision?: unknown }; multi?: { revision?: unknown } };
+  };
 };
 const manifest = embedding.manifest;
 if (!manifest?.runtime_version || !manifest.models?.en?.revision)
@@ -107,6 +113,7 @@ writeFileSync(
       source_commit: sourceCommit,
       bundle_origin_commit: sourceCommit,
       semantic_content_id: actualContentId,
+      gate_policy_id: recommendationGatePolicyId(),
       profile_hash: embeddingProfileHash(data),
       model_revision: manifest.models.en.revision,
       multilingual_model_revision: manifest.models.multi?.revision ?? null,

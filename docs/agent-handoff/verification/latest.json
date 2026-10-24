@@ -1,0 +1,322 @@
+{
+  "recorded_at": "2026-10-03T20:19:03.496877+00:00",
+  "branch": "fix/site-ja-usability",
+  "code_revision": "6bdb20e735540dd4800c673664ff15b2a223dc83",
+  "own_code_commits": [
+    "064055d305fd15c6a29b2e0c88510a27c2ff3f2d",
+    "85240e35b3555b633e44c5504768a81644646e52",
+    "892ec16cb7ab67c970c10f9a0744c3fd7d6ee845",
+    "8e39f1cf1f9a41b30ee27b4885a39b6251553c5d",
+    "393b3c6c478c22ffb242c4ae2e303d1e43012059",
+    "f0bdccd84ec76753c20dd4be28dc8d44864b592c",
+    "3ca8f39062b85c335eab343aeb80b52b96b92dfd",
+    "891e25d8e938715d2f6c11226034ae9924d4e1ee",
+    "f9fc4956df70ab8183c1dc45a7bcbf4d73f046ef",
+    "2abaf056b487df548c79b3ad048453bdac046f5f",
+    "6bdb20e735540dd4800c673664ff15b2a223dc83"
+  ],
+  "new_branch_worktree_clone_during_handoff": false,
+  "own_ui_branch_pushed": false,
+  "verification_scope": "Actual /Users/ten82e/kamiyobi checkout and its public assets; real Git HEAD, no archive adapter including the protected pre-existing changes; clean HEAD alone was not tested.",
+  "tests": {
+    "passed": 5337,
+    "files_passed": 353
+  },
+  "checks": [
+    {
+      "check": "typecheck",
+      "exit_code": 0,
+      "seconds": 1.3
+    },
+    {
+      "check": "lint",
+      "exit_code": 0,
+      "seconds": 0.56
+    },
+    {
+      "check": "fixed-build",
+      "exit_code": 0,
+      "seconds": 1.22
+    },
+    {
+      "check": "tests",
+      "exit_code": 0,
+      "seconds": 314.23
+    },
+    {
+      "check": "fixed-validation",
+      "exit_code": 0,
+      "seconds": 0.46
+    },
+    {
+      "check": "fixed-health",
+      "exit_code": 0,
+      "seconds": 0.34
+    },
+    {
+      "check": "semantic-recommendation",
+      "exit_code": 0,
+      "seconds": 0.22
+    },
+    {
+      "check": "recommendation-data-delta",
+      "exit_code": 0,
+      "seconds": 1.13
+    },
+    {
+      "check": "real-paper-recommendation",
+      "exit_code": 0,
+      "seconds": 53.56
+    },
+    {
+      "check": "build",
+      "exit_code": 0,
+      "seconds": 3.58
+    },
+    {
+      "check": "data-validation",
+      "exit_code": 0,
+      "seconds": 0.44
+    },
+    {
+      "check": "public-validation",
+      "exit_code": 0,
+      "seconds": 0.45
+    },
+    {
+      "check": "health-gate",
+      "exit_code": 0,
+      "seconds": 0.34
+    },
+    {
+      "check": "diff-check",
+      "exit_code": 0,
+      "seconds": 0.14
+    }
+  ],
+  "checks_sha256": "5c7fc6792e69d663ccaf2b87cbf198088ee10b0b7fb8f79afd4a7d129838024d",
+  "tests_log_sha256": "d334d9b31424f3a07328146e67bc35f9d5b1d0630f2989850e9ef36e7acc4471",
+  "headless_browser": [
+    {
+      "script": "scripts/agent-handoff/headless-compsac.mjs",
+      "motion": "reduce",
+      "passed": true,
+      "report": "work/agent-verification/main-integration/browser/compsac-reduce.json",
+      "report_sha256": "e855a810987abf9165481928751419b3324a7f33a8ad774100e1bfb11863764d",
+      "actual_worktree": true
+    },
+    {
+      "script": "scripts/agent-handoff/headless-identity.mjs",
+      "motion": "reduce",
+      "passed": true,
+      "report": "work/agent-verification/main-integration/browser/identity-reduce.json",
+      "report_sha256": "6d510429dea1f343cab112fdfc9b03d75d0516618ba6304e0e613efe4bcd652d",
+      "actual_worktree": true
+    },
+    {
+      "script": "scripts/agent-handoff/headless-researcher.mjs",
+      "motion": "reduce",
+      "passed": true,
+      "report": "work/agent-verification/main-integration/browser/researcher-reduce.json",
+      "report_sha256": "d646f0f50278333047ee621a927fc50d356e721cd340e00d8d6634c3597fd65d",
+      "actual_worktree": true
+    },
+    {
+      "script": "scripts/agent-handoff/headless-updater.mjs",
+      "motion": "reduce",
+      "passed": true,
+      "report": "work/agent-verification/main-integration/browser/updater-reduce.json",
+      "report_sha256": "7e3c6eaf1ea4d1933675f8e156c18aa31c36b73aaa13c04a74c2b953b06f0ee5",
+      "actual_worktree": true
+    },
+    {
+      "script": "scripts/agent-handoff/headless-compsac.mjs",
+      "motion": "no-preference",
+      "passed": true,
+      "report": "work/agent-verification/main-integration/browser/compsac-no-preference.json",
+      "report_sha256": "3b9e4b2f95d71855b97a443c64e6203faa35c144b35165f3b33dc1995669d952",
+      "actual_worktree": true
+    },
+    {
+      "script": "scripts/agent-handoff/headless-identity.mjs",
+      "motion": "no-preference",
+      "passed": true,
+      "report": "work/agent-verification/main-integration/browser/identity-no-preference.json",
+      "report_sha256": "610d05f7e165482a6e40c3b694f351ac934af368fc465542603d74e8985faeff",
+      "actual_worktree": true
+    },
+    {
+      "script": "scripts/agent-handoff/headless-researcher.mjs",
+      "motion": "no-preference",
+      "passed": true,
+      "report": "work/agent-verification/main-integration/browser/researcher-no-preference.json",
+      "report_sha256": "3d378d78cb978956b048b680cbad691b2615a773aa76a47ea57cae876601d486",
+      "actual_worktree": true
+    },
+    {
+      "script": "scripts/agent-handoff/headless-updater.mjs",
+      "motion": "no-preference",
+      "passed": true,
+      "report": "work/agent-verification/main-integration/browser/updater-no-preference.json",
+      "report_sha256": "69f1910a21b938a7c914d9e21ad2ee761858f80ed0f9ede2d15a961451e261a3",
+      "actual_worktree": true
+    }
+  ],
+  "identity_audit": [
+    {
+      "file": "data.json",
+      "conferences": 696,
+      "rows": 4964,
+      "shown": 4963,
+      "only_reviewed_pair_consolidated": true,
+      "canonical_share_keys_unique": true,
+      "untouched_identity_rows": 4962,
+      "continuous_journal_rows": 22,
+      "shared_key_collision_groups": 38
+    },
+    {
+      "file": "catalog.json",
+      "conferences": 696,
+      "rows": 716,
+      "shown": 715,
+      "only_reviewed_pair_consolidated": true,
+      "canonical_share_keys_unique": true,
+      "untouched_identity_rows": 714,
+      "continuous_journal_rows": 22,
+      "shared_key_collision_groups": 4
+    }
+  ],
+  "protected_source_test_hashes_unchanged": true,
+  "protected_paths_sha256": {
+    "site/recommender.ts": "bc5c73bbed9e09c36df21906aec7e7582da3e97f328051b2d0d88c48298980d6",
+    "tests/japanese_glued_kind_fold_query.test.ts": "f18101e643e27549f80ffa03d88b37fa48ad3f37feeb6464db20e2cd3a570a13",
+    "tests/held_in_suffix_query.test.ts": "6cb084a50369e0ce48298e1b64adbb191d8f7b4f178cf17af2ba4e78861e3700",
+    "data/source-snapshots/aideadlines.json": "c1411d15de9699dc5aa3e279aeccd8407e8c842744fc3f07f8bde8a226d52377",
+    "data/source-snapshots/ccfddl.json": "608d21d5f83e1a0886c5a75ec9c1fe3e37c0b0e07cc3bf701f9dc8b334bca87d",
+    "data/source-snapshots/local.json": "1b8a058ca8415710541d6a137233f27fc85b59fa0ca1658e9d2df9bceb95cbe8",
+    "data/source-snapshots/primary.json": "73b86e439978a1c36f16eedb34e6a09371e46b8bbcf6f64621a0e39cd5b5b346"
+  },
+  "verification_source_sha256": {
+    "site/app.ts": "dc5586327f8ff38e06437db3e7b78385413c181a234d5eb4208b18b2407cf658",
+    "site/template.html": "0e7fe31f9d86b586abd510685e21191454a59ee2948388213744a228ff33c7d0",
+    "site/submission-identity.ts": "e69eba706320b08147e77fd764ea3e9a6c73c7de8c23a0a64d9b1b99c1588e12",
+    "src/build.ts": "ea330387e2b87df0d3c7dd5736e0578df00268cae3797af2f46318127310751d",
+    "tests/submission_share_identity.test.ts": "93e2c10b0246b9a2bc6d728e83e043996dc8c30c64d18651a9902e4fcd692250",
+    "scripts/agent-handoff/headless-identity.mjs": "fedee2b94a607fa180c7054d7225a612d53e3edeb56768997518f7d7fb0ccda0",
+    "src/merge.ts": "fd17227e634c398b6525d89e855e482f277cad12a797dc53d3615e1123f1d29b",
+    "scripts/train-reranker.ts": "6b17687313ab4e0c01a287a3d1530d3c665b95a76d80fb22e35a732b080f2990",
+    "tests/built_site.ts": "f847062bf44d1a61a2044dc303c502f21e8cbdd59946efaffca044d522b2d8a7",
+    "tests/edition_schedule_catalog.test.ts": "6bee13c8f5b4e5bb10219f18dbde2ed4ff744cc44001b7f8d7271685c51706f4",
+    "tests/fixtures/query-reference-overrides.yaml": "467362b529278f1b0e314a7134294ecbefa24cecc27dde73a90495730e1c94d4",
+    "tests/fixtures/query-reference-config.yaml": "7542e4941bd9461815a5541a3a88e14cb2006db7f1158ef5467333f82d621cb5",
+    "scripts/agent-handoff/headless-updater.mjs": "a3ffd021e51c438499205a2a2b1d379de9251c0b464215d7d259a41fa452607a",
+    "scripts/agent-handoff/apply-compatibility.py": "116caa839ca71f02f919f0e8bb711653ef6533d6d75eeb08b6b065b09e2cd5bf",
+    ".github/workflows/ci.yml": "ab4fab68217d9d772751872fdd8a324100a907699ed12f279f22cae8c55acb7c",
+    ".github/workflows/update-data.yml": "3a16773dedbaf37b75f2faf61ef6f94e4278d69f5b59c7be06d0e180a6636889",
+    "SPEC.md": "41bc2c917ea6215de69ebd7f078c62b8137bcf8799ae1259fab0e99c46769f91",
+    "config.yaml": "456daf5f68825f64cfbeca1d40cea7b5d50126e8915c8e5bf005b09c9190b23a",
+    "data/benchmarks/real-paper-feature-baseline.json": "a9dfcff7c8f46cbbf3437c94e66021cf661751111251a2461e2a0062536cf0d6",
+    "data/benchmarks/real-paper-features.jsonl": "be70f5648bece9a8ff3cb1c5edd1d9015ced0b16f75f363754e5a471a017a12d",
+    "data/evidence/blobs/08810cdea05169d3110106df6b6e8cf461c5ebda2f74feb757b712753b878c37.body": "08810cdea05169d3110106df6b6e8cf461c5ebda2f74feb757b712753b878c37",
+    "data/evidence/blobs/24a85164b842fa0b7b5f98c75e1fa9dfa8851372f73571cbe2de94dc9141dd2d.body": "24a85164b842fa0b7b5f98c75e1fa9dfa8851372f73571cbe2de94dc9141dd2d",
+    "data/evidence/blobs/2710171d2ee3d422ec6bb0842872cac5add2e18259de3da70b4e6d7d00b190aa.body": "2710171d2ee3d422ec6bb0842872cac5add2e18259de3da70b4e6d7d00b190aa",
+    "data/evidence/blobs/313329e1b1243fb8c8297930dd410fccd368943906e10b6493354439916f6027.body": "313329e1b1243fb8c8297930dd410fccd368943906e10b6493354439916f6027",
+    "data/evidence/blobs/4cec899d14b03fb294dac055b5a7aec7ab28ba32c9fdad86ff2ad535eca68d35.body": "4cec899d14b03fb294dac055b5a7aec7ab28ba32c9fdad86ff2ad535eca68d35",
+    "data/evidence/blobs/77f70f1aceb8fb84775488920b2af7c6d2bf44be386c954f2cfb86925e744e9c.body": "77f70f1aceb8fb84775488920b2af7c6d2bf44be386c954f2cfb86925e744e9c",
+    "data/evidence/blobs/b95f7e84da5a57d058767466da8a40d298849459bd0bfb354450c91adfe2ce65.body": "b95f7e84da5a57d058767466da8a40d298849459bd0bfb354450c91adfe2ce65",
+    "data/evidence/blobs/e36a837b58b55e998aa952e7e15a50a502e2c7dbb122ac881e6e63989e0bdc30.body": "e36a837b58b55e998aa952e7e15a50a502e2c7dbb122ac881e6e63989e0bdc30",
+    "data/overrides.yaml": "f2a09809cd40f4a73841ceca2361c495f9c2126e75a0049f5c8210a37775bf3a",
+    "data/recommender-reranker.json": "a7c771c5ac6740def2eca58f8a1251d189a6bfa31535fc4baa62e72ccaceacc6",
+    "src/bench-recommender.ts": "2b98cba1ec53c6ad2e1a1e20f12370e4ec3db34de92bf9635a1e5b5fd69c6809",
+    "src/cli.ts": "68bccc93328bccdd0b3dde6f0bd7cae4e064ee56f18ee9049902fa195cfdc113",
+    "src/identity-migration.ts": "ae9dfe9b7680959b567cc8acbf44ee31f57b40e47e797f96a3cc0fd3e25918e8",
+    "tests/autoupdate_hosted_regression.test.ts": "dd67c34a86f6dd49fc74a94799ad0ba13d17a5532283869ab8168e49fc155177",
+    "tests/bench_recommender.test.ts": "1d5737ae70d144f88ece7ba63fcc70b244fa56e84ffed52860d0217c176b8c75",
+    "tests/curation.test.ts": "5134adc854a22c06af173112bc9dcfd710dac241f02f5f414b6fa08f9ca28ad0",
+    "tests/event_schedule.test.ts": "dbb1febd186730c24488427e5e72b608814d0fefbb1ff22a6a3b5433bf0a4440",
+    "tests/fixtures/autoupdate-committed-ecir.json": "ec356822e964e4f0bc4eaa217cf4d003d4b405694ab3625b3c1eb955da797650",
+    "tests/fixtures/autoupdate-deadline-conflicts.json": "f8225c573999b7c9ffeced29c1897881fe6233333f395811079f92fbe8c0adca",
+    "tests/fixtures/autoupdate-deadline-transitions.json": "fc2303ada57622d9b827999a2a639322a33fcfdd9afc28c4a9ae978e081d83f8",
+    "tests/fixtures/autoupdate-hosted-regression.json": "7048fb113d6775b26651cc46cb0f81daef9d6280c5a9759612cd8ed749ddbf1f",
+    "tests/fixtures/autoupdate-published-identities.json": "c1203953ff85d738bb59b094df39e191bb05a5b1fb486cae8fd480d874244b92",
+    "tests/fixtures/canary-primary-observations.yaml": "ff07557e580767ac59ea9b813061ada5940397c75dc2ed0e9ead139774567461",
+    "tests/local_sources.test.ts": "7bf14e55da9c6e702ecabfe50b25e1c964da0ce33c6914ca178050a4ca80e0a4",
+    "tests/merge.test.ts": "7742432c28a80355151f5612bad43d7dff50779f39a4dc1534f086a82a5a1152",
+    "tests/reverify.test.ts": "4a55324195a7d9c31da53c3875db30830139bcfc80811f3c6dac90e0f37a7bae",
+    "tests/update_data_canary.test.ts": "edb051fd537c1ecf6feb2873d3d9aa2ee195ea2f4a18f7446a9c9727464800d2",
+    "scripts/agent-handoff/verify-main-integration.py": "c0b91f4306823e97cb021a872388481254fb43eeb9ef99277240150c1a4ce5c6",
+    "scripts/agent-handoff/browser-main-integration.py": "58f52fdd18586faba66820c1f0f5dc70284f3bc79ca0ae485271b5f93f1668a3"
+  },
+  "screenshots": [
+    "work/agent-verification/main-integration/browser/screenshots/integration-corrected-link-mobile.png",
+    "work/agent-verification/main-integration/browser/screenshots/integration-evomusart-mobile.png",
+    "work/agent-verification/main-integration/browser/screenshots/shared-link-choices-mobile.png"
+  ],
+  "remaining": [
+    "Local source integration is complete. Publication was not authorized and has not been performed.",
+    "Recheck remote/public state before any future authorized publication."
+  ],
+  "publish_actions_authorized": false,
+  "review_browser_checks": [
+    {
+      "check": "compsac",
+      "mode": "reduce",
+      "exit_code": 0,
+      "actual_worktree": true
+    },
+    {
+      "check": "identity",
+      "mode": "reduce",
+      "exit_code": 0,
+      "actual_worktree": true
+    },
+    {
+      "check": "researcher",
+      "mode": "reduce",
+      "exit_code": 0,
+      "actual_worktree": true
+    },
+    {
+      "check": "updater",
+      "mode": "reduce",
+      "exit_code": 0,
+      "actual_worktree": true
+    },
+    {
+      "check": "compsac",
+      "mode": "no-preference",
+      "exit_code": 0,
+      "actual_worktree": true
+    },
+    {
+      "check": "identity",
+      "mode": "no-preference",
+      "exit_code": 0,
+      "actual_worktree": true
+    },
+    {
+      "check": "researcher",
+      "mode": "no-preference",
+      "exit_code": 0,
+      "actual_worktree": true
+    },
+    {
+      "check": "updater",
+      "mode": "no-preference",
+      "exit_code": 0,
+      "actual_worktree": true
+    }
+  ],
+  "review_fix_details": "Reviewed venue aliases preserve deadline identity through merge, compact catalog, URL restoration and explicit changed-date choices; historical query inputs are isolated; default trainer keeps historical promotion provenance.",
+  "integration_report": "docs/agent-handoff/verification/integration-latest.json",
+  "agy_review": "docs/agent-handoff/reviews/agy-integration-disposition.md",
+  "compatibility_manifest": "docs/agent-handoff/candidates/updater-compatibility-manifest.json",
+  "integration_complete": true,
+  "integration_tests_passed": 5337,
+  "integration_checks_passed": 13,
+  "full_recommendation_queries_passed": 201,
+  "identity_audit_detail": "work/agent-verification/identity-audit.json",
+  "actual_updater_sources_applied": true,
+  "main_integration_report": "docs/agent-handoff/verification/main-integration-latest.json",
+  "main_integration_checks_passed": 14
+}

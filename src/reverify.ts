@@ -1893,14 +1893,30 @@ function normalizeLimits(value: Partial<ReverifyLimits> | undefined): ReverifyLi
   };
 }
 
-function hostRateLimiter(intervalMs: number): (url: string) => Promise<void> {
+function hostRateLimiter(
+  intervalMs: number,
+): <T>(url: string, request: () => Promise<T>) => Promise<T> {
   const nextAt = new Map<string, number>();
-  return async (url: string): Promise<void> => {
+  const queued = new Map<string, Promise<void>>();
+  return async <T>(url: string, request: () => Promise<T>): Promise<T> => {
     const host = new URL(url).hostname.toLowerCase();
-    const now = Date.now();
-    const start = Math.max(now, nextAt.get(host) ?? now);
-    nextAt.set(host, start + intervalMs);
-    if (start > now) await new Promise<void>((resolve) => setTimeout(resolve, start - now));
+    const previous = queued.get(host);
+    let release!: () => void;
+    queued.set(
+      host,
+      new Promise<void>((resolve) => {
+        release = resolve;
+      }),
+    );
+    await previous;
+    try {
+      const delay = (nextAt.get(host) ?? 0) - performance.now();
+      if (delay > 0) await new Promise<void>((resolve) => setTimeout(resolve, Math.ceil(delay)));
+      return await request();
+    } finally {
+      nextAt.set(host, performance.now() + intervalMs);
+      release();
+    }
   };
 }
 
@@ -2057,7 +2073,7 @@ export async function reverifyData(options: ReverifyOptions): Promise<ReverifyRe
     options.bodyRoot ?? join(dirname(options.ledgerPath), "evidence", "blobs"),
   );
   const fetchImpl = options.fetchImpl;
-  const waitForHost = hostRateLimiter(limits.minHostIntervalMs);
+  const withHostLimit = hostRateLimiter(limits.minHostIntervalMs);
   const data = JSON.parse(readFileSync(options.dataPath, "utf8")) as JsonData;
   const ledger = loadVerificationLedger(options.ledgerPath);
   migrateTargetIds(data, ledger);
@@ -2144,23 +2160,24 @@ export async function reverifyData(options: ReverifyOptions): Promise<ReverifyRe
       const previous = ledger.pages[target.pageId];
       let captured: Awaited<ReturnType<typeof capturePage>>;
       try {
-        await waitForHost(url);
-        captured = await capturePage(url, {
-          ...(fetchImpl ? { fetchImpl } : {}),
-          previous: previous
-            ? {
-                headers: previous.headers,
-                contentHash: previous.content_hash,
-                sourceRevision: previous.source_revision,
-                bodyRef: previous.body_ref,
-                contentLength: previous.content_length,
-              }
-            : undefined,
-          bodyRoot,
-          parserVersion: "reverification-v2",
-          maxBodyBytes: limits.maxBodyBytes,
-          timeoutMs: limits.timeoutMs,
-        });
+        captured = await withHostLimit(url, () =>
+          capturePage(url, {
+            ...(fetchImpl ? { fetchImpl } : {}),
+            previous: previous
+              ? {
+                  headers: previous.headers,
+                  contentHash: previous.content_hash,
+                  sourceRevision: previous.source_revision,
+                  bodyRef: previous.body_ref,
+                  contentLength: previous.content_length,
+                }
+              : undefined,
+            bodyRoot,
+            parserVersion: "reverification-v2",
+            maxBodyBytes: limits.maxBodyBytes,
+            timeoutMs: limits.timeoutMs,
+          }),
+        );
       } catch (error) {
         const page = errorPage(target, now, error, previous);
         ledger.pages[target.pageId] = page;

@@ -25,6 +25,29 @@ function offset(tz: Tz, when: Date = WINTER): number {
 }
 
 describe("resolve_tz", () => {
+  it("accepts explicit full AoE and Japanese standard-time names (#784)", () => {
+    for (const raw of [
+      "Anywhere on Earth",
+      "anywhere on the earth",
+      "Anywhere on inhabited Earth",
+    ]) {
+      expect(isConfirmedTimezone(raw)).toBe(true);
+      expect(parseInstant("2026-05-15 23:59:00", raw)?.toISOString()).toBe(
+        "2026-05-16T11:59:00.000Z",
+      );
+    }
+    for (const raw of ["日本時間", "Japan Standard Time"]) {
+      expect(isConfirmedTimezone(raw)).toBe(true);
+      expect(parseInstant("2026-05-15 23:59:00", raw)?.toISOString()).toBe(
+        "2026-05-15T14:59:00.000Z",
+      );
+    }
+    for (const raw of [undefined, "", "Japan", "CST", "IST", "BST"]) {
+      expect(isConfirmedTimezone(raw)).toBe(false);
+      expect(parseInstant("2026-05-15 23:59:00", raw)).toBeNull();
+    }
+  });
+
   it("AoE is UTC-12", () => {
     expect(offset(resolveTz("AoE"))).toBe(-12 * 60);
     expect(offset(resolveTz("aoe"))).toBe(-12 * 60);

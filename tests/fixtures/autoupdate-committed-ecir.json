@@ -1,0 +1,653 @@
+{
+  "conferences": [
+    {
+      "key": "ecir",
+      "title": "ECIR",
+      "full_name": "European Conference on Information Retrieval",
+      "acronym": "ECIR",
+      "categories": ["ai", "db"],
+      "rank": {
+        "ccf": "C",
+        "core": "A",
+        "thcpl": "B"
+      },
+      "link": "https://www.ecir2027.co.uk/",
+      "tags": ["data-mining"],
+      "sources": ["aideadlines", "ccfddl"],
+      "dblp": "ecir",
+      "upstream_sub": "DB",
+      "identity": {
+        "dblpKey": "ecir",
+        "officialDomains": ["https://ecir2027.co.uk/", "https://www.ecir2027.co.uk/"],
+        "sourceIds": {
+          "aideadlines": "ecir",
+          "ccfddl": "DB/ecir"
+        }
+      },
+      "category_assignments": [
+        {
+          "category": "ai",
+          "reason": "source-subfield"
+        },
+        {
+          "category": "db",
+          "reason": "source-subfield"
+        }
+      ],
+      "editions": [
+        {
+          "year": 2027,
+          "id": "ecir27",
+          "link": "https://www.ecir2027.co.uk/",
+          "place": "Southampton, United Kingdom",
+          "date_text": "March 21-25, 2027 (Southampton, UK)",
+          "event_date_precision": "exact-range",
+          "event_start": "2027-03-21",
+          "event_end": "2027-03-25",
+          "estimated": false,
+          "source": "aideadlines",
+          "identity": {
+            "editionId": "ecir-2027",
+            "officialUrls": ["https://ecir2027.co.uk/", "https://www.ecir2027.co.uk/"],
+            "sourceIds": {
+              "aideadlines": "ecir27",
+              "ccfddl": "ecir27"
+            }
+          },
+          "deadlines": [
+            {
+              "kind": "other",
+              "label": "Workshop proposal deadline",
+              "round": 1,
+              "track": "",
+              "comment": null,
+              "status": "confirmed",
+              "selection_rule": "source_priority_then_nearest_within_configured_window",
+              "evidence": [
+                {
+                  "source_name": "aideadlines",
+                  "source_url": "https://www.ecir2027.co.uk/",
+                  "observed_at": "",
+                  "original_value": "2026-09-07 23:59:59",
+                  "confidence": "aggregator",
+                  "sourceClass": "aggregator",
+                  "sourceUrl": "https://www.ecir2027.co.uk/",
+                  "rawExcerpt": "2026-09-07 23:59:59"
+                }
+              ],
+              "verification": {
+                "official_url": "https://www.ecir2027.co.uk/",
+                "last_attempt_at": null,
+                "last_verified_at": null,
+                "next_check_at": "2026-09-06T06:49:53.000Z",
+                "content_hash": null,
+                "status": "manual-required",
+                "source_name": "aideadlines",
+                "source_class": "aggregator"
+              },
+              "precision": "exact",
+              "utc": "2026-09-08T11:59:59Z",
+              "aoe": "2026-09-07 23:59:59 AoE",
+              "tz_raw": "AoE"
+            },
+            {
+              "kind": "abstract",
+              "label": "Full paper abstract deadline",
+              "round": 1,
+              "track": "",
+              "comment": null,
+              "status": "confirmed",
+              "selection_rule": "source_priority_then_nearest_within_configured_window",
+              "evidence": [
+                {
+                  "source_name": "aideadlines",
+                  "source_url": "https://www.ecir2027.co.uk/",
+                  "observed_at": "",
+                  "original_value": "2026-09-21 23:59:59",
+                  "confidence": "aggregator",
+                  "sourceClass": "aggregator",
+                  "sourceUrl": "https://www.ecir2027.co.uk/",
+                  "rawExcerpt": "2026-09-21 23:59:59"
+                }
+              ],
+              "verification": {
+                "official_url": "https://www.ecir2027.co.uk/",
+                "last_attempt_at": null,
+                "last_verified_at": null,
+                "next_check_at": "2026-09-06T06:49:53.000Z",
+                "content_hash": null,
+                "status": "manual-required",
+                "source_name": "aideadlines",
+                "source_class": "aggregator"
+              },
+              "precision": "exact",
+              "utc": "2026-09-22T11:59:59Z",
+              "aoe": "2026-09-21 23:59:59 AoE",
+              "tz_raw": "AoE"
+            },
+            {
+              "kind": "abstract",
+              "label": "Abstract submission",
+              "round": 1,
+              "track": "",
+              "comment": null,
+              "status": "confirmed",
+              "selection_rule": "source_priority_then_nearest_within_configured_window",
+              "evidence": [
+                {
+                  "source_name": "ccfddl",
+                  "source_url": "https://ecir2027.co.uk/",
+                  "observed_at": "",
+                  "original_value": "2026-09-25 23:59:59",
+                  "confidence": "aggregator",
+                  "sourceClass": "aggregator",
+                  "sourceUrl": "https://ecir2027.co.uk/",
+                  "rawExcerpt": "2026-09-25 23:59:59"
+                }
+              ],
+              "conflicts": [
+                {
+                  "at_utc": "2026-09-22T11:59:59Z",
+                  "label": "Abstract submission",
+                  "source": "primary",
+                  "original_value": "2026-09-22T11:59:59Z",
+                  "evidence": {
+                    "source_name": "primary",
+                    "source_url": "",
+                    "observed_at": "",
+                    "original_value": "2026-09-22T11:59:59Z",
+                    "confidence": "aggregator",
+                    "sourceClass": "aggregator",
+                    "rawExcerpt": "2026-09-22T11:59:59Z"
+                  }
+                }
+              ],
+              "verification": {
+                "official_url": "https://www.ecir2027.co.uk/",
+                "last_attempt_at": "2026-09-06T22:09:24.000Z",
+                "last_verified_at": null,
+                "next_check_at": "2026-09-07T22:09:24.000Z",
+                "content_hash": null,
+                "status": "manual-required",
+                "source_class": "unknown",
+                "source_name": "local",
+                "provider_identity": {
+                  "provider": "dedicated-domain",
+                  "providerKey": "www.ecir2027.co.uk",
+                  "strength": "dedicated-domain"
+                },
+                "label_signature": "abstract submission"
+              },
+              "precision": "exact",
+              "utc": "2026-09-25T23:59:59Z",
+              "aoe": "2026-09-25 11:59:59 AoE",
+              "tz_raw": "UTC+0"
+            },
+            {
+              "kind": "abstract",
+              "label": "Short paper abstract deadline",
+              "round": 1,
+              "track": "",
+              "comment": null,
+              "status": "confirmed",
+              "selection_rule": "source_priority_then_nearest_within_configured_window",
+              "evidence": [
+                {
+                  "source_name": "aideadlines",
+                  "source_url": "https://www.ecir2027.co.uk/",
+                  "observed_at": "",
+                  "original_value": "2026-10-05 23:59:59",
+                  "confidence": "aggregator",
+                  "sourceClass": "aggregator",
+                  "sourceUrl": "https://www.ecir2027.co.uk/",
+                  "rawExcerpt": "2026-10-05 23:59:59"
+                }
+              ],
+              "verification": {
+                "official_url": "https://www.ecir2027.co.uk/",
+                "last_attempt_at": null,
+                "last_verified_at": null,
+                "next_check_at": "2026-09-08T06:49:53.000Z",
+                "content_hash": null,
+                "status": "manual-required",
+                "source_name": "aideadlines",
+                "source_class": "aggregator"
+              },
+              "precision": "exact",
+              "utc": "2026-10-06T11:59:59Z",
+              "aoe": "2026-10-05 23:59:59 AoE",
+              "tz_raw": "AoE"
+            },
+            {
+              "kind": "paper",
+              "label": "Paper submission",
+              "round": 1,
+              "track": "",
+              "comment": null,
+              "status": "confirmed",
+              "selection_rule": "source_priority_then_nearest_within_configured_window",
+              "evidence": [
+                {
+                  "source_name": "ecir official CFP",
+                  "source_url": "https://www.ecir2027.co.uk/call-for-full-papers",
+                  "observed_at": "2026-10-03T05:12:25Z",
+                  "original_value": "Paper submission October 5, 2026, 11:59pm (AOE).",
+                  "confidence": "official",
+                  "sourceClass": "official-cfp",
+                  "sourceUrl": "https://www.ecir2027.co.uk/call-for-full-papers",
+                  "retrievedAt": "2026-10-03T05:12:25Z",
+                  "verifiedAt": "2026-10-03T05:12:25Z",
+                  "contentHash": "b95f7e84da5a57d058767466da8a40d298849459bd0bfb354450c91adfe2ce65",
+                  "evidenceRef": "data/evidence/blobs/b95f7e84da5a57d058767466da8a40d298849459bd0bfb354450c91adfe2ce65.body",
+                  "rawExcerpt": "Paper submission October 5, 2026, 11:59pm (AOE).",
+                  "verifiedFields": ["date", "kind", "round", "time", "timezone"]
+                },
+                {
+                  "source_name": "aideadlines",
+                  "source_url": "https://www.ecir2027.co.uk/",
+                  "observed_at": "",
+                  "original_value": "2026-10-05 23:59:59",
+                  "confidence": "aggregator",
+                  "sourceClass": "aggregator",
+                  "sourceUrl": "https://www.ecir2027.co.uk/",
+                  "rawExcerpt": "2026-10-05 23:59:59"
+                }
+              ],
+              "superseded_deadlines": [
+                {
+                  "value": "2026-10-05T23:59:59Z",
+                  "precision": "exact",
+                  "source": "https://www.ecir2027.co.uk/call-for-full-papers",
+                  "evidenceRef": "data/evidence/blobs/b95f7e84da5a57d058767466da8a40d298849459bd0bfb354450c91adfe2ce65.body",
+                  "status": "superseded",
+                  "supersededBy": "ecir|ecir27|paper|1|",
+                  "reason": "manual-resolution",
+                  "supersededAt": "2026-10-03T05:12:25.000Z"
+                }
+              ],
+              "verification": {
+                "official_url": "https://www.ecir2027.co.uk/",
+                "last_attempt_at": "2026-09-05T22:05:09.000Z",
+                "last_verified_at": null,
+                "next_check_at": "2026-09-08T22:05:09.000Z",
+                "content_hash": null,
+                "status": "manual-required",
+                "source_class": "unknown",
+                "source_name": "local",
+                "provider_identity": {
+                  "provider": "dedicated-domain",
+                  "providerKey": "www.ecir2027.co.uk",
+                  "strength": "dedicated-domain"
+                },
+                "label_signature": "paper submission"
+              },
+              "precision": "exact",
+              "utc": "2026-10-06T11:59:59Z",
+              "aoe": "2026-10-05 23:59:59 AoE",
+              "tz_raw": "AoE"
+            },
+            {
+              "kind": "abstract",
+              "label": "Reproducibility abstract deadline",
+              "round": 1,
+              "track": "",
+              "comment": null,
+              "status": "confirmed",
+              "selection_rule": "source_priority_then_nearest_within_configured_window",
+              "evidence": [
+                {
+                  "source_name": "aideadlines",
+                  "source_url": "https://www.ecir2027.co.uk/",
+                  "observed_at": "",
+                  "original_value": "2026-10-12 23:59:59",
+                  "confidence": "aggregator",
+                  "sourceClass": "aggregator",
+                  "sourceUrl": "https://www.ecir2027.co.uk/",
+                  "rawExcerpt": "2026-10-12 23:59:59"
+                }
+              ],
+              "verification": {
+                "official_url": "https://www.ecir2027.co.uk/",
+                "last_attempt_at": null,
+                "last_verified_at": null,
+                "next_check_at": "2026-09-08T06:49:53.000Z",
+                "content_hash": null,
+                "status": "manual-required",
+                "source_name": "aideadlines",
+                "source_class": "aggregator"
+              },
+              "precision": "exact",
+              "utc": "2026-10-13T11:59:59Z",
+              "aoe": "2026-10-12 23:59:59 AoE",
+              "tz_raw": "AoE"
+            },
+            {
+              "kind": "paper",
+              "label": "Short paper submission deadline",
+              "round": 1,
+              "track": "",
+              "comment": null,
+              "status": "confirmed",
+              "selection_rule": "source_priority_then_nearest_within_configured_window",
+              "evidence": [
+                {
+                  "source_name": "aideadlines",
+                  "source_url": "https://www.ecir2027.co.uk/",
+                  "observed_at": "",
+                  "original_value": "2026-10-12 23:59:59",
+                  "confidence": "aggregator",
+                  "sourceClass": "aggregator",
+                  "sourceUrl": "https://www.ecir2027.co.uk/",
+                  "rawExcerpt": "2026-10-12 23:59:59"
+                }
+              ],
+              "verification": {
+                "official_url": "https://www.ecir2027.co.uk/",
+                "last_attempt_at": null,
+                "last_verified_at": null,
+                "next_check_at": "2026-09-08T06:49:53.000Z",
+                "content_hash": null,
+                "status": "manual-required",
+                "source_name": "aideadlines",
+                "source_class": "aggregator"
+              },
+              "precision": "exact",
+              "utc": "2026-10-13T11:59:59Z",
+              "aoe": "2026-10-12 23:59:59 AoE",
+              "tz_raw": "AoE"
+            },
+            {
+              "kind": "paper",
+              "label": "Reproducibility paper submission deadline",
+              "round": 1,
+              "track": "",
+              "comment": null,
+              "status": "confirmed",
+              "selection_rule": "source_priority_then_nearest_within_configured_window",
+              "evidence": [
+                {
+                  "source_name": "aideadlines",
+                  "source_url": "https://www.ecir2027.co.uk/",
+                  "observed_at": "",
+                  "original_value": "2026-10-19 23:59:59",
+                  "confidence": "aggregator",
+                  "sourceClass": "aggregator",
+                  "sourceUrl": "https://www.ecir2027.co.uk/",
+                  "rawExcerpt": "2026-10-19 23:59:59"
+                }
+              ],
+              "verification": {
+                "official_url": "https://www.ecir2027.co.uk/",
+                "last_attempt_at": null,
+                "last_verified_at": null,
+                "next_check_at": "2026-09-08T06:49:53.000Z",
+                "content_hash": null,
+                "status": "manual-required",
+                "source_name": "aideadlines",
+                "source_class": "aggregator"
+              },
+              "precision": "exact",
+              "utc": "2026-10-20T11:59:59Z",
+              "aoe": "2026-10-19 23:59:59 AoE",
+              "tz_raw": "AoE"
+            },
+            {
+              "kind": "abstract",
+              "label": "Doctoral Consortium abstract deadline",
+              "round": 1,
+              "track": "",
+              "comment": null,
+              "status": "confirmed",
+              "selection_rule": "source_priority_then_nearest_within_configured_window",
+              "evidence": [
+                {
+                  "source_name": "aideadlines",
+                  "source_url": "https://www.ecir2027.co.uk/",
+                  "observed_at": "",
+                  "original_value": "2026-10-26 23:59:59",
+                  "confidence": "aggregator",
+                  "sourceClass": "aggregator",
+                  "sourceUrl": "https://www.ecir2027.co.uk/",
+                  "rawExcerpt": "2026-10-26 23:59:59"
+                }
+              ],
+              "verification": {
+                "official_url": "https://www.ecir2027.co.uk/",
+                "last_attempt_at": null,
+                "last_verified_at": null,
+                "next_check_at": "2026-09-08T06:49:53.000Z",
+                "content_hash": null,
+                "status": "manual-required",
+                "source_name": "aideadlines",
+                "source_class": "aggregator"
+              },
+              "precision": "exact",
+              "utc": "2026-10-27T11:59:59Z",
+              "aoe": "2026-10-26 23:59:59 AoE",
+              "tz_raw": "AoE"
+            },
+            {
+              "kind": "other",
+              "label": "Demo / Doctoral Consortium paper / Industry Day / tutorial proposal / resource paper deadline",
+              "round": 1,
+              "track": "",
+              "comment": null,
+              "status": "confirmed",
+              "selection_rule": "source_priority_then_nearest_within_configured_window",
+              "evidence": [
+                {
+                  "source_name": "aideadlines",
+                  "source_url": "https://www.ecir2027.co.uk/",
+                  "observed_at": "",
+                  "original_value": "2026-11-02 23:59:59",
+                  "confidence": "aggregator",
+                  "sourceClass": "aggregator",
+                  "sourceUrl": "https://www.ecir2027.co.uk/",
+                  "rawExcerpt": "2026-11-02 23:59:59"
+                }
+              ],
+              "verification": {
+                "official_url": "https://www.ecir2027.co.uk/",
+                "last_attempt_at": null,
+                "last_verified_at": null,
+                "next_check_at": "2026-09-08T06:49:53.000Z",
+                "content_hash": null,
+                "status": "manual-required",
+                "source_name": "aideadlines",
+                "source_class": "aggregator"
+              },
+              "precision": "exact",
+              "utc": "2026-11-03T11:59:59Z",
+              "aoe": "2026-11-02 23:59:59 AoE",
+              "tz_raw": "AoE"
+            },
+            {
+              "kind": "notification",
+              "label": "Notifications (full & short papers)",
+              "round": 1,
+              "track": "",
+              "comment": null,
+              "status": "confirmed",
+              "selection_rule": "source_priority_then_nearest_within_configured_window",
+              "evidence": [
+                {
+                  "source_name": "ecir official CFP",
+                  "source_url": "https://www.ecir2027.co.uk/call-for-full-papers",
+                  "observed_at": "2026-10-03T05:12:25Z",
+                  "original_value": "Full paper notification: 7 December 2026",
+                  "confidence": "official",
+                  "sourceClass": "official-cfp",
+                  "sourceUrl": "https://www.ecir2027.co.uk/call-for-full-papers",
+                  "retrievedAt": "2026-10-03T05:12:25Z",
+                  "verifiedAt": "2026-10-03T05:12:25Z",
+                  "contentHash": "b95f7e84da5a57d058767466da8a40d298849459bd0bfb354450c91adfe2ce65",
+                  "evidenceRef": "data/evidence/blobs/b95f7e84da5a57d058767466da8a40d298849459bd0bfb354450c91adfe2ce65.body",
+                  "rawExcerpt": "Full paper notification: 7 December 2026",
+                  "verifiedFields": ["date", "kind"]
+                }
+              ],
+              "verification": {
+                "official_url": "https://www.ecir2027.co.uk/call-for-full-papers",
+                "last_attempt_at": "2026-10-03T05:12:25Z",
+                "last_verified_at": "2026-10-03T05:12:25.000Z",
+                "next_check_at": "2026-10-06T05:31:18.000Z",
+                "content_hash": "b95f7e84da5a57d058767466da8a40d298849459bd0bfb354450c91adfe2ce65",
+                "source_name": "ecir official CFP",
+                "status": "verified",
+                "source_class": "official-cfp"
+              },
+              "precision": "date-only",
+              "local_date": "2026-12-07",
+              "earliest_utc": "2026-12-06T10:00:00.000Z",
+              "latest_utc": "2026-12-08T11:59:59.999Z",
+              "utc": null,
+              "aoe": null,
+              "tz_raw": null
+            },
+            {
+              "kind": "notification",
+              "label": "Notification of acceptance",
+              "round": 1,
+              "track": "",
+              "comment": null,
+              "status": "confirmed",
+              "selection_rule": "source_priority_then_nearest_within_configured_window",
+              "evidence": [
+                {
+                  "source_name": "aideadlines",
+                  "source_url": "https://www.ecir2027.co.uk/",
+                  "observed_at": "",
+                  "original_value": "2026-12-07 23:59:59",
+                  "confidence": "aggregator",
+                  "sourceClass": "aggregator",
+                  "sourceUrl": "https://www.ecir2027.co.uk/",
+                  "rawExcerpt": "2026-12-07 23:59:59"
+                }
+              ],
+              "verification": {
+                "official_url": "https://www.ecir2027.co.uk/",
+                "last_attempt_at": null,
+                "last_verified_at": null,
+                "next_check_at": "2026-09-12T06:49:53.000Z",
+                "content_hash": null,
+                "status": "manual-required",
+                "source_name": "aideadlines",
+                "source_class": "aggregator"
+              },
+              "precision": "exact",
+              "utc": "2026-12-08T11:59:59Z",
+              "aoe": "2026-12-07 23:59:59 AoE",
+              "tz_raw": "AoE"
+            },
+            {
+              "kind": "registration",
+              "label": "Author and early registration deadline",
+              "round": 1,
+              "track": "",
+              "comment": null,
+              "status": "confirmed",
+              "selection_rule": "source_priority_then_nearest_within_configured_window",
+              "evidence": [
+                {
+                  "source_name": "aideadlines",
+                  "source_url": "https://www.ecir2027.co.uk/",
+                  "observed_at": "",
+                  "original_value": "2026-12-21 23:59:59",
+                  "confidence": "aggregator",
+                  "sourceClass": "aggregator",
+                  "sourceUrl": "https://www.ecir2027.co.uk/",
+                  "rawExcerpt": "2026-12-21 23:59:59"
+                }
+              ],
+              "verification": {
+                "official_url": "https://www.ecir2027.co.uk/",
+                "last_attempt_at": null,
+                "last_verified_at": null,
+                "next_check_at": "2026-09-12T06:49:53.000Z",
+                "content_hash": null,
+                "status": "manual-required",
+                "source_name": "aideadlines",
+                "source_class": "aggregator"
+              },
+              "precision": "exact",
+              "utc": "2026-12-22T11:59:59Z",
+              "aoe": "2026-12-21 23:59:59 AoE",
+              "tz_raw": "AoE"
+            },
+            {
+              "kind": "camera_ready",
+              "label": "Tutorial camera-ready deadline",
+              "round": 1,
+              "track": "",
+              "comment": null,
+              "status": "confirmed",
+              "selection_rule": "source_priority_then_nearest_within_configured_window",
+              "evidence": [
+                {
+                  "source_name": "aideadlines",
+                  "source_url": "https://www.ecir2027.co.uk/",
+                  "observed_at": "",
+                  "original_value": "2027-01-10 23:59:59",
+                  "confidence": "aggregator",
+                  "sourceClass": "aggregator",
+                  "sourceUrl": "https://www.ecir2027.co.uk/",
+                  "rawExcerpt": "2027-01-10 23:59:59"
+                }
+              ],
+              "verification": {
+                "official_url": "https://www.ecir2027.co.uk/",
+                "last_attempt_at": null,
+                "last_verified_at": null,
+                "next_check_at": "2026-09-12T06:49:53.000Z",
+                "content_hash": null,
+                "status": "manual-required",
+                "source_name": "aideadlines",
+                "source_class": "aggregator"
+              },
+              "precision": "exact",
+              "utc": "2027-01-11T11:59:59Z",
+              "aoe": "2027-01-10 23:59:59 AoE",
+              "tz_raw": "AoE"
+            },
+            {
+              "kind": "registration",
+              "label": "Regular registration deadline",
+              "round": 1,
+              "track": "",
+              "comment": null,
+              "status": "confirmed",
+              "selection_rule": "source_priority_then_nearest_within_configured_window",
+              "evidence": [
+                {
+                  "source_name": "aideadlines",
+                  "source_url": "https://www.ecir2027.co.uk/",
+                  "observed_at": "",
+                  "original_value": "2027-02-08 23:59:59",
+                  "confidence": "aggregator",
+                  "sourceClass": "aggregator",
+                  "sourceUrl": "https://www.ecir2027.co.uk/",
+                  "rawExcerpt": "2027-02-08 23:59:59"
+                }
+              ],
+              "verification": {
+                "official_url": "https://www.ecir2027.co.uk/",
+                "last_attempt_at": null,
+                "last_verified_at": null,
+                "next_check_at": "2026-09-12T06:49:53.000Z",
+                "content_hash": null,
+                "status": "manual-required",
+                "source_name": "aideadlines",
+                "source_class": "aggregator"
+              },
+              "precision": "exact",
+              "utc": "2027-02-09T11:59:59Z",
+              "aoe": "2027-02-08 23:59:59 AoE",
+              "tz_raw": "AoE"
+            }
+          ]
+        }
+      ],
+      "papers": []
+    }
+  ]
+}

@@ -1,6 +1,23 @@
+import {
+  ICS_VIEW_CAL_NAME_JA,
+  ICS_VIEW_CANDIDATE_CAL_NAME_JA,
+  icsViewText,
+  jstParts,
+  type ScreenDeadlineInput,
+} from "./ics.js";
 import { loadPublishedRecommendation } from "./publish.js";
-import { type RecommendationAxes, recommendationAxes } from "./recommendation-core.js";
-import Recommender from "./recommender.js";
+import Recommender from "./recommendation.js";
+import {
+  isRecommendationAxes,
+  type RecommendationAxes,
+  recommendationAxes,
+  venueEvidenceLineJa,
+} from "./recommendation-core.js";
+import {
+  assignShareIdentities,
+  consolidateReviewedSubmissions,
+  type SubmissionDisplay,
+} from "./submission-identity.js";
 
 type CandidateRow = ReturnType<typeof Recommender.candidateRows>[number];
 type PaperRecord = ReturnType<typeof Recommender.parsePaperLines>[number];
@@ -8,18 +25,28 @@ type RecommendationResult = ReturnType<typeof Recommender.venueRecommendations>[
 type ScoreBreakdown = ReturnType<typeof Recommender.breakdown>;
 type ConferenceRecord = CandidateRow["conf"] & {
   link?: string;
+  /* 収録の締切の日（品書が申告 – 第 295 回・第 949 回）。窓の外の「一番遠い日」と
+   * 「推定ならその日に締切がある」。 */
+  record_deadline_last?: string | null;
+  record_deadline_next?: string;
+  record_deadline_next_kind?: string;
+  record_deadline_count?: number;
+  record_estimated_next?: string;
   editions?: EditionRecord[];
   dblp?: string | null;
   sources?: string[];
-  recommendation_axes?: RecommendationAxes;
+  legacy_keys?: string[];
 };
 type EditionRecord = CandidateRow["ed"] & {
+  id?: string;
   link?: string;
   event_start?: string | null;
   event_end?: string | null;
   event_date_precision?: string;
+  schedule_deadlines?: DeadlineRecord[];
 };
 type DeadlineRecord = CandidateRow["dl"] & {
+  track?: string;
   verification?: {
     official_url?: string;
     source_class?: string;
@@ -37,6 +64,9 @@ type AppRow = Omit<CandidateRow, "conf" | "ed" | "dl"> & {
   conf: ConferenceRecord;
   ed: EditionRecord;
   dl: DeadlineRecord;
+  legacyShareKey?: string;
+  shareDiscriminator?: string;
+  submission?: SubmissionDisplay;
   _boosted?: boolean;
   _match?: RecommendationResult["match"];
   _vocabScore?: number;
@@ -45,25 +75,38 @@ type AppRow = Omit<CandidateRow, "conf" | "ed" | "dl"> & {
   _semanticRank?: number | null;
   _semScore?: number;
   _availability?: RecommendationResult["availability"];
+  /** 「過去の締切も表示」のとき、過ぎた行を後ろの塊に寄せるための目印（0: これから / 1: 過ぎた）。 */
+  _pastBlock?: number;
 };
 
 interface DrawerRow {
+  legacyShareKey?: string;
+  shareDiscriminator?: string;
+  submission?: SubmissionDisplay;
   conf: {
     key?: string;
     title?: string;
     full_name?: string;
     link?: string;
+    tags?: string[];
   };
   ed: {
+    id?: string;
     year?: number;
     link?: string;
     place?: string;
     date_text?: string;
     event_start?: string | null;
+    event_review?: { held_year?: number; note?: string; source_url?: string };
+    deadlines?: DeadlineRecord[];
+    schedule_deadlines?: DeadlineRecord[];
   };
   kind: string;
   dateOnly?: boolean;
   localDate?: string;
+  // 表と同じ情報をドロワーでも出すため、この 2 つは無くさない（無い呼び出し側も許す）。
+  cats?: string[];
+  rankPairs?: string[];
   t: number;
   tLast: number;
   dl?: DeadlineRecord;
@@ -76,12 +119,42 @@ interface SourceRecord {
   url?: string;
 }
 
+/* カレンダー配信（`deadlines.ics`）の中身の実測。ビルドが行から導いた値で、画面は数え直さない
+ * – ここで数え直すと、配信物と違う数を画面が言い出す。 */
+interface CalendarSpan {
+  event_count: number;
+  /** 内、日付の欄が「締切」の件数（無いビルドもある – 第 300 回）。 */
+  deadline_count?: number;
+  first_day: string;
+  last_day: string;
+}
+
+interface CatalogWindow {
+  lookback_days: number;
+  upcoming_days: number;
+}
+
+interface SourceUpdate {
+  name: string;
+  status: string;
+  fetched_at: string | null;
+}
+
+type DeadlineClock = Pick<AppRow, "t" | "tLast" | "tShown" | "dateOnly"> & { kind?: string };
+
 interface Catalog {
   generated_at?: string;
+  source_updates?: SourceUpdate[];
+  calendar?: CalendarSpan;
+  window?: CatalogWindow;
   sources: SourceRecord[];
   categories: Record<string, string>;
   conferences: ConferenceRecord[];
   history_ref?: string;
+  /** 「収録の全体」（`history_ref`）のバイト数。押す前に読める量を知らせる為 –
+   *  第 905 回（画面は今も「大きめのデータ」だけで，更有実際は約 9.1 MB）。 */
+  history_bytes?: number;
+  deadline_summary?: DeadlineClock[];
   reranker?: Record<string, unknown>;
 }
 
@@ -91,11 +164,19 @@ interface UiState {
   q: string;
   cats: string[];
   kind: string;
+  /** 会議の鍵（`sigmod` など）で 1 会場だけに絞る（URL では `venue`）。 */
+  venue: string;
   rank: string;
   win: string;
   est: boolean;
   domestic: boolean;
+  /** 会場表記にオンライン参加の記述がある行だけを出す（対面の判定はしない）。 */
+  online: boolean;
   past: boolean;
+  /** 推薦の候補から、受付状況が「締切済み」と確認できた会議を除く（URL では `open=1`）。 */
+  openOnly: boolean;
+  /** 推薦の候補の並び。`fit` は論文との一致順、`deadline` は締切の近い順（URL では `order`）。 */
+  order: "fit" | "deadline";
 }
 
 type LoadStatus = "idle" | "loading" | "ready" | "error";
@@ -114,6 +195,7 @@ interface EmbeddingSet {
   model: string;
   dim: number;
   embeddings: VectorMap;
+  topicVecs?: Record<string, Vector[]>;
 }
 
 interface EmbeddingBundle extends EmbeddingSet {
@@ -161,37 +243,6 @@ function isStringArray(value: unknown): value is string[] {
   return Array.isArray(value) && value.every((item) => typeof item === "string");
 }
 
-const TRUST_LEVELS = new Set([
-  "official",
-  "publisher",
-  "curated-manual",
-  "aggregator",
-  "assumption",
-  "unverified",
-]);
-
-function isRecommendationAxes(value: unknown): value is RecommendationAxes {
-  if (!isRecord(value) || !isRecord(value.research_fit) || !isRecord(value.venue_maturity)) {
-    return false;
-  }
-  const maturity = value.venue_maturity;
-  const maturityEvidence = maturity.evidence;
-  const trust = value.deadline_trust;
-  if (!isRecord(maturityEvidence) || !isRecord(trust)) return false;
-  return (
-    ["established", "emerging", "new", "unverified"].includes(String(maturity.status)) &&
-    ["profiled", "unprofiled"].includes(String(maturity.profile_status)) &&
-    typeof maturityEvidence.yearsObserved === "number" &&
-    typeof maturityEvidence.dblpIndexed === "boolean" &&
-    typeof maturityEvidence.publisherVerified === "boolean" &&
-    typeof maturityEvidence.ranked === "boolean" &&
-    typeof maturityEvidence.profileCoverage === "number" &&
-    ["date", "time", "timezone", "kind"].every((field) => TRUST_LEVELS.has(String(trust[field]))) &&
-    ["fresh", "cache-fallback", "snapshot-fallback"].includes(String(trust.sourceFreshness)) &&
-    typeof trust.conflicts === "number"
-  );
-}
-
 function isDeadlineRecord(value: unknown): value is DeadlineRecord {
   if (!isRecord(value)) return false;
   return (
@@ -234,6 +285,16 @@ function isConferenceRecord(value: unknown): value is ConferenceRecord {
     (value.categories === undefined || isStringArray(value.categories)) &&
     (value.tags === undefined || isStringArray(value.tags)) &&
     (value.papers === undefined || isStringArray(value.papers)) &&
+    (value.record_deadline_last === undefined ||
+      value.record_deadline_last === null ||
+      typeof value.record_deadline_last === "string") &&
+    hasOptionalString(value, "record_deadline_next") &&
+    hasOptionalString(value, "record_deadline_next_kind") &&
+    /* 推定の未來の締切。 */
+    hasOptionalString(value, "record_estimated_next") &&
+    (value.record_deadline_count === undefined ||
+      (typeof value.record_deadline_count === "number" &&
+        Number.isFinite(value.record_deadline_count))) &&
     rankValid &&
     (value.editions === undefined ||
       (Array.isArray(value.editions) && value.editions.every(isEditionRecord)))
@@ -247,6 +308,40 @@ function sourceRecord(value: unknown): SourceRecord | null {
     repo: typeof value.repo === "string" ? value.repo : undefined,
     license: typeof value.license === "string" ? value.license : undefined,
     url: typeof value.url === "string" ? value.url : undefined,
+  };
+}
+
+/* カレンダーの申告を受け取る。型の違う物・日付の形の違う物は丸ごと無し扱いにする
+ * （無いときは注記を出さない – 「0 件」と「知らない」を混ぜない）。 */
+function calendarSpan(value: unknown): CalendarSpan | undefined {
+  if (!isRecord(value)) return undefined;
+  const count =
+    typeof value.event_count === "number" && value.event_count > 0 ? value.event_count : 0;
+  const first = typeof value.first_day === "string" ? value.first_day : "";
+  const last = typeof value.last_day === "string" ? value.last_day : "";
+  const day = /^\d{4}-\d{2}-\d{2}$/u;
+  if (!count || !day.test(first) || !day.test(last)) return undefined;
+  // 内訳はあっても無くても注記は出る（無いときに締切の数を言い出さない – 「知らない」と
+  // 「0 件」を混ぜない）。
+  const dead =
+    typeof value.deadline_count === "number" &&
+    value.deadline_count >= 0 &&
+    value.deadline_count <= count
+      ? value.deadline_count
+      : undefined;
+  return { event_count: count, deadline_count: dead, first_day: first, last_day: last };
+}
+
+/* 品の窓の申告を受け取る。正の整数で無い物は無し扱いにする（無いときは画面が日数を
+ * 言い出さない – 「0 日」と「知らない」を混ぜない）。 */
+function catalogWindow(value: unknown): CatalogWindow | undefined {
+  if (!isRecord(value)) return undefined;
+  const back = value.lookback_days;
+  const ahead = value.upcoming_days;
+  if (typeof ahead !== "number" || !Number.isFinite(ahead) || ahead < 1) return undefined;
+  return {
+    lookback_days: typeof back === "number" && Number.isFinite(back) && back >= 0 ? back : 0,
+    upcoming_days: Math.floor(ahead),
   };
 }
 
@@ -267,9 +362,55 @@ function catalogFrom(value: unknown): Catalog | null {
       : [],
     categories,
     conferences,
+    source_updates: Array.isArray(value.source_updates)
+      ? value.source_updates.flatMap((source) => {
+          if (
+            !isRecord(source) ||
+            typeof source.name !== "string" ||
+            typeof source.status !== "string"
+          )
+            return [];
+          return [
+            {
+              name: source.name,
+              status: source.status,
+              fetched_at: typeof source.fetched_at === "string" ? source.fetched_at : null,
+            },
+          ];
+        })
+      : [],
     history_ref: typeof value.history_ref === "string" ? value.history_ref : undefined,
+    history_bytes:
+      typeof value.history_bytes === "number" && Number.isFinite(value.history_bytes)
+        ? value.history_bytes
+        : undefined,
+    deadline_summary: deadlineSummary(value.deadline_summary),
+    calendar: calendarSpan(value.calendar),
+    window: catalogWindow(value.window),
     reranker: isRecord(value.reranker) ? value.reranker : undefined,
   };
+}
+
+function deadlineSummary(value: unknown): DeadlineClock[] | undefined {
+  if (
+    !Array.isArray(value) ||
+    !value.every(
+      (row) =>
+        isRecord(row) &&
+        [row.t, row.tLast, row.tShown].every(
+          (time) => typeof time === "number" && Number.isFinite(time),
+        ) &&
+        typeof row.dateOnly === "boolean" &&
+        Number(row.tLast) >= Number(row.t),
+    )
+  )
+    return undefined;
+  return value.map((row) => ({
+    t: row.t,
+    tLast: row.tLast,
+    tShown: row.tShown,
+    dateOnly: row.dateOnly,
+  }));
 }
 
 function isDrawerRow(value: unknown): value is DrawerRow {
@@ -284,7 +425,10 @@ function isDrawerRow(value: unknown): value is DrawerRow {
 }
 
 function vector(value: unknown): Vector | null {
-  return Array.isArray(value) && value.every((item) => typeof item === "number") ? value : null;
+  return Array.isArray(value) &&
+    value.every((item) => typeof item === "number" && Number.isFinite(item))
+    ? value
+    : null;
 }
 
 function vectorMap(value: unknown): VectorMap | null {
@@ -311,7 +455,22 @@ function embeddingSet(value: unknown): EmbeddingSet | null {
     dim <= 0
   )
     return null;
-  return { model, dim, embeddings };
+  const topicVecs = topicVectorMap(value.topicVecs, dim);
+  if (!topicVecs) return null;
+  return { model, dim, embeddings, topicVecs };
+}
+
+function topicVectorMap(value: unknown, dim: number): Record<string, Vector[]> | null {
+  if (value === undefined) return {};
+  if (!isRecord(value)) return null;
+  const out: Record<string, Vector[]> = {};
+  for (const [key, item] of Object.entries(value)) {
+    if (!Array.isArray(item)) return null;
+    const parsed = item.map(vector);
+    if (parsed.some((entry) => !entry || entry.length !== dim)) return null;
+    out[key] = parsed as Vector[];
+  }
+  return out;
 }
 
 function embeddingModelMeta(value: unknown): EmbeddingModelMeta | null {
@@ -405,8 +564,9 @@ function semanticOutput(value: unknown): value is SemanticOutput {
 }
 
 (() => {
-  // SPEC.md section 7: catalog.json is injected by the build. Defaults to empty so that
-  // opening the template standalone displays a blank table instead of throwing.
+  /* ビルド時にデータが差し込まれる（SPEC §7）。無い状態で開いても例外にせず、
+   * 空の一覧として出す – ただし「絞り込みで 0 件」と取り違えない案内を後段で出す
+   * （`emptyDeadlineHint` の冒頭）。 */
   const DATA = catalogFrom(window.__KAMIYOBI_DATA__) ?? {
     generated_at: "",
     sources: [],
@@ -416,22 +576,170 @@ function semanticOutput(value: unknown): value is SemanticOutput {
 
   const DAY = 86400000;
   const PAGE = 40;
+  /* 推薦カードの初期表示件数。件数欄は候補の総数を出すので、ここで打ち切ったまま
+   * 「さらに表示」を出さないと「200 件」と言いながら 5 件しか見えない画面になる
+   * （変更前は 5 件 fixed で、残りの候補に到達する手段が無かった）。 */
+  const RECOMMENDATION_PAGE = 20;
   let selectedIndex = -1;
-  let sortKey = "rem";
+
+  let drawerRow: AppRow | null = null;
+  let drawerOriginKey = "";
+  let pendingDrawerReturnKey = "";
+  let restoringNavigation = false;
+  let queryEditInProgress = false;
+  /* URL から受け取った行の鍵。起動時の描き込みが終わってから行を探す。 */
+  let pendingDrawerKey = "";
+
+  /* 共有用の行の鍵。同じ一覧の中でも区別が要る（同じ会議は概要締切と論文締切で別行に
+   * なり、同じ種別でも第 1 ラウンドと第 2 ラウンドが並ぶ）ので、会議の鍵に年・種別・
+   * 締切時刻を添える。値その物ではなく照合にだけ使う。 */
+  function rowShareKeyJa(
+    r: {
+      conf?: { key?: string; legacy_keys?: string[] };
+      ed?: { year?: unknown };
+      kind?: string;
+      t?: number;
+      shareDiscriminator?: string;
+    },
+    reviewedAlias?: string,
+  ): string {
+    const key =
+      reviewedAlias && r.conf?.legacy_keys?.includes(reviewedAlias)
+        ? reviewedAlias
+        : String(r.conf?.key || "");
+    const year = r.ed && r.ed.year !== undefined && r.ed.year !== null ? String(r.ed.year) : "";
+    const kind = String(r.kind || "");
+    const t = Number.isFinite(Number(r.t)) ? String(Math.trunc(Number(r.t))) : "";
+    const legacy = `${key}|${year}|${kind}|${t}`;
+    return r.shareDiscriminator ? `${legacy}|slot=${r.shareDiscriminator}` : legacy;
+  }
+  /** ソートできる列の key。`th[data-sort]` と一致させる（ズレは検査で拾う）。 */
+  /* 表の列数。行をまたぐ見出し（月見出し・過ぎた締切の見出し・行の詳細）はここを使う
+   * （直書きを 3 箇所に分けると、列を増やした日に見出しの跨ぎが足りず右に列が余る –
+   * 画面では「表示が欠けた」ように見え、支援技術では見出しが列に紐づかない –
+   * `site/template.html` の見出しと検査で突き合わせる）。 */
+  const TABLE_COLUMNS_JA = 7;
+
+  const SORTABLE_KEYS = ["rem", "date", "event", "conf", "rank"];
+  const DEFAULT_SORT_KEY = "rem";
+  let sortKey = DEFAULT_SORT_KEY;
   let sortAsc = true;
 
-  const KIND_LABEL: Record<string, string> = {
-    abstract: "概要締切",
-    paper: "論文締切",
-    journal: "常時受付",
-  };
+  // 種別の日本語表記は recommender の正典と同じ表を使う（表示している語で検索できない、
+  // という状態を作らないため）。
+  const KIND_LABEL: Record<string, string> = Recommender.kindLabelTable();
+  /* 推薦で**省いた論文の行数**。件数欄に
+   * 書くので filter の外に置く（描画が読む）。 */
+  let 截つた行 = 0;
+
+  const VERIFICATION_STATUS_LABELS: Record<string, string> =
+    Recommender.verificationStatusLabelTable();
+
+  /* 種別セレクトの選択肢。`filter()` の `byKind` が通す種別と必ず揃える —
+   * 選んでも 0 件になる選択肢を並べるのが最もまずい（選択肢が噺になる）。
+   * 採否通知・カメラレディ・登録締切などはサイト表に出さない仕様で、
+   * それらを追うのは `upcoming.html`（SPEC §4・§7）。 */
+  const SELECTABLE_KINDS = ["abstract", "paper", "journal"];
+
+  function kindDetailJa(round: unknown, label: unknown): string {
+    const parts: string[] = [];
+    const r = Number(round);
+    if (Number.isFinite(r) && r > 1) parts.push(`第 ${r} ラウンド`);
+    const text = typeof label === "string" ? label.trim() : "";
+    if (text) parts.push(`原表記: ${text}`);
+    return parts.join(" / ");
+  }
+
+  /* 種別セレクトの既定（絞り込みなし）の書き方。0 件の案内もこの語を書く —
+   * 案内が古いラベルを指すと、その語が画面に見つからない。 */
+  const KIND_ALL_LABEL_JA = "投稿締切（概要・論文）";
+
+  /* 件数の数え方。てびきは「全 3,235 件」と書いていたのに、画面は同じ数を「全 3235 件」と
+   * 出していた（2026-09-23 実測: 既定画面は「478 件 / 全 3235 件」、0 件の案内は
+   * 「過去の締切 2317 件」）。4 桁以上の数を素で出されると、一覧の件数と収録総数を
+   * 見比べたときに桁の大きさが取り出しにくい。てびきの書き方に合わせて 3 桁ごとに区切る。
+   * `toLocaleString` は環境の実装差に左右される（地域によって区切り文字が違う）ので、
+   * 区切りは自分で書く。 */
+  function countJa(n: number): string {
+    const int = Math.trunc(Number(n) || 0);
+    const digits = String(Math.abs(int)).replace(/\B(?=(\d{3})+$)/g, ",");
+    return int < 0 ? `-${digits}` : digits;
+  }
+
+  /* ランク絞り込みの選択肢（data の grade と一致させる。SPEC §2: `N` はランク無し）。 */
+  // 等級の順は recommender の正本から取る（並び順と同じ順序で選択肢を出す）。
+  const RANK_GRADE_OPTIONS = Recommender.rankGradeOrderJa();
+  const RANK_UNRATED_JA = Recommender.rankUnratedLabelJa();
+  /* ランクの絞り込み値を選択欄と同じ語にする関数は 1 本だけ持つ。印刷の条件の書き下ろしも
+   * 同じ語を書く – 以前はここでだけ値をそのまま書いていて、「評価なし」を選ぶと紙に
+   * 「ランク: N」と出ていた（2026-08-09 実測。N はデータ内部の番兵で、選択欄の側は
+   * 「読み手には意味が伝わらない」とコメントして日本語に直していた）。 */
+  function rankFilterLabelJa(grade: string): string {
+    // 語は正本（`recommender.js`）から取る。ここに文字列を書くと、選択欄と紙で別々の
+    // 「評価なし」になり得る。
+    return grade === "N" ? Recommender.rankUnratedLabelJa() : grade;
+  }
+  /* 「評価なし」の吹き出し。中身は画面の語だけで書く – 折り返し形式の指定（markdown の
+   * バッククォート）は `title` で効かず「内部表記では `N`」のように記号がそのまま出ていた
+   * （2026-09-23 実測）。同じく開発寄りの「内部表記」という語も画面のどこにも出てこない。
+   * 利用者が知りたいのは「評価なし」と「未確認」の違いなので、その区別を書く
+   * （てびきの「空欄の出し方」と同じ説明の向き）。 */
+  const RANK_UNRATED_TITLE_JA =
+    "この会議はその評価一覧に載っていますが、評価は付いていません。評価が付いていないことと、 kamiyobi が公式で裏を取れていないこと（「未確認」）は別に出しています。";
+  const RANK_FILTER_NOTE_JA =
+    "CCF・CORE・THCPL のいずれかの一覧で、その評価が付いている会議を出します。";
+
+  /* 評価で絞ったとき「のぞいた行」を指す語。選択欄の見出し（`rankFilterLabelJa`）を
+   * そのまま使う – 値のまま書くと、評価なしを選んだ人に「評価「N」を持たない行」と
+   * 内部トークンが見えていた（2026-08-09 生成ビルドで実測: 収録 863 行の評価なしは
+   * 144 行なので、この選び方では 719 行がその数え方で落ちる。`N` は表にも行の詳細にも
+   * 出さない語にしている – てびきの「データ内部の表記は N」が言う通り）。
+   * `評価なし` だけが文の形も変える（「評価「評価なし」を持たない」は読めない）。 */
+  function rankDropWordsJa(grade: string): string {
+    const label = rankFilterLabelJa(grade);
+    return label === Recommender.rankUnratedLabelJa()
+      ? `${label}の行以外`
+      : `評価「${label}」を持たない行`;
+  }
+
+  /** URL やフォームから来た種別を選択可能なものにする。捨てた場合は理由を返す。 */
+  function selectableKind(raw: string | null): { kind: string; notice: string } {
+    const value = raw || "";
+    if (!value || SELECTABLE_KINDS.indexOf(value) >= 0) {
+      return { kind: value, notice: "" };
+    }
+    if (KIND_LABEL[value]) {
+      // 実在する種別なのに表に出さない場合だけ、理由を伝える（不明な値は黙って落とす）。
+      return {
+        kind: "",
+        notice: `${KIND_LABEL[value]} は表に出しません（upcoming.html で確認できます）`,
+      };
+    }
+    return { kind: "", notice: "" };
+  }
 
   // recommender.js から供給（テスト可能な単一正典）。無ければこの場で縮退定義。
   let activeData: Catalog = DATA;
   let recommendationData: Catalog | null = null;
   let recommendationPromise: Promise<void> | null = null;
   let recommendationError = false;
+  let recommendationNeedsRetry = false;
   let historyStatus: LoadStatus = "idle";
+  // 「収録の全体を読む」ボタンで立つ旗。既定（この旗が下がったまま）は品書だけで開く –
+  // 9 MB 強を毎回読みに行くと開くのが遅くなる。
+  let fullRecordRequested = false;
+
+  /* 画面に差し込んだ品書（`catalog.json`）の外を読む必要があるか。
+   *
+   * 「締切まで: かまわない」は既定の選択で、てびきも「期限なく先の締切も出します」と書いて
+   * いた – が、品書は生成から 180 日先で切れている（2026-08-09 生成のビルドで一覧に出る一番
+   * 遠い締切は 2027-02-04）。収録には品書の果てを越える締切が **133 件（74 会議）** あり、
+   * カレンダーには 2028-03-30 まで入っている（2026-09-24 実測）。品書の外を読む入口は
+   * 「過去の締切も表示」だけだったので、先の締切を見るのに過去を見るチェックを外せない、と
+   * いう取り合わせになっていた。ここでは事実を伝えたうえで、押した人だけが読む形にする。 */
+  function fullRecordNeeded(past: boolean, win: string, requested: boolean): boolean {
+    return past === true || (win === "all" && requested === true);
+  }
 
   function createHistoryLoader(
     fetchJson: (ref: string) => Promise<Catalog>,
@@ -521,17 +829,68 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     q: "",
     cats: [],
     kind: "",
+    venue: "",
     rank: "",
     win: "all",
     est: false,
     domestic: false,
+    online: false,
     past: false,
+    openOnly: false,
+    order: "fit",
   };
 
   function $(id: string): HTMLElement {
     const element = document.getElementById(id);
     if (!element) throw new Error(`missing element #${id}`);
     return element;
+  }
+
+  /* 印刷物に残す条件の書き下ろし。画面の絞り込み欄は印刷では落ちる（研究室に貼る・
+   * グループ会議で回覧する用途 – スタイルのコメントに書いた需要そのもの）なので、
+   * 紙のうえに「どんな条件で絞った一覧か」が無いと、受け取った人は収録全体の一覧と
+   * 取り違える（2026-09-23 実測: 印刷時に条件を書く箇所はどこにも無かった）。
+   * 語は画面のチェック欄・セレクトと同じ物を書く（別の名前を付けない）。
+   * ラベルは呼び出し側から渡す – 検査はこの関数を単位で切り出して動かす。 */
+  function describeFilters(
+    s: {
+      q: string;
+      cats: string[];
+      kind: string;
+      venue: string;
+      rank: string;
+      est: boolean;
+      domestic: boolean;
+      online: boolean;
+      past: boolean;
+    },
+    kindLabel: (k: string) => string,
+    rankLabel: (g: string) => string,
+    categoryLabel: (c: string) => string,
+    windowLabel: string,
+    sort: { key: string; asc: boolean },
+    sortLabel: (key: string) => string,
+  ): string {
+    const out: string[] = [];
+    const query = String(s.q || "").trim();
+    if (query) out.push(`検索語「${query}」`);
+    if (s.kind) out.push(`種別: ${kindLabel(s.kind)}`);
+    /* 会議の絞り込みも紙に書く（書かないと、1 会場だけの紙に「絞り込みなし（収録全体の
+     * 一覧）」と刷れていた – 2026-10-23 實測）。 */
+    if (s.venue) out.push(`会議: ${s.venue}`);
+    if (s.rank) out.push(`ランク: ${rankLabel(s.rank)}`);
+    if (s.cats.length) out.push(`分野: ${s.cats.map((c) => categoryLabel(c)).join("・")}`);
+    if (windowLabel) out.push(`締切まで: ${windowLabel}`);
+    if (s.est) out.push("推定締切を含める");
+    if (s.domestic) out.push("国内研究会・国内シンポジウムのみ");
+    if (s.online) out.push("オンライン参加可のみ");
+    if (s.past) out.push("過去の締切も表示");
+    // 何も絞っていないときは「全件」と書く。空欄だと、絞ったのに漏れたのか読めない。
+    const condition = out.length ? out.join(" ／ ") : "絞り込みなし（収録全体の一覧）";
+
+    const order = sortLabel(sort.key);
+    if (!order) return condition;
+    return `${condition} ／ 並び順: ${order} ${sort.asc ? "昇順" : "降順"}`;
   }
 
   function valueElement(id: string): HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement {
@@ -571,24 +930,36 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   }
 
   function rowDateOnlyState(r: AppRow | DrawerRow, now: number) {
-    if (!r.dateOnly) return null;
-    if (typeof r.t !== "number" || typeof r.tLast !== "number") return null;
-    if (now < r.t) return "definitely-future";
-    if (now <= r.tLast) return "uncertain-on-date";
-    return "definitely-past";
+    return Recommender.dateOnlyStateJa(r, now);
   }
 
-  function rowIsPast(r: AppRow, now: number) {
-    return r.dateOnly ? rowDateOnlyState(r, now) === "definitely-past" : r.t < now;
+  function rowIsPast(r: DeadlineClock, now: number) {
+    // 過ぎたかどうかの判定は recommender.js の正本に寄せる（一覧の印・絞り込み・残り欄が
+    // 同じ規則を見るようにするため。第 225 回）。
+    return Recommender.deadlineRowIsPast(r, now);
   }
 
-  function rowIsFuture(r: AppRow, now: number) {
+  function rowIsFuture(r: DeadlineClock, now: number) {
     return !rowIsPast(r, now);
   }
 
-  function rowAfter(r: AppRow, limit: number) {
-    return r.t > limit;
+  function rowShownDayMs(r: DeadlineClock) {
+    return Number.isFinite(r.tShown) ? r.tShown : r.t;
   }
+
+  /* 期間の窓の上側を超えているか。`limit` は `windowLimitMs`（JST の暦日で切る）から渡す。
+   * 経過 24 時間で区切ると、一覧が「あと 30 日」と出す行が上の数だけから落ちる
+   * （2026-08-09T21:00Z 見立ての実測: 上部 176 件・一覧 177 件で `pacificvis` が足りなかった）。 */
+  function rowAfter(r: DeadlineClock, dateLimit: number) {
+    if (r.kind === "journal" && Number.isFinite(dateLimit)) return true;
+    // dateLimit は翌日の開始。午前0時ちょうどは次の暦日なので含めない。
+    return rowShownDayMs(r) >= dateLimit;
+  }
+
+  // 投稿作業は日本の時刻で回る。JST を主表記にし、曜日を必ず添える。
+  // AoE 締切（23:59 AoE 等）は JST では翌日の夜になるため、UTC 優先では
+  // 「日本でいつまでに提出すればよいか」が判定できない。
+  const WEEKDAY_JA = ["日", "月", "火", "水", "木", "金", "土"];
 
   function fmtJst(d: Date) {
     const jst = new Date(d.getTime() + 9 * 3600000);
@@ -598,12 +969,34 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       pad(jst.getUTCMonth() + 1) +
       "-" +
       pad(jst.getUTCDate()) +
-      " " +
+      "(" +
+      WEEKDAY_JA[jst.getUTCDay()] +
+      ") " +
       pad(jst.getUTCHours()) +
       ":" +
       pad(jst.getUTCMinutes()) +
       " JST"
     );
+  }
+
+  /* 「データ生成」の表示。生成時刻は UTC の `...Z` で来るため、そのまま出すと日本語の
+   * 利用者には日付が一日ずれて見える（2026-09-23 実測: 「データ生成: 2026-08-09T00:00:00Z」
+   * → JST では同日 09:00。夜ビルドなら日付その物が翌日になる）。一覧と同じ JST + 曜日 に
+   * 寄せる。読めない値には嘘の日付を作らず原文を残す。 */
+  function generatedAtLabel(value: string): string {
+    /* ヘッダーに常に出る語なので、値が欠けているときの書き方まで決める
+     * （2026-09-23 実測: 空文字で「データ生成: 」の語だけ、`undefined` ではその英字が、
+     * `null` では 1970-01-01 がそのまま出ていた – 締切のサイトで間違った日付を
+     * 「データ生成」として見せるのが最悪）。値その物は読めない表記として残す
+     * （原因の切り分けに要る）が、主語にはしない。 */
+    const raw = typeof value === "string" ? value.trim() : "";
+    if (!raw) return `データ生成: ${UNCONFIRMED_JA}`;
+    const at = new Date(raw);
+    // 日付として読めない値は、そのまま書く。人が読める印字（「未取得」など）を
+    // 運営が置くことがあるので、それを「未確認」に潰さない – 危険なのは空欄と、
+    // 読めるのに間違った日付（`null` → 1970-01-01）を見ることだけだった。
+    if (Number.isNaN(at.getTime())) return `データ生成: ${raw}`;
+    return `データ生成: ${fmtJst(at)}`;
   }
 
   // Anywhere on Earth (UTC-12)。SPEC §7: 締切表示に AoE 表記を併記する。
@@ -623,11 +1016,111 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     );
   }
 
+  /* 公式が書いた時間帯での日時（表の 2 行目・ドロワー・推薦の次回締切で共有）。
+   * `UTC-7`・`GMT+2` のような数値の時差と `GMT` は一意に戻せるので、公式の壁時計で出す
+   * （「元の日時 UTC-7 ／ 2026-10-26 06:59 UTC」は、公式ページに無い時刻を読ませていた）。
+   * `PT`・`Europe/London` のような名前は夏時間の扱いが表に無いので換算せず、UTC の時刻に
+   * 公式の表記を添える。「元の日時 PT」と書くと PT が日時に読めるので、その形にはしない。 */
+  function officialClockJa(zone: string, d: Date): string {
+    if (zone === "JST") return "元の日時 JST";
+    if (zone === "AoE") return `元の日時 ${fmtAoE(d)}`;
+    if (!zone || zone === "UTC") return `${fmtDate(d)} UTC`;
+    const upper = zone.toUpperCase().replace(/\s/g, "");
+    const m = /^(?:UTC|GMT)(?:([+-])(\d{1,2})(?::?(\d{2}))?)?$/.exec(upper);
+    if (m && (!m[1] || (Number(m[2]) <= 14 && Number(m[3] ?? 0) <= 59))) {
+      const minutes = m[1] ? (m[1] === "-" ? -1 : 1) * (Number(m[2]) * 60 + Number(m[3] ?? 0)) : 0;
+      return `元の日時 ${fmtDate(new Date(d.getTime() + minutes * 60000))} ${zone}`;
+    }
+    return `${fmtDate(d)} UTC（公式は ${zone} 表記）`;
+  }
+
+  // SPEC §7: 日本語 UI。分野は日本語名で示す（英表記の正本は data.json の categories）。
   function catLabel(key: string) {
-    return DATA.categories?.[key] ? key.toUpperCase() : key;
+    return Recommender.categoryLabelJa(key);
   }
 
   // タイトル + 開催年。タイトルが既にその年で終わっていれば年を二重に付けない。
+  /* 表の会議名列に実際に出る語。並び順はこの語を使う（素の `conf.title` で並べると、
+   * タイトル欠落の行 — 表示は `ieice-nolta-2027` のような語 — が空文字で先頭に集まり、
+   * 「勝手に並ぶ」ように見える。セルの書き換えと並び替えが別文字列を持つのが原因）。 */
+  /* 同じ締切時刻の行は、そのままではデータ源の順で並ぶ。既定画面 477 行のうち 303 行が
+   * 別の行と同じ締切時刻を持ち（同値グループは最大 17 行）、同じ日の内側がバラバラな
+   * ままだった。締切時刻 → 表に出る会議名（五十音順）→ 種別（種別セレクトと同じ順）の
+   * 順でタイを割り、同じ日に並んだ行を上から読めるようにする。
+   * 日本語名は `"ja"` collation を使う（漢字は読み基準の五十音順になる。実測で
+   * 航空(か) → 情報(ざ) → 電子(た) と並ぶ。カタカナ語は漢字語より前に出る）。
+   * 日付だけ_unknown_の行（175 件）は JST 00:00 相当なので、同じ日内では先に並ぶ。 */
+  /* SPEC §7: 締切の時刻を持たない行（常時受付の学術誌など）の並び方。
+   * `a.t < b.t` は片側が NaN だと常に false なので、旧実装は比較の向きが定まらなかった
+   * （2026-09-23 実測: 時刻の無い行を交ぜて並べ替えると、入力順を変えただけで結果が
+   * 変わり、昇順では先頭に出て「いちばん近い締切」と誤読させる）。収録カタログには
+   * 現時点で時刻の無い行が 0 件なので今日の見え方は変わらないが、学術誌を 1 行足すと
+   * 日時順の表全体が崩れる形だった。ここを直す。
+   * 約束: 時刻の無い行は向きの影響を受けない場所（最後尾）にまとめる。未知の種別を
+   * 末尾に置く `kindSortIndex` と同じ型。 */
+  /* `mult` を中を取る: 昇順・降順は締切のある行の中での向きで、時刻の無い行は
+   * どちらの向きでも最後尾に置く（外で `* mult` をすると降順で先頭に反転して
+   * 「いちばん遠い」に化ける）。依存を新たに増やさないよう NaN はここで寄せる
+   * （ビルド成果物から関数を抜き出す検査は、自由変数を全部渡し直す必要がある）。 */
+  function compareDeadlineRows(a: AppRow, b: AppRow, mult: number = 1): number {
+    // 基準は「画面に出している暦日」(`tShown`)。古い呼び出し側や検査で組んだ行が
+    // 持っていないときは `t` に寄せる（行を落とさない・並びを壊さない）。
+    const key = (r: AppRow) =>
+      Number.isFinite(r.tShown) ? r.tShown : Number.isFinite(r.t) ? r.t : Number.NaN;
+    const aKey = key(a);
+    const bKey = key(b);
+    const aTail = Number.isFinite(aKey) ? 0 : 1;
+    const bTail = Number.isFinite(bKey) ? 0 : 1;
+    if (aTail !== bTail) return aTail - bTail;
+    const at = Number.isFinite(aKey) ? aKey : 0;
+    const bt = Number.isFinite(bKey) ? bKey : 0;
+    if (at !== bt) return (at < bt ? -1 : 1) * mult;
+    const cmp = conferenceNameCell(a).localeCompare(conferenceNameCell(b), "ja");
+    if (cmp) return cmp * mult;
+    return (kindSortIndex(a.kind) - kindSortIndex(b.kind)) * mult;
+  }
+
+  /** 会期順の比較。会期が決まっていない行（表では「未確認」）は末尾に寄せる –
+   * 画面で「未確認」と読める行が、並び順では先頭に来るのは噓になる（時刻未確認の行を
+   * 末尾に置くのと同じ約束）。同じ会期の行は締切の近い順に揃える。 */
+  function compareEventRows(a: AppRow, b: AppRow, mult: number = 1): number {
+    const key = (r: AppRow) => (Number.isFinite(r.tEvent) ? r.tEvent : Number.NaN);
+    const aKey = key(a);
+    const bKey = key(b);
+    const aTail = Number.isFinite(aKey) ? 0 : 1;
+    const bTail = Number.isFinite(bKey) ? 0 : 1;
+    if (aTail !== bTail) return aTail - bTail;
+    const at = Number.isFinite(aKey) ? aKey : 0;
+    const bt = Number.isFinite(bKey) ? bKey : 0;
+    if (at !== bt) return at < bt ? -1 * mult : 1 * mult;
+    // 会期が同じ行（同日に複数ある研究会など）は、締切の基準でそろえる。
+    const aDue = Number.isFinite(dueShown(a)) ? dueShown(a) : 0;
+    const bDue = Number.isFinite(dueShown(b)) ? dueShown(b) : 0;
+    if (aDue !== bDue) return aDue < bDue ? -1 * mult : 1 * mult;
+    return 0;
+  }
+
+  /** 比較に使う締切の基準（`compareDeadlineRows` と同じ組み立て。検査で単位切り出し
+   * するので、外部の決まり値を見ずにこの中で完結させる）。 */
+  function dueShown(r: AppRow): number {
+    return Number.isFinite(r.tShown) ? r.tShown : Number.isFinite(r.t) ? r.t : Number.NaN;
+  }
+
+  /** 種別の並び順（種別セレクトに並べる順と共通。書き写さない）。 */
+  function kindSortIndex(kind: string): number {
+    const at = SELECTABLE_KINDS.indexOf(kind);
+    return at < 0 ? SELECTABLE_KINDS.length : at;
+  }
+
+  function conferenceNameCell(r: AppRow): string {
+    return titleWithYear(r.conf.title || r.conf.key || "", r.ed.year);
+  }
+
+  /* 会議名+年の組み立ては site/recommender.ts の `titleWithYearJa` と**同じ式**を使う。
+   * 本体をここに置くのは、検査が表の並び順を実行するときにこの関数を単独で動かすため
+   * （他モジュールへの呼び出しにすると、検査側が正本を注入し直しになる）。式がズレたら
+   * 一覧と CSV が違う会議名を書くので、`会議名は CSV と同じ語が出る` の検査が両方を
+   * 突き合わせて弾く（実装を 2 本持つ代价は検査で払う）。 */
   function titleWithYear(title: string | undefined, year: number | null | undefined) {
     const t = String(title || "").trim();
     if (!t) return "";
@@ -645,91 +1138,77 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     return `${t} ${year}`;
   }
 
-  // Quick Presets
+  /* 早め絞り込みのボタン。点灯は「その条件が入っているか」だけを見る（`presetIsActive` が
+   * 正本）。以前は他の条件がすべて空のときだけ点いていたので、検索語を打った後に
+   * 「オンライン参加可」を押すと、条件は掛かっているのにボタンは点かず、押した意味が
+   * 画面から読めなかった（2026-09-23）。 */
   function updatePresetActive() {
-    const p7d =
-      state.win === "7d" &&
-      !state.q &&
-      !state.cats.length &&
-      !state.kind &&
-      !state.rank &&
-      !state.est &&
-      !state.domestic &&
-      !state.past;
-    const paStar =
-      state.rank === "A*" &&
-      !state.q &&
-      !state.cats.length &&
-      !state.kind &&
-      state.win === "all" &&
-      !state.est &&
-      !state.domestic &&
-      !state.past;
-    const pHpcSys =
-      state.cats.length === 2 &&
-      state.cats.indexOf("hpc") >= 0 &&
-      state.cats.indexOf("systems") >= 0 &&
-      !state.q &&
-      !state.kind &&
-      !state.rank &&
-      state.win === "all" &&
-      !state.est &&
-      !state.domestic &&
-      !state.past;
-    const pDom =
-      state.domestic &&
-      !state.q &&
-      !state.cats.length &&
-      !state.kind &&
-      !state.rank &&
-      state.win === "all" &&
-      !state.est &&
-      !state.past;
-    const map: Record<string, boolean> = {
-      "7d": p7d,
-      a_star: paStar,
-      hpc_sys: pHpcSys,
-      domestic: pDom,
-    };
     document.querySelectorAll<HTMLElement>(".preset-btn").forEach((btn) => {
-      const p = btn.getAttribute("data-preset");
-      btn.classList.toggle("active", p !== null && Boolean(map[p]));
+      const active = Recommender.presetIsActive(btn.getAttribute("data-preset"), state);
+      btn.classList.toggle("active", active);
+      /* 点灯は目にしか見えない合図で、読み上げには「押されている」状態が伝わらない。
+       * 並び順のボタンと画面切替のボタンは `aria-pressed` を出しているので、同じ約束に
+       * 揃える（2026-08-09 生成ビルドで実測: 早め絞り込みのボタン 5 個だけ `aria-pressed` が
+       * 無く、てびきが書く「押している間は点いたまま」の状態が読み上げで読めなかった）。
+       * 条件は点灯と同じ正本 `presetIsActive` を一度だけ見る。 */
+      btn.setAttribute("aria-pressed", active ? "true" : "false");
     });
   }
 
+  /* ボタンは**自分が担当する条件だけ**を出し入れする（`presetNextSelection` が正本）。
+   * 以前は押すたびに検索語・締切種別・推定まで初期値へ戻していた。検索語を打った人が
+   * 「オンライン参加可」で絞り直したのに全件に戻るなど、意図と逆のことになっていた。
+   * 条件をまとめて外す操作は、0 件案内の「条件をまとめて外す」が自分で状態を戻して
+   * 担っているので、ボタン側で初期値に戻す役まで兼ねる必要はない。 */
   window.applyPreset = (type: string) => {
-    state = {
-      mode: state.mode,
-      q: "",
-      cats: [],
-      kind: "",
-      rank: "",
-      win: "all",
-      est: false,
-      domestic: false,
-      past: false,
-    };
-    if (type === "7d") state.win = "7d";
-    if (type === "a_star") state.rank = "A*";
-    if (type === "hpc_sys") state.cats = ["hpc", "systems"];
-    if (type === "domestic") state.domestic = true;
+    state = { ...state, ...Recommender.presetNextSelection(type, state) };
     stopHistoryLoad();
     if (state.mode === "deadlines") setDeadlineProfile(DATA);
     toForm();
-    writeUrl();
+    writeUrl("push");
     render();
   };
 
   // Column Sorting
-  // 現在の並び順を aria-sort でスクリーンリーダーに伝える（昇順/降順/指定なし）。
+  /* 並び順の目印。ひきがし `↕` だけが見えていると、どの列がどちら向きで並んでいるか
+   * 押した人にも分からない（`aria-sort` はスクリーンリーダー向けで、マウス利用者には
+   * 見えない）。押している列は ↑ / ↓、他は ↕ のままにする。 */
+  function sortMarkJa(active: boolean, asc: boolean): string {
+    if (!active) return "↕";
+    return asc ? "↑" : "↓";
+  }
+
+  /** 並びの基準にしている列の画面での語。見出しから取る（書き写すと、列の名前を
+   * 変えたときに案内だけ古くなる）。見出しは目印の矢印まで書き換えるので、そこは落とす。 */
+  function sortColumnLabel(key: string): string {
+    if (!key) return "";
+    const th = document.querySelector<HTMLElement>(`th[data-sort="${key}"]`);
+    return String(th?.textContent || "")
+      .replace(/[↑↓↕]\s*$/, "")
+      .trim();
+  }
+
+  function sortNoteJa(key: string, asc: boolean): string {
+    const label = sortColumnLabel(key);
+    if (!label) return "";
+    return ` ｜ 並び順: ${label} ${asc ? "昇順" : "降順"}`;
+  }
+
+  // 現在の並び順を aria-sort（支援技術向け）と見出しの目印（目に見える方）で伝える。
   function setSortAria(key: string | null) {
-    document.querySelectorAll<HTMLTableCellElement>("th[data-sort]").forEach((th) => {
-      const k = th.getAttribute("data-sort");
-      let state = "none";
-      if (k === key) {
-        state = sortAsc ? "ascending" : "descending";
+    // 列見出しと、狭い画面に出す並べ替えバー（`button[data-sort]`）が同じ目印を使う。
+    // 見出しには `aria-sort`、ボタンには `aria-pressed`（ボタンに aria-sort は意味不通）。
+    document.querySelectorAll<HTMLElement>("[data-sort]").forEach((node) => {
+      const k = node.getAttribute("data-sort");
+      const active = k === key;
+      if (node.tagName === "BUTTON") {
+        node.setAttribute("aria-pressed", active ? "true" : "false");
+      } else {
+        node.setAttribute("aria-sort", active ? (sortAsc ? "ascending" : "descending") : "none");
       }
-      th.setAttribute("aria-sort", state);
+      // 語尾の目印だけ入れ替える（語のほうは触らない）。
+      const label = String(node.textContent || "").replace(/[↑↓↕]\s*$/, "");
+      node.textContent = `${label}${sortMarkJa(active, sortAsc)}`;
     });
   }
 
@@ -742,6 +1221,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       sortAsc = true;
     }
     setSortAria(key);
+    writeUrl("push");
     render();
   };
 
@@ -758,10 +1238,22 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   });
 
   // Drawer Controls
-  function openDrawer(r: DrawerRow) {
+  function openDrawer(
+    r: DrawerRow,
+    navigation: "push" | "replace" = drawerRow ? "replace" : "push",
+  ) {
+    const alreadyOpen = Boolean(drawerRow);
+    if (!alreadyOpen)
+      drawerOriginKey =
+        navigation === "replace" && history.state?.kamiyobiOrigin
+          ? history.state.kamiyobiOrigin
+          : rowShareKeyJa(r);
+    drawerRow = r as unknown as AppRow;
+    writeUrl(navigation);
     // フォーカス管理: 開く直前の要素を保存し、ドロワー内（閉じるボタン）へフォーカスを移す。
-    window._prevFocus = document.activeElement as HTMLElement | null;
+    if (!alreadyOpen) window._prevFocus = document.activeElement as HTMLElement | null;
     $("drawerBackdrop").classList.add("active");
+    setDrawerModal(true);
     $("drawerTitle").textContent = titleWithYear(r.conf.title || r.conf.key, r.ed.year);
     $("drawerFullName").textContent = r.conf.full_name || "";
     const dateState = rowDateOnlyState(r, Date.now());
@@ -772,35 +1264,51 @@ function semanticOutput(value: unknown): value is SemanticOutput {
           ? "（締切日経過）"
           : "（時刻未確認）";
 
+    // 表の種別セルに出している「第 N ラウンド」「ラベル」をドロワーで落とさない。
+    // 同じ会議の複数ラウンドを見分ける実務上有意のある情報で、詳細側で欠けると困る。
+    const kindDetail = kindDetailJa(r.dl?.round, r.dl?.label);
+    // 表と同じ式で併記を出す。AoE は公式が AoE 締めの場合だけ見せる
+    // （JST 宣言の国内締切に AoE を出すと、実在しない AoE 締切があると誤解させる）。
+    const zone = Recommender.officialZone(r.dl);
+    const crossCheck = officialClockJa(zone, new Date(r.t));
+
     let html =
-      '<div style="background: let(--chip); padding: 14px; border-radius: 6px; border: 1px solid let(--border); margin-bottom: 16px;">' +
-      '<div style="font-size: 0.78rem; color: let(--muted);">種別・日時</div>' +
-      '<div style="font-size: 1.1rem; font-weight: 600; color: let(--fg); margin-top: 2px;">' +
-      esc(KIND_LABEL[r.kind] || r.kind) +
+      '<div style="background: var(--chip); padding: 14px; border-radius: 6px; border: 1px solid var(--border); margin-bottom: 16px;">' +
+      /* 節の名は見出しにする（読み上げで節を飛ばせる – 「投稿日程」は前から h3。2026-10-22
+       * 実測: 行の詳細は h2 の会議名の下、「種別・日時」だけが div だった）。見た目は
+       * クラスで前のまま（小さめの灰色）。 */
+      '<h3 class="drawer-label">種別・日時</h3>' +
+      '<div style="font-size: 1.1rem; font-weight: 600; color: var(--fg); margin-top: 2px;">' +
+      esc(Recommender.kindLabelJa(r.kind)) +
       "</div>" +
       (r.kind === "journal"
-        ? '<div style="font-family: let(--font-mono); font-size: 0.85rem; color: let(--accent); margin-top: 4px;">随時受付（締切なし）</div>'
-        : r.dateOnly
-          ? '<div style="font-family: let(--font-mono); font-size: 0.85rem; color: let(--accent); margin-top: 4px;">' +
-            esc(r.localDate) +
-            dateOnlyText +
-            "</div>"
-          : '<div style="font-family: let(--font-mono); font-size: 0.85rem; color: let(--accent); margin-top: 4px;">' +
-            fmtDate(new Date(r.t)) +
-            " UTC (" +
-            fmtJst(new Date(r.t)) +
-            " / " +
-            fmtAoE(new Date(r.t)) +
-            ")</div>") +
+        ? '<div style="font-family: var(--font-mono); font-size: 0.85rem; color: var(--accent); margin-top: 4px;">常時受付（締切なし）</div>'
+        : !Number.isFinite(r.t)
+          ? '<div style="margin-top: 4px;">投稿締切未確認</div>'
+          : r.dateOnly
+            ? '<div style="font-family: var(--font-mono); font-size: 0.85rem; color: var(--accent); margin-top: 4px;">' +
+              esc(
+                `${r.localDate}${Recommender.weekdayJaFromDate(r.localDate) ? `(${Recommender.weekdayJaFromDate(r.localDate)})` : ""}`,
+              ) +
+              dateOnlyText +
+              "</div>"
+            : '<div style="font-family: var(--font-mono); font-size: 0.85rem; color: var(--accent); margin-top: 4px;">' +
+              fmtJst(new Date(r.t)) +
+              "（" +
+              crossCheck +
+              "）</div>") +
+      (kindDetail
+        ? `<div style="font-size: 0.8rem; color: var(--muted); margin-top: 4px;">${esc(kindDetail)}</div>`
+        : "") +
       "</div>";
 
     let actionRow = "";
     if (r.kind === "journal") {
       actionRow =
-        '<div style="font-size: 0.85rem; color: let(--muted); margin-bottom: 16px;">常時受付のジャーナル（締切なし）です。投稿規程を公式サイトで確認してください。</div>';
+        '<div style="font-size: 0.85rem; color: var(--muted); margin-bottom: 16px;">常時受付のジャーナル（締切なし）です。投稿規程を公式サイトで確認してください。</div>';
     } else {
       actionRow =
-        '<div style="font-size: 0.85rem; color: let(--muted); margin-bottom: 16px;">投稿前に公式サイトで最新の募集要項と締切を確認してください。</div>';
+        '<div style="font-size: 0.85rem; color: var(--muted); margin-bottom: 16px;">投稿前に公式サイトで最新の募集要項と締切を確認してください。</div>';
     }
     html += actionRow;
 
@@ -809,33 +1317,342 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       html +=
         '<a href="' +
         esc(officialLink) +
-        '" target="_blank" style="display: block; text-align: center; background: let(--accent); color: #fff; text-decoration: none; padding: 10px; border-radius: 6px; font-weight: 600; margin-bottom: 20px;">公式サイトを開く</a>';
+        '" target="_blank" style="display: block; text-align: center; background: var(--accent); color: var(--on-accent); text-decoration: none; padding: 10px; border-radius: 6px; font-weight: 600; margin-bottom: 20px;">公式サイトを開く</a>';
     }
+    /* この 1 件だけを持ち出す入口（中身は描いた後に組み立てる – 押した時に走る関数は
+     * 文字列には書けない）。 */
+    html += '<div id="drawerRowActions"></div>';
 
+    const placeRaw = String(r.ed.place || "");
+    const placeShown = Recommender.placeJa(placeRaw);
+    // 会期も一覧・CSV と同じ式を使う（`eventCellJa` を共有）。公式表記は原表記として添える。
+    const eventShownJa = Recommender.eventCellJa(r);
+    const eventRawJa = String(r.ed.date_text || "").trim();
+    // 研究会は毎月開くので、この行の回より後の会期も併記する（「次はいつか」を
+    // 行をめくって探さなくて済むように）。日程の書き方は表と揃える。
+    const laterEditions = r.submission
+      ? []
+      : Recommender.upcomingEditionsOf(
+          r.conf,
+          String(r.ed.event_start || ""),
+          Date.now(),
+          Number.POSITIVE_INFINITY,
+          r.ed.id,
+        );
+    const catNamesJa = (r.cats || []).map((key) => catLabel(key));
+    const rankShown = (r.rankPairs || []).map((pair) => Recommender.rankPairLabelJa(pair));
+    // 今後の会期の開催地も、表と同じ書き方で日本語に寄せる（行の詳細の中で
+    // 「開催地: 京都, 日本」と「今後の会期: … ＠Kyoto, Japan」が両方出ると、
+    // 別の場所だと誤解する）。原文は下に同じ「原表記」の書き方で出す – 開催地の行と
+    // 同じ作法に揃える（以前はここだけ `title` の注記で、タッチ操作の端末と読み上げで
+    // 原文に辿れなかった。2026-08-09 生成ビルドで実測）。
+    function laterEditionsMarkup(editions: typeof laterEditions): string {
+      if (!editions.length) return "";
+      const rows = (items: typeof editions): string =>
+        '<ul class="schedule-only-list">' +
+        items
+          .map((next) => {
+            const raw = String(next.place || "");
+            const original =
+              raw && Recommender.placeJa(raw) !== raw
+                ? `<div style="color: var(--muted); font-size: 0.8rem;">原表記: ${esc(raw)}</div>`
+                : "";
+            const url = safeExternalUrl(next.link || "");
+            const official = url
+              ? ` <a href="${esc(url)}" target="_blank" rel="noopener noreferrer">この開催回の公式サイト</a>`
+              : "";
+            return `<li>${esc(Recommender.laterEditionLineJa(next))}${official}${original}</li>`;
+          })
+          .join("") +
+        "</ul>";
+      const first = editions.slice(0, 3);
+      const remaining = editions.slice(3);
+      return (
+        "<div><strong>今後の会期:</strong>" +
+        rows(first) +
+        (remaining.length
+          ? `<details><summary>残り ${remaining.length.toLocaleString("ja-JP")} 開催回を表示</summary>${rows(remaining)}</details>`
+          : "") +
+        "</div>"
+      );
+    }
+    const laterEditionsHtml = laterEditionsMarkup(laterEditions);
     html +=
       '<div style="font-size: 0.85rem;">' +
-      '<p style="margin-bottom: 8px;"><strong>開催地:</strong> ' +
-      esc(r.ed.place || "未定") +
+      '<p style="margin-bottom: 8px;"><strong>' +
+      (r.submission ? "投稿先" : "開催地") +
+      ":</strong> " +
+      esc(
+        r.submission
+          ? r.conf.full_name
+          : placeShown ||
+              (Recommender.fieldNotApplicableJa(r) ? NOT_APPLICABLE_JA : UNCONFIRMED_JA),
+      ) +
       "</p>" +
-      '<p style="margin-bottom: 8px;"><strong>会期:</strong> ' +
-      esc(r.ed.date_text || r.ed.event_start || "未定") +
+      (placeShown && placeShown !== placeRaw
+        ? '<p style="margin-bottom: 8px; color: var(--muted); font-size: 0.8rem;">原表記: ' +
+          esc(r.ed.place || "") +
+          "</p>"
+        : "") +
+      (r.submission ? "" : fieldReasonsJa.note(fieldReasonsJa.place(r))) +
+      '<p style="margin-bottom: 8px;"><strong>' +
+      (r.submission ? "掲載予定" : "会期") +
+      ":</strong> " +
+      esc(
+        eventShownJa || (Recommender.fieldNotApplicableJa(r) ? NOT_APPLICABLE_JA : UNCONFIRMED_JA),
+      ) +
       "</p>" +
+      // 公式ページの会期表記は「原表記」として下に添える（開催地と同じ作法）。前にここを
+      // 主語にしていたので、一覧が `2024-03-18(月) 〜 2024-03-21(木)` の行の詳細が
+      // `March 18-21, 2024` と英語だけ書いていた（SPEC §7）。
+      (eventRawJa && eventRawJa !== eventShownJa
+        ? '<p style="margin-bottom: 8px; color: var(--muted); font-size: 0.8rem;">原表記: ' +
+          esc(eventRawJa) +
+          "</p>"
+        : "") +
+      (r.ed.event_review?.held_year && r.ed.event_review.held_year !== r.ed.year
+        ? '<p style="margin-bottom: 8px;">' +
+          esc(`${String(r.ed.year)}年版・開催は${String(r.ed.event_review.held_year)}年`) +
+          "</p>"
+        : "") +
+      (r.ed.event_review?.note && safeExternalUrl(r.ed.event_review.source_url)
+        ? '<p style="margin-bottom: 8px; color: var(--muted);">' +
+          esc(r.ed.event_review.note) +
+          ' <a target="_blank" href="' +
+          esc(safeExternalUrl(r.ed.event_review.source_url)) +
+          '">会期の根拠</a></p>'
+        : "") +
+      (r.submission
+        ? '<p style="margin-bottom: 8px;">情報処理学会／JIPの同じ募集を1件にまとめています。' +
+          esc(r.submission.language) +
+          "。</p>"
+        : "") +
+      fieldReasonsJa.note(fieldReasonsJa.event(r)) +
+      laterEditionsHtml +
+      // 並べ語は中黒（・）に統一する。一覧・CSV・件数欄はすでに中黒で並べていて、
+      // 行の詳細だけ全角コンマ（，）だと、同じ情報を 2 通りの書き方で見る上に、
+      // 行の詳細から検索欄へ写したときに 1 語扱いで 0 件へ落ちる（2026-09-23 実測）。
+      // 主題タグは日本語表記で出す（会議名から場を推定しないため）。
+      // 表にある分野・ランクをドロワーで落とさない（詳細を開いたのに一覧より分からない、を
+      // 避ける）。分野は日本語名、ランクの表記は表のセルと同じ形にする。
+      (catNamesJa.length
+        ? `<p style="margin-bottom: 8px;"><strong>分野:</strong> ${esc(catNamesJa.join("・"))}</p>`
+        : "") +
+      /* ランクの組が無い行で「ランク」の行その物を落としていた（2026-08-09 生成ビルドで実測:
+       * 収録 863 行のうち 388 行）。一覧のセルは同じ行に「未確認」と出すので、
+       * 「詳細を開いたのに一覧より分からない」状態だった（下の注で分野・ランクは
+       * 落とさない書いていたのに、コードは落としていた）。 */
+      `<p style="margin-bottom: 8px;"><strong>ランク:</strong> ${esc(
+        rankShown.length ? rankShown.join("・") : UNCONFIRMED_JA,
+      )}</p>` +
+      fieldReasonsJa.note(fieldReasonsJa.rank(r)) +
+      (Recommender.topicTagsJa(r.conf.tags).length
+        ? '<p style="margin-bottom: 8px;"><strong>主題:</strong> ' +
+          esc(Recommender.topicTagsJa(r.conf.tags).join("・")) +
+          "</p>"
+        : "") +
       "</div>";
     html += verificationSummary(r.dl);
 
     $("drawerBody").innerHTML = html;
+    renderEditionSchedule(r);
+    renderDrawerRowActions(r);
     const closeBtn = $("drawerClose");
-    if (closeBtn) closeBtn.focus();
+    if (closeBtn) focusDrawerAfterRender(r, closeBtn);
   }
+  /* 行の詳細から、その 1 件だけをカレンダーに持ち出せるようにする（一覧の書き出しは
+   * 絞り込みごと入るので、「この締切だけ」を持ち出すには 1 件に絞る手間が要った –
+   * 2026-10-18）。予定の UID は購読の ICS と同じ物を使う（二重に並ばない）。 */
+  function exportRowIcs(r: AppRow): void {
+    const one = icsInputForRow(r);
+    if (!one) return;
+    const generated = typeof DATA.generated_at === "string" ? new Date(DATA.generated_at) : null;
+    const text = icsViewText([one], new Date(), generated, {
+      scopeJa: "行の詳細から入れた 1 件",
+      calName: ICS_VIEW_CAL_NAME_JA,
+    });
+    if (typeof Blob === "undefined" || typeof URL === "undefined" || !URL.createObjectURL) return;
+    const url = URL.createObjectURL(new Blob([text], { type: "text/calendar;charset=utf-8" }));
+    /* 同じ日に何件も落としても上書きしないよう、会議の鍵と日（画面に出ている日）を名前に入れる。 */
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = `kamiyobi-${String(r.conf.key || "deadline")}-${one.day}.ics`;
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
+    setTimeout(() => URL.revokeObjectURL(url), 0);
+  }
+
+  /* ★ を付けた会議（この端末だけ）。共有 URL には載せない – 何を見たいかは人ごとに違い、
+   * URL に載せると他人の ★ が自分の一覧に混ざる。値は会議の鍵（`venue=` にそのまま渡せる）。 */
+  const WATCH_KEY = "kamiyobi.watchedVenues.v1";
+
+  function readWatchedVenues(): string[] {
+    try {
+      const raw = window.localStorage.getItem(WATCH_KEY);
+      if (!raw) return [];
+      const parsed = JSON.parse(raw) as unknown;
+      if (!Array.isArray(parsed)) return [];
+      const keys = parsed
+        .filter((value): value is string => typeof value === "string")
+        .map((value) => value.trim())
+        .filter((value) => value !== "");
+      return [...new Set(keys)];
+    } catch {
+      return [];
+    }
+  }
+
+  function writeWatchedVenues(keys: string[]): void {
+    const 前 = readWatchedVenues().length;
+    try {
+      if (keys.length) window.localStorage.setItem(WATCH_KEY, JSON.stringify(keys));
+      else window.localStorage.removeItem(WATCH_KEY);
+    } catch {
+      /* 保存できない環境（シークレット等）では、その回の表示だけ変わる。 */
+    }
+    renderWatchPanel();
+    /* 足したときに何も見えないと、★ が効いたのか分からない（畳んだ一覧は開かない）。
+     * 増えた時だけ開く。 */
+    if (keys.length > 前) {
+      const panel = $("watchPanel") as HTMLDetailsElement | null;
+      if (panel) panel.open = true;
+    }
+  }
+
+  function venueTitleJa(key: string): string {
+    /* 会議の名簿（収録の全 696 件）から引く。行（`rows`）から引くと、締切が過ぎた会議
+     * （RTSS など）は行が無いので鍵がそのまま出てしまう（2026-10-23 實測）。 */
+    const conf = (DATA.conferences || []).find((c) => c.key === key);
+    return String(conf?.title || key);
+  }
+
+  function renderWatchPanel(): void {
+    const panel = $("watchPanel");
+    const list = $("watchList");
+    const count = $("watchCount");
+    if (!panel || !list || !count) return;
+    const keys = readWatchedVenues();
+    count.textContent = String(keys.length);
+    panel.hidden = keys.length === 0;
+    list.textContent = "";
+    /* 次に締切が来る順に並べる（★ は「近い順に見たい」物なので、付けた順では並べない）。
+     * 読み込み済みの行に無い会議（期間の外・過ぎた締切だけ）は最後に置く。 */
+    const now = Date.now();
+    const 次連 = (key: string): number => {
+      const t = rows
+        .filter((row) => row.conf.key === key && !row.est && Number.isFinite(row.t) && row.t >= now)
+        .map((row) => row.t)
+        .sort((a2, b2) => a2 - b2)[0];
+      return Number.isFinite(t) ? t : Number.POSITIVE_INFINITY;
+    };
+    const 並び = keys.map((key) => ({ key, 次: 次連(key) })).sort((a2, b2) => a2.次 - b2.次);
+    for (const { key, 次 } of 並び) {
+      const li = document.createElement("li");
+      const link = document.createElement("a");
+      /* 今後の締切が無い会議は、既定の一覧（今後の締切）に行が無いので、過去も出す条件を
+       * 添える（推薦のカードと同じ規則 – 2026-10-24 實測: RTSS の ★ は 0 件に着地していた）。 */
+      link.href = `?venue=${encodeURIComponent(key)}${Number.isFinite(次) ? "" : "&past=1"}`;
+      link.textContent = venueTitleJa(key);
+      link.title = `この会議（${key}）の締切だけを一覧で見る`;
+      li.appendChild(link);
+      /* 次の締切（★ を付けた理由がその場で分かる）。読み込み済みの行から見るので、期間の外や
+       * 過ぎた締切しか無い会議は「今後の締切なし」と書く（推測で日付を作らない）。 */
+      const when = document.createElement("span");
+      when.className = "watch-when";
+      /* 並べ替えの印に `Infinity` を使っているので、真偽ではなく有限かどうかで分ける
+       * （`Infinity` は真なので、そのまま渡すと NaN の日付になる – 2026-10-23 實測）。 */
+      when.textContent = Number.isFinite(次) ? `次回 ${fmtJst(new Date(次))}` : "今後の締切なし";
+      li.appendChild(when);
+      const remove = document.createElement("button");
+      remove.type = "button";
+      remove.textContent = "×";
+      remove.setAttribute("aria-label", `${venueTitleJa(key)} を ★ から外す`);
+      remove.addEventListener("click", () => {
+        writeWatchedVenues(readWatchedVenues().filter((k) => k !== key));
+        /* 押したボタンは描き直しで消えるので、焦点が body に落ちないよう移す。一覧が残れば
+         * 見出しへ、空になったら検索欄へ（2026-10-23 實測: 何もしないと焦点が失われる）。 */
+        const panel = $("watchPanel");
+        const 移す = panel && !panel.hidden ? panel.querySelector("summary") : $("q");
+        (移す as HTMLElement | null)?.focus();
+      });
+      li.appendChild(remove);
+      list.appendChild(li);
+    }
+  }
+
+  function renderDrawerRowActions(r: DrawerRow): void {
+    const box = $("drawerRowActions");
+    if (!box) return;
+    box.textContent = "";
+    /* 1 件だけをカレンダーへ（日付だけの行など、予定にできない行では出さない）。 */
+    if (icsInputForRow(r as unknown as AppRow)) {
+      const ics = document.createElement("button");
+      ics.type = "button";
+      ics.className = "drawer-action";
+      ics.textContent = "この締切をカレンダー（.ics）に入れる";
+      ics.title =
+        "この 1 件だけを .ics で持ち出します。予定の UID は購読のカレンダー（deadlines.ics）と共通です。重複の扱いはカレンダーアプリによって異なります。";
+      ics.addEventListener("click", () => exportRowIcs(r as unknown as AppRow));
+      box.appendChild(ics);
+    }
+    /* 会議の識別子（key）。AI に頼むときはこの値を渡す（MCP の `venue_info` の `key`）。
+     * 一覧へのリンクにはしない – 検索は語の一致で引くので、短い識別子（`chi`・`sc`）だと
+     * 別の会議（開催地が Chicago など）まで当たる（2026-10-23 実測: `chi` は 70 会場）。
+     * 「この会議だけ」を正確に絞る URL はまだ無いので、押せる物にはしない。 */
+    const key = String(r.conf?.key || "").trim();
+    if (key) {
+      const all = document.createElement("a");
+      all.className = "drawer-action";
+      all.href = `?venue=${encodeURIComponent(key)}`;
+      all.textContent = `この会議（${key}）の締切だけを一覧で見る`;
+      all.title =
+        "この会議の行だけに絞った一覧を開きます（URL の venue）。会議の識別子は AI に頼むときにも渡せます（MCP の venue_info の key）。";
+      box.appendChild(all);
+      const id = document.createElement("p");
+      id.className = "drawer-key";
+      id.textContent = `会議の識別子: ${key}`;
+      id.title = "AI に頼むときはこの値を渡します（MCP の venue_info の key）。";
+      box.appendChild(id);
+      const watched = readWatchedVenues();
+      const on = watched.includes(key);
+      const star = document.createElement("button");
+      star.type = "button";
+      star.className = "drawer-action";
+      /* 押す所には会議の名前を出す（鍵は小文字の識別子で、人には読みにくい）。 */
+      const 名 = venueTitleJa(key);
+      star.textContent = on ? `★ ${名} をはずす` : `★ ${名} をあとで見る`;
+      star.title = "この端末（このブラウザ）にだけ覚えます。共有 URL には入りません。";
+      star.setAttribute("aria-pressed", String(on));
+      star.addEventListener("click", () => {
+        const now = readWatchedVenues();
+        writeWatchedVenues(now.includes(key) ? now.filter((k) => k !== key) : [...now, key]);
+        renderDrawerRowActions(r);
+      });
+      box.appendChild(star);
+    }
+  }
+
   window.openDrawer = (row: unknown) => {
     if (isDrawerRow(row)) openDrawer(row);
   };
 
+  // 再描画後も詳細が開いていて、利用者が内部へ移動していない場合だけ回復する。
+  function focusDrawerAfterRender(row: DrawerRow, closeButton: HTMLElement) {
+    closeButton.focus();
+    requestAnimationFrame(() => {
+      if (drawerRow === row && !$("drawer").contains(document.activeElement)) closeButton.focus();
+    });
+  }
+
   // 閉じるのは ✕ ボタン（自前 onclick 経由、引数なし）とバックドロップの直接クリックのみ。
   // ドロワー内の button がバブルしても閉じない。
-  function closeDrawer(e: Event | null = null) {
+  function closeDrawer(e: Event | null = null, navigate = true) {
     if (!e || e.target === $("drawerBackdrop")) {
       $("drawerBackdrop").classList.remove("active");
+      setDrawerModal(false);
+      drawerRow = null;
+      if (navigate) writeUrl("close");
       // フォーカスを開く直前の要素へ戻す。
       const prev = window._prevFocus;
       window._prevFocus = null;
@@ -844,24 +1661,204 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   }
   window.closeDrawer = closeDrawer;
 
+  function setDrawerModal(open: boolean): void {
+    const wrap = document.querySelector<HTMLElement>(".wrap");
+    if (wrap) wrap.inert = open;
+    document.body.classList.toggle("drawer-open", open);
+  }
+
+  // Keep keyboard navigation inside the dialog, including Escape on its close button.
+  $("drawer").addEventListener("keydown", (e: KeyboardEvent) => {
+    if (e.isComposing || e.keyCode === 229 || e.ctrlKey || e.metaKey || e.altKey) return;
+    e.stopPropagation();
+    if (e.key === "Escape") {
+      e.preventDefault();
+      e.stopPropagation();
+      closeDrawer();
+    } else if (e.key === "Tab") {
+      const controls = [
+        ...$("drawer").querySelectorAll<HTMLElement>("button:not(:disabled), a[href], summary"),
+      ];
+      const first = controls[0];
+      const last = controls[controls.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last?.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first?.focus();
+      }
+    }
+  });
+
+  function editionScheduleRows(
+    r: Pick<
+      DrawerRow,
+      "conf" | "ed" | "submission" | "dl" | "legacyShareKey" | "shareDiscriminator"
+    >,
+  ): AppRow[] {
+    // Build from this exact edition, retaining the selected deadline's object identity.
+    const edition = {
+      ...r.ed,
+      deadlines: [...(r.ed.deadlines || []), ...(r.ed.schedule_deadlines || [])],
+    };
+    return assignShareIdentities(
+      Recommender.candidateRows({ conferences: [{ ...r.conf, editions: [edition] }] }) as AppRow[],
+      rowShareKeyJa,
+    )
+      .filter((next) => next.kind !== "journal")
+      .map((next) => {
+        const known =
+          (typeof rows === "undefined"
+            ? undefined
+            : rows.find(
+                (candidate) =>
+                  candidate.conf.key === r.conf.key &&
+                  candidate.ed.id === r.ed.id &&
+                  candidate.dl === next.dl,
+              )) || (r.dl === next.dl ? r : undefined);
+        return {
+          ...next,
+          conf: r.conf,
+          ed: r.ed,
+          submission: known?.submission ?? (r.dl === next.dl ? r.submission : undefined),
+          legacyShareKey: known?.legacyShareKey || next.legacyShareKey,
+          shareDiscriminator: known?.shareDiscriminator || next.shareDiscriminator,
+        } as AppRow;
+      })
+      .sort((a, b) => a.tShown - b.tShown);
+  }
+
+  function findEditionScheduleRow(catalog: Catalog, key: string): AppRow | null {
+    for (const conf of catalog.conferences) {
+      for (const ed of conf.editions || []) {
+        if (!catalog.window && !ed.schedule_deadlines?.length) continue;
+        const hit = editionScheduleRows({ conf, ed }).find(
+          (next) =>
+            (catalog.window || ed.schedule_deadlines?.includes(next.dl)) &&
+            (rowShareKeyJa(next) === key ||
+              next.conf.legacy_keys?.some((alias) => rowShareKeyJa(next, alias) === key)),
+        );
+        if (hit) return hit;
+      }
+    }
+    return null;
+  }
+
+  function renderEditionSchedule(r: DrawerRow): void {
+    const related = editionScheduleRows(r);
+    if (!related.length) return;
+    const section = document.createElement("section");
+    section.className = "edition-schedule";
+    const heading = document.createElement("h3");
+    heading.textContent = r.submission ? "投稿日程（この特集号）" : "投稿日程（この開催回）";
+    section.appendChild(heading);
+    const note = document.createElement("p");
+    note.textContent =
+      "概要の登録が論文提出より先に必要な場合があります。トラック・ラウンドと公式の募集要項を確認してください。";
+    section.appendChild(note);
+    const list = document.createElement("ul");
+    const pastList = document.createElement("ul");
+    const now = Date.now();
+    let pastCount = 0;
+    let pastSelected = false;
+    for (const next of related) {
+      const item = document.createElement("li");
+      const button = document.createElement("button");
+      button.type = "button";
+      const current = next.dl === r.dl;
+      if (current) button.setAttribute("aria-current", "true");
+      const date = next.dateOnly
+        ? `${next.localDate}（時刻未確認・日本時間への換算なし）`
+        : fmtJst(new Date(next.t));
+      const detail = kindDetailJa(next.dl?.round, next.dl?.label);
+      const status = next.est
+        ? "推定"
+        : rowIsPast(next, now)
+          ? "終了済み"
+          : next.dateOnly
+            ? "時刻未確認"
+            : "";
+      button.textContent = [
+        KIND_LABEL[next.kind] || next.kind,
+        date,
+        detail,
+        status,
+        current ? "表示中" : "確認する",
+      ]
+        .filter(Boolean)
+        .join(" ／ ");
+      button.addEventListener("click", () => openDrawer(next));
+      item.appendChild(button);
+      if (rowIsPast(next, now)) {
+        pastList.appendChild(item);
+        pastCount++;
+        if (current) pastSelected = true;
+      } else list.appendChild(item);
+    }
+    if (list.children.length) section.appendChild(list);
+    if (pastCount) {
+      const history = document.createElement("details");
+      history.className = "past-edition-schedule";
+      history.open = pastSelected;
+      const summary = document.createElement("summary");
+      summary.textContent = `終了済みの日程（${pastCount}件）`;
+      history.appendChild(summary);
+      history.appendChild(pastList);
+      section.appendChild(history);
+    }
+    const scope = document.createElement("p");
+    scope.textContent = r.submission
+      ? "この特集号の収録済み日程です。掲載予定と投稿締切は別の年月です。"
+      : "この開催回の収録済み日程です。一覧の期間外にある日程も含みます。締切の前後関係だけでは、同じ投稿トラックとは判定できません。";
+    section.appendChild(scope);
+    $("drawerBody").insertBefore(section, $("drawerBody").children[1] || null);
+  }
+
+  /* どのキーを入力欄・ボタン自身が受け取るかの判断（SPEC §7）。
+   *
+   * 文字を打つ欄（入力欄・選択欄・改行が打てる欄）では、すべてのキーを欄に渡す –
+   * 「/」を検索のショートカットとして奪うと、論文の本文に「GPU/vGPU」や URL を
+   * 打てなくなる。ボタンは Enter と Space だけが操作に効くので、それ以外は
+   * ショートカットに渡す。
+   *
+   * 以前はボタンにフォーカスが乗っているとすべてのキーを止めていた（2026-09-23 実測:
+   * 完成した画面の `onKeydown` を実行して確かめた – 「過去の締切も表示」のボタンを
+   * クリックした直後、`/` で検索欄にフォーカスが移らず、`j` も効かなかった –
+   * 画面をクリックするたびに快捷键が死んでいた。`j` / `k` を打つ人はボタンを
+   * 踏んだ直後であることが多い）。 */
+  function keyBlockedByTarget(tag: string, key: string, contentEditable: boolean): boolean {
+    if (contentEditable) return true;
+    if (tag === "INPUT" || tag === "SELECT" || tag === "TEXTAREA") return true;
+    if (tag === "BUTTON") return key === "Enter" || key === " " || key === "Spacebar";
+    if (tag === "A") return key === "Enter";
+    return false;
+  }
+
   // Keyboard Navigation (j/k/Enter/Esc//)
   function onKeydown(e: KeyboardEvent) {
+    if (e.isComposing || e.keyCode === 229) return;
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
     const target = e.target;
     if (!target || !("tagName" in target) || typeof target.tagName !== "string") return;
     const tag = target.tagName;
     const isContentEditable = "isContentEditable" in target && target.isContentEditable === true;
-    if (
+    const onControl =
       tag === "INPUT" ||
       tag === "SELECT" ||
       tag === "TEXTAREA" ||
       tag === "BUTTON" ||
-      isContentEditable
-    ) {
-      if (e.key === "Escape") {
-        if ("blur" in target && typeof target.blur === "function") target.blur();
+      isContentEditable;
+    if (onControl && e.key === "Escape") {
+      if ("blur" in target && typeof target.blur === "function") target.blur();
+      // 検索欄から一覧へ戻り、続けて j / k で移動できるようにする。
+      if (target === $("q")) {
+        if (selectedIndex >= 0 && selectedIndex < shown.length) updateRowSelection();
+        else $("results").focus();
       }
       return;
     }
+    if (keyBlockedByTarget(tag, e.key, isContentEditable)) return;
     // 推薦モードでは非表示の締切表用ショートカットを無効化する。
     if (
       typeof state !== "undefined" &&
@@ -873,26 +1870,28 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         e.key === "ArrowDown" ||
         e.key === "ArrowUp")
     ) {
-      e.preventDefault();
       return;
     }
     if (e.key === "/") {
       e.preventDefault();
-      $("q").focus();
+      $(
+        typeof state !== "undefined" && state.mode === "recommend" ? "paperPrimaryTitle" : "q",
+      ).focus();
     } else if (e.key === "d" && selectedIndex >= 0 && selectedIndex < shown.length) {
       // キーボードで詳細ドロワーを開く。
       // 行にフォーカスしてから開き、
       // openDrawer が _prevFocus として保存する。
       e.preventDefault();
-      const dtrs = [...$("tbody").querySelectorAll<HTMLTableRowElement>("tr")].filter(
-        (row) => !row.classList.contains("detail-row"),
-      );
+      // 選択行がまだ描画されていなければ先に描く（下のフォーカス先が存在しないため）。
+      ensureRowsDrawn(selectedIndex);
+      const dtrs = dataRows();
       if (dtrs[selectedIndex]) dtrs[selectedIndex].focus();
       openDrawer(shown[selectedIndex]);
     } else if (e.key === "j" || e.key === "ArrowDown") {
       e.preventDefault();
       if (selectedIndex < shown.length - 1) {
         selectedIndex++;
+        ensureRowsDrawn(selectedIndex);
         updateRowSelection();
       }
     } else if (e.key === "k" || e.key === "ArrowUp") {
@@ -910,41 +1909,114 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     }
   }
   window.addEventListener("keydown", onKeydown);
+  /* 窓の幅が変わると越え方も変わる（拡大表示・画面分割を含む）ので、そのつど揃える。 */
+  window.addEventListener("resize", syncTableScroll);
+
+  /* 選択は `shown`（絞り込み後の全行）まで進められるが、表に描いてある行は `drawn` 行だけ
+   * （既定は PAGE=40 行 – 2026-09-23 実測）。`j` を 40 回押すと、ハイライトとフォーカスは
+   * 40 行目に残ったまま内部の選択だけ 41 行目以降へ進み、`d` を押すと画面に出ていない行の
+   * 詳細が開いていた。マウスなら「さらに表示」を自分で押せるが、キーボードだけで操作する人に
+   * その入口を探させるのは無理があるので、必要になった時点で描く。 */
+  function ensureRowsDrawn(index: number): void {
+    let guard = 0;
+    while (drawn <= index && drawn < shown.length && guard <= shown.length) {
+      drawMore();
+      guard += 1;
+    }
+  }
+
+  function dataRows(): HTMLTableRowElement[] {
+    return [...$("tbody").querySelectorAll<HTMLTableRowElement>("tr")].filter(
+      (row) => !(row.classList.contains("detail-row") || row.classList.contains("month-row")),
+    );
+  }
 
   function updateRowSelection() {
     // 展開用 detail-row を除外し、shown[] の行と 1:1 対応を保つ
-    const trs = [...$("tbody").querySelectorAll<HTMLTableRowElement>("tr")].filter(
-      (row) => !row.classList.contains("detail-row"),
-    );
+    const trs = dataRows();
     trs.forEach((tr, idx) => {
-      tr.classList.toggle("selected", idx === selectedIndex);
+      const on = idx === selectedIndex;
+      tr.classList.toggle("selected", on);
+      /* 選んだ行はクラスの目印だけ変えていた。視覚だけの状態は支援技術に伝わらない
+       * （2026-09-23 実測: ビルド成果物に `aria-current`・`aria-selected` は 1 箇所も
+       * 無く、`selected` クラスの切り替えだけだった）。表の行なので `aria-current="row"`
+       * を使う。選ぶのをやめた行からは消す（付けっぱなしだと 2 行が「今選んでいる行」に
+       * なる）。再描画時は選択が解かれるので、付けっぱなしにはならない。 */
+      if (on) tr.setAttribute("aria-current", "row");
+      else tr.removeAttribute("aria-current");
     });
     if (trs[selectedIndex]) {
-      trs[selectedIndex].scrollIntoView({ block: "nearest", behavior: "smooth" });
+      /* フォーカスも選んだ行へ移す。クラス目印だけ変えてスクロールしていたので、
+       * キーボードで `j` / `k` を押しても支援技術には何も読まれなかった（2026-09-23 実測:
+       * てびきは「キーボードで一覧を動かす」と案内しているのに、支援技術には無音だった）。
+       * `preventScroll` は効かない環境があるので、自分で scrollIntoView する。 */
+      trs[selectedIndex].focus({ preventScroll: true });
+      /* 1 打鍵ごとに なめらかスクロールを続けると酔う人がいる（「動きを抑える」設定は
+       * JS の `behavior` を自動では見ない – 2026-09-23 実測）。設定があれば瞬間移動にする。 */
+      const reduced =
+        typeof window.matchMedia === "function" &&
+        window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      trs[selectedIndex].scrollIntoView({
+        block: "nearest",
+        behavior: reduced ? "auto" : "smooth",
+      });
     }
   }
 
   // ---- CATEGORIES ----
+
+  function categoryChipKeys(categories: Record<string, string>): string[] {
+    return Object.keys(categories || {}).sort((a, b) => {
+      const la = Recommender.categoryChipLabelJa(a, String(categories[a] || ""));
+      const lb = Recommender.categoryChipLabelJa(b, String(categories[b] || ""));
+      return la.localeCompare(lb, "ja") || a.localeCompare(b);
+    });
+  }
+
   const catsBox = $("cats");
-  Object.keys(DATA.categories).forEach((k) => {
+  const catCountNodes: Record<string, HTMLElement> = {};
+  categoryChipKeys(DATA.categories).forEach((k) => {
     const lbl = document.createElement("label");
     const chk = document.createElement("input");
     chk.type = "checkbox";
     chk.value = k;
     lbl.appendChild(chk);
     const span = document.createElement("span");
-    span.textContent = `${k.toUpperCase()} (${DATA.categories[k]})`;
+    // 日本語名を主、英表記は併記（現場では分野の英語名で覚えている人もいるため）。
+    // 組み立ては recommender の 1 本だけ使う – 以前はここで式を書いていて、検索索引が
+    // 同じ語を持っておらず、チップの語をコピーして貼った人が 0 件に落ちた。
+    const en = String(DATA.categories?.[k] || "");
+    span.textContent = Recommender.categoryChipLabelJa(k, en);
+    span.title = `${k}: ${en}`;
     lbl.appendChild(span);
+    // 件数（他の絞り込みを通った行の数）。何を選ぶと何が残りそうか分からないと、
+    // チップを試すたびに表が空になる。0 の分野も消さずに薄く残す（収録が無いことが分かる）。
+    const countNode = document.createElement("span");
+    countNode.className = "chip-count";
+    countNode.textContent = "0";
+    lbl.appendChild(countNode);
+    catCountNodes[k] = countNode;
     catsBox.appendChild(lbl);
   });
+
+  /** 分野チップの件数を書き換える。`filter()` が数え直した `categoryCounts()` を使う。 */
+  function updateCategoryCounts(): void {
+    const counts = categoryCounts();
+    Object.keys(catCountNodes).forEach((key) => {
+      const node = catCountNodes[key] as HTMLElement;
+      const value = counts[key] || 0;
+      node.textContent = String(value);
+      node.classList.toggle("zero", value === 0);
+    });
+  }
 
   // ---- SELECTS ----
   const kindSel = $("kind");
   const optAllK = document.createElement("option");
   optAllK.value = "";
-  optAllK.textContent = "投稿締切（概要・論文）";
+  optAllK.textContent = KIND_ALL_LABEL_JA;
   kindSel.appendChild(optAllK);
-  Object.keys(KIND_LABEL).forEach((k) => {
+  SELECTABLE_KINDS.forEach((k) => {
     const opt = document.createElement("option");
     opt.value = k;
     opt.textContent = KIND_LABEL[k];
@@ -956,18 +2028,45 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   optAllR.value = "";
   optAllR.textContent = "すべて";
   rankSel.appendChild(optAllR);
-  ["A*", "A", "B", "C", "N"].forEach((r) => {
+  // 値は data の grade のまま（URL にも同じ値を書く）。見出しは日本語に出す —
+  // 「Rank N」は内部トークンそのもので、読み手には意味が伝わらない。
+  RANK_GRADE_OPTIONS.forEach((r) => {
     const opt = document.createElement("option");
     opt.value = r;
-    opt.textContent = `Rank ${r}`;
+    opt.textContent = rankFilterLabelJa(r);
+    opt.title = r === "N" ? RANK_UNRATED_TITLE_JA : RANK_FILTER_NOTE_JA;
     rankSel.appendChild(opt);
   });
+  rankSel.title = RANK_FILTER_NOTE_JA;
+  /* 推薦モードのランクの絞り込みも同じ選択肢（値は `data` の grade のまま。URL の `rank` を
+   * 共用する）。未設定なら何もしない（テンプレートに欄が無い版でも動くように）。 */
+  const recRankSel = document.getElementById("recRank") as HTMLSelectElement | null;
+  if (recRankSel) {
+    const optAll = document.createElement("option");
+    optAll.value = "";
+    optAll.textContent = "すべて";
+    recRankSel.appendChild(optAll);
+    RANK_GRADE_OPTIONS.forEach((r) => {
+      const opt = document.createElement("option");
+      opt.value = r;
+      opt.textContent = rankFilterLabelJa(r);
+      opt.title = r === "N" ? RANK_UNRATED_TITLE_JA : RANK_FILTER_NOTE_JA;
+      recRankSel.appendChild(opt);
+    });
+    recRankSel.title = RANK_FILTER_NOTE_JA;
+  }
 
   // ---- DATA FLATTENING ----
   function buildRows(data: Catalog): AppRow[] {
-    return Recommender.candidateRows(data);
+    const candidates = Recommender.candidateRows(data);
+    if (!candidates.some((row) => row.conf?.key)) return candidates;
+    return assignShareIdentities(
+      consolidateReviewedSubmissions(candidates, rowShareKeyJa),
+      rowShareKeyJa,
+    );
   }
   let rows = buildRows(DATA);
+  const summaryRows = summaryDeadlineRows(DATA, rows);
 
   function setDeadlineProfile(data: Catalog) {
     activeData = data;
@@ -980,7 +2079,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       historyStatus === "ready" &&
       historyLoader.data &&
       state.mode === "deadlines" &&
-      state.past
+      fullRecordNeeded(state.past, state.win, fullRecordRequested)
     ) {
       setDeadlineProfile(historyLoader.data);
     } else if (historyStatus === "error" && state.mode === "deadlines") {
@@ -1000,39 +2099,64 @@ function semanticOutput(value: unknown): value is SemanticOutput {
 
   const historyLoader = createHistoryLoader(fetchHistoryJson, syncHistoryState);
 
-  // Update Summary Dashboard Stats
-  $("statConfs").textContent = String((DATA.conferences || []).length);
-  const nowMs = Date.now();
-  const next30 = rows.filter(
-    (r) =>
-      (r.kind === "abstract" || r.kind === "paper") &&
-      !r.est &&
-      rowIsFuture(r, nowMs) &&
-      !rowAfter(r, nowMs + 30 * DAY),
-  ).length;
-  $("statUpcoming").textContent = String(next30);
-  const nicheCount = (DATA.conferences || []).filter(
-    (c) => (c.tags || []).indexOf("niche") !== -1,
-  ).length;
-  $("statNiche").textContent = String(nicheCount);
-  const domCount = (DATA.conferences || []).filter(
-    (c) => (c.tags || []).indexOf("domestic-jp") !== -1,
-  ).length;
-  $("statDomestic").textContent = String(domCount);
+  function summaryDeadlineRows(data: Catalog, initialRows: AppRow[]): DeadlineClock[] {
+    return (
+      data.deadline_summary ??
+      initialRows.filter((row) => (row.kind === "abstract" || row.kind === "paper") && !row.est)
+    );
+  }
+
+  function renderSummaryStats() {
+    $("statConfs").textContent = String((DATA.conferences || []).length);
+    const nowMs = Date.now();
+    const next30 = summaryRows.filter(
+      (r) => rowIsFuture(r, nowMs) && !rowAfter(r, windowLimitMs("30", nowMs)),
+    ).length;
+    const partial = !DATA.deadline_summary && DATA.window && DATA.window.upcoming_days < 30;
+    $("statUpcoming").textContent = `${partial ? "少なくとも " : ""}${next30}`;
+    const nicheCount = (DATA.conferences || []).filter(
+      (c) => (c.tags || []).indexOf("niche") !== -1,
+    ).length;
+    $("statNiche").textContent = String(nicheCount);
+    const domCount = (DATA.conferences || []).filter(
+      (c) => (c.tags || []).indexOf("domestic-jp") !== -1,
+    ).length;
+    $("statDomestic").textContent = String(domCount);
+  }
+  renderSummaryStats();
+  renderWatchPanel();
 
   // ---- REMAIN / STATUS ----
   function remain(ms: number) {
-    const diff = ms - Date.now();
+    /* 締切の瞬間が読めない行は組み立て時点で落ちるので、ここは本来通らない。
+     * それでも通ったときに画面へ `あと NaN 日` と出すのがいちばん悪い
+     * （2026-09-23 実測: 呼び出し側が基準を間違えると NaN がそのまま出ていた）。
+     * 数えられない、という意味で横線を出す（「評価なし」を空欄にしない規則と同じで、
+     * 値が無いことを値として出す）。 */
+    if (!Number.isFinite(ms)) return { text: "―", cls: "" };
+    const now = Date.now();
+    const diff = ms - now;
     if (diff < 0) {
-      const pd = Math.floor(-diff / DAY);
-      return { text: pd === 0 ? "本日終了" : `${pd} 日前に終了`, cls: "past" };
+      const jstDay = (t: number) => Math.floor((t + 9 * 3600000) / DAY);
+      const days = jstDay(now) - jstDay(ms);
+      return { text: days <= 0 ? "本日終了" : `${days} 日前に終了`, cls: "past" };
     }
     const d = Math.floor(diff / DAY);
     if (d === 0) {
       const h = Math.floor(diff / 3600000);
       return { text: h <= 0 ? "まもなく" : `あと ${h} 時間`, cls: "today" };
     }
-    return { text: `あと ${d} 日`, cls: d <= 14 ? "soon" : "" };
+    /* これからの分も **JST の暦日**で数える（過ぎた分と同じ規則で、`dataAgeNoteJa` が
+     * 「残りは JST の暦日が正本」と書いている側）。経過 24 時間の floor だと、同じ行の
+     * 締切日より 1 日短く出て、しかも見る人の時計の時刻で数字が動く（2026-08-09 生成
+     * ビルドで実測: 締切 2026-08-22 03:00 JST の行は JST 09:00 の眺めると「あと 12 日」で、
+     * JST の暦日では 13 日後。締切の日付が動いていないのに、ずれは JST 09:00 で 97 行、
+     * 20:00 で 320 行（並んでいる 785 行中）、翌朝 06:00 で 7 行）。
+     * 暦日が 1 日違っても 24 時間未満の行は上の時刻表示に任せる（「あと 2 時間」を
+     * 「あと 1 日」とは言わない。急ぎを過小に見せないためで、表計算の欄も 0 のまま）。
+     * JST のオフセットはインラインに置く（この関数はビルド成果物から抜き出して検査する）。 */
+    const cal = Math.floor((ms + 9 * 3600000) / DAY) - Math.floor((now + 9 * 3600000) / DAY);
+    return { text: `あと ${cal} 日`, cls: cal <= 14 ? "soon" : "" };
   }
 
   // Paper Text Matching Score。ロジックは recommender.js (Recommender.breakdown) に移管
@@ -1043,11 +2167,16 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   let EMBEDDINGS: EmbeddingBundle | null = null; // manifest + 言語別の埋め込み表
   let semQuery: Vector | null = null; // 現在のユーザー入力の埋め込みベクトル
   let semModel: SemanticModel | null = null; // transformers.js の pipeline
+  const semModelLoads = new Map<string, Promise<SemanticModel>>();
   let semLoadedModel = ""; // ロード済みモデル ID（言語適応で切り替え）
   let semEmbeddings: VectorMap | null = null; // 言語に応じた埋め込み表（en / multi）
   let semGeneration = 0;
   let semState: SemanticStatus = "idle"; // idle | loading | ready | error（AI 状態の表示用）
+  let semanticRetryRequested = false;
   let semanticReason: string | null = null;
+  /* 画面には日本語の理由だけを出し、識別子はこの要素の `data-semantic-reason` に残す
+   * （原因追跡は #711 以来の要件なので捨てない）。*/
+  let countSemanticReason: string | null = null;
   const semProbeCache: Record<string, boolean> = {}; // model@revision -> probe compatibility
 
   function currentPaperText() {
@@ -1062,10 +2191,12 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     semQuery = null;
     semEmbeddings = null;
     Recommender.setPaperVecs(null);
+    Recommender.setTopicVecs(null);
     if (nextState) semState = nextState;
   }
 
   function invalidateSemantic() {
+    semanticRetryRequested = false;
     semGeneration += 1;
     clearSemantic("idle");
   }
@@ -1100,11 +2231,16 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     // jsdelivr の素のパッケージ URL は Node 向けバンドルで window.transformers を
     // 公開しない（実行しても undefined になる）。ESM ビルド（+esm）を動的 import する。
     const transformersUrl = "https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2/+esm";
-    import(transformersUrl)
-      .then((module: unknown) => {
+    let pending = semModelLoads.get(modelKey);
+    if (!pending) {
+      pending = import(transformersUrl).then((module: unknown) => {
         if (!transformersModule(module)) throw new Error("invalid transformers module");
         return module.pipeline("feature-extraction", modelId, { revision });
-      })
+      });
+      semModelLoads.set(modelKey, pending);
+      pending.catch(() => semModelLoads.delete(modelKey));
+    }
+    pending
       .then((model) => {
         if (generation !== semGeneration) return;
         semModel = model;
@@ -1138,19 +2274,21 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         cb(ok);
       })
       .catch(() => {
-        semProbeCache[modelKey] = false;
         cb(false);
       });
   }
 
-  // 論文テキストが変わったら埋め込みを再計算し、完了後に render する。
-  // 言語適応: 日本語を含む論文は多言語モデル、それ以外は英語モデルで埋め込む
-  // （実測: EN は英語モデル 80.1% > 多言語 76.2%、JP は多言語 42.9% > 英語 19.0%）。
-  function scheduleSemantic() {
+  // 復号済みの論文からモデルを選び、入力の変更後に埋め込みを再計算する。
+  // 掲載先タグの言語は、論文本文の言語判定に含めない。
+  function scheduleSemantic(manualRetry = false) {
+    semanticRetryRequested = manualRetry;
     const generation = ++semGeneration;
     const text = currentPaperText();
     clearSemantic("idle");
     if (!text.trim() || !Recommender) return;
+    const lines = Recommender.parsePaperLines(text);
+    const q = Recommender.queryText(lines);
+    if (!q.trim()) return;
     semState = "loading";
     loadEmbeddings(() => {
       if (!semanticIsCurrent(generation, text)) return;
@@ -1160,8 +2298,8 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         return;
       }
       const bundle = EMBEDDINGS;
-      const isJp = Recommender.hasJapanese(text);
-      const language = isJp && bundle.multi ? "multi" : "en";
+      const isJp = Recommender.queryHasJapanese(lines);
+      const language = isJp ? "multi" : "en";
       const embSet = language === "multi" ? bundle.multi : bundle;
       if (!embSet || !Recommender.embeddingSetCompatible(bundle, language)) {
         semanticReason = "embedding set incompatible";
@@ -1192,8 +2330,6 @@ function semanticOutput(value: unknown): value is SemanticOutput {
             render();
             return;
           }
-          const lines = Recommender.parsePaperLines(text);
-          const q = Recommender.queryText(lines);
           const model = semModel;
           if (!model) {
             semanticReason = "model unavailable";
@@ -1201,11 +2337,18 @@ function semanticOutput(value: unknown): value is SemanticOutput {
             render();
             return;
           }
-          model(q, { pooling: "mean", normalize: true })
-            .then((output: unknown) => {
-              if (!semanticOutput(output)) throw new Error("invalid embedding output");
+          Promise.all(
+            Recommender.semanticQueryPlan(lines).map(({ text }) =>
+              model(text, { pooling: "mean", normalize: true }),
+            ),
+          )
+            .then((outputs: unknown[]) => {
+              if (!outputs.every(semanticOutput)) throw new Error("invalid embedding output");
               if (!semanticIsCurrent(generation, text)) return;
-              let nextQuery = Array.from(output.data);
+              let nextQuery = Recommender.semanticQueryVector(
+                lines,
+                outputs.map((output) => Array.from(output.data)),
+              );
               // 擬似関連性フィードバック（PRF）: 掲載先タグ付き論文がある場合、
               // その会議の埋め込みを 0.3 混ぜる（「自分が載せた所と似た会議」を拾う）。
               // 実測: タグ付きクエリで正解会議 #1 が 78.9% → 92.2% に改善。
@@ -1237,6 +2380,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
               // 論文個別ベクトル（max 類似度）は英語クエリのみ。
               // 日本語クエリは多言語モデルなので英語モデルの論文ベクトルを混ぜない。
               Recommender.setPaperVecs(isJp ? null : (bundle.paperVecs ?? null));
+              Recommender.setTopicVecs(embSet.topicVecs ?? null);
               semState = "ready";
               render();
             })
@@ -1251,77 +2395,703 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     });
   }
 
+  function semanticCanRetry(): boolean {
+    if (semState !== "error" || !EMBEDDINGS || !currentPaperText().trim()) return false;
+    if (semanticReason === "probe mismatch") {
+      const lines = Recommender.parsePaperLines(currentPaperText());
+      const language = Recommender.queryHasJapanese(lines) ? "multi" : "en";
+      const metadata = EMBEDDINGS.manifest.models[language];
+      return Boolean(
+        metadata && !Object.hasOwn(semProbeCache, `${metadata.model}@${metadata.revision}`),
+      );
+    }
+    return ["model load failed", "model unavailable", "query embedding failed"].includes(
+      semanticReason ?? "",
+    );
+  }
+
+  function updateSemanticRetry(recommend: boolean): void {
+    const status = $("semanticRetryStatus");
+    const button = $("semanticRetry");
+    const note = $("semanticRetryNote");
+    if (!status || !button || !note) return;
+    const requested = semanticRetryRequested && semState !== "error";
+    status.hidden = !recommend || recommendationNeedsRetry || !(semanticCanRetry() || requested);
+    if (status.hidden) {
+      if (document.activeElement === button) $("results").focus();
+      return;
+    }
+    note.textContent =
+      semState === "loading"
+        ? "意味検索を再試行中…"
+        : semState === "ready"
+          ? "意味検索が完了しました。"
+          : "入力を残したまま意味検索を再試行できます。";
+    button.setAttribute("aria-disabled", String(semState === "loading"));
+  }
+
+  function retrySemantic(): void {
+    if (
+      state.mode !== "recommend" ||
+      recommendationNeedsRetry ||
+      semState === "loading" ||
+      !(semanticCanRetry() || (semanticRetryRequested && semState === "ready"))
+    )
+      return;
+    scheduleSemantic(true);
+    render();
+  }
+
   // ---- FILTERING ----
-  function filter(): AppRow[] {
+  /** 展開で置き換わった語だけ `打った語 = 解決した西暦月` の形で返す（説明用の補助）。
+   * 例をこのコメントに日付で書かなかった – てびきの側で同じ例を「来月 = 再来月の値」と
+   * 取り違えて書いていた（SPEC §7）ので、固定の日付は書かない。 */
+  function relativeMonthNote(query: string, now: number): string {
+    const pairs = Recommender.relativeMonthPairs(query, now)
+      .concat(Recommender.monthRangePairs(query, now) as unknown as Array<[string, string]>)
+      // 季節の語も「どの月へ展開したか」を同じ形で出す。
+      .concat(Recommender.seasonPairs(query, now) as unknown as Array<[string, string]>)
+      // 「今月末」「年内」も同じ形でどこへ展開したか出す。
+      .concat(Recommender.periodMonthPairs(query, now) as unknown as Array<[string, string]>)
+      // 暦日を二つ並べた幅（`8月10日から8月20日`）も同じ形でどこへ展開したか出す。
+      .concat(Recommender.dayRangePairs(query, now) as unknown as Array<[string, string]>);
+    return pairs.length ? ` ｜ ${pairs.map((pair) => `${pair[0]} = ${pair[1]}`).join("、")}` : "";
+  }
+
+  /** 相対月を展開した後の検索語。`filter()` の描画周期内でだけ有効（利用者の入力文は `state.q`）。 */
+  let searchQuery = "";
+
+  /* 値が空のとき、記号「-」だけを出さない。利用者は「該当なし」「収録漏れ」
+   * 「公式が出ていない」を区別できない。確認できていないことを短い語で出し、
+   * 詳しい理由は title に落とす。「未定」にすると会議が決めていないことになり、
+   * kamiyobi が確認できていないという事実とは別の話になるため使わない。
+   * 語そのものは recommender の正本を使い、表に出る語が検索で引ける状態を保つ。 */
+  const UNCONFIRMED_JA = Recommender.unconfirmedLabelJa();
+  /* 「未確認」（確認できていない）と「該当なし」（そもそも存在しない）は別の話なので、
+   * 常時受付の行には後者を出す（SPEC §7）。 */
+  const NOT_APPLICABLE_JA = Recommender.notApplicableLabelJa();
+  /* 過去の締切の読み込み状態。件数欄と専用の状態欄は**同じ読み込み**を指すので、名前は
+   * 1 箇所で決める。以前は件数欄が「全履歴を読み込み中…」、状態欄が「過去の締切を読み込んで
+   * います…」で、チェックした直後に 2 つの語が同時に出て、別々の読み込みが始まったように
+   * 読めた（2026-08-09 実測）。状態欄の語には「表示中のカタログ」という画面のどこにも出て
+   *こない語も混ざっていた。短い形は件数欄用だが、名詞は揃える。 */
+
+  const HISTORY_NOUN_JA = "収録の全体の締切";
+  const HISTORY_LOADING_SHORT_JA = `${HISTORY_NOUN_JA}を読み込み中…`;
+  const HISTORY_ERROR_SHORT_JA = `${HISTORY_NOUN_JA}の読み込みに失敗`;
+  const HISTORY_LOADING_JA = `${HISTORY_NOUN_JA}を読み込んでいます…`;
+  const HISTORY_ERROR_JA = `${HISTORY_NOUN_JA}の読み込みに失敗しました。いま表示している一覧は使えます。`;
+
+  const UNCONFIRMED_TITLES_JA = {
+    event: " kamiyobi が公式で会期を確認できていません。".trim(),
+    place: " kamiyobi が公式で開催地を確認できていません。".trim(),
+    rank: "CCF・CORE の一覧でこの会議の評価が確認できていません。".trim(),
+  };
+
+  /** 理由の語を出すのに必要な形。一覧の行（`AppRow`）も行の詳細が受ける `DrawerRow` も
+   * 入る（両方の形で同じ語を出したくて、必要な物だけ受ける型にした）。 */
+  type ReasonRow = {
+    ed: { place?: string };
+    rankPairs?: readonly string[] | null;
+  };
+
+  const fieldReasonsJa = {
+    /** 理由の語。説明が要らない（値が出ている）ときは空文字。 */
+    event: (r: ReasonRow): string =>
+      Recommender.eventCellJa(r)
+        ? ""
+        : Recommender.fieldNotApplicableJa(r)
+          ? Recommender.notApplicableTitleJa("event")
+          : UNCONFIRMED_TITLES_JA.event,
+    place: (r: ReasonRow): string =>
+      Recommender.placeJa(r.ed.place)
+        ? ""
+        : Recommender.fieldNotApplicableJa(r)
+          ? Recommender.notApplicableTitleJa("place")
+          : UNCONFIRMED_TITLES_JA.place,
+    rank: (r: ReasonRow): string => {
+      const pairs = r.rankPairs || [];
+      if (!pairs.length) return UNCONFIRMED_TITLES_JA.rank;
+      return pairs
+        .map((pair) => Recommender.rankPairLabelJa(pair))
+        .some((label) => label.indexOf(RANK_UNRATED_JA) >= 0)
+        ? RANK_UNRATED_TITLE_JA
+        : "";
+    },
+    /** 行の詳細で、本文の下に小さく添える行（「原表記」の行と同じ出し方）。 */
+    note: (text: string): string =>
+      text
+        ? '<p style="margin-bottom: 8px; color: var(--muted); font-size: 0.8rem;">' +
+          esc(text) +
+          "</p>"
+        : "",
+  };
+
+  /* 「N 件 / 全 M 件」の差の内訳。既定で隠れる行（過去の締切・推定・投稿締切以外の種別）を
+   * 数える。隠れていることを説明しないと、探した締切が「無い」と誤解される。 */
+  let hiddenCounts = {
+    past: 0,
+    est: 0,
+    kind: 0,
+    venue: 0,
+    domestic: 0,
+    // 「オンライン参加可のみ」で落ちた行数と、そのうち開催地自体が未確認の行数。
+    online: 0,
+    onlinePlaceUnknown: 0,
+    // 「締切まで N 日以内」の窓（上限・下限の両方）で落ちた行数。
+    window: 0,
+    // 「評価でしぼる」で落ちた行数（選択した等級を持たない行）。
+    rank: 0,
+    // 検索語でのぞいた行数。0 のときは検索語が 1 行も絞れていないので、件数欄で
+    // 打ち直し方を示す。
+    query: 0,
+    // 分野チップで落ちた行数（選んだ分野を持たない行）。
+    cats: 0,
+  };
+
+  /* URL で渡された種別のうち、表に出さないものを読み捨てたときの説明。
+   * 黙って条件が変わったように見えるのを避ける（相対月を解決したときと同じ方針）。 */
+  /* 共有リンクの中で、この一覧が受け付けられなかった値の案内。黙って落とすと、送った人が
+   * 意図した絞り込みが外れた画面を相手に見せる（送った人は自分が映った画面を信じている）。
+   * 種別だけ特別扱いしていたのは、他の値でも同じ問題が起きるのに気づけていなかったから。 */
+  let urlNotices: string[] = [];
+  /* ランクの断り（推薦モードでも出す – ランクは両方の画面の欄だから）。 */
+  let urlRankNotice = "";
+
+  function urlFlagJa(raw: unknown): { on: boolean; readable: boolean } {
+    const value = String(raw == null ? "" : raw)
+      .trim()
+      .toLowerCase();
+    if (value === "" || value === "0" || value === "false") return { on: false, readable: true };
+    if (value === "1" || value === "true") return { on: true, readable: true };
+    return { on: false, readable: false };
+  }
+
+  /** 受け付けられなかった値を、条件の書き下ろしとは別の文で伝える。 */
+  function urlValueNoticeJa(label: string, value: string, behavior: string): string {
+    if (!value) return "";
+    return `リンクの${label}「${value}」はこの一覧で使えない値なので、${behavior}`;
+  }
+
+  function hiddenDeadlineCounts(): {
+    past: number;
+    est: number;
+    kind: number;
+    venue: number;
+    domestic: number;
+    online: number;
+    onlinePlaceUnknown: number;
+    window: number;
+    rank: number;
+    cats: number;
+    query: number;
+  } {
+    return hiddenCounts;
+  }
+
+  /* 検索語が収録データ全体で何件に当たるかを数える（0 件の案内が使う）。
+   * 表は投稿締切・未来だけを出すので、収録している語でも 0 件になりうる。
+   * 「 kamiyobi に無い」と「今出していない」を区別できないと、そこで検索をやめてしまう。
+   * 絞り込みをまたいだ再実行はしない（どの条件を外せば出るかと結びつけると、
+   * 1 つ外しても他の条件で 0 件のときに過剰な約束になる）。 */
+  function queryMatchCounts(query: string): { catalog: number; journal: number } {
+    const trimmed = query.trim();
+    if (!trimmed) return { catalog: 0, journal: 0 };
+    /* 時計を渡す – 時間の言い方（`あと 6 時間`）は、打たれた時点の日へ寄せる規則がある
+     * （渡さないと寄らずに 0 件になり、件数欄の「今日 = …」と食い違う）。 */
+    const 今 = Date.now();
+    const matches = Recommender.searchMatcher(Recommender.expandRelativeMonths(trimmed, 今), 今);
+    let catalog = 0;
+    rows.forEach((row) => {
+      if (matches(row.hay)) catalog += 1;
+    });
+    let journal = 0;
+    Recommender.journalRows(activeData.conferences, Date.now()).forEach((row) => {
+      if (matches((row as unknown as AppRow).hay)) journal += 1;
+    });
+    return { catalog, journal };
+  }
+
+  /* 語を分けて打った時に何件当たるか。 */
+  function splitCountJa(文: string): number {
+    const c = queryMatchCounts(文);
+    return c.catalog + c.journal;
+  }
+
+  function columnValueHitsJa(word: string): boolean {
+    const counted = queryMatchCounts(word);
+    return counted.catalog + counted.journal > 0;
+  }
+
+  /* 0 件の理由を出したのは良いが、その文は表の場所（`#emptyText`）に書くだけで、
+   * 支援技術には読まれていなかった（2026-09-23 実測: 読み上げ専用の欄は件数だけを
+   * 言っていた）。長い文を aria-live に流すのは避ける方針なので、読み上げには同じ原因を
+   * 短い形で入れる。 */
+  function zeroResultLiveNote(filter: {
+    scheduleOnlyCount?: number;
+    hiddenKindWords: string[];
+    termCounts: Array<{ term: string; count: number }>;
+    /* 欄の名前の連結形（`分野セキュリティ`）を案内するかを決める問答。
+       品書を持つこの側で答え、正典は渡されて動く。*/
+    columnValueHits?: (語: string) => boolean;
+    splitCount?: (文: string) => number;
+    // 打ち直しの見当。
+    shorterHits?: Array<{ word: string; count: number; how: string; pair?: string }>;
+    // 検索語が公式ページの URL の形か（URL で引いた人は「語が無い」話では済まない）。
+    urlQuery: boolean;
+    queryMatch: { catalog: number; journal: number };
+    catalogConferences: number;
+    // この表その物を指す語（「締め切り」など）を打ったかを見る。
+    query: string;
+    // 下に並ぶ「外せる条件」が 1 つ以上あるか（0 件案内と数え上げを同じにする）。
+    clearable: boolean;
+    pastShown: boolean;
+    hidden: Record<string, number>;
+  }): string {
+    // データその物が無いときは、他のどの説明より先にそれを言う（読み上げは短い形で）。
+    if (!filter.catalogConferences) return " ｜ 締切のデータが入っていません";
+    if (filter.scheduleOnlyCount && filter.scheduleOnlyCount > 0)
+      return ` ｜ 会期情報がある開催回 ${countJa(filter.scheduleOnlyCount)} 件（投稿締切は未収録）`;
+    /* 0 件画面の下の方には「外せる条件」を書く。読み上げには短い形だけを流すので、
+     * その案内が画面に出ていることを一言添えないと、支援技術では 0 件とだけ聞いて
+     * 操作をやめてしまう（画面の内訳まで流すと 1 打鍵ごとに数十語になるので、
+     * そこは流さない – 上の `countLive` の注記と同じ判断）。 */
+    const loosenable =
+      filter.clearable ||
+      !filter.pastShown ||
+      Boolean(filter.hidden?.past) ||
+      Boolean(filter.hidden?.est);
+    const pointer = loosenable ? "。下に外せる条件も書いてあります" : "";
+
+    const 聲 = (文: string): string =>
+      pointer && /[。！？]$/.test(文) ? `${文.slice(0, -1)}${pointer}` : `${文}${pointer}`;
+    // 外せる条件が 1 つも無いなら、その旨を言う（「下に案内がある」「緩めると出る」は
+    // いずれも噓になる）。2026-09-23 の収録では踏めない（今後より後の締切が多数ある）
+    // ので、収録が古くなった日に効く形の防御である。
+    if (!loosenable) return " ｜ 収録にいま以降の締切が残っていません。データ更新をお待ちください";
+
+    const matchedRows = filter.queryMatch.catalog + filter.queryMatch.journal;
+    if (filter.urlQuery && matchedRows === 0)
+      return (
+        " ｜ 検索語の URL の会議は収録に見当たりません。収録の中心はランク付けの一覧に載る会議と" +
+        "国内研究会です。公式ページのアドレスではなく会議名（「ICDE」など）でも試してください" +
+        pointer
+      );
+    /* 表その物を指す語を打たれた人は、収録に無いと誤解してやめる（画面と同じ判断を
+     * 同じ語列表で言う – 第 239 回）。当たり数が 0 のときだけ立てる。 */
+    if (matchedRows === 0) {
+      const wholeWord = Recommender.wholeTableQueryWordJa(filter.query);
+      if (wholeWord)
+        return ` ｜ 「${wholeWord}」はこの表の全行に当たる語なので、検索では絞れません${pointer}`;
+
+      const columnNote = Recommender.columnQueryLiveNoteJa(filter.query, filter.columnValueHits);
+      if (columnNote) return ` ｜ ${聲(columnNote)}`;
+      /* 画面自身の操作・説明・出典の語を打たれた人。同じ表から短い文を作る。 */
+      /* 同じ讓りの判斷 – 画面と読み上げが別のことを言はん。 */
+      const 打ち替えが在るか = (filter.shorterHits || []).length > 0;
+      const uiNote = Recommender.uiWordLiveNoteJa(filter.query, 打ち替えが在るか);
+      if (uiNote) return ` ｜ ${聲(uiNote)}`;
+
+      const dayRange = Recommender.dayRangeLiveNoteJa(filter.query);
+      if (dayRange) return ` ｜ ${聲(dayRange)}`;
+    }
+
+    const dead =
+      matchedRows === 0 ? filter.termCounts.filter((t) => t.count === 0).map((t) => t.term) : [];
+    if (dead.length) {
+      /* 「語が無い」で止める読み上げは、打ち直しを知らない人に打ち切らせる。
+       * 同じ 0 件画面で効く打ち直しを数えているので、それを先に言う（画面と同じ判断）。 */
+      const alt = (filter.shorterHits || []).filter((h) => String(h.word || "").trim())[0];
+      if (alt) {
+        const note = ` ｜ 「${dead[0]}」は無くて「${alt.word}」なら ${countJa(alt.count)} 件当たります${pointer}`;
+        // aria-live に長い文を流さない約束（SPEC §7 – 60 字）。収まらないなら短いほうに落ちる。
+        if (note.length <= 60) return note;
+
+        const 短 = ` ｜ 「${dead[0]}」は無くて「${alt.word}」なら ${countJa(alt.count)} 件当たります`;
+        if (短.length <= 60) return 短;
+        // 語その物が長い時は、導きを落とした一層短い形で打ち手だけを說ふ。
+        const 最 = ` ｜ 「${alt.word}」なら ${countJa(alt.count)} 件当たります`;
+        if (最.length <= 60) return 最;
+      }
+      return ` ｜ 語「${dead[0]}」は収録データにありません${pointer}`;
+    }
+    if (filter.hiddenKindWords.length)
+      return (
+        /* 読み上げは 60 字までの検査が見ている（長い文を aria-live に流さない – SPEC §7）。
+         * 画面に出る長い一文（`hiddenKindDeliveryJa`）と同じことを、行先の語だけを短く添える。
+         * 「upcoming.html」を入れる枠が他に無いので、括弧の中で行先を言ってしまう。 */
+        ` ｜ 検索語は「${filter.hiddenKindWords[0]}」の種別に当たります（表に出さず upcoming.html）` +
+        pointer
+      );
+    if (matchedRows > 0) {
+      /* 画面と同じ内訳で数字を出す（読み上げだけ合計を数えると、同じ 0 件画面で
+       * 画面と読み上げが別の数を言い、どちらも信じられなくなる）。 */
+      if (filter.queryMatch.catalog === 0)
+        return (
+          ` ｜ 検索語は収録の常時受付ジャーナル ${countJa(matchedRows)} 件に当たります（「種別」で選べます）` +
+          pointer
+        );
+      if (filter.queryMatch.journal > 0)
+        return ` ｜ 検索語は収録で ${countJa(filter.queryMatch.catalog)} 件と常時受付ジャーナル ${countJa(filter.queryMatch.journal)} 件に当たりますが、いまの条件では 0 件です${pointer}`;
+      return (
+        ` ｜ 検索語は収録で ${countJa(matchedRows)} 件に当たりますが、いまの条件では 0 件です` +
+        pointer
+      );
+    }
+    // 何も絞り込んでいないのに 0 件なら、緩める条件ではなく収録の時刻の話をする。
+    if (!filter.clearable && !filter.pastShown && filter.hidden?.past)
+      return " ｜ 収録の締切はすべて過ぎています。「過去の締切も表示」で出ます";
+    return ` ｜ いまの条件では行がありません${pointer}`;
+  }
+
+  /* 語を並べて打った検索語を、語の組に分けて収録データの当たり数を数える
+   * （`queryMatchCounts` と同じ展開を使う – 展開を忘れると届く語を「無い」と書く）。 */
+  function queryTermNotes(query: string): Array<{ term: string; count: number }> {
+    const trimmed = query.trim();
+    if (!trimmed) return [];
     const now = Date.now();
+
+    const seen: Record<string, boolean> = {};
+    const hays: string[] = [];
+    (rows as AppRow[])
+      .concat(Recommender.journalRows(activeData.conferences, now) as unknown as AppRow[])
+      .forEach((row) => {
+        const hay = String(row.hay);
+        if (seen[hay]) return;
+        seen[hay] = true;
+        hays.push(hay);
+      });
+    return Recommender.queryTermCounts(Recommender.expandRelativeMonths(trimmed, now), hays, now);
+  }
+
+  function deadTermRemainderCount(query: string): number | null {
+    const counts = queryTermNotes(query);
+    if (counts.length < 2) return null;
+    const 殘 = counts
+      .filter((t) => t.count > 0)
+      .map((t) => t.term)
+      .join(" ")
+      .trim();
+    if (!殘) return null;
+    return queryMatchCounts(殘).catalog;
+  }
+
+  /* 問ひを外した時に見える行を渡して、打ち直しの見当を数へる。 */
+  function shorterWordsForZero(
+    query: string,
+  ): Array<{ word: string; count: number; how: string; pair?: string }> {
+    const 元 = searchQuery;
+    const 基準の行 = filter("");
+    searchQuery = 元;
+    return shorterWordNotes(query, 基準の行);
+  }
+
+  /* 假名だけの語を見分ける目。 */
+  const HIRAGANA_ONLY_JA = /^[\u3041-\u309f]+$/;
+
+  function shorterWordNotes(
+    query: string,
+    基準の行?: AppRow[],
+  ): Array<{ word: string; count: number; how: string; pair?: string }> {
+    const trimmed = query.trim();
+    if (!trimmed) return [];
+    const now = Date.now();
+    const seen: Record<string, boolean> = {};
+    const hays: string[] = [];
+    /* 数へる集合は、呼び出し側が渡した行（打ち直した時に見える行）を優先する。 */
+    ((基準の行 ?? (rows as AppRow[])) as AppRow[])
+      .concat(Recommender.journalRows(activeData.conferences, now) as unknown as AppRow[])
+      .forEach((row) => {
+        const hay = String(row.hay);
+        if (seen[hay]) return;
+        seen[hay] = true;
+        hays.push(hay);
+      });
+
+    return Recommender.shorterHitWordsJa(trimmed, hays, now).filter((hit) => {
+      const 語 = String(hit.word || "").trim();
+      return !(HIRAGANA_ONLY_JA.test(語) && 語.length <= 3);
+    });
+  }
+
+  /* 検索語が「表に出さない種別」の表示語に当たるか。`SELECTABLE_KINDS` に無い種別が対象で、
+   * 選択肢と同じ列表から求める（書き写すと増えた種別が案内から落ちる）。 */
+  /**
+   * 表に出さない種別の行の行き先を言う一文（0 件案内と読み上げで文言を分けない）。
+   * 種別の行は条件を変えても表に出ないので、「絞り込みで消えています」と書くのは噓になる
+   * （2026-08-09 生成ビルドの実測: 「採択通知」は収録 129 件に当たり、その全部が 採否通知 の
+   * 種別なのに、0 件案内は「既定と、いまの絞り込みで 0 件になっています」と言っていた）。
+   */
+  function hiddenKindDeliveryJa(count?: number): string {
+    if (count === undefined) {
+      return "その種別は表には出さず、締切一覧のファイル upcoming.html に載せています。";
+    }
+    return (
+      `その種別は表には出しません。条件を変えてもこの ${countJa(count)} 件は表には出ず、` +
+      "締切一覧のファイル upcoming.html に載せています。"
+    );
+  }
+
+  function hiddenKindQueryWords(query: string): string[] {
+    const table = Recommender.kindLabelTable();
+    const hidden = Object.keys(table)
+      .filter((kind) => SELECTABLE_KINDS.indexOf(kind) < 0)
+      .map((kind) => String(table[kind] || ""));
+    return Recommender.queryHiddenKindMatches(query, hidden);
+  }
+
+  /** 分野チップの件数（`filter()` が分野以外の条件を通った行について数え直す）。 */
+  let catFacetCounts: Record<string, number> = {};
+
+  let venueLookupMiss: string[] = [];
+
+  /* 「締切が過ぎた候補を除く」で候補から外した件数（`filter()` が数え、件数欄と 0 件の
+   * 案内が読む。黙って消さない – 画面の他の絞り込みと同じ約束）。 */
+  let recommendExcludedClosed = 0;
+  /* 推薦モードのランクの絞り込みで外した件数（同上）。 */
+  let recommendExcludedRank = 0;
+  /* 締切の一覧で、論文に合う行に印を付けた数（`filter()` が数え、件数欄と印刷物が読む –
+   * 札は行ごとに付くが、一覧のどこに何行あるかは数えないと分からない）。 */
+  let recommendFitMatches = 0;
+
+  function categoryCounts(): Record<string, number> {
+    return catFacetCounts;
+  }
+
+  /** 締切までの窓の選択肢。`site/template.html` の `<select id="win">` と必ず揃える。 */
+  const WIN_OPTIONS = ["all", "7d", "30d", "90d", "180d"];
+
+  /* 窓の上限時刻。絞り込みと 0 件時の会期案内で別の式を書くと、表と案内が違う窓で
+   * 動く（過去行を出すか否かは `past` のチェックボックスだけが決める）。 */
+  function windowLimitMs(win: string, now: number): number {
+    if (win === "all") return Number.POSITIVE_INFINITY;
+    const n = Number.parseInt(win, 10);
+    if (!Number.isFinite(n)) return Number.POSITIVE_INFINITY;
+
+    return (Math.floor((now + 9 * 3600000) / DAY) + n + 1) * DAY - 9 * 3600000;
+  }
+
+  /* 「締切まで N 日」の下側。既定（過去を表示しない）は過去分がそもそも出ないので要らないが、
+   * 「過去の締切も表示」と同時に使うと窓が未来側にしか効かず、2019 年まで全件が残って
+   * 窓が意味を失う（実測: 7 日以内 + 過去表示で 2,059 行）。過去を見せているときは
+   * 同じ日数の前後の窓として扱う（「先週出た締切と今週の締切」が見られる形）。 */
+  function windowFloorMs(win: string, now: number): number {
+    if (win === "all") return Number.NEGATIVE_INFINITY;
+    const n = Number.parseInt(win, 10);
+    if (!Number.isFinite(n)) return Number.NEGATIVE_INFINITY;
+    /* 上側と同じ暦日の基準で、n 日前の暦日の始まりから。経過 24 時間で数えると、
+     * 「7 日以内 + 過去表示」で昨日の締切が今日何時に見るかによって入り出た。 */
+    return (Math.floor((now + 9 * 3600000) / DAY) - n) * DAY - 9 * 3600000;
+  }
+
+  let recommendationCandidateCount = 0;
+  interface DeadlineRecovery {
+    key: string;
+    label: string;
+    count: number;
+    changes: Partial<UiState>;
+  }
+
+  function deadlineRecoveryOptions(
+    current: UiState,
+    count: (candidate: UiState) => number,
+  ): DeadlineRecovery[] {
+    const options: Array<Omit<DeadlineRecovery, "count">> = [];
+    const add = (key: string, label: string, changes: Partial<UiState>) =>
+      options.push({ key, label, changes });
+    if (!current.past) add("past", "過去の締切も表示", { past: true });
+    if (!current.est) add("est", "推定締切を含める", { est: true });
+    if (current.win && current.win !== "all") add("window", "締切までの期間を外す", { win: "all" });
+    if (current.rank && current.rank !== "all") add("rank", "ランクをすべてにする", { rank: "" });
+    if (current.cats.length) add("cats", "分野の指定を外す", { cats: [] });
+    if (current.domestic) add("domestic", "国内のみの条件を外す", { domestic: false });
+    if (current.online) add("online", "オンライン参加可の条件を外す", { online: false });
+    if (current.kind) add("kind", "概要・論文の投稿締切を表示", { kind: "" });
+    if (current.venue) add("venue", "会議の絞り込みを外す", { venue: "" });
+    const results = options
+      .map((option) => ({ ...option, count: count({ ...current, ...option.changes }) }))
+      .filter((option) => option.count > 0);
+    if (!results.length && options.length > 1) {
+      const changes: Partial<UiState> = {
+        past: true,
+        est: true,
+        win: "all",
+        rank: "",
+        cats: [],
+        domestic: false,
+        online: false,
+        kind: "",
+        venue: "",
+      };
+      const n = count({ ...current, ...changes });
+      if (n > 0)
+        results.push({
+          key: "combined",
+          label: "検索語を残して他の条件を広げる",
+          changes,
+          count: n,
+        });
+    }
+    return results;
+  }
+
+  function collectDeadlineRecoveries(): DeadlineRecovery[] {
+    const original = state;
+    try {
+      return deadlineRecoveryOptions(original, (candidate) => {
+        state = candidate;
+        return filter().length;
+      });
+    } finally {
+      state = original;
+      // 候補の計数中に変わった内訳や分野別の集計を、表示中の条件に戻す。
+      filter();
+    }
+  }
+
+  function renderDeadlineRecoveries(actions: DeadlineRecovery[], partialHistory: boolean): void {
+    const box = $("emptyRecovery");
+    box.textContent = "";
+    box.hidden = actions.length === 0;
+    for (const action of actions) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "filter-remove";
+      const lower = partialHistory && action.changes.past === true;
+      button.textContent = `${action.label}（${countJa(action.count)} 件${lower ? "以上" : ""}）`;
+      button.addEventListener("click", () => {
+        state = { ...state, ...action.changes };
+        toForm();
+        apply();
+        $("results").focus();
+      });
+      box.appendChild(button);
+    }
+  }
+
+  function filter(問ひ?: string): AppRow[] {
+    const now = Date.now();
+    // `来月` などの相対月を検索語として受け付ける。展開式の一覧への反映は recommender が
+    // 持つ（`来月` がどの月を指すかの判断を UI 側に二重化しない）。
+    searchQuery = Recommender.expandRelativeMonths(state.q, now);
+
+    if (問ひ !== undefined) searchQuery = Recommender.expandRelativeMonths(問ひ, now);
+    // 検索語の分解は 1 描画に 1 回で足りる。行ごとに `hayMatches` を呼ぶと、そのたびに
+    // 語を分解し直す（3234 行で 1 打鍵あたり約 83 ms かかっていた）。
+    const matchesQuery = Recommender.searchMatcher(searchQuery, now);
     const isPast = (row: AppRow) => (row.dateOnly ? now > row.tLast : row.t < now);
-    const isAfter = (row: AppRow, dateLimit: number) => row.t > dateLimit;
-    const q = state.q.toLowerCase();
-    const isWinFuture = state.win === "future";
-    const limit =
-      state.win === "all" || isWinFuture ? Infinity : now + parseInt(state.win, 10) * DAY;
+    /* 窓の比較は「表示している暦日」でやる（`rowShownDayMs`・`rowAfter` がその正本で、
+     * 画面上部の「これからの30日間の締切」も同じ関数を見る。基準を分けると、一覧が
+     * 「あと 30 日」と出す行が上の数から落ちて画面が自己矛盾する）。 */
+    const limit = windowLimitMs(state.win, now);
+    const floor = state.past ? windowFloorMs(state.win, now) : Number.NEGATIVE_INFINITY;
+    /* 論文の下書きは**両方の画面**で読む。推薦モードでは候補の並びを作るのに使い、締切の
+     * 一覧では「その論文に合う行」に印を付けるのに使う（並びも絞り込みも変えない –
+     * 2026-10-18 に、締切の一覧の一致評価の札が出ていない事に気づいた。てびきと検査は
+     * 前から在った）。 */
     const pElem = typeof document !== "undefined" ? $("paperText") : null;
     const pText =
-      state.mode === "recommend" && pElem && "value" in pElem && typeof pElem.value === "string"
-        ? pElem.value.trim()
-        : "";
+      pElem && "value" in pElem && typeof pElem.value === "string" ? pElem.value.trim() : "";
     // 単体抽出テスト（node probe）でも動くよう、filter 内では window 経由で解決する
     const Rec = Recommender;
-    const pLines = Rec
+
+    const 行の截 = 20;
+    const 全部の行 = Rec
       ? Rec.parsePaperLines(pText)
       : pText
         ? [{ title: pText, keywords: "", venue: "" }]
         : [];
+    const pLines = 全部の行.slice(0, 行の截);
+    截つた行 = 全部の行.length > pLines.length ? 全部の行.length - pLines.length : 0;
 
-    // 分野: 手動チップがあればそれで絞る。論文モードでチップが空なら絞らない
-    // （スコア順ソートで自然に候補が上位に来る）。
+    // 分野: 手動チップがあればそれで絞る。論文モードではチップ自体を見せていない
+    // （`.field.deadline-only` で非表示）ので、ここで絞る必要は無い。
     const cats = state.cats;
     // 掲載先タグの属するカテゴリ（例: RTSS タグ → systems）。同カテゴリの会議を僅かにブースト
     const autoCats = pLines.length && Rec ? Rec.autoDetectCats(pLines) : [];
     const detectedVenueCats = pLines.length && Rec ? Rec.venueCategories(pLines, rows) : [];
+    // 掲載先に入れた語に当たる会議が今並んでいる行に無ければ、そのことを件数欄で言う。
+    // 「入力の例」が掲載先まで打ち替えるので、例どおりに押すと探している掲載先だけが
+    // 黙って消える（2026-08-09 生成ビルドの実測: 例の 1 件は掲載先を `IEEE RTSS` と指定し、
+    // 検索対象 863 行に RTSS は 0 行。候補は 44 件出るので、画面は動いている）。
+    venueLookupMiss = pLines.length && Rec ? Rec.unmatchedVenues(pLines, rows) : [];
+    recommendExcludedClosed = 0;
+    recommendExcludedRank = 0;
+    recommendFitMatches = 0;
     const venueCats = [...new Set([...(state.cats || []), ...detectedVenueCats, ...autoCats])];
 
     // 論文モードおよび常時受付モード: 未来締切 + 常時受付ジャーナル + 未来締切の無い会議の過去代表行
     // （過去行は代表 1 行のみに限定し、全過去版で埋めない）
     let pool = rows;
-    if (pLines.length && Rec) {
-      pool = rows
-        .filter((row) => !isPast(row))
-        .concat(Rec.journalRows(activeData.conferences, now), Rec.pastRepresentatives(rows, now));
+    if (state.mode === "recommend" && pLines.length && Rec) {
+      pool = Rec.candidatePool(rows, activeData.conferences, now);
+      recommendationCandidateCount = new Set(
+        pool.flatMap((row) => [
+          row.conf.key,
+          ...(row.submission?.sourceRecords ?? []).map((record) => record.venueKey),
+        ]),
+      ).size;
     } else if (state.kind === "journal" && Rec) {
       pool = rows.concat(Rec.journalRows(activeData.conferences, now));
     }
 
-    // 推薦モード（論文入力あり）では締切画面用の検索/種別/ランク/期間/推定/過去フィルタを
-    // 適用しない（手動指定の分野・国内フィルタは反映）。pool は既に未来締切+常時受付+過去代表行で構成済み。
+    // 推薦モード（論文入力あり）では締切画面用の絞り込みを適用しない（検索・種別・期間・
+    // 推定・過去・分野チップ・国内・オンラインは非表示なので効かせない）。ただし**ランク**は
+    // 推薦モードにも欄があり（「ランク」）、候補に掛ける（下の推薦の枝で `rankMatches`）。
+    // 同じ `state.rank` を両方の欄が映すので、モードを切り替えても条件が揃う。
+    // 分野は絞らず `venueCats` によるスコアの寄せにだけ使う。
+    // pool は既に未来締切 + 常時受付ジャーナル + 過去代表行で構成済み。
     const inRecommend = state.mode === "recommend" && pLines.length > 0;
 
-    let out: AppRow[] = pool.filter((r) => {
-      if (!inRecommend && !state.est && r.est && !pLines.length) {
-        return false;
-      }
+    // 分野だけを覗いた述語。分野チップの件数は「他の条件を通った行」を数えるため、
+    // ここで区切っておく（選んだ分野で自分の選択肢を潰さない、facet の普通の形にする）。
+    const matchesExceptCats = (r: AppRow): boolean => {
+      // 既定の条件で何件が落ちたかを数える。「N 件 / 全 M 件」の差を読み手が説明できる
+      // ようにするためで、条件式を外に書き出して二重実装する代わりにここで名前を付ける。
+      const byEst = !inRecommend && !state.est && r.est;
       // 過去行は通常モードで除外（「過去の締切も表示」トグルで表示）。
-      // 論文モードでは「締切済みだが次回予定あり」の会議として許容
-      if (isPast(r) && !pLines.length && !state.past) {
-        return false;
-      }
-      if (r.est && isPast(r)) {
-        return false;
-      }
+      // 論文モード（論文の投稿先を探す画面）では過ぎた締切の行も候補にする –
+      // ここでは「次回予定がある」とは判定しない（第 225 回: 一覧の印で同じ語を根拠なく
+      // 使っていたので、コメントから外した）。
+      const byPast = isPast(r) && !inRecommend && !state.past;
+      // 推定日程がすでに過ぎた行は「推定を含める」でも出さない（未来の約束ではない）。
+      const byEstimatedPast = r.est && isPast(r);
       // このサイトは「これから投稿できるところ」を探すもの。
       // 投稿締切（概要・論文）以外の種別（開催・採否通知等）は表示しない。
       // 論文モードまたは種別指定時のみ常時受付ジャーナル（kind: journal）を許容する。
-      if (
+      const byKind =
         r.kind !== "abstract" &&
         r.kind !== "paper" &&
-        !((pLines.length || state.kind === "journal") && r.kind === "journal")
-      ) {
+        !((inRecommend || state.kind === "journal") && r.kind === "journal") &&
+        !(inRecommend && r.kind === "venue");
+      // 各条件は**独立に**数える（1 行が過去かつ投稿締切以外なら両方に立つ）。
+      // なので内訳を足しても全件にはならない — 表示文でもそう書く。
+      if (!inRecommend) {
+        if (byEst) hiddenCounts.est += 1;
+        if (byPast) hiddenCounts.past += 1;
+        if (byKind) hiddenCounts.kind += 1;
+      }
+      if (byEst || byPast || byEstimatedPast || byKind) {
         return false;
       }
-      if (!inRecommend && isAfter(r, limit)) {
+      if (!inRecommend && rowAfter(r, limit)) {
+        // 「締切まで 7 日以内」を選ぶと 438 件が黙って消える（実測: 対象 477 行のうち表示 39 件）。
+        // 件数欄が窓の話をしないと「今週は収録が薄い」と誤解して検索をやめてしまう。
+        hiddenCounts.window += 1;
+        return false;
+      }
+      // 日付だけの行は当日中が有効なので、終端側（tLast）で窓に触れているかを見る。
+      // 下側も同じ「表示している暦日」で比べる（上側と基準を分けるのが今回の原因）
+      if (!inRecommend && rowShownDayMs(r) < floor) {
+        // 「過去の締切も表示」と併用したときの下限側。同じ窓の話なので上の計数とまとめる。
+        hiddenCounts.window += 1;
         return false;
       }
       if (!inRecommend && state.kind && r.kind !== state.kind) {
+        return false;
+      }
+      if (!inRecommend && state.venue && r.conf.key !== state.venue) {
+        hiddenCounts.venue += 1;
         return false;
       }
       // ランクはグレード厳密比較（indexOf の部分一致だと A が core:A* に誤マッチする）
@@ -1330,8 +3100,65 @@ function semanticOutput(value: unknown): value is SemanticOutput {
           ? Rec.rankMatches(r.rankPairs, state.rank)
           : r.rankPairs.indexOf(state.rank) >= 0;
         if (!rankHit) {
+          // 評価は選択欄の表示が「A*」などの一語で、収まっているのか無いのかが見えない。
+          // のぞいた件数を出さないと「収録に A* が少ない」と誤解する（国内・オンラインと
+          // 同じ型の問題。2026-09-23 実測: 「A*」を選ぶと既定画面 477 行のうち 61 行だけ
+          // 出て、のこり 416 行の話が件数欄になかった）。
+          if (!inRecommend) hiddenCounts.rank += 1;
           return false;
         }
+      }
+      if (!inRecommend && state.domestic && (r.tags || []).indexOf("domestic-jp") < 0) {
+        // 「国内研究会・国内シンポジウムのみ」は**主催の区分**で、日本で開かれる会議のことでは
+        // ない。チェックしたままだと `Tokyo, 日本` のような行が黙って消えるので、
+        // のぞいた件数を件数欄に出す（利用者が「日本で開かれる会議を見たい」に気づける形で）。
+        if (!inRecommend) hiddenCounts.domestic += 1;
+        return false;
+      }
+      // 開催形式は会場表記に書かれた記述だけで絞る（書かれていないことから対面を断定しない）。
+      if (!inRecommend && state.online && !Recommender.placeOffersOnline(r.ed.place)) {
+        // チェックを付けた人にとって「出ない理由」は 2 種類ある。
+        // 会場表記に対面の記述しかない場合と、**開催地自体が未確認**で読みようがない場合。
+        // 後者を区別しないと「オンライン参加が無い会議」と誤解して検索をやめてしまう
+        // （実測: 既定画面 477 行でオンライン参加可は 15 件だけ、のぞく 462 件のうち
+        // 110 件は開催地が空）。
+        hiddenCounts.online += 1;
+        if (!String(r.ed.place || "").trim()) hiddenCounts.onlinePlaceUnknown += 1;
+        return false;
+      }
+      // 検索は正規化した語の AND 判定（全角入力・全角スペース・複数語に対応するため
+      // 照合式は recommender の searchMatcher を単一正典にする）。
+      if (!inRecommend && !matchesQuery(r.hay)) {
+        // 「他の条件を通った行のうち、検索語だけで何行落ちたか」。0 のときは検索語が
+        // 何も絞れていないので、件数欄で打ち直し方を示す（同じ述語を外に書き出して
+        // 二重実装しないため、通過条件を見るこの場所で数える）。
+        hiddenCounts.query = (hiddenCounts.query || 0) + 1;
+        return false;
+      }
+      return true;
+    };
+
+    hiddenCounts = {
+      past: 0,
+      est: 0,
+      kind: 0,
+      venue: 0,
+      domestic: 0,
+      online: 0,
+      onlinePlaceUnknown: 0,
+      window: 0,
+      rank: 0,
+      cats: 0,
+      query: 0,
+    };
+    catFacetCounts = {};
+    let out: AppRow[] = pool.filter((r) => {
+      if (!matchesExceptCats(r)) {
+        return false;
+      }
+      // チップの件数: 分野の絞り込みを見る前の状態で数える。
+      for (const cat of r.cats || []) {
+        catFacetCounts[cat] = (catFacetCounts[cat] || 0) + 1;
       }
       if (!inRecommend && cats.length) {
         let hit = false;
@@ -1342,37 +3169,46 @@ function semanticOutput(value: unknown): value is SemanticOutput {
           }
         }
         if (!hit) {
+          // チップには分野ごとの件数が写るが、「選んだ分野で何行が出て、他が何行だったか」は
+          // 件数欄に書かないと分からない。窓や評価と同じ型でのぞいた件数を出す
+          // （のぞいた行数は「他の条件を通った行」の数えなので、チップの件数と足して
+          // 全件にはならない）。
+          if (!inRecommend) hiddenCounts.cats += 1;
           return false;
         }
       }
-      if (!inRecommend && state.domestic && (r.tags || []).indexOf("domestic-jp") < 0) {
-        return false;
-      }
-      if (!inRecommend && q && r.hay.indexOf(q) < 0) {
-        return false;
-      }
-
       r._boosted = false;
       return true;
     });
 
-    if (pLines.length && Rec) {
+    /* 意味検索の点（会場ごとに 1 度だけ数える）。候補の並びにも、締切の一覧の印にも
+     * 同じ点を使う（同じ画面の中で評価が 2 通りになってはいけない）。 */
+    const 意味の點 = (
+      query: Vector,
+      embeddings: VectorMap,
+    ): { semanticScores: Record<string, number>; semanticSimilarities: Record<string, number> } => {
+      const scores: Record<string, number> = {};
+      const similarities: Record<string, number> = {};
+      out.forEach((r) => {
+        const key = r.conf?.key;
+        if (key && !Object.hasOwn(scores, key)) {
+          scores[key] = Rec.semanticScore(key, query, embeddings, null);
+          similarities[key] = Rec.semanticSimilarity(key, query, embeddings, null);
+        }
+      });
+      return { semanticScores: scores, semanticSimilarities: similarities };
+    };
+
+    if (inRecommend && Rec) {
       let semanticScores: Record<string, number> | null = null;
+      let semanticSimilarities: Record<string, number> | null = null;
       if (semQuery && semEmbeddings) {
-        const scores: Record<string, number> = {};
-        const query = semQuery;
-        const embeddings = semEmbeddings;
-        out.forEach((r) => {
-          const key = r.conf?.key;
-          if (key && !Object.hasOwn(scores, key)) {
-            scores[key] = Rec.semanticScore(key, query, embeddings, null);
-          }
-        });
-        semanticScores = scores;
+        ({ semanticScores, semanticSimilarities } = 意味の點(semQuery, semEmbeddings));
       }
       out = Rec.venueRecommendations(out, pLines, semanticScores, now, {
         venueCats: venueCats,
         fieldedLexical: true,
+        semanticSimilarities,
       })
         .filter((recommendation) => recommendation.fit.score >= 10)
         .map(
@@ -1389,33 +3225,1276 @@ function semanticOutput(value: unknown): value is SemanticOutput {
             _availability: recommendation.availability,
           }),
         );
+      /* 締切が過ぎた候補を外す（任意の絞り込み）。順位は変えない – 候補の並びは論文との
+       * 一致の順のままにして、出す・出さないだけを決める。 */
+      if (state.openOnly) {
+        const kept = withoutClosedCandidates(out);
+        recommendExcludedClosed = out.length - kept.length;
+        out = kept;
+      }
+      /* ランクの絞り込み（任意）。締切一覧の「ランク」と同じ値・同じ判定を使い、
+       * 推薦モードでは候補に掛ける（`filter()` の締切一覧用の判定は推薦モードでは
+       * 効かないようにしてある）。 */
+      if (state.rank && Rec) {
+        const kept = out.filter((row) => Rec.rankMatches(row.rankPairs, state.rank));
+        recommendExcludedRank = out.length - kept.length;
+        out = kept;
+      }
+      /* 並べ替えは最後に一度だけ（外した数は一致順の候補から数える）。 */
+      if (state.order === "deadline") out = orderCandidatesByDeadline(out);
+      return out;
+    }
+
+    /* 締切の一覧でも、論文を入れていれば「その論文に合う行」に印（一致評価の札）を付ける。
+     * **並びも絞り込みも変えない** – 一覧は締切の順のまま、合う行だけが分かる（札を押すと
+     * その行の中で当たった要素の内訳が開く）。点は候補と同じ計算を使う。 */
+    if (pLines.length && Rec) {
+      const 意味 = semQuery && semEmbeddings ? 意味の點(semQuery, semEmbeddings) : null;
+      const 一致 = Rec.venueRecommendations(out, pLines, 意味?.semanticScores ?? null, now, {
+        venueCats: venueCats,
+        fieldedLexical: true,
+        ...(意味 ? { semanticSimilarities: 意味.semanticSimilarities } : {}),
+      }).filter((recommendation) => recommendation.fit.score >= 10);
+      if (一致.length) {
+        const 索引 = new Map(
+          一致.map((recommendation) => [recommendation.venueKey, recommendation]),
+        );
+        /* 数えるのは**行**（会場の数ではない）。同じ会場の複数の締切（概要と論文、複数
+         * ラウンド）にも同じ印が付くので、会場の数とは違う（実測 2026-10-18: 会場 18・
+         * 行 25）。 */
+        let 印を付けた = 0;
+        out = out.map((row) => {
+          const hit = 索引.get(row.conf.key);
+          if (!hit) return row;
+          印を付けた += 1;
+          return {
+            ...row,
+            _boosted: hit.boosted,
+            _match: hit.match,
+            _vocabScore: hit.fit.lexicalScore,
+            _matchScore: hit.fit.score,
+            _fitLabel: hit.fit.label,
+            _availability: hit.availability,
+          };
+        });
+        recommendFitMatches = 印を付けた;
+      }
+    }
+
+    /* 「過去の締切も表示」を入れると、既定の並び（残りの昇順）では 2019 年の行が画面の
+     * 先頭になり、これからの締切が 2,318 行の下に沈んでいた（2026-09-23 実測: 収録 3,235 行の
+     * うち締切時刻が過ぎた行が 2,318 行）。過ぎた行を後ろの塊に寄せる目印を先に置く。
+     * 比較関数（抽出して検査する）の依存を増やさないため、計算はここでやる。 */
+    if (state.past) {
+      out.forEach((r) => {
+        // 時刻未確認の幅も絞り込みと同じ終了判定を使う。
+        r._pastBlock = isPast(r) ? 1 : 0;
+      });
     }
 
     // Custom Sorting
     out.sort((a, b) => {
-      if (pLines.length && Rec) {
-        return Rec.comparePapers(a, b, now);
-      }
       const mult = sortAsc ? 1 : -1;
       if (sortKey === "conf") {
-        return (a.conf.title || "").localeCompare(b.conf.title || "") * mult;
+        // 会議名順は表に出る語で並べ、同じ名前の複数版（年違い）は締切時刻でそろえる。
+        // ロケールを明示しないと、閲覧者の UI ロケールで日本語の並びが変わる
+        // （実測: 既定＝自環境ロケールでは en/de と ja で「航空/情報」の順が入れ替わった）。
+        // `"ja"` は漢字を読み（音読み）の五十音順に並べる collation。読み辞書を持たない
+        // のでカタカナ語は漢字語より前の段に出る（異スクリプト間の段差は越えられない）。
+        const cmp = conferenceNameCell(a).localeCompare(conferenceNameCell(b), "ja");
+        return cmp ? cmp * mult : (a.tShown - b.tShown) * mult;
+      } else if (sortKey === "event") {
+        // 会期順（出張の計画は「いつ開かれるか」で見ることが多い）。未確認は末尾。
+        return compareEventRows(a, b, mult);
       } else if (sortKey === "rank") {
-        const ar = a.rankPairs[0] || "";
-        const br = b.rankPairs[0] || "";
-        return (ar === br ? 0 : ar > br ? 1 : -1) * mult;
+        // 等級の点数で並べる（`rankSortKey` が正本）。`rankPairs` をそのまま文字列比較
+        // すると体系名が先に効いて `ccf:C` が `core:A*` より前に来ていた。
+        // 数値列と同じ約束で、降順がいちばん評価の高い行（A*）から出る。
+        const ar = Recommender.rankSortKey(a.rankPairs);
+        const br = Recommender.rankSortKey(b.rankPairs);
+        const cmp = ar === br ? 0 : ar < br ? -1 : 1;
+        // ランクが同じ行は締切の近い順（同じ評価の塊の中を読める順にする）。
+        return cmp ? cmp * mult : compareDeadlineRows(a, b, mult);
       }
-      return (a.t - b.t) * mult;
+      // ここは「残り」「日時」の列を見ているときだけ通る。過ぎた締切の塊は、昇順・降順の
+      // 向きに関係なく後ろに置く（塊の中は選んだ向きそのまま。降順で先頭に反転させると
+      // 「いちばん遠い」ではなく「いちばん近い過去の締切」が画面の先頭になって誤解を招く）。
+      const block = (a._pastBlock || 0) - (b._pastBlock || 0);
+      if (block) return block;
+      return compareDeadlineRows(a, b, mult);
     });
 
     return out;
   }
 
+  // 月見出し行（.month-row）と推薦理由の行内展開（.detail-row）は shown[] と 1:1 にならない。
+  // 選択・詳細・キーボード移動はこれらの行を数えない（off-by-one の再発防止）。
+  // 日時順で見ているときだけ月で区切る。一致度順やランク順で区切ると、
+  // 月が往復してかえって読めなくなる。
+  /* SPEC §7: 絞り込み後の全行を表計算へ持ち出せるようにする。ページング後の表示分だけ
+   * ではなく `shown` 全体を書き出す。Excel は BOM の無い UTF-8 を日本語として読めないため
+   * BOM を付けて渡す（本文の区切りは recommender の deadlinesToCsv が単一正典）。 */
+
+  /* 一覧に並ぶ物の中で一番遠い締切日（JST の暦日）。品書の果てを、ハードコードせずに実測で
+   * 出す（ビルドごとに違う – 品書は生成からの日数で切れている）。 */
+  function farthestRowDayJa(list: AppRow[]): string {
+    let best = 0;
+    let found = false;
+    list.forEach((row) => {
+      const shown =
+        typeof row.tShown === "number" && Number.isFinite(row.tShown) ? row.tShown : row.t;
+      if (typeof shown !== "number" || !Number.isFinite(shown)) return;
+      // 時刻 0（1970 年）でも「無い」とは取り違えない – ある物の中で一番遠い物を見る。
+      if (!found || shown > best) {
+        best = shown;
+        found = true;
+      }
+    });
+    if (!found) return "";
+    // JST の暦日（`remain`・`fmtJst` と同じ理由でオフセットはインライン）。
+    const jst = new Date(best + 9 * 3600000);
+    const month = String(jst.getUTCMonth() + 1).padStart(2, "0");
+    const day = String(jst.getUTCDate()).padStart(2, "0");
+    return `${jst.getUTCFullYear()}-${month}-${day}`;
+  }
+
+  /** 容量を画面の読みやすい単位で示す（9,490,437 バイト → 「約 9.1 MB」）。 */
+  function bytesJa(bytes: number): string {
+    if (!Number.isFinite(bytes) || bytes <= 0) return "";
+    if (bytes < 1024 * 1024) return `約 ${Math.max(1, Math.round(bytes / 1024))} KB`;
+    return `約 ${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  }
+  function fullRecordNoteJa(
+    lastDay: string,
+    calendarLastDay: string,
+    horizonDays: number,
+    historyBytes: number,
+  ): string {
+    const 容量 = bytesJa(historyBytes);
+    return (
+      `読み込み済みのデータで一番先の締切は ${lastDay} です。` +
+      (horizonDays
+        ? `初期表示は生成から ${countJa(horizonDays)} 日先までを対象にしています。`
+        : "") +
+      "過去の締切も含めて収録全体を確認するには、この欄の" +
+      /* **容量を数字で**言う（理不尽 – 押す前に読める量を知る）。品書が実測値を
+       * 持って居ない古い差し込みでは「大きめのデータ」になる。 */
+      `「収録の全体を読み込む」を押してください（${
+        容量 ? `読み込む量は${容量}です` : "一覧より大きめのデータを読みます"
+      }）。` +
+      (calendarLastDay ? `カレンダー（.ics）には ${calendarLastDay} まで入っています。` : "")
+    );
+  }
+
+  function icsScopeNoteJa(span: CalendarSpan): string {
+    const dead = span.deadline_count;
+    const mix =
+      dead === undefined || dead >= span.event_count
+        ? ""
+        : `うち締切が ${countJa(dead)} 件で、残りの ${countJa(span.event_count - dead)} 件は` +
+          `採否通知・査読結果公開・反論期間の開始のように、その日までに何かを出す必要のない日です。`;
+    return (
+      `カレンダーに追加（.ics）に入る日は ${countJa(span.event_count)} 件` +
+      `（${span.first_day} 〜 ${span.last_day}）。` +
+      mix +
+      "会期自体の予定は含みません。会期は各予定の本文に記載します。画面の一覧に適用した期間や絞り込みは、カレンダーには引き継がれません。"
+    );
+  }
+
+  /* 締切の一覧では「この一覧の N 件」、推薦の候補では「この候補 N 件」と言う（同じ物を
+   * 指す語を画面ごとに変えない – CSV も .ics も同じ約束。第 870 回）。 */
+  function exportCsvLabelJa(total: number, recMode = false): string {
+    return recMode
+      ? `この候補 ${countJa(total)} 件を CSV でダウンロード`
+      : `この一覧の ${countJa(total)} 件を CSV でダウンロード`;
+  }
+
+  const ICS_FILE_NAME = "deadlines.ics";
+
+  function icsSubscribeUrl(): string {
+    const base = typeof document === "undefined" ? "" : String(document.baseURI || "");
+    if (!base) return ICS_FILE_NAME;
+    try {
+      return new URL(ICS_FILE_NAME, base).href;
+    } catch {
+      // 組み立てられなければ、リンクと同じ相対のままとる（空文字を返して押せないふりをしない）。
+      return ICS_FILE_NAME;
+    }
+  }
+
+  /** 押した後の案内文。URL はこのうしろに選べる形で載せる（書き換えられないため）。 */
+  function icsCopyNoteJa(copied: boolean): string {
+    return copied
+      ? "購読用の URL をコピーしました。カレンダーアプリの「URL から追加」「購読先」に貼り付けてください（データ更新のあと、毎日新しい一覧に置き換わります）。指定する URL:"
+      : "このページでは自動でコピーできませんでした（ブラウザがクリップボードを許可していません）。カレンダーの購読先に、次をそのまま指定してください:";
+  }
+
+  function showIcsCopyNote(copied: boolean): void {
+    const note = $("icsCopyNote");
+    note.textContent = "";
+    const lead = document.createElement("span");
+    lead.textContent = icsCopyNoteJa(copied);
+    const url = document.createElement("code");
+    // 必ずテキストとして入れる（URL の中の文字をタグとして解釈させない）。
+    url.textContent = icsSubscribeUrl();
+    note.appendChild(lead);
+    note.appendChild(document.createTextNode(" "));
+    note.appendChild(url);
+    note.hidden = false;
+  }
+
+  /* Promise を返す（押した側は捨てて良いが、検査は結果を待って確かめる。タイマーは
+     使わない – 待ち時間を見る検査は禁止なので、ここで待たせる物は何も無い）。 */
+  async function copyIcsSubscribeUrl(): Promise<void> {
+    const url = icsSubscribeUrl();
+    const clip = typeof navigator === "undefined" ? null : navigator.clipboard;
+    if (!clip || typeof clip.writeText !== "function") {
+      // 許可されていない環境（このページを http で開くなど）でも、同じことが手でできる。
+      showIcsCopyNote(false);
+      return;
+    }
+    try {
+      await clip.writeText(url);
+      showIcsCopyNote(true);
+    } catch {
+      showIcsCopyNote(false);
+    }
+  }
+
+  function candidateScopeOnScreen(): boolean {
+    if (state.mode !== "recommend") return false;
+    const paper = document.getElementById("paperText") as HTMLTextAreaElement | null;
+    return Boolean(paper && String(paper.value || "").trim());
+  }
+
+  function exportShownCsv() {
+    const recMode = candidateScopeOnScreen();
+    const rows = shown as unknown as Record<string, unknown>[];
+    /* 論文を入れたまま締切の一覧を書き出すと、画面には一致評価の札が付いている。CSV にも
+     * 同じ 4 列（一致評価・一致の点・言葉の一致・意味の近さ）を先頭に付ける – 画面に在る
+     * 物が書き出しに無いと、表計算に持って行ってから探し直すことになる（2026-10-18）。 */
+    const 一致評価の列 =
+      recMode || rows.some((row) => String((row as { _fitLabel?: string })._fitLabel || "").trim());
+    const csv = 一致評価の列
+      ? Recommender.candidateRowsToCsv(rows, Date.now())
+      : Recommender.deadlinesToCsv(rows, Date.now());
+    if (typeof Blob === "undefined" || typeof URL === "undefined" || !URL.createObjectURL) return;
+    const url = URL.createObjectURL(new Blob([`\ufeff${csv}`], { type: "text/csv;charset=utf-8" }));
+    /* ファイル名の日は JST にする。このサイトは「日時は JST で出しています」と宣言し、
+     * 一覧の日付も JST 固定で計算しているのに、ここだけ端末の時刻合わせで出ていた
+     * （2026-08-09 実測: 同じ瞬間に保存しても、UTC の端末では
+     * `kamiyobi-deadlines-20260809.csv`、日本の端末では `kamiyobi-deadlines-20260810.csv`
+     * に化けた。JST で 0 時台に保存する – 夜に締切をまとめたり出張先のホテルで
+     * 端末を現地に合わせたり – ケースで日付が一日ずれる）。
+     * JST のオフセットはインラインに置く（この関数はビルド成果物から抜き出して検査する
+     * ので依存を増やさない。`remain`・`fmtJst` と同じ理由）。 */
+    const stampDate = new Date(Date.now() + 9 * 3600000);
+    const stamp = `${stampDate.getUTCFullYear()}${String(stampDate.getUTCMonth() + 1).padStart(2, "0")}${String(stampDate.getUTCDate()).padStart(2, "0")}`;
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    /* 候補と一覧は別の物なので、名前も分ける（同じ日に両方を落とした人が、表計算の
+     * タブで見分けられるように – 欄も先頭の 4 本が違う）。 */
+    anchor.download = `kamiyobi-${recMode ? "candidates" : "deadlines"}-${stamp}.csv`;
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
+    if (URL.revokeObjectURL) URL.revokeObjectURL(url);
+  }
+
+  /* 締切の一覧では「この一覧の N 件」、推薦の候補では「この候補 N 件」と言う（同じ物を
+   * 指す語を画面ごとに変へない – 押す前に、何が入るかが分かる樣に）。 */
+  function exportIcsLabelJa(total: number, recMode = false): string {
+    if (total === 0) return "カレンダーに書き出せる日付がありません";
+    return recMode
+      ? `この候補の締切 ${countJa(total)} 件をカレンダー（.ics）でダウンロード`
+      : `この一覧の ${countJa(total)} 件をカレンダー（.ics）でダウンロード`;
+  }
+
+  /** 1 行を、カレンダーの材料へ写す（組み立ては `site/ics.ts` が持つ）。値は**画面に出ている
+   * 物と同じ入口**から取る（会議名は年を添えた形・種別・日付欄・会期・開催地・ランク）。一覧の
+   * 書き出しと行の詳細からの 1 件が同じ物を使う – 同じ締切が別の予定として並ばないよう、
+   * カレンダーの UID も同じ入口から渡す。 */
+  function icsInputForRow(r: AppRow): ScreenDeadlineInput | null {
+    if (r.kind === "journal" && !r.dl.utc && !r.dateOnly) return null;
+    const at = Number(r.t);
+    if (!Number.isFinite(at)) return null;
+    const ed = r.ed || {};
+    const conf = r.conf || {};
+    const 時 = jstParts(new Date(at));
+    const day = r.dateOnly
+      ? String(r.localDate ?? "")
+          .replace(/-/g, "")
+          .slice(0, 8)
+      : (時?.day ?? "");
+    if (!/^\d{8}$/.test(day)) return null;
+    return {
+      key: String(conf.key ?? ""),
+      editionId: String(ed.id ?? ""),
+      year: ed.year ?? null,
+      title: Recommender.titleWithYearJa(conf.title || conf.key || "", ed.year),
+      kind: String(r.kind ?? ""),
+      kindWord: String(Recommender.kindLabelJa(r.kind) ?? r.kind ?? "").trim(),
+      /* 計画の計画– CLOSER の 2 つは別の募集なのに摘要が同じだつた。 */
+      kindNote: String((r.dl as { track?: unknown }).track ?? "").trim(),
+      dateField: String(Recommender.kindDateFieldJa(r.dl?.kind) ?? "").trim(),
+      day,
+      whenText: r.dateOnly
+        ? `${String(r.localDate ?? "")}（時刻未確認）`
+        : `${時?.human ?? ""}（JST）`,
+      at,
+      estimated: Boolean(r.est),
+      categories: conf.categories,
+      place: ed.place,
+      link: ed.link || conf.link,
+      session: Recommender.eventCellJa(r),
+      /* 締切の記録その物も渡す（確認の状態と延長の札を、配付する ICS と同じ語で本文に
+       * 書くため – 語は共通の `statusMarksJa` が画面の正本から取る）。 */
+      dl: r.dl,
+      /* 配付物の ICS が使った UID（品書の締切に載っている）。渡さないと、書き出しの
+       * 予定が購読の予定と別の物になり、両方を入れた人に同じ締切が二度並ぶ。 */
+      uid: (r.dl as { ics_uid?: unknown } | undefined)?.ics_uid,
+      /* ランクも渡す（畫面の列と同じ語 • 同じ入口。購読した人はカレンダーしか見ない）。 */
+      rank: (r.rankPairs || [])
+        .map((pair) => String(Recommender.rankPairLabelJa(pair) ?? "").trim())
+        .filter(Boolean)
+        .join("・"),
+    };
+  }
+
+  /* 一覧に出ている行を、書き出しの形にまとめる（行の詳細からの 1 件と同じ入口）。 */
+  function shownIcsInput(): ScreenDeadlineInput[] {
+    const out: ScreenDeadlineInput[] = [];
+    for (const r of shown) {
+      const one = icsInputForRow(r);
+      if (one) out.push(one);
+    }
+    return out;
+  }
+
+  /** 書き出す 1 本。データ生成は画面の右上と同じ値（`DATA.generated_at`）を使う。 */
+  function shownIcsText(recMode = false): string {
+    const generated = typeof DATA.generated_at === "string" ? new Date(DATA.generated_at) : null;
+    /* 説明欄にも、何の写しかを書く（候補を書き出した人と、絞り込みを書き出した人が、
+     * カレンダーの情報欄で取り違へない樣に）。 */
+    return icsViewText(shownIcsInput(), new Date(), generated, {
+      /* 何を書き出したかは、紙と同じ条件の文で書く（持ち出した先で条件が分かる）。 */
+      scopeJa: recMode ? "「投稿先を探す」が挙げた候補" : filtersJa(null),
+      /* 暦の棚に出る名前も分ける（同じ名が 2 つ並ぶと見分けられない）。 */
+      calName: recMode ? ICS_VIEW_CANDIDATE_CAL_NAME_JA : ICS_VIEW_CAL_NAME_JA,
+    });
+  }
+
+  function exportShownIcs() {
+    /* 候補の別は CSV と同じ規則で決める（推薦の画面でも、論文情報が空なら候補は出ていない）。 */
+    const 候補 = candidateScopeOnScreen();
+    const text = shownIcsText(候補);
+    if (typeof Blob === "undefined" || typeof URL === "undefined" || !URL.createObjectURL) return;
+    const url = URL.createObjectURL(new Blob([text], { type: "text/calendar;charset=utf-8" }));
+    /* ファイル名の日は JST（CSV と同じ理由 – 端末の時刻合わせで日付が一日ずれる）。 */
+    const stampDate = new Date(Date.now() + 9 * 3600000);
+    const stamp = `${stampDate.getUTCFullYear()}${String(stampDate.getUTCMonth() + 1).padStart(2, "0")}${String(stampDate.getUTCDate()).padStart(2, "0")}`;
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    /* 候補と一覧は別の物なので、名前も分ける（CSV と同じ規則。同じ日に両方を落とした人が
+     * 暦の棚で見分けられるように – 入る予定も違う。2026-10-17 実測: 推薦の画面で落とした
+     * ICS が一覧と同じ `kamiyobi-deadlines-<日>.ics` に成り、同じ日に兩方を落とすと
+     * 片方が上書きされた）。 */
+    anchor.download = `kamiyobi-${候補 ? "candidates" : "deadlines"}-${stamp}.ics`;
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
+    if (URL.revokeObjectURL) URL.revokeObjectURL(url);
+  }
+
+  /* SPEC §7: 0 件のとき、原因になりやすい条件をそのまま並べる。
+   * 期間窓・過去非表示・「開催行は表に出さない」が重なると、収録が無いのだと
+   * 誤解して離脱するため、いま外せる条件を実名で示す。*/
+
+  function nameOnlyConferenceMatch(
+    query: string,
+    list: AppRow[],
+    nowMs: number,
+  ): {
+    example: string;
+    count: number;
+    terms: string[];
+    recordLast: string | null | "";
+    eventNext: string;
+    nextDay: string;
+    nextKind: string;
+    nextCount: number;
+    estimatedNext: string;
+  } | null {
+    const terms = String(query || "")
+      .split(/\s+/u)
+      .map((t) => t.trim())
+      .filter((t) => t.length >= 2);
+    if (!terms.length) return null;
+
+    const looksLikeDate = (t: string): boolean =>
+      /\d/u.test(t) && /^[\d\s./\-年月日時分秒週周]+$/u.test(t);
+    const nameTerms = terms.filter((t) => !looksLikeDate(t));
+    // 日付だけで引いたときは、名簿の話をしない。
+    if (!nameTerms.length) return null;
+    const withRows: Record<string, boolean> = {};
+    list.forEach((row) => {
+      const key = typeof row?.conf?.key === "string" ? row.conf.key : "";
+      if (key) withRows[key] = true;
+    });
+    /* 語が名前の途中に隠れただけ（`sc` が `science` を含む）を名前の語として数えない – 英数字の語は
+       前後が区切りであることを要求する。それ以外の語（日本語など）は部分一致で見る。 */
+    const matchesName = (term: string, hay: string): boolean => {
+      // 語の境界を見る目（この関数の中で持つ – 抜いた先でも動くように）。
+      const wordChar = /[a-z0-9]/u;
+      const t = term.toLowerCase();
+      if (!/^[a-z0-9][a-z0-9 .+-]*$/u.test(t)) return hay.indexOf(t) >= 0;
+      let at = hay.indexOf(t);
+      while (at >= 0) {
+        const before = at > 0 ? hay.charAt(at - 1) : " ";
+        const after = at + t.length < hay.length ? hay.charAt(at + t.length) : " ";
+        /* 前後が英数字でなければ、その語は名前の中で独立に立っている。 */
+        if (!wordChar.test(before) && !wordChar.test(after)) return true;
+        at = hay.indexOf(t, at + 1);
+      }
+      return false;
+    };
+    let count = 0;
+    let example = "";
+    let recordDay = "";
+    let recordNull = false;
+
+    let eventNext = "";
+    /* 推定の未來の締切。 */
+    let 推定の次の手がかり = "";
+
+    let nextDay = "";
+    let nextKind = "";
+    let nextCount = 0;
+    const hitTerms: string[] = [];
+    DATA.conferences.forEach((conf) => {
+      if (!conf || typeof conf.key !== "string" || withRows[conf.key]) return;
+      const hay =
+        `${conf.acronym || ""} ${conf.title || ""} ${conf.full_name || ""} ${conf.key}`.toLowerCase();
+      const hits = nameTerms.filter((term) => matchesName(term, hay));
+      hits.forEach((term) => {
+        if (hitTerms.indexOf(term) < 0) hitTerms.push(term);
+      });
+      if (!hits.length) return;
+
+      if (hits.length !== nameTerms.length) return;
+      count += 1;
+      /* 名簿の例として挙げるのは、1 件に絞れたときだけにする – `CoNLL 2027` に別の会議の名前を
+         挙げても、人はそれを信じない（件数だけを出す）。 */
+      example = String(conf.acronym || conf.title || conf.key);
+      (conf.editions || []).forEach((ed) => {
+        const day = typeof ed.event_start === "string" ? ed.event_start : "";
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(day) || ed.estimated === true) return;
+        if (Recommender.jstNoonMs(day, Number.NaN) < nowMs) return;
+        if (!eventNext || day < eventNext) eventNext = day;
+      });
+      // 収録の側に残っている締切の話。
+      if (typeof conf.record_deadline_count === "number" && conf.record_deadline_count > 0) {
+        nextCount = conf.record_deadline_count;
+        nextDay = typeof conf.record_deadline_next === "string" ? conf.record_deadline_next : "";
+        nextKind =
+          typeof conf.record_deadline_next_kind === "string" ? conf.record_deadline_next_kind : "";
+      }
+      // 推定の未來の締切。
+      const 推定の次 =
+        typeof conf.record_estimated_next === "string" ? conf.record_estimated_next : "";
+      if (推定の次) 推定の次の手がかり = 推定の次;
+      // 収録の側にその会の締切があるか。
+      const recordLast = conf.record_deadline_last;
+      if (recordLast === null) recordNull = true;
+      else if (typeof recordLast === "string" && /^\d{4}-\d{2}-\d{2}$/.test(recordLast)) {
+        recordDay = recordLast;
+      }
+    });
+    // 名前の語が名簿に見えたのに 0 件のときは、件数を作らないで語だけを返す（第 294 回の
+    // 「無い」の列から外す話はここでも生きる – 全ての語に当たる会議が無くても語は名簿にある）。
+    if (!count && !hitTerms.length) return null;
+    return {
+      example: count === 1 ? example : "",
+      count,
+      terms: hitTerms,
+      // 例を 1 件に絞れたときだけ、収録側の締切日の話をできる。
+      recordLast: count === 1 ? (recordNull ? null : recordDay) : "",
+      // 開催日も同じ理屈で、1 件に絞れたときだけ言う。
+      eventNext: count === 1 ? eventNext : "",
+      // 締切の日も同じ – 曖昧な会議に「一番近い日」を教えない。
+      nextDay: count === 1 ? nextDay : "",
+      nextKind: count === 1 ? nextKind : "",
+      nextCount: count === 1 ? nextCount : 0,
+      estimatedNext: count === 1 ? 推定の次の手がかり : "",
+    };
+  }
+
+  /* 名簿の案内に添える、収録側の締切日の向き。読み方が分からない日は、数を
+     言わない方（""）に寄せる。 */
+  function nameOnlyRecordInfo(
+    found: {
+      example: string;
+      count: number;
+      terms: string[];
+      recordLast: string | null | "";
+      eventNext?: string;
+      nextDay?: string;
+      nextKind?: string;
+      nextCount?: number;
+      estimatedNext?: string;
+    } | null,
+    nowMs: number,
+    kindLabel: Record<string, string>,
+  ): {
+    example: string;
+    count: number;
+    terms: string[];
+    recordLast: string | null | "";
+    recordFuture: boolean;
+    eventNext?: string;
+    /** 収録の側に残っている一番近い締切（過ぎた日は教えない – 第 298 回）。 */
+    nextDay: string;
+    /** その種別の日本語（表と同じ語）。未登録の種別は空にして括弧を付けない。 */
+    nextLabel: string;
+    nextCount: number;
+    estimatedNext?: string;
+  } | null {
+    if (!found) return null;
+    const nextOf = (
+      f: typeof found,
+    ): {
+      nextDay: string;
+      nextLabel: string;
+      nextCount: number;
+    } => {
+      const day = typeof f?.nextDay === "string" ? f.nextDay : "";
+      const kind = typeof f?.nextKind === "string" ? f.nextKind : "";
+      const count = typeof f?.nextCount === "number" && f.nextCount > 0 ? f.nextCount : 0;
+      const noon = /^\d{4}-\d{2}-\d{2}$/.test(day)
+        ? Recommender.jstNoonMs(day, Number.NaN)
+        : Number.NaN;
+      if (!Number.isFinite(noon) || noon < nowMs || !count)
+        return { nextDay: "", nextLabel: "", nextCount: 0 };
+      return { nextDay: day, nextLabel: kindLabel[kind] || "", nextCount: count };
+    };
+    const next = nextOf(found);
+    if (found.recordLast === null)
+      return {
+        ...found,
+        recordFuture: false,
+        ...next,
+        estimatedNext: String(found.estimatedNext ?? ""),
+      };
+    if (!found.recordLast)
+      return {
+        ...found,
+        recordFuture: false,
+        ...next,
+        estimatedNext: String(found.estimatedNext ?? ""),
+      };
+    const noon = Recommender.jstNoonMs(found.recordLast, Number.NaN);
+    if (!Number.isFinite(noon)) return { ...found, recordLast: "", recordFuture: false, ...next };
+    return {
+      ...found,
+      recordFuture: noon >= nowMs,
+      ...next,
+      estimatedNext: String(found.estimatedNext ?? ""),
+    };
+  }
+
+  function emptyDeadlineHint(filter: {
+    scheduleOnlyCount?: number;
+    actionableRecovery?: boolean;
+    window: string;
+    past: boolean;
+    cats: number;
+    domestic: boolean;
+    online: boolean;
+    rank: string;
+    kind: string;
+    est: boolean;
+    hidden: Record<string, number>;
+    query: string;
+    hiddenKindWords: string[];
+    queryMatch: { catalog: number; journal: number };
+    termCounts: Array<{ term: string; count: number }>;
+    /* 欄の名前の連結形（`分野セキュリティ`）を案内するかを決める問答。
+       品書を持つこの側で答え、正典は渡されて動く。*/
+    columnValueHits?: (語: string) => boolean;
+    splitCount?: (文: string) => number;
+    // 打ち直しの見当。0 件のときだけ数える – 通常描画では走らせない。
+    shorterHits?: Array<{ word: string; count: number; how: string; pair?: string }>;
+    termRemainder?: number | null;
+    urlQuery: boolean;
+    catalogConferences: number;
+
+    categoryNames?: string[];
+    // 打った日付と、いま読み込んでいるデータの果て。
+    queryDaySpan?: { first: string; last: string; label: string } | null;
+    // 名簿にあるのに締切の行が無い会議。
+    nameOnly?: {
+      example: string;
+      count: number;
+      terms: string[];
+      recordLast?: string | null | "";
+      recordFuture?: boolean;
+      /** その会のこれからの開催日（いま読み込んでいる名簿にある分だけ – 第 297 回）。 */
+      eventNext?: string;
+      /** 収録の側に残っている一番近い締切。 */
+      nextDay?: string;
+      nextLabel?: string;
+      nextCount?: number;
+      /** 推定ならその会の締切が収録にある日（確約ではない – 第 949 回）。 */
+      estimatedNext?: string;
+    } | null;
+    loadedLastDay?: string;
+    fullRecordLoaded?: boolean;
+    canLoadFullRecord?: boolean;
+    recordLastDay?: string;
+    horizonDays?: number;
+  }): string {
+    /* 収録データその物が無いとき（データが差し込まれていない HTML を開いた、組み込みの
+     * データを拡張機能が止めた等）は、条件の話をする前にそれを伝える
+     * （2026-09-23 実測: 「該当する締切はありません。条件を緩めると出ます」と出ていて、
+     * 緩めても何も出ない人に的外れの案内になっていた）。*/
+    if (!filter.catalogConferences) {
+      return (
+        "締切のデータが入っていません。ページの読み込みに失敗している可能性があります。" +
+        "時間をおいて再読み込みするか、サイトの一覧を開き直してください。"
+      );
+    }
+    const base = "該当する締切はありません。";
+    const trimmedQuery = filter.query.trim();
+    /* 検索語が採否通知・査読結果公開など、表に出さない種別に当たっていることがある。
+     * 外せる条件とは別枠の「なぜ 0 件か」なので、先に文として立てる。 */
+    const kindNote = filter.hiddenKindWords.length
+      ? ` 検索語は${filter.hiddenKindWords.map((w) => `「${w}」`).join("・")}の種別に当たります` +
+        "（表には投稿締切だけを出します）。"
+      : "";
+    /* 検索語が収録データ全体では行に当たっているのに 0 件のとき（既定で出す行が
+     * 投稿締切・未来だけなので起こる）。「 kamiyobi に無い」と誤解させない。 */
+
+    // ドメインが収録に当たっている場合は「収録にあるが条件で消えている」が正しいので、
+    // その場合はこの文を立てない（上の catalogNote が受け持つ）。
+    const urlNote =
+      filter.urlQuery && filter.queryMatch.catalog === 0
+        ? " 検索語の URL の会議は収録に見当たりません。収録の中心はランク付けの一覧に載る会議と" +
+          "国内研究会です。公式ページのアドレスではなく会議名（「ICDE」など）で試してください。"
+        : "";
+    /* 当たり数は候補行と常時受付のジャーナル行を**合わせて**見る。表に出さない行にだけ
+     * 当たっているとき、以前は文が丸ごと立たず（`catalog > 0` の条件）、読み上げが
+     * 「収録データにありません」と噓を言っていた（2026-08-09 生成ビルドで実測）。 */
+    const matchedRows = filter.queryMatch.catalog + filter.queryMatch.journal;
+    const catalogNote =
+      trimmedQuery && matchedRows > 0
+        ? filter.queryMatch.catalog === 0
+          ? ` 検索語「${trimmedQuery}」は収録済みの行 ${countJa(matchedRows)} 件に当たります` +
+            "（いずれも常時受付のジャーナルで、表は投稿締切を出す既定なので、" +
+            "「種別」で常時受付を選ぶと出ます）。"
+          : (filter.urlQuery
+              ? ` その URL のドメインは収録済みで ${countJa(filter.queryMatch.catalog)} 件に当たります`
+              : ` 検索語「${trimmedQuery}」は収録済みで ${countJa(filter.queryMatch.catalog)} 件に当たります`) +
+            /* 種別に当たっているときは「絞り込みで消えている」と書かない（外しても増えない）。 */
+            (filter.hiddenKindWords.length
+              ? `（${hiddenKindDeliveryJa(filter.queryMatch.catalog)}）`
+              : "（表は投稿締切でこれから先のものだけを出す既定と、いまの絞り込みで 0 件になっています）。") +
+            (filter.queryMatch.journal > 0
+              ? ` 常時受付のジャーナル ${countJa(filter.queryMatch.journal)} 件は「種別」で選べます。`
+              : "")
+        : "";
+    /* 会期だけの開催回が当たったときも、打った語が収録に当たっている事を先に言う
+     * （2026-10-17 実測: `SIGCOMM` は 0 件で、案内は主催の同じ IMC・CoNEXT の会期だけを
+     * 並べ、SIGCOMM その物が収録にある事も過去の締切がある事も言わなかった）。 */
+    if (filter.scheduleOnlyCount && filter.scheduleOnlyCount > 0)
+      return `${base}${catalogNote} 投稿締切が未収録の開催回が ${countJa(filter.scheduleOnlyCount)} 件見つかりました。会期情報は下に表示しています。`;
+    /* 語を並べて打ったのに 0 件のとき、どの語が足りなかったのかを言う（2026-09-23 実測:
+     * 「ネットワーク 福岡 GPU」も「人工知能 だけ」も 0 件なのに、画面は原因の語を言わず
+     * 「検索語を短くする」しか出さなかった）。収録データに無い語があればそれを名指す
+     * （その語を待っても行は増えない）。語が全部当たっている場合は、すべてを含む行が
+     * 無いだけなので語ごとの件数を示し、いずれかを外すよう導く。 */
+    /* 検索語がこの表その物を指す語（「締め切り」など）のときは、0 件は検索の失敗では
+     * ない。そのことを書かないと「該当する締切はありません」がこの表に締切の無い話に
+     * 読める（2026-08-09 生成ビルドで実測: `締め切り` `締切り` `締切日` `提出期限` はいずれも
+     * 0 件で、収録 863 行はすべて締切だった）。当たり数が 0 のときだけ立てる –
+     * 当たっているときに「絞れません」と言うのは噓になる。 */
+    const wholeNote = matchedRows === 0 ? Recommender.wholeTableQueryNoteJa(trimmedQuery) : "";
+
+    const columnNote =
+      matchedRows === 0 ? Recommender.columnQueryNoteJa(trimmedQuery, filter.columnValueHits) : "";
+
+    /* 実に絞れる語の打ち替えが並んで居れば、長い文の打ち直しは讓る。 */
+    const 打ち替えが在るか = (filter.shorterHits || []).length > 0;
+    const uiNote =
+      matchedRows === 0 ? Recommender.uiWordNoteJa(trimmedQuery, 打ち替えが在るか) : "";
+
+    const dayRangeNote = matchedRows === 0 ? Recommender.dayRangeNoteJa(trimmedQuery) : "";
+
+    const conjunctionNote =
+      matchedRows === 0 && !columnNote && !uiNote && !dayRangeNote && filter.splitCount
+        ? Recommender.conjunctionQueryNoteJa(trimmedQuery, filter.splitCount)
+        : "";
+
+    const horizonDay = filter.loadedLastDay || "";
+    let horizonNote = "";
+    if (matchedRows === 0) {
+      const span = filter.queryDaySpan;
+      // URL を貼った人を日付の話に引きずり込まない（語の分解と同じ判断 – 第 236 回）。
+      if (span?.first && !filter.urlQuery && horizonDay && span.first > horizonDay) {
+        const recordLast = filter.fullRecordLoaded ? horizonDay : filter.recordLastDay || "";
+        horizonNote =
+          recordLast && span.first > recordLast
+            ? // 収録その物より先。あるかどうかを kamiyobi が知らないので、無いとは言い切らない。
+              ` 打った日付「${span.label}」は、収録している中で一番遠い締切 ${recordLast} より先です。` +
+              "その日付に締切があるかどうかも、まだ確認できていません。"
+            : ` 打った日付「${span.label}」は、いま読み込んでいるデータ（${horizonDay} まで）より先です。` +
+              (filter.canLoadFullRecord === true
+                ? (filter.horizonDays
+                    ? `初期表示は生成から ${countJa(filter.horizonDays)} 日先までを対象にしています。`
+                    : "") +
+                  "この欄の「収録の全体を読み込む」を押すと、収録全体を同じ条件で検索します。" +
+                  (recordLast ? `収録の中で一番遠い締切は ${recordLast} です。` : "")
+                : "収録全体に該当する締切があるかは、まだ確認できていません。");
+      }
+    }
+    /* 名前は名簿にあるのに締切が行に無い会議。「別の語で試す」も「過去の締切も
+       表示」も、この人には効かない – 締切がデータの切れ目より先にしかない。 */
+    let nameNote = "";
+
+    if (filter.nameOnly?.count || filter.nameOnly?.terms.length) {
+      const named = filter.nameOnly.example
+        ? `打った語に似た名前の会議（${filter.nameOnly.example}）は、収録の名簿に見えます。`
+        : (filter.nameOnly.count || 0) > 1
+          ? `打った語に似た名前の会議が、収録の名簿に ${countJa(filter.nameOnly.count)} 件見えます。`
+          : "打った語に似た名前の会議は、収録の名簿に見えます。";
+
+      const record = filter.nameOnly.recordLast;
+      const named_only = Boolean(filter.nameOnly.example);
+      const beyond = horizonDay
+        ? `いま読み込んでいるデータには入りません（一覧に出せる締切は ${horizonDay} まで）。`
+        : "いま読み込んでいるデータには入りません。";
+      let tail: string;
+      if (named_only && record === null) {
+        tail =
+          "その会について、収録は締切を 1 本も持っていません。一覧に出ないのはそのためで、" +
+          "この欄の「収録の全体を読み込む」を押しても 1 件も増えません。" +
+          // 締切の無い会でも、開かる日が決まっていることがある（実測 74 件のうち 31 件 –
+          // 締切の無い会議は一覧に出ないので、行き先を添える）。
+          (filter.nameOnly.eventNext
+            ? ` その会の開催日（${filter.nameOnly.eventNext}）は決まっています。締切のない会議は一覧に出ないので、upcoming.html に載せています。`
+            : "");
+      } else if (
+        named_only &&
+        typeof record === "string" &&
+        record &&
+        // 向きを渡されなければ、これからだとも過ぎたのだと教えない。
+        typeof filter.nameOnly.recordFuture === "boolean"
+      ) {
+        tail = filter.nameOnly.recordFuture
+          ? (() => {
+              // 一番近い日を教える（第 298 回 – 実測 42 件のうち 19 件は、遠い日だけを教えて
+              // いたため、人は間の締切を見落とす）。近い日が読み込めないときは従来どおり。
+              const near = filter.nameOnly.nextDay
+                ? filter.nameOnly.nextLabel
+                  ? `${filter.nameOnly.nextDay}（${filter.nameOnly.nextLabel}）`
+                  : filter.nameOnly.nextDay
+                : "";
+              const n = filter.nameOnly.nextCount || 0;
+              const head = !near
+                ? `その会には ${record} の締切が収録に在りますが、`
+                : n > 1
+                  ? `その会の締切が収録に ${n} 本在って、一番近いのは ${near}です。`
+                  : `その会の締切が収録に ${n} 本在って、${near}です。`;
+              return (
+                head +
+                beyond +
+                "この欄の「収録の全体を読み込む」を押すと、その締切も一覧に載せられます。"
+              );
+            })()
+          : `収録にあるのは過ぎた締切（${record}）だけで、${beyond}` +
+            "読み込まれるときは「過去の締切も表示」もいっしょにオンにしてください。" +
+            /* 推定の未來の締切も品書が申告しているなら添える。 */
+            (filter.nameOnly.estimatedNext
+              ? ` ただし推定なら ${filter.nameOnly.estimatedNext} の締切が収録にあります（「推定の締切も表示」で一覧に出せます – 確約ではありません）。`
+              : "") +
+            // 締切が過ぎただけで、会議が終わったわけではない（実測 – 過ぎた締切だけの会議
+            // 174 件のうち 118 件は、品書にこれからの開催日がある）。
+            (filter.nameOnly.eventNext
+              ? ` なお、その会の開催日（${filter.nameOnly.eventNext}）はこれからです。締切が過ぎたというだけで、会議が終わったわけではありません。`
+              : "");
+      } else {
+        tail =
+          "ただしその締切は、いま読み込んでいるデータに 1 本も入っていません" +
+          (horizonDay
+            ? `（一覧に出せる締切は ${horizonDay} まで – 締切がそれより先の会議は、名簿だけが残っています）。`
+            : "（締切がデータの切れ目より先の会議は、名簿だけが残っています）。") +
+          // 収録の側に締切があるか分からないときは、「出る」とは言わない。
+          "この欄の「収録の全体を読み込む」を押すと、収録の全体の締切から同じ語を引き直します。";
+      }
+      nameNote = ` ${named}${tail}`;
+    }
+    const horizonOnly = Boolean(horizonNote) && (!filter.window || filter.window === "all");
+    const nameOnlyOnly = Boolean(nameNote) && (!filter.window || filter.window === "all");
+    // URL の検索語を語に分解して「〜は収録データにも見当たりません」と言うのは誤解になる
+    // （分解された語はドメインの一部で、検索の失敗理由ではない）。
+    const terms =
+      matchedRows === 0 &&
+      !filter.urlQuery &&
+      !wholeNote &&
+      !columnNote &&
+      !uiNote &&
+      !dayRangeNote &&
+      !conjunctionNote &&
+      filter.termCounts.length > 1
+        ? filter.termCounts
+        : [];
+    const deadAll = terms.filter((t) => t.count === 0).map((t) => t.term);
+
+    const nameTerms = filter.nameOnly ? filter.nameOnly.terms : [];
+    const deadTerms = deadAll.filter((t) => nameTerms.indexOf(t) < 0);
+    let termNote = "";
+    if (deadTerms.length) {
+      const 外しても零件 = filter.termRemainder === 0;
+      termNote =
+        ` 検索語のうち${deadTerms
+          .slice(0, 2)
+          .map((w) => `「${w}」`)
+          .join("・")}は` +
+        "収録データにも見当たりません。" +
+        (外しても零件 ? "それを外しても残りの語では 0 件のままです。" : "その語を外すと増えます。");
+    } else if (terms.length > 1) {
+      termNote =
+        " 語をすべて含む行はありません（" +
+        terms
+          .slice(0, 3)
+          .map((t) => `「${t.term}」${t.count}件`)
+          .join("・") +
+        "）。いずれかの語を外すと増えます。";
+    }
+
+    const splitNote =
+      matchedRows === 0 &&
+      !filter.urlQuery &&
+      !horizonNote &&
+      !nameNote &&
+      !kindNote &&
+      !wholeNote &&
+      !columnNote &&
+      !uiNote &&
+      !dayRangeNote &&
+      !conjunctionNote &&
+      !catalogNote &&
+      !urlNote &&
+      !termNote &&
+      filter.splitCount
+        ? Recommender.splitHintJa(trimmedQuery, filter.splitCount)
+        : "";
+    /* 原因を特定できたときは、他の説明文を足さない。考えられる理由を全部並べると
+     * 「結局どうすればいい」が読めなくなる。検索語を短くする助言も、原因が分かっていれば
+     * 的外れなので出さない。 */
+
+    const 語が死んだだけ =
+      deadTerms.length > 0 &&
+      !(
+        kindNote ||
+        wholeNote ||
+        columnNote ||
+        uiNote ||
+        splitNote ||
+        dayRangeNote ||
+        conjunctionNote ||
+        catalogNote ||
+        urlNote ||
+        horizonOnly ||
+        nameOnlyOnly
+      );
+    const specific = Boolean(
+      kindNote ||
+        wholeNote ||
+        columnNote ||
+        uiNote ||
+        splitNote ||
+        dayRangeNote ||
+        conjunctionNote ||
+        catalogNote ||
+        deadTerms.length ||
+        urlNote ||
+        horizonOnly ||
+        nameOnlyOnly,
+    );
+
+    /* 0 件案内はこれまで「外せる条件」の名前だけを並べていた。同じ画面上の件数欄は
+     * 同じ条件で消えた件数を書いているのに、案内の側には数字が無く、6 項目のうち
+     * どれから外す価値があるかが読めなかった（2026-09-23 実測: 窓を 7 日・評価を A* に
+     * 絞って 0 件にした画面の案内は「外せる条件: …」の羅列だけだった）。
+     * 件数欄と同じ名前の同じ数字を項目に添える – 「外せば増える」という約束ではなく、
+     * 「いまこの条件で隠れている行数」なので、そのように書く。 */
+    /* 案内の項目は「いまこの条件で隠れている行数」を添える。件数欄は同じ画面上で同じ
+     * 条件の数字を内訳として書いているのに、案内の側には数字が無かった（2026-09-23 実測:
+     * 窓を 7 日・評価を A* に絞った 0 件画面の案内は条件名の羅列だけで、どれから外す
+     * 価値があるか読めなかった）。外せば増えるという約束ではなく、いま隠れている行数なので、
+     * そのように書く。件数欄と同じ名前の同じ数字を使う（案内と件数欄が違う行の話をするのを防ぐ）。 */
+    const tip = (text: string, key: string, label: string): void => {
+      if (filter.actionableRecovery) return;
+      // 隠している行数が 0 の条件を勧めても、行は増えずに外し直しの手だけ増える
+      // （件数欄に内訳として出ていない条件と同じ理屈）。
+      const n = filter.hidden ? filter.hidden[key] || 0 : 0;
+      if (!n) return;
+      tips.push(`${text}（${label} ${countJa(n)} 件）`);
+    };
+    const tips: string[] = [];
+    // 選択肢の実際のラベルを書く（「すべて」に変えた旧名を案内すると、その語が見つからない）。
+    if (filter.window && filter.window !== "all")
+      tip(
+        "「締切まで」を「かまわない」に変更",
+        "window",
+        `「締切まで ${Number.parseInt(filter.window, 10)} 日以内」の対象外`,
+      );
+    if (!filter.past) tip("「過去の締切も表示」をオン", "past", "過去の締切");
+    // 推定は既定で出さない。0 件の画面でこれに触れないと、収録にある語を「無い」と
+    // 誤解したまま検索をやめてしまう（件数欄は同じ数を「推定 N 件」として書いている）。
+    if (!filter.est) tip("「推定締切を含める」をオン", "est", "推定");
+    if (filter.cats > 0) tip("分野チップをはずす", "cats", "選んだ分野を持たない行");
+    if (filter.domestic)
+      tip(
+        "「国内研究会・国内シンポジウムのみ」をオフ",
+        "domestic",
+        "国内研究会・国内シンポジウム以外",
+      );
+    if (filter.online)
+      tip("「オンライン参加可のみ」をオフ", "online", "オンライン参加の記載がない");
+    if (filter.rank && filter.rank !== "all")
+      tip("ランクを「すべて」に変更", "rank", rankDropWordsJa(filter.rank));
+    // 種別も絞り込みである。これを数えないと、案内どおりに他を外しても 0 件のままになる。
+    if (filter.kind) tip(`「種別」を「${KIND_ALL_LABEL_JA}」に変更`, "kind", "投稿締切以外の種別");
+    // 欄の名前や画面自身の語を打たれた人に「検索語を短くする」と言っても直らない。
+
+    const altTips: string[] = [];
+
+    const retypeTips: string[] = [];
+    (filter.shorterHits || []).slice(0, 2).forEach((hit) => {
+      const word = String(hit.word || "").trim();
+      if (!word) return;
+
+      if (hit.how === "split") {
+        altTips.push(
+          `検索語を「${word}」に分けて打つ（両方を書く行がいまの絞り込みで ${countJa(hit.count)} 件）`,
+        );
+      } else if (hit.how === "alone" && word.indexOf(" ") < 0) {
+        altTips.push(
+          `検索語を「${word}」だけに絞る（いまの絞り込みで ${countJa(hit.count)} 件当たります）`,
+        );
+      } else {
+        altTips.push(
+          `検索語を「${word}」に打ち替える（いまの絞り込みで ${countJa(hit.count)} 件当たります）`,
+        );
+      }
+    });
+    if (
+      trimmedQuery &&
+      (!specific || 語が死んだだけ) &&
+      !columnNote &&
+      !uiNote &&
+      !dayRangeNote &&
+      !conjunctionNote &&
+      !horizonNote &&
+      !nameNote
+    ) {
+      if (altTips.length) {
+        altTips.forEach((t) => {
+          retypeTips.push(t);
+        });
+      } else {
+        /* 案内の当たらん打ち手は、ここに落ちる（実測 – 2026-08-09 生成の実ビルドで 0 件の
+           打ち手 844 本の内 273 本がこの受皿にいた）。受皿の文は「過去の締切も表示」等を
+           数へるだけで、**この表が何を出す画面なのか**を一言も言はなんだ – 分野で引ける事
+           だけが伝わつて、締切の日と催し物しか載らん事は伝わらん。そちらをここに一筆置く。 */
+
+        const 分野 = (filter.categoryNames || []).filter((x) => String(x || "").trim());
+        retypeTips.push(
+          "別の語で試す（分野名・主題・開催地の日本語でも引けます）。" +
+            (分野.length
+              ? `分野の欄は${分野.join("・")}の${countJa(分野.length)}種だけで、他の分野の言葉でもその語を行に持つ締切なら当たります。`
+              : "") +
+            "この表が出すのは催し物の名前・締切の日・分野・種別・開催地・参加形式で、" +
+            "くわしくはページ下の『見方のてびき』に書いています",
+        );
+      }
+    }
+
+    if (nameOnlyOnly) tips.length = 0;
+
+    const meetingNote = "開催日だけが確定している会議は表に出さず、upcoming.html に載せています。";
+    /* 打ち替えは別の言い出しで受ける（「外せる条件」に混ぜると条件の話と混同する – 第 623 回）。 */
+    const retypeNote = retypeTips.length ? ` 打ち直すなら ${retypeTips.join(" / ")}。` : "";
+    if (specific) {
+      const 本 = `${base}${horizonNote}${nameNote}${kindNote}${wholeNote}${columnNote}${uiNote}${dayRangeNote}${conjunctionNote}${catalogNote}${urlNote}${termNote}${splitNote}`;
+      return tips.length
+        ? `${本} 外せる条件: ${tips.join(" / ")}。${retypeNote}`
+        : `${本}${retypeNote}`;
+    }
+    if (!tips.length)
+      return `${base}${horizonNote}${nameNote}${termNote}${retypeNote}${meetingNote}`;
+    return `${base}${horizonNote}${nameNote}${termNote} 多いのは ${tips.join(" / ")}。${retypeNote}${meetingNote}`;
+  }
+
+  /** 投稿締切が未収録の開催回。会期の確かさと分割区間を案内まで保持する。 */
+  type ScheduleOnlyMatch = {
+    name: string;
+    year?: number;
+    eventStart: string;
+    eventEnd: string;
+    eventDatePrecision?: string;
+    eventSegments?: Array<{ start: string; end: string; label?: string }>;
+    place?: string;
+    link?: string;
+  };
+
+  /* いまの絞り込みで残る、投稿締切が未収録の開催回を数える（表に出さないだけで、
+   * 検索語・分野・国内・オンライン・締切までの窓は表と同じ目盛りで掛ける）。 */
+  function scheduleOnlyMatches(filter: {
+    window: string;
+    cats: string[];
+    domestic: boolean;
+    online: boolean;
+    rank?: string;
+    /* 会議の絞り込み（`?venue=`）。掛けないと、1 会場の一覧の下に別の会議の会期が並ぶ
+     * （2026-10-24 実測: `?venue=sigmod` で 129 件のまま ACML・APPT などが出ていた）。 */
+    venue?: string;
+  }): ScheduleOnlyMatch[] {
+    const now = Date.now();
+    const limit = windowLimitMs(filter.window, now);
+    const meetsQuery = Recommender.searchMatcher(searchQuery, now);
+    return Recommender.scheduleOnlyEditions(DATA)
+      .filter((m) => {
+        // 同じ会議の重なる会期に投稿締切があるなら、別出典の空の回を「未定」と案内しない。
+        const knownSubmission = DATA.conferences
+          .find((conf) => conf.key === m.key)
+          ?.editions?.some(
+            (ed) =>
+              ed.event_start &&
+              ed.event_end &&
+              ed.event_start <= m.eventEnd &&
+              m.eventStart <= ed.event_end &&
+              [...(ed.deadlines || []), ...(ed.schedule_deadlines || [])].some(
+                (dl) => dl.kind === "paper" || dl.kind === "abstract",
+              ),
+          );
+        if (knownSubmission) return false;
+        if (filter.venue && m.key !== filter.venue) return false;
+        if (filter.rank && !Recommender.rankMatches(m.rankPairs, filter.rank)) return false;
+        if (searchQuery.trim() && !meetsQuery(m.hay)) return false;
+        if (filter.domestic && m.tags.indexOf("domestic-jp") < 0) return false;
+        if (filter.online && !Recommender.placeOffersOnline(m.place)) return false;
+        if (filter.cats.length && !filter.cats.some((c) => m.cats.indexOf(c) >= 0)) return false;
+        if (m.eventDatePrecision === "not-announced") return !Number.isFinite(limit);
+        const segments = m.eventSegments?.length
+          ? m.eventSegments
+          : [{ start: m.eventStart, end: m.eventEnd }];
+        return segments.some((part) => {
+          const bounds = Recommender.eventDateBoundsMs(part.start, part.end, m.eventDatePrecision);
+          if (!bounds) return false;
+          const startMs = bounds[0] - 9 * 3_600_000;
+          const endExclusiveMs = bounds[1] + 15 * 3_600_000;
+          return endExclusiveMs > now && startMs < limit;
+        });
+      })
+      .sort((a, b) => a.eventStart.localeCompare(b.eventStart)) as unknown as ScheduleOnlyMatch[];
+  }
+
+  /* 会期だけ分かっている開催回（投稿締切が未収録の物）の一覧を、渡された箱に描く。
+   * 0 件の画面（`#emptyMeeting`）と、表の下の折りたたみ（`#scheduleOnlyBody`）が同じ物を使う
+   * （同じ情報を 2 通りの書き方で出さない – 語も並びもここが正本）。 */
+  function fillScheduleOnlyList(
+    box: HTMLElement,
+    matches: ScheduleOnlyMatch[],
+    limit: number,
+  ): number {
+    const found = matches.slice(0, limit);
+    if (!found.length) return 0;
+    const lead = document.createElement("strong");
+    lead.textContent = "投稿締切が未収録の開催回:";
+    box.appendChild(lead);
+    const list = document.createElement("ul");
+    list.className = "schedule-only-list";
+    found.forEach((m) => {
+      const item = document.createElement("li");
+      const label = document.createTextNode(
+        `${m.eventDatePrecision === "not-announced" ? "会期未発表" : Recommender.eventCellJa({ ed: { event_start: m.eventStart, event_end: m.eventEnd, event_date_precision: m.eventDatePrecision, event_segments: m.eventSegments } })} `,
+      );
+      item.appendChild(label);
+      const name = Recommender.titleWithYearJa(m.name, m.year);
+      if (m.link) {
+        const a = document.createElement("a");
+        a.href = m.link;
+        a.target = "_blank";
+        a.rel = "noopener";
+        a.textContent = name;
+        item.appendChild(a);
+      } else {
+        item.appendChild(document.createTextNode(name));
+      }
+      if (m.place) {
+        // 会期だけの会の開催地も、表と同じく日本語に寄せる（原文は title に残す）。
+        const shownPlace = Recommender.placeJa(m.place);
+        const placeNode = document.createElement("span");
+        placeNode.textContent = ` ＠${shownPlace}`;
+        if (shownPlace !== m.place) placeNode.title = String(m.place);
+        item.appendChild(placeNode);
+      }
+      list.appendChild(item);
+    });
+    box.appendChild(list);
+    if (matches.length > found.length) {
+      const more = document.createElement("button");
+      more.type = "button";
+      more.className = "filter-remove";
+      more.textContent = `残り ${(matches.length - found.length).toLocaleString("ja-JP")} 開催回を表示`;
+      more.addEventListener("click", () => {
+        box.textContent = "";
+        fillScheduleOnlyList(box, matches, matches.length);
+        box.tabIndex = -1;
+        box.focus();
+      });
+      box.appendChild(more);
+    }
+    box.appendChild(document.createTextNode(" 投稿締切が未収録の開催回は締切一覧に載せません。"));
+    const upcoming = document.createElement("a");
+    upcoming.href = "upcoming.html";
+    upcoming.textContent = "直近の締切と会期の一覧";
+    upcoming.title = "生成時点から一定期間の一覧です。期間外の開催回は載りません。";
+    box.appendChild(upcoming);
+    return found.length;
+  }
+
+  function renderNextMeetingNote(matches: ScheduleOnlyMatch[], limit = 3): void {
+    const box = $("emptyMeeting");
+    if (!box) return;
+    box.textContent = "";
+    box.hidden = true;
+    if (!fillScheduleOnlyList(box, matches, limit)) return;
+    box.hidden = false;
+  }
+
+  /* 表に行が出ているときも、投稿締切が未収録の開催回（会期だけ分かっている物）を
+   * 折りたたみで表の下に置く。件数だけ言われても、その会がどこにあるか分からず、
+   * `upcoming.html` を開いても絞り込めない（2026-10-18 に実測した行き止まり）。
+   * 表が 0 件のときは `#emptyMeeting` が同じ一覧を出すので、こちらは隠す。 */
+  function renderScheduleOnlyPanel(matches: ScheduleOnlyMatch[]): void {
+    const panel = $("scheduleOnlyPanel") as HTMLDetailsElement | null;
+    const summary = $("scheduleOnlySummary");
+    const body = $("scheduleOnlyBody");
+    if (!panel || !summary || !body) return;
+    body.textContent = "";
+    if (!matches.length) {
+      panel.hidden = true;
+      panel.open = false;
+      return;
+    }
+    summary.textContent = `投稿締切が未収録の開催回（会期だけ分かっている物）${countJa(matches.length)} 件`;
+    fillScheduleOnlyList(body, matches, 3);
+    panel.hidden = false;
+  }
+
+  /** 0 件時に「条件をまとめて外す」を出すべきか（既に全部外れていれば出さない）。 */
+  function filtersClearable(filter: {
+    window: string;
+    cats: number;
+    domestic: boolean;
+    online: boolean;
+    rank: string;
+    kind: string;
+    est: boolean;
+    query: string;
+  }): boolean {
+    return Boolean(
+      (filter.window && filter.window !== "all" && filter.window !== "") ||
+        filter.cats > 0 ||
+        filter.domestic ||
+        filter.online ||
+        (filter.rank && filter.rank !== "all" && filter.rank !== "") ||
+        // 種別だけを掛けた状態で 0 件になった人に「外せる条件はありません」と言わない。
+        filter.kind ||
+        // 「推定締切を含める」も外せる条件である（0 件案内が並べる項目と同じにする。
+        // 2026-09-23 の収録では推定だけを入れて 0 件になることが起きないため、
+        // 今日は画面で踏めないが、案内と数え上げをズレさせない）。
+        filter.est ||
+        filter.query.trim(),
+    );
+  }
+
+  function shouldGroupMonths(grouping: {
+    sortKey: string | null;
+    sortAsc: boolean;
+    paper: boolean;
+  }): boolean {
+    if (grouping.paper) return false;
+    if (!grouping.sortAsc) return false;
+    return !grouping.sortKey || grouping.sortKey === "rem" || grouping.sortKey === "date";
+  }
+
+  // 月キーは JST で決める（表示が JST なので、表示と違う単位で区切ると迷う）。
+  function monthKey(r: AppRow): string {
+    if (r.kind === "journal") return "";
+    // 月も「画面に出している暦日」で決める。幅を持つ行は `t` が締切の最も早い瞬間なので、
+    // それを見ると表示している暦日と違う月に入ることがある（残り・並びと同じ基準）。
+    const basis = Number.isFinite(r.tShown) ? r.tShown : r.t;
+    if (!Number.isFinite(basis)) return "";
+    const jst = new Date(basis + 9 * 3600000);
+    return `${jst.getUTCFullYear()}-${pad(jst.getUTCMonth() + 1)}`;
+  }
+
+  function monthHeading(key: string, count: number): string {
+    const parts = key.split("-");
+    return `締切 ${parts[0]}年${Number(parts[1])}月（${countJa(count)} 件）`;
+  }
+
+  function makeMonthRow(key: string, count: number) {
+    const tr = document.createElement("tr");
+    tr.className = "month-row";
+    const th = document.createElement("th");
+    th.colSpan = TABLE_COLUMNS_JA;
+    th.scope = "colgroup";
+    th.textContent = monthHeading(key, count);
+    tr.appendChild(th);
+    return tr;
+  }
+
+  /* 過ぎた締切の塊の先頭に出す見出し行。月見出しと同じ `month-row` を併せ持つ
+   * （支援技術のコラム対応と同じにしておかないと、列を跨ぐ行として読まれない）。 */
+  function makeSectionRow(label: string, count: number) {
+    const tr = document.createElement("tr");
+    tr.className = "month-row section-row";
+    const th = document.createElement("th");
+    th.colSpan = TABLE_COLUMNS_JA;
+    th.scope = "colgroup";
+    th.textContent = `${label}（${countJa(count)} 件）`;
+    tr.appendChild(th);
+    return tr;
+  }
+
   // ---- RENDERING ----
   let shown: AppRow[] = [];
   let drawn = 0;
+  // 推薦カード側の描画進捗（「さらに表示」を表と同じボタンで共有するため分けて持つ）。
+  let cardsDrawn = 0;
+  let recommendationList: AppRow[] = [];
+  // 月見出しの描画条件と、描画対象における月ごとの件数（見出しの「N 件」用）。
+  let groupMonths = false;
+  let monthCounts: Record<string, number> = {};
+  let lastMonthKey = "";
+  // 過ぎた締切の塊の件数と、ページ末尾で出していた見出し（「さらに表示」で繰り返さない）。
+  let pastBlockTotal = 0;
+  let lastPastBlock = -1;
 
-  function td(tr: HTMLTableRowElement, label: string, cls = "") {
-    const e = document.createElement("td");
+  /* 表のセルを作る。`rowHeader` を付けたセルは「その行が何の行か」を表す
+     **行ヘッダー**（`<th scope="row">`）にする – 1,126 行の表を一マスずつ読む時、
+     列名だけ読めても「どの会議か」が分からないと意味が取れない（2026-09-24 実測:
+     行ヘッダーは 0 個で、全マスが `td` だった）。見た目は `td` のまま（CSS 側）。 */
+  function td(tr: HTMLTableRowElement, label: string, cls = "", rowHeader = false) {
+    const e = document.createElement(rowHeader ? "th" : "td");
+    if (rowHeader) {
+      e.setAttribute("scope", "row");
+    }
     if (label) {
       e.setAttribute("data-label", label);
     }
@@ -1441,10 +4520,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
 
   function verificationAlert(status: string | undefined): string | null {
     if (!status || status === "verified") return null;
-    if (status === "changed") return "変更を検出";
-    if (status === "source-unreachable") return "公式ページ取得不能";
-    if (status === "manual-required" || status === "parser-failed") return "複数候補のため要確認";
-    return "再確認待ち";
+    return VERIFICATION_STATUS_LABELS[status] || "再確認待ち";
   }
 
   function makeRow(r: AppRow) {
@@ -1456,6 +4532,16 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         toggleDetail(r, tr);
         return;
       }
+      /* 行の文字をドラッグして選んだ人（会議名・会場・公式ページの名前をコピーしたかった）
+       * にもドロワーが開いていた（2026-09-23 実測: リンクと一致評価の目印以外では必ず開く
+       * 書き方で、`getSelection` の参照はビルド成果物に 1 件も無かった）。選んだ物が
+       * ドロワーと背景に隠れて、コピーしたい文字が消える。選択しているときは開かない。
+       * 選択がこの行のなかにあるときだけ止める（他所に残った選択を理由に、いま押した行を
+       * 開かないのは別の不親切になる）。 */
+      const selection = typeof window.getSelection === "function" ? window.getSelection() : null;
+      if (selection && !selection.isCollapsed && String(selection.toString()).trim()) {
+        if (tr.contains(selection.anchorNode)) return;
+      }
       if (target?.tagName !== "A") {
         openDrawer(r);
       }
@@ -1465,34 +4551,50 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       ? dateState === "definitely-past"
         ? { text: "締切日経過", cls: "past" }
         : dateState === "uncertain-on-date"
-          ? { text: "締切日です（終了済みの可能性あり）", cls: "today" }
+          ? /* 日付だけの締切がその日に入った時（時刻の幅が今を含む）。**短く書く** – この欄は
+             * 列の中で最も狭く、長い文は一字ずつ縦に折れて読めなくなる（2026-10-06 実測:
+             * 1280px の幅でこの列 65px・「締切日です（終了済みの可能性あり）」が 2 字/行）。
+             * `td.c-deadline` に `nowrap` を付けた上で、文言もこの長さに収める。 */
+            { text: "締切日（過ぎた可能性）", cls: "today" }
           : { text: "時刻未確認", cls: "" }
-      : remain(r.t);
+      : remain(r.tShown);
     // 常時受付ジャーナルは締切の概念がないため「本日終了」等の誤解を与えない表示にする
     if (r.kind === "journal") {
       rem = { text: "常時受付", cls: "" };
+    } else if (!Number.isFinite(r.t)) {
+      rem = { text: "締切未確認", cls: "" };
     }
 
     const c0 = td(tr, "残り", "c-deadline");
     line(c0, rem.text, `left ${rem.cls}`);
 
-    const c1 = td(tr, "日時");
+    const c1 = td(tr, "日時（JST）");
     if (r.kind === "journal") {
-      line(c1, "随時受付", "nowrap");
+      // 種別セル・CSV・詳細・てびきと同じ語に寄せる（1 行の中で 2 つの名前が見えると
+      // 別のものだと誤解する）。
+      line(c1, "常時受付", "nowrap");
+    } else if (!Number.isFinite(r.t)) {
+      line(c1, "投稿締切未確認", "nowrap");
     } else if (r.dateOnly) {
-      line(c1, r.localDate, "nowrap");
+      // 暦日だけ分かっている締切でも、動作計画は曜日で見込むので曜日を添える。
+      const dateOnlyDay = Recommender.weekdayJaFromDate(r.localDate);
+      line(c1, dateOnlyDay ? `${r.localDate}(${dateOnlyDay})` : r.localDate, "nowrap");
       line(c1, "時刻未確認", "sub nowrap");
     } else {
       const d = new Date(r.t);
-      line(c1, `${fmtDate(d)} UTC`, "nowrap");
-      line(c1, fmtJst(d), "sub nowrap");
-      line(c1, fmtAoE(d), "sub nowrap");
+      // JST を主表記にする。AoE 23:59 締切は JST では翌日の夜になるため、
+      // UTC 優先だと日本で何時までに提出すればよいか判定できない。
+      // 2 行目は公式ページの表記。AoE 併記は AoE で締切る会議だけに出す
+      // （JST 宣言の国内締切に AoE を見せると、実在しない AoE 締切があると誤解させる）。
+      line(c1, fmtJst(d), "nowrap");
+      const zone = Recommender.officialZone(r.dl);
+      line(c1, officialClockJa(zone, d), "sub nowrap");
     }
 
-    const c2 = td(tr, "会議");
+    const c2 = td(tr, "会議", "", true);
     const head = document.createElement("div");
     head.className = "conf";
-    const name = titleWithYear(r.conf.title || r.conf.key || "", r.ed.year);
+    const name = conferenceNameCell(r);
     const href = safeExternalUrl(r.ed.link || r.conf.link);
     if (href) {
       const a = document.createElement("a");
@@ -1505,6 +4607,21 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       head.textContent = name.trim();
     }
     c2.appendChild(head);
+    if (r.submission) line(c2, r.submission.language, "sub");
+    const detailButton = document.createElement("button");
+    detailButton.type = "button";
+    detailButton.className = "row-detail";
+    detailButton.textContent = "詳細・投稿日程";
+    detailButton.setAttribute(
+      "aria-label",
+      `${name.trim()}の${Recommender.kindLabelJa(r.kind)}の詳細・投稿日程`,
+    );
+    detailButton.addEventListener("click", (event) => {
+      event.stopPropagation();
+      openDrawer(r);
+    });
+    c2.appendChild(detailButton);
+
     if (r.conf.full_name && r.conf.full_name !== r.conf.title) {
       line(c2, r.conf.full_name, "sub");
     }
@@ -1516,20 +4633,31 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       tags.appendChild(s);
     });
     if (r._matchScore && r._matchScore >= 10) {
-      const ms = document.createElement("span");
-      // match-trigger: クリックで行内展開（この会議が選ばれた理由の内訳）
+      // match-trigger: 行内展開（この会議が選ばれた理由の内訳）。
+      // `<span>` + `onclick` だとキーボードで開けなかった（Tab で届かず、行の Enter は
+      // ドロワーを開くので理由の内訳に到達できない。2026-09-23 実測: ビルド成果物に
+      // `aria-expanded` は 1 箇所も無く、トリガは span）。ボタンにして開閉状態を出す。
+      const ms = document.createElement("button");
+      ms.type = "button";
       ms.className = "tag match match-trigger";
+      ms.setAttribute("aria-expanded", "false");
       ms.textContent = `一致評価 ${r._fitLabel || "評価保留"} ▾`;
       if (r._match?.agg) {
         const agg = r._match.agg;
         const parts: string[] = [];
-        if (agg.domain > 0) parts.push(`分野シグナル +${agg.domain}`);
-        if ((agg.venueName || 0) > 0) parts.push(`会議名一致 +${agg.venueName}`);
-        if (agg.paper > 0) parts.push(`採択論文一致 +${agg.paper}`);
-        if (agg.jp > 0) parts.push(`日本語一致 +${agg.jp}`);
-        if (agg.tags > 0) parts.push(`領域タグ +${agg.tags}`);
+        // 項目は当たった要素の名前だけを出す（てびきと同じ）。この数字は手作業の信号重みで、
+        // 画面のスコアとは別の計算なので、併記すると足して読む人だけに嘘が見える
+        // （2026-08-09 実測: 内訳を持つ候補 29 件すべてで内訳の和とスコアが違った。例は
+        // スコア 58 点 / 内訳の和 45、52 点 / 15）。以前ここから数字を外したとき、検査は
+        // ラベルの直後に値を繋ぐ古い書き方だけを禁じていたため、書き方を変えた数字が戻って
+        // いた（ビルド後もコメントは残るので、この説明に禁止された形その物を書かない）。
+        if (agg.domain > 0) parts.push("分野の一致");
+        if ((agg.venueName || 0) > 0) parts.push("会議名一致");
+        if (agg.paper > 0) parts.push("採択論文一致");
+        if (agg.jp > 0) parts.push("日本語一致");
+        if (agg.tags > 0) parts.push("主題の一致");
         if (agg.venue > 0) parts.push("過去掲載先一致");
-        if ((r._semScore ?? 0) > 0) parts.push(`意味類似度 ${r._semScore}点`);
+        if ((r._semScore ?? 0) > 0) parts.push(`意味の近さ ${r._semScore}点`);
         if (parts.length) ms.title = parts.join(" ／ ");
       }
       tags.appendChild(ms);
@@ -1544,13 +4672,25 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       const es = document.createElement("span");
       es.className = "tag est";
       es.textContent = "推定";
+      es.title = "推定: 過去の開催から見込んだ日付（公式発表前）";
       tags.appendChild(es);
+    }
+    // 締切が延びていたことは、一覧に出さないと分からない（2026-09-23 実測: 上流の締切名に
+    // "Extended" と付く 30 行が、画面では他の行と区別が無く、検索も英語でしか引けなかった）。
+    if (Recommender.isExtendedDeadline(r.dl)) {
+      const xs = document.createElement("span");
+      xs.className = "tag est";
+      xs.textContent = Recommender.extendedLabelJa();
+      tags.appendChild(xs);
     }
     const verificationTag = verificationAlert(r.dl.verification?.status);
     if (verificationTag) {
       const vs = document.createElement("span");
       vs.className = "tag est";
       vs.textContent = verificationTag;
+      // 札の語だけでは何をすればよいか分からない。触ったときに、意味と次の一手を出す。
+      // 全行に出る札なので短く（支援技術と AI は札ごとに此の文を読む）。
+      vs.title = `${verificationTag}: 公式ページで未照合。投稿前に公式ページで確認を`;
       tags.appendChild(vs);
     }
     if (r.kind === "journal") {
@@ -1561,13 +4701,17 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     } else if (rowIsPast(r, Date.now())) {
       const pp = document.createElement("span");
       pp.className = "tag past";
-      pp.textContent = "締切済み（次回予定）";
+
+      pp.textContent = Recommender.pastDeadlineTagJa(r, Date.now());
       tags.appendChild(pp);
     }
-    if ((r.tags || []).indexOf("domestic-jp") >= 0) {
+    /* 國內の札（畫面と同じ語 – 語の正本は recommender 側。`domestic-jp` は構造のタグ
+     * なので主題欄には出さず、列の外に一つ出す）。日本で開催される國際会議と
+     * 國內の學會を區別するのが此の札の役目。 */
+    if (Recommender.isDomesticTag(r.tags)) {
       const dj = document.createElement("span");
       dj.className = "tag";
-      dj.textContent = "国内";
+      dj.textContent = Recommender.domesticTagLabelJa(r.tags);
       tags.appendChild(dj);
     }
     if (tags.childNodes.length) {
@@ -1575,43 +4719,63 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     }
 
     const c3 = td(tr, "種別");
-    line(c3, (KIND_LABEL[r.kind] || r.kind) + (r.dupLabel ? `: ${r.dupLabel}` : ""));
-    const detail: string[] = [];
-    if (r.dl.round && r.dl.round > 1) {
-      detail.push(`第 ${r.dl.round} ラウンド`);
-    }
-    if (r.dl.label) {
-      detail.push(r.dl.label);
-    }
-    if (detail.length) {
-      line(c3, detail.join(" / "), "sub");
+    line(c3, Recommender.kindLabelJa(r.kind) + (r.dupLabel ? `: ${r.dupLabel}` : ""));
+    const detail = kindDetailJa(r.dl.round, r.dl.label);
+    if (detail) {
+      line(c3, detail, "sub");
     }
 
     const c4 = td(tr, "ランク");
     if (r.rankPairs.length) {
       r.rankPairs.forEach((p) => {
-        const s = p.split(":");
         const e = document.createElement("span");
         e.className = "tag";
-        e.textContent = `${s[0].toUpperCase()} ${s[1]}`;
+        // 内部トークンの `N` をそのまま出さない（表・ドロワーで同じ語を使う）。
+        e.textContent = Recommender.rankPairLabelJa(p);
+        if (e.textContent.indexOf(RANK_UNRATED_JA) >= 0) {
+          e.title = RANK_UNRATED_TITLE_JA;
+        }
         c4.appendChild(e);
       });
     } else {
-      line(c4, "-", "sub");
+      const rankCell = line(c4, UNCONFIRMED_JA, "sub");
+      // 理由の語は行の詳細と同じ入口から取る（注記と本文で言い方が分かれるのを防ぐ）。
+      if (rankCell) rankCell.title = fieldReasonsJa.rank(r);
     }
 
     const c5 = td(tr, "会期");
-    let span = "-";
-    if (r.ed.event_start) {
-      span =
-        r.ed.event_end && r.ed.event_end !== r.ed.event_start
-          ? `${r.ed.event_start} 〜 ${r.ed.event_end}`
-          : r.ed.event_start;
-    }
-    line(c5, span, "sub nowrap");
+    const eventNa = Recommender.fieldNotApplicableJa(r);
+    // 会期の式は一覧・行の詳細・CSV で `eventCellJa` を共有する。ここで別の式を持つと
+    // 行の詳細だけ公式ページの原文（英語）になった（SPEC §7）。
+    const span = Recommender.eventCellJa(r) || (eventNa ? NOT_APPLICABLE_JA : UNCONFIRMED_JA);
+
+    const spanCell = (() => {
+      const 部 = span.split(/\s*〜\s*/);
+      if (部.length !== 2 || !部[0] || !部[1]) return line(c5, span, "sub nowrap");
+      const d = document.createElement("div");
+      d.className = "sub nowrap";
+      部.forEach((text, i) => {
+        if (i) d.appendChild(document.createTextNode(" 〜 "));
+        const s = document.createElement("span");
+        s.className = "span-part";
+        s.textContent = text;
+        d.appendChild(s);
+      });
+      c5.appendChild(d);
+      return d;
+    })();
+    // 理由の語は行の詳細と同じ入口から取る（2 箇所で条件を書くと、どちらかだけ直る）。
+    if (spanCell) spanCell.title = fieldReasonsJa.event(r);
 
     const c6 = td(tr, "開催地");
-    line(c6, r.ed.place || "-", "sub");
+    const placeShown = Recommender.placeJa(r.ed.place);
+    const placeNa = Recommender.fieldNotApplicableJa(r);
+    const placeCell = line(c6, placeShown || (placeNa ? NOT_APPLICABLE_JA : UNCONFIRMED_JA), "sub");
+    if (placeCell) {
+      // 日本語化は流し読み用。会場名・市区郡を含む原文は title に落とす。
+      if (placeShown && placeShown !== r.ed.place) placeCell.title = String(r.ed.place || "");
+      else placeCell.title = fieldReasonsJa.place(r);
+    }
 
     return tr;
   }
@@ -1630,55 +4794,59 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   }
 
   function verificationSummary(dl?: DeadlineRecord) {
-    const verification = dl?.verification;
-    if (!verification) return "";
-    const sourceLabels: Record<string, string> = {
-      "official-cfp": "公式CFP",
-      publisher: "出版社ページ",
-      "official-homepage": "公式ホームページ",
-      aggregator: "集約サイト",
-    };
-    const statusLabels: Record<string, string> = {
-      verified: "確認済み",
-      pending: "再確認待ち",
-      changed: "変更を検出",
-      retryable: "再試行待ち",
-      "source-unreachable": "公式ページ取得不能",
-      "parser-failed": "複数候補のため要確認",
-      "manual-required": "複数候補のため要確認",
-    };
-    const evidence = (dl.evidence ?? []).find(
-      (item) => item.verifiedFields ?? item.verified_fields,
-    );
-    const verified = evidence?.verifiedFields ?? evidence?.verified_fields;
-    const fields = Array.isArray(verified)
-      ? verified.join("・")
-      : verification.selector_or_field || "日付・時刻・タイムゾーン";
-    const verifiedAt = verification.last_verified_at
-      ? new Date(verification.last_verified_at).toLocaleString("ja-JP")
-      : "未確認";
+    /* 行の詳細の「公式確認」に出る語は、収録データの内部表記のまま見せない（2026-08-09 実測:
+     * ビルド後のデータで `source_class` が `unknown` の締切が 236 件あり「確認元: unknown」と
+     * 出ていた。`verifiedFields` は `date・kind・round` のような内部の項目名でそのまま
+     * 出ていた（項目その物が無いときの既定値は「日付・時刻・タイムゾーン」と日本語なので、
+     * 同じ欄の中で日本語と機械の表記が混ざっていた）。知らない語を勝手に翻訳しない –
+     * 中身を推測して書くほうが悪いので、そのまま出す。
+     *
+     * 組み立ては recommender の正本（`verificationSummaryJa`）の一つに寄せた。畫面は
+     * 其の部品を HTML に並べ、**MCP は其の儘**返す – 畫面と AI が同じ字面を見る。
+     * （第 1106 回: MCP は内部の鍵名のまま出して居た。）拔き出して動かす検査は
+     * `Recommender` を注入する。 */
+
+    const 要約 = Recommender.verificationSummaryJa(dl, Date.now());
+    if (!要約) return "";
     return (
       '<div class="verification-summary"><b>公式確認</b> ' +
-      esc(verifiedAt) +
+      esc(要約.verified_at) +
       "<br><b>確認元</b> " +
-      esc(sourceLabels[verification.source_class || ""] || verification.source_class || "公式") +
+      esc(要約.source) +
       "<br><b>確認範囲</b> " +
-      esc(fields) +
+      esc(要約.scope) +
       "<br><b>状態</b> " +
-      esc(statusLabels[verification.status || ""] || verification.status || "未確認") +
-      (verification.next_check_at
-        ? "<br><b>次回確認予定</b> " +
-          esc(new Date(verification.next_check_at).toLocaleString("ja-JP"))
-        : "") +
+      esc(要約.status) +
+      (要約.next_check_at ? `<br><b>次回確認予定</b> ${esc(要約.next_check_at)}` : "") +
       "</div>"
     );
+  }
+
+  /* 内訳の項目は「当たり方の説明」を項目の下にそのまま書く。以前は説明を `title` 属性
+   * （マウスを乗せたときだけ出る注記）に入れていたが、タッチ操作の端末では注記が出ず、
+   * キーボードや読み上げでも辿れなかった（2026-08-09 生成ビルドで実測: 内訳に出る 9 項目の
+   * 説明が `title` にしか無く、ビルド後の `app.js` に残る `title="` は 2 箇所だけだった）。
+   * 項目と説明は同じ組のデータなので、組み立ても一か所に寄せる。 */
+  function reasonChipHtml(chips: Array<[string, string, string]>): string {
+    return chips
+      .map(
+        (chip) =>
+          '<span class="reason-chip"><b>' +
+          esc(chip[0]) +
+          "</b>" +
+          // 順位など実数がある項目だけ値を出す（空の <em> は空白の塊に見える）。
+          (chip[1] ? `<em>${esc(chip[1])}</em>` : "") +
+          (chip[2] ? `<span class="reason-why">${esc(chip[2])}</span>` : "") +
+          "</span>",
+      )
+      .join("");
   }
 
   function makeDetailRow(r: AppRow) {
     const tr = document.createElement("tr");
     tr.className = "detail-row";
     const td = document.createElement("td");
-    td.colSpan = 7;
+    td.colSpan = TABLE_COLUMNS_JA;
     const m: ScoreBreakdown | undefined = r._match;
     const agg = m?.agg ?? { domain: 0, name: 0, paper: 0, jp: 0, tags: 0, venue: 0 };
     let lines: PaperRecord[] = [];
@@ -1687,81 +4855,84 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       lines = Recommender.parsePaperLines(paperText);
     }
 
+    /* 内訳の chips は「当たった要素」の名前だけを出す（2 番目の欄は順位などの
+     * 実数があるときだけ埋める）。以前は `+18` のような数字を並べていたが、それは
+     * 手作業で決めた信号重み（`SIG_WEIGHTS`）で、**画面に出すスコアとは別の計算**だった
+     * （スコアは各項目の順位の融合 + 会議名一致 + 分野の推定で決まる – 2026-09-23 実測:
+     * 「一致スコア 65点」の行の内訳の数字は 18 + 9 が並ぶだけで合計 27、63 点的な行は
+     * 合計 21、59 点的な行は合計 57）。`+` 付きの数字は足して読むものに見えるため、
+     * 画面の噓になっていた。当たり外れだけが本当に分かる形にする。 */
     const chips: Array<[string, string, string]> = [];
     if (agg.domain > 0)
       chips.push([
-        "分野シグナル",
-        `+${agg.domain}`,
-        "会議のカテゴリと論文キーワードが一致（HPC/AI/Security 等）",
+        "分野の一致",
+        "",
+        "会議の分野と論文のキーワードが一致（HPC・AI・セキュリティなど）",
       ]);
     if ((agg.venueName || 0) > 0)
-      chips.push([
-        "会議名一致",
-        `+${agg.venueName}`,
-        "会議名の内容語が論文タイトル・キーワードに含まれる",
-      ]);
+      chips.push(["会議名一致", "", "会議名の内容語が論文タイトル・キーワードに含まれる"]);
     if (agg.paper > 0)
-      chips.push(["採択論文一致", `+${agg.paper}`, "この会議の代表採択論文の語彙と一致"]);
-    if (agg.jp > 0) chips.push(["日本語一致", `+${agg.jp}`, "日本語の会議名・論文語が一致"]);
+      chips.push(["採択論文一致", "", "この会議で採択された論文に使われた語と一致"]);
+    if (agg.jp > 0) chips.push(["日本語一致", "", "日本語の会議名・論文語が一致"]);
     if (agg.tags > 0)
-      chips.push(["領域タグ", `+${agg.tags}`, "会議の領域タグ（real-time 等）が論文に含まれる"]);
+      chips.push(["主題の一致", "", "会議の主題（real-time など）が論文に書かれている"]);
     if (agg.venue > 0)
       chips.push([
         "過去掲載先一致",
         "補助",
-        "過去に同じ掲載先が確認された補助シグナル（トピック一致とは別）",
+        "過去にこの掲載先への投稿が確認されている（主題の一致とは別の補助情報）",
       ]);
     if ((r._semScore ?? 0) > 0)
       chips.push([
-        "意味検索候補",
-        `順位 ${r._semanticRank || "—"}`,
-        "埋め込み検索の候補順位を RRF に加算",
+        "意味検索の候補",
+        /* 順位は上位の候補にだけ付く（近さを示す点は上位以外にも付く）。横棒の記号で
+         * 誤魔化さず語で書く。このサイトの「分からない」は 未確認 / 該当なし / 評価なし
+         * の語で出すことにしていて、記号は使わない（2026-08-09 実測: ビルド後の
+         * `app.js` に U+2014 の横棒が 2 箇所残り、候補を 200 件出した画面で 44 件が
+         * 「順位 —」になっていた）。 */
+        r._semanticRank ? `順位 ${r._semanticRank}` : "順位は出ていません",
+        "意味検索（文の意味の近さで探す検索）の順位も、順序決めに使う",
       ]);
     if (r._boosted)
-      chips.push(["同分野ブースト", "+10", "掲載先タグから推定した分野とこの会議が一致"]);
-    if (!chips.length) chips.push(["一致要素なし", "—", "低スコアでも閾値を超えたため表示"]);
+      chips.push(["同じ分野（掲載先から推定）", "", "掲載先から推定した分野とこの会議が一致"]);
+    if (!chips.length)
+      chips.push(["目立つ一致はない", "", "一致の数は少ないが、表示の下限は超えている"]);
 
     let html = '<div class="detail-inner">';
     html +=
       '<div class="detail-head">一致評価 ' +
       esc(r._fitLabel || "評価保留") +
-      " の内訳（この会議が選ばれた理由）</div>";
+      " の内訳（この会議で当たった要素）</div>";
     let comp: string;
     if (r._semanticRank) {
+      /* 語彙検索の順位は、言葉が重なった候補にだけ付く（語彙の点が 0 の行には付かない）。
+       * 意味検索で見つかる行は語彙の点が 0 ことがあり（2026-08-09 実測: 候補 200 件中
+       * 3 件。例 `cade` は語彙 0 点・意味の近さ 0.899 で意味検索 1 位）、その行で
+       * 「言葉の一致（語彙検索）で — 位」と横棒を出していて、順位が無いのか値が壊れたのか
+       * 読めなかった。
+       * 語彙の点はその行に実際に出ている値なので、それをそのまま書く（記号で潰さない）。 */
+      const lexicalJa = r._lexicalRank
+        ? `言葉の一致（語彙検索）で ${r._lexicalRank} 位`
+        : `言葉の一致（語彙検索）では ${r._vocabScore} 点で順位は無く`;
       comp =
-        "RRF: 語彙検索順位 " +
-        (r._lexicalRank || "—") +
-        " + 意味検索順位 " +
+        lexicalJa +
+        "、意味検索で " +
         r._semanticRank +
-        " → 一致評価 " +
+        " 位 → 合わせて 一致評価 " +
         esc(r._fitLabel || "評価保留");
     } else if (semState === "loading") {
-      comp = `語彙スコア ${r._vocabScore}点（意味検索を実行中…）`;
+      comp = `言葉の一致スコア ${r._vocabScore}点（意味検索を実行中…）`;
     } else if (semState === "error") {
-      comp = `語彙スコア ${r._vocabScore}点（埋め込みが使えないため意味検索なし）`;
+      comp = `言葉の一致スコア ${r._vocabScore}点（意味検索が使えないため、言葉の一致だけで順位を決めています）`;
     } else {
-      comp = `語彙スコア ${r._vocabScore}点`;
+      comp = `言葉の一致スコア ${r._vocabScore}点`;
     }
     html +=
       '<div class="detail-comp">' +
       comp +
-      (m?.evidence?.some((evidence) => evidence.rank) ? "（順位情報を RRF で集約）" : "") +
+      (m?.evidence?.some((evidence) => evidence.rank) ? "（2つの検索の順位を合わせて集約）" : "") +
       "</div>";
-    html +=
-      '<div class="reason-chips">' +
-      chips
-        .map(
-          (chip) =>
-            '<span class="reason-chip" title="' +
-            esc(chip[2]) +
-            '"><b>' +
-            esc(chip[0]) +
-            "</b><em>" +
-            esc(chip[1]) +
-            "</em></span>",
-        )
-        .join("") +
-      "</div>";
+    html += `<div class="reason-chips">${reasonChipHtml(chips)}</div>`;
 
     if (lines.length > 1) {
       html += '<div class="perline">';
@@ -1771,11 +4942,12 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         const sc = pl ? pl.score : 0;
         const parts: string[] = [];
         if (pl) {
-          if (pl.details.domain > 0) parts.push(`分野 +${pl.details.domain}`);
-          if (pl.details.name > 0) parts.push(`会議名 +${pl.details.name}`);
-          if (pl.details.paper > 0) parts.push(`採択論文 +${pl.details.paper}`);
-          if (pl.details.jp > 0) parts.push(`日本語 +${pl.details.jp}`);
-          if (pl.details.tags > 0) parts.push(`タグ +${pl.details.tags}`);
+          // 同じ理由で項目は名前だけ（`makeRow`・`makeRecommendationCard` と同じ約束）。
+          if (pl.details.domain > 0) parts.push("分野");
+          if (pl.details.name > 0) parts.push("会議名");
+          if (pl.details.paper > 0) parts.push("採択論文");
+          if (pl.details.jp > 0) parts.push("日本語");
+          if (pl.details.tags > 0) parts.push("タグ");
           if (pl.details.venue > 0) parts.push("過去掲載先");
         }
         html +=
@@ -1799,6 +4971,11 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       }
       html += "</div>";
     }
+
+    const shiftLineJa = Recommender.deadlineShiftLineJa(r.dl);
+    if (shiftLineJa) {
+      html += `<p style="margin-bottom: 8px;">${esc(shiftLineJa)}</p>`;
+    }
     html += verificationSummary(r.dl);
     html += "</div>";
     td.innerHTML = html;
@@ -1808,54 +4985,283 @@ function semanticOutput(value: unknown): value is SemanticOutput {
 
   function toggleDetail(r: AppRow, tr: HTMLTableRowElement) {
     const next = tr.nextElementSibling;
-    if (next?.classList.contains("detail-row")) {
+    // 開閉を支援技術に伝える（行そのものは `detail-row` の追加・削除で分かるが、
+    // トリガの状態が分からないと「押せる物」だと気づけない）。
+    const setExpanded = (open: boolean) => {
+      const trigger = tr.querySelector<HTMLElement>(".match-trigger");
+      if (trigger && trigger.tagName === "BUTTON") {
+        trigger.setAttribute("aria-expanded", String(open));
+      }
+    };
+    if (next && (next.classList.contains("detail-row") || next.classList.contains("month-row"))) {
       next.remove();
+      setExpanded(false);
       return;
     }
     tr.parentNode?.insertBefore(makeDetailRow(r), tr.nextSibling);
+    setExpanded(true);
+  }
+
+  /** 「さらに表示」のラベル（残り件数を出す。表と推薦カードで同じ形にする）。 */
+  function moreButtonLabel(drawnCount: number, total: number): string {
+    return `さらに表示 (残り ${countJa(total - drawnCount)} 件)`;
+  }
+
+  /* 「すべて表示」のラベル。「さらに表示」と同じ形にしておく（2 つ並んだときに、
+   * 片方だけ言い方が違うと違いが読めない）。40 件ずつの追加を 11 回押させるのは
+   * 現実的でないので、残りを一気に入れる口を同じ場所に出す（印刷では全行出る）。 */
+  function showAllButtonLabel(drawnCount: number, total: number): string {
+    return `すべて表示 (残り ${countJa(total - drawnCount)} 件)`;
+  }
+
+  /** 「さらに表示」と「すべて表示」の表示可否・ラベルを、描画済み件数と総数からそろえる。 */
+  function updateMoreButton(drawnCount: number, total: number) {
+    const btn = $("more");
+    const all = $("showAll");
+    if (drawnCount < total) {
+      btn.hidden = false;
+      btn.textContent = moreButtonLabel(drawnCount, total);
+      all.hidden = false;
+      all.textContent = showAllButtonLabel(drawnCount, total);
+    } else {
+      btn.hidden = true;
+      all.hidden = true;
+    }
+  }
+
+  /** 「さらに表示」を推薦カードで押したとき: 次の 20 件を足す（表と違い作り直しは不要）。 */
+  function drawMoreCards() {
+    const cards = $("recommendationCards");
+    const now = Date.now();
+    const end = Math.min(cardsDrawn + RECOMMENDATION_PAGE, recommendationList.length);
+    for (let i = cardsDrawn; i < end; i += 1) {
+      cards.appendChild(makeRecommendationCard(recommendationList[i], now));
+    }
+    cardsDrawn = end;
+    updateMoreButton(cardsDrawn, recommendationList.length);
+    keepFocusAfterMoreDraw();
+  }
+
+  /** 「すべて表示」: 残りを一気に入れる。推薦カードでも表でも、続きの出し方は
+   * 「さらに表示」と同じ関数を使う（式を 2 つ持つと片方だけ古くなる）。 */
+  function drawAll() {
+    let guard = 0;
+    while (guard <= shown.length + recommendationList.length) {
+      const before = !$("recommendationCards").hidden ? cardsDrawn : drawn;
+      if (!$("recommendationCards").hidden) {
+        if (cardsDrawn >= recommendationList.length) break;
+        drawMoreCards();
+      } else {
+        if (drawn >= shown.length) break;
+        drawMore();
+      }
+      // 進まなかったら無限ループにしない（`shown` が空のときにあり得る）。
+      const after = !$("recommendationCards").hidden ? cardsDrawn : drawn;
+      if (after <= before) break;
+      guard += 1;
+    }
+    keepFocusAfterMoreDraw();
+  }
+
+  /* 「さらに表示」「すべて表示」を最後まで押すと、押した人自身のフォーカスが、消えた物に
+   * 乗ったままになる。そのままだと次の Tab は画面の先頭からやり直しになり、読み上げも
+   * 居場所を失う（マウスならスクロールバーで済むが、キーボードだけの人には一番きつい）。
+   * **押して足した場合だけ**、最後に足した行（カードならそのカード）へ移す。条件を変えて
+   * `render()` から呼ばれたときはフォーカスが条件の欄に乗っているので、この関数は入らない。 */
+  function keepFocusAfterMoreDraw() {
+    const more = $("more");
+    const all = $("showAll");
+    const active = document.activeElement as HTMLElement | null;
+    if (active !== more && active !== all) return;
+    // まだ足す物が残っているなら、ボタンは生きているので動かさない。
+    if (!more.hidden || !all.hidden) return;
+    const cards = $("recommendationCards");
+    let target: HTMLElement | null = null;
+    if (!cards.hidden) {
+      const last = cards.lastElementChild as HTMLElement | null;
+      if (last) {
+        // カードは既定でフォーカスをもらえない（行は `tabIndex = -1` を持っている）。
+        if (last.tabIndex < 0) last.tabIndex = -1;
+        target = last;
+      }
+    } else {
+      const rows = dataRows();
+      target = rows.length ? rows[rows.length - 1] : null;
+    }
+    if (!target) return;
+    target.focus();
+    sharedRowNotice(
+      cards.hidden
+        ? `この一覧 ${countJa(shown.length)} 件をすべて出しました`
+        : `候補 ${countJa(recommendationList.length)} 件をすべて出しました`,
+    );
   }
 
   function drawMore() {
+    // 推薦モードでは表が出ていない。同じボタンでカードの続きを出す。
+    if (!$("recommendationCards").hidden) {
+      drawMoreCards();
+      return;
+    }
     const tbody = $("tbody");
     const frag = document.createDocumentFragment();
     const end = Math.min(drawn + PAGE, shown.length);
     for (let i = drawn; i < end; i++) {
+      if (groupMonths) {
+        const key = monthKey(shown[i]);
+        // 前のページ末尾と同じ月の行なら見出しは繰り返さない。
+        if (key && key !== lastMonthKey) {
+          frag.appendChild(makeMonthRow(key, monthCounts[key] || 0));
+        }
+        lastMonthKey = key;
+      }
+      // 過ぎた締切を表示に含めるときは、塊の切り替わりに見出しを出す（件数が分かれて
+      // いるのに理由が分からない行の壁にしないため。SPEC §7）。
+      if (pastBlockTotal > 0 && pastBlockTotal < shown.length) {
+        const block = shown[i]._pastBlock || 0;
+        if (block !== lastPastBlock) {
+          frag.appendChild(
+            makeSectionRow(
+              block ? "過ぎた締切" : "これからの締切",
+              block ? pastBlockTotal : shown.length - pastBlockTotal,
+            ),
+          );
+          lastPastBlock = block;
+        }
+      }
       frag.appendChild(makeRow(shown[i]));
     }
     tbody.appendChild(frag);
     drawn = end;
-    const btn = $("more");
-    if (drawn < shown.length) {
-      btn.hidden = false;
-      btn.textContent = `さらに表示 (残り ${shown.length - drawn} 件)`;
-    } else {
-      btn.hidden = true;
-    }
+    updateMoreButton(drawn, shown.length);
+    keepFocusAfterMoreDraw();
+  }
+
+  /* 候補に締切が過ぎた会議が混ざる理由と件数を、候補の数の隣で言う（2026-10-18 に研究者役の
+   * 試しで、日本語の論文を入れると上位に `締切済み` の会議が並び、まだ出せる候補と読めた）。
+   * MCP の `recommend_venues` は同じ事を返している（「うち N 件は締切が過ぎた会議です –
+   * 次回の開催に向けた参考に載せています」）。数えるのは**締切が過ぎたと確認できた行**だけで、
+   * 受付状況が未確認の行は「これから」とも「過ぎた」とも数えない（推測しない – AGENTS.md）。
+   * 画面に出る語はカードの札と同じ `締切済み`。 */
+  function recommendationPastNoteJa(rows: readonly AppRow[]): string {
+    const past = rows.filter((r) => r._availability?.status === "past").length;
+    if (!past) return "";
+    return (
+      ` ｜ うち ${countJa(past)} 件は締切が過ぎた会議です` +
+      "（カードでは「締切済み」。次回の開催に向けた参考に載せています）"
+    );
+  }
+
+  /* 推薦の候補から、受付状況が「締切済み」と確認できた会議を除く（任意の絞り込み）。
+   * 受付状況が未確認の候補は残す – 分からない物を「過ぎた」側に寄せない（推測しない）。 */
+  function withoutClosedCandidates(rows: readonly AppRow[]): AppRow[] {
+    return rows.filter((row) => row._availability?.status !== "past");
+  }
+
+  /* 候補を「締切が近い順」に並べ替える（任意）。三つの群に分ける:
+   *   0. 締切がまだ来ていない候補（日付のある物）– 近い順
+   *   1. 日付を持たない候補（常時受付の論文誌・締切未確認）– 論文との一致順のまま
+   *   2. 締切が過ぎた候補 – 最後（`open=1` を入れていれば、そもそも残っていない）
+   * 群の中は元の並び（論文との一致順）を保つ – `sort` は安定なので 0 を返すだけでよい。
+   * 日付の比較は締切一覧と同じ `compareDeadlineRows`（表示している暦日 `tShown` で見る）。 */
+  function orderCandidatesByDeadline(rows: readonly AppRow[]): AppRow[] {
+    const 群 = (row: AppRow): number => {
+      const status = row._availability?.status;
+      if (status === "past") return 2;
+      if (status === "open" || status === "uncertain") return 0;
+      return 1;
+    };
+    return rows.slice().sort((a, b) => {
+      const diff = 群(a) - 群(b);
+      if (diff) return diff;
+      if (群(a) !== 0) return 0;
+      return compareDeadlineRows(a, b, 1);
+    });
+  }
+
+  /* 候補の並びが既定（論文との一致順）でないときは、件数欄で言う（黙って並べ替えない –
+   * 締切の一覧が `sortNoteJa` で並びを書くのと同じ約束）。 */
+  function recommendationOrderNoteJa(order: string): string {
+    return order === "deadline" ? " ｜ 並び順: 締切が近い順（日付の無い候補は後ろ）" : "";
+  }
+
+  /* 推薦のカードに出すランクの札。一覧の「ランク」列と同じ札（`rankPairLabelJa`）で、
+   * 投稿先を選ぶときの主な手掛かりなのに、カードには出ていなかった。
+   * 収録にランクが無い会議は 1 つだけ「ランク未確認」を返す（空欄にしない – 一覧の
+   * 「未確認」と同じ意味。MCP の文も同じ語）。札の説明は行の詳細と同じ
+   * `fieldReasonsJa.rank` から取る（同じ説明を二度書かない）。 */
+  function recommendationRankTagsJa(r: AppRow): Array<{ text: string; title: string }> {
+    const reason = fieldReasonsJa.rank(r);
+    const pairs = r.rankPairs || [];
+    if (!pairs.length) return [{ text: "ランク未確認", title: reason }];
+    return pairs.map((pair) => ({ text: Recommender.rankPairLabelJa(pair), title: reason }));
+  }
+
+  /* 推薦のカードに出す残り（`あと N 日`）。一覧の「残り」列と**同じ数え方**を使う:
+   * 時刻のある締切だけを `remain` で数え、日付だけの締切（時刻未確認）は数えない
+   * （一覧の「残り」列も、日付だけの行には日数を出さず「時刻未確認」と書いている）。
+   * 並びを「締切が近い順」にしたとき、どれが近いかをカードだけで読めるようにする。 */
+  function recommendationRemainingJa(
+    availability: { status?: string; timestamp?: number | null } | null | undefined,
+  ): { text: string; cls: string } | null {
+    const status = availability?.status;
+    if (status !== "open" && status !== "uncertain") return null;
+    const stamp = availability?.timestamp;
+    if (typeof stamp !== "number" || !Number.isFinite(stamp)) return null;
+    const 残り = remain(stamp);
+    return 残り.text && 残り.text !== "―" ? 残り : null;
+  }
+
+  /* ランクの絞り込みで外した件数。外す入口（「ランク」と「すべて」）をそのまま書く。 */
+  function recommendationRankExcludedNoteJa(count: number, rank: string): string {
+    if (!count || !rank) return "";
+    return ` ｜ ランク「${rankFilterLabelJa(rank)}」の候補 ${countJa(count)} 件を除いています（「ランク」を「すべて」に戻すと出ます）`;
+  }
+
+  /* 外した件数を候補の数の隣で言う（黙って消さない – 画面の他の絞り込みと同じ約束）。
+   * 外す入口の名前をそのまま書く（条件を外す場所を探させない）。 */
+  function recommendationExcludedNoteJa(count: number): string {
+    if (!count) return "";
+    return ` ｜ 締切が過ぎた候補 ${countJa(count)} 件を除いています（「締切が過ぎた候補を除く」を外すと出ます）`;
   }
 
   function recommendationAvailability(r: AppRow) {
     const a = r._availability;
-    if (!a) return "受付状況不明";
+    // 画面の「分からない」の語は 未確認 / 該当なし / 評価なし に揃えてある（てびきの
+    // 「空欄の出し方」に同じ約束を書いている）。カードだけが「不明」を出していた
+    // （2026-09-23 実測: 「受付状況不明」。てびきにも出てこない語だった）。
+    if (!a) return `受付状況${UNCONFIRMED_JA}`;
     if (a.status === "ongoing") return "常時受付";
+    // 日付の向きは表と揃える（JST を主表記、曜日を添える、公式の表記は副で出す）。
+    // カードだけ UTC 主表記だった（2026-09-23 実測: 「次回締切: 2026-10-05 23:59 UTC /
+    // 2026-10-05 15:59 AoE」）。AoE 23:59 締切は JST では翌日の夜になるので、UTC 優先だと
+    // 日本で何時までに出せばよいか決められない。表は第 65 回から JST を主にしている。
+    const dayJa = (date: string) => {
+      const weekday = Recommender.weekdayJaFromDate(date);
+      return weekday ? `${date}(${weekday})` : date;
+    };
     if (a.status === "uncertain" && a.local_date) {
-      return `次回締切: ${a.local_date}（時刻未確認。終了済みの可能性があります）`;
+      return `次回締切: ${dayJa(a.local_date)}（時刻未確認。終了済みの可能性があります）${a.estimated ? "（推定）" : ""}`;
     }
     if (a.status === "open" && a.local_date) {
-      return `次回締切: ${a.local_date}（時刻未確認）`;
+      return `次回締切: ${dayJa(a.local_date)}（時刻未確認）${a.estimated ? "（推定）" : ""}`;
     }
     if (a.status === "open" && a.timestamp) {
-      return (
-        "次回締切: " +
-        fmtDate(new Date(a.timestamp)) +
-        " UTC / " +
-        fmtAoE(new Date(a.timestamp)) +
-        (a.estimated ? "（推定）" : "")
-      );
+      const d = new Date(a.timestamp);
+      const zone = Recommender.officialZone(r.dl);
+      // AoE 併記は AoE で締切る会議だけに出す（表と同じ理由。JST 宣言の締切に AoE を
+      // 見せると、実在しない AoE 締切があると誤解させる）。
+      const official = `（${officialClockJa(zone, d)}）`;
+      return `次回締切: ${fmtJst(d)}${official}${a.estimated ? "（推定）" : ""}`;
     }
     if (a.status === "past") {
       return a.timestamp || a.local_date ? "締切済み" : "締切済み（次回情報なし）";
     }
-    return "受付状況不明";
+    // 受け付け中なのに次回の日付が出ていない行がある（表の「時刻未確認」より情報が薄い）。
+    // ここで「受付状況が分かりません」と言うと、受け付けていることまで分からないので、
+    // 分からない部分だけを書く。
+    if (a.status === "open") return `次回締切の日付が${UNCONFIRMED_JA}`;
+    return `受付状況${UNCONFIRMED_JA}`;
   }
 
   const trustLabel: Record<string, string> = {
@@ -1866,18 +5272,15 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     assumption: "推定",
     unverified: "未確認",
   };
+  /* 推薦カードの「取得状態」に出る語。`キャッシュ退避`・`スナップショット退避` は
+   * 実装側の語で、読者には「その締切が今日の見積もりなのか、古いデータなのか」が
+   * 伝わらなかった（2026-09-23 確認）。何が違うかで書く。 */
   const freshnessLabel: Record<string, string> = {
-    fresh: "最新取得",
-    "cache-fallback": "キャッシュ退避",
-    "snapshot-fallback": "スナップショット退避",
+    fresh: "取得時に上流へアクセス",
+    unknown: "取得履歴なし",
+    "cache-fallback": "前回の取得データを使用",
+    "snapshot-fallback": "保存済みの収録データを使用",
   };
-  const maturityLabel: Record<string, string> = {
-    established: "確立",
-    emerging: "成長中",
-    new: "新規",
-    unverified: "未確認",
-  };
-
   function axesForRecommendation(r: AppRow, now: number): RecommendationAxes {
     const published = isRecommendationAxes(r.conf.recommendation_axes)
       ? r.conf.recommendation_axes
@@ -1885,6 +5288,14 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     if (published) {
       return {
         ...published,
+        deadline_trust: {
+          ...published.deadline_trust,
+          sourceFreshness: recommendationAxes(
+            r.conf as unknown as Record<string, unknown>,
+            null,
+            now,
+          ).deadline_trust.sourceFreshness,
+        },
         research_fit: { ...published.research_fit, score: r._matchScore ?? null },
       };
     }
@@ -1898,6 +5309,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   function makeRecommendationCard(r: AppRow, now: number) {
     const card = document.createElement("article");
     card.className = "recommendation-card";
+    card.setAttribute("data-venue-key", r.conf.key);
     const isPastOnly = r._availability?.status === "past";
     const title = document.createElement("h3");
     const name = titleWithYear(r.conf.title || r.conf.key || "", isPastOnly ? null : r.ed.year);
@@ -1919,8 +5331,28 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     meta.className = "card-meta";
     const fit = document.createElement("span");
     fit.className = "tag match";
-    fit.textContent = `一致評価 ${r._fitLabel || "評価保留"}`;
+    /* 点も添える（並びは点の順なので、点が無いと「重なりうすい」が先頭に来る理由が読めない。
+     * MCP の行と CSV は前から点を出している）。点が無い候補（評価保留）は点を書かない。 */
+    fit.textContent = `一致評価 ${r._fitLabel || "評価保留"}${
+      typeof r._matchScore === "number" ? `（${r._matchScore} 点）` : ""
+    }`;
     meta.appendChild(fit);
+    /* 残りは一覧の「残り」列と同じ語で、一致評価の札の隣に出す（一覧も残りが左端）。
+     * 日付を読んで今日から数えるのは利用者の仕事にしない。 */
+    const remaining = recommendationRemainingJa(r._availability);
+    if (remaining) {
+      const left = document.createElement("span");
+      left.className = `tag ${remaining.cls}`.trim();
+      left.textContent = remaining.text;
+      meta.appendChild(left);
+    }
+    for (const rank of recommendationRankTagsJa(r)) {
+      const tag = document.createElement("span");
+      tag.className = "tag";
+      tag.textContent = rank.text;
+      if (rank.title) tag.title = rank.title;
+      meta.appendChild(tag);
+    }
     const availability = document.createElement("span");
     availability.className = "tag";
     availability.textContent = recommendationAvailability(r);
@@ -1928,21 +5360,12 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     card.appendChild(meta);
 
     const axes = axesForRecommendation(r, now);
-    const maturityEvidence = axes.venue_maturity.evidence;
+    const venueEvidence = axes.venue_evidence;
     const deadlineTrust = axes.deadline_trust;
+    line(card, venueEvidenceLineJa(venueEvidence), "card-section recommendation-axes");
     line(
       card,
-      `研究適合度: ${r._fitLabel || "評価保留"}（順位評価）`,
-      "card-section recommendation-axes",
-    );
-    line(
-      card,
-      `会議履歴: ${maturityLabel[axes.venue_maturity.status]}（観測年数 ${maturityEvidence.yearsObserved}年、プロフィール ${maturityEvidence.profileCoverage}件）`,
-      "card-section recommendation-axes",
-    );
-    line(
-      card,
-      `締切: ${recommendationAvailability(r)} ／ 種別: ${KIND_LABEL[r.kind] || r.kind || "未確認"}`,
+      `種別: ${Recommender.kindLabelJa(r.kind) || "未確認"}`,
       "card-section recommendation-axes",
     );
     line(
@@ -1956,6 +5379,21 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       "card-section recommendation-axes",
     );
 
+    /* 会期と開催地は一覧の列と同じ語で出す（その年の予定を重ねる・出張の段取りを立てるのに
+     * 要る。MCP の `recommend_venues` の文には出ているので、画面と AI で材料を揃える）。
+     * 値の無い会議は一覧と同じく「該当なし」「未確認」で、空欄にしない。 */
+    const 場所の語 = (value: string) =>
+      value || (Recommender.fieldNotApplicableJa(r) ? NOT_APPLICABLE_JA : UNCONFIRMED_JA);
+    line(
+      card,
+      `会期: ${場所の語(Recommender.eventCellJa(r))} ／ 開催地: ${場所の語(Recommender.placeJa(r.ed.place))}`,
+      "card-section",
+    );
+    /* 会場の分野も出す（一覧の会議の欄にある札と同じ語）。会議名だけで当たった候補は、
+     * これが無いと自分の分野かどうかを確かめるのにカードから離れることになる。 */
+    const 分野の札 = (r.cats || []).map((key) => catLabel(key)).filter((label) => label !== "");
+    line(card, `分野: ${分野の札.length ? 分野の札.join("・") : UNCONFIRMED_JA}`, "card-section");
+
     const agg = r._match?.agg ?? {
       domain: 0,
       venueName: 0,
@@ -1966,21 +5404,25 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     };
     const reasons: string[] = [];
     const reasonSignals: Array<[string, number]> = [
-      ["分野シグナル", agg.domain],
+      ["分野の一致", agg.domain],
       ["会議名一致", agg.venueName ?? 0],
       ["採択論文一致", agg.paper],
       ["日本語一致", agg.jp],
-      ["領域タグ", agg.tags],
+      ["主題の一致", agg.tags],
     ];
     reasonSignals.forEach((item) => {
-      if (item[1] > 0) reasons.push(`${item[0]} +${item[1]}`);
+      // カードの「選定理由」も名前だけ。信号重みをここに書くと、カードごとに並ぶ数字が
+      // スコアと合わない（上の `makeRow` と同じ実測）。重みが必要な行は出す順が語る。
+      if (item[1] > 0) reasons.push(item[0]);
     });
     if (agg.venue > 0) reasons.push("過去掲載先一致");
     if (r._semanticRank) reasons.push(`意味検索順位 ${r._semanticRank}`);
-    if (r._boosted) reasons.push("同分野ブースト");
+    if (r._boosted) reasons.push("同じ分野（掲載先から推定）");
     line(
       card,
-      reasons.length ? `選定理由: ${reasons.join(" / ")}` : "選定理由: 一致要素を確認できる候補",
+      reasons.length
+        ? `選定理由: ${reasons.join(" / ")}`
+        : "選定理由: 目立つ一致はないが候補に入った",
       "card-section",
     );
     if (r.conf.link && safeExternalUrl(r.conf.link)) {
@@ -1992,12 +5434,29 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       official.className = "card-section";
       card.appendChild(official);
     }
+    /* この会議の締切を、締切の一覧で 1 会場だけに絞って開く（推薦の候補から、その会議の
+     * 日程・種別を確かめられる）。検索語ではなく `venue=<鍵>` なので、同じ語を含む別の
+     * 会議は混ざらない（2026-10-23）。 */
+    const 鍵 = String(r.conf.key || "").trim();
+    if (鍵) {
+      /* 締切が過ぎた候補は、既定の一覧（今後の締切）には行が無い。過去も出す条件を添えて、
+       * 押した先が空にならないようにする（その会議の最後の締切は、次回の目安になる）。 */
+      const 過ぎた = r._availability?.status === "past";
+      const 一覧 = document.createElement("a");
+      一覧.href = `?venue=${encodeURIComponent(鍵)}${過ぎた ? "&past=1" : ""}`;
+      一覧.textContent = "この会議の締切を一覧で見る";
+      一覧.className = "card-section";
+      一覧.title = "締切の一覧を、この会議の行だけに絞って開きます。";
+      card.appendChild(一覧);
+    }
     return card;
   }
 
   function renderRecommendationCards(list: AppRow[], now = Date.now()) {
     const cards = $("recommendationCards");
     cards.textContent = "";
+    recommendationList = list;
+    cardsDrawn = 0;
     if (!recommendationData) {
       line(
         cards,
@@ -2010,87 +5469,678 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     if (!lines.length) {
       line(
         cards,
-        "投稿予定論文のタイトル・概要・PDF/TXTを入力してください。",
+        // 共有リンクで開いた人は、ここが空のままになる（論文の本文をURLに載せないため）。
+        // 「リンクが壊れた」と受け取られると、そこで操作が止まる。
+        "投稿予定論文のタイトル・概要・PDF/TXTを入力してください。リンクで開いた場合はここが空になります（論文の本文はURLに載せません）。",
         "recommendation-card",
       );
       return;
     }
     if (!list.length) {
+      // 推薦モードでは締切画面の絞り込み（検索・分野・国内など）を見せていないので、
+      // 「条件を変えてみてください」は画面に無いものを探す案内になる。
+      // 実際に打てる手（論文の情報量、入力形式の見本）だけを書く。
+      /* 締切が過ぎた候補を外した結果 0 件になったなら、その事を先に言う（「語と重なる
+       * 投稿先が無い」と読むと、打ち直しに走って候補の存在に気づけない）。 */
+      /* 0 件の理由を、効いている絞り込みの名指しで書く（片方だけなら、その入口を名指す。
+       * 両方なら両方を書く – 片方だけを直しても出ないため）。 */
+      if (recommendExcludedRank && recommendExcludedClosed) {
+        line(
+          cards,
+          `絞り込みで 0 件でした（ランク「${rankFilterLabelJa(state.rank)}」の候補 ${countJa(recommendExcludedRank)} 件・締切が過ぎた会議 ${countJa(recommendExcludedClosed)} 件を除いています）。「ランク」を「すべて」に戻すか「締切が過ぎた候補を除く」を外すと出ます。`,
+          "recommendation-card",
+        );
+        return;
+      }
+      if (recommendExcludedRank) {
+        line(
+          cards,
+          `ランク「${rankFilterLabelJa(state.rank)}」では 0 件でした（「ランク」を「すべて」に戻すと ${countJa(recommendExcludedRank)} 件出ます）。`,
+          "recommendation-card",
+        );
+        return;
+      }
+      if (recommendExcludedClosed) {
+        line(
+          cards,
+          `締切が過ぎた会議を除くと 0 件でした（「締切が過ぎた候補を除く」を外すと ${countJa(recommendExcludedClosed)} 件出ます）。`,
+          "recommendation-card",
+        );
+        return;
+      }
       line(
         cards,
-        "該当する投稿先がありません。論文本文を長めに入れるか、条件を変えてみてください。",
+        "この論文の語と重なる投稿先が見つかりませんでした。タイトル・概要・キーワードを足すと当たりやすくなります。上のサンプルボタンで入力の形を確かめられます。",
         "recommendation-card",
       );
       return;
     }
-    list.slice(0, 5).forEach((r) => {
+    cardsDrawn = Math.min(list.length, RECOMMENDATION_PAGE);
+    list.slice(0, cardsDrawn).forEach((r) => {
       cards.appendChild(makeRecommendationCard(r, now));
     });
   }
 
+  const TABLE_SCROLL_LABEL_JA =
+    "締切の一覧（この表は画面の幅を越えています。ここで Tab を受けると ← → キーで横に動かせます）";
+  const TABLE_SCROLL_HINT_JA =
+    "← → で横にスクロールできます（この表は画面の幅を越えています。右に続きがあります）";
+
+  /** 表が横幅を越えているか。1 px 以下の差は丸めとして無視する（越えていないときに
+   *  「続きがある」と噓を言うほうが害が大きい）。 */
+  function tableScrollOver(scrollWidth: number, clientWidth: number): boolean {
+    return scrollWidth - clientWidth > 1;
+  }
+
+  function syncTableScroll(): void {
+    const wrap = $("deadlineTableWrap");
+    const hint = $("tableScrollHint");
+    if (!wrap || !hint) return;
+    /* 一覧そのものが隠れている状態（投稿先を探す画面・0 件）では測れない。 */
+    const over = !wrap.hidden && tableScrollOver(wrap.scrollWidth, wrap.clientWidth);
+    hint.hidden = !over;
+    hint.textContent = over ? TABLE_SCROLL_HINT_JA : "";
+    if (over) {
+      wrap.setAttribute("role", "region");
+      wrap.setAttribute("aria-label", TABLE_SCROLL_LABEL_JA);
+      wrap.setAttribute("tabindex", "0");
+    } else {
+      wrap.removeAttribute("role");
+      wrap.removeAttribute("aria-label");
+      wrap.removeAttribute("tabindex");
+    }
+  }
+
+  /* 締切一覧で、既定から絞っている条件が 1 つでも入っているか（件数欄を開くかの判断）。 */
+  function deadlineFiltersOnJa(): boolean {
+    return Boolean(
+      state.kind ||
+        state.venue ||
+        state.rank ||
+        state.cats.length ||
+        state.domestic ||
+        state.online ||
+        state.est ||
+        state.past ||
+        (state.win && state.win !== "all"),
+    );
+  }
+
+  function renderActiveFilters(): void {
+    const box = $("activeFilters");
+    /* この札の列は締切一覧のための物で、推薦モードでは箱ごと隠す。推薦モードだけの条件
+     * （「締切が過ぎた候補を除く」）はここに並べない – 効かない画面に札を出しても、
+     * 条件が外れたようにしか見えない。其の条件の入口は推薦モードでも見えている
+     * チェック欄なので、入っているかどうかは其ちらで分かる。 */
+    box.hidden = state.mode !== "deadlines";
+    box.textContent = "";
+    if (box.hidden) return;
+    const conditions: Array<{ label: string; clear: () => void }> = [];
+    if (state.q)
+      conditions.push({
+        label: `検索: ${state.q}`,
+        clear: () => {
+          state.q = "";
+        },
+      });
+    for (const cat of state.cats)
+      conditions.push({
+        label: catLabel(cat),
+        clear: () => {
+          state.cats = state.cats.filter((key) => key !== cat);
+        },
+      });
+    if (state.kind)
+      conditions.push({
+        label: KIND_LABEL[state.kind] || state.kind,
+        clear: () => {
+          state.kind = "";
+        },
+      });
+    if (state.venue)
+      conditions.push({
+        /* 押す所・一覧・紙と同じく、人には会議の名前で見せる（鍵は識別子で、行の詳細に在る）。 */
+        label: `会議: ${venueTitleJa(state.venue)}`,
+        clear: () => {
+          state.venue = "";
+        },
+      });
+    if (state.rank)
+      conditions.push({
+        label: `ランク: ${state.rank}`,
+        clear: () => {
+          state.rank = "";
+        },
+      });
+    if (state.win !== "all")
+      conditions.push({
+        label: `締切まで ${Number.parseInt(state.win, 10)} 日以内`,
+        clear: () => {
+          state.win = "all";
+        },
+      });
+    for (const [key, label] of [
+      ["domestic", "国内研究会・国内シンポジウム"],
+      ["online", "オンライン参加可"],
+      ["est", "推定締切を含める"],
+      ["past", "過去の締切も表示"],
+    ] as const) {
+      if (state[key])
+        conditions.push({
+          label,
+          clear: () => {
+            state[key] = false;
+          },
+        });
+    }
+    box.hidden = !conditions.length;
+    for (const condition of conditions) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "filter-remove";
+      button.textContent = `${condition.label} ×`;
+      button.setAttribute("aria-label", `${condition.label}を外す`);
+      button.addEventListener("click", () => {
+        condition.clear();
+        toForm();
+        apply();
+        $("activeFilters").querySelector<HTMLElement>("button")?.focus();
+        if ($("activeFilters").hidden) $("q").focus();
+      });
+      box.appendChild(button);
+    }
+  }
+
   function render() {
+    // 上の四つの数もそのときの時計で数え直す（一覧と同じ目盛りを保つため）。
+    renderSummaryStats();
+    renderActiveFilters();
+    $("timeGuide").hidden = state.mode !== "deadlines";
     const recMode = state.mode === "recommend";
     if (recMode && !recommendationData && !recommendationError) loadRecommendationData();
     shown = recMode && !recommendationData ? [] : filter();
+    // チップの件数は分野以外の条件で絞った後の数。推薦モードではチップを見せないので更新しない。
+    if (!recMode) updateCategoryCounts();
     drawn = 0;
     selectedIndex = -1;
+    groupMonths = shouldGroupMonths({
+      sortKey: sortKey,
+      sortAsc: sortAsc,
+      paper: recMode && Boolean(valueElement("paperText").value.trim()),
+    });
+    monthCounts = {};
+    lastMonthKey = "";
+    pastBlockTotal = shown.reduce((n: number, r: AppRow) => n + (r._pastBlock ? 1 : 0), 0);
+    lastPastBlock = -1;
+    if (groupMonths) {
+      shown.forEach((r) => {
+        const key = monthKey(r);
+        if (key) monthCounts[key] = (monthCounts[key] || 0) + 1;
+      });
+    }
     $("tbody").textContent = "";
     const paperText = valueElement("paperText").value;
     const paperMode = recMode && Boolean(paperText.trim());
+    // 掲載先に入れた語が行に見当たらないときは、候補の数だけ出して黙っていない。
+    // 例を使った人は「掲載先が消えた」と読む。文は recommender の正本。
+    const venueMissNotice = Recommender.venueLookupNoticeJa(venueLookupMiss);
     let cnt = paperMode
-      ? `あなたの論文に合う投稿先 ${shown.length} 件`
+      ? `あなたの論文に合う投稿先 ${countJa(shown.length)} 件${
+          shown.length > RECOMMENDATION_PAGE
+            ? `（まず上位 ${countJa(RECOMMENDATION_PAGE)} 件を表示）`
+            : ""
+        }${venueMissNotice ? ` ｜ ${venueMissNotice}` : ""}${
+          截つた行 > 0 ? ` ｜ ${countJa(截つた行)} 行を省いて調べました（最初の 20 行だけ）` : ""
+        }`
       : recMode
         ? "投稿先を探すには論文情報を入力してください"
-        : `${shown.length} 件 / 全 ${rows.length} 件`;
-    if (!recMode && state.past && historyStatus === "loading") cnt += " ｜ 全履歴を読み込み中…";
-    if (!recMode && state.past && historyStatus === "error")
-      cnt += " ｜ 全履歴を読み込めませんでした";
+        : `${countJa(shown.length)} 件 / 全 ${countJa(rows.length)} 件`;
+    // 読み上げ用の一行。`#count` は「のぞく」の内訳まで載せる長い欄なので、そこを
+    // そのまま aria-live にすると 1 打鍵ごとに数十語が流れる。
+    // 件数と、解決結果・取得状態の短い通知だけをこちらに出す。
+    let cntLive = cnt;
+    // 前の描画で出した理由が残り続けないよう、状態を組み直すたびに消す。
+    countSemanticReason = null;
+    /* 投稿締切が未収録の開催回の当たり数を、件数欄と 0 件の案内で共用する（同じ絞り込みを
+     * 二箇所に書かない）。対象は数十件なので、毎回数えても打鍵のコストにはならない。 */
+    const scheduleOnly =
+      recMode || paperMode
+        ? []
+        : scheduleOnlyMatches({
+            window: state.win,
+            cats: state.cats,
+            domestic: state.domestic,
+            online: state.online,
+            rank: state.rank,
+            venue: state.venue,
+          });
+    // 「全 M 件」との差をその場で説明する。内訳は独立に数えているので合計は全件にならない
+    // （過去かつ投稿締切以外の行が両方に立つ）ため、「〜をのぞく」の形で書く。
+    if (!recMode && !paperMode) {
+      const hidden = hiddenDeadlineCounts();
+      const parts: string[] = [];
+      if (hidden.past) parts.push(`過去の締切 ${countJa(hidden.past)} 件`);
+      if (hidden.kind) parts.push(`投稿締切以外の種別 ${countJa(hidden.kind)} 件`);
+      /* 札と同じく、人には会議の名前で見せる（鍵は行の詳細の「会議の識別子」と紙に在る）。 */
+      if (hidden.venue)
+        parts.push(`会議「${venueTitleJa(state.venue)}」以外の行 ${countJa(hidden.venue)} 件`);
+      // 「推定」の語は一覧の検索でも引ける（`推定` バッジの語を hay に入れている）が、
+      // 既定ではここで行が落ちたままなので、出し方を同じ行に書く。
+      if (hidden.est) parts.push(`推定 ${countJa(hidden.est)} 件（「推定締切を含める」で出ます）`);
+      // 国内チェックで消えた行は「国内研究会ではない」だけの理由で落ちている。
+      // 日本開催の国際会議もここに入るため、件数だけ出しておかないと検索をやめてしまう。
+      if (hidden.window && state.win !== "all") {
+        // 選んだ窓の名前は選択欄の表記のまま書く（「どのボタンを戻せばいいか」が分かる形で）。
+        parts.push(
+          `「締切まで ${Number.parseInt(state.win, 10)} 日以内」の対象外 ${countJa(hidden.window)} 件`,
+        );
+      }
+      // 評価で絞った件数。選択欄の等級表記をそのまま書く（画面の語で探す人が探せる形に）。
+      // 値の `N` をそのまま書かないのはその約束の実装で、`rankDropWordsJa` が持つ。
+      if (hidden.rank && state.rank)
+        parts.push(`${rankDropWordsJa(state.rank)} ${countJa(hidden.rank)} 件`);
+      // 分野チップも同じ。チップに押した語が並ぶので、外した語を日本語でそのまま書く。
+      if (hidden.cats && state.cats.length)
+        parts.push(
+          `分野「${state.cats.map((key: string) => catLabel(key)).join("・")}」を持たない行 ${countJa(hidden.cats)} 件`,
+        );
+      if (hidden.domestic)
+        parts.push(`国内研究会・国内シンポジウム以外 ${countJa(hidden.domestic)} 件`);
+      if (hidden.online) {
+        // 「記載が無いだけ」の行数を括弧で添える（対面だと断定していないことの説明にもなる）。
+        parts.push(
+          hidden.onlinePlaceUnknown
+            ? `オンライン参加の記載がない ${countJa(hidden.online)} 件（うち開催地が未確認 ${countJa(hidden.onlinePlaceUnknown)} 件）`
+            : `オンライン参加の記載がない ${countJa(hidden.online)} 件`,
+        );
+      }
+      if (parts.length) cnt += ` ｜ のぞく: ${parts.join("・")}`;
+      /* 論文を入れているときは、その論文に合う行が何行あるかも書く（行ごとの札だけでは、
+       * 一覧のどこに何行あるかは分からない）。 */
+      if (recommendFitMatches) {
+        const fitNote = ` ｜ この論文に合う行 ${countJa(recommendFitMatches)} 件（一致評価の札）`;
+        cnt += fitNote;
+        cntLive += fitNote;
+      }
+      /* 会期情報がある開催回の件数。これまでは表が 0 件のときにだけ
+       * 出していたので、表に 1 行でも出た人は「これで全部だ」と受け取ってしまう
+       * （2026-09-23 実測: 「研究会」は表 16 件に対し会期だけの該当 28 件、
+       * 「ネットワーク」は 39 件に対し 31 件が画面に出ていなかった）。 */
+      if (scheduleOnly.length) {
+        const scheduleNote = ` ｜ 会期情報がある開催回 ${countJa(scheduleOnly.length)} 件（投稿締切は未収録。会期だけの一覧も下に出しています）`;
+        cnt += scheduleNote;
+        if (shown.length) cntLive += scheduleNote;
+      }
+      // 「スパコン」などを分野名に寄せたときは、寄せた先をその場で書く。
+      // 理由も見ずに分野全体の行を並べると、なぜ出たか分からないまま行の壁になる。
+      const synonymNotes = Recommender.querySynonymNotes(searchQuery).concat(
+        // 「明日」「今週」を暦日へ解決したことも同じ欄に寄せる（相対月と同じ方針で、
+        // 黙って条件が変わったように見せない）。
+        Recommender.relativeDayNotes(searchQuery, Date.now()),
+
+        shown.length
+          ? [Recommender.uiWordAlwaysNoteJa(searchQuery)].filter((note) => note !== "")
+          : [],
+      );
+      if (synonymNotes.length) {
+        cnt += ` ｜ ${synonymNotes.join("・")}`;
+        cntLive += ` ｜ ${synonymNotes.join("・")}`;
+      }
+
+      if (state.q.trim() && !hidden.query && shown.length >= 5) {
+        const hint = Recommender.queryNarrowHintJa(state.q);
+        if (hint) {
+          cnt += ` ｜ ${hint}`;
+          cntLive += ` ｜ ${hint}`;
+        }
+      }
+    }
+    if (!recMode && urlNotices.length) {
+      const noticeText = urlNotices.map((notice) => ` ｜ ${notice}`).join("");
+      cnt += noticeText;
+      cntLive += noticeText;
+    }
+    /* 推薦モードでも、ランクの欄に無い値は落とした事を言う（欄が在る画面で黙らない）。 */
+    if (recMode && urlRankNotice) {
+      const noticeText = ` ｜ ${urlRankNotice}`;
+      cnt += noticeText;
+      cntLive += noticeText;
+    }
+    if (
+      !recMode &&
+      fullRecordNeeded(state.past, state.win, fullRecordRequested) &&
+      historyStatus === "loading"
+    ) {
+      cnt += ` ｜ ${HISTORY_LOADING_SHORT_JA}`;
+      cntLive += ` ｜ ${HISTORY_LOADING_SHORT_JA}`;
+    }
+    if (
+      !recMode &&
+      fullRecordNeeded(state.past, state.win, fullRecordRequested) &&
+      historyStatus === "error"
+    ) {
+      cnt += ` ｜ ${HISTORY_ERROR_SHORT_JA}`;
+      cntLive += ` ｜ ${HISTORY_ERROR_SHORT_JA}`;
+    }
     if (paperMode) {
       const _lines = Recommender.parsePaperLines(paperText);
       const _auto = _lines.length ? Recommender.autoDetectCats(_lines) : [];
       if (_auto.length && !state.cats.length) {
-        cnt +=
-          " ｜ 分野自動判定: " +
-          _auto.map((k) => (DATA.categories[k] ? DATA.categories[k] : k)).join(", ");
+        const autoNote = ` ｜ 分野自動判定: ${_auto.map((k) => catLabel(k)).join("・")}`;
+        cnt += autoNote;
+        cntLive += autoNote;
       }
       // 意味検索の状態を明示（初回はモデル読込に数秒かかる）
       if (semState === "loading") {
         cnt += " ｜ 意味検索を実行中…";
+        cntLive += " ｜ 意味検索を実行中…";
       } else if (semState === "error") {
         // 失敗理由コードを併記する。publish.ts / 各 error 分岐が設定する診断コードで、
         // 8+通りの失敗が1文言に潰れて原因追跡不能になっていた (#711 の構造要因)。
-        cnt += ` ｜ 意味検索は利用不可（語彙検索のみ・原因: ${semanticReason || "unknown"}）`;
+        /* 理由の識別子は英語なので、画面には日本語を出す – 英字の符号は利用者に
+         * 読めない（2026-09-23 実測: 「原因: embeddings unavailable」）。 */
+        const semCode = semanticReason || "unknown";
+        /* 日本語だけの題名・概要は、収録の英語表記との語の一致が弱い（2026-10-18 に研究者役の試しで、
+         * 分野違いの会議が上位に並んだ）。意味検索が使えない時だけ、直し方を結果の横で言う。 */
+        /* `paperText` は JSON の文字列（英字のキー名を含む）なので、題名・概要・キーワードの値で見る。 */
+        const 入力の文 = _lines
+          .map((record) => [record.title, record.abstract, record.keywords].join(" "))
+          .join(" ");
+        const 日本語だけ =
+          /[\u3040-\u30ff\u3400-\u9fff]/.test(入力の文) && !/[A-Za-z]{3,}/.test(入力の文);
+        const 英語を足す案内 = 日本語だけ
+          ? " ｜ 日本語だけの入力は語の一致が弱くなります。専門用語の英語表記（例: LLM、scheduling）を題名かキーワードに足すと合いやすくなります"
+          : "";
+        const semNote = ` ｜ 意味検索は利用不可（語彙検索のみ・原因: ${Recommender.semanticReasonJa(semCode)}）${英語を足す案内}`;
+        cnt += semNote;
+        cntLive += semNote;
+        countSemanticReason = semCode;
+      }
+      const pastNote = recommendationPastNoteJa(shown);
+      if (pastNote) {
+        cnt += pastNote;
+        cntLive += pastNote;
+      }
+      const excludedNote = recommendationExcludedNoteJa(recommendExcludedClosed);
+      if (excludedNote) {
+        cnt += excludedNote;
+        cntLive += excludedNote;
+      }
+      const rankExcludedNote = recommendationRankExcludedNoteJa(recommendExcludedRank, state.rank);
+      if (rankExcludedNote) {
+        cnt += rankExcludedNote;
+        cntLive += rankExcludedNote;
+      }
+      const orderNote = recommendationOrderNoteJa(state.order);
+      if (orderNote) {
+        cnt += orderNote;
+        cntLive += orderNote;
       }
     }
-    $("count").textContent = cnt;
-    const showHistoryStatus =
-      !recMode && state.past && (historyStatus === "loading" || historyStatus === "error");
-    $("historyStatus").hidden = !showHistoryStatus;
-    if (showHistoryStatus) {
-      $("historyStatusText").textContent =
-        historyStatus === "loading"
-          ? "過去の締切を読み込んでいます…"
-          : "全履歴を読み込めませんでした。表示中のカタログは利用できます。";
-      $("historyRetry").hidden = historyStatus !== "error";
+    // 「来月」で検索したとき、何月に絞ったのかを利用者が確認できるようにする
+    // （相対指定が裏でどう解決されたかを見せないのは誤信を生む）。
+    if (!recMode) {
+      const note = relativeMonthNote(state.q, Date.now());
+      if (note) {
+        cnt += note;
+        cntLive += note;
+      }
     }
+    // 過ぎた締切を下へまとめたことは、件数欄に書く（黙って並びを変えないため）。
+    if (!recMode && pastBlockTotal > 0) {
+      let blockNote =
+        pastBlockTotal < shown.length
+          ? ` ｜ 過ぎた締切 ${countJa(pastBlockTotal)} 件は下にまとめました`
+          : "";
+      /* 塊の中は列の向きのまま（昇順なら古い順）。「去年の締切はいつか」を見に来た人は
+       * 直近の行を探すが、先頭は 2019 年の行になる（2026-10-17 実測: `NSDI` で「過去の締切も
+       * 表示」を押すと 28 行の先頭が 2020 年）。並びは変えず、次の一手を書く。 */
+      if (sortAsc && (!sortKey || sortKey === "rem" || sortKey === "date"))
+        blockNote += ` ｜ 過ぎた締切は古い順です（直近から見るには「残り」の見出しを押して降順に）`;
+      cnt += blockNote;
+      cntLive += blockNote;
+    }
+    // 並び替えの状態を読み上げに足す（表が出ているときだけ。推薦のカードでは
+    // 見出しが消えているので、見出しの語から作るこの文は出さない）。
+    if (!recMode && !paperMode) cntLive += sortNoteJa(sortKey, sortAsc);
+    /* 0 件の理由は、のちのち表の場所に出す長い文と同じ材料から作る（同じ判定を二箇所に
+       書かない）。0 件のときだけ走るので、打鍵ごとの当たりの数え上げは増えない。 */
+    const recoveries = !recMode && !paperMode && !shown.length ? collectDeadlineRecoveries() : [];
+    const zeroFilter =
+      !recMode && !paperMode && !shown.length
+        ? {
+            actionableRecovery: true,
+            window: state.win,
+            past: state.past,
+            cats: state.cats.length,
+            domestic: state.domestic,
+            online: state.online,
+            rank: state.rank,
+            kind: state.kind,
+            est: state.est,
+            query: state.q,
+            // 0 件の案内が、件数欄と同じ数字を項目ごとに添えられるようにする。
+            hidden: hiddenDeadlineCounts(),
+            hiddenKindWords: hiddenKindQueryWords(searchQuery),
+            urlQuery: Recommender.looksLikeUrlQuery(searchQuery),
+            queryMatch: queryMatchCounts(searchQuery),
+            termCounts: queryTermNotes(searchQuery),
+            columnValueHits: columnValueHitsJa,
+            splitCount: splitCountJa,
+
+            shorterHits: shorterWordsForZero(searchQuery),
+            termRemainder: deadTermRemainderCount(searchQuery),
+            // データその物が無い場合と、絞り込みで 0 件の場合を区別する材料。
+            catalogConferences: DATA.conferences.length,
+            // 打った日付がいま読み込んだデータの果てより先か。`rows` は絞り込み
+            // 前の行なので、一覧に出せるデータの範囲が出る（0 件で空になった行数ではない）。
+            // 日付の幅は、一覧の検索と同じ入口で検索語から取る（第 293 回 – 案内が自分で
+            // 呼ばないのは、この関数の検査ハーネスが `Recommender` の一部分しか持たないため）。
+            queryDaySpan: Recommender.queryDaySpanJa(searchQuery),
+            loadedLastDay: farthestRowDayJa(rows),
+            fullRecordLoaded: activeData !== DATA,
+            canLoadFullRecord:
+              activeData === DATA &&
+              historyStatus !== "loading" &&
+              historyStatus !== "error" &&
+              resolveHistoryRef() !== "",
+            // 名簿にあるのに締切の行が 1 本も無い会議。`rows` は絞り込み前なので、
+            // 「読み込めているデータに行があるか」で判断できる（読み込んだあとは行が出る）。
+            nameOnly: nameOnlyRecordInfo(
+              nameOnlyConferenceMatch(searchQuery, rows, Date.now()),
+              Date.now(),
+              KIND_LABEL,
+            ),
+            // 受皿の案内が分野の欄の名前を数へる語（チップと同じ順 – 第 679 回）。
+            categoryNames: categoryChipKeys(DATA.categories || {}).map((k) =>
+              Recommender.categoryLabelJa(k),
+            ),
+            recordLastDay: DATA.calendar ? DATA.calendar.last_day : "",
+            horizonDays: DATA.window ? DATA.window.upcoming_days : 0,
+          }
+        : null;
+    if (zeroFilter)
+      cntLive += zeroResultLiveNote({
+        ...zeroFilter,
+        // 0 件案内が「外せる条件」として並べる数と、読み上げの言いぶりを揃える。
+        clearable: filtersClearable(zeroFilter),
+        pastShown: state.past,
+        scheduleOnlyCount: scheduleOnly.length,
+      });
+    /* 件数欄は**見える欄**に出す。推薦モードの文言（`あなたの論文に合う投稿先 N 件`・
+     * 分野自動判定・意味検索の状態）は `#count` に置いていたが、`#count` は畳んだ
+     * `<details>`（絞り込みの内訳）の中なので、**論文を入れても候補の数が読めなかった**
+     * （2026-10-06 実測 – 候補 161 件・分野自動判定: システム・意味検索は利用不可、の三つが
+     * 何れも畳まれた中に在った）。締切モードは今まで通り「締切の検索結果 N 件」を出し、
+     * 詳しい内訳は `#count` に残す。 */
+    $("resultSummary").hidden = false;
+    $("resultSummary").textContent = recMode ? cnt : `締切の検索結果 ${countJa(shown.length)} 件`;
+    /* 件数欄（絞りの内訳）は、0 件のとき・検索語があるとき・**絞り込みが入っているとき**に
+     * 開く。絞った時にこそ「何件をのぞいたか」を読む物で、既定のまま開けても長い文が増える
+     * だけ（2026-10-18 実測: ランクを「A*」にすると 41 件になるが、訳の
+     * 「評価「A*」を持たない行 142 件」は畳まれた中に在って読めなかった）。 */
+    $("resultNotes").toggleAttribute(
+      "open",
+      shown.length === 0 ||
+        Boolean(state.q.trim()) ||
+        (state.mode === "deadlines" && (deadlineFiltersOnJa() || recommendFitMatches > 0)),
+    );
+    if (shown.length === 0) ($("dataScope") as HTMLDetailsElement).open = true;
+    $("count").textContent = cnt;
+    $("count").setAttribute("data-semantic-state", semState);
+    $("count").setAttribute("data-semantic-model", semLoadedModel);
+    $("count").setAttribute("data-semantic-generation", String(semGeneration));
+    $("count").setAttribute("data-candidate-venues", String(recommendationCandidateCount));
+    /* 原因の識別子は画面に出さないが、捨てると調査できない（#711）。属性で残す
+     * （エラーのときだけ付け、他の状態では消す – 前の理由が残り続けるのを防ぐ）。 */
+    if (countSemanticReason) $("count").setAttribute("data-semantic-reason", countSemanticReason);
+    else $("count").removeAttribute("data-semantic-reason");
+    // 読み上げはこちらの短い欄だけ（画面に出す文は `#count` のまま）。
+    const countLive = $("countLive");
+    if (countLive) countLive.textContent = cntLive;
+    const sharedChoices = $("sharedRowChoices");
+    if (sharedChoices) sharedChoices.hidden = true;
+    const choiceButtons = $("sharedRowChoiceButtons");
+    if (choiceButtons) choiceButtons.textContent = "";
+
+    const 候補を書き出す = candidateScopeOnScreen();
+    const exportBtn = $("exportCsv");
+    if (exportBtn) {
+      exportBtn.textContent = exportCsvLabelJa(shown.length, 候補を書き出す);
+      exportBtn.hidden = !shown.length || (recMode && !候補を書き出す);
+      /* 書き出しのボタンが 5 つ並ぶので、どれが何かを押す前に一行で言う（2026-10-18 に研究者役の試しで
+       * 「カレンダーに入れたい」の迷いを実測）。ボタンと同じ条件で出す。 */
+      const exportGuide = $("exportGuide");
+      if (exportGuide) exportGuide.hidden = exportBtn.hidden;
+      exportBtn.title = 候補を書き出す
+        ? "「投稿先を探す」が挙げた候補を、表計算で読める形（BOM 付き CSV）にしたファイルです。" +
+          "先頭の 4 列が一致評価・一致の点・言葉の一致・意味の近さで、残りの列は締切の一覧と同じ物です。" +
+          /* 並び順を「締切が近い順」にすると、点の大きい順には並ばない（点は一致の順位を
+           * 決める値のままで、並べ替えでは変わらない）。「大きいほど上」と言い切らない。 */
+          "「一致の点」は候補の一致の順位を決める値（「論文との一致順」では大きいほど上）、" +
+          "「一致評価」の札は別の計算（当たった証拠の強さ）で、" +
+          "同じ行でも点が高いのに札が「候補」のことがあります。" +
+          "意味検索が使えない環境では「意味の近さ」は空になります（0 とは書きません）。" +
+          "候補は絞り込みではなく、論文の語との重なりで選ばれています（画面のカードと同じ順・同じ件数）。"
+        : "いまの絞り込みで残った行を、表計算で読める形（BOM 付き CSV）にしたファイルです。" +
+          "「残り日数」は数値なので、並べ替えや絞り込みに使えます。日時は JST、日付だけ分かっている行は「時刻未確認」と書きます。" +
+          "この一覧に出ていない行（過ぎた締切や、期間より先の締切）は入りません。";
+    }
+    // カレンダーへの書き出しも同じ条件（候補が出ていない時は出さない・0 件でも出さない）。
+    const icsExportCount = shownIcsInput().length;
+    const exportIcsBtn = $("exportIcs");
+    if (exportIcsBtn) {
+      exportIcsBtn.textContent = exportIcsLabelJa(icsExportCount, 候補を書き出す);
+      (exportIcsBtn as HTMLButtonElement).disabled = icsExportCount === 0;
+      /* 推薦の候補も書き出せる。候補の締切をカレンダーに入れて比べるのが、
+       * 投稿先を決める時の実際の動作 – 候補に出口が無かつた。 */
+      exportIcsBtn.hidden = !shown.length || (recMode && !候補を書き出す);
+      exportIcsBtn.title = 候補を書き出す
+        ? `「投稿先を探す」の候補のうち、日付のある締切 ${countJa(icsExportCount)} 件をカレンダーアプリで読める形（RFC 5545）にしたファイルです。` +
+          "1 件 = 1 つの日の終日で、日付だけ分かっている行は「時刻未確認」と書きます。" +
+          "常時受付・日付未確認の候補は含みません。"
+        : `いまの一覧のうち、日付のある ${countJa(icsExportCount)} 件をカレンダーアプリで読める形（RFC 5545）にしたファイルです。` +
+          "1 件 = 1 つの日の終日で、日付だけ分かっている行は「時刻未確認」と書きます。" +
+          "上の『カレンダーに追加（.ics）』は収録の全部で、購読すると毎日入れ替わりますが、絞り込みは効きません。";
+    }
+    const icsNote = $("exportIcsNote");
+    if (icsNote) {
+      const omitted = shown.length - icsExportCount;
+      icsNote.hidden = omitted === 0 || !shown.length || (recMode && !候補を書き出す);
+      icsNote.textContent = icsNote.hidden
+        ? ""
+        : `日付未確認・常時受付の ${countJa(omitted)} 件はカレンダーに含みません。CSVには全 ${countJa(shown.length)} 件を書き出せます。`;
+      if (exportIcsBtn) {
+        if (icsNote.hidden) exportIcsBtn.removeAttribute("aria-describedby");
+        else exportIcsBtn.setAttribute("aria-describedby", "exportIcsNote");
+      }
+    }
+    const showHistoryStatus = updateHistoryStatus(recMode);
+    updateRecommendationRetry(recMode);
+    updateSemanticRetry(recMode);
+    /* 品書を見ている間だけ、品書の果てを伝える（読んでしまったあとは件数が増えるので黙る）。
+     * `history_ref` が無い品書（古い差し込み）では押せる物を出さない。 */
+    const showFullRecordOffer =
+      !recMode && activeData === DATA && !showHistoryStatus && resolveHistoryRef() !== "";
+    const fullRecordOffer = $("fullRecord");
+    fullRecordOffer.hidden = !showFullRecordOffer;
+    if (showFullRecordOffer) {
+      const lastDay = farthestRowDayJa(rows);
+      const calendarLastDay = DATA.calendar ? DATA.calendar.last_day : "";
+      $("fullRecordText").textContent = lastDay
+        ? fullRecordNoteJa(
+            lastDay,
+            calendarLastDay,
+            DATA.window ? DATA.window.upcoming_days : 0,
+            Number(DATA.history_bytes) || 0,
+          )
+        : "";
+      fullRecordOffer.hidden = !lastDay;
+    }
+    $("dataScope").hidden = !DATA.calendar && fullRecordOffer.hidden && !showHistoryStatus;
     if (recMode) {
       $("deadlineTableWrap").hidden = true;
       $("recommendationCards").hidden = false;
       $("empty").hidden = true;
-      $("more").hidden = true;
+      /* 会期だけの一覧は締切の一覧の物（推薦の画面には出さない）。 */
+      const schedulePanel = $("scheduleOnlyPanel");
+      if (schedulePanel) schedulePanel.hidden = true;
       renderRecommendationCards(paperMode ? shown : []);
+      // 件数欄は総数を出すので、打ち切ったぶんは「さらに表示」に載せ直す
+      // （数の言い切りと画面の食い違いを残さない）。
+      updateMoreButton(cardsDrawn, recommendationList.length);
     } else {
       $("deadlineTableWrap").hidden = false;
       $("recommendationCards").hidden = true;
-      if (!shown.length) {
-        $("empty").textContent = "該当する締切はありません。";
+      if (zeroFilter) {
+        const filter = zeroFilter;
+        $("emptyText").textContent = emptyDeadlineHint({
+          ...filter,
+          scheduleOnlyCount: scheduleOnly.length,
+        });
+        renderDeadlineRecoveries(recoveries, activeData === DATA && resolveHistoryRef() !== "");
+        $("emptyReset").textContent = state.q.trim()
+          ? "検索語も消して条件クリア"
+          : "条件をまとめて外す";
+        renderNextMeetingNote(scheduleOnly);
+        // 「過去の締切も表示」だけは一覧の意味を変える（過去行の読み込みを伴う）ので
+        // まとめて外す側では触らず、文章での案内に留める。
+        $("emptyReset").hidden = !filtersClearable(filter);
         $("empty").hidden = false;
       } else {
         $("empty").hidden = true;
       }
       drawMore();
+      /* 行が出ていても、投稿締切が未収録の開催回は件数にしか出ない。その一覧を表の下に
+       * 置く（0 件の画面では `#emptyMeeting` が同じ物を出すので、こちらは隠れる）。 */
+      renderScheduleOnlyPanel(shown.length ? scheduleOnly : []);
     }
+    syncTableScroll();
     updatePresetActive();
+  }
+
+  function updateHelpMode(recommend: boolean): void {
+    const help = $("helpPanel");
+    help.hidden = false;
+    const summary = help.querySelector("summary");
+    /* 見出しは summary の中の h2 が持つ（読み上げの見出しの並びを h1 → h2 → その下の h3 に
+     * するため）。summary ごと textContent で書き換えると h2 が消える（2026-10-22 実測:
+     * 画面を開くと `.help-title` が無くなり、てびきの h3 が「締切の一覧」の下に付いていた）。 */
+    const 見出し = summary?.querySelector("h2") ?? summary;
+    if (見出し) 見出し.textContent = recommend ? "投稿先候補の見方" : "見方のてびき";
+    /* 詳しい説明は見出しの外（締切の一覧の話なので、推薦の画面では出さない）。 */
+    const 説明 = summary?.querySelector<HTMLElement>(".help-title-rest");
+    if (説明) 説明.hidden = recommend;
+    for (const section of Array.from(help.children) as HTMLElement[]) {
+      const shared = section.hasAttribute("data-recommend-help");
+      section.hidden = recommend && section.tagName !== "SUMMARY" && !shared;
+      if (shared)
+        for (const topic of Array.from(section.children) as HTMLElement[])
+          topic.hidden = recommend && !topic.hasAttribute("data-recommend-help");
+    }
+    const results = $("results");
+    if (recommend) results.before(help);
+    else results.after(help);
   }
 
   function updateModeUi() {
@@ -2100,6 +6150,29 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     panel.classList.toggle("mode-deadlines", !recommend);
     $("modeRecommend").setAttribute("aria-pressed", String(recommend));
     $("modeDeadlines").setAttribute("aria-pressed", String(!recommend));
+    const resultLabel = recommend ? "投稿先の候補" : "締切の一覧";
+    $("resultsHeading").textContent = resultLabel;
+    const skip = document.querySelector<HTMLAnchorElement>(".skip-link");
+    if (skip) skip.textContent = `${resultLabel}へ進む`;
+    $("deadlineResultHint").hidden = recommend;
+    $("recommendResultHint").hidden = !recommend;
+    updateHelpMode(recommend);
+  }
+
+  function updateRecommendationRetry(recommend: boolean): void {
+    const status = $("recommendationRetryStatus");
+    const button = $("recommendationRetry");
+    status.hidden = !recommend || !recommendationNeedsRetry;
+    if (status.hidden) {
+      if (document.activeElement === button) $("results").focus();
+      return;
+    }
+    $("recommendationRetryNote").textContent = recommendationPromise
+      ? "推薦データを再読み込み中…"
+      : recommendationData
+        ? "推薦用データを取得できませんでした。取得済みのデータで表示しています。"
+        : "推薦用データを取得できませんでした。入力を残したまま再試行できます。";
+    button.setAttribute("aria-disabled", String(Boolean(recommendationPromise)));
   }
 
   function loadRecommendationData() {
@@ -2116,6 +6189,8 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         const catalog = catalogFrom(result.index);
         if (!catalog) throw new Error("invalid recommendation catalog");
         recommendationData = catalog;
+        recommendationNeedsRetry =
+          !result.state.semantic && result.state.reason !== "semantic_status lexical-only";
         EMBEDDINGS = result.embeddings ? embeddingBundle(result.embeddings) : null;
         semanticReason = result.state.reason;
         if (!result.state.semantic || !EMBEDDINGS) clearSemantic("error");
@@ -2128,10 +6203,23 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       })
       .catch(() => {
         recommendationError = true;
+        recommendationNeedsRetry = true;
         semanticReason = "recommendation data unavailable";
         clearSemantic("error");
         render();
+      })
+      .finally(() => {
+        recommendationPromise = null;
+        render();
       });
+  }
+
+  function retryRecommendationData() {
+    if (recommendationPromise) return;
+    recommendationData = null;
+    recommendationError = false;
+    loadRecommendationData();
+    render();
   }
 
   function resolveHistoryRef() {
@@ -2146,13 +6234,31 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     }
   }
 
+  function updateHistoryStatus(recommend: boolean): boolean {
+    const show =
+      !recommend &&
+      fullRecordNeeded(state.past, state.win, fullRecordRequested) &&
+      (historyStatus === "loading" || historyStatus === "error");
+    const button = $("historyRetry");
+    if (!show && document.activeElement === button) $("results").focus();
+    $("historyStatus").hidden = !show;
+    button.hidden = !show;
+    if (!show) return false;
+    $("historyStatusText").textContent =
+      historyStatus === "loading" ? HISTORY_LOADING_JA : HISTORY_ERROR_JA;
+    button.setAttribute("aria-disabled", String(historyStatus === "loading"));
+    if (document.activeElement === $("fullRecordButton")) button.focus();
+    return true;
+  }
+
   function stopHistoryLoad() {
     historyLoader.cancel();
     historyStatus = historyLoader.status;
   }
 
   function loadHistoryData() {
-    if (state.mode !== "deadlines" || !state.past) return;
+    if (state.mode !== "deadlines" || !fullRecordNeeded(state.past, state.win, fullRecordRequested))
+      return;
     if (historyLoader.data) {
       historyStatus = historyLoader.status;
       setDeadlineProfile(historyLoader.data);
@@ -2169,14 +6275,21 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   }
 
   function setMode(mode: UiMode) {
+    /* モードを変えると表は消える（推薦画面では行を一覧に描かない）ので、開いていた行の
+     * 詳細は閉じる。閉じないと `?row=` が投稿先を探す画面の URL に残る（`writeUrl` は
+     * `drawerRow` をモードが見ていずに書く）。その URL を受け取った人は、表の出ない画面で
+     * 行を開こうとして、収録があるのに「収録に見当たりません」と読まされた
+     * （2026-08-09 実測: `setMode` はドロワーを閉めていなかった）。 */
+    if (drawerRow) closeDrawer(null, false);
+    window._prevFocus = null;
     state.mode = mode === "recommend" ? "recommend" : "deadlines";
     updateModeUi();
-    writeUrl();
+    writeUrl("push");
     if (state.mode === "recommend") {
       stopHistoryLoad();
       if (recommendationData) setRecommendationProfile(recommendationData);
       else loadRecommendationData();
-    } else if (state.past) {
+    } else if (fullRecordNeeded(state.past, state.win, fullRecordRequested)) {
       loadHistoryData();
     } else {
       stopHistoryLoad();
@@ -2187,47 +6300,188 @@ function semanticOutput(value: unknown): value is SemanticOutput {
 
   function readUrl() {
     const p = new URLSearchParams(window.location.search);
-    state.mode = p.get("mode") === "recommend" ? "recommend" : "deadlines";
+    // 案内は読み取りのつど作り直す（項目を集めたあとで初期化すると、最初に集めた分が
+    // 消える。2026-09-23 に実発生）。
+    urlNotices = [];
+    urlRankNotice = "";
+    const rawMode = p.get("mode");
+    state.mode = rawMode === "recommend" ? "recommend" : "deadlines";
+    if (rawMode && rawMode !== "recommend" && rawMode !== "deadlines") {
+      urlNotices.push(urlValueNoticeJa("モード", rawMode, "締切の一覧を開きました"));
+    }
     state.q = p.get("q") || "";
-    state.kind = KIND_LABEL[p.get("kind") || ""] ? p.get("kind") || "" : "";
+    const urlKind = selectableKind(p.get("kind"));
+    state.kind = urlKind.kind;
+    /* 会議の鍵で 1 会場だけに絞る（行の詳細の「この会議の締切だけを見る」が使う）。
+     * 収録に無い鍵は絞り込みを外す（残すと「会議「xyz」以外の行 183 件」とだけ出て、
+     * 何が起きたのか分からない – 2026-10-23 實測）。 */
+    const rawVenue = (p.get("venue") || "").trim();
+    /* 画面の札は `SIGMOD`（大文字）と出るので、大文字小文字を問わずに受ける（2026-10-24 実測:
+     * `?venue=SIGMOD` は絞り込みが黙って外れていた）。 */
+    state.venue = Recommender.venueKeyFromInput(
+      rawVenue,
+      (DATA.conferences || []).map((c) => String(c.key || "")),
+    );
+    if (rawVenue && !state.venue)
+      urlNotices.push(urlValueNoticeJa("会議", rawVenue, "会議の絞り込みは外れています"));
+    if (urlKind.notice) urlNotices.push(urlKind.notice);
     const rawRank = p.get("rank");
-    state.rank = ["A*", "A", "B", "C", "N"].indexOf(rawRank || "") >= 0 ? rawRank || "" : "";
+    // 許す値は選択肢の正本と同じ（書き写すと URL だけ通る値が生まれる）。
+    state.rank = RANK_GRADE_OPTIONS.indexOf(rawRank || "") >= 0 ? rawRank || "" : "";
+    if (rawRank && !state.rank) {
+      /* ランクは推薦モードにも欄が在るので、断りも両方の画面で出す（締切の一覧の
+       * `urlNotices` は締切向けの条件をまとめて出す物で、推薦モードでは出さない）。 */
+      urlRankNotice = urlValueNoticeJa("ランク", rawRank, "ランクの絞り込みは外れています");
+      urlNotices.push(urlRankNotice);
+    }
     const rawWin = p.get("win");
-    state.win =
-      ["all", "7d", "30d", "90d", "180d", "future"].indexOf(rawWin || "") >= 0
-        ? rawWin || ""
-        : "all";
-    state.est = p.get("est") === "1";
-    state.domestic = p.get("domestic") === "1";
-    state.past = p.get("past") === "1";
-    state.cats = (p.get("cats") || "")
-      .split(",")
-      .filter((category) => Boolean(category) && Boolean(DATA.categories[category]));
+    // 受け付ける値はセレクトの選択肢と表裏一体にする（選択肢に無い値を通すと、その値で
+    // 共有された URL を開いた人のセレクトが空欄になる。`future` は過去行を落とさない
+    // 何もしない値だったので、受け付け自体をやめた）。
+    state.win = WIN_OPTIONS.indexOf(rawWin || "") >= 0 ? rawWin || "" : "all";
+    if (rawWin && state.win === "all") {
+      urlNotices.push(urlValueNoticeJa("締切まで", rawWin, "締切日は絞っていません"));
+    }
+    /* チェック欄の値。`1` / `true` で入り、`0` / `false` で入りなし、読めない値は
+     * 入りなしにして、画面上の語（ラベルそのもの）で理由を出す。
+     * `p.get("est")` のように鍵を直書きするのは、URL に書いた条件を読み戻す照合検査
+     * （SPEC §7）が鍵名を洗えるようにするためでもある。 */
+    const flagNoticeJa = (label: string, raw: string | null): void => {
+      urlNotices.push(
+        urlValueNoticeJa(label, raw == null ? "" : String(raw), "チェックは入りませんでした"),
+      );
+    };
+    const estRaw = p.get("est");
+    const domesticRaw = p.get("domestic");
+    const onlineRaw = p.get("online");
+    const pastRaw = p.get("past");
+    const estFlag = urlFlagJa(estRaw);
+    const domesticFlag = urlFlagJa(domesticRaw);
+    const onlineFlag = urlFlagJa(onlineRaw);
+    const pastFlag = urlFlagJa(pastRaw);
+    if (!estFlag.readable) flagNoticeJa("推定締切を含める", estRaw);
+    if (!domesticFlag.readable) flagNoticeJa("国内研究会・国内シンポジウムのみ", domesticRaw);
+    if (!onlineFlag.readable) flagNoticeJa("オンライン参加可のみ", onlineRaw);
+    if (!pastFlag.readable) flagNoticeJa("過去の締切も表示", pastRaw);
+    state.est = estFlag.on;
+    state.domestic = domesticFlag.on;
+    state.online = onlineFlag.on;
+    state.past = pastFlag.on;
+    /* 推薦の候補から締切が過ぎた会議を除く（任意）。締切一覧の「過去の締切も表示」とは
+     * 別の条件 – あちらは過ぎた行を出す側で、こちらは候補から外す側。 */
+    const openOnlyRaw = p.get("open");
+    const openOnlyFlag = urlFlagJa(openOnlyRaw);
+    if (!openOnlyFlag.readable) flagNoticeJa("締切が過ぎた候補を除く", openOnlyRaw);
+    state.openOnly = openOnlyFlag.on;
+    /* 推薦の候補の並び。締切の一覧の `sort` とは別の欄 – あちらは表の列の並びで、
+     * こちらは候補（カード）の並び。知らない値は既定へ戻して理由を残す。 */
+    const orderRaw = p.get("order");
+    if (orderRaw == null || orderRaw === "" || orderRaw === "fit") {
+      state.order = "fit";
+    } else if (orderRaw === "deadline") {
+      state.order = "deadline";
+    } else {
+      state.order = "fit";
+      urlNotices.push(urlValueNoticeJa("並び順", orderRaw, "論文との一致順に戻しました"));
+    }
+    /* 「見方のてびき」を開いた状態もリンクで引き継ぐ。閉じた `<details>` の中は
+     * ブラウザのページ内検索（Ctrl+F）で出てこない（WebKit の既知の制限:
+     * https://bugs.webkit.org/show_bug.cgi?id=239940）。てびきを探している人が
+     * 「このページに書いてあるのに見つからない」で止まらないように、開いた状態で
+     * 渡せる道をここに置く（2026-09-23）。 */
+    const helpFlag = urlFlagJa(p.get("help"));
+    // 開いていた行の詳細も引き継ぐ（行が見つからないときは静かに開かない –
+    // 件数欄に注意を足すと、行の有り無しと無関係な読み上げが増えるため第 140 回と同じ扱い）。
+    const rowFlag = p.get("row");
+    pendingDrawerKey = typeof rowFlag === "string" ? rowFlag : "";
+    // 読めない値でも注意を出さない。てびきは画面の絞り込みではなく見せ方なので、
+    // 件数欄に「チェックは入りませんでした」を並べると、本当に外れた条件の案内が
+    // 埋もれる（チェック欄と同じ案内文もそこでは不通）。
+    // `<details>` の開閉なので型を落とす（`$` は HTMLElement を返す）。見出しは
+    // `site/template.html` に常にあるので存在チェックはしない（他の欄と同じ）。
+    const helpPanel = $("helpPanel") as HTMLDetailsElement;
+    helpPanel.open = helpFlag.on;
+    const rawCats = (p.get("cats") || "").split(",").filter((category) => Boolean(category));
+    state.cats = rawCats.filter((category) => Boolean(DATA.categories[category]));
+    // 分野は「知らない鍵を黙って落とす」と、送った人の意図より広い一覧を開くことになる
+    // （全部の鍵が未知なら、そもそも絞り込んでいない画面になる）。
+    const unknownCats = rawCats.filter((category) => !DATA.categories[category]);
+    if (unknownCats.length) {
+      // 知らない鍵はラベルの引きようが無いので、URL に書いたとおりの値で見せる
+      // （送った人が打った / 生成的に得た文字列そのものが分からないと直せない）。
+      const names = unknownCats.join("・");
+      urlNotices.push(
+        state.cats.length
+          ? `リンクの分野「${names}」はこの一覧にないので、その部分だけ外しました`
+          : `リンクの分野「${names}」はこの一覧にないので、分野の絞り込みは外れています`,
+      );
+    }
+    const rawSort = p.get("sort");
+    sortKey = rawSort && SORTABLE_KEYS.indexOf(rawSort) >= 0 ? rawSort : DEFAULT_SORT_KEY;
+    if (rawSort && sortKey === DEFAULT_SORT_KEY && SORTABLE_KEYS.indexOf(rawSort) < 0) {
+      urlNotices.push(urlValueNoticeJa("並び順", rawSort, "既定の並び順に戻しました"));
+    }
+    sortAsc = p.get("dir") !== "desc";
   }
 
-  function writeUrl() {
+  function writeUrl(navigation: "replace" | "push" | "close" = "replace") {
+    if (restoringNavigation) return;
     const p = new URLSearchParams();
     p.set("mode", state.mode);
     if (state.q) p.set("q", state.q);
     if (state.kind) p.set("kind", state.kind);
+    /* 会議の絞り込みは締切の一覧だけに掛かる（推薦の候補は絞らない）。推薦モードの URL に
+     * 残すと、受け取った人が「候補も絞られている」と読む（2026-10-24）。締切に戻れば戻る。 */
+    if (state.mode === "deadlines" && state.venue) p.set("venue", state.venue);
     if (state.rank) p.set("rank", state.rank);
     if (state.win !== "all") p.set("win", state.win);
     if (state.est) p.set("est", "1");
     if (state.domestic) p.set("domestic", "1");
+    if (state.online) p.set("online", "1");
     if (state.past) p.set("past", "1");
+    if (state.openOnly) p.set("open", "1");
+    if (state.order === "deadline") p.set("order", "deadline");
     if (state.cats.length) p.set("cats", state.cats.join(","));
+    // 並び順も URL に入れる。「国内研究会を締切の新しい順で」のような共有が、
+    // 開いた人の画面で元の並びにならないのは惜しい。既定の並びなら引数を足さない。
+    if (sortKey !== DEFAULT_SORT_KEY) p.set("sort", sortKey);
+    if (!sortAsc) p.set("dir", "desc");
+    // てびきを開いている状態も同じ理屈で引き継ぐ（上の読み取り側参照）。
+    const helpPanelEl = $("helpPanel") as HTMLDetailsElement;
+    if (helpPanelEl.open) p.set("help", "1");
+    if (drawerRow) p.set("row", rowShareKeyJa(drawerRow));
     const str = p.toString();
-    history.replaceState(null, "", str ? `?${str}` : window.location.pathname);
+    const next = `${window.location.pathname}${str ? `?${str}` : ""}${window.location.hash}`;
+    if (navigation === "close" && history.state?.kamiyobiDrawer) {
+      pendingDrawerReturnKey = drawerOriginKey;
+      history.back();
+      return;
+    }
+    if (next === `${window.location.pathname}${window.location.search}${window.location.hash}`)
+      return;
+    const entry = {
+      kamiyobiOrigin: drawerRow ? drawerOriginKey : "",
+      kamiyobiDrawer:
+        Boolean(drawerRow) && (navigation === "push" || Boolean(history.state?.kamiyobiDrawer)),
+    };
+    if (navigation === "push") history.pushState(entry, "", next);
+    else history.replaceState(entry, "", next);
   }
 
   function toForm() {
     valueElement("q").value = state.q;
     valueElement("kind").value = state.kind;
     valueElement("rank").value = state.rank;
+    /* 推薦モードのランク欄は同じ状態を映す（片方だけ古い値になると、欄と結果が食い違う）。 */
+    const recRankSel = document.getElementById("recRank") as HTMLSelectElement | null;
+    if (recRankSel) recRankSel.value = state.rank;
     valueElement("win").value = state.win;
     inputElement("est").checked = state.est;
     inputElement("domestic").checked = state.domestic;
+    inputElement("online").checked = state.online;
     inputElement("past").checked = state.past;
+    inputElement("openOnly").checked = state.openOnly;
+    valueElement("recOrder").value = state.order;
     catsBox.querySelectorAll<HTMLInputElement>("input").forEach((chk) => {
       chk.checked = state.cats.indexOf(chk.value) >= 0;
     });
@@ -2237,11 +6491,20 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   function fromForm() {
     state.q = valueElement("q").value;
     state.kind = valueElement("kind").value;
-    state.rank = valueElement("rank").value;
+    /* ランクは締切一覧と推薦の両方の欄が持つ（同じ `state.rank`）。見えている方の欄を読む
+     * （隠れた欄の古い値を読むと、触っていない条件が戻る）。 */
+    {
+      const recRankSel = document.getElementById("recRank") as HTMLSelectElement | null;
+      state.rank =
+        state.mode === "recommend" && recRankSel ? recRankSel.value : valueElement("rank").value;
+    }
     state.win = valueElement("win").value;
     state.est = inputElement("est").checked;
     state.domestic = inputElement("domestic").checked;
+    state.online = inputElement("online").checked;
     state.past = inputElement("past").checked;
+    state.openOnly = inputElement("openOnly").checked;
+    state.order = valueElement("recOrder").value === "deadline" ? "deadline" : "fit";
     state.cats = [];
     catsBox.querySelectorAll<HTMLInputElement>("input").forEach((chk) => {
       if (chk.checked) state.cats.push(chk.value);
@@ -2250,8 +6513,13 @@ function semanticOutput(value: unknown): value is SemanticOutput {
 
   function apply() {
     fromForm();
-    writeUrl();
-    if (state.mode === "deadlines" && state.past) {
+    const editing = document.activeElement === $("q");
+    writeUrl(editing && queryEditInProgress ? "replace" : "push");
+    queryEditInProgress = editing;
+    if (
+      state.mode === "deadlines" &&
+      fullRecordNeeded(state.past, state.win, fullRecordRequested)
+    ) {
       loadHistoryData();
     } else {
       stopHistoryLoad();
@@ -2264,6 +6532,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   const PDFJS_VERSION = "3.11.174";
   const PDFJS_SCRIPT = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";
   const PDFJS_WORKER = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+  const PDFJS_CMAPS = "https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/cmaps/";
   const PDF_MAX_BYTES = 20 * 1024 * 1024;
   const PDF_MAX_PAGES = 100;
   const PDF_PAGE_LIMIT = 3;
@@ -2303,7 +6572,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   function readPdf(buf: ArrayBuffer, signal: AbortSignal): Promise<PdfReadResult> {
     const runtime = window.pdfjsLib;
     if (!runtime) return Promise.reject(new Error("pdfjs unavailable"));
-    const task = runtime.getDocument({ data: buf });
+    const task = runtime.getDocument({ data: buf, cMapUrl: PDFJS_CMAPS, cMapPacked: true });
     let timeout: ReturnType<typeof setTimeout> | undefined;
     const stop = () => {
       if (task.destroy) task.destroy();
@@ -2354,13 +6623,163 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   function textRecord(name: string, text: string) {
     return Recommender.textPaperRecord(text, name);
   }
+  /* PDF 読み込みの失敗を、画面に出せる日本語と打ち手へ寄せる。内部の英語文字列を
+   * そのまま出していた（2026-09-23 実測: 「PDF 読込に失敗しました: pdfjs unavailable」
+   * 「: file is too large」「: PDF has too many pages」「: PDF extraction timed out」、
+   * pdf.js 由来の "Invalid PDF structure." など）。日本語の利用者は何が起きたか
+   * 直せないので、原因の心当たりと代替手段（貼り付け）を出す。
+   * 上限値はテスト側にも書き写さず、同じ定数から作る。 */
+  function pdfFailureMessageJa(error: unknown): string {
+    if (
+      error &&
+      typeof error === "object" &&
+      "paperFileName" in error &&
+      typeof error.paperFileName === "string" &&
+      "cause" in error
+    )
+      return `${error.paperFileName}：${pdfFailureMessageJa(error.cause)}`;
+    const name = error instanceof Error ? error.name : "";
+    if (name === "AbortError") return "ファイルの読み込みをキャンセルしました";
+    const message = (error instanceof Error ? error.message : String(error)).toLowerCase();
+    const pasteHint = "タイトルと概要を下の欄に貼り付けてください";
+    if (message === "txt has no paper text" || message === "pdf has no paper text") {
+      const format = message.startsWith("txt") ? "TXT" : "PDF";
+      return `${format} から題名や概要を読み取れませんでした。入力済みの論文情報は残しています。文字の入ったファイルを選ぶか、${pasteHint}`;
+    }
+    if (message.includes("txt read failed"))
+      return `TXT を読み込めませんでした。ファイルを確かめるか、${pasteHint}`;
+    /* 対応していない文書形式を「PDF が読めない」とは言わない（自分の PDF の文字化けを疑って、
+     * 直せない方向へ探させることになる – 第 150 回）。 */
+    if (message.indexOf("unsupported document") >= 0) {
+      const ext = /format:\s*([a-z0-9]+)/.exec(message);
+      return (
+        (ext ? `.${ext[1]} は` : "その形式のファイルは") +
+        "この欄で読めません（対応しているのは PDF と TXT です）。" +
+        "Word などは TXT に保存し直すか、" +
+        pasteHint
+      );
+    }
+    if (
+      message.indexOf("pdfjs") >= 0 ||
+      message.indexOf("cdnjs") >= 0 ||
+      message.indexOf("failed to fetch") >= 0
+    ) {
+      return (
+        "PDF を読む仕組みが呼び出せませんでした（外部から部品を取れないネットワーク状況の" +
+        "可能性があります）。" +
+        pasteHint
+      );
+    }
+    if (message.indexOf("too large") >= 0 || message.indexOf("size") >= 0) {
+      const mb = Math.round(PDF_MAX_BYTES / (1024 * 1024));
+      return `ファイルが大きすぎます（${mb} MB まで）。抜粋を TXT にして貼るか、小さいファイルを指定してください`;
+    }
+    if (message.indexOf("too many pages") >= 0) {
+      return (
+        `PDF のページが多すぎます（${PDF_MAX_PAGES} ページまで）。` +
+        "先頭部分を TXT に書き出して貼ってください"
+      );
+    }
+    if (message.indexOf("timed out") >= 0 || message.indexOf("timeout") >= 0) {
+      return `PDF の読み込みが遅すぎて中断しました。${pasteHint}`;
+    }
+    if (
+      message.indexOf("invalid pdf") >= 0 ||
+      message.indexOf("password") >= 0 ||
+      message.indexOf("structure") >= 0
+    ) {
+      return (
+        "PDF から文字を読み取れませんでした（文字が入っていない PDF や、パスワード付きは" +
+        "読めません）。" +
+        pasteHint
+      );
+    }
+    return `PDF を読み込めませんでした。ファイルを確かめるか、${pasteHint}`;
+  }
+
+  /* 対応していない文書形式（Word・一太郎・OpenDocument など）。これを PDF として読むと
+   * pdf.js が `Invalid PDF structure.` を落とし、画面は「文字が入っていない PDF や、
+   * パスワード付きは読めません」と言っていた（2026-09-23 実測: `.docx` を選んだ人がこの文を
+   * 受け、自分の PDF の文字化けを疑って直せない方向へ探した）。ピッカーは `accept` だけで
+   * 絞られるわけではなく、「すべてのファイル」に切り替えれば運べるので、拡張子で止める。 */
+  function unsupportedPaperFormatJa(name: unknown): string | null {
+    const text = String(name || "");
+    const m = /\.(docx?|odt|rtf|pages|wps|pptx?|odp|key|epub|zip)$/i.exec(text);
+    if (!m) return null;
+    return `unsupported document format: ${m[1].toLowerCase()}`;
+  }
+
+  function decodePaperText(buffer: ArrayBuffer): string {
+    const bytes = new Uint8Array(buffer);
+    const encoding =
+      bytes[0] === 0xff && bytes[1] === 0xfe
+        ? "utf-16le"
+        : bytes[0] === 0xfe && bytes[1] === 0xff
+          ? "utf-16be"
+          : "utf-8";
+    return new TextDecoder(encoding).decode(bytes);
+  }
+
   function readPaperFile(file: File, signal: AbortSignal): Promise<PaperRecord> {
+    if (signal.aborted) return Promise.reject(abortError());
+    const unsupported = unsupportedPaperFormatJa(file.name);
+    if (unsupported) return Promise.reject(new Error(unsupported));
     if (file.size > PDF_MAX_BYTES) return Promise.reject(new Error("file is too large"));
-    if (/\.txt$/i.test(file.name)) return file.text().then((text) => textRecord(file.name, text));
+    if (/\.txt$/i.test(file.name))
+      return file
+        .arrayBuffer()
+        .then((buffer) => {
+          if (signal.aborted) throw abortError();
+          const text = decodePaperText(buffer);
+          if (!text.trim()) throw new Error("TXT has no paper text");
+          return textRecord(file.name, text);
+        })
+        .catch((error: unknown) => {
+          if (
+            error instanceof Error &&
+            (error.name === "AbortError" || error.message === "TXT has no paper text")
+          )
+            throw error;
+          throw new Error("TXT read failed", { cause: error });
+        });
     return file
       .arrayBuffer()
       .then((buf) => readPdf(buf, signal))
-      .then((result) => Recommender.pdfPaperRecord(result.metadata, result.pages, file.name));
+      .then((result) => {
+        const record = Recommender.pdfPaperRecord(result.metadata, result.pages, "");
+        if (!record.title.trim() && !record.abstract?.trim())
+          throw new Error("PDF has no paper text");
+        return record;
+      });
+  }
+  function readablePaperFileRecord(record: PaperRecord): PaperRecord {
+    const readable = (text: string | undefined) =>
+      String(text || "").replace(/\p{Cc}/gu, (character) =>
+        /\p{White_Space}/u.test(character) ? character : "\uFFFD",
+      );
+    return {
+      title: readable(record.title),
+      abstract: readable(record.abstract),
+      keywords: readable(record.keywords),
+      venue: readable(record.venue),
+    };
+  }
+  function paperFileStatusJa(names: string[], records: PaperRecord[]): string {
+    const affected = names.filter((_name, index) => {
+      const record = records[index];
+      return (
+        record &&
+        [record.title, record.keywords, record.venue, index === 0 ? record.abstract : ""].some(
+          (text) => String(text || "").includes("\uFFFD"),
+        )
+      );
+    });
+    return (
+      names.join(", ") +
+      (affected.length
+        ? `。${names.length > 1 ? `${affected.join(", ")}の` : ""}読み取れない文字を「\uFFFD」で示しました。原文と照合して入力欄を修正してください。`
+        : "")
+    );
   }
   function syncPaperText() {
     const primary: PaperRecord = {
@@ -2373,7 +6792,116 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       primary.title || primary.abstract || primary.keywords ? [primary] : [];
     records = records.concat(Recommender.parsePaperLines(valueElement("paperReferences").value));
     valueElement("paperText").value = records.length ? JSON.stringify(records) : "";
+    // 欄の読み直しは必ずここを通るので、下書きの保存もここに寄せる（呼び出し側 4 箇所に
+    // ばら撒くと、増やした日がどこかで記憶が漏れる）。
+    savePaperDraft(readPaperInput());
   }
+  /* サンプルボタンは欄を差し替える。利用者が打ち込んだ物を黙って消さないために、差し替えの
+   * 規則を決める関数と、画面を読み書きする関数を分けておいた（規則の側は画面を作らずに
+   * 検査で動かせる）。
+   * 以前は、空のときの案内が「上のサンプルボタンで入力の形を確かめられます」と押すことを
+   * 勧めていたのに、押すと打ち込んだタイトル・概要・キーワード・掲載先が告げずに消えた。 */
+  type PaperInputJa = {
+    title: string;
+    abstract: string;
+    keywords: string;
+    references: string;
+    venue: string;
+  };
+
+  function paperInputHasText(input: PaperInputJa): boolean {
+    return [input.title, input.abstract, input.keywords, input.references].some(
+      (text) => String(text || "").trim() !== "",
+    );
+  }
+
+  /** 現在の入力があれば保持する（戻す物が無いときは戻すボタンを出さない）。 */
+  function paperInputWithSample(
+    current: PaperInputJa,
+    sample: PaperInputJa,
+  ): { kept: PaperInputJa | null; next: PaperInputJa } {
+    return {
+      kept: paperInputHasText(current) ? current : null,
+      next: sample,
+    };
+  }
+
+  /** 打ち込み中の論文の入力をまとめて取る。 */
+  function readPaperInput(): PaperInputJa {
+    return {
+      title: valueElement("paperPrimaryTitle").value,
+      abstract: valueElement("paperPrimaryAbstract").value,
+      keywords: valueElement("paperPrimaryKeywords").value,
+      references: valueElement("paperReferences").value,
+      venue: paperPrimaryVenue,
+    };
+  }
+
+  function writePaperInput(input: PaperInputJa): void {
+    valueElement("paperPrimaryTitle").value = input.title;
+    valueElement("paperPrimaryAbstract").value = input.abstract;
+    valueElement("paperPrimaryKeywords").value = input.keywords;
+    valueElement("paperReferences").value = input.references;
+    paperPrimaryVenue = input.venue;
+  }
+
+  const PAPER_DRAFT_KEY = "kamiyobi.paperDraft.v1";
+
+  function savePaperDraft(input: PaperInputJa): void {
+    try {
+      if (!paperInputHasText(input)) {
+        window.sessionStorage.removeItem(PAPER_DRAFT_KEY);
+        return;
+      }
+      window.sessionStorage.setItem(PAPER_DRAFT_KEY, JSON.stringify(input));
+    } catch {
+      // 記憶できない環境（シークレットモード等）ではそのまま進む。打ち込み自体は消さない。
+    }
+  }
+
+  function loadPaperDraft(): PaperInputJa | null {
+    try {
+      const raw = window.sessionStorage.getItem(PAPER_DRAFT_KEY);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw) as Partial<PaperInputJa> | null;
+      if (!parsed || typeof parsed !== "object") return null;
+      const draft: PaperInputJa = {
+        title: String(parsed.title ?? ""),
+        abstract: String(parsed.abstract ?? ""),
+        keywords: String(parsed.keywords ?? ""),
+        references: String(parsed.references ?? ""),
+        venue: String(parsed.venue ?? ""),
+      };
+      // 空の下書きを戻すと「何も打っていないのに欄が埋まっている」形になるので戻さない。
+      return paperInputHasText(draft) ? draft : null;
+    } catch {
+      return null;
+    }
+  }
+
+  /** 画面を開いたとき、欄が空なら下書きを戻す。打ち込み中の物があるなら上書きしない。 */
+  function restorePaperDraft(): boolean {
+    if (paperInputHasText(readPaperInput())) return false;
+    const draft = loadPaperDraft();
+    if (!draft) return false;
+    writePaperInput(draft);
+    return true;
+  }
+
+  let paperInputBeforeSwap: PaperInputJa | null = null;
+
+  function setPaperActionHidden(button: HTMLElement, hidden: boolean): void {
+    const moveFocus = hidden && document.activeElement === button;
+    button.hidden = hidden;
+    if (moveFocus) valueElement("paperPrimaryTitle").focus();
+  }
+
+  /** 入れ替え前の入力に戻せることを、ボタンで示す（ボタン名は画面側にある）。 */
+  function setPaperUndoVisible(visible: boolean): void {
+    const button = $("paperUndo");
+    if (button) setPaperActionHidden(button, !visible);
+  }
+
   function setPrimaryRecord(record?: Partial<PaperRecord>) {
     valueElement("paperPrimaryTitle").value = record?.title || "";
     valueElement("paperPrimaryAbstract").value = record?.abstract || "";
@@ -2381,15 +6909,26 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     paperPrimaryVenue = record?.venue || "";
   }
   const paperFiles = inputElement("paperFiles");
+  $("paperChoose").addEventListener("click", () => paperFiles.click());
   const cancelPdf = $("cancelPdf");
-  cancelPdf.addEventListener("click", () => {
+  function stopPaperFileRead() {
+    pdfJob++;
     if (pdfAbortController) pdfAbortController.abort();
+    pdfAbortController = null;
+    setPaperActionHidden(cancelPdf, true);
+    $("paperFileLabel").textContent = "未選択";
+  }
+  cancelPdf.addEventListener("click", () => {
+    if (!pdfAbortController) return;
+    stopPaperFileRead();
+    $("paperFileLabel").textContent = pdfFailureMessageJa(abortError());
   });
   paperFiles.addEventListener("change", (event) => {
     const target = event.currentTarget;
     if (!(target instanceof HTMLInputElement)) return;
     const files = Array.from(target.files ?? []);
     if (!files.length) return;
+    if (pdfAbortController) pdfAbortController.abort();
     const label = $("paperFileLabel");
     label.textContent = "読み込み中…";
     cancelPdf.hidden = false;
@@ -2397,127 +6936,902 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     pdfAbortController = new AbortController();
     const signal = pdfAbortController.signal;
     /** @type {Promise<void>} */
-    const load: Promise<void> = files.some((file) => !/\.txt$/i.test(file.name))
+    const load: Promise<void> = files.some(
+      (file) => !/\.txt$/i.test(file.name) && !unsupportedPaperFormatJa(file.name),
+    )
       ? new Promise((resolve, reject) =>
           loadPdfJs((ok) => (ok ? resolve() : reject(new Error("pdfjs unavailable")))),
         )
       : Promise.resolve();
     load
-      .then(() => Promise.all(files.map((file) => readPaperFile(file, signal))))
-      .then((records) => {
+      .then(() => {
         if (job !== pdfJob || signal.aborted) throw abortError();
-        setPrimaryRecord(records[0] || {});
-        valueElement("paperReferences").value = records
-          .slice(1)
-          .map((record) =>
-            [record.title, record.keywords, record.venue].filter(Boolean).join(" | "),
-          )
-          .join("\n");
+        return Promise.all(
+          files.map((file) =>
+            readPaperFile(file, signal).catch((error: unknown) => {
+              if (
+                error &&
+                typeof error === "object" &&
+                "name" in error &&
+                error.name === "AbortError"
+              )
+                throw error;
+              throw Object.assign(new Error("paper file read failed", { cause: error }), {
+                paperFileName: file.name,
+              });
+            }),
+          ),
+        );
+      })
+      .then((readRecords) => {
+        if (job !== pdfJob || signal.aborted) throw abortError();
+        const records = readRecords.map(readablePaperFileRecord);
+        // 選んだファイルを欄に反映する差し替えも、例のボタンと同じ規則を通す。以前はここで
+        // 無条件に上書きしていて、打ち込んだ物や前に選んだファイル群が告げずに消えた
+        // （欄に「複数可」とあるので、足し算に読む人がいても不思議ではない）。
+        const first = records[0] || {};
+        const nextInput: PaperInputJa = {
+          title: first.title || "",
+          abstract: first.abstract || "",
+          keywords: first.keywords || "",
+          references: records
+            .slice(1)
+            .map((record) =>
+              [record.title, record.keywords, record.venue]
+                .slice(0, record.venue ? 3 : record.keywords ? 2 : 1)
+                .join(" | "),
+            )
+            .join("\n"),
+          venue: first.venue || "",
+        };
+        const swap = paperInputWithSample(readPaperInput(), nextInput);
+        paperInputBeforeSwap = swap.kept;
+        setPaperUndoVisible(Boolean(swap.kept));
+        writePaperInput(swap.next);
         syncPaperText();
-        label.textContent = files.map((file) => file.name).join(", ");
+        label.textContent = paperFileStatusJa(
+          files.map((file) => file.name),
+          records,
+        );
         apply();
         scheduleSemantic();
       })
       .catch((error: unknown) => {
-        const name = error instanceof Error ? error.name : "Error";
-        const message = error instanceof Error ? error.message : String(error);
-        label.textContent =
-          name === "AbortError"
-            ? "PDF 読込をキャンセルしました"
-            : `PDF 読込に失敗しました: ${message}`;
+        if (job !== pdfJob) return;
+        label.textContent = pdfFailureMessageJa(error);
       })
       .finally(() => {
         if (job === pdfJob) {
           pdfAbortController = null;
-          cancelPdf.hidden = true;
+          setPaperActionHidden(cancelPdf, true);
         }
       });
     target.value = "";
   });
 
+  /* 入力欄への入力を遅延適用する。日本語 IME の変換中は適用しない —
+   * 未確定のひらなが（「きかい」）で画面が入れ替わって見えいうえ、変換候補ウィンドウを
+   * 開いたままの再計算はもたつく。確定（compositionend）後に一度だけ走らせる。
+   * 検索欄だけでなく論文入力の各欄も同じにする。要旨・タイトルは日本語で打つ欄なので、
+   * 検索欄だけ守っても使っている人は同じもたつきを踏む。
+   * `onType` は打鍵ごとに走らせる軽い処理（再計算を伴わないキャッシュ無効化など）。
+   * 変換中に他の操作（分野チップ等）をされたときに、古い結果を使い回さないため必要。 */
+  function wireDebouncedInput(
+    element: { addEventListener(type: string, listener: () => void): void },
+    delay: number,
+    applyInput: () => void,
+    onType?: () => void,
+  ): () => boolean {
+    let composing = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const cancel = () => {
+      const pending = timer !== undefined;
+      clearTimeout(timer);
+      timer = undefined;
+      return pending;
+    };
+    const schedule = () => {
+      if (onType) onType();
+      cancel();
+      if (composing) return;
+      timer = setTimeout(() => {
+        timer = undefined;
+        applyInput();
+      }, delay);
+    };
+    element.addEventListener("compositionstart", () => {
+      composing = true;
+      cancel();
+      if (onType) onType();
+    });
+    element.addEventListener("compositionend", () => {
+      composing = false;
+      schedule();
+    });
+    element.addEventListener("input", schedule);
+    return cancel;
+  }
+
   // ---- wiring ----
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  $("q").addEventListener("input", () => {
-    clearTimeout(timer);
-    timer = setTimeout(apply, 180);
+  // 検索は 1 打鍵で全行を絞り込む（3234 行で約 9.6 ms）。確定・入力のたびに
+  // 走らせるともたつくので、入力はまとめて 1 回だけ適用する。
+  const cancelQueryUpdate = wireDebouncedInput(valueElement("q"), 180, apply);
+  $("showResults").addEventListener("click", () => {
+    cancelQueryUpdate();
+    apply();
+    $("results").focus();
   });
-  $("paperText").addEventListener("input", () => {
-    invalidateSemantic();
-    clearTimeout(timer);
-    timer = setTimeout(() => {
+  $("q").addEventListener("focus", () => {
+    queryEditInProgress = false;
+  });
+  $("q").addEventListener("keydown", (e: KeyboardEvent) => {
+    if (e.ctrlKey || e.metaKey || e.altKey || e.isComposing || e.keyCode === 229) return;
+    if (e.key === "Escape") {
+      e.preventDefault();
+      if (!cancelQueryUpdate()) return;
+      e.stopPropagation();
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      cancelQueryUpdate();
+    } else return;
+    apply();
+    $("results").focus();
+  });
+
+  wireDebouncedInput(
+    $("paperText"),
+    200,
+    () => {
       apply();
       scheduleSemantic();
-    }, 200);
-  });
+    },
+    invalidateSemantic,
+  );
   ["paperPrimaryTitle", "paperPrimaryAbstract", "paperPrimaryKeywords", "paperReferences"].forEach(
     (id) => {
-      $(id).addEventListener("input", () => {
-        syncPaperText();
-        invalidateSemantic();
-        clearTimeout(timer);
-        timer = setTimeout(() => {
+      wireDebouncedInput(
+        $(id),
+        200,
+        () => {
+          syncPaperText();
           apply();
           scheduleSemantic();
-        }, 200);
-      });
+        },
+        invalidateSemantic,
+      );
     },
   );
+
   document.querySelectorAll<HTMLElement>(".sample-btn").forEach((button) => {
     button.addEventListener("click", () => {
-      const sample = Recommender.parsePaperLines(button.getAttribute("data-sample"))[0];
-      setPrimaryRecord(sample);
-      valueElement("paperReferences").value = "";
+      stopPaperFileRead();
+      const parsed = Recommender.parsePaperLines(button.getAttribute("data-sample"))[0];
+      const sample: PaperInputJa = {
+        title: parsed?.title || "",
+        abstract: parsed?.abstract || "",
+        keywords: parsed?.keywords || "",
+        references: "",
+        venue: parsed?.venue || "",
+      };
+      const swap = paperInputWithSample(readPaperInput(), sample);
+      paperInputBeforeSwap = swap.kept;
+      setPaperUndoVisible(Boolean(swap.kept));
+      writePaperInput(swap.next);
       syncPaperText();
       apply();
       scheduleSemantic();
     });
   });
-  ["kind", "rank", "win", "est", "domestic", "past"].forEach((id) => {
+  /* サンプルで差し替える前の入力に戻す。取り消しの入口が無いと、長い概要を貼った後に
+   * 例を試すことができない（2026-08-09 実測: 以前は差し替えが元に戻せなかった）。 */
+  $("paperUndo").addEventListener("click", () => {
+    const kept = paperInputBeforeSwap;
+    if (!kept) return;
+    stopPaperFileRead();
+    writePaperInput(kept);
+    paperInputBeforeSwap = null;
+    setPaperUndoVisible(false);
+    syncPaperText();
+    apply();
+    scheduleSemantic();
+  });
+  /* 条件の欄（種別・ランク・期間・チェック・推薦モードの並び順とランク）は、変えたら
+   * すぐ適用する。推薦モードの 2 つも同じ経路（`fromForm` が見えている欄を読む）。 */
+  [
+    "kind",
+    "rank",
+    "win",
+    "est",
+    "domestic",
+    "online",
+    "past",
+    "openOnly",
+    "recOrder",
+    "recRank",
+  ].forEach((id) => {
     $(id).addEventListener("change", apply);
   });
   catsBox.addEventListener("change", apply);
-  $("more").addEventListener("click", drawMore);
-  $("modeRecommend").addEventListener("click", () => setMode("recommend"));
-  $("modeDeadlines").addEventListener("click", () => setMode("deadlines"));
-  $("historyRetry").addEventListener("click", () => {
-    if (state.mode !== "deadlines" || !state.past) return;
-    loadHistoryData();
-    render();
+  /* てびきを開閉したら URL も揃える。閉じた `<details>` の中はブラウザのページ内検索に
+   * 出ないので、開いた人一緒の画面をそのまま共有できるようにする（読み取り側は `readUrl`）。 */
+  $("helpPanel").addEventListener("toggle", () => writeUrl());
+  // 上の入口から、てびきを開いてそこへ移る（開閉は上の toggle が URL に書く）。
+  $("helpJump").addEventListener("click", (e) => {
+    e.preventDefault();
+    const help = $("helpPanel") as HTMLDetailsElement;
+    help.open = true;
+    help.scrollIntoView({ block: "start" });
+    help.querySelector("summary")?.focus();
   });
-  $("reset").addEventListener("click", () => {
+  $("more").addEventListener("click", drawMore);
+  $("showAll").addEventListener("click", drawAll);
+  // 0 件時の「条件をまとめて外す」。早め絞り込みのボタンは自分の条件だけを出し入れする
+  // 切り替えなので、まとめて外す役はここで状態を戻して担う。
+  // 一覧の意味を変える「過去の締切も表示」は利用者の選択として残す。
+  $("emptyReset").addEventListener("click", () => {
+    const past = state.past;
     state = {
       mode: state.mode,
       q: "",
       cats: [],
+      venue: "",
       kind: "",
       rank: "",
       win: "all",
       est: false,
       domestic: false,
-      past: false,
+      online: false,
+      past,
+      /* 候補が 0 件になった原因そのものなので、まとめて外す側で外す。 */
+      openOnly: false,
+      order: "fit",
     };
+    stopHistoryLoad();
+    if (state.mode === "deadlines") setDeadlineProfile(DATA);
+    toForm();
+    writeUrl("push");
+    render();
+  });
+  const exportCsvButton = $("exportCsv");
+  if (exportCsvButton) exportCsvButton.addEventListener("click", exportShownCsv);
+  const exportIcsButton = $("exportIcs");
+  if (exportIcsButton) exportIcsButton.addEventListener("click", exportShownIcs);
+  // JavaScript が動いているときだけ出る（押せない物を紙と JavaScript 無効の画面に出さない）。
+  const fullRecordButton = $("fullRecordButton");
+  if (fullRecordButton)
+    fullRecordButton.addEventListener("click", () => {
+      fullRecordRequested = true;
+      loadHistoryData();
+      render();
+    });
+
+  const icsCopyButton = $("icsCopy");
+  icsCopyButton.addEventListener("click", () => {
+    void copyIcsSubscribeUrl();
+  });
+  /* 押せる物は、JavaScript が動いているときだけ出す（`hidden` のまま置いてあるのは、
+   * スクリプト無しでは何も起きないボタンを画面と紙に出さないため）。
+   *
+   * 2026-10-17 實測: 此のボタンは**一度も出て居なかった** – 雛形は `hidden` で置き、
+   * 此処で外す筈が其の一行が無く、てびきは「「購読 URL をコピー」で URL を取得できます」と
+   * 案内して居た（讀む人には見えないボタンを押せと言つて居た）。 */
+  icsCopyButton.hidden = false;
+  // 印刷時は絞り込み後の全行を描画する。画面は 40 行ずつしか出さないので、
+  // この措置が無いと印刷物だけ「直近 40 件」で途中までになる。印刷後に戻す。
+  let printExpanded = false;
+  /* 印刷物に「いつのデータで、どんな条件の一覧か」を残す。画面の絞り込み欄は印刷で
+   * 落ちるので、これがないと紙だけ条件の分からない一覧になる（データ生成日はヘッダーに
+   * 残るが、絞り込み条件はどこにも残っていなかった – 2026-09-23 実測）。 */
+  /* 送られてきたリンクで、送った人が開いていた行の詳細を開く。条件も一緒に来るので
+   * 通常は同じ行が見つかるが、データの生成日が違うと無いことがある（そのときは
+   * 表だけを出す – 存在しない行を開くより、開かないほうがマシな誤解で済む）。 */
+  /* 共有された行のURL（`?row=`）を受け取った人は、その行が既定の一覧に出ていないと
+   * これまで**何も起きなかった**（2026-09-23 実測: 収録の共有キー 3,207 件のうち既定の
+   * 画面に出るのは 475 件で、残り 2,732 件 – 過ぎた締切 2,295 件・推定 134 件・表の既定の
+   * 種別以外 303 件 – へのリンクは黙って一覧だけが出ていた）。論文のメモやスライドに
+   * 残った去年の締切のリンクを踏む操作はふつうにあるので、外せる条件を自分で外して
+   * 見せ、それでも見つからないときだけその旨を言う。 */
+  function sharedRowState(row: AppRow | null, now: number): "past" | "est" | "other" | "missing" {
+    if (!row) return "missing";
+    if (rowIsPast(row, now)) return "past";
+    if (row.est) return "est";
+    return "other";
+  }
+
+  /* 共有リンクの行を一覧に出すために、こちら側で緩める条件を 1 つずつ試す。緩めるたびに
+   * 描き直してその行が出るかを見る（まとめて全部外すと、関係の無い条件まで外れた画面に
+   * なるので、必要最小限だけ触る）。緩めた項目名を返すのは、件数のうしろにそのまま
+   * 書くため（外したことが見えないと、受け取った人は送った人と同じ画面を開けたのか
+   * 判断できない）。チェック欄の項目は「隠す条件を外した」という意味の語にしている –
+   * 「条件を外しました」に並べて筋が通る。 */
+  function loosenSharedRowConditions(find: () => number): string[] {
+    const steps: [string, () => void][] = [];
+    if (state.q) {
+      steps.push([
+        "検索語",
+        () => {
+          state.q = "";
+        },
+      ]);
+    }
+    if (state.kind) {
+      steps.push([
+        "種別",
+        () => {
+          state.kind = "";
+        },
+      ]);
+    }
+    if (state.rank) {
+      steps.push([
+        "ランク",
+        () => {
+          state.rank = "";
+        },
+      ]);
+    }
+    if (state.win !== "all") {
+      steps.push([
+        "締切まで",
+        () => {
+          state.win = "all";
+        },
+      ]);
+    }
+    if (state.cats.length) {
+      steps.push([
+        "分野",
+        () => {
+          state.cats = [];
+        },
+      ]);
+    }
+    if (state.domestic) {
+      steps.push([
+        "国内研究会・国内シンポジウムのみ",
+        () => {
+          state.domestic = false;
+        },
+      ]);
+    }
+    if (state.online) {
+      steps.push([
+        "オンライン参加可のみ",
+        () => {
+          state.online = false;
+        },
+      ]);
+    }
+    if (!state.past) {
+      steps.push([
+        "過去の締切を隠す条件",
+        () => {
+          state.past = true;
+        },
+      ]);
+    }
+    if (!state.est) {
+      steps.push([
+        "推定の行を隠す条件",
+        () => {
+          state.est = true;
+        },
+      ]);
+    }
+    const changed: string[] = [];
+    for (const [name, apply] of steps) {
+      apply();
+      changed.push(name);
+      render();
+      if (find() >= 0) return changed;
+    }
+    return changed;
+  }
+
+  function restoreDrawerFromUrl() {
+    if (!pendingDrawerKey) return;
+    /* 投稿先を探す画面では表を描かないので、行の詳細は開けない。上の `setMode` が
+     * モード変更時に閉じるので、こういう URL はふつうは生まれない（手入力と、直す前の
+     * 版本が作ったリンクで受け取る）。条件を勝手に外さず、理由をそのまま言う。 */
+    if (state.mode !== "deadlines") {
+      sharedRowNotice(
+        "リンクに行の詳細が含まれていますが、投稿先を探す画面では行を開きません。締切の一覧に戻すと開けます。",
+      );
+      return;
+    }
+    function showChoices(candidates: AppRow[], message: string) {
+      const choices = $("sharedRowChoices");
+      const guide = $("sharedRowChoiceGuide");
+      const buttons = $("sharedRowChoiceButtons");
+      if (choices && guide && buttons) {
+        choices.hidden = false;
+        guide.textContent = message;
+        buttons.textContent = "";
+        for (const row of candidates) {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = "btn-reset shared-row-choice";
+          button.style.minHeight = "44px";
+          button.style.display = "block";
+          button.style.margin = "4px 0";
+          button.style.maxWidth = "100%";
+          button.style.whiteSpace = "normal";
+          button.style.overflowWrap = "anywhere";
+          button.style.textAlign = "left";
+          button.textContent = [
+            Recommender.titleWithYearJa(row.conf.title || row.conf.key, row.ed.year),
+            KIND_LABEL[row.kind] || row.kind,
+            row.dl.round ? `第 ${row.dl.round} ラウンド` : "ラウンド未確認",
+            row.dl.track ? `トラック: ${row.dl.track}` : "",
+            kindDetailJa(null, row.dl.label),
+            row.localDate
+              ? `${row.localDate}（時刻未確認）`
+              : `${new Date(row.t).toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" })}（日本時間）`,
+          ]
+            .filter(Boolean)
+            .join(" ／ ");
+          button.addEventListener("click", () => openDrawer(row, "replace"));
+          buttons.appendChild(button);
+        }
+      }
+    }
+    const legacyMatches = rows.filter(
+      (row) =>
+        row.legacyShareKey &&
+        (row.legacyShareKey === pendingDrawerKey ||
+          row.conf.legacy_keys?.some(
+            (alias) =>
+              rowShareKeyJa({ ...row, shareDiscriminator: undefined }, alias) === pendingDrawerKey,
+          )),
+    );
+    if (legacyMatches.length > 1) {
+      sharedRowNotice(
+        "この旧リンクは同じ日時の複数の日程に対応します。ラウンド・トラックを確認して開いてください。",
+      );
+      showChoices(
+        legacyMatches,
+        "この旧リンクは同じ日時の複数の日程に対応します。ラウンド・トラックを確認して開いてください。",
+      );
+      return;
+    }
+    const oldParts = pendingDrawerKey.split("|");
+    const exactAlias = rows.some((row) =>
+      row.conf.legacy_keys?.some((alias) => rowShareKeyJa(row, alias) === pendingDrawerKey),
+    );
+    if (
+      !exactAlias &&
+      oldParts.length === 4 &&
+      /^\d{4}$/.test(oldParts[1]) &&
+      /^\d+$/.test(oldParts[3])
+    ) {
+      const currentDates = rows.filter(
+        (row) =>
+          row.conf.legacy_keys?.includes(oldParts[0]) &&
+          String(row.ed.year) === oldParts[1] &&
+          row.kind === oldParts[2],
+      );
+      if (currentDates.length) {
+        const message =
+          "旧リンクの日時に一致する日程はありません。同じ会議・年度・締切種別の現在の日程です。日時と公式情報を確認して選んでください。";
+        sharedRowNotice(message);
+        showChoices(currentDates, message);
+        return;
+      }
+    }
+    let idx = shown.findIndex(
+      (r) =>
+        rowShareKeyJa(r) === pendingDrawerKey ||
+        r.legacyShareKey === pendingDrawerKey ||
+        r.submission?.shareAliases.includes(pendingDrawerKey) ||
+        r.conf.legacy_keys?.some((alias) => rowShareKeyJa(r, alias) === pendingDrawerKey),
+    );
+    if (idx < 0) {
+      const scheduleHit = findEditionScheduleRow(DATA, pendingDrawerKey);
+      if (scheduleHit) {
+        sharedRowNotice(
+          "一覧の条件に含まれない日程を詳細に表示しています。検索や絞り込み条件は保持しています。",
+        );
+        openDrawer(scheduleHit, "replace");
+        return;
+      }
+      const hit =
+        rows.find(
+          (r) =>
+            rowShareKeyJa(r) === pendingDrawerKey ||
+            r.legacyShareKey === pendingDrawerKey ||
+            r.submission?.shareAliases.includes(pendingDrawerKey) ||
+            r.conf.legacy_keys?.some((alias) => rowShareKeyJa(r, alias) === pendingDrawerKey),
+        ) || null;
+      const why = sharedRowState(hit, Date.now());
+      if (why === "missing") {
+        sharedRowNotice(
+          "共有された行はこの収録に見当たりません。データの更新で無くなった可能性があります。",
+        );
+        return;
+      }
+      if (SELECTABLE_KINDS.indexOf((hit as { kind: string }).kind) < 0) {
+        /* 表に出さない種別（採否通知・カメラレディ・反論期間など）の行へのリンクは、
+         * 絞り込みの問題ではないので「条件を確認してください」とは言わない（実測: 既定で
+         * 一覧に出ない 2,732 件のうち 303 件がこの種別で、表に出さない行なのである）。
+         * 行その物を見せて中身を読むことができる – 行の目印は出せない（一覧に無い）ので、
+         * その旨を添える。 */
+        sharedRowNotice(
+          "その行は表に出さない種別（採否通知・カメラレディなど）なので、行を開いて中身を出します。",
+        );
+        openDrawer(hit as unknown as DrawerRow, "replace");
+        return;
+      }
+      /* 既定で隠している条件（過ぎた締切・推定）は、リンクが指す行のために自分で外す。
+       * 画面のチェックも同じにする – 外したことが見えないと「なぜ過去の行が出ているか」が
+       * 読めない（`toForm` は条件欄を state から書き直す）。 */
+      if (why === "past") state.past = true;
+      else if (why === "est") state.est = true;
+      toForm();
+      render();
+      /* まだ無い行は、リンクに書かれた検索語や絞り込みで落ちている（実測: `q` と `row` を
+       * 同時に含む URL で、表に出る `paper` の行が「表に出さない種別なので…」という
+       * 筋違いの案内を受けていた）。送った人の画面ではその行が出ていたので、受け取る側で
+       * 条件を緩めて開く（過ぎた締切・推定で決めた方針の続き）。 */
+      const keyAt = () =>
+        shown.findIndex(
+          (r) =>
+            rowShareKeyJa(r) === pendingDrawerKey ||
+            r.legacyShareKey === pendingDrawerKey ||
+            r.submission?.shareAliases.includes(pendingDrawerKey) ||
+            r.conf.legacy_keys?.some((alias) => rowShareKeyJa(r, alias) === pendingDrawerKey),
+        );
+      idx = keyAt();
+      /* 過ぎた締切・推定を外しただけで出てくる行には、これ以上触らない。それでも無い行だけ、リンクについていた条件を緩めに行く。 */
+      const loosened = idx < 0 ? loosenSharedRowConditions(keyAt) : [];
+      idx = keyAt();
+      if (idx < 0) {
+        /* 収録に見当っても、いまの一覧に出さない行（会期だけの研究会など）がある。
+         * ここまで条件を緩めても出ない行を「見当たりません」とは言わない – 行は
+         * あるので、開いて中身を出す。 */
+        sharedRowNotice(
+          loosened.length
+            ? `その行はいまの一覧に出さない行なので、リンクについていた条件（${loosened.join("・")}）を外したうえで、行を開いて中身を出します。`
+            : "その行はいまの一覧に出さない行なので、行を開いて中身を出します。",
+        );
+        openDrawer(hit as unknown as DrawerRow, "replace");
+        return;
+      }
+      // `render()` が `#countLive` を書き直すので、案内は後から同じ欄に足す。
+      if (loosened.length) {
+        sharedRowNotice(
+          `その行を開くために、リンクについていた条件を自分から外しました（${loosened.join("・")}）。一覧はリンクの条件と違う範囲になっています。`,
+        );
+      }
+    } else {
+      render();
+    }
+    /* `render()` は本体の先頭で `selectedIndex = -1` と `drawn = 0` に戻す（2026-09-23 実測:
+     * `render` の本体の最初に両方の代入がある）。従来は render の前に選択を置いていたため、
+     * 共有リンクを受け取った側の画面で、開いた行に目印が付かなかった。描き終えた後に付け直す。 */
+    selectedIndex = idx;
+    ensureRowsDrawn(idx);
+    updateRowSelection();
+    openDrawer(shown[idx] as unknown as DrawerRow, "replace");
+  }
+
+  /* 起動時のみ使うお知らせ。`render()` が `#countLive` を書き直すので、この関数は
+   * render の後に呼ぶ（0 件案内と同じ 「 ｜ 」 の形で流す – 支援技術では同じ場所から
+   * 読まれる）。 */
+  function sharedRowNotice(text: string) {
+    const live = $("countLive");
+    if (live) live.textContent = ` ｜ ${text}`;
+  }
+
+  /* 紙にだけ載せる但し書き。画面のてびきは印刷時に隠れる（`@media print` で `#helpPanel` を
+   * 消している）ので、紙だけで読める語の解説を同じ帯に添える。語は正本（`recommender.js` の
+   * 公開している名前）から組み立てる – 手コピーすると画面の語とズレる。
+   * 2026-08-09 実測: 既定の印刷対象 478 行のうち 280 行が「ランク未確認」を刷っていたが、
+   * 紙のうえにはその意味がどこにも書かれていなかった（受け取った人は画面を開かないと読めない）。 */
+  function printLegendJa(カードも刷るか = false): string {
+    const unconfirmed = Recommender.unconfirmedLabelJa();
+    const unrated = Recommender.rankUnratedLabelJa();
+    const extended = Recommender.extendedLabelJa();
+    const notApplicable = Recommender.notApplicableLabelJa();
+    const unconfirmedWords = ["ランク", "会期", "開催地"].map((p) => `${p}${unconfirmed}`);
+    const parts = [
+      `${unconfirmedWords.join("・")} は、${Recommender.unconfirmedMeaningJa()}です（確認元・確認範囲・次回確認予定は、画面で行を開くと出ます）`,
+      `ランク${unconfirmed} はどのランク表にも載っていない行、「${unrated}」は表に載っているが評価が付いていない行です`,
+      `「${extended}」は、上流が延長した締切です`,
+      `「${notApplicable}」は、常時受付の期刊行で、締切というものがない行です`,
+      // 検証状態の印も紙に刷られる。第 212 回まで検索用の語と CSV の「状態」列から
+      // 抜けていて、紙のうえに意味が書かれていなかった（2026-08-09 生成ビルドで実測:
+      // 状態列には 要確認 375 件・確認済み 25 件・再確認待ち 2 件が入る）。
+      // 語は画面と同じ語彙表から取る（書き写すと紙と画面がズレる）。
+      `「${VERIFICATION_STATUS_LABELS["manual-required"]}」は公式ページから締切を 1 つに確定できなかった行（理由は一つではありません）、「${VERIFICATION_STATUS_LABELS.pending}」は次の確認予定に回した行、「${VERIFICATION_STATUS_LABELS.verified}」は公式ページで確認した行です`,
+      // ここに並べる語は、必ずこの用紙に刷られるものだけにする。前回は画面でしか見えない
+      // 語（行の詳細の「原表記:」）と、現状のデータで一度も出ない語（残り欄の横線）を
+      // 説明していた（2026-08-09 実測: 詳細欄は印刷で隠れ、横線は候補行 3,235 件の CSV に
+      // 0 件）。逆に、紙に刷る「公式表記」とランクの三列の説明が無かった。
+      /* 「公式表記」列に実際に入る物を書く。以前は「収録元がその締切に付けた呼び方そのもの」
+       * と説明していたが、列にあるのはいつ締めるかの宣言で、収録元の締切名（論文締切・
+       * 概要締切など）は「種別」に出る（2026-08-09 生成ビルドで実測: 公式表記列の値は
+       * 「2026-07-21 23:59 AoE」「PDT ／ UTC」「時刻未確認」など 18 種で、収録元の締切名は
+       * 候補行 863 行のどこにも入っておらず、種別の値との重なりも 0）。この説明を信じて
+       * 紙の上で列を分類として読むと、探している行が一もつ出てこない。 */
+      "「公式表記」はいつ締めるかを収録元の宣言どおりに書いた列で、AoE や UTC などの宣言と、日付しか確認できていない行の「時刻未確認」が入ります。締切の種類は「種別」に出します",
+      "CCF・CORE・THCPL は別々のランク表の列で、この三列が空欄の行はランク未確認です",
+      // 「状態」が空欄の行は注記が無いという意味（2026-08-09 実測: 既定の印刷対象 478 行の
+      // うち 189 行が空欄で、その 189 行はランク・会期・開催地の列にも空欄が無かった）。
+      "「状態」が空欄の行は、この行に注記がない行です",
+      /* 「投稿先を探す」の紙には候補のカードが刷られる。カードの語（一致評価・点・受付状況・
+       * 次回締切）は締切の一覧の但し書きに無く、点は 2026-10-18 から札に添えている。カードを
+       * 刷る時だけ説明を足す（出ない語を説明しない、が約束）。 */
+      ...(カードも刷るか
+        ? [
+            "「一致評価」の札は、入力した論文とその会議の一致の証拠の形の区分です（採択の見込みではありません）。札のあとの「N 点」は候補の並びを決める点で、札とは別の計算です",
+            "「受付状況」は締切の状態（締切済み・受付中など）で、「次回締切」は次に来る募集の締切です。日時は日本時間（JST）です",
+          ]
+        : []),
+      /* 論文を入れたまま印刷すると、締切の一覧の行にも「一致評価」の札が刷られる。
+       * **出る時だけ**説明を足す（この用紙の表記は「必ず刷られる語」だけ、が約束）。 */
+      ...(recommendFitMatches
+        ? [
+            "「一致評価」の札は、入力した論文とその会議の一致の強さの区分です（受付の状態ではなく、点数を足した物でもありません）。札のあとの「N 点」は候補の並びを決める点で、札とは別の計算です",
+          ]
+        : []),
+      Recommender.aoeMeaningJa(),
+    ];
+    return `この用紙の表記: ${parts.join("。")}。`;
+  }
+
+  /* 紙と書き出しで同じ条件の文を使う（片方だけ「絞り込んだ」と書くと、持ち出した物と刷った物で
+   * 条件の読み方が変わる – 2026-10-24）。並び順は紙のときだけ渡す（書き出しの並びは行の順）。 */
+  function filtersJa(sort: { key: string; asc: boolean } | null): string {
+    const winSelect = valueElement("win") as HTMLSelectElement;
+    const opt =
+      winSelect?.options && winSelect.selectedIndex >= 0
+        ? winSelect.options[winSelect.selectedIndex]
+        : null;
+    const winText = opt ? String(opt.text || opt.textContent || "").trim() : "";
+    const winLabel = state.win && state.win !== "all" ? winText || state.win : "";
+    return describeFilters(
+      { ...state, venue: state.venue ? venueTitleJa(state.venue) : "" },
+      (k) => KIND_LABEL[k] || k,
+      rankFilterLabelJa,
+      (c) => Recommender.categoryLabelJa(c),
+      winLabel,
+      sort ?? { key: "", asc: true },
+      sortColumnLabel,
+    );
+  }
+
+  function fillPrintMeta() {
+    const box = $("printMeta");
+    if (!box) return;
+    const genAt = typeof DATA.generated_at === "string" ? DATA.generated_at : "";
+    const printedTail = ` ／ 印刷した日時 ${fmtJst(new Date())} ／ ${generatedAtLabel(genAt)}`;
+    /* 投稿先を探す画面では、表の絞り込み条件も「表示 N 件」も紙に意味がない（並ぶのは
+     * 候補のカードだけ）。従来は表用の文言をそのまま書いていて、カードが並んだ紙に
+     * 「表示 0 件」と刷れていた（2026-09-23 実測: 推薦画面では `shown` が空になる –
+     * `render` の `shown = recMode && !recommendationData ? [] : filter()`）。
+     * 紙に出る語は画面の実物（「投稿先を探す」）に揃える。 */
+    if (state.mode !== "deadlines") {
+      const cards = $("recommendationCards");
+      const drawn = cards?.children?.length ?? 0;
+      /* 用紙に載るのは描画済みのカードだけなので、候補の総数と違うときは両方書く。
+       * 「候補 20 件」とだけ刷ると、この先にも候補があることが紙で分からない
+       * （2026-08-09 生成ビルドで実測: サンプル論文の候補 114 件、画面は
+       * 「まず上位 20 件を表示」と言うのに、用紙は「候補 20 件」と刷れていた –
+       * 印刷前にカードを足す処理が表の枝にしか無かった。上の `beforeprint` で直す）。
+       * `recommendationList` は画面が候補として持っている一覧（「さらに表示」の元）。 */
+      const total = Math.max(recommendationList.length, drawn);
+      const listed =
+        total > drawn
+          ? `候補 ${countJa(total)} 件のうちこの用紙に ${countJa(drawn)} 件（続きは画面の「さらに表示」）`
+          : `候補 ${countJa(drawn)} 件`;
+      /* 締切が過ぎた候補を外しているときは、その事も紙に書く（紙だけを受け取った人に
+       * 「これが候補の全部」と読ませない – 表の枝の `describeFilters` と同じ約束）。 */
+      const excludedOnPaper = recommendExcludedClosed
+        ? ` ／ 締切が過ぎた候補 ${countJa(recommendExcludedClosed)} 件は「締切が過ぎた候補を除く」で除いています`
+        : "";
+      /* 並びも紙に書く（紙は並べ替えられないので、何の順かが分からないと読めない）。 */
+      const orderOnPaper =
+        state.order === "deadline" ? " ／ 並び順: 締切が近い順（日付の無い候補は後ろ）" : "";
+      /* どの論文の候補かを用紙に書く（2 枚刷ると見分けが付かない – 2026-10-18 実測:
+       * 推薦の紙には論文の題名もランクの絞り込みも書いていなかった。締切の枝は
+       * `describeFilters` で条件を書いている）。長い題名は画面と同じ 40 字で切る。 */
+      const 入力 = readPaperInput();
+      const 題の一行 =
+        String(入力.title || 入力.abstract || "")
+          .split("\n")
+          .map((line) => line.trim())
+          .filter((line) => line.length > 0)[0] ?? "";
+      const 論文OnPaper =
+        題の一行 === ""
+          ? ""
+          : ` ／ 論文「${題の一行.length > 40 ? `${題の一行.slice(0, 39)}…` : 題の一行}」`;
+      const rankOnPaper = state.rank ? ` ／ ランク: ${rankFilterLabelJa(state.rank)}` : "";
+      box.textContent = `この印刷物: 投稿先を探す画面${論文OnPaper}${rankOnPaper} ／ ${listed}${excludedOnPaper}${orderOnPaper}${printedTail}。${printLegendJa(true)}`;
+      return;
+    }
+    box.textContent =
+      `この印刷物: ${filtersJa({ key: sortKey, asc: sortAsc })}` +
+      ` ／ 表示 ${countJa(shown.length)} 件` +
+      /* 論文を入れているときは、その論文に合う行の数も紙に書く（札は行ごとに付くが、
+       * 紙の上では数えにくい）。 */
+      (recommendFitMatches
+        ? ` ／ この論文に合う行 ${countJa(recommendFitMatches)} 件（一致評価の札）`
+        : "") +
+      `${printedTail}。${printLegendJa()}`;
+  }
+  window.addEventListener("beforeprint", () => {
+    /* 推薦画面も表と同じ扱い: 用紙には候補を全部載せる。ここが表の枝にしか無く、
+     * 20 枚しか無いカードの列に「候補 20 件」と見出しが刷れていた（2026-08-09 生成
+     * ビルドで実測: 候補 114 件の論文で用紙は 20 枚 + 「候補 20 件」）。
+     * 見出しは描画のうしろに書かないと 20 枚の数を数える。 */
+    if (state.mode !== "deadlines") {
+      if (cardsDrawn < recommendationList.length) {
+        while (cardsDrawn < recommendationList.length) drawMoreCards();
+        printExpanded = true;
+      }
+      fillPrintMeta();
+      return;
+    }
+    fillPrintMeta();
+    if (drawn >= shown.length) return;
+    const target = shown.length;
+    while (drawn < target) drawMore();
+    printExpanded = true;
+  });
+  window.addEventListener("afterprint", () => {
+    const box = $("printMeta");
+    if (box) box.textContent = "";
+    if (!printExpanded) return;
+    printExpanded = false;
+    render();
+  });
+  $("modeRecommend").addEventListener("click", () => setMode("recommend"));
+  $("modeDeadlines").addEventListener("click", () => setMode("deadlines"));
+  $("recommendationRetry").addEventListener("click", retryRecommendationData);
+  $("semanticRetry")?.addEventListener("click", retrySemantic);
+  $("historyRetry").addEventListener("click", () => {
+    if (
+      state.mode !== "deadlines" ||
+      !fullRecordNeeded(state.past, state.win, fullRecordRequested) ||
+      historyStatus !== "error"
+    )
+      return;
+    loadHistoryData();
+    render();
+  });
+  /* 「条件クリア」は名前の通り条件だけを外す。論文のタイトル・概要・参考論文の欄まで
+   * 消していた（2026-09-23 実測: `#reset` の中に `paperText` と `paperReferences` の代入が
+   * 残っていた）。絞り込みをまとめ直したいだけの人（CSV を条件なしで出したいためだけに
+   * 押す人也 – てびきがそう案内している）が、打ち込んだ概要を Confirmation も Undo も無く
+   * 失っていた。消す操作は、そう書かれた別のボタンに寄せる。 */
+  function clearPaperInput() {
+    stopPaperFileRead();
     valueElement("paperText").value = "";
     setPrimaryRecord();
     valueElement("paperReferences").value = "";
+    // 消したのに次の刷新で戻ってくる、という形を作らない。
+    savePaperDraft(readPaperInput());
     paperFiles.value = "";
-    $("paperFileLabel").textContent = "未選択";
+    invalidateSemantic();
+  }
+
+  $("paperReset").addEventListener("click", () => {
+    paperInputBeforeSwap = null;
+    setPaperUndoVisible(false);
+    clearPaperInput();
+    // 条件は触らない（`apply` は欄の中身を読み直し、候補を描き直すだけ）。
+    apply();
+  });
+
+  $("reset").addEventListener("click", () => {
+    state = {
+      mode: state.mode,
+      q: "",
+      cats: [],
+      venue: "",
+      kind: "",
+      rank: "",
+      win: "all",
+      est: false,
+      domestic: false,
+      online: false,
+      past: false,
+      openOnly: false,
+      order: "fit",
+    };
     stopHistoryLoad();
     if (state.mode === "deadlines") setDeadlineProfile(DATA);
     invalidateSemantic();
     toForm();
-    writeUrl();
+    writeUrl("push");
     render();
   });
 
-  if (DATA.generated_at) {
-    $("genat").textContent = `データ生成: ${DATA.generated_at}`;
+  /* カレンダーに入る件数と範囲（`catalog.json` の申告）を一覧の上に出す。 */
+  const icsScopeNode = $("icsScope");
+  const icsSpan = DATA.calendar;
+  if (icsScopeNode && icsSpan) {
+    icsScopeNode.textContent = icsScopeNoteJa(icsSpan);
+    icsScopeNode.hidden = false;
   }
-  const srcs = (DATA.sources || []).map(
-    (source) =>
-      source.name +
-      (source.repo ? ` (${source.repo}${source.license ? `, ${source.license}` : ""})` : ""),
-  );
-  $("sources").textContent = srcs.length ? srcs.join(" / ") : "-";
+
+  function sourceUpdateNoteJa(updates: SourceUpdate[]): string {
+    return updates
+      .map((source) => {
+        const at = source.fetched_at ? Date.parse(source.fetched_at) : Number.NaN;
+        const date = Number.isFinite(at) ? fmtJst(new Date(at)) : "取得日時未確認";
+        const fallback =
+          source.status === "cache-fallback" || source.status === "snapshot-fallback";
+        const status = fallback
+          ? "保存済みデータ"
+          : source.status === "failed"
+            ? "取得に失敗"
+            : source.status === "fresh" || source.status === "success"
+              ? "上流から取得"
+              : "取得状態未確認";
+        return `${source.name}: ${status}（${date}）`;
+      })
+      .join(" ／ ");
+  }
+
+  const sourceUpdates = DATA.source_updates || [];
+  if (sourceUpdates.length) {
+    $("sourceUpdateDetails").hidden = false;
+    $("sourceUpdateText").textContent = sourceUpdateNoteJa(sourceUpdates);
+    const fallback = sourceUpdates.some(
+      (source) => source.status === "cache-fallback" || source.status === "snapshot-fallback",
+    );
+    $("sourceUpdateWarning").hidden = !fallback;
+  }
+
+  if (DATA.generated_at) {
+    const genAtNode = $("genat");
+    genAtNode.textContent = generatedAtLabel(DATA.generated_at);
+    /* 日次更新の運用から日数が経ているなら、古いデータを最新と誤って使わせないために
+     * その旨を出す（SPEC §7）。締切の日付を推測する話ではなく、表示しているデータの
+     * 生成時刻の話。 */
+    const ageNote = Recommender.dataAgeNoteJa(DATA.generated_at, Date.now());
+    if (ageNote) {
+      const stale = document.createElement("span");
+      stale.className = "stale";
+      stale.textContent = ageNote;
+      genAtNode.appendChild(stale);
+    }
+  }
+  /* データ源の行。`local` はこのサイト自身の入力で、上流の配布物ではない。
+   * 内部のファイル名（`data/extra.yaml`）を画面に出さない（§7: 内部キー・実装語を出さない）。
+   * また上流と並ぶ欄に自前の入力へ「MIT」を出すのは誤解を招く（配布物のライセンス表記に
+   * 見える。2026-09-23 実測）。上流の出典は一次資料へ飛べるようにリンクする。 */
+  function dataSourceLabels(sources: SourceRecord[]): Array<{ label: string; url: string | null }> {
+    return (sources || []).map((source) => {
+      const url = safeExternalUrl(source.url);
+      if (source.name === "local") {
+        return { label: "このサイトで収録した分（上流にないもの）", url };
+      }
+      const where = source.repo
+        ? `（${source.repo}${source.license ? `、${source.license}` : ""}）`
+        : "";
+      return { label: `${source.name}${where}`, url };
+    });
+  }
+
+  const srcEls = dataSourceLabels(DATA.sources || []);
+  const sourcesEl = $("sources");
+  sourcesEl.textContent = "";
+  if (!srcEls.length) {
+    sourcesEl.textContent = "-";
+  }
+  srcEls.forEach((item, i) => {
+    if (i) sourcesEl.appendChild(document.createTextNode(" / "));
+    if (item.url) {
+      const a = document.createElement("a");
+      a.href = item.url;
+      a.textContent = item.label;
+      sourcesEl.appendChild(a);
+    } else {
+      sourcesEl.appendChild(document.createTextNode(item.label));
+    }
+  });
 
   const localSrc = DATA.sources.find((source) => source.name === "local");
   if (localSrc && safeExternalUrl(localSrc.url)) {
@@ -2528,9 +7842,62 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     $("repolink").appendChild(a);
   }
 
+  window.addEventListener("popstate", () => {
+    const previousRow = drawerRow;
+    const previousOrigin = pendingDrawerReturnKey || (previousRow ? drawerOriginKey : "");
+    pendingDrawerReturnKey = "";
+    restoringNavigation = true;
+    try {
+      if (drawerRow) closeDrawer(null, false);
+      stopHistoryLoad();
+      readUrl();
+      setSortAria(sortKey);
+      updateModeUi();
+      toForm();
+      if (state.mode === "recommend") {
+        if (recommendationData) setRecommendationProfile(recommendationData);
+        else loadRecommendationData();
+      } else if (fullRecordNeeded(state.past, state.win, fullRecordRequested)) {
+        loadHistoryData();
+      } else setDeadlineProfile(DATA);
+      render();
+      restoreDrawerFromUrl();
+      if (!drawerRow && (previousRow || previousOrigin)) {
+        const idx = shown.findIndex(
+          (row) =>
+            rowShareKeyJa(row) ===
+              (previousOrigin || (previousRow ? rowShareKeyJa(previousRow) : "")) ||
+            row.submission?.shareAliases.includes(
+              previousOrigin || (previousRow ? rowShareKeyJa(previousRow) : ""),
+            ),
+        );
+        if (idx >= 0) {
+          selectedIndex = idx;
+          ensureRowsDrawn(idx);
+          dataRows()[idx]?.querySelector<HTMLElement>(".row-detail")?.focus();
+        } else $("results").focus();
+      }
+      queryEditInProgress = false;
+    } finally {
+      restoringNavigation = false;
+    }
+  });
+
+  if (window.matchMedia("(max-width: 640px)").matches) {
+    ($("advancedFilters") as HTMLDetailsElement).open = false;
+    ($("catalogStats") as HTMLDetailsElement).open = false;
+  }
   readUrl();
+  // URL から復元した並び順をヘッダーの矢印と aria-sort にも反映する（表の中身だけ
+  // 並び、見出しが既定を指しているのは読み違えのもと）。
+  setSortAria(sortKey);
   updateModeUi();
   toForm();
-  if (state.mode === "deadlines" && state.past) loadHistoryData();
+  /* 欄が空なら下書きを戻す（`toForm` は絞り込みの欄だけを見るので、この時点では論文の欄が
+   * 空のまま）。戻した後に `syncPaperText` を呼ぶと、候補の描画も刷新前の形に戻る。 */
+  if (restorePaperDraft()) syncPaperText();
+  if (state.mode === "deadlines" && fullRecordNeeded(state.past, state.win, fullRecordRequested))
+    loadHistoryData();
   render();
+  restoreDrawerFromUrl();
 })();

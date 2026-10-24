@@ -1,0 +1,341 @@
+import { spawn } from "node:child_process";
+import { cpSync, mkdirSync, symlinkSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
+import { createInterface } from "node:readline";
+import { expect, it } from "vitest";
+import { REPO_ROOT, tempWork } from "./helpers.ts";
+
+it("returns every ambiguous venue as structured identity data and accepts its key on the same MCP connection", async () => {
+  const root = tempWork("kamiyobi-mcp-candidates-");
+  for (const dir of ["src", "site"])
+    cpSync(join(REPO_ROOT, dir), join(root, dir), { recursive: true });
+  symlinkSync(join(REPO_ROOT, "node_modules"), join(root, "node_modules"));
+  writeFileSync(join(root, "package.json"), '{"type":"module"}');
+  for (const dir of ["data", "public"]) mkdirSync(join(root, dir));
+  const conferences = Array.from({ length: 31 }, (_, i) => ({
+    key: `series-${i}`,
+    title: `Series ${i}`,
+    full_name: `システム研究会 ${i}`,
+    ...(i ? { acronym: `S${i}` } : {}),
+    link: `https://example.org/series/${i}`,
+    legacy_keys: ["shared-old"],
+    categories: ["systems"],
+    rank: i === 7 ? { core: "B" } : {},
+    tags: i === 7 ? ["storage", "domestic-jp"] : [],
+    editions: [
+      {
+        id: `edition-${i}`,
+        year: 2029,
+        event_date_precision: "not-announced",
+        place: "Tokyo, Japan",
+        link: `https://example.org/edition/${i}`,
+        deadlines:
+          i % 2 === 0 ? [{ kind: "paper", utc: "2029-01-10T00:00:00Z", tz_raw: "UTC" }] : [],
+      },
+    ],
+  }));
+  const official = "https://www.ipsj.or.jp/journal/cfp/27-R.html";
+  const sharedDeadline = (label: string) => ({
+    kind: "paper",
+    label,
+    round: 1,
+    precision: "date-only",
+    local_date: "2026-12-01",
+  });
+  const linkedVenues = [
+    {
+      key: "jip",
+      title: "JIP",
+      categories: ["security"],
+      rank: { ccf: "A" },
+      tags: ["security"],
+      editions: [
+        {
+          id: "jip-compsac2027-si",
+          year: 2027,
+          link: official,
+          deadlines: [sharedDeadline("投稿締切")],
+        },
+      ],
+    },
+    {
+      key: "ipsj-27-r-compsac",
+      title: "Partner Archive",
+      legacy_keys: ["old-partner"],
+      categories: ["systems"],
+      rank: { core: "B" },
+      tags: ["storage"],
+      editions: [
+        {
+          id: "ipsj-27-r26",
+          year: 2026,
+          link: official,
+          deadlines: [sharedDeadline("Submission")],
+        },
+        {
+          id: "partner28",
+          year: 2028,
+          link: "https://example.org/partner28",
+          deadlines: [{ kind: "paper", utc: "2029-01-10T00:00:00Z", tz_raw: "UTC" }],
+        },
+      ],
+    },
+  ];
+  const generatedAt = "2028-01-01T00:00:00Z";
+  writeFileSync(
+    join(root, "data/snapshot.json"),
+    JSON.stringify({
+      snapshot_metadata: { generated_at: generatedAt },
+      conferences: [...conferences, ...linkedVenues],
+    }),
+  );
+  writeFileSync(
+    join(root, "public/catalog.json"),
+    JSON.stringify({ generated_at: "2027-12-01T00:00:00Z", conferences: conferences.slice(0, 1) }),
+  );
+  writeFileSync(
+    join(root, "run.ts"),
+    'import {runStdio} from "./src/mcp.ts";runStdio(Date.parse("2028-01-02T00:00:00Z"));',
+  );
+  const child = spawn(process.execPath, ["run.ts"], { cwd: root, stdio: ["pipe", "pipe", "pipe"] });
+  const reader = createInterface({ input: child.stdout });
+  const lines = reader[Symbol.asyncIterator]();
+  let id = 0;
+  async function call(args: Record<string, unknown>) {
+    child.stdin.write(
+      `${JSON.stringify({ jsonrpc: "2.0", id: ++id, method: "tools/call", params: { name: "venue_info", arguments: args } })}\n`,
+    );
+    const line = await lines.next();
+    if (line.done) throw new Error("MCP closed before replying");
+    const reply = JSON.parse(line.value);
+    expect(reply.id).toBe(id);
+    expect(reply.error).toBeUndefined();
+    expect(reply.result.isError).not.toBe(true);
+    return reply.result;
+  }
+  try {
+    for (const args of [
+      { name: "Series", scope: "screen" },
+      { name: "システム研究会", scope: "all" },
+      { key: "ＳＨＡＲＥＤ－ＯＬＤ", scope: "screen" },
+    ]) {
+      const result = await call(args);
+      const data = result.structuredContent;
+      expect(data).toMatchObject({
+        lookup_status: "ambiguous",
+        matched_by: args.key ? "legacy_key" : "name",
+        query: args.key || args.name,
+        scope: "all",
+        generated_at: generatedAt,
+        candidate_count: 31,
+      });
+      expect(data.candidates).toEqual(
+        conferences.map((conf) => ({
+          venue_key: conf.key,
+          title: conf.title,
+          full_name: conf.full_name,
+          acronym: conf.acronym ?? null,
+          official_url: conf.link,
+        })),
+      );
+      expect(data).not.toHaveProperty("venue_key");
+      expect(data).not.toHaveProperty("editions");
+      expect(data).not.toHaveProperty("rows");
+      expect(result.content[0].text).not.toContain("開催回の会期");
+      const selected = await call({
+        key: data.candidates[7].venue_key,
+        name: "Series",
+        scope: "all",
+      });
+      expect(selected.structuredContent).toMatchObject({
+        venue_key: "series-7",
+        categories: ["systems"],
+        rank: { core: "B" },
+        tags: ["storage", "domestic-jp"],
+        domestic: true,
+        deadline_total: 0,
+        editions: [
+          {
+            edition_id: "edition-7",
+            year: 2029,
+            place: "Tokyo, Japan",
+            official_url: "https://example.org/edition/7",
+          },
+        ],
+      });
+      expect(selected.content[0].text).not.toContain("31 の会議");
+      expect(
+        selected.content[0].text
+          .split("\n")
+          .filter((line: string) => /^(分野|ランク|主題|区分):/.test(line)),
+      ).toEqual(["分野: システム", "ランク: CORE B", "主題: ストレージ", "区分: 国内"]);
+    }
+    for (const args of [
+      { key: "ipsj-27-r-compsac" },
+      { key: "old-partner" },
+      { name: "Partner Archive" },
+    ]) {
+      const selected = await call({ ...args, scope: "all" });
+      expect(selected.structuredContent).toMatchObject({
+        venue_key: "ipsj-27-r-compsac",
+        title: "Partner Archive",
+        categories: ["systems"],
+        rank: { core: "B" },
+        tags: ["storage"],
+        domestic: false,
+        deadline_total: 2,
+        next_submission: { edition_id: "partner28" },
+      });
+      expect(selected.structuredContent).not.toHaveProperty("candidates");
+      expect(selected.content[0].text).toContain("会議: Partner Archive（key: ipsj-27-r-compsac");
+      expect(
+        selected.structuredContent.rows.map((row: { edition_id: string }) => row.edition_id).sort(),
+      ).toEqual(["jip-compsac2027-si", "partner28"]);
+    }
+    for (const [args, venueKey, count] of [
+      [{ key: "series-30" }, "series-30", 1],
+      [{ name: "システム研究会 30" }, "series-30", 1],
+      [{ key: "ipsj-27-r-compsac" }, "ipsj-27-r-compsac", 2],
+      [{ key: "old-partner" }, "ipsj-27-r-compsac", 2],
+      [{ name: "Partner Archive" }, "ipsj-27-r-compsac", 2],
+    ] as const) {
+      const outside = await call({ ...args, scope: "screen" });
+      expect(outside.structuredContent).toMatchObject({
+        lookup_status: "out_of_scope",
+        query: "key" in args ? args.key : args.name,
+        scope: "screen",
+        catalog_fallback: false,
+        generated_at: "2027-12-01T00:00:00Z",
+        available_scope: "all",
+        available_generated_at: generatedAt,
+        available_deadline_total: count,
+        candidate_count: 1,
+        retry_arguments: { key: venueKey, scope: "all" },
+      });
+      expect(outside.structuredContent.candidates).toEqual([
+        venueKey === "series-30"
+          ? {
+              venue_key: venueKey,
+              title: "Series 30",
+              full_name: "システム研究会 30",
+              acronym: "S30",
+              official_url: "https://example.org/series/30",
+            }
+          : {
+              venue_key: venueKey,
+              title: "Partner Archive",
+              full_name: null,
+              acronym: null,
+              official_url: null,
+            },
+      ]);
+      expect(outside.structuredContent).not.toHaveProperty("rows");
+      expect(outside.structuredContent).not.toHaveProperty("deadline_total");
+      expect(outside.content[0].text).toContain(`key: ${venueKey}`);
+      if (venueKey !== "series-30") expect(outside.content[0].text).not.toContain("key: jip");
+      const retried = await call(outside.structuredContent.retry_arguments);
+      expect(retried.structuredContent).toMatchObject({
+        venue_key: venueKey,
+        scope: "all",
+        deadline_total: count,
+      });
+      expect(retried.structuredContent.rows).toHaveLength(count);
+    }
+    const visible = await call({ key: "series-0", scope: "screen" });
+    expect(visible.structuredContent).toMatchObject({
+      venue_key: "series-0",
+      scope: "screen",
+      deadline_total: 1,
+    });
+    expect(visible.structuredContent).not.toHaveProperty("retry_arguments");
+    const eventOnly = await call({ key: "series-7", scope: "screen" });
+    expect(eventOnly.structuredContent).toMatchObject({ venue_key: "series-7", deadline_total: 0 });
+    expect(eventOnly.structuredContent).not.toHaveProperty("retry_arguments");
+    const sharedOnly = structuredClone(linkedVenues);
+    sharedOnly[1].editions.pop();
+    writeFileSync(
+      join(root, "data/snapshot.json"),
+      JSON.stringify({
+        snapshot_metadata: { generated_at: generatedAt },
+        conferences: [...conferences, ...sharedOnly],
+      }),
+    );
+    const shared = await call({ key: "ipsj-27-r-compsac", scope: "all" });
+    expect(shared.structuredContent).toMatchObject({
+      venue_key: "ipsj-27-r-compsac",
+      title: "Partner Archive",
+      categories: ["systems"],
+      rank: { core: "B" },
+      tags: ["storage"],
+      domestic: false,
+      deadline_total: 1,
+      next_submission: null,
+      editions: [{ edition_id: "ipsj-27-r26" }],
+      rows: [{ venue_key: "jip" }],
+    });
+    expect(shared.content[0].text).toContain("会議: Partner Archive（key: ipsj-27-r-compsac");
+    expect(shared.content[0].text.split("\n").find((line: string) => line.startsWith("版: "))).toBe(
+      "版: ipsj-27-r26",
+    );
+    expect(shared.content[0].text).toContain("2026（ipsj-27-r26）");
+    const classification = (result: { content: { text: string }[] }) =>
+      result.content[0].text.split("\n").filter((line) => /^(分野|ランク|主題):/.test(line));
+    expect(classification(shared)).toEqual([
+      "分野: システム",
+      "ランク: CORE B",
+      "主題: ストレージ",
+    ]);
+    for (const args of [{ key: "old-partner" }, { name: "Partner Archive" }]) {
+      expect(classification(await call({ ...args, scope: "all" }))).toEqual([
+        "分野: システム",
+        "ランク: CORE B",
+        "主題: ストレージ",
+      ]);
+    }
+    expect(classification(await call({ key: "jip", scope: "all" }))).toEqual([
+      "分野: セキュリティ",
+      "ランク: CCF A",
+      "主題: セキュリティ",
+    ]);
+    // 属性が未収録でも、共有募集の統合先の属性で補わない。
+    const {
+      categories: _categories,
+      rank: _rank,
+      tags: _tags,
+      ...withoutClassification
+    } = sharedOnly[1];
+    writeFileSync(
+      join(root, "data/snapshot.json"),
+      JSON.stringify({ conferences: [...conferences, sharedOnly[0], withoutClassification] }),
+    );
+    const missing = await call({ key: "ipsj-27-r-compsac", scope: "all" });
+    expect(missing.structuredContent).toMatchObject({
+      categories: [],
+      rank: null,
+      tags: [],
+      domestic: false,
+    });
+    expect(classification(missing)).toEqual(["分野: 未確認", "ランク: ランク未確認"]);
+    writeFileSync(
+      join(root, "data/snapshot.json"),
+      JSON.stringify({ conferences: [{ ...withoutClassification, editions: [] }] }),
+    );
+    for (const scope of ["all", "screen"]) {
+      const empty = await call({ key: "ipsj-27-r-compsac", scope });
+      expect(empty.structuredContent).toMatchObject({
+        venue_key: "ipsj-27-r-compsac",
+        categories: [],
+        rank: null,
+        tags: [],
+        domestic: false,
+        deadline_total: 0,
+        rows: [],
+        editions: [],
+      });
+      expect(classification(empty)).toEqual(["分野: 未確認", "ランク: ランク未確認"]);
+    }
+  } finally {
+    reader.close();
+    child.kill();
+  }
+});

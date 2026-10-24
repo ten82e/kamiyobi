@@ -12,6 +12,26 @@
      frame-ancestors は meta 経由では無効 (console エラーの元) のため置かない。 -->
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://cdn.jsdelivr.net https://huggingface.co https://cdn-lfs.huggingface.co https://*.cdn.hf.co https://*.xethub.hf.co; worker-src 'self' blob: https://cdnjs.cloudflare.com;">
 <title>kamiyobi：CS国際会議・穴場ワークショップ締切探知</title>
+<!-- 検索結果とチャット（Slack / Teams / X）のリンクプレビューで何のサイトかわかるようにする。
+     日本語利用者が「学会 締切」で検索したときと、研究室グループに貼ったときの両方が入口になる。
+     og:url と canonical は config.yaml の site.base_url と一致させる（テストで検査する）。 -->
+<meta name="description" content="CS分野の国際会議・穴場ワークショップと、情報処理学会・電子情報通信学会の国内研究会の締切を、日本時間（JST）と曜日で一覧化する。検索は全角入力や「機械学習」「韓国」などの日本語でも引ける。">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="kamiyobi">
+<meta property="og:locale" content="ja_JP">
+<meta property="og:title" content="kamiyobi：CS国際会議・穴場ワークショップ締切探知">
+<meta property="og:description" content="CS国際会議・穴場ワークショップ・国内研究会の締切を JST と曜日で一覧。全角入力や日本語の主題語でも検索でき、絞り込み結果は CSV で持ち出せる。">
+<meta property="og:url" content="https://ten82e.github.io/kamiyobi/">
+<meta name="twitter:card" content="summary">
+<!-- tab で他タブと見分けるための自前アイコン（外部アセットは読まない）。
+     og:image を置いていないのは、チャット側が SVG をプレビューに使えないため。 -->
+<link rel="icon" type="image/svg+xml" href="icon.svg">
+<link rel="canonical" href="https://ten82e.github.io/kamiyobi/">
+<meta name="theme-color" content="#f7f7f8">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#18181b">
+<!-- 機械可読の自己紹介（schema.org の Dataset）。ビルドが実測値で埋める
+     （`src/build.ts` の `toDatasetJsonLd`。印が無いとビルドが止まる）。 -->
+<!--__JSONLD__-->
 <style>
 :root {
   color-scheme: light dark;
@@ -21,12 +41,23 @@
   --border: #e2e2e6;
   --border-subtle: #ececef;
   --fg: #1c1c1e;
-  --muted: #6b6b72;
+  /* 補助の文字（件数・チップ・表の見出し）。白地では 5.29、チップの地（#f1f1f3）でも
+   * 5.36 あり、WCAG AA（4.5）を満たす。前の #6b6b72 はチップの地で 4.69 と際どかった
+   * （2026-10-23 実測）。 */
+  --muted: #62626a;
   --accent: #2f5fd0;
+
+  --on-accent: #ffffff;
   --accent-subtle: rgba(47, 95, 208, 0.08);
   --warn: #b3382c;
-  --soon: #9a6700;
+
+  --soon: #8a5c00;
+
+  --ok: #0d6e4c;
   --chip: #f1f1f3;
+
+
+  --fs-note: 0.78rem;
 
   --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
@@ -43,15 +74,47 @@
     --fg: #e4e4e7;
     --muted: #9d9da6;
     --accent: #8ab4f8;
+    --on-accent: #18181b;
     --accent-subtle: rgba(138, 180, 248, 0.12);
     --warn: #f28b82;
     --soon: #e5c07b;
+    --ok: #7fd6a8;
     --chip: #26262b;
   }
 }
 
 /* SPEC §7: 狭い画面ではカード表示に落とす。td() が付与する data-label を列名に使う。 */
+.sortbar {
+  display: none;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 12px;
+}
+.sortbar-label {
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin-right: 2px;
+}
+.sortbar button {
+  font: inherit;
+  font-size: 0.82rem;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--panel);
+  color: var(--fg);
+  cursor: pointer;
+}
+.sortbar button[aria-pressed="true"] {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--panel-hover);
+}
+/* 狭い画面（ほぼスマホ）: 見出しを隠す代わりに並べ替えの列を出す。
+   2 つは対で動く（`thead { display: none }` だけが増えると並び替え不能になる）。 */
 @media (max-width: 640px) {
+  .sortbar { display: flex; }
   thead { display: none; }
   tbody tr {
     display: block;
@@ -61,15 +124,58 @@
     margin: 0 0 12px;
     padding: 10px 12px;
   }
-  tbody tr td {
+  tbody tr td,
+  tbody tr th[scope="row"] {
     display: block;
     border: none;
     padding: 2px 0;
   }
-  tbody tr td::before {
+  tbody tr td::before,
+  tbody tr th[scope="row"]::before {
     content: attr(data-label) "：";
     font-weight: 600;
     color: var(--muted);
+  }
+  /* カード化の中でも月見出しは通し見出しのままにする（1 枚のカードにしない）。 */
+  tbody tr.month-row {
+    display: table-row;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    margin: 0;
+    padding: 0;
+  }
+  tbody tr.month-row th {
+    display: table-cell;
+    padding: 6px 10px;
+  }
+}
+
+
+@media (hover: none), (pointer: coarse) {
+  .count-kbd { display: none; }
+  .only-keyboard,
+  .only-keyboard + dd { display: none; }
+
+  .sortbar button,
+  .mode-switch button,
+  .btn-reset,
+  .preset-btn,
+  .sample-btn,
+  .paper-file-button,
+  .chips label,
+  label.check,
+  button.tag,
+  #emptyReset {
+    min-height: 44px;
+  }
+
+  /* 末尾の出典・リポジトリ・配布ファイルの文字リンクは、指で押せる高さにする（2026-10-18 に
+   * 375px 幅で実測: 高さ 15〜18px）。段落の中の文字リンクは行間を変えないよう余白で足す。 */
+  footer a {
+    display: inline-block;
+    padding: 13px 4px;
+    margin: -13px -4px;
   }
 }
 
@@ -131,7 +237,8 @@ header {
 /* Stats Summary Row */
 .summary-bar {
   display: flex;
-  gap: 24px;
+
+  gap: 8px 20px;
   margin-top: 20px;
   padding: 12px 16px;
   background: var(--panel);
@@ -141,7 +248,21 @@ header {
   flex-wrap: wrap;
 }
 .stat-item { display: flex; align-items: center; gap: 8px; }
+.summary-bar .stats-caption,
+.summary-bar .stat-unit {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
 .stat-item strong { font-family: var(--font-mono); color: var(--fg); font-size: 0.95rem; }
+/* あとで見たい会議（★）。行の詳細から足し、会議の一覧（venue=）へ渡る。 */
+.watch-panel { margin-top: 10px; font-size: 0.85rem; }
+.watch-panel > summary { cursor: pointer; padding: 8px 0; color: var(--accent); }
+.watch-list { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px 16px; }
+.watch-list li { display: flex; align-items: center; gap: 8px; }
+.watch-list a { color: var(--accent); }
+.watch-when { color: var(--muted); font-size: 0.8rem; }
+.watch-list button { min-width: 24px; min-height: 24px; background: transparent; border: 1px solid var(--border); border-radius: 6px; color: var(--muted); cursor: pointer; }
+.stats-hint { font-size: 0.78rem; color: var(--muted); margin: 8px 0 0; }
 
 /* Quick Preset Filter Bar */
 .presets-bar {
@@ -218,7 +339,20 @@ header {
   align-items: flex-end;
 }
 .field { display: flex; flex-direction: column; gap: 6px; }
-.field > span { font-size: 0.78rem; color: var(--muted); font-weight: 500; }
+.field > span, .field > label { font-size: 0.78rem; color: var(--muted); font-weight: 500; }
+/* 画面には出さないが支援技術には渡すラベル（検索欄のように見出しを置かない場所用の
+   定番の型）。`display: none` と違い、支援技術から消えない。 */
+.sr-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
 
 .search-wrap {
   flex: 1 1 280px;
@@ -232,7 +366,7 @@ input[type=search], input[type=text] {
   border-radius: 6px;
   color: var(--fg);
   font: inherit;
-  font-size: 0.88rem;
+  font-size: 1rem;
   outline: none;
   transition: border-color 0.15s ease;
 }
@@ -255,8 +389,19 @@ select {
   border-radius: 6px;
   color: var(--fg);
   font: inherit;
-  font-size: 0.85rem;
+  font-size: 1rem;
   outline: none;
+}
+/* 期間・種別・ランクの <select> は `outline: none` だけで焦点の目印を書いていなかった
+   （入力欄は border-color が変わるが、select は変わらない）。 */
+/* リンクと `<summary>`（てびき・畳み）も同じ印にする。前はブラウザ既定の 1px の輪だけで、
+   ボタンや入力欄の 2px と揃っていなかった（2026-10-23 実測: Tab で動かすとリンクだけ
+   `auto 1px`）。 */
+input[type=search]:focus-visible, input[type=text]:focus-visible,
+textarea:focus-visible, select:focus-visible,
+button:focus-visible, a:focus-visible, summary:focus-visible, [tabindex]:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 textarea {
@@ -267,7 +412,7 @@ textarea {
   border-radius: 6px;
   color: var(--fg);
   font: inherit;
-  font-size: 0.85rem;
+  font-size: 1rem;
   outline: none;
   resize: vertical;
   min-height: 72px;
@@ -277,6 +422,7 @@ textarea:focus { border-color: var(--accent); }
 
 .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
 .chips label {
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -293,7 +439,41 @@ textarea:focus { border-color: var(--accent); }
   border-color: var(--accent);
   color: var(--fg);
 }
-.chips input { display: none; }
+/* ヘッダーの「データ生成」に出す、生成からの経過日数の注意。日次更新の運用から日数が
+   経っているときだけ出る（古いデータを最新と誤って使うのが一番悪い失敗なので、
+   色だけに頼らず本文で言う）。 */
+.meta-info .stale {
+  display: block;
+  margin-top: 4px;
+  color: var(--warn);
+  font-weight: 600;
+}
+
+/* 分野チップの件数。0 は薄くして「今は該当が無い」と分かるようにする（消すと
+   収録が無いのか絞り込みのせいか区別できない）。 */
+.chips .chip-count {
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+}
+.chips .chip-count.zero {
+  opacity: 0.5;
+}
+/* 分野チップの checkbox は `display: none` にしていた（2026-09-23 実測）。
+   それではタブで届かず焦点も出ないので、**分野で絞る操作がマウス専用**になっていた。
+   見えなくするだけ（visually hidden）に直し、焦点はラベル側に出す。 */
+.chips input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+.chips label:has(input:focus-visible),
+.chips input:focus-visible + span {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
 .chips input:checked + span { color: var(--accent); font-weight: 500; }
 
 label.check {
@@ -318,6 +498,27 @@ label.check input:checked + span { color: var(--fg); }
 }
 .btn-reset:hover { color: var(--fg); border-color: var(--muted); }
 
+a.btn-reset {
+  display: inline-block;
+  text-decoration: none;
+}
+/* 行の詳細の操作（この 1 件だけをカレンダーへ）。公式サイトのボタンの下に置く。 */
+.drawer-action {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  background: transparent;
+  color: var(--accent);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: 20px;
+}
+.drawer-action:hover { border-color: var(--accent); }
+/* 行の詳細の、AI に渡す会議の識別子（押せない文字）。 */
+.drawer-key { margin: 0 0 20px; color: var(--muted); font-size: 0.85rem; font-family: var(--font-mono); }
+
 .sample-btn {
   font-size: 0.75rem;
   padding: 4px 10px;
@@ -328,18 +529,146 @@ label.check input:checked + span { color: var(--fg); }
   cursor: pointer;
 }
 .sample-btn:hover { color: var(--accent); border-color: var(--accent); border-style: solid; }
+.paper-file-button {
+  display: inline-block;
+  cursor: pointer;
+  max-width: 100%;
+  padding: 8px 14px;
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  background: transparent;
+  font: inherit;
+  font-size: 0.85rem;
+  color: var(--accent);
+  text-align: left;
+}
 
 /* Main Table */
-.count { font-size: 0.82rem; color: var(--muted); margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
+.count { font-size: 0.82rem; color: var(--muted); margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+.count-hint { text-align: right; }
+.count #exportCsv { white-space: nowrap; }
+/* 月ごとの区切り行。日時順の見やすさのためで、行として選択させない。
+   列ヘッダーは固定していないので、月見出しも固定しない（見出しだけが残ると迷う）。 */
+.month-row th {
+  background: var(--accent-subtle);
+  color: var(--fg);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  padding: 6px 10px;
+}
+/* 見方のてびき: 初回利用者が最初に詰まる用語（JST/AoE・時刻未確認・推定・公式確認）を
+   別ファイルに飛ばさずその場で説明する。初期状態は畳んで表のじゃまにしない。 */
+.help {
+  margin-top: 28px;
+  padding: 14px 16px;
+  background: var(--panel);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  font-size: 0.83rem;
+}
+/* てびきの見出しは h2（読み上げの見出しの並びを h1 → h2 → その下の h3 にする）。
+   見た目は summary のまま（前は文字だけを summary に置いていた）。 */
+.help-title { margin: 0; font: inherit; display: inline; }
+.help-title-rest { font-weight: 400; }
+.help > summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--fg);
+  /* 押せる所を 24px 以上に（WCAG 2.5.8 の目安）。行の高さだけだと 20px で、すぐ下の
+     目次や説明と 5px しか離れていなかった（2026-10-23 実測）。 */
+  padding: 6px 0;
+}
+.help dl { margin-top: 12px; display: grid; gap: 12px; }
+.help dt { font-weight: 600; }
+.help [hidden] { display: none; }
+
+.help h3 {
+  margin: 20px 0 0;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+.help h3 + dl { margin-top: 10px; }
+/* てびきの目次。長いので、頭から節へ飛べるようにする（節の h3 の id と対で保つ）。 */
+.help-index { margin: 10px 0 0; font-size: 0.8rem; color: var(--muted); }
+.help-index > span { font-weight: 600; }
+.help-index ul {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 14px;
+}
+.help-index a { color: var(--accent); }
+/* 節の終わりから目次へ戻る（節が長いので、上まで戻らせない）。 */
+.help-back { margin: 8px 0 0; font-size: 0.8rem; }
+.help-back a { color: var(--accent); }
+/* 画面には見せず、支援技術にだけ読む語（`display: none` は読み上げも消してしまう）。 */
+.only-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 60;
+  background: var(--accent);
+  color: var(--on-accent);
+  padding: 8px 12px;
+  border-radius: 6px;
+  text-decoration: none;
+}
+.skip-link:focus {
+  left: 8px;
+  top: 8px;
+}
 .tablewrap {
   border: 1px solid var(--border);
   border-radius: 8px;
   overflow-x: auto;
   background: var(--panel);
 }
+
+.scrollhint {
+  margin: 0 0 6px;
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+.tablewrap:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
 table { border-collapse: collapse; width: 100%; min-width: 880px; }
+/* 狭幅ではカード化するので、デスクトップ用の最小幅をここで解除する。カード自体が 880px に
+   広がり、1 行を読むのに横スワイプが要ってしまう。上の規則より**後ろ**に置くこと
+   （セレクタの特異性が同じなので、前に書くと負ける）。 */
+@media (max-width: 640px) {
+  table { min-width: 0; }
+  .tablewrap {
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    overflow-x: visible;
+  }
+}
 th, td { padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border-subtle); vertical-align: top; }
-th {
+/* 「残り」の欄は列の中で最も狭い。表は `table-layout: auto` なので、長い日本語は
+   どこでも折れてよく、幅の計算では 1 字ぶんまで縮められる（2026-10-06 実測: 1280px の
+   幅でこの列 **65px**、「締切日です（終了済みの可能性あり）」が **2 字/行**で縦に並び、
+   既定の並び順が示す欄なのに読めなかった）。折らせない事で最小幅を語の長さに固定する
+   （文言も `site/app.ts` 側で短く持つ – 両方で直す）。 */
+td.c-deadline { white-space: nowrap; }
+
+thead th {
   background: var(--chip);
   font-size: 0.75rem;
   font-weight: 600;
@@ -350,11 +679,18 @@ th {
   cursor: pointer;
   user-select: none;
 }
-th:hover { color: var(--fg); }
-th[data-sort]:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
-tr:last-child td { border-bottom: none; }
-tr:hover td { background: var(--panel-hover); }
-tr.selected td { background: var(--accent-subtle); border-color: rgba(47, 95, 208, 0.25); }
+thead th:hover { color: var(--fg); }
+thead th[data-sort]:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+tbody th[scope="row"] {
+  font-weight: normal;
+}
+tr:last-child td,
+tr:last-child th[scope="row"] { border-bottom: none; }
+tr:hover td,
+tr:hover th[scope="row"] { background: var(--panel-hover); }
+tr.selected td,
+tr.selected th[scope="row"] { background: var(--accent-subtle); border-color: rgba(47, 95, 208, 0.25); }
 
 .conf { font-weight: 600; font-size: 0.95rem; }
 .conf a { color: var(--fg); text-decoration: none; }
@@ -379,9 +715,25 @@ tr.selected td { background: var(--accent-subtle); border-color: rgba(47, 95, 20
   font-family: var(--font-mono);
 }
 .tag.est { color: var(--soon); border-color: rgba(154, 103, 0, 0.3); background: rgba(154, 103, 0, 0.06); }
-.tag.match { color: #0f7a55; border-color: rgba(15, 122, 85, 0.35); background: rgba(15, 122, 85, 0.08); font-weight: 600; }
+  /* 推薦のカードの残り（`あと N 日`）。一覧の「残り」列と同じ色の使い方をする
+     （14 日以内は要注意の色、今日中は警告の色。`remain` が付けるクラスをそのまま受ける）。 */
+.tag.soon { color: var(--soon); border-color: rgba(154, 103, 0, 0.3); background: rgba(154, 103, 0, 0.06); }
+.tag.today { color: var(--warn); border-color: rgba(180, 83, 9, 0.35); background: rgba(180, 83, 9, 0.08); font-weight: 600; }
+.tag.match { color: var(--ok); border-color: rgba(15, 122, 85, 0.35); background: rgba(15, 122, 85, 0.08); font-weight: 600; }
 .tag.match-trigger { cursor: pointer; }
 .tag.match-trigger:hover { outline: 1px solid rgba(15, 122, 85, 0.45); background: rgba(15, 122, 85, 0.14); }
+/* トリガは `<button>`（キーボードで開閉できるようにした）。見た目は従来のチップと揃える。
+   `.tag` 側で字体・サイズを出すので、`font` の短縮形はここで上書きしない。 */
+button.tag {
+  -webkit-appearance: none;
+  appearance: none;
+  line-height: 1.4;
+  text-align: left;
+}
+button.tag:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
 
 /* 推薦理由の行内展開 */
 tr.detail-row td {
@@ -399,19 +751,22 @@ tr.detail-row td {
 }
 .detail-head { font-weight: 600; color: var(--fg); margin-bottom: 4px; }
 .detail-comp { font-size: 0.72rem; color: var(--muted); margin-bottom: 8px; font-family: var(--font-mono); }
-.reason-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 4px; }
+.reason-chips { display: grid; gap: 6px; margin-bottom: 4px; }
 .reason-chip {
-  display: inline-flex;
+  display: flex;
+  flex-wrap: wrap;
   align-items: baseline;
   gap: 6px;
-  padding: 2px 10px;
-  border-radius: 999px;
+  padding: 4px 10px;
+  border-radius: 12px;
   background: var(--chip);
   border: 1px solid var(--border);
-  font-size: 0.72rem;
+  font-size: var(--fs-note);
 }
 .reason-chip b { color: var(--fg); font-weight: 600; }
-.reason-chip em { font-style: normal; font-family: var(--font-mono); color: #0f7a55; font-weight: 600; }
+/* 当たり方の説明は項目の下に常に表示する（`title` の注記はタッチ端末で出ない）。 */
+.reason-why { flex-basis: 100%; color: var(--muted); font-size: var(--fs-note); }
+.reason-chip em { font-style: normal; font-family: var(--font-mono); color: var(--ok); font-weight: 600; }
 .perline {
   border-top: 1px dashed var(--border);
   margin-top: 8px;
@@ -432,8 +787,8 @@ tr.detail-row td {
 }
 .perline-title { flex: 1; min-width: 200px; color: var(--fg); }
 .perline-score { font-family: var(--font-mono); color: var(--muted); }
-.perline-venue { color: #0f7a55; font-weight: 600; font-size: 0.72rem; }
-.perline-parts { color: var(--muted); font-size: 0.7rem; }
+.perline-venue { color: var(--ok); font-weight: 600; font-size: var(--fs-note); }
+.perline-parts { color: var(--muted); font-size: var(--fs-note); }
 .verification-summary {
   margin-top: 10px;
   padding: 8px 12px;
@@ -445,7 +800,7 @@ tr.detail-row td {
   line-height: 1.6;
 }
 .verification-summary b { color: var(--fg); font-weight: 600; }
-.tag.past { color: var(--muted); border-color: rgba(120, 120, 120, 0.3); background: rgba(120, 120, 120, 0.08); }
+.tag.past { color: var(--muted); border-color: rgba(120, 120, 120, 0.3); background: rgba(120, 120, 120, 0.02); }
 
 #more {
   font-size: 0.85rem;
@@ -467,9 +822,19 @@ tr.detail-row td {
   z-index: 100;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.2s ease;
+  /* 閉じている間は支援技術からもタブ順序からも消す（`pointer-events: none` は
+     マウス専用で、Tab は素通りしない。2026-09-23 実測: 閉じた状態の「閉じる」ボタンが
+     タブで届き、`aria-modal="true"` の行儀の良さを失っていた）。
+     フェードアウトを潰さないよう、可視化は遅延なし・非可視化は遷移の後に遅らせる。 */
+  visibility: hidden;
+  transition: opacity 0.2s ease, visibility 0s linear 0.2s;
 }
-.drawer-backdrop.active { opacity: 1; pointer-events: auto; }
+.drawer-backdrop.active {
+  opacity: 1;
+  pointer-events: auto;
+  visibility: visible;
+  transition: opacity 0.2s ease, visibility 0s;
+}
 .drawer {
   position: fixed;
   top: 0; right: -480px; width: 440px; max-width: 90vw; height: 100vh;
@@ -482,6 +847,68 @@ tr.detail-row td {
   transition: right 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .drawer-backdrop.active .drawer { right: 0; }
+
+/* Search and submission workflow */
+.source-update-warning { margin-top: 12px; color: var(--warn); font-size: 0.85rem; }
+.source-update-details { margin-top: 8px; color: var(--muted); font-size: 0.85rem; }
+.source-update-details summary { cursor: pointer; padding: 8px 0; color: var(--accent); }
+.resource-links { display: flex; flex-wrap: wrap; gap: 8px 20px; margin: 8px 0; font-size: 0.85rem; }
+.resource-links a { display: inline-block; padding: 12px 0; color: var(--accent); }
+.mode-guide { color: var(--muted); font-size: 0.85rem; margin: 0 0 12px; line-height: 1.7; }
+.help-jump { margin: 4px 0 0; font-size: 0.85rem; }
+.help-jump a { display: inline-block; padding: 6px 0; color: var(--accent); }
+.catalog-stats > summary { cursor: pointer; padding: 8px 0; color: var(--accent); }
+.catalog-stats[open] > summary { display: none; }
+.advanced-filters > summary { cursor: pointer; min-height: 44px; padding: 10px 0; color: var(--accent); font-size: 0.85rem; }
+.search-wrap > label { display: block; color: var(--muted); font-size: 0.78rem; margin-bottom: 4px; }
+.active-filters { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+.active-filters[hidden] { display: none; }
+.filter-remove, .row-detail {
+  font: inherit; color: var(--accent); background: var(--panel); border: 1px solid var(--border);
+  border-radius: 6px; padding: 6px 10px; min-height: 36px; cursor: pointer;
+}
+.filter-remove:hover, .row-detail:hover { border-color: var(--accent); background: var(--accent-subtle); }
+.row-detail { margin-top: 6px; white-space: normal; }
+.time-guide { margin: 12px 0; font-size: 0.85rem; color: var(--muted); }
+.time-guide strong { color: var(--fg); }
+.shared-row-options { flex-basis: 100%; min-width: 0; }
+.shared-row-options[hidden] { display: none; }
+.shared-row-options h2 { font-size: 1rem; color: var(--fg); margin: 8px 0; }
+.shared-row-options p { line-height: 1.7; margin: 8px 0; }
+.shared-row-options button { width: 100%; }
+.result-notes { flex-basis: 100%; }
+.result-notes summary, .data-scope summary { cursor: pointer; padding: 8px 0; min-height: 36px; color: var(--accent); }
+.result-notes > span { display: block; margin: 4px 0 8px; line-height: 1.7; }
+.data-scope { margin: 0 0 16px; font-size: 0.85rem; }
+.data-scope[open] { padding: 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--panel); }
+body.drawer-open { overflow: hidden; }
+.edition-schedule { margin: 16px 0; }
+.edition-schedule h3 { font-size: 1rem; margin-bottom: 8px; }
+/* 行の詳細の節の名（見出し要素にするが、見た目は小さめの灰色のまま）。 */
+.drawer-label { margin: 0; font-size: 0.78rem; font-weight: 600; color: var(--muted); }
+/* JavaScript なしの面（upcoming.html）の但し書きの題。summary の中の h2 なので、
+   見た目は前の文字のまま（h2 の既定の大きさにしない）。 */
+.upcoming-notes-title { margin: 0; font: inherit; display: inline; }
+.edition-schedule p { font-size: 0.85rem; color: var(--muted); margin: 8px 0; }
+.edition-schedule ul { list-style: none; }
+.past-edition-schedule > summary { cursor: pointer; min-height: 44px; padding: 12px 0; }
+.edition-schedule button {
+  width: 100%; text-align: left; font: inherit; font-size: 0.85rem; line-height: 1.6; color: var(--fg);
+  background: var(--panel); border: 1px solid var(--border); border-radius: 6px; padding: 10px;
+  margin: 4px 0; cursor: pointer; overflow-wrap: anywhere;
+}
+.edition-schedule button[aria-current="true"] { border-color: var(--accent); background: var(--accent-subtle); }
+@media (max-width: 640px) {
+  .row-detail, .filter-remove { min-height: 44px; }
+  .catalog-stats > summary, .catalog-stats[open] > summary { display: list-item; padding: 10px 0; color: var(--accent); cursor: pointer; }
+  .presets-bar { display: grid; grid-template-columns: 1fr 1fr; }
+  .presets-bar > span { grid-column: 1 / -1; }
+  .presets-bar .preset-btn { min-height: 44px; white-space: normal; }
+  .wrap { padding-top: 20px; }
+  header { margin-bottom: 20px; padding-bottom: 12px; }
+  .drawer { width: 100%; max-width: 100vw; padding: 20px; }
+  #drawerClose { min-width: 44px; min-height: 44px; }
+}
 
 /* Footer */
 footer {
@@ -498,9 +925,213 @@ footer {
 footer a { color: var(--accent); text-decoration: none; }
 footer a:hover { text-decoration: underline; }
 
+
+.print-meta {
+  display: none;
+}
+
+/* 印刷: 締切一覧を研究室に貼る・グループ会議で回覧する需要に応える。
+   画面用の操作要素を落として紙で役に立つ情報だけ残し、紙で押せないリンクは URL を印字する。 */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition: none !important;
+    transition-delay: 0s !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@media print {
+  @page { margin: 14mm; }
+  body {
+    background: #fff;
+    color: #111;
+    font-size: 10.5pt;
+  }
+  .wrap { max-width: none; padding: 0; }
+  .mode-switch,
+  #controlsPanel,
+  .active-filters,
+  .row-detail,
+  .data-scope,
+  .result-notes,
+  #helpPanel,
+  #exportCsv,
+  /* 書き出しのボタンは紙では押せない（CSV の隣だけが残っていた – 2026-10-17 実測:
+     印刷の見え方で `#exportIcs` だけ display: block、`#exportCsv` は none）。 */
+  #exportIcs,
+  #more,
+  #showAll,
+  #historyStatus,
+  #drawer,
+  #drawerBackdrop,
+  .count-hint,
+  #tableScrollHint,
+  #icsLink,
+  #jsonLink,
+  #icsCopy,
+  #icsCopyNote,
+  #icsScope,
+  #fullRecord,
+  .sortbar,
+  .recommend-only,
+  footer .btn-reset { display: none !important; }
+  .skip-link, .resource-links, .mode-guide { display: none !important; }
+  /* JavaScript なしの面（upcoming.html）の但し書きは畳んである（画面では開いて読む）。
+   * 紙では開けないので、中身を刷る – 列の意味が無いと「残り」「状態」が読めない
+   * （2026-10-23 実測: 印刷の模擬で `.upcoming-notes` の中身が display: none のまま）。 */
+  .upcoming-notes > *:not(summary) { display: block !important; }
+  /* ★ はその人の私物で、紙は一覧そのものを読む物なので刷らない。 */
+  .watch-panel { display: none !important; }
+  /* 但し書きは 1 ページに収める（列の意味がページをまたぐと読めない）。見出しの直後で
+     ページを割らない（見出しだけが前のページの末尾に残らない）。 */
+  .upcoming-notes, .upcoming-notes > blockquote { break-inside: avoid; }
+  h1, h2, .upcoming-notes > summary { break-after: avoid; }
+  /* 推薦のカードは 1 枚を 1 ページに収める（高さ 337〜365px で、107 枚並ぶと途中で切れ得る）。
+     カードの題の直後でも割らない。 */
+  #recommendationCards article { break-inside: avoid; }
+  #recommendationCards article h3 { break-after: avoid; }
+  /* 条件・件数・日時を紙に残す見出し（画面では `display: none`）。 */
+  .print-meta {
+    display: block !important;
+    font-size: 9pt;
+    color: #333;
+    border: 1px solid #bbb;
+    padding: 6px 8px;
+    margin: 0 0 8px;
+  }
+  /* 幅せまカード表示のメディアクエリが印刷幅でも当たることがあるため、表として印刷する。 */
+  thead { display: table-header-group; }
+  tbody tr { display: table-row; }
+  tbody td,
+  tbody th[scope="row"] { display: table-cell; }
+  .tablewrap { overflow: visible; border: 0; }
+  /* 紙は A4 の本文幅（14mm の余白で 779px 相当）なのに、表の最小幅（880px）と「折らない」
+     印が効いて**表が 1,021px** に成り、**右の列（会期・開催地）が紙からはみ出して切れて
+     居た**（2026-10-06 實測 – 印刷の媒體で表 1,021px / 本文 779px）。紙では最小幅を外し、
+     字を小さくして頁の幅に收める（日付は折らない侭 – 折ると讀めなくなる）。 */
+  table { min-width: 0; }
+  th, td { font-size: 8pt; }
+  /* 折り返しを許すのは**副の行**（「元の日時 …」「時刻未確認」「会期」）だけにする – 主の
+     日付（「2026-10-05(月)」）まで折ると讀めなくなる（實測 – 全部折ると日時の列が 79px に
+     成つて日付が途中で切れた）。副の行を折ると、表は 779px に收まつた（實測）。 */
+  td .sub.nowrap { white-space: normal; }
+
+  td .sub.nowrap .span-part { white-space: nowrap; }
+  th, td {
+    color: #111 !important;
+    background: transparent !important;
+    border-bottom: 1px solid #bbb;
+    padding: 4px 6px;
+  }
+  .month-row th { background: #eee !important; color: #111 !important; }
+  /* 行がページのまたぎで分断されると「どの締切か」わからなくなる。 */
+  tbody tr, .month-row { break-inside: avoid; page-break-inside: avoid; }
+  a { color: #111 !important; text-decoration: none; }
+  /* 候補のカードも同じ扱いにする（紙では URL を押せない。投稿先の一覧は公式ページの URL が無いと
+     次の行動が取れない）。 */
+  #tbody a[href^="http"]::after,
+  #recommendationCards a[href^="http"]::after {
+    content: " (" attr(href) ")";
+    font-size: 8pt;
+    color: #444;
+    word-break: break-all;
+  }
+  .brand-badge, .lead { color: #444 !important; }
+  /* 紙では URL を押せない。データ源（出典）は printed でも価値があるので残し、
+     サイト内導線だけ落とす。 */
+  footer { color: #444; font-size: 8.5pt; border-top: 1px solid #bbb; }
+  footer #repolink { display: none !important; }
+}
+
+/* 縦に長い表（静的な一覧 `upcoming.html` は実測 1,127 行）では、少しスクロールするだけで
+ * 列の名前が画面から消え、800 行目の数字が「残り」なのか「会期」か読めなかった
+ * （2026-09-23 実測: スタイルシートに `sticky` は 1 度も無い）。見出しを粘らせる。
+ * ただし `.tablewrap` の `overflow-x: auto` は粘着を止める（内側に貼り付く扱いになり、
+ * この箱は高さを持たないので効かない）。横に越えない幅だけ `overflow` を戻す。
+ * 越えない幅の計算: 表の `min-width: 880px` + `.wrap` の左右 24 px x 2 +
+ * `.tablewrap` の枠 1 px x 2 + 縦スクロールバー 17 px = 947 px。**バーの分を忘れると、
+ * ぎりぎりの幅でページ全体の横スクロールが起きてしまう**（はみ出した物を隠す `auto` を
+ * 外すため）。余裕を持って 960 px とする。狭い幅では表がはみ出すので `auto` のまま
+ * （その幅では横スクロールの案内が出ている）。 */
+@media (min-width: 960px) {
+  .tablewrap {
+    overflow-x: visible;
+  }
+  .tablewrap thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+  }
+  /* 並び替えられない列の見出し地は半透明なので、粘着中に下を走る行が透ける。
+     不透明な下地を敷く（並び替えられる列は不透明な地を既に持っている）。 */
+  .tablewrap thead th:not([data-sort]) {
+    background-color: var(--panel);
+  }
+}
+
+/* 表の下に置く「投稿締切が未収録の開催回」（会期だけ分かっている物）。 */
+.schedule-only-panel {
+  margin: 14px 0 0;
+  padding: 10px 12px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  background: var(--panel);
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+.schedule-only-panel > summary { cursor: pointer; font-weight: 600; color: var(--fg); }
+.schedule-only-panel[hidden] { display: none; }
+.schedule-only-list { margin: 8px 0; padding-left: 1.5em; text-align: left; }
+.schedule-only-list li { margin: 6px 0; }
 </style>
 </head>
 <body>
+  <!-- 検索欄・プリセット・分野チップを全部 Tab で辿らないと表に届かないので、本文へ飛ぶ
+       導線を最初に置く（フォーカスされるまで画面外。`display: none` にすると
+       支援技術からも消えるので使わない）。 -->
+  <a class="skip-link" href="#results">締切の一覧へ進む</a>
+  <!-- JavaScript が動かない環境（学内や端末側でスクリプトを止める運用、読み込みの失敗）では、
+       この画面は黙って空になる（2026-08-09 生成のビルドで実測: JavaScript を使わないときに
+       出る案内を一つも置いておらず、表は空・件数は「--」のまま、検索も絞り込みも押せて、
+       理由を書く場所が画面のどこにも無かった）。一覧を組み立てる前の静的な HTML なので、
+       ここに理由と読み替える先を書く。リンクは相対パスにする（配信先は /kamiyobi/ の下。
+       絶対パスにすると 404 になる）。 -->
+  <noscript>
+    <div class="panel">
+      <p>
+        <strong>この締切一覧は JavaScript で組み立てています。</strong> いま JavaScript
+        が動いていないため、下の表は空で、上の件数も「--」のまま、検索と絞り込みも効きません。
+      </p>
+      <p>データそのものは、このサイトの同じ場所にあるファイルで直接読めます。</p>
+      <ul>
+        <li>
+          <a href="data.csv" title="このサイトの同じ場所にあるファイルです。1 行 1 締切の平坦な表。">data.csv</a>
+          ―― 収録している全ての締切を 1 行 1 件で並べた表（UTF-8。画面のダウンロードボタンが
+          出す CSV と違い、文字コードの目印は付けていません）。
+          <strong>種別</strong>は英語のキー（<code>paper</code> など）と、この画面と同じ日本語
+          （<code>論文締切</code>）の 2 欄があるので、スプレッドシートでの並び替え・絞り込みは
+          日本語の欄でできます。
+        </li>
+        <li>
+          <a href="deadlines.ics" title="このサイトの同じ場所にあるファイルです。今後の締切を全て、カレンダーアプリで読める形（RFC 5545）にしたものです。1 件 = 1 つの日の終日（JST の暦日）で、締切と、採否通知のように締切ではない日が入ります。過ぎた日は入りません。会議が開かれている日（会期）は並べず、各予定の説明に書きます。">deadlines.ics</a>
+          ―― 締切を自分のカレンダーに入れるファイル。表が見えない代わりにカレンダーへ入れておけば、締切の日に自分で見に行かずに済みます。
+        </li>
+        <li>
+          <a href="upcoming.html" title="同じ表を、ブラウザでそのまま読める形にしたものです。行の並びと中身は下の Markdown 版とそのものです。">upcoming.html</a>（機械が読む用の Markdown は <a href="upcoming.md" title="機械が読む用のマークダウンを、生ファイルのまま置いてあるものです。ブラウザでは表に整形されず、記号が並んだ文章で開くか、そのままダウンロードになります。">upcoming.md</a>）
+          ―― 直近の締切と、そこから見える会期の一覧。
+        </li>
+        <li>
+          <a href="data.json" title="このサイトの同じ場所にあるファイルです。収録した全ての会議を 1 会議 1 件、その締切・会期・出典といっしょに並べた、機械が読む用の JSON です。項目の名前は英語のキーで、読み方の索引は同じ場所の llms.txt に有ります。">data.json</a>
+          ―― 収録の全体。過ぎた締切と、上の表が持つ期間より先の締切も入っています。自分の道具で読みたい向きはこちらをお使いください（画面の一覧より大きめのファイルです）。
+        </li>
+      </ul>
+    </div>
+  </noscript>
 
 <div class="wrap">
   <!-- Header & Editorial Branding -->
@@ -516,128 +1147,564 @@ footer a:hover { text-decoration: underline; }
       <div class="meta-info" id="genat"></div>
     </div>
 
-    <!-- Editorial Stats Summary -->
+    <p id="sourceUpdateWarning" class="source-update-warning" hidden>一部の情報は保存済みデータを使用しています。画面の生成日時は、公式情報の確認日時ではありません。</p>
+    <details id="sourceUpdateDetails" class="source-update-details" hidden>
+      <summary>情報の取得日時を確認</summary>
+      <p id="sourceUpdateText"></p>
+      <p>各締切の確認状況と根拠は「詳細・投稿日程」で確認できます。</p>
+    </details>
+    <!-- てびきは締切一覧では表の後ろ（ページの一番下）にあり、初めて開いた人が見つけられ
+         なかった（2026-10-17 実測: 上から約 11,700px）。上に入口を置く。 -->
+    <p class="help-jump"><a href="#helpPanel" id="helpJump">見方のてびきを開く（「要確認」「推定」・時刻・キーボード操作の読み方）</a></p>
+
+    <nav class="resource-links" aria-label="一覧・AI向けデータの入口">
+      <a href="upcoming.html">直近の締切と開催を読む</a>
+      <a href="upcoming.md" title="直近の締切と開催をまとめたマークダウンの表です。ブラウザでは整形されずに表示されるか、ダウンロードされます。">AIに渡す一覧（Markdown）</a>
+      <a href="llms.txt">AI・プログラム向けの利用案内</a>
+    </nav>
+
+    <!-- 収録状況の四つ組。単位を各ラベルに書く（会議の数と締切の件数を並べておいて
+         単位を書かないと、680 と 176 が同じ物だと読めてしまう。2026-09-23 実測で
+         「穴場/特化誌」は実数（穴場タグの会議だけ）とラベルが食い違っていた。 -->
+    <details id="catalogStats" class="catalog-stats" open><summary>収録状況を見る</summary>
     <div class="summary-bar">
-      <div class="stat-item"><span>追跡会議数:</span> <strong id="statConfs">--</strong></div>
-      <div class="stat-item"><span>直近30日締切:</span> <strong id="statUpcoming" style="color: var(--accent);">--</strong></div>
-      <div class="stat-item"><span>穴場/特化誌:</span> <strong id="statNiche">--</strong></div>
-      <div class="stat-item"><span>国内研究会:</span> <strong id="statDomestic">--</strong></div>
+      <span class="stats-caption">絞り込み前の収録全体:</span>
+      <div class="stat-item"><span>収録している会議:</span> <strong id="statConfs">--</strong></div>
+      <div class="stat-item"><span>これからの30日間の締切:</span>
+        <strong id="statUpcoming" style="color: var(--accent);">--</strong><span class="stat-unit">件</span></div>
+      <div class="stat-item"><span>穴場として収録した会議:</span> <strong id="statNiche">--</strong></div>
+      <div class="stat-item"><span>国内研究会・国内シンポジウム:</span> <strong id="statDomestic">--</strong></div>
     </div>
+    <!-- 数字は「集まりの大きさ」しか言わない。そこから一覧へ行く道を、数字の隣に書く
+         （てびきにも書いてあるが、数を見た場所から離れている – 2026-10-18）。 -->
+    <p class="stats-hint">穴場の会議は、検索欄に「穴場」と打つと出ます（国内研究会は下の「国内研究会・国内シンポジウムのみ」で絞れます）。</p>
+    </details>
+    <!-- あとで見たい会議（★）。この端末にだけ保存し、共有 URL には載せない。 -->
+    <details id="watchPanel" class="watch-panel" hidden>
+      <summary>★ を付けた会議（<span id="watchCount" aria-live="polite">0</span> 件）</summary>
+      <ul id="watchList" class="watch-list"></ul>
+      <p class="stats-hint">行の詳細の「★ この会議をあとで見る」で足せます。保存先はこの端末（このブラウザ）だけで、共有 URL には入りません。</p>
+    </details>
   </header>
 
-  <nav class="mode-switch" aria-label="表示モード">
+  <nav class="mode-switch" aria-label="表示モード" aria-describedby="modeGuide">
     <button id="modeRecommend" type="button" aria-pressed="false">投稿先を探す</button>
     <button id="modeDeadlines" type="button" aria-pressed="true">締切を検索</button>
   </nav>
+
+  <p class="mode-guide" id="modeGuide">会議名や分野が決まっているなら「締切を検索」。論文の題名・概要から候補を比べるなら「投稿先を探す」。日時は日本時間（JST）です。投稿前に公式サイトで募集要項を確認してください。</p>
 
   <!-- Filter & Controls Toolbar -->
   <div class="panel mode-deadlines" id="controlsPanel">
     <div class="presets-bar deadline-only">
       <span style="font-size: 0.78rem; color: var(--muted); align-self: center; margin-right: 4px;">クイック抽出:</span>
-      <button class="preset-btn" data-preset="7d" onclick="applyPreset('7d')">締切直近 (7日以内)</button>
-      <button class="preset-btn" data-preset="a_star" onclick="applyPreset('a_star')">A*ランク</button>
-      <button class="preset-btn" data-preset="hpc_sys" onclick="applyPreset('hpc_sys')">HPC・システム</button>
-      <button class="preset-btn" data-preset="domestic" onclick="applyPreset('domestic')">国内研究会</button>
+      <button class="preset-btn" data-preset="7d" onclick="applyPreset('7d')" type="button" aria-pressed="false" title="押すと 7 日以内に絞ります。もう一度押すと外れます。入力済みの検索語や他の条件は消えません。">締切まで 7 日以内</button>
+      <button class="preset-btn" data-preset="a_star" onclick="applyPreset('a_star')" type="button" aria-pressed="false" title="押すと A*ランクだけに絞ります。もう一度押すと外れます。入力済みの検索語や他の条件は消えません。">A*ランク</button>
+      <button class="preset-btn" data-preset="hpc_sys" onclick="applyPreset('hpc_sys')" type="button" aria-pressed="false" title="押すと分野を高性能計算とシステムに絞ります。もう一度押すと外れます。入力済みの検索語や他の条件は消えません。">高性能計算・システム</button>
+      <button class="preset-btn" data-preset="domestic" onclick="applyPreset('domestic')" type="button" aria-pressed="false" title="押すと国内研究会・国内シンポジウムに絞ります（下のチェック欄と同じ条件です）。もう一度押すと外れます。入力済みの検索語や他の条件は消えません。">国内研究会・国内シンポジウム</button>
+      <button class="preset-btn" data-preset="online" onclick="applyPreset('online')" type="button" aria-pressed="false" title="押すとオンライン参加可に絞ります（チェック欄と同じ条件です）。もう一度押すと外れます。入力済みの検索語や他の条件は消えません。">オンライン参加可</button>
     </div>
 
     <div class="row deadline-only" style="margin-bottom: 14px;">
       <div class="search-wrap">
-        <input type="search" id="q" placeholder="会議名・フルネーム・開催地を検索 (例: NSDI, NVMW)...">
+        <!-- 何で引けるかはラベルに、例は placeholder に分ける。両方を placeholder に
+             詰めると、スマートフォン幅で「（例:」で切れて例が一つも見えなかった
+             （2026-10-17 実測: 375px 幅）。 -->
+        <label for="q">会議名・分野・開催地で検索</label>
+        <input type="search" id="q" enterkeyhint="search" placeholder="例: NSDI、機械学習、おきなわ">
       </div>
       <div class="field">
-        <span>種別</span>
+        <label for="kind">種別</label>
         <select id="kind"></select>
       </div>
       <div class="field">
-        <span>ランク</span>
+        <label for="rank">ランク</label>
         <select id="rank"></select>
       </div>
       <div class="field">
-        <span>期間</span>
-        <select id="win">
-          <option value="all">すべて</option>
-          <option value="7d">直近 7 日以内</option>
-          <option value="30d">直近 30 日以内</option>
-          <option value="90d">直近 90 日以内</option>
-          <option value="180d">直近 180 日以内</option>
+        <label for="win">締切まで</label>
+        <select id="win" title="締切日からの日数で絞ります（開催日ではありません）。">
+          <option value="all">かまわない</option>
+          <option value="7d">7 日以内</option>
+          <option value="30d">30 日以内</option>
+          <option value="90d">90 日以内</option>
+          <option value="180d">180 日以内</option>
         </select>
       </div>
       <button class="btn-reset" id="reset">条件クリア</button>
     </div>
 
     <!-- Paper Title / Abstract / Keyword Smart Recommender -->
-    <div class="recommend-only" style="margin-top: 14px;">
+    <!-- 推薦モードの欄も、塊として名前を持たせる（この中身は 4 つの欄とサンプルのボタンが
+     * 並ぶだけで、支援技術には「編集領域が 4 つ」にしか見えなかった）。 -->
+    <div class="recommend-only" style="margin-top: 14px;" role="region" aria-labelledby="paperInputHeading">
+      <h2 class="only-sr" id="paperInputHeading">論文の入力</h2>
       <span style="font-size: 0.78rem; color: var(--muted); font-weight: 500;">投稿先推薦</span>
       <div style="margin-top: 4px;">
-        <label style="display: inline-block; cursor: pointer; padding: 8px 14px; border: 1px dashed var(--border); border-radius: 8px; font-size: 0.85rem; color: var(--accent);">
+        <button id="paperChoose" type="button" class="paper-file-button" aria-describedby="paperFileLabel">
           📄 投稿予定の論文を選ぶ（PDF / TXT・複数可。1件目が投稿予定、残りは参考論文）
-          <input type="file" id="paperFiles" accept=".pdf,.txt" multiple style="display: none;">
-        </label>
-        <span id="paperFileLabel" style="font-size: 0.72rem; color: var(--muted); margin-left: 8px;">未選択</span>
-        <button id="cancelPdf" type="button" hidden>PDF読み込みをキャンセル</button>
+        </button>
+        <input type="file" id="paperFiles" accept=".pdf,.txt" multiple style="display: none;">
+        <button id="cancelPdf" type="button" class="btn-reset" hidden>読み込みをキャンセル</button>
+        <button id="paperReset" type="button" class="btn-reset">論文の入力を消す</button>
+        <button id="paperUndo" type="button" class="btn-reset" hidden>直前の入力に戻す</button>
+        <span id="paperFileLabel" role="status" style="display: block; font-size: 0.85rem; color: var(--fg); margin-top: 8px; overflow-wrap: anywhere;">未選択</span>
       </div>
-      <div style="font-size: 0.7rem; color: var(--muted); margin-top: 2px;">PDF は先頭3ページのタイトル・概要・キーワードだけを読み取ります。抽出結果は編集してから推薦できます。</div>
+      <div style="font-size: 0.7rem; color: var(--muted); margin-top: 2px;">PDF は先頭3ページのタイトル・概要・キーワードだけを読み取ります（Word などの文書形式は読めません。TXT に保存し直すか、下の欄に貼ってください）。抽出結果は編集してから推薦できます。<strong>選んだファイルは送信しません</strong>（文字の読み取りはこの端末の中で行います。PDF を読む部品だけを初回に外部から取りにいきます）。</div>
+      <div style="font-size: 0.7rem; color: var(--muted); margin-top: 2px;">共有用URLには論文のタイトル・概要を含めません。未発表の原稿がリンクや閲覧履歴に残るためです。共有されるのはモードと絞り込みだけなので、リンクを受け取った側には同じ情報を入力してもらってください。</div>
       <div style="display: grid; gap: 8px; margin-top: 8px;">
         <label>投稿予定タイトル<input id="paperPrimaryTitle" type="text" placeholder="投稿予定論文のタイトル"></label>
         <label>投稿予定概要<textarea id="paperPrimaryAbstract" rows="4" placeholder="投稿予定論文の概要"></textarea></label>
         <label>投稿予定キーワード<input id="paperPrimaryKeywords" type="text" placeholder="キーワード, キーワード"></label>
         <label>参考論文<textarea id="paperReferences" rows="3" placeholder="参考論文（1行1件: タイトル | キーワード | 掲載先）"></textarea></label>
       </div>
+      <div style="font-size: 0.7rem; color: var(--muted); margin-top: 6px;">入力はこのタブに下書きとして保存します。ページを再読み込みしても復元され、共有URLには含まれません。他の人の共有リンクを開いても、表示されるのは自分の下書きです。下書きを消すにはボタン「論文の入力を消す」を押してください。</div>
       <div style="margin-top: 6px; display: flex; flex-wrap: wrap; gap: 6px;">
-        <span style="font-size: 0.7rem; color: var(--muted); align-self: center;">動作確認用サンプル:</span>
+        <span style="font-size: 0.7rem; color: var(--muted); align-self: center;">入力の例（押すと欄の中身を入れ替えます）:</span>
         <button class="sample-btn" type="button" data-sample="Time-Sensitive Networking Scheduling for Deterministic Industrial Networks | tsn, real-time, scheduling, deterministic | IEEE RTSS">TSN スケジューリング</button>
         <button class="sample-btn" type="button" data-sample="High-Performance Key-Value Store with RDMA and NVMe | storage, rdma, nvme | USENIX FAST">分散ストレージ</button>
         <button class="sample-btn" type="button" data-sample="Kubernetes Service Mesh with eBPF-based Packet Processing | kubernetes, ebpf, network, packet">K8s ネットワーク</button>
         <button class="sample-btn" type="button" data-sample="Confidential Computing with SGX Enclaves in Cloud | sgx, enclave, confidential computing">SGX セキュリティ</button>
-        <button class="sample-btn" type="button" data-sample="分散システムにおける低遅延ミドルウェアの設計と評価 | 分散, ミドルウェア, 低遅延, リアルタイム">日本語 分散システム</button>
+        <!-- 案内（リード文）は HPC・AI・HCI も挙げているので、その分野の例も置く
+             （システム系の例だけだと、他の分野の人は自分の論文で試せない）。 -->
+        <button class="sample-btn" type="button" data-sample="Scalable Particle-in-Cell Simulation on Exascale Supercomputers | hpc, mpi, gpu, simulation, exascale | SC">HPC シミュレーション</button>
+        <button class="sample-btn" type="button" data-sample="Efficient Serving of Large Language Models with KV-Cache Compression | llm, inference, quantization, serving | MLSys">LLM 推論の高速化</button>
+        <button class="sample-btn" type="button" data-sample="Gaze-based Text Entry for Augmented Reality Headsets | hci, gaze, augmented reality, text entry | ACM CHI">AR の視線入力</button>
+        <button class="sample-btn" type="button" data-sample="分散システムにおける低遅延ミドルウェアの設計と評価 | 分散, ミドルウェア, 低遅延, リアルタイム">日本語の例（分散システム）</button>
+      </div>
+      <!-- 候補は論文との一致の順に並ぶので、締切が過ぎた会議も混ざる（次回の開催に向けた
+           参考）。「まだ出せる所だけ見たい」に答える入口をここに置く（既定は外さない –
+           MCP の `recommend_venues` と同じ候補を出しておく）。 -->
+      <div style="margin-top: 8px; display: flex; gap: 14px; align-items: center; flex-wrap: wrap;">
+        <label class="check"><input type="checkbox" id="openOnly"> <span title="推薦の候補のうち、受付状況が「締切済み」と確認できた会議を、カード・CSV・ICSから除きます。次回の開催に向けた参考として見たいときは、このチェックを外してください。受付状況が未確認の候補は除きません。">締切が過ぎた候補を除く</span></label>
+        <!-- 候補は既定で論文との一致順。締切の段取りを立てる人向けに、締切の近い順も選べる
+             （日付の無い候補＝常時受付・締切未確認は後ろ、締切済みは最後）。 -->
+        <span style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.78rem; color: var(--muted);">
+          <label for="recRank">ランク</label>
+          <!-- 候補をランク（CCF・CORE・THCPL）で絞る。選択肢は画面の組み立て時に、締切一覧の
+               「ランク」と同じ表（`rankGradeOrderJa`）から入れる。値は URL の `rank` を共用する。 -->
+          <select id="recRank" title="候補をランク（CCF・CORE・THCPL）で絞ります。「A*」は CCF A* などの A* が付いた会議だけ、「評価なし」は一覧に載っているが等級が付いていない会議だけです。">
+          </select>
+        </span>
+        <span style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.78rem; color: var(--muted);">
+          <label for="recOrder">並び順</label>
+          <select id="recOrder" title="候補の並び順です。「締切が近い順」は、締切がまだ来ていない候補を近い順に並べ、日付の無い候補（常時受付・締切未確認）はその後ろ、締切が過ぎた候補は最後に置きます。同じ群の中は論文との一致順のままです。">
+            <option value="fit">論文との一致順</option>
+            <option value="deadline">締切が近い順</option>
+          </select>
+        </span>
       </div>
     </div>
     <textarea id="paperText" hidden></textarea>
 
+    <details id="advancedFilters" class="advanced-filters deadline-only" open>
+      <summary>分野・参加形式・過去の締切で絞る</summary>
     <div class="field deadline-only">
       <span>分野（複数選択可。空ならすべて）</span>
       <div class="chips" id="cats"></div>
     </div>
 
     <div class="row deadline-only" style="margin-top: 14px;">
-      <label class="check"><input type="checkbox" id="domestic"> <span>国内研究会・国内シンポジウムのみ</span></label>
+      <label class="check"><input type="checkbox" id="domestic"> <span title="情報処理学会・電子情報通信学会などの国内研究会と国内シンポジウムに絞ります。日本の開催かどうかは関係ありません。日本で開催される国際会議（開催地が Tokyo, 日本 のように書かれる行）を見たいときは、このチェックを外して検索に「東京」「日本」などと打ってください。">国内研究会・国内シンポジウムのみ</span></label>
+      <label class="check"><input type="checkbox" id="online"> <span title="会場表記にオンライン・ハイブリッドなどの記述がある行だけを出します。記述が無い行は対面だと判定していません。開催地が未確認の行もここには出ないので、件数欄の「うち開催地が未確認 N 件」で確かめてください。">オンライン参加可のみ</span></label>
       <label class="check"><input type="checkbox" id="est"> <span>推定締切を含める</span></label>
       <label class="check"><input type="checkbox" id="past"> <span>過去の締切も表示</span></label>
     </div>
+    </details>
+    <div class="deadline-only" style="margin-top: 14px;">
+      <button id="showResults" class="btn-reset" type="button" aria-controls="results">結果を見る</button>
+      <span class="count-hint">入力すると自動で絞り込みます。このボタンで一覧へ移動します。</span>
+    </div>
   </div>
+
+  <div id="activeFilters" class="active-filters" role="group" aria-label="適用中の検索条件（押すとその条件だけを外します）" hidden></div>
+  <p id="timeGuide" class="time-guide deadline-only"><strong>日時は日本時間（JST）</strong>。時刻未確認の行は公式の日付のままで、日本時間へ換算していません。</p>
 
   <!-- Items Counter & Keyboard Shortcuts Hint -->
   <div class="count">
-    <span id="count"></span>
-    <span style="font-family: var(--font-mono); font-size: 0.75rem;">ショートカット: <kbd>j</kbd>/<kbd>k</kbd> 選択 | <kbd>Enter</kbd> 開く | <kbd>d</kbd> 詳細 | <kbd>Esc</kbd> 閉じる | <kbd>/</kbd> 検索</span>
-  </div>
-  <div id="historyStatus" hidden style="padding: 0 0 12px; text-align: center; color: var(--muted);">
-    <span id="historyStatusText"></span>
-    <button id="historyRetry" type="button" hidden>過去の締切を再試行</button>
+    <!-- 絞り込みのたびに書き換わる唯一のフィードバック（件数・「こう探しました」・
+     0 件のときの案内）。読み上げは上の短い生領域だけに出す（この欄は「のぞく」の
+     内訳まで載るので、全体を aria-live にすると 1 打鍵ごとに数十語が流れる）。 -->
+    <span id="countLive" class="sr-label" aria-live="polite"></span>
+    <div id="sharedRowChoices" class="shared-row-options" role="group" aria-labelledby="sharedRowChoiceTitle" aria-describedby="sharedRowChoiceGuide" hidden>
+      <h2 id="sharedRowChoiceTitle">共有リンク</h2>
+      <p id="sharedRowChoiceGuide"></p>
+      <div id="sharedRowChoiceButtons"></div>
+    </div>
+    <strong id="resultSummary"></strong>
+    <details id="resultNotes" class="result-notes"><summary>絞り込みの内訳・検索の説明</summary><span id="count"></span></details>
+    <!-- 絞り込んだ結果は表計算へ持ち出して研究室内の予定表に貼れる（BOM 付き UTF-8） -->
+    <span id="exportGuide" class="count-hint" hidden>カレンダーに入れるには – 今の一覧だけを一度きりで入れるなら「この一覧の…件をカレンダー（.ics）でダウンロード」、収録の今後の締切すべてを毎日自動で更新して見るなら「カレンダーに追加（.ics）」か「購読 URL をコピー」を使います。表計算には CSV、プログラムには JSON です。</span>
+    <button id="exportCsv" type="button" class="btn-reset" hidden></button>
+
+    <button id="exportIcs" type="button" class="btn-reset" hidden></button>
+    <span id="exportIcsNote" class="count-hint" hidden></span>
+
+    <!-- 閉じタグを折り畳まない（`</a\n>` の形にすると、タグの対応を見る検査が素直に読めない）。 -->
+    <a id="icsLink" class="btn-reset" href="deadlines.ics" title="収録している今後の締切を全て、カレンダーアプリで読める形（RFC 5545）にしたファイルです。画面の絞り込みは引き継がれません。同じ場所を購読先に指定すると毎日更新されます。">カレンダーに追加（.ics）</a>
+
+    <button id="icsCopy" type="button" class="btn-reset" hidden>購読 URL をコピー</button>
+
+    <a id="jsonLink" class="btn-reset" href="data.json" title="収録している全ての会議・締切・出典を JSON で開きます。過去の締切や、画面の表示期間より先の締切も含みます。ファイルは画面の一覧より大きく、取得に時間がかかる場合があります。現在の絞り込み結果を表計算で使う場合は『この一覧の N 件を CSV でダウンロード』を選んでください。">全データ（JSON）</a>
+    <span class="count-hint" id="deadlineResultHint">「詳細・投稿日程」で概要登録・論文提出と確認の根拠を見る<span class="count-kbd" style="font-family: var(--font-mono); font-size: 0.75rem;"> ｜ ショートカット: <kbd>j</kbd>/<kbd>k</kbd>・<kbd>↓</kbd>/<kbd>↑</kbd> 選択 | <kbd>Enter</kbd> 公式ページ | <kbd>d</kbd> 詳細 | <kbd>Esc</kbd> 閉じる | <kbd>/</kbd> 検索</span></span>
+    <span class="count-hint" id="recommendResultHint" hidden>会議名か「公式サイト」を開いて、募集要項を確認してください。<span class="count-kbd" style="font-family: var(--font-mono); font-size: 0.75rem;"> ｜ ショートカット: <kbd>/</kbd> 論文入力 | <kbd>Tab</kbd> 次の項目へ | <kbd>Enter</kbd> 開く</span></span>
   </div>
 
+  <details id="dataScope" class="data-scope">
+    <summary>カレンダーの内容・先の締切を読み込む</summary>
+  <div id="icsScope" class="scrollhint" hidden></div>
+  <!-- 「購読 URL をコピー」を押した後の返事。自動でコピーできない環境（このページを http で
+       開くなど）でも、この文字列を選べば同じことができる。 -->
+  <div id="icsCopyNote" class="scrollhint" aria-live="polite" hidden></div>
+
+  <div id="fullRecord" class="scrollhint" hidden>
+    <span id="fullRecordText"></span>
+    <button id="fullRecordButton" type="button" class="btn-reset">収録の全体を読み込む</button>
+  </div>
+  <div id="historyStatus" aria-live="polite" hidden style="padding: 0 0 12px; text-align: center; color: var(--muted);">
+    <span id="historyStatusText"></span>
+    <button id="historyRetry" type="button" hidden>収録の全体の締切を再試行</button>
+  </div>
+
+  </details>
+
   <!-- Table Container -->
+  <!-- 狭い画面では thead を消して行をカードにする（上の @media）。そのままだと
+       並び替えの入口が見出しと一緒に失われる（2026-09-23 実測: スマホ幅で押せる場所が
+       無かった）。同じ `toggleSort` を呼ぶ列を表の上に置き、 desktop では隠す。 -->
+  <div class="sortbar" id="sortBar" role="group" aria-label="並べ替え">
+    <span class="sortbar-label">並べ替え</span>
+    <button type="button" data-sort="rem" onclick="toggleSort('rem')">残り ↕</button>
+    <button type="button" data-sort="date" onclick="toggleSort('date')">日時（JST） ↕</button>
+    <button type="button" data-sort="conf" onclick="toggleSort('conf')">会議 ↕</button>
+    <button type="button" data-sort="event" onclick="toggleSort('event')">会期 ↕</button>
+        <button type="button" data-sort="rank" onclick="toggleSort('rank')">ランク ↕</button>
+  </div>
+  <!-- 支援技術は見出しとランドマークで画面を飛ぶ。この画面は見出しが h1 とドロワーの 2 つ
+     だけ（2026-08-09 生成ビルドで実測: 静的な HTML の見出しは 2 個、本文欄より前に
+     Tab で止まる物が 44 個）で、44 個を越えて辿り着いた先が何なのか、見出し一覧では
+     分からなかった。語はいずれも画面に既に出ている物を使う（てびきの「論文の入力とサンプル」、
+     スキップリンクと表の見出しの「締切の一覧」）。見た目は変えない（`only-sr` は紙にも出ない）。 -->
+  <main id="results" tabindex="-1" aria-labelledby="resultsHeading">
+  <h2 class="only-sr" id="resultsHeading">締切の一覧</h2>
+  <div class="print-meta" id="printMeta"></div>
+  <p class="scrollhint" id="tableScrollHint" hidden></p>
   <div class="tablewrap" id="deadlineTableWrap">
     <table>
+      <caption class="only-sr">締切の一覧（日時は JST で出しています）</caption>
       <thead>
         <tr>
-          <th tabindex="0" aria-sort="ascending" data-sort="rem" onclick="toggleSort('rem')">残り ↕</th>
-          <th tabindex="0" aria-sort="none" data-sort="date" onclick="toggleSort('date')">日時 ↕</th>
-          <th tabindex="0" aria-sort="none" data-sort="conf" onclick="toggleSort('conf')">会議 ↕</th>
-          <th>種別</th>
-          <th tabindex="0" aria-sort="none" data-sort="rank" onclick="toggleSort('rank')">ランク ↕</th>
-          <th>会期</th>
-          <th>開催地</th>
+          <th scope="col" tabindex="0" aria-sort="ascending" data-sort="rem" onclick="toggleSort('rem')" title="ここを押すと「残り」の昇順・降順を切り替えます">残り ↕</th>
+          <th scope="col" tabindex="0" aria-sort="none" data-sort="date" onclick="toggleSort('date')" title="ここを押すと「日時（JST）」の昇順・降順を切り替えます">日時（JST） ↕</th>
+          <th scope="col" tabindex="0" aria-sort="none" data-sort="conf" onclick="toggleSort('conf')" title="ここを押すと「会議」の昇順・降順を切り替えます">会議 ↕</th>
+          <th scope="col">種別</th>
+          <th scope="col" tabindex="0" aria-sort="none" data-sort="rank" onclick="toggleSort('rank')" title="ここを押すと「ランク」の昇順・降順を切り替えます">ランク ↕</th>
+          <th scope="col" tabindex="0" aria-sort="none" data-sort="event" onclick="toggleSort('event')" title="ここを押すと「会期」の昇順・降順を切り替えます。会期が未確認の行は、向きに関係なく末尾に置きます">会期 ↕</th>
+          <th scope="col">開催地</th>
         </tr>
       </thead>
       <tbody id="tbody"></tbody>
     </table>
   </div>
 
+  <!-- 表に出ない（投稿締切が未収録の）開催回は、件数だけ言っても行き先に迷う。表に 1 行でも
+       出ているときは、会期だけ分かっている物をここに折りたたんで置く
+       （0 件の画面は `#emptyMeeting` が同じ一覧を出す – 中身は app.js の同じ関数）。 -->
+  <details class="schedule-only-panel" id="scheduleOnlyPanel" hidden>
+    <summary id="scheduleOnlySummary">投稿締切が未収録の開催回</summary>
+    <div id="scheduleOnlyBody"></div>
+  </details>
+
+  <div id="recommendationRetryStatus" class="scrollhint" aria-live="polite" hidden>
+    <span id="recommendationRetryNote"></span>
+    <button id="recommendationRetry" type="button">推薦データの読み込みを再試行</button>
+  </div>
+  <div id="semanticRetryStatus" class="scrollhint" aria-live="polite" hidden>
+    <span id="semanticRetryNote"></span>
+    <button id="semanticRetry" type="button">意味検索を再試行</button>
+  </div>
   <div id="recommendationCards" class="recommendation-cards" hidden></div>
 
-  <div class="empty" id="empty" style="padding: 32px; text-align: center; color: var(--muted);" hidden>該当する締切はありません。</div>
-  <div style="margin-top: 20px; text-align: center;"><button id="more">さらに表示</button></div>
+  <!-- 0 件のときは外せる条件を実名で示し、まとめて外す導線も置く（各チェックを順番に
+       外させるのは手間なので）。ボタンは実際に外せる条件が残っているときだけ出す。 -->
+  <div class="empty" id="empty" style="padding: 32px; text-align: center; color: var(--muted);" hidden>
+    <span id="emptyText">該当する締切はありません。</span>
+    <div id="emptyRecovery" class="active-filters" role="group" aria-label="検索語を残して試せる条件" hidden></div>
+    <div id="emptyMeeting" style="margin: 12px 0 0; font-size: 13px;" hidden></div>
+    <div style="margin-top: 12px;">
+      <button id="emptyReset" type="button" hidden>条件をまとめて外す</button>
+    </div>
+  </div>
+  <div style="margin-top: 20px; text-align: center;">
+    <button id="more">さらに表示</button>
+    <button id="showAll" type="button" hidden>すべて表示</button>
+  </div>
+  </main>
+
+  <!-- 見方のてびき: 締切一覧の用語をその場で説明する（外部の解説ページを必要としない） -->
+  <details class="help" id="helpPanel">
+    <summary><h2 class="help-title">見方のてびき</h2><span class="help-title-rest">（「推定」「未確認」「該当なし」の意味・過去の締切の見方・CSV と印刷）</span></summary>
+      <!-- てびきは長いので、頭に目次を置く。節の h3 の id と対で保つ
+           （tests/guide_index.test.ts が、目次と節の食い違いを見る）。 -->
+      <nav class="help-index" aria-label="てびきの目次">
+        <span>目次</span>
+        <ul>
+          <li><a href="#help-time">日時・残り・AoE・時刻</a></li>
+          <li><a href="#help-estimate">推定・未確認・延長</a></li>
+          <li><a href="#help-window">締切まで・件数・過去</a></li>
+          <li><a href="#help-export">CSV・並び順・共有・印刷・キーボード</a></li>
+          <li><a href="#help-search">検索・日付・分野</a></li>
+          <li><a href="#help-domestic">国内・種別・行の詳細</a></li>
+          <li><a href="#help-fit">一致評価・意味検索・印</a></li>
+          <li><a href="#help-venue">開催地・オンライン参加可・ランク・会期</a></li>
+          <li><a href="#help-data">データ源・更新・会期・論文・カレンダー</a></li>
+        </ul>
+      </nav>
+      <h3 id="help-time">日時・残り・AoE・時刻</h3>
+    <dl>
+      <div>
+        <dt>日時</dt>
+        <dd>日本時間（JST）と曜日を最初に表示する。2 行目は公式ページの表記で、表と詳細で同じ式を使う。行の詳細の中にある公式確認の日時（公式ページを見直した時刻と次回確認の予定）も同じ JST で出す。</dd>
+      </div>
+      <div>
+        <dt>残り</dt>
+        <dd>「あと N 日」（14 日以内は強調）・「あと N 時間」（当日）・「まもなく」（1 時間未満）と出す。過ぎた締切は「本日終了」「N 日前に終了」で、<strong>日数は JST の暦日</strong>で数えます（JST で昨日終わった締切は「1 日前に終了」です。経過時間では数えない）。過去の行は既定では一覧に出さない（「過去の締切も表示」をオンにすると見える）。公式で時刻を確認できていない日付は「時刻未確認」とし、残り日数を計算していない。日付だけの締切は、その日に入ると「締切日（過ぎた可能性）」、時刻の幅を過ぎると「締切日経過」と出します（幅のどこかで終わっているため、残り日数は数えません。時刻とタイムゾーンは「日時（JST）」の欄と行の詳細で確かめてください）。</dd>
+      </div>
+      <div>
+        <dt>AoE</dt>
+        <dd>Anywhere on Earth（UTC-12）の略。「世界のどこかでその日が終わるまで受け付ける」という国際会議の締め方。AoE 2026-02-06 23:59 は JST では 2026-02-07 20:59 で、日本では AoE の翌日まで提出できる。「元の日時」は収録データの表記で、公式サイトでの再確認状態とは別です。AoE を併記するのは収録元が AoE を指定しているものだけで、JST 宣言の国内会議には出さない。その場合、<strong>二つの欄で違う日付を書く行</strong>があります。<strong>元の日時に書く AoE の日付もそのまま検索の語になります</strong>（一覧の月のまとめ・並び順・残りの日数は JST の暦日で決まります）。</dd>
+      </div>
+      <div>
+        <dt>時刻未確認</dt>
+        <dd>締切日だけを公式で確認し、時刻とタイムゾーンが未確認のもの。UTC+14 の始まりから UTC-12 の終わりまでを幅に持つため、表示した日より前に終わっている可能性がある。日付に添える曜日は暦日そのもの（閲覧者のタイムゾーンで前後しない）。並び順・「残り」の日数・月のまとめ・CSV の残り日数は、<strong>表示している暦日</strong>で決まります。すでに終わったかどうかの判定だけは幅のままです。</dd>
+      </div>
+      <div>    </div>
+  </dl>
+  <p class="help-back"><a href="#helpPanel">↑ てびきの目次へ</a></p>
+      <h3 id="help-estimate">推定・未確認・延長</h3>
+      <dl>
+    <div>
+
+        <dt>推定</dt>
+        <dd>前年までの実績から機械的に置いた未確認の値。公式サイトで裏が取れるまで確定扱いせず、既定では一覧に出さない（件数欄に「推定 N 件（『推定締切を含める』で出ます）」と出す）。<code>推定</code> は検索の語としても引ける（「推定 機械学習」のように他の語と組み合わせられる）。「推定」で行が出るのは「推定締切を含める」をオンにしたときだけ。</dd>
+      </div>
+      <div>
+        <dt>要確認・読み取り失敗・再確認待ち</dt>
+        <dd>行に出す印の語で、一覧に並ぶこの語はそのまま検索の語にもなります（<code>要確認</code> は公式ページから締切を 1 つに確定できなかった行、<code>読み取り失敗</code> は公式ページは取れたのに締切を読み取れなかった行、<code>再確認待ち</code> は公式ページの見直しを予定している行です。行の詳細には <code>確認済み</code> も表示します）。<strong>確定できなかった理由は一つではありません</strong> – 公式ページを自動で見に行けない・候補が複数で一意に決まらない・本文が取れなかった、のいずれかです。理由を一つに決め打つ語は出しません。行を選ぶと<strong>公式確認</strong>（最後に確かめた日時。確かめていなければ「未確認」）・<strong>確認元</strong>（どこで確かめたか）・<strong>確認範囲</strong>（その記録が扱う欄。まだ確かめていない行は「まだ確かめていません」）・<strong>次回確認予定</strong>（次に見直す日）が出ます。確認元・確認範囲は日本語で出します。</dd>
+      </div>
+      <div>
+        <dt>過ぎた締切の印</dt>
+        <dd>「過去の締切も表示」で並ぶ行には、根拠の分かる範囲で三つの印を付けます。<strong>「締切済み（会期がこれから）」</strong>は投稿の締切を逃したけれど、その会議の会期はまだ先だという意味です。<strong>「締切済み（次回予定）」</strong>は同じ会議の次の回が収録で確認できている行だけに出します。<strong>「締切済み」</strong>は会期も過ぎて次の回が確認できていない行です。印は行の詳細の「今後の会期」と同じ判断を見るので、印と中身が食い違いません。</dd>
+      </div>
+      <div>
+        <dt>延長後</dt>
+        <dd>締切が後ろへ延びていた行に出す印です。もともとの締切が延びて、<strong>一覧に出している日付が延長後の締切</strong>です。情報源は二つあります。上流の締切名に Extended（延長）と付いていた行（元の日付は上流が保持していません）と、公式ページの差し替えを検知して前に出していた日付を持っている行です。以前の締切が記録されているときは、<strong>行を開くと「前に出ていた締切: <code>2026-09-27(日) → 2027-01-08(金)（延長）</code>」</strong>の形で前に出ていた日付が出ます（その日付をそのまま検索欄に貼るとその行に出会えます）。日付が前へ動いた行には印を付けず、行の詳細に「（前倒し）」だけを出します – 会議が動かしたのかこちらの以前の記録が弱かったのかは分からないので、動作を推測した語は書きません。<code>延長</code> は検索の語としても引けます（「延長 機械学習」のように他の語と組み合わせられる）。</dd>
+      </div>
+      <div>    </div>
+  </dl>
+  <p class="help-back"><a href="#helpPanel">↑ てびきの目次へ</a></p>
+      <h3 id="help-window">締切まで・件数・過去</h3>
+      <dl>
+    <div>
+
+        <dt>締切まで</dt>
+        <dd>締切日からの日数で絞ります（<strong>開催日ではありません</strong>）。「過去の締切も表示」と一緒にすると、同じ日数の<strong>前後</strong>の窓になります（「先週出た締切と今週の締切」を見るためで、過ぎた締切が片端から残るのではありません）。既定は「かまわない」（期間の限定を付けない）です。ただし<strong>この一覧に差し込むデータは生成から 180 日先で切れています</strong> – それより先の締切は、件数欄の下に出る「<strong>収録の全体を読み込む</strong>」を押すと出てきます（押さない限りは読みに行きません）。カレンダー（deadlines.ics）にはこの一覧より先の締切も入っているので、画面で見えない先もカレンダーには載っています。窓で外れた件数は件数欄に「「締切まで 7 日以内」の対象外 N 件」として出ます。戻すときは選択欄を「かまわない」にしてください。選択肢は <strong>かまわない・7 日以内・30 日以内・90 日以内・180 日以内</strong>です。（画面上部の同じ窓のボタンについては「早め絞り込みのボタン」の項）</dd>
+      </div>
+      <div>
+        <dt>画面上部の四つの数</dt>
+        <dd>いずれも<strong>絞り込み前の収録全体</strong>の数字です（検索や絞り込みで動きません）。単位をラベルに書いています: 「収録している会議」と「穴場として収録した会議」「国内研究会・国内シンポジウム」は<strong>会議の数</strong>、「これからの30日間の締切」だけ<strong>締切の件数</strong>（概要締切と論文締切を、推定を除いて数えます）。「穴場として収録した会議」は収録側が <code>niche</code> とタグ付けた会議で、<strong>検索欄に「穴場」と打つとその会議の締切が一覧に出ます</strong>（数は会議の数、一覧は締切の行数なので一致しません）。「国内研究会・国内シンポジウム」は同じく <code>domestic-jp</code> とタグ付けた会議で、下の「国内研究会・国内シンポジウムのみ」のチェックと同じ集まりです。一覧に出る行数は件の欄（例: 「478 件 / 全 3,235 件」）を見てください。<strong>「これからの30日間の締切」は、期間の選択で「30 日以内」を選んだときの一覧と同じ行を数えます</strong>。</dd>
+        <dt>過去の締切も表示</dt>
+        <dd>締切を過ぎた行も出します。収録している投稿締切は 2019 年ごろまで遡れ、過去分も種別・ランク・検索語で絞れます。期間の限定を外したので、過去の締切がすべて出ています。過ぎた行は<strong>一覧の下にまとめて</strong>出し、「過ぎた締切（N 件）」の見出しを置きます（まとめないと 2019 年の行が画面の先頭を埋め尽くし、これからの締切がすべてその下に沈むためです）。塊の中は選んだ列の向きそのままに並ぶので、直近に締切ったものから見たいときは「残り」を押して降順にしてください。「締切まで」と一緒に選ぶと、同じ日数の前後の窓になります。去年この会議の締切はいつだったかを確かめるときに使ってください。収録の全体の読み込みは表本体とは別に行うので、始まっている間は「収録の全体の締切を読み込み中…」、失敗したときは「収録の全体の締切の読み込みに失敗しました。いま表示している一覧は使えます」を出します。読み込みに失敗してもいま見ている一覧はそのまま使え、隣の「収録の全体の締切を再試行」でもう一度読めます。件数欄にも同じ名前で短く出るため、2 つの読み込みが始まったようには読めません。</dd>
+      </div>
+      <div>    </div>
+  </dl>
+  <p class="help-back"><a href="#helpPanel">↑ てびきの目次へ</a></p>
+      <h3 id="help-export">CSV・並び順・共有・印刷・キーボード</h3>
+      <dl>
+    <div>
+
+        <dt>CSV</dt>
+        <dd><p>「この一覧の N 件を CSV でダウンロード」は、<strong>絞り込み後の全行</strong>を書き出します。先頭40件だけの表示でも、<strong>件数欄に出る N 件ぶん</strong>が対象です。画面で続きを見るには「さらに表示」または「すべて表示」を押します。入力した検索条件を外して書き出すには、先に「条件クリア」を押してください。</p>
+        <p>日時は JST、日付のみの締切は「時刻未確認」と表示します。「残り」列は画面と同じ日数で、過去の締切は負の数です。<strong>分野</strong>列は画面の分野チップと同じ日本語です。<strong>会議</strong>列には開催年を添えた名前（例: <code>3DV 2024</code>）が入ります。<strong>状態</strong>列には「会期未確認・開催地未確認」や、常時受付の「会期該当なし」も記録し、値が空の場合の理由を区別できます。</p>
+        <p>Excelで開けるようBOMを付け、<strong>ファイル名の YYYYMMDD は JST の日付</strong>に揃えます。「投稿先を探す」では「この候補 N 件を CSV でダウンロード」となり、カードと同じ候補・同じ並びを書き出し、ファイル名は <code>kamiyobi-candidates-YYYYMMDD.csv</code> です。最初の4列は<strong>一致評価・一致の点・言葉の一致・意味の近さ</strong>です。「一致の点」は一致の順位を決める値で、「一致評価」の区分とは別の計算です（並び順を「締切が近い順」にしても、点と一致の順位は変わりません）。順位表に入るのは、会議名・主題などに実質的な一致がある投稿先です。意味検索を使っていない場合、「意味の近さ」は空欄です。<strong>論文を入れたまま締切の一覧を書き出すと、その先頭にも同じ 4 列が付きます</strong>（画面で一致評価の札が付いている行だけ値が入り、他の行は空欄です。ファイル名は <code>kamiyobi-deadlines-YYYYMMDD.csv</code> のままです）。</p>
+        <p>公開ファイル <code>data.csv</code> の列名は英語です。種別には日本語の列 <code>kind_ja</code> もあります。<code>label</code> は上流の自由記述なので、種別で並べ替える場合は <code>kind_ja</code> を使ってください。</p></dd>
+      </div>
+      <div>
+        <dt>JSON</dt>
+        <dd><p>「全データ（JSON）」は <code>data.json</code> を開きます。<strong>収録している全ての会議を 1 会議 1 件</strong>として、開催回ごとの会期・締切・出典をまとめています。過去の締切や、画面の表示期間より先の締切も含みます。収録件数は画面の件数欄または <code>health.md</code> で確認できます。</p>
+        <p>項目名は英語のキーです。分野は各会議の <code>categories</code> にキー（例: <code>ai</code>）で入り、正式名はファイル先頭の <code>categories</code> 対応表にあります。表計算で現在の絞り込み結果を使う場合はCSV、自分のプログラムで収録全体を読む場合はJSONを選んでください。</p>
+        <p>ファイルは一覧より大きく、取得に時間がかかることがあります。プログラムから <code>…/data.json</code> のURLを直接指定できます。読み方と関連ファイルの索引は、同じ場所の <code>llms.txt</code> にあります。</p></dd>
+      </div>
+      <div>
+        <dt>並び順</dt>
+        <dd><p>列の見出し（残り・日時・会期・会議・ランク）を押すと並べ替わります。選択中の列は <code>↑</code> または <code>↓</code>、他の列は <code>↕</code> で表示します。狭い画面では表の上の「<strong>並べ替え</strong>」を使います。並び順はURLにも保存されます。読み上げでは「並び順: 残り 昇順」のように、選択中の列と向きを伝えます。<strong>会期</strong>の順は出張の計画に向きます。</p>
+        <p>会期が未確認の行は、昇順・降順のどちらでも<strong>末尾</strong>です。「残り」や「日時」の昇順では、<strong>締切の月</strong>ごとに <strong>「締切 YYYY年M月（N 件）」</strong>の見出しで区切ります。会期順では月見出しを出しません。同じ締切日・ランクでは、会議名（日本語は読みを基準に五十音順）、種別の順に並べます。ランクは、複数の評価がある場合の最高評価で比較し、評価のない行は末尾に置きます。</p></dd>
+      </div>
+      <div>
+        <dt>画面を共有する</dt>
+        <dd><p>ブラウザーのアドレスをコピーすると、絞り込みと並び順を共有できます。未対応の値を含むURLでは、選択肢にある値へ戻し、変更した内容を画面に表示します。分野だけを変えたい場合は分野チップを切り替えてください。見方のてびきを開いた状態も <code>?help=1</code> で引き継ぎます。</p>
+        <p>行の詳細を開いたURLには <code>?row=…</code> が入り、その行を指定します。必要な条件を外して行を開き、何を外したかを件数欄に表示します。通常の一覧に出さない種別や、会期のみの行も詳細を確認できます。旧リンクが複数の行に当たる場合は候補を選びます。収録に見当たらない場合はその旨を表示します。</p>
+        <p>「投稿先を探す」では行の詳細を閉じます。<code>mode=recommend</code> と行の指定を組み合わせたURLでは、開かない理由を表示します。<strong>共有URLに論文のタイトル・概要・キーワード・参考論文は含まれません</strong>。入力は同じタブの下書きとして保存され、ページの再読み込みで復元します。</p></dd>
+      </div>
+      <div>
+        <dt>印刷</dt>
+        <dd>ブラウザの印刷（<code>Ctrl</code> + <code>P</code> など）では、いま絞り込まれた
+        一覧の<strong>全行</strong>が出ます（画面では 40 行ずつしか描かないので、そのままだと
+        印刷物だけ途中までになってしまうためです）。表の上には、条件の書き下ろし・表示件数・
+        印刷した日時（JST）・データ生成日時（JST）・<strong>並び順</strong>が紙に残ります。研究室に貼る・会議で回覧する
+        ときに、条件の分からない一覧にならないためです。並び順は絞り込みではありませんが、同じ一覧を
+        会期順やランク順に並べ替えて配ることがあるので、紙のうえで何の順か分かります。ヘッダーの「データ生成」も印刷に残ります（生成から時間が経っているときの注意書きも一緒に残ります）。「投稿先を探す」画面で印刷したときは、紙に残るのは候補のカードと各候補の公式ページのアドレスです。カードは画面では上位 20 件ずつ出ていますが、<strong>紙には候補をぜんぶ載せます</strong>。このときの但し書きは「投稿先を探す画面 ／ 候補 N 件」となり、締切一覧の絞り込み条件は書きません（並んでいる物が別物なので、条件を書くと紙のうえで噓になるためです）。紙のうえには<strong>語の但し書き</strong>も一緒に刷ります（画面のてびきは印刷で隠れるので、受け取った人が紙だけで読めるようにするためです）。用紙には「この用紙の表記: …」の形で、「未確認」の付く語・「評価なし」・「ランク未確認」・「延長後」・「該当なし」・「公式表記」と「種別」の違い・CCF・CORE・THCPL の三列が空欄の意味・「状態」が空欄のときに何が言えるか・「AoE」が何を指すかが書かれます。紙に刷られない語（行の詳細にしか出ない語など）は書きません。</dd>
+        <dt class="only-keyboard">キーボードで一覧を動かす</dt>
+        <dd><code>j</code> / <code>k</code>（または <code>↓</code> / <code>↑</code>）で選択行を動かし、<code>Enter</code> で公式ページを開き、<code>d</code> で行の詳細を出します。<code>/</code> で検索欄に飛び、その欄にいるときに<code>Esc</code> を押すと検索語を消さずに欄を出て、選んでいた行にフォーカスが戻ります（<code>Esc</code> は行の詳細を閉じるのにも使います）。選んだ行にはフォーカスも一緒に動くので、支援技術では行の内容が読まれます。入力欄の中ではこれらのキーはただの文字として扱われるので、検索語に <code>j</code> や <code>k</code> を含んでも行は動きません。列の<strong>見出しもキーボードで押せます</strong>（<code>Tab</code> で <code>残り</code> ・<code>日時（JST）</code>・<code>会期</code>・<code>会議</code>・<code>ランク</code> の見出しから、狭い画面に出す並べ替えのボタンまで移動し、<code>Enter</code>（または <code>スペース</code>）を押すと並び替わります）。押している列は <code>↑</code> / <code>↓</code>、他は <code>↕</code> になるので、どれが効いているかが見出しだけで分かります。条件のチェックや並び替えの<strong>ボタンを押した直後も、そのまま打てます</strong>（ボタン自身の操作である <code>Enter</code> と <code>Space</code> だけがボタンに渡ります）。投稿先を探すモードでは表用の操作は使いません。</dd>
+      </div>
+      <div>    </div>
+  </dl>
+  <p class="help-back"><a href="#helpPanel">↑ てびきの目次へ</a></p>
+      <h3 id="help-search">検索・日付・分野</h3>
+      <dl>
+    <div>
+
+        <dt>検索</dt>
+        <dd><p>会議名・分野・主題・開催地・公式ページのURLで検索できます。公式ページのURLをそのまま貼り付けても検索できます。日本語の主題も英語の表記に対応します（例:「暗号」は <code>cryptography</code>）。略字の <code>〆</code> は <code>締</code> と同じ扱いです。<strong>欄の名前</strong>（「分野」など）より、値（例: <code>オンライン参加可</code>）で検索してください。</p>
+        <p>複数の語をスペースや <code>・</code> <code>，</code> <code>、</code> <code>/</code> で区切ると、全ての語に当たる行を探します。全角文字や、語の前後の疑問符・括弧・句読点も扱えます。記号だけの入力は絞り込みません。助詞を含む文や「海外で開催される会議」のような表現も使え、件数欄に解釈を表示します。<code>会議</code>・<code>大会</code>、<code>開催</code>・<code>実施</code>など一覧全体に当たる語は、他の語と一緒に入力した場合は絞り込みに使いません。</p>
+        <p><strong>日付の検索は締切の日付と会期の日付の両方を見ます</strong>。<code>8月21日</code> <code>2027年8月21日</code> <code>2027-08-21</code>、月なら <code>12月</code> <code>2027年12月</code> のように入力します。年を付けるとその年に限定します。<code>1月</code> で <code>11月</code>、<code>1日</code> で <code>11日・21日・31日</code> は探しません。締切欄・会期欄の表示をそのまま貼り付けても検索できます。「締切まで」の選択欄は締切からの日数で絞るので、日付の検索とは対象が異なります。</p>
+        <p>「今月」「来月」「再来月」「先月」「今年」「来年」「去年」「再来年」「明日」「今週」「来週」も使えます。日本時間の暦として解釈し、週は月曜始まりです。件数欄で解決した年・月・日を確認できます。「3月まで」「来月まで」は今月からその月末までの締切の幅です（その月だけなら「3月」「来月」）。曜日は締切の日を対象に「金曜日」「水曜」「週末」（土曜日・日曜日）「平日」（月曜日〜金曜日）の形で検索します。</p>
+        <p>会議名に年を付けた <code>ACISP 2027</code> <code>nsdi27</code> <code>ICDE2027</code> や、略称と2桁の年を離した入力も使えます。会議名のない <code>27</code> は年とは決めません。数字だけでは広く当たるため、<code>25日・8月・2027年</code> のように単位を付けてください。ラウンドは <code>第 2 ラウンド</code> <code>第2ラウンド</code> <code>R2</code> で検索でき、1 ラウンド目は表に番号を添えませんが、<code>第 1 ラウンド</code> や <code>R1</code> でも検索できます。時刻やランク、分野名も画面の表記で検索できます。</p>
+        <p>開催地は「おきなわ」「しこく」「首都圏」「東海地方」「シアトル」「米国」「上海」などの日本語でも探せます。海外の地域名（「ヨーロッパ」「北米」「南米」「中米」「中東」など）も使えます。「中国」は国と地方の両方を探すので、地方だけなら「中国地方」と入力してください。「バリ」のように複数の地名に対応する語は、その対応を件数欄に表示します。アクセント付きの <code>Montréal</code> と <code>montreal</code> も同じ扱いです。</p>
+        <p>主題の例は「リアルタイム」「プログラミング言語」「仮想現実」「データ分析」「脆弱性」「マルウェア」などです。表記によって見つからない場合は、「画像認識」を「画像」「パターン認識」に変えるなど、別の語でも試してください。公式URLで見つからない場合も、会議名で探せます。常時受付のジャーナルを表示するには「種別」で「常時受付」を選びます。</p>
+        <p>0件になったら件数欄の案内を確認してください。収録の範囲、足りない語、適用中の条件による除外を区別して表示します。「締切」「提出期限」のように一覧全体を指す語や、短い入力で絞れない場合も打ち直し方を案内します。日本語入力は<strong>変換が確定してから絞り込みます</strong>。</p></dd>
+      </div>
+      <div>
+        <dt>日付の言い方</dt>
+        <dd><code>今日</code> <code>明日</code> <code>明後日</code> <code>今週</code> <code>来週</code> <code>今年</code> <code>来年</code> はその暦日・暦月語に解決して引きます。<code>中</code> を付けた言い方も同じ解決をします（<code>今日中</code> <code>本日中</code> <code>明日中</code> <code>今週中</code> <code>来週中</code> <code>今月中</code> <code>来月中</code>）。<strong>『今日中』は今日の話、『今週中』はその週の話</strong>で、別の日数を足す意味にはしていません。「残り」欄に並ぶ語もそのまま貼れます（<code>あと 51 日</code> → 51 日先の暦日。<code>51日後</code>・<code>3 日前</code> の言い方でも同じ）。週・か月の言い方も使えます（<code>あと 1 週間</code> は 7 日先、<code>あと 2 か月</code> は 2 か月先の暦日）。<strong>「以内」を付けた幅の言い方</strong>（<code>あと 7 日以内</code>・<code>あと 2 週間以内</code>）は、これからその期間の締切です。か月の幅だけは日数へ換えません（暦の月は 28〜31 日で長さが一定でないためです。日数で言うなら <code>60日以内</code>）。<code>あと 6 時間</code> のような時間の言い方は、その締切のある日（JST の暦日）の締切として引きます（日より細かい幅は持っていないので、日まで寄せた事は件数欄に書きます）。数え方は一覧と同じ <strong>JST の暦日</strong>です。黙って条件を変えたように見せないため、解決した日付は件数欄に出します（<code>51日後 = 2026年9月29日(火)</code>）。<code>5日</code> のように数値だけの日は「今月の 5 日」と読んで、日数の言い方には寄せません。</dd>
+      </div>
+      <div>
+        <dt>分野の言い方</dt>
+        <dd>「スパコン」「可視化」「ヒューマンインタフェース」のように口にする語で打つと、表に出している分野名に寄せて探します。締切種別も同じで、「抄録」「要旨」は「概要締切」、「全文」「本論文」は「論文締切」に寄せます（学会の募集文は「抄録締切」と書くことが多いので）。寄せたときは件数欄に「<code>「スパコン」は分野「高性能計算」で探しています</code>」と出すので、なぜその行が出たか分からないまま行数の壁になることがありません。もともと精密に引ける語（「機械学習」など）は寄せません。分野でしぼりたいときは分野チップを押してください。 主題の言い方で困るのは、収録の会議名が英語で書かれている場合です。こういう語は英語の語も調べて、件数欄に「<code>「異常検知」は原文の anomaly detection という語で探しています</code>」と出します。ただし <code>エッジ</code> には <code>edge</code> を寄せません – <code>knowledge</code> の中に含まれて CIKM や KR が出てしまうためで、<code>edge computing</code> だけに寄せています。会の催し物の言い方も同じです – <code>ワークショップ</code> は 74 件しか当たらず、会議名に <code>Workshop</code> と書く 52 件が抜けていました（<code>セッション</code> <code>学生</code> は 0 件）。今はどちらも調べて、件数欄に <code>「ワークショップ」は原文の workshop という語で探しています</code> と出します。<code>提案</code> <code>募集</code> <code>発表</code> を付けた形も同じです （<code>ワークショップ提案</code> <code>チュートリアル募集</code> <code>学生発表</code> – 直し前は どれも 0 件でした）。
+        チップで絞ったときは件数欄に「<code>分野「人工知能」を持たない行 N 件</code>」も出ます。チップに書かれる件数はその分野の行の数、件数欄の件数は「他の条件を通った行のうち分野で落ちた数」なので、<strong>足しても全件にはなりません</strong>。 チップは <code>Tab</code> で届き、<code>Space</code> で入り・出ます（押しているチップには枠が出ます）。 チップに並ぶ語（<code>システム（Systems, Architecture and Storage）</code> のように日本語名へ英表記を併記した形）をそのままコピーして貼っても、その分野の行に出会えます – 括弧の中の英文字は日本語名の但し書きなので、検索語では落としてから引きます。<code>人工知能</code> のように括弧の中が日本語のときは、今までどおり絞り込みとして効きます。<strong>チップの並びは日本語名の五十音順</strong>です。行に付く分野タグは収録の分野順のままです。</dd>
+      </div>
+      <div>    </div>
+  </dl>
+  <p class="help-back"><a href="#helpPanel">↑ てびきの目次へ</a></p>
+      <h3 id="help-domestic">国内・種別・行の詳細</h3>
+      <dl>
+    <div>
+
+        <dt>国内</dt>
+        <dd>情報処理学会・電子情報通信学会などの国内研究会と国内シンポジウムに絞ります。「国内研究会」のボタンでも同じ絞り込みができて、件数欄にはのぞいた件数も出ます。<strong>日本の開催かどうかとは別物</strong>で、日本で開催される国際会議（開催地が <code>Tokyo, 日本</code> のように書かれる行）はここを付けると消えます。日本開催の会議を見たいときはチェックを外し、検索に「東京」「日本」などと打ってください。逆に、検索に <code>国際会議</code>（<code>国際学会</code> なども同じ）と打つと、国内研究会・国内シンポジウム以外の会議に絞れます（名前に International の無い会議も入り、論文誌は入りません）。日本の行の開催地はローマ字で書かれていますが、漢字で打てます（<code>東京</code> <code>京都</code> <code>名古屋</code> <code>会津若松</code> など。会場名で行を書いている回は <code>一橋講堂</code> <code>日本科学未来館</code> でも引けます。行には <code>Aizuwakamatsu, 日本</code> のまま出ます）。<code>宮古島</code> のように、寄せてあるものは公式の表記（<code>Miyakojima, Japan</code>）に対応しています。逆に、行の無い地名（<code>宮島</code> など）は置いていません。</dd>
+      </div>
+      <div>
+        <dt>種別</dt>
+        <dd>表は<strong>投稿締切（概要・論文）だけ</strong>を出します。採否通知・カメラレディ・登録締切・開催案内などは表に混ぜず、<a href="upcoming.html" title="このサイトの同じ場所にある表です。ブラウザでそのまま読める形にしてあります。表が見たいだけならこのページの締切の一覧が早く、締切が未定で会期だけ決まっている会はここにしか載りません。"><code>upcoming.html</code></a> に載せます。種別の選択欄に並ぶのは、選べば結果が返る種別（概要・論文・常時受付）だけです。種別の下に小さく添える「原表記: …」は、収録元がその締切に付けた呼び方そのものです（画面の種別と並ぶ別の分類ではありません。既定画面の行はすべて原表記を持っています）。この語も検索で引けます。</dd>
+      </div>
+      <div>
+                <dt>行の詳細</dt>
+        <dd>行を押す（タップする）と、右から詳細の出る欄が開きます。行の文字をドラッグして選んだときは開きません（会議名・会場・公式ページの名前をコピーしたいときに、選んだ物が詳細の欄に隠れていたためです）。閉じるときは、開いた欄の右上にある ✕（閉じる）を押します。<span class="only-keyboard">キーボードなら <code>j</code> / <code>k</code> で選択行を動かしてから <code>d</code> で開け、<code>Esc</code> で閉じられます。</span>中身は、公式ページへのリンク、開催地と会期（JST と曜日）、分野、評価、締切の確認状況（いつ・何を公式で確認したかと、次回確認の予定）、日付だけが分かっている締切のただし書き、同じ研究会のこれからの回（研究会は毎月開くので、行をめくらなくても次の回が分かります）。一覧に出ない情報はこの欄に有りますが、<strong>投稿前に公式サイトで最新の募集要項を確認してください</strong>。欄の下には、その 1 件だけをカレンダーに入れるボタン・<strong>★ この会議をあとで見る</strong>（★ はこの端末にだけ覚え、上の「★ を付けた会議」から一覧へ渡れます）・<strong>会議の識別子</strong>（<code>sigmod</code> のような短い名前）が出ます。識別子は <strong>AI に頼むときに渡す値</strong>です（MCP の <code>venue_info</code> の <code>key</code>）。その上に「<strong>この会議の締切だけを一覧で見る</strong>」があり、押すとその会議の行だけに絞った一覧（URL の <code>venue</code>）を開きます。検索欄に識別子を打つと、同じ語を含む別の会議（開催地が Chicago など）も混ざるので、1 会場だけを見たいときはこのボタンか「投稿日程」を使ってください。</dd>    </div>
+  </dl>
+  <p class="help-back"><a href="#helpPanel">↑ てびきの目次へ</a></p>
+      <h3 id="help-fit">一致評価・意味検索・印</h3>
+      <dl data-recommend-help>
+    <div data-recommend-help>
+
+<dt>一致評価の出し方（投稿先を探す）</dt>
+        <dd>
+          <p>投稿先は、言葉の一致や意味の近さを使って並べます。意味検索が使えるときは、2つの検索の順位を合わせます。</p>
+          <p><strong>候補</strong>は投稿先として適合を確認する対象で、強い一致も含みます。<strong>重なりうすい</strong>は言葉や意味の一致が弱い候補です。CSVの「一致の点」は並べ替えの目安で、採択される可能性の予測ではありません。</p>
+          <p>カードの「選定理由」で一致した要素を確かめ、会議名か「公式サイト」を開いて募集分野を確認してください。</p>
+        </dd>
+        <dd>カードの頭にある<strong>一致評価</strong>の札の隣に、残り（「あと N 日」）・<strong>ランク</strong>・受付状況の札が並びます。カードの下の「<strong>この会議の締切を一覧で見る</strong>」で、締切の一覧をその会議の行だけに絞って開けます（締切が過ぎた候補では、過去の締切も出す条件を添えます）。一致評価の札には<strong>点</strong>も添えます（例:「一致評価 候補（56 点）」）。<strong>点は候補の並びを決める値で、札（一致評価）とは別の計算</strong>です。ランクは一覧の「ランク」列と同じ札（<code>CCF A</code> など）で、収録にランクが無い会議は「<strong>ランク未確認</strong>」と出します（一覧の「未確認」と同じ意味です）。その下に、判断材料を4行並べます。<strong>収録データ</strong>は収録した開催年の件数と論文サンプル数です。会議の年齢や査読品質を示す値ではありません。<strong>種別</strong>は論文募集・採択通知などの区別、<strong>締切の確認状況</strong>は日付・時刻・タイムゾーン・種別の確認状態、<strong>取得状態</strong>はデータを取得した状況を示します。その下に、<strong>会期と開催地</strong>（一覧の列と同じ語。値の無い会議は「該当なし」「未確認」）、<strong>分野</strong>（一覧の会議の欄にある札と同じ語。分野の無い会議は「未確認」）、<strong>選定理由</strong>が並びます。保存済みのデータを使用している場合は、公式サイトで最新の締切を確認してください。</dd>
+      </div>
+      <div>
+        <dt>当たった要素の名前</dt>
+        <dd>投稿先を探す画面では、なぜその候補が出たかを<strong>当たった要素の名前</strong>で出します。短い名前は次の意味で使っています。<strong>会議名</strong>（会議名の内容語が論文のタイトルやキーワードに含まれる）、<strong>分野</strong>（会議の分野と論文のキーワードが一致。高性能計算・人工知能・セキュリティなど）、<strong>タグ</strong>（会議の主題が論文に書かれている）、<strong>採択論文</strong>（この会議で採択された論文に使われた語と一致）、<strong>日本語</strong>（日本語の会議名・論文語が一致）、<strong>過去掲載先</strong>（過去にこの掲載先への投稿が確認されている）。<strong>過去掲載先は主題の一致とは別の補助情報</strong>です。候補のカードでは「採択論文一致」のように<strong>語に「一致」を付けた書き方</strong>をします。もう 1 つ、<strong>「同じ分野（掲載先から推定）」</strong>という名前が並ぶことがあり、これは掲載先から推定した分野とこの会議が一致した意味です。逆に <strong>「目立つ一致はない」</strong>と出ることがありますが、これは一致の数が少ないだけで、候補として出す最低の線は超えているという意味です（候補の組み立てが壊れた印ではありません）。複数の論文を入力したときは、論文ごとの行にも同じ名前を並べます。内訳に出る数字は上位何番目かという順位などで、<strong>一致スコア（点）を足して作った物ではありません</strong>（昔は手作業で決めた重みを足した数字を並べていて、画面の噓になっていたためやめました）。<strong>論文を入れたまま締切の一覧に移ると、その論文に合う行にも同じ札が付きます</strong>（一覧の並びと絞り込みはそのまま – 印を付けるだけで、行は消えません）。合う行の数は件数欄に「<strong>この論文に合う行 N 件</strong>（一致評価の札）」と出ます。 締切の一覧の「一致評価 … ▾」ボタンは、Tab でチップに移動して Enter または Space を押すと内訳を開閉できます（マウスで押しても同じです）。 開いた内訳では、当たり方の説明を項目の下に書いています。スコア（点）はこの内訳を足した値ではありません。</dd>
+      </div>
+      <div data-recommend-help>
+        <dt>意味検索が使えないとき</dt>
+        <dd>論文から投稿先を探しているとき、件数の欄に<strong>「意味検索は利用不可（語彙検索のみ・原因: …）」</strong>と出ることがあります。意味検索（文の意味の近さで探す検索）の仕組みが端末で動かせない代わりに、<strong>言葉の一致だけ</strong>で順位を決めている、という意味です。候補そのものと一覧はそのまま使えます。原因は「意味検索のデータが読み込めませんでした」などの日本語で書きます（英字の符号は出しません）。モデルの読み込みは時間のかかる処理なので、<strong>時間を置いて再読み込み</strong>すると戻ることがあります。何度試しても戻らないときは、言葉の一致だけでの順位としてお使いください。</dd>
+        <dt>候補に「締切済み」が混ざるとき</dt>
+        <dd>「投稿先を探す」の候補には、締切が過ぎた会議も<strong>次回の開催に向けた参考</strong>として混ざります（毎年ほぼ同じ時期に募集がある会議が多いためです）。過ぎた件数は候補の数の横に「<strong>うち N 件は締切が過ぎた会議です</strong>」と出し、カードの受付状況の札は「<strong>締切済み</strong>」になります。受け付け中の会議の次回締切は、カードに「次回締切: …」と JST で出します。<strong>受付状況が未確認の候補は、これからとも過ぎたとも数えていません</strong>（分からない物を分かったことにしないためです）。<strong>締切が過ぎた会議を外したいときは「締切が過ぎた候補を除く」を入れます</strong>（カード・CSV・カレンダーのすべてから外れ、件数欄と印刷物に外した数が出ます。並びは論文との一致の順のままで、順位は変わりません）。<strong>並べ替えは隣の「並び順」で選べます</strong>（既定は「論文との一致順」）。<strong>「締切が近い順」</strong>は、締切がまだ来ていない候補を近い順に並べ、日付の無い候補（常時受付・締切未確認）はその後ろ、締切が過ぎた候補は最後に置きます。同じ群の中は論文との一致順のままで、「一致評価」の札も変わりません。カードの<strong>「あと N 日」</strong>は一覧の「残り」列と同じ数え方（JST の暦日）で、<strong>時刻のある締切だけ</strong>を数えます（日付だけの締切は一覧と同じく日数を出さず「時刻未確認」のままです）。<strong>「ランク」で候補を絞れます</strong>（一覧の「ランク」と同じ値。「A*」は CCF A* などの A* が付いた会議だけ、「評価なし」は一覧に載っているが等級が付いていない会議だけです）。外した件数は件数欄に出ます。</dd>
+      </div>
+      <div>
+        <dt>未確認</dt>
+        <dd>会期・開催地・ランクの値が空のセルは「未確認」と出します（「-」などの記号ではありません）。投稿先を探すモードのカードでも同じ語を使い、受付状況が確認できない行は「受付状況未確認」、受け付け中で次回の日付だけが出ていない行は「次回締切の日付が未確認」と出します。行の詳細の中にある公式確認の欄も、確認元が収録データに記録されていなかったときは「<strong>確認元 未確認</strong>」と、同じ語で出します（<code>unknown</code> や「不明」など、てびきに無い語は使いません）。<strong>会議側が未定にしていることとは別</strong>で、kamiyobi が公式で裏を取れていないという意味です。空のまま置きたくない情報は公式の発表を待つしかありません。その理由は<strong>行の詳細の本文にも同じ語で出します</strong>。</dd>
+      </div>
+      <div>
+        <dt>該当なし</dt>
+        <dd>「該当なし」は、<strong>もともと締切・会期・会場という物が無い行</strong>に出す印です。常時受付の期刊行がこれで、会期・開催地の列に「未確認」ではなくこの語が出ます（ジャーナルには会期も会場も無いので、公式の発表を待つ情報ではないためです）。「未確認」は kamiyobi が公式で裏を取れていないだけの印なので、<strong>同じ列に並べ分けています</strong>（混ざると、確認待ちの行かどうかを紙と画面で区別できません）。<strong>「該当なし」で検索すると、その行だけが出ます</strong>。印刷した用紙の但し書きにも同じ語の意味を書きます。</dd>
+      </div>
+      <div>
+        <dt>早め絞り込みのボタン</dt>
+        <dd>画面上部のボタン（「締切まで 7 日以内」「A*ランク」「高性能計算・システム」「国内研究会・国内シンポジウム」「オンライン参加可」）は、<strong>その条件だけを出し入れします</strong>。押すと入ってもう一度押すと外れ、押している間は点いたままです。点いていることは<strong>読み上げにも同じ状態として伝わります</strong>。入力済みの検索語や他の条件は<strong>消えません</strong>。条件を一度に外したいときは、0 件案内の「条件をまとめて外す」を使ってください。ボタンの語はそのまま検索欄にも打てます（<code>A*ランク</code>・<code>A* ランク</code>で同じ行）。等級の呼び方はこれだけでは止まりません – <strong>『A 類』のような言い方も同じ行を出します</strong>。同じ系列で <strong>『A クラス』の言い方も受け付けます</strong>。<code>類</code> だけ・<code>ランク</code> だけでは等級を絞れないので、そのことは件数欄が出します。</dd>
+      </div>
+      <div>    </div>
+  </dl>
+  <p class="help-back"><a href="#helpPanel">↑ てびきの目次へ</a></p>
+      <h3 id="help-venue">開催地・オンライン参加可・ランク・会期</h3>
+      <dl>
+    <div>
+
+        <dt>地名はひらがなでもカタカナでも</dt>
+        <dd><code>とうきょう</code> <code>おきなわ</code> <code>きょうと</code> のようにひらがなで打っても、<code>東京</code> <code>沖縄</code> <code>京都</code> と打ったときと同じ行が出ます。行の開催地は公式の表記のまま残っているので、日本語で打った人に届くようにするのは検索語の側だけです。</dd>
+      </div>
+      <div>
+        <dt>海外の開催都市</dt>
+        <dd>カタカナで引けます（<code>リール</code> <code>ストラスブール</code> <code>チェジュ</code> <code>バンガロール</code> など）。行には公式の英文字表記が残りますが、日本語の表記表が同じ都市のつづりに寄せます。<code>カンクン</code>・<code>マルメ</code>・<code>テュービンゲン</code>・<code>マラガ</code>・<code>クラクフ</code>・<code>ロングビーチ</code>・<code>ヴェローナ</code>・<code>サクラメント</code>など、アクセント記号付きで収録されている都市もカタカナで引けます。<code>ワシントン</code> はワシントン州の行にも当たり、<code>バリ</code> はインドネシアの島とイタリアのバーリの両方に当たります（行の開催地に国・州が併記されるので、そこで判別してください）。</dd>
+      </div>
+      <div>
+        <dt>国内研究会・国内シンポジウム</dt>
+        <dd>「国内研究会」は検索の語としても引けます。行の名前に「研究会」と書かれた国内の行だけを指すので、チェックボックス（国内の行すべて）より狭くなります。</dd>
+      </div>
+      <div>
+        <dt>オンライン参加可</dt>
+        <dd>会場表記に「オンライン」「ハイブリッド」「Online」「Virtual」などの記述がある行だけを出します。記述が無い行を<strong>対面とは判定しません</strong>（公式サイトで確認してください）。会場名の一部として語が含まれる例（<code>KSIR Virtual Conference Center</code>）は除外しています。現在の件数は検索結果で確認してください。件数欄は「オンライン参加の記載がない N 件（うち開催地が未確認 M 件）」と分けて出すので、<strong>オンライン参加が無いのだと誤解しないでください</strong>。行の詳細には開催地の公式表記をそのまま載せています。<code>（hybrid）</code> のような対面併用の表記もオンライン参加可として数えます。このチェックボックスの語はそのまま検索の語にもなっていて、「オンライン参加可」「オンライン参加」「ハイブリッド」と打っても同じ行が引けます（広げた先は件数欄におしらせを出す）。</dd>
+      </div>
+      <div>
+        <dt>会期情報あり・投稿締切未収録</dt>
+        <dd>投稿締切が未収録の開催回は、締切一覧（表）には出ません。表に 1 行でも出ているときは、<strong>表の下に「投稿締切が未収録の開催回」の一覧</strong>を折りたたんで置きます（会期だけ分かっている物です）。検索結果が0件のときは、同じ条件で会期情報が見つかればその場に案内します。どちらの場合も、件数欄に「会期情報がある開催回」の件数を併記します。直近の会期は<a href="upcoming.html" title="生成時点から一定期間の一覧です。期間外の開催回は載りません。"><code>upcoming.html</code></a>でも確認できます。月のみ判明・日付未確認・未発表の区別は会期の表示で確認してください。期間の指定は会期に適用します。情報があれば、行の詳細の「今後の会期」に別の開催回も表示します。</dd>
+      </div>
+      <div>
+        <dt>ランク</dt>
+        <dd>「クラスA」は A と A* の両方に当たります。等級を正確に指定するにはランクの選択欄を使ってください。CCF・CORE・THCPL の評価一覧に基づきます。同じ会議でも一覧によって評価が違うので、<strong>絞り込みはいずれかの一覧その評価なら出します</strong>。評価一覧に載っているが評価が付いていないものは「<strong>CCF 評価なし</strong>」のように出します（データ内部の表記は <code>N</code>）。評価一覧そのものに載らない会議は「<strong>未確認</strong>」です。収録している穴場会議・ワークショップは基本的に載りません。
+        評価でしぼったときは件数欄に「<code>評価「A*」を持たない行 N 件</code>」も出します。選択欄には評価の収録数が写らないので、この数がないと「収録に A* が少ない」と誤解して絞り込みを外してしまうためです。<code>評価なし</code> を選んだときの件数欄は「<code>評価なしの行以外 N 件</code>」と出します – 絞り込みの値は <code>N</code> ですが、その語は一覧にも行の詳細にも出さない約束なので、件数欄でも選択欄と同じ語にします。</dd>
+      </div>
+      <div>    </div>
+  </dl>
+  <p class="help-back"><a href="#helpPanel">↑ てびきの目次へ</a></p>
+      <h3 id="help-data">データ源・更新・会期・論文・カレンダー</h3>
+      <dl>
+    <div>
+
+        <dt>データ源</dt>
+        <dd>画面下の「データ源」は、収録データがどの配布物に基づいているかの表示です。名前はリンクで、クリックするとその配布物のページ（一次資料）に飛べます。「<strong>このサイトで収録した分（上流にないもの）</strong>」は、上流の配布物に載っていない会議・締切をこちらで入力し、公式ページを確認して加えた分です（上流配布物のライセンスとは別の話なので、画面のこの項目にはライセンスを書きません。配布物の data.json では sources の local に、このサイト自身の配布物として MIT が入っています）。評価（CCF・CORE・THCPL）の出典でもあることは「ランク」の項に書いています。どこまでが公開済みかは「データ更新」を見てください。</dd>
+        <dt>データ更新</dt>
+        <dd>右上の「データ生成」がその時刻。JST と曜日で書きます（一覧と同じ単位）。掲載値は集約データと公式ページの自動確認に基づくが、投稿前に必ず公式サイトの募集要項を確認する。締切のデータが入っていない状態でページが開かれたときは、「データ生成」に<strong>未確認</strong>と出し、一覧の場所にもその旨を書きます（条件の話ではなく読み込みの問題なので、絞り込みを外しても行は増えません）。時間をおいて再読み込みするか、サイトの一覧を開き直してください。また、データは<strong>日次で更新する運用</strong>なので、生成から<strong>3 日以上</strong>経っている場合は「データは N 日前に生成されたものです」と出して、更新が止まっている可能性を伝えます（古い一覧を最新と誤って使い、投稿の機会を逃すのがいちばん悪い失敗のためです）。日数の数え方は一覧の「残り」と同じで、<strong>JST の暦日</strong>です（データ生成の時刻も JST で出しているので、隣に並ぶ日時とずれません。端末の時計が合っていないと、その分だけずれます）。</dd>
+      <dt>会期</dt>
+      <dd>会議の開催日程です。締切とは別の情報として、一覧・詳細・CSVで <code>2024-03-18(月) 〜 2024-03-21(木)</code> のように表示します。曜日はその暦日に対応し、公式の原表記は詳細に残します。<strong>会期の日付も検索できます</strong>。開催日順に見るには「会期」列で並べ替えてください。「締切まで」は会期ではなく投稿締切からの日数です。</dd>
+      <dt>読み込みに失敗したとき（再試行）</dt>
+      <dd>読み込みは三つに分かれていて、失敗した物だけがその場に案内と再試行のボタンを出します。<strong>「収録の全体の締切を再試行」</strong>は、この一覧より先の締切（過去の全履歴と、この一覧の期間より先の締切）の読み込みです（前の節に書いたとおり、失敗してもいまの一覧はそのまま使えます）。<strong>「推薦データの読み込みを再試行」</strong>は「投稿先を探す」の候補を組み立てるデータ（論文サンプル・収録年数・確認状況）の読み込みで、失敗している間は候補を出しません（「推薦用データを取得できませんでした。入力を残したまま再試行できます」と出ます。前に取れていた物があるときは、その古いデータで表示している事も書きます）。<strong>「意味検索を再試行」</strong>は意味検索のモデルの読み込み・推論の失敗で、押すと入力を残したままやり直します。意味検索が使えない間は語彙の一致だけで候補を出し、件数欄に理由（モデル未準備・読み込み失敗・推論失敗）を出します。</dd>
+      <dt>データの健全性（health.md）</dt>
+      <dd>この一覧の裏取りを、人の読める形に書いた報告を同じ場所に置いています
+        （<a href="health.md" title="このサイトの同じ場所にあるファイルです。収録の件数、確定・推定の内訳、上流ソースの取得状況、分野の内訳、解析上の注意を並べた報告です。機械が読む形は health.json。">health.md</a>）。
+        書いてあるのは – 収録している会議の件数、締切が<strong>時刻まで確定 / 日付のみ / 推定</strong>の
+        内訳、上流をその場であたったのか収録の snapshot から引いたのか、分野の内訳、解析で見つけた
+        注意、必ず収録しておきたい会議の名簿です。画面は推定を既定の一覧に出しませんが、報告には
+        件数が載ります。機械が読む形は同じ場所の <code>health.json</code> です。</dd>
+        <dt>AI に聞く</dt>
+        <dd><a href="llms.txt">llms.txt</a> に、機械向けのファイル一覧と検索の読み方があります。リポジトリを手元に置いている場合は、<code>node src/mcp.ts</code> で起動する読み取り専用のMCPサーバーをAIのツールとして登録できます。画面と共通の検索処理で、締切検索・直近の締切と会期・会議ごとの開催回・用語の案内・収録件数・投稿先検索・投稿先推薦を取得します。MCPサーバーは外部通信やデータの書き込みを行いません。</dd>
+      </div>
+      <div>
+    <dt>論文の入力とサンプル</dt>
+    <dd>「投稿先を探す」には、投稿予定の論文を PDF・TXT で選ぶか、下の欄に直接打ちます。欄の下の「入力の例」のボタンは、押すと欄の中身をその例に<strong>入れ替えます</strong>。すでに打ち込んだ物があるときは、押した直後に「直前の入力に戻す」が出るので元に戻せます。PDF・TXT を選んだときの差し替えも同じボタンで戻せます（「複数可」とあっても、新しく選んだ物で入れ替わります）。押すと検索も一緒に走るので、入力の形を確かめたらそのまま候補を見られます。</dd>
+    <dt>カレンダーに追加（.ics）</dt>
+    <dd><p>「カレンダーに追加（.ics）」は <code>deadlines.ics</code> を開きます。<strong>収録している今後の締切が全て対象で、画面の絞り込みは引き継がれません</strong>。採否通知・査読結果公開・反論期間の開始なども含みます。会期自体の予定は作らず、各予定の本文に会期を記載します。</p>
+      <p>各予定は終日で表示します。時刻が分かる予定は<strong>JST の暦日</strong>、日付のみの締切は公式の日付を使います。継続時間や時間帯は作りません。公式の時刻がない締切は「<strong>時刻未確認</strong>」、推定日程は「<strong>推定</strong>」と表示します。「<strong>要確認</strong>」「<strong>延長後</strong>」などの状態も本文に記載します。</p>
+      <p>分野名は画面の分野チップと同じ日本語で、本文と分類欄（CATEGORIES）に入ります。カレンダーアプリが分類欄を表示しなくても、本文を「セキュリティ」などの語で検索できます。収録件数と期間は、一覧の上のカレンダーの説明欄で確認できます。画面の一覧より先の締切も収録しています。</p>
+      <p>更新を受け取るには、カレンダーアプリの<strong>購読先（URL）</strong>に指定してください。「<strong>購読 URL をコピー</strong>」でURLを取得できます。自動コピーが使えない場合は、画面に表示されたURLをコピーします。データは毎日、日本時間の朝に更新する運用です。ダウンロードしたファイルは保存時点の写しで、自動更新されません。</p>
+      <p>絞り込んだ締切だけを保存するには「この一覧の N 件をカレンダー（.ics）でダウンロード」を押します。「投稿先を探す」では「この候補 N 件をカレンダー（.ics）でダウンロード」となり、カードと同じ候補の締切を書き出します。候補は「この候補 N 件を CSV でダウンロード」でも保存できます。これらも保存時点の写しなので、一覧が変わったら保存し直してください。<strong>1 件だけ</strong>持ち出したいときは、行の詳細（「詳細・投稿日程」）の<strong>「この締切をカレンダー（.ics）に入れる」</strong>を使います（ファイル名は会議と日付で変わるので、同じ日に何件落としても上書きしません）。<strong>同じ締切には、購読の <code>deadlines.ics</code> と同じ識別子（UID）を付けます</strong> – 重複の扱いはカレンダーアプリによって異なります（購読に入っていない締切 – 過ぎた物など – には、この写しだけの識別子を付けます）。</p></dd>
+  </div>
+</dl>
+<p class="help-back"><a href="#helpPanel">↑ てびきの目次へ</a></p>
+  </details>
 
   <!-- Footer -->
   <footer>

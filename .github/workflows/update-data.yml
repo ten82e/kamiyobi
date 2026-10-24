@@ -17,10 +17,11 @@ jobs:
     permissions:
       contents: read
     steps:
-      - name: Checkout main
+      - name: Checkout update source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: main
+          # Canary reads its selected ref; scheduled/PR-writing runs stay on main.
+          ref: ${{ inputs.dry_run && github.ref || 'main' }}
           fetch-depth: 0
           persist-credentials: false
       - name: Set up Node
@@ -34,6 +35,8 @@ jobs:
           mkdir -p /tmp/kamiyobi-update
           git rev-parse HEAD > /tmp/kamiyobi-update/main.sha
           echo "BUILD_NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_ENV"
+      - name: Capture verified published history
+        run: node scripts/capture-published-history.ts /tmp/kamiyobi-update/published/data.json
       - name: Build committed baseline
         run: node src/cli.ts build --out /tmp/kamiyobi-baseline --offline --no-embeddings --cache .cache --now "$BUILD_NOW"
       - name: Fetch primary sources
@@ -43,7 +46,7 @@ jobs:
         # --archive-out フラグは廃止)。
         run: node src/cli.ts discover --candidate-out data/discovered_candidates.yaml
       - name: Build source data
-        run: node src/cli.ts build --out public --no-embeddings --now "$BUILD_NOW"
+        run: node src/cli.ts build --out public --no-embeddings --now "$BUILD_NOW" --history-baseline /tmp/kamiyobi-update/published/data.json --history-report /tmp/kamiyobi-update/current/history-retention.json
       - name: Reverify due official deadlines
         # resolutions (data/reverification-resolutions.json) と evidence (data/evidence/blobs)
         # は新 CLI の既定パス。run は source-unreachable / retryable / parser-failed が
@@ -80,12 +83,14 @@ jobs:
             fi
           fi
       - name: Build source data with refreshed verification
-        run: node src/cli.ts build --out public --no-embeddings --now "$BUILD_NOW"
+        run: node src/cli.ts build --out public --no-embeddings --now "$BUILD_NOW" --history-baseline /tmp/kamiyobi-update/published/data.json --history-report /tmp/kamiyobi-update/current/history-retention.json
       - name: Validate generated production data
+        id: validate
         run: npm run validate:data -- public/data.json --json
       - name: Persist canonical data-quality findings
         run: node scripts/validate-data.ts --write-findings --json > /tmp/kamiyobi-update/validator-findings.json
       - name: Health gate
+        id: health
         # 失敗時でも違反報告を書いて、後続の always() 診断 step が原因を残せるようにする。
         # 観測系 (warning・conflict) は committed observation baseline を比較源にする。
         run: node scripts/health-gate.ts public/health.json --require-baseline /tmp/kamiyobi-baseline/health.json /tmp/next-last-known-good-health.json --observation-baseline data/source-observation-baseline.json --report /tmp/kamiyobi-update/health-violations.json
@@ -109,6 +114,7 @@ jobs:
           for path in data/verification-ledger.json data/reverification-resolutions.json data/validator-findings.json; do
             test -f "$path" && cp "$path" /tmp/kamiyobi-update/data/
           done
+          if [ -d data/source-snapshots ]; then cp -R data/source-snapshots /tmp/kamiyobi-update/data/; fi
           if [ -d data/discovery ]; then cp -R data/discovery /tmp/kamiyobi-update/data/; fi
           if [ -d data/evidence ]; then cp -R data/evidence /tmp/kamiyobi-update/data/; fi
           mkdir -p /tmp/kamiyobi-update/baseline /tmp/kamiyobi-update/current
@@ -148,7 +154,9 @@ jobs:
         if: failure()
         run: |
           {
-            echo "### update-data blocked by health gate"
+            echo "### update-data blocked"
+            echo "Production data validation: ${{ steps.validate.outcome }}"
+            echo "Health gate: ${{ steps.health.outcome }}"
             echo '```text'
             node -e '
               const fs = require("node:fs");
@@ -276,19 +284,28 @@ jobs:
               findings_changed=1
             fi
           fi
+          source_snapshots_changed=0
+          for path in data/source-snapshots/*.json; do
+            test -f "$path" || continue
+            if ! git cat-file -e "HEAD:$path" 2>/dev/null || [ "$(node scripts/compare-head.ts "$path")" = 1 ]; then
+              source_snapshots_changed=1
+            fi
+          done
           observation_changed=$(node scripts/compare-head.ts data/source-observation-baseline.json)
           evidence_changed=0
           if [ -d data/evidence ]; then
             if ! git diff --quiet -- data/evidence; then evidence_changed=1; fi
+            if [ -n "$(git ls-files --others --exclude-standard -- data/evidence)" ]; then evidence_changed=1; fi
             if ! git ls-tree -r --name-only HEAD -- data/evidence | grep -q .; then evidence_changed=1; fi
           fi
-          if [ "$snap_changed" != 1 ] && [ "$primary_changed" != 1 ] && [ "$candidate_changed" != 1 ] && [ "$archive_changed" != 1 ] && [ "$ledger_changed" != 1 ] && [ "$resolutions_changed" != 1 ] && [ "$findings_changed" != 1 ] && [ "$evidence_changed" != 1 ] && [ "$observation_changed" != 1 ]; then
+          if [ "$snap_changed" != 1 ] && [ "$primary_changed" != 1 ] && [ "$candidate_changed" != 1 ] && [ "$archive_changed" != 1 ] && [ "$ledger_changed" != 1 ] && [ "$resolutions_changed" != 1 ] && [ "$findings_changed" != 1 ] && [ "$evidence_changed" != 1 ] && [ "$observation_changed" != 1 ] && [ "$source_snapshots_changed" != 1 ]; then
             if [ -n "$pr_number" ]; then gh pr close "$pr_number"; fi
             if [ "$existing_branch" = true ]; then git push origin --delete "$branch"; fi
             exit 0
           fi
 
           git switch -C "$branch"
+          if [ "$source_snapshots_changed" = 1 ]; then git add data/source-snapshots; fi
           if [ "$snap_changed" = 1 ]; then git add data/snapshot.json; fi
           if [ "$primary_changed" = 1 ]; then git add data/primary_overrides.yaml; fi
           if [ "$candidate_changed" = 1 ]; then git add data/discovered_candidates.yaml; fi
@@ -302,23 +319,22 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git commit -m 'chore: update deadline data'
-          git push --force-with-lease=refs/heads/$branch origin "$branch"
+          # Bound PR presentation before pushing; full diagnostics stay in generated-update.
+          node scripts/update-data-pr-body.ts /tmp/kamiyobi-update > /tmp/data-pr-body.md
+          # Preserve prior generated history and use a normal, race-safe fast-forward push.
+          if [ "$existing_branch" = true ]; then
+            ancestor=$(git merge-base "$start_sha" "origin/$branch")
+            while IFS= read -r path; do
+              case "$path" in
+                data/snapshot.json|data/primary_overrides.yaml|data/discovered_candidates.yaml|data/discovery/*|data/verification-ledger.json|data/reverification-resolutions.json|data/validator-findings.json|data/source-observation-baseline.json|data/source-snapshots/*|data/evidence/*) ;;
+                *) echo "::error::automation branch has unrelated changes; refusing to replace them"; exit 1 ;;
+              esac
+            done < <(git diff --name-only "$ancestor" "origin/$branch")
+            # The new tree has already passed schema/health gates against current main.
+            git merge --strategy=ours --no-ff -m 'chore: retain prior automated data history' "origin/$branch"
+          fi
+          git push origin "$branch"
 
-          node --input-type=module <<'NODE' > /tmp/data-pr-body.md
-          import { readFileSync } from "node:fs";
-          const health = JSON.parse(readFileSync("/tmp/kamiyobi-update/health.json", "utf8"));
-          const recommendation = JSON.parse(readFileSync("/tmp/kamiyobi-update/recommendation-delta.json", "utf8"));
-          const categoryChanges = readFileSync("/tmp/kamiyobi-update/category-delta.md", "utf8").trim();
-          const deadlineChanges = readFileSync("/tmp/kamiyobi-update/deadline-delta.md", "utf8").trim();
-          console.log("## Automated data update");
-          console.log(`- health: tracked venues ${health.tracked_venues}; source failures: ${health.source_failures.length ? health.source_failures.join(", ") : "none"}; warnings: ${health.parse_warning_count}`);
-          console.log(`- recommendation Top-5 changes: ${recommendation.changed_top5.length ? recommendation.changed_top5.join(", ") : "none"}`);
-          console.log(`- new venues in Top-5: ${recommendation.new_venues_in_top5.length ? recommendation.new_venues_in_top5.join(", ") : "none"}`);
-          console.log("## Validator category changes");
-          console.log(categoryChanges);
-          console.log("## Deadline semantic changes");
-          console.log(deadlineChanges);
-          NODE
           if [ -n "$pr_number" ]; then
             if ! gh pr edit "$pr_number" --title 'chore: update deadline data' --body-file /tmp/data-pr-body.md; then
               git push origin --delete "$branch"

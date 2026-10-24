@@ -44,6 +44,44 @@ jobs:
       - name: Build real-data test fixture
         run: node src/cli.ts build --out public --offline --no-embeddings --cache /tmp/kamiyobi-test-cache --now 2026-08-09T00:00:00Z
       - run: npm test
+  real-embedding-models:
+    runs-on: ubuntu-latest
+    # 手順の制限（45 分）をジョブの制限より短くする。実モデルの検査ファイルが増え、25 分では
+    # 最後まで走らなかった（2026-10-17 の PR #963 で実測: 25 分で時間切れ）。ジョブごと打ち切られると cancelled に
+    # なり、下の手順の「失敗しても先へ進める」設定が効かずに必須の判定を塞ぐ（2026-10-17 実測: 20 分で打ち切り）。
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with: { node-version: '24', cache: npm }
+      - name: Install dependencies (with retry)
+        run: |
+          for i in 1 2 3; do npm ci && break; [ "$i" -lt 3 ] || exit 1; sleep 15; done
+      - name: Cache pinned model weights
+        uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5
+        with:
+          path: .cache/embedding-models
+          key: ${{ runner.os }}-embedding-models-${{ hashFiles('src/embeddings.ts', 'package-lock.json') }}
+      # 当面は必須にしない（2026-10-17 決定）: 実モデルの量子化演算は環境で僅かに揺れ、
+      # 正解が上位 5 件の境目にある事例（手元 4 位・CI 6 位）で落ちる。境目の事例は意味検索の
+      # 調査で扱う。手順の失敗はジョブを落とさず、結果は警告と実行概要に出す。
+      - name: Generate and verify English and Japanese embeddings with real models
+        id: models
+        continue-on-error: true
+        timeout-minutes: 45
+        run: npm run test:models
+      - name: Show real-model result (not required)
+        if: ${{ always() }}
+        env:
+          OUTCOME: ${{ steps.models.outcome }}
+        run: |
+          if [ "$OUTCOME" = success ]; then
+            echo "### 実モデルの検査: 成功" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "::warning title=real-embedding-models::実モデルの検査が失敗しました（${OUTCOME}）。当面は必須ではありません。ログで落ちた事例を確かめてください。"
+            echo "### 実モデルの検査: 失敗（${OUTCOME}・当面は必須ではない）" >> "$GITHUB_STEP_SUMMARY"
+          fi
   offline-build:
     runs-on: ubuntu-latest
     steps:
@@ -156,6 +194,7 @@ jobs:
             --real-v2-heldout data/benchmarks/real-paper-required-heldout.json \
             --real-v2-negative data/benchmarks/real-paper-negative.json \
             --real-v2-features data/benchmarks/real-paper-features.jsonl \
+            --real-v2-feature-baseline data/benchmarks/real-paper-feature-baseline.json \
             --real-v2-small \
             --json > /tmp/real-paper-required.json
       - name: Upload fixed recommendation gate report
@@ -173,7 +212,7 @@ jobs:
 
   report-dispatch-statuses:
     if: ${{ always() && github.event_name == 'workflow_dispatch' }}
-    needs: [typecheck, lint, unit-integration-tests, offline-build, validate-data, health-transition, production-health-self-check, recommendation-regression]
+    needs: [typecheck, lint, unit-integration-tests, real-embedding-models, offline-build, validate-data, health-transition, production-health-self-check, recommendation-regression]
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -186,7 +225,7 @@ jobs:
         run: |
           set -euo pipefail
           overall=success
-          for context in typecheck lint unit-integration-tests offline-build validate-data health-transition production-health-self-check recommendation-regression; do
+          for context in typecheck lint unit-integration-tests real-embedding-models offline-build validate-data health-transition production-health-self-check recommendation-regression; do
             result=$(jq -r --arg context "$context" '.[$context].result' <<< "$RESULTS")
             state=success
             if [ "$result" != success ]; then state=failure; overall=failure; fi

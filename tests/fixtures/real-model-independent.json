@@ -1,0 +1,525 @@
+{
+  "schema": 1,
+  "sampling": "Research papers 4–6 in publisher volume order, excluding editorials, in PMLR volumes 235, 238, 244 and 247. Disjoint from the initial 22 papers. Japanese versions summarize the same papers. Selection, labels and text fixed before changing the recommender.",
+  "profile_policy": "Reuse the initial 27 official-scope profiles unchanged. No evaluation titles, abstracts or paper prototypes in profiles.",
+  "papers": [
+    {
+      "id": "acharya24a",
+      "language": "en",
+      "title": "Balancing Feature Similarity and Label Variability for Optimal Size-Aware One-shot Subset Selection",
+      "abstract": "Subset or core-set selection offers a data-efficient way for training deep learning models. One-shot subset selection poses additional challenges as subset selection is only performed once and full set data become unavailable after the selection. However, most existing methods tend to choose either diverse or difficult data samples, which fail to faithfully represent the joint data distribution that is comprised of both feature and label information. The selection is also performed independently from the subset size, which plays an essential role in choosing what types of samples. To address this critical gap, we propose to conduct Feature similarity and Label variability Balanced One-shot Subset Selection (BOSS), aiming to construct an optimal size-aware subset for data-efficient deep learning. We show that a novel balanced core-set loss bound theoretically justifies the need to simultaneously consider both diversity and difficulty to form an optimal subset. It also reveals how the subset size influences the bound. We further connect the inaccessible bound to a practical surrogate target which is tailored to subset sizes and varying levels of overall difficulty. We design a novel Beta-scoring importance function to delicately control the optimal balance of diversity and difficulty. Comprehensive experiments conducted on both synthetic and real data justify the important theoretical properties and demonstrate the superior performance of BOSS as compared with the competitive baselines.",
+      "primary_venue": "icml",
+      "acceptable_venues": ["icml", "aistats", "uai", "neurips"],
+      "source": "https://proceedings.mlr.press/v235/acharya24a.html",
+      "authors": ["Abhinab Acharya", "Dayou Yu", "Qi Yu", "Xumin Liu"],
+      "publication": "PMLR 235, 2024",
+      "license": "CC-BY-4.0",
+      "abstract_sha256": "a95ba1e711bb93ed5aa5dff869b24323251323e84c263eafc7e0ee59e8e2c2b0",
+      "acceptable_venue_sources": [
+        "https://icml.cc/Conferences/2024/CallForPapers",
+        "https://github.com/aistats/aistats2024/blob/gh-pages/call-for-papers.md",
+        "https://www.auai.org/uai2024/call_for_papers",
+        "https://neurips.cc/Conferences/2024/CallForPapers"
+      ]
+    },
+    {
+      "id": "achituve24a",
+      "language": "en",
+      "title": "Bayesian Uncertainty for Gradient Aggregation in Multi-Task Learning",
+      "abstract": "As machine learning becomes more prominent there is a growing demand to perform several inference tasks in parallel. Multi-task learning (MTL) addresses this challenge by learning a single model that solves several tasks simultaneously and efficiently. Often optimizing MTL models entails first computing the gradient of the loss for each task, and then aggregating all the gradients to obtain a combined update direction. However, common methods following this approach do not consider an important aspect, the sensitivity in the dimensions of the gradients. Some dimensions may be more lenient for changes while others may be more restrictive. Here, we introduce a novel gradient aggregation procedure using Bayesian inference. We place a probability distribution over the task-specific parameters, which in turn induce a distribution over the gradients of the tasks. This valuable information allows us to quantify the uncertainty associated with each of the gradients’ dimensions which is factored in when aggregating them. We empirically demonstrate the benefits of our approach in a variety of datasets, achieving state-of-the-art performance.",
+      "primary_venue": "icml",
+      "acceptable_venues": ["icml", "aistats", "uai", "neurips"],
+      "source": "https://proceedings.mlr.press/v235/achituve24a.html",
+      "authors": ["Idan Achituve", "Idit Diamant", "Arnon Netzer", "Gal Chechik", "Ethan Fetaya"],
+      "publication": "PMLR 235, 2024",
+      "license": "CC-BY-4.0",
+      "abstract_sha256": "135683ea989adef7fed51de33ab46b27367775b47aeb8f3f06d7afb5fc0937fe",
+      "acceptable_venue_sources": [
+        "https://icml.cc/Conferences/2024/CallForPapers",
+        "https://github.com/aistats/aistats2024/blob/gh-pages/call-for-papers.md",
+        "https://www.auai.org/uai2024/call_for_papers",
+        "https://neurips.cc/Conferences/2024/CallForPapers"
+      ]
+    },
+    {
+      "id": "achtibat24a",
+      "language": "en",
+      "title": "AttnLRP: Attention-Aware Layer-Wise Relevance Propagation for Transformers",
+      "abstract": "Large Language Models are prone to biased predictions and hallucinations, underlining the paramount importance of understanding their model-internal reasoning process. However, achieving faithful attributions for the entirety of a black-box transformer model and maintaining computational efficiency is an unsolved challenge. By extending the Layer-wise Relevance Propagation attribution method to handle attention layers, we address these challenges effectively. While partial solutions exist, our method is the first to faithfully and holistically attribute not only input but also latent representations of transformer models with the computational efficiency similar to a single backward pass. Through extensive evaluations against existing methods on LLaMa 2, Mixtral 8x7b, Flan-T5 and vision transformer architectures, we demonstrate that our proposed approach surpasses alternative methods in terms of faithfulness and enables the understanding of latent representations, opening up the door for concept-based explanations. We provide an LRP library at https://github.com/rachtibat/LRP-eXplains-Transformers.",
+      "primary_venue": "icml",
+      "acceptable_venues": ["icml", "aistats", "uai", "neurips"],
+      "source": "https://proceedings.mlr.press/v235/achtibat24a.html",
+      "authors": [
+        "Reduan Achtibat",
+        "Sayed Mohammad Vakilzadeh Hatefi",
+        "Maximilian Dreyer",
+        "Aakriti Jain",
+        "Thomas Wiegand",
+        "Sebastian Lapuschkin",
+        "Wojciech Samek"
+      ],
+      "publication": "PMLR 235, 2024",
+      "license": "CC-BY-4.0",
+      "abstract_sha256": "88b35e8100224a877d96e571e79f9b3ae80e6d58dc43daef48835ad95e7691af",
+      "acceptable_venue_sources": [
+        "https://icml.cc/Conferences/2024/CallForPapers",
+        "https://github.com/aistats/aistats2024/blob/gh-pages/call-for-papers.md",
+        "https://www.auai.org/uai2024/call_for_papers",
+        "https://neurips.cc/Conferences/2024/CallForPapers"
+      ]
+    },
+    {
+      "id": "jang24a",
+      "language": "en",
+      "title": "Achieving Fairness through Separability: A Unified Framework for Fair Representation Learning",
+      "abstract": "Fairness is a growing concern in machine learning as state-of-the-art models may amplify social prejudice by making biased predictions against specific demographics such as race and gender. Such discrimination raises issues in various fields such as employment, criminal justice, and trust score evaluation. To address the concerns, we propose learning fair representation through a straightforward yet effective approach to project intrinsic information while filtering sensitive information for downstream tasks. Our model consists of two goals: one is to ensure that the latent data from different demographic groups is non-separable (i.e., make the latent data distribution independent of the sensitive feature to improve fairness); the other is to maximize the separability of latent data from different classes (i.e., maintain the discriminative power of data for the sake of the downstream tasks like classification). Our method adopts a non-zero-sum adversarial game to minimize the distance between data from different demographic groups while maximizing the margin between data from different classes. Moreover, the proposed objective function can be easily generalized to multiple sensitive attributes and multi-class scenarios as it upper bounds popular fairness metrics in these cases. We provide theoretical analysis of the fairness of our model and validate w.r.t. both fairness and predictive performance on benchmark datasets.",
+      "primary_venue": "aistats",
+      "acceptable_venues": ["aistats", "icml", "uai", "neurips"],
+      "source": "https://proceedings.mlr.press/v238/jang24a.html",
+      "authors": ["Taeuk Jang", "Hongchang Gao", "Pengyi Shi", "Xiaoqian Wang"],
+      "publication": "PMLR 238, 2024",
+      "license": "CC-BY-4.0",
+      "abstract_sha256": "765edfaf9d0004833fba83afc6ac75f3b59d4b922012aba6b50346710d09e0b3",
+      "acceptable_venue_sources": [
+        "https://icml.cc/Conferences/2024/CallForPapers",
+        "https://github.com/aistats/aistats2024/blob/gh-pages/call-for-papers.md",
+        "https://www.auai.org/uai2024/call_for_papers",
+        "https://neurips.cc/Conferences/2024/CallForPapers"
+      ]
+    },
+    {
+      "id": "li24a",
+      "language": "en",
+      "title": "Personalized Federated X-armed Bandit",
+      "abstract": "In this work, we study the personalized federated $\\mathcal{X}$-armed bandit problem, where the heterogeneous local objectives of the clients are optimized simultaneously in the federated learning paradigm. We propose the \\texttt{PF-PNE} algorithm with a unique double elimination strategy, which safely eliminates the non-optimal regions while encouraging federated collaboration through biased but effective evaluations of the local objectives. The proposed \\texttt{PF-PNE} algorithm is able to optimize local objectives with arbitrary levels of heterogeneity, and its limited communications protects the confidentiality of the client-wise reward data. Our theoretical analysis shows the benefit of the proposed algorithm over single-client algorithms. Experimentally, \\texttt{PF-PNE} outperforms multiple baselines on both synthetic and real life datasets.",
+      "primary_venue": "aistats",
+      "acceptable_venues": ["aistats", "icml", "uai", "neurips"],
+      "source": "https://proceedings.mlr.press/v238/li24a.html",
+      "authors": ["Wenjie Li", "Qifan Song", "Jean Honorio"],
+      "publication": "PMLR 238, 2024",
+      "license": "CC-BY-4.0",
+      "abstract_sha256": "2b530753648bddfcbb52e32d5029ba33a422fecaf0806573f377657f063cdf82",
+      "acceptable_venue_sources": [
+        "https://icml.cc/Conferences/2024/CallForPapers",
+        "https://github.com/aistats/aistats2024/blob/gh-pages/call-for-papers.md",
+        "https://www.auai.org/uai2024/call_for_papers",
+        "https://neurips.cc/Conferences/2024/CallForPapers"
+      ]
+    },
+    {
+      "id": "li24b",
+      "language": "en",
+      "title": "Non-Neighbors Also Matter to Kriging: A New Contrastive-Prototypical Learning",
+      "abstract": "Kriging aims to estimate the attributes of unseen geo-locations from observations in the spatial vicinity or physical connections. Existing works assume that neighbors’ information offers the basis for estimating the unobserved target while ignoring non-neighbors. However, neighbors could also be quite different or even misleading, and the non-neighbors could still offer constructive information. To this end, we propose \"Contrastive-Prototypical\" self-supervised learning for Kriging (KCP): (1) The neighboring contrastive module coarsely pushes neighbors together and non-neighbors apart. (2) In parallel, the prototypical module identifies similar representations via exchanged prediction, such that it refines the misleading neighbors and recycles the useful non-neighbors from the neighboring contrast component. As a result, not all the neighbors and some of the non-neighbors will be used to infer the target. (3) To learn general and robust representations, we design an adaptive augmentation module that encourages data diversity. Theoretical bound is derived for the proposed augmentation. Extensive experiments on real-world datasets demonstrate the superior performance of KCP compared to its peers with 6% improvements and exceptional transferability and robustness.",
+      "primary_venue": "aistats",
+      "acceptable_venues": ["aistats", "icml", "uai", "neurips"],
+      "source": "https://proceedings.mlr.press/v238/li24b.html",
+      "authors": ["Zhishuai Li", "Yunhao Nie", "Ziyue Li", "Lei Bai", "Yisheng Lv", "Rui Zhao"],
+      "publication": "PMLR 238, 2024",
+      "license": "CC-BY-4.0",
+      "abstract_sha256": "213438dad5e6bdcd99e9057d077d1c495231f82c8ee34cee61ab5d689fa198d6",
+      "acceptable_venue_sources": [
+        "https://icml.cc/Conferences/2024/CallForPapers",
+        "https://github.com/aistats/aistats2024/blob/gh-pages/call-for-papers.md",
+        "https://www.auai.org/uai2024/call_for_papers",
+        "https://neurips.cc/Conferences/2024/CallForPapers"
+      ]
+    },
+    {
+      "id": "aouali24a",
+      "language": "en",
+      "title": "Unified PAC-Bayesian Study of Pessimism for Offline Policy Learning with Regularized Importance Sampling",
+      "abstract": "Off-policy learning (OPL) often involves minimizing a risk estimator based on importance weighting to correct bias from the logging policy used to collect data. However, this method can produce an estimator with a high variance. A common solution is to regularize the importance weights and learn the policy by minimizing an estimator with penalties derived from generalization bounds specific to the estimator. This approach, known as pessimism, has gained recent attention but lacks a unified framework for analysis. To address this gap, we introduce a comprehensive PAC-Bayesian framework to examine pessimism with regularized importance weighting. We derive a tractable PAC-Bayesian generalization bound that universally applies to common importance weight regularizations, enabling their comparison within a single framework. Our empirical results challenge common understanding, demonstrating the effectiveness of standard IW regularization techniques.",
+      "primary_venue": "uai",
+      "acceptable_venues": ["uai", "icml", "aistats", "neurips"],
+      "source": "https://proceedings.mlr.press/v244/aouali24a.html",
+      "authors": ["Imad Aouali", "Victor-Emmanuel Brunel", "David Rohde", "Anna Korba"],
+      "publication": "PMLR 244, 2024",
+      "license": "CC-BY-4.0",
+      "abstract_sha256": "b40abb6fc5e9b77199026c82ede382c1684501c309dd0d930c4054524a10e9dc",
+      "acceptable_venue_sources": [
+        "https://icml.cc/Conferences/2024/CallForPapers",
+        "https://github.com/aistats/aistats2024/blob/gh-pages/call-for-papers.md",
+        "https://www.auai.org/uai2024/call_for_papers",
+        "https://neurips.cc/Conferences/2024/CallForPapers"
+      ]
+    },
+    {
+      "id": "arnez24a",
+      "language": "en",
+      "title": "Latent Representation Entropy Density for Distribution Shift Detection",
+      "abstract": "Distribution shift detection is paramount in safety-critical tasks that rely on Deep Neural Networks (DNNs). The detection task entails deriving a confidence score to assert whether a new input sample aligns with the training data distribution of the DNN model. While DNN predictive uncertainty offers an intuitive confidence measure, exploring uncertainty-based distribution shift detection with simple sample-based techniques has been relatively overlooked in recent years due to computational overhead and lower performance than plain post-hoc methods. This paper proposes using simple sample-based techniques for estimating uncertainty and employing the entropy density from intermediate representations to detect distribution shifts. We demonstrate the effectiveness of our method using standard benchmark datasets for out-of-distribution detection and across different common perception tasks with convolutional neural network architectures. Our scope extends beyond classification, encompassing image-level distribution shift detection for object detection and semantic segmentation tasks. Our results show that our method’s performance is comparable to existing State-of-the-Art methods while being computationally faster and lighter than other Bayesian approaches, affirming its practical utility.",
+      "primary_venue": "uai",
+      "acceptable_venues": ["uai", "icml", "aistats", "neurips"],
+      "source": "https://proceedings.mlr.press/v244/arnez24a.html",
+      "authors": [
+        "Fabio Arnez",
+        "Daniel Alfonso Montoya Vasquez",
+        "Ansgar Radermacher",
+        "François Terrier"
+      ],
+      "publication": "PMLR 244, 2024",
+      "license": "CC-BY-4.0",
+      "abstract_sha256": "052334efba24a3da7349bedcabbea60c430ec0d9bab06d8d0552ddabd33a4d7c",
+      "acceptable_venue_sources": [
+        "https://icml.cc/Conferences/2024/CallForPapers",
+        "https://github.com/aistats/aistats2024/blob/gh-pages/call-for-papers.md",
+        "https://www.auai.org/uai2024/call_for_papers",
+        "https://neurips.cc/Conferences/2024/CallForPapers"
+      ]
+    },
+    {
+      "id": "askin24a",
+      "language": "en",
+      "title": "FedAST: Federated Asynchronous Simultaneous Training",
+      "abstract": "Federated Learning (FL) enables edge devices or clients to collaboratively train machine learning (ML) models without sharing their private data. Much of the existing work in FL focuses on efficiently learning a model for a single task. In this paper, we study simultaneous training of multiple FL models using a common set of clients. The few existing simultaneous training methods employ synchronous aggregation of client updates, which can cause significant delays because large models and/or slow clients can bottleneck the aggregation. On the other hand, a naive asynchronous aggregation is adversely affected by stale client updates. We propose FedAST, a buffered asynchronous federated simultaneous training algorithm that overcomes bottlenecks from slow models and adaptively allocates client resources across heterogeneous tasks. We provide theoretical convergence guarantees for FedAST for smooth non-convex objective functions. Extensive experiments over multiple real-world datasets demonstrate that our proposed method outperforms existing simultaneous FL approaches, achieving up to 46.0% reduction in time to train multiple tasks to completion.",
+      "primary_venue": "uai",
+      "acceptable_venues": ["uai", "icml", "aistats", "neurips"],
+      "source": "https://proceedings.mlr.press/v244/askin24a.html",
+      "authors": ["Baris Askin", "Pranay Sharma", "Carlee Joe-Wong", "Gauri Joshi"],
+      "publication": "PMLR 244, 2024",
+      "license": "CC-BY-4.0",
+      "abstract_sha256": "40ec2466de20701ab823fa6963e715d9d3cfc730324634d782d1e81bd11386b0",
+      "acceptable_venue_sources": [
+        "https://icml.cc/Conferences/2024/CallForPapers",
+        "https://github.com/aistats/aistats2024/blob/gh-pages/call-for-papers.md",
+        "https://www.auai.org/uai2024/call_for_papers",
+        "https://neurips.cc/Conferences/2024/CallForPapers"
+      ]
+    },
+    {
+      "id": "alon24a",
+      "language": "en",
+      "title": "A Unified Characterization of Private Learnability via Graph Theory",
+      "abstract": "We provide a unified framework for characterizing pure and approximate differentially private (DP) learnability. The framework uses the language of graph theory: for a concept class $\\mathcal{H}$, we define the contradiction graph $G$ of $\\mathcal{H}$. Its vertices are realizable datasets and two datasets $S,S’$ are connected by an edge if they contradict each other (i.e., there is a point $x$ that is labeled differently in $S$ and $S’$). Our main finding is that the combinatorial structure of $G$ is deeply related to learning $\\mathcal{H}$ under DP. Learning $\\mathcal{H}$ under pure DP is captured by the fractional clique number of $G$. Learning $\\mathcal{H}$ under approximate DP is captured by the clique number of $G$. Consequently, we identify graph-theoretic dimensions that characterize DP learnability: the \\emph{clique dimension} and \\emph{fractional clique dimension}. Along the way, we reveal properties of the contradiction graph which may be of independent interest. We also suggest several open questions and directions for future research.",
+      "primary_venue": "colt",
+      "acceptable_venues": ["colt", "icml", "stoc", "focs"],
+      "source": "https://proceedings.mlr.press/v247/alon24a.html",
+      "authors": ["Noga Alon", "Shay Moran", "Hilla Schefler", "Amir Yehudayoff"],
+      "publication": "PMLR 247, 2024",
+      "license": "CC-BY-4.0",
+      "abstract_sha256": "0da304302cda3d6f73c3e7674e0132c1af4f8ee972a68c554ca3fa1b4da3eca8",
+      "acceptable_venue_sources": [
+        "https://icml.cc/Conferences/2024/CallForPapers",
+        "https://www.learningtheory.org/colt2024/cfp.html",
+        "https://acm-stoc.org/stoc2024/",
+        "https://focs.computer.org/2024/call-for-papers/"
+      ]
+    },
+    {
+      "id": "amortila24a",
+      "language": "en",
+      "title": "Mitigating Covariate Shift in Misspecified Regression with Applications to Reinforcement Learning",
+      "abstract": "A pervasive phenomenon in machine learning applications is \\emph{distribution shift}, where training and deployment conditions for a machine learning model differ. As distribution shift typically results in a degradation in performance, much attention has been devoted to algorithmic interventions that mitigate these detrimental effects. This paper studies the effect of distribution shift in the presence of model misspecification, specifically focusing on $L_{\\infty}$-misspecified regression and \\emph{adversarial covariate shift}, where the regression target remains fixed while the covariate distribution changes arbitrarily. We show that empirical risk minimization, or standard least squares regression, can result in undesirable \\emph{misspecification amplification} where the error due to misspecification is amplified by the density ratio between the training and testing distributions. As our main result, we develop a new algorithm—inspired by robust optimization techniques—that avoids this undesirable behavior, resulting in no misspecification amplification while still obtaining optimal statistical rates. As applications, we use this regression procedure to obtain new guarantees in offline and online reinforcement learning with misspecification and establish new separations between previously studied structural conditions and notions of coverage.",
+      "primary_venue": "colt",
+      "acceptable_venues": ["colt", "icml", "stoc", "focs"],
+      "source": "https://proceedings.mlr.press/v247/amortila24a.html",
+      "authors": ["Philip Amortila", "Tongyi Cao", "Akshay Krishnamurthy"],
+      "publication": "PMLR 247, 2024",
+      "license": "CC-BY-4.0",
+      "abstract_sha256": "c319c95b5a7770e480ebc617ef92ae8b4e7e07d85a58719c03a5a448a5c87800",
+      "acceptable_venue_sources": [
+        "https://icml.cc/Conferences/2024/CallForPapers",
+        "https://www.learningtheory.org/colt2024/cfp.html",
+        "https://acm-stoc.org/stoc2024/",
+        "https://focs.computer.org/2024/call-for-papers/"
+      ]
+    },
+    {
+      "id": "anari24a",
+      "language": "en",
+      "title": "Fast parallel sampling under isoperimetry",
+      "abstract": "We show how to sample in parallel from a distribution $\\pi$ over $\\mathbb{R}^d$ that satisfies a log-Sobolev inequality and has a smooth log-density, by parallelizing the Langevin (resp. underdamped Langevin) algorithms. We show that our algorithm outputs samples from a distribution $\\hat{\\pi}$ that is close to $\\pi$ in Kullback–Leibler (KL) divergence (resp. total variation (TV) distance), while using only $\\log(d)^{O(1)}$ parallel rounds and $\\widetilde{O}(d)$ (resp. $\\widetilde O(\\sqrt d)$) gradient evaluations in total. This constitutes the first parallel sampling algorithms with TV distance guarantees. For our main application, we show how to combine the TV distance guarantees of our algorithms with prior works and obtain RNC sampling-to-counting reductions for families of discrete distribution on the hypercube $\\{\\pm 1\\}^n$ that are closed under exponential tilts and have bounded covariance. Consequently, we obtain an RNC sampler for directed Eulerian tours and asymmetric determinantal point processes, resolving open questions raised in prior works.",
+      "primary_venue": "colt",
+      "acceptable_venues": ["colt", "icml", "stoc", "focs"],
+      "source": "https://proceedings.mlr.press/v247/anari24a.html",
+      "authors": ["Nima Anari", "Sinho Chewi", "Thuy-Duong Vuong"],
+      "publication": "PMLR 247, 2024",
+      "license": "CC-BY-4.0",
+      "abstract_sha256": "aaf144e1ea4d1d4b9a38f65c78147797b888c32fb052f4e04c66716cffdbc55b",
+      "acceptable_venue_sources": [
+        "https://icml.cc/Conferences/2024/CallForPapers",
+        "https://www.learningtheory.org/colt2024/cfp.html",
+        "https://acm-stoc.org/stoc2024/",
+        "https://focs.computer.org/2024/call-for-papers/"
+      ]
+    },
+    {
+      "id": "acharya24a-ja",
+      "language": "ja",
+      "title": "特徴の類似性とラベルの変動を両立する、部分集合の大きさに応じた一度きりのデータ選択",
+      "abstract": "深層学習の訓練データを一度だけ選び、その後は全データを参照できない状況を扱う。従来の選択法は多様な標本または難しい標本に偏り、特徴とラベルの同時分布を十分に表せない。提案手法BOSSは、多様性と難易度を両立する部分集合を、選択する標本数に応じて構成する。理論的な損失上界から両者の必要性を示し、実用的な代理目的とBetaスコアによってバランスを調整する。合成データと実データの実験で既存手法と比較している。",
+      "primary_venue": "icml",
+      "acceptable_venues": ["icml", "aistats", "uai", "neurips"],
+      "source": "https://proceedings.mlr.press/v235/acharya24a.html",
+      "authors": ["Abhinab Acharya", "Dayou Yu", "Qi Yu", "Xumin Liu"],
+      "publication": "PMLR 235, 2024",
+      "license": "CC-BY-4.0",
+      "abstract_sha256": "086e214cc578ac768ccb9692d5ff5dc5007720ee36d282e33d1ac8e9595ada2e",
+      "acceptable_venue_sources": [
+        "https://icml.cc/Conferences/2024/CallForPapers",
+        "https://github.com/aistats/aistats2024/blob/gh-pages/call-for-papers.md",
+        "https://www.auai.org/uai2024/call_for_papers",
+        "https://neurips.cc/Conferences/2024/CallForPapers"
+      ],
+      "paper_id": "acharya24a",
+      "abstract_kind": "Japanese title translation and summary of the author abstract; not a native-Japanese publication",
+      "original_title": "Balancing Feature Similarity and Label Variability for Optimal Size-Aware One-shot Subset Selection"
+    },
+    {
+      "id": "achituve24a-ja",
+      "language": "ja",
+      "title": "マルチタスク学習の勾配集約におけるベイズ的不確実性",
+      "abstract": "複数の推論タスクを一つのモデルで学習する際、タスクごとの損失の勾配を集約して更新方向を決める。従来法では、勾配の各次元が変化に対してどの程度敏感かを十分に考慮していない。本論文はタスク固有のパラメータに確率分布を置き、そこから勾配の分布を求める。各次元の不確実性を定量化して集約に反映するベイズ的な手法を提案し、複数のデータセットで予測性能を検証している。",
+      "primary_venue": "icml",
+      "acceptable_venues": ["icml", "aistats", "uai", "neurips"],
+      "source": "https://proceedings.mlr.press/v235/achituve24a.html",
+      "authors": ["Idan Achituve", "Idit Diamant", "Arnon Netzer", "Gal Chechik", "Ethan Fetaya"],
+      "publication": "PMLR 235, 2024",
+      "license": "CC-BY-4.0",
+      "abstract_sha256": "1632572ff1633ef83eafe9555e6e8f4e3bc9f6b6a09b1b384fae5b09d57f4dc2",
+      "acceptable_venue_sources": [
+        "https://icml.cc/Conferences/2024/CallForPapers",
+        "https://github.com/aistats/aistats2024/blob/gh-pages/call-for-papers.md",
+        "https://www.auai.org/uai2024/call_for_papers",
+        "https://neurips.cc/Conferences/2024/CallForPapers"
+      ],
+      "paper_id": "achituve24a",
+      "abstract_kind": "Japanese title translation and summary of the author abstract; not a native-Japanese publication",
+      "original_title": "Bayesian Uncertainty for Gradient Aggregation in Multi-Task Learning"
+    },
+    {
+      "id": "achtibat24a-ja",
+      "language": "ja",
+      "title": "AttnLRP：Transformerの注意機構を考慮した層別関連度伝播",
+      "abstract": "大規模言語モデルの偏った予測や幻覚を理解するため、Transformer全体の判断根拠を計算効率を保ちながら説明する手法を扱う。層別関連度伝播を注意層にも適用できるよう拡張し、入力だけでなく内部の潜在表現にも予測への寄与を割り当てる。計算量は一回の逆伝播と同程度である。LLaMa 2、Mixtral、Flan-T5、画像Transformerで既存手法との忠実度を比較し、潜在表現や概念に基づく説明への利用を示している。",
+      "primary_venue": "icml",
+      "acceptable_venues": ["icml", "aistats", "uai", "neurips"],
+      "source": "https://proceedings.mlr.press/v235/achtibat24a.html",
+      "authors": [
+        "Reduan Achtibat",
+        "Sayed Mohammad Vakilzadeh Hatefi",
+        "Maximilian Dreyer",
+        "Aakriti Jain",
+        "Thomas Wiegand",
+        "Sebastian Lapuschkin",
+        "Wojciech Samek"
+      ],
+      "publication": "PMLR 235, 2024",
+      "license": "CC-BY-4.0",
+      "abstract_sha256": "53a207aa398d54ed962cc79f09f3d41e5cfb13dd72d03919799ea32031f5ea54",
+      "acceptable_venue_sources": [
+        "https://icml.cc/Conferences/2024/CallForPapers",
+        "https://github.com/aistats/aistats2024/blob/gh-pages/call-for-papers.md",
+        "https://www.auai.org/uai2024/call_for_papers",
+        "https://neurips.cc/Conferences/2024/CallForPapers"
+      ],
+      "paper_id": "achtibat24a",
+      "abstract_kind": "Japanese title translation and summary of the author abstract; not a native-Japanese publication",
+      "original_title": "AttnLRP: Attention-Aware Layer-Wise Relevance Propagation for Transformers"
+    },
+    {
+      "id": "jang24a-ja",
+      "language": "ja",
+      "title": "分離可能性によって公平性を実現する、公平な表現学習の統一的枠組み",
+      "abstract": "機械学習モデルが人種や性別などの属性に対する社会的な偏見を増幅する問題を扱う。提案法は、異なる属性集団の潜在分布を分離しにくくする一方、予測対象のクラス間は分離しやすくする。この二つの目的を非ゼロ和の敵対的ゲームとして定式化し、集団間の距離を小さくしながらクラス間の余白を広げる。複数の機微な属性や多クラス分類への拡張を示し、理論解析とベンチマーク実験で公平性と予測性能を評価する。",
+      "primary_venue": "aistats",
+      "acceptable_venues": ["aistats", "icml", "uai", "neurips"],
+      "source": "https://proceedings.mlr.press/v238/jang24a.html",
+      "authors": ["Taeuk Jang", "Hongchang Gao", "Pengyi Shi", "Xiaoqian Wang"],
+      "publication": "PMLR 238, 2024",
+      "license": "CC-BY-4.0",
+      "abstract_sha256": "dea8b65b9130d5d4548dc45fcefbaf35b0b6f052617f4889abf572b3b774c5c4",
+      "acceptable_venue_sources": [
+        "https://icml.cc/Conferences/2024/CallForPapers",
+        "https://github.com/aistats/aistats2024/blob/gh-pages/call-for-papers.md",
+        "https://www.auai.org/uai2024/call_for_papers",
+        "https://neurips.cc/Conferences/2024/CallForPapers"
+      ],
+      "paper_id": "jang24a",
+      "abstract_kind": "Japanese title translation and summary of the author abstract; not a native-Japanese publication",
+      "original_title": "Achieving Fairness through Separability: A Unified Framework for Fair Representation Learning"
+    },
+    {
+      "id": "li24a-ja",
+      "language": "ja",
+      "title": "個別最適化を行う連合X-armedバンディット",
+      "abstract": "連合学習の枠組みで、クライアントごとに異なる目的を同時に最適化する連続領域のバンディット問題を扱う。提案アルゴリズムPF-PNEは二重の除外戦略を用い、最適でない領域を除外しながらクライアント間の協力を促す。局所目的の異質性を任意の水準で扱い、通信を制限してクライアントの報酬データの秘密を保つ。単独のクライアントによる手法に対する理論的な利点を示し、合成データと実データで複数の基準手法と比較している。",
+      "primary_venue": "aistats",
+      "acceptable_venues": ["aistats", "icml", "uai", "neurips"],
+      "source": "https://proceedings.mlr.press/v238/li24a.html",
+      "authors": ["Wenjie Li", "Qifan Song", "Jean Honorio"],
+      "publication": "PMLR 238, 2024",
+      "license": "CC-BY-4.0",
+      "abstract_sha256": "5cb17cec68e683e17c938f91da5bd53f8532d1cce3f175aaffb49845f5745a7b",
+      "acceptable_venue_sources": [
+        "https://icml.cc/Conferences/2024/CallForPapers",
+        "https://github.com/aistats/aistats2024/blob/gh-pages/call-for-papers.md",
+        "https://www.auai.org/uai2024/call_for_papers",
+        "https://neurips.cc/Conferences/2024/CallForPapers"
+      ],
+      "paper_id": "li24a",
+      "abstract_kind": "Japanese title translation and summary of the author abstract; not a native-Japanese publication",
+      "original_title": "Personalized Federated X-armed Bandit"
+    },
+    {
+      "id": "li24b-ja",
+      "language": "ja",
+      "title": "クリギングでは非近傍も有用：対照学習とプロトタイプ学習を組み合わせた手法",
+      "abstract": "観測のない地理地点の属性を、周辺や物理的につながった地点の観測から推定するクリギングを扱う。近傍でも対象と異なる場合があり、非近傍にも役立つ情報が含まれる。提案法KCPでは近傍対照学習とプロトタイプ学習を組み合わせ、紛らわしい近傍を補正し、有用な非近傍を推定に利用する。適応的なデータ拡張によって多様性を確保し、その理論的な上界を示す。実データによる実験で既存法に対する精度、転移性能、頑健性を検証している。",
+      "primary_venue": "aistats",
+      "acceptable_venues": ["aistats", "icml", "uai", "neurips"],
+      "source": "https://proceedings.mlr.press/v238/li24b.html",
+      "authors": ["Zhishuai Li", "Yunhao Nie", "Ziyue Li", "Lei Bai", "Yisheng Lv", "Rui Zhao"],
+      "publication": "PMLR 238, 2024",
+      "license": "CC-BY-4.0",
+      "abstract_sha256": "ebc249aec3f87abab66285b0f5f64fbbcaf0a3c9dfc7db0c121fc4a84925ec2a",
+      "acceptable_venue_sources": [
+        "https://icml.cc/Conferences/2024/CallForPapers",
+        "https://github.com/aistats/aistats2024/blob/gh-pages/call-for-papers.md",
+        "https://www.auai.org/uai2024/call_for_papers",
+        "https://neurips.cc/Conferences/2024/CallForPapers"
+      ],
+      "paper_id": "li24b",
+      "abstract_kind": "Japanese title translation and summary of the author abstract; not a native-Japanese publication",
+      "original_title": "Non-Neighbors Also Matter to Kriging: A New Contrastive-Prototypical Learning"
+    },
+    {
+      "id": "aouali24a-ja",
+      "language": "ja",
+      "title": "正則化した重要度サンプリングによるオフライン方策学習の悲観的評価をPACベイズで統一的に解析する",
+      "abstract": "行動を記録した方策と学習対象の方策の違いを重要度重みで補正するオフライン方策学習では、リスク推定量の分散が大きくなることがある。重みを正則化し、汎化上界に基づく罰則で方策を学習する悲観的評価について、統一したPACベイズ解析の枠組みを提案する。よく使われる重要度重みの正則化に適用できる計算可能な汎化上界を導き、同じ枠組みの中で比較する。実験では標準的な正則化手法の有効性を検証している。",
+      "primary_venue": "uai",
+      "acceptable_venues": ["uai", "icml", "aistats", "neurips"],
+      "source": "https://proceedings.mlr.press/v244/aouali24a.html",
+      "authors": ["Imad Aouali", "Victor-Emmanuel Brunel", "David Rohde", "Anna Korba"],
+      "publication": "PMLR 244, 2024",
+      "license": "CC-BY-4.0",
+      "abstract_sha256": "2fb2e0a01e1a00c276ef4c28e98610f77507cd0dfccfab87e172e80a6c2fd9e9",
+      "acceptable_venue_sources": [
+        "https://icml.cc/Conferences/2024/CallForPapers",
+        "https://github.com/aistats/aistats2024/blob/gh-pages/call-for-papers.md",
+        "https://www.auai.org/uai2024/call_for_papers",
+        "https://neurips.cc/Conferences/2024/CallForPapers"
+      ],
+      "paper_id": "aouali24a",
+      "abstract_kind": "Japanese title translation and summary of the author abstract; not a native-Japanese publication",
+      "original_title": "Unified PAC-Bayesian Study of Pessimism for Offline Policy Learning with Regularized Importance Sampling"
+    },
+    {
+      "id": "arnez24a-ja",
+      "language": "ja",
+      "title": "潜在表現のエントロピー密度による分布変化の検出",
+      "abstract": "深層ニューラルネットワークに新しい入力を与える際、その入力が訓練データの分布に沿っているかを検出する問題を扱う。標本に基づく簡単な方法で不確実性を推定し、中間表現のエントロピー密度から分布の変化を検出する手法を提案する。畳み込みニューラルネットワークを使った分類、物体検出、意味的領域分割で評価する。既存の高性能な手法と同程度の検出性能を示し、他のベイズ的な方法に対して計算時間と処理量を抑えている。",
+      "primary_venue": "uai",
+      "acceptable_venues": ["uai", "icml", "aistats", "neurips"],
+      "source": "https://proceedings.mlr.press/v244/arnez24a.html",
+      "authors": [
+        "Fabio Arnez",
+        "Daniel Alfonso Montoya Vasquez",
+        "Ansgar Radermacher",
+        "François Terrier"
+      ],
+      "publication": "PMLR 244, 2024",
+      "license": "CC-BY-4.0",
+      "abstract_sha256": "1cf716581aeaf1feb03f0b7b7e399267e698d0d01e3d8d69fa352f09d0782f7e",
+      "acceptable_venue_sources": [
+        "https://icml.cc/Conferences/2024/CallForPapers",
+        "https://github.com/aistats/aistats2024/blob/gh-pages/call-for-papers.md",
+        "https://www.auai.org/uai2024/call_for_papers",
+        "https://neurips.cc/Conferences/2024/CallForPapers"
+      ],
+      "paper_id": "arnez24a",
+      "abstract_kind": "Japanese title translation and summary of the author abstract; not a native-Japanese publication",
+      "original_title": "Latent Representation Entropy Density for Distribution Shift Detection"
+    },
+    {
+      "id": "askin24a-ja",
+      "language": "ja",
+      "title": "FedAST：複数モデルの非同期連合学習",
+      "abstract": "同じクライアント群を使って複数の連合学習モデルを同時に訓練する問題を扱う。同期的な更新集約では大きなモデルや遅いクライアントが全体を待たせる一方、単純な非同期集約では古い更新が悪影響を及ぼす。FedASTは更新をバッファに蓄えて非同期に集約し、異なるタスクにクライアントの資源を適応的に割り当てる。滑らかな非凸目的関数に対する収束を理論的に示す。実データの実験で複数モデルの訓練完了までの時間を既存手法より最大46.0％短縮する。",
+      "primary_venue": "uai",
+      "acceptable_venues": ["uai", "icml", "aistats", "neurips"],
+      "source": "https://proceedings.mlr.press/v244/askin24a.html",
+      "authors": ["Baris Askin", "Pranay Sharma", "Carlee Joe-Wong", "Gauri Joshi"],
+      "publication": "PMLR 244, 2024",
+      "license": "CC-BY-4.0",
+      "abstract_sha256": "a5ef79328a445a2cb8e84bafe6794e03bfb6f65bb7fb92f4cb9671ead48d5f3b",
+      "acceptable_venue_sources": [
+        "https://icml.cc/Conferences/2024/CallForPapers",
+        "https://github.com/aistats/aistats2024/blob/gh-pages/call-for-papers.md",
+        "https://www.auai.org/uai2024/call_for_papers",
+        "https://neurips.cc/Conferences/2024/CallForPapers"
+      ],
+      "paper_id": "askin24a",
+      "abstract_kind": "Japanese title translation and summary of the author abstract; not a native-Japanese publication",
+      "original_title": "FedAST: Federated Asynchronous Simultaneous Training"
+    },
+    {
+      "id": "alon24a-ja",
+      "language": "ja",
+      "title": "グラフ理論による差分プライバシー下の学習可能性の統一的特徴付け",
+      "abstract": "純粋な差分プライバシーと近似差分プライバシーの下で何が学習可能かを、グラフ理論で特徴付ける。ある概念クラスで実現可能なデータセットを頂点とし、同じ点に異なるラベルを付ける二つのデータセットを辺で結ぶ矛盾グラフを定義する。純粋な差分プライバシーでの学習可能性には分数クリーク数、近似差分プライバシーではクリーク数が対応することを示す。これに基づく次元を定義し、矛盾グラフの性質と今後の課題も論じている。",
+      "primary_venue": "colt",
+      "acceptable_venues": ["colt", "icml", "stoc", "focs"],
+      "source": "https://proceedings.mlr.press/v247/alon24a.html",
+      "authors": ["Noga Alon", "Shay Moran", "Hilla Schefler", "Amir Yehudayoff"],
+      "publication": "PMLR 247, 2024",
+      "license": "CC-BY-4.0",
+      "abstract_sha256": "81b141c3809ced1c907dcfab34be7a00a4f78b55a5d952ce21c9c1506e34c663",
+      "acceptable_venue_sources": [
+        "https://icml.cc/Conferences/2024/CallForPapers",
+        "https://www.learningtheory.org/colt2024/cfp.html",
+        "https://acm-stoc.org/stoc2024/",
+        "https://focs.computer.org/2024/call-for-papers/"
+      ],
+      "paper_id": "alon24a",
+      "abstract_kind": "Japanese title translation and summary of the author abstract; not a native-Japanese publication",
+      "original_title": "A Unified Characterization of Private Learnability via Graph Theory"
+    },
+    {
+      "id": "amortila24a-ja",
+      "language": "ja",
+      "title": "モデルの誤指定がある回帰における共変量シフトの緩和と強化学習への応用",
+      "abstract": "訓練時と利用時に入力の分布が変わるとき、回帰モデルの誤指定がどのように予測誤差を増幅するかを調べる。回帰の目標は固定し、共変量分布が任意に変化する状況を扱う。経験リスク最小化や通常の最小二乗法では、訓練分布と評価分布の密度比に応じて誤指定の誤差が増幅することを示す。頑健最適化に基づく新しいアルゴリズムによって増幅を避けつつ最適な統計的収束率を得る。誤指定があるオフライン・オンライン強化学習への応用も示している。",
+      "primary_venue": "colt",
+      "acceptable_venues": ["colt", "icml", "stoc", "focs"],
+      "source": "https://proceedings.mlr.press/v247/amortila24a.html",
+      "authors": ["Philip Amortila", "Tongyi Cao", "Akshay Krishnamurthy"],
+      "publication": "PMLR 247, 2024",
+      "license": "CC-BY-4.0",
+      "abstract_sha256": "3c29418a8ff424dabfadf84821e9c2687f52b26dca4bc5adbd74d4a1ee538d9e",
+      "acceptable_venue_sources": [
+        "https://icml.cc/Conferences/2024/CallForPapers",
+        "https://www.learningtheory.org/colt2024/cfp.html",
+        "https://acm-stoc.org/stoc2024/",
+        "https://focs.computer.org/2024/call-for-papers/"
+      ],
+      "paper_id": "amortila24a",
+      "abstract_kind": "Japanese title translation and summary of the author abstract; not a native-Japanese publication",
+      "original_title": "Mitigating Covariate Shift in Misspecified Regression with Applications to Reinforcement Learning"
+    },
+    {
+      "id": "anari24a-ja",
+      "language": "ja",
+      "title": "等周性の下での高速な並列サンプリング",
+      "abstract": "対数ソボレフ不等式を満たし、対数密度が滑らかな高次元分布から並列に標本を生成する問題を扱う。ランジュバン法と不足減衰ランジュバン法を並列化し、目標分布とのKLダイバージェンスまたは全変動距離が小さい標本分布を得る。並列ラウンド数と勾配評価回数の上界を示し、全変動距離の保証を持つ並列サンプリングを実現する。さらに指数傾斜に対して閉じた離散分布族への帰着を使い、有向オイラー巡回と非対称行列式点過程のサンプラーを構成する。",
+      "primary_venue": "colt",
+      "acceptable_venues": ["colt", "icml", "stoc", "focs"],
+      "source": "https://proceedings.mlr.press/v247/anari24a.html",
+      "authors": ["Nima Anari", "Sinho Chewi", "Thuy-Duong Vuong"],
+      "publication": "PMLR 247, 2024",
+      "license": "CC-BY-4.0",
+      "abstract_sha256": "07567761bdc944ad9b8e912362c85775a73e76bc7049fd9973ef0907553a94d0",
+      "acceptable_venue_sources": [
+        "https://icml.cc/Conferences/2024/CallForPapers",
+        "https://www.learningtheory.org/colt2024/cfp.html",
+        "https://acm-stoc.org/stoc2024/",
+        "https://focs.computer.org/2024/call-for-papers/"
+      ],
+      "paper_id": "anari24a",
+      "abstract_kind": "Japanese title translation and summary of the author abstract; not a native-Japanese publication",
+      "original_title": "Fast parallel sampling under isoperimetry"
+    }
+  ]
+}

@@ -1,0 +1,150 @@
+{
+  "sampling": "Third and fourth full research papers in the published contents order of PMLR 267, 258 and 291 (2025); preface and one-page extended abstracts excluded. Selected and labeled before this confirmation corpus was evaluated.",
+  "profile_policy": "The same frozen 27 official CFP profiles; no evaluation titles, summaries or labels in profiles or training.",
+  "papers": [
+    {
+      "id": "aamand25b",
+      "language": "en",
+      "title": "Breaking the n^1.5 Additive Error Barrier for Private and Efficient Graph Sparsification via Private Expander Decomposition",
+      "abstract": "The study improves polynomial-time, differentially private graph cut sparsification. Previous efficient methods had roughly n^1.5 additive error, whereas exponential-time methods could achieve smaller error. A private expander decomposition enables a synthetic weighted graph to approximate every cut with n^(1.25+o(1)) additive error and a controlled multiplicative factor.",
+      "abstract_sha256": "f214e8201d612c9cde3d74d3134d0c29c084e1a094c1593a0f07b3de3dec93f6",
+      "primary_venue": "icml",
+      "acceptable_venues": ["icml", "stoc", "focs"],
+      "source": "https://proceedings.mlr.press/v267/aamand25b.html",
+      "publication": "PMLR 267 (2025)",
+      "abstract_kind": "English summary of author abstract"
+    },
+    {
+      "id": "aamand25b-ja",
+      "language": "ja",
+      "title": "差分プライバシーを保つエクスパンダー分解による、効率的なグラフ疎化の加法誤差の改善",
+      "abstract": "差分プライバシーを保ちながらグラフのカットを疎化する問題を扱う。従来の効率的な方法では加法誤差がおおむねnの1.5乗となり、より小さい誤差を得る方法は指数時間を要していた。プライバシーを保つエクスパンダー分解を用い、多項式時間で合成グラフを生成する。すべてのカットについて、乗法誤差を制御しつつ加法誤差をnの1.25乗に漸近的な項を加えた水準へ改善する。",
+      "abstract_sha256": "37eac217565e0aa7845a407811a126322b4a35d26fc977d6a557e28867a378e1",
+      "primary_venue": "icml",
+      "acceptable_venues": ["icml", "stoc", "focs"],
+      "source": "https://proceedings.mlr.press/v267/aamand25b.html",
+      "publication": "PMLR 267 (2025)",
+      "abstract_kind": "Japanese title translation and summary of author abstract; not a native-Japanese publication"
+    },
+    {
+      "id": "aamand25c",
+      "language": "en",
+      "title": "Improved Approximations for Hard Graph Problems using Predictions",
+      "abstract": "This paper uses weak predictions about an optimal solution to improve approximation algorithms for NP-hard graph problems. Each edge provides predictions about its two endpoints. Even limited correlation with the correct solution yields improved guarantees for problems including maximum cut, vertex cover, set cover and maximum independent set. The construction combines prediction-guided constraints for high-degree vertices with a separate treatment of low-degree vertices.",
+      "abstract_sha256": "b5db5c4e54d35467c626256c1afc55dbaed485faead27dc2fa84937dd41b3ee0",
+      "primary_venue": "icml",
+      "acceptable_venues": ["icml", "stoc", "focs"],
+      "source": "https://proceedings.mlr.press/v267/aamand25c.html",
+      "publication": "PMLR 267 (2025)",
+      "abstract_kind": "English summary of author abstract"
+    },
+    {
+      "id": "aamand25c-ja",
+      "language": "ja",
+      "title": "予測を用いた困難なグラフ問題の近似精度の改善",
+      "abstract": "最適解に関する弱い予測を用いて、NP困難なグラフ問題の近似アルゴリズムを改善する。各辺の両端が最適解に含まれるかについて二つの予測値を受け取り、正解との相関が小さくても近似保証を改善できることを示す。最大カット、頂点被覆、集合被覆、最大独立集合などを扱い、高次数頂点には予測を使い、低次数頂点には予測を使わない処理を組み合わせる。",
+      "abstract_sha256": "220d387c42658216894c022330b75d6b6166e861f5c9c90b8b56c181eda13514",
+      "primary_venue": "icml",
+      "acceptable_venues": ["icml", "stoc", "focs"],
+      "source": "https://proceedings.mlr.press/v267/aamand25c.html",
+      "publication": "PMLR 267 (2025)",
+      "abstract_kind": "Japanese title translation and summary of author abstract; not a native-Japanese publication"
+    },
+    {
+      "id": "blot25a",
+      "language": "en",
+      "title": "Automatically Adaptive Conformal Risk Control",
+      "abstract": "The authors seek risk guarantees that adapt to the difficulty of each input rather than relying on preset groups. Their method approximately controls conditional statistical risks and determines conditioning function classes from data. Regression and image segmentation experiments illustrate finer control of model performance than conventional risk-control approaches.",
+      "abstract_sha256": "f7fa7f6d0f2f2fa3672b005a20e1ee29b28f850d1a3dc104c6ef9b8b6293fb08",
+      "primary_venue": "aistats",
+      "acceptable_venues": ["aistats", "icml", "uai", "neurips"],
+      "source": "https://proceedings.mlr.press/v258/blot25a.html",
+      "publication": "PMLR 258 (2025)",
+      "abstract_kind": "English summary of author abstract"
+    },
+    {
+      "id": "blot25a-ja",
+      "language": "ja",
+      "title": "自動的に適応するコンフォーマルリスク制御",
+      "abstract": "入力ごとの難しさに応じて機械学習モデルのリスクを制御する。性別などの事前に決めた群だけで条件付ける方法を超え、条件付きの統計的リスクを近似的に制御し、条件付けに用いる関数クラスをデータから決める枠組みを提案する。回帰と画像セグメンテーションの課題で、従来のリスク制御より細かな性能の管理を検証している。",
+      "abstract_sha256": "3413d5b2c4ad606471a5cec9ae30112d85925726c442efc6d88789decb3fc755",
+      "primary_venue": "aistats",
+      "acceptable_venues": ["aistats", "icml", "uai", "neurips"],
+      "source": "https://proceedings.mlr.press/v258/blot25a.html",
+      "publication": "PMLR 258 (2025)",
+      "abstract_kind": "Japanese title translation and summary of author abstract; not a native-Japanese publication"
+    },
+    {
+      "id": "bharti25a",
+      "language": "en",
+      "title": "Cost-aware simulation-based inference",
+      "abstract": "The work addresses the parameter-dependent cost of simulations used to infer parameters in otherwise intractable scientific models. Rejection sampling and self-normalized importance sampling are combined to avoid costly simulations. The approach reduces expense in neural simulation-based inference and approximate Bayesian computation, with evaluations spanning epidemiology and telecommunications.",
+      "abstract_sha256": "5679785fe5eb10ae7dca17d6c03ac6451c67a63d7bec437a39fa292ecb750e9b",
+      "primary_venue": "aistats",
+      "acceptable_venues": ["aistats", "uai", "icml", "neurips"],
+      "source": "https://proceedings.mlr.press/v258/bharti25a.html",
+      "publication": "PMLR 258 (2025)",
+      "abstract_kind": "English summary of author abstract"
+    },
+    {
+      "id": "bharti25a-ja",
+      "language": "ja",
+      "title": "計算費用を考慮したシミュレーションに基づく推論",
+      "abstract": "解析が難しい科学・工学のモデルについて、シミュレーションからパラメータを推論する際の計算費用を扱う。シミュレーションの費用がパラメータによって変わることを利用し、棄却サンプリングと自己正規化重要度サンプリングを組み合わせて高価なシミュレーションを減らす。ニューラル推論と近似ベイズ計算に適用し、疫学や通信工学のモデルで費用削減を評価している。",
+      "abstract_sha256": "afeb767d67d755e5f13e9456564a967a86d5eb90562f736ae212dec36d32ff29",
+      "primary_venue": "aistats",
+      "acceptable_venues": ["aistats", "uai", "icml", "neurips"],
+      "source": "https://proceedings.mlr.press/v258/bharti25a.html",
+      "publication": "PMLR 258 (2025)",
+      "abstract_kind": "Japanese title translation and summary of author abstract; not a native-Japanese publication"
+    },
+    {
+      "id": "appel25a",
+      "language": "en",
+      "title": "Regret Bounds for Robust Online Decision Making",
+      "abstract": "The paper extends structured-observation decision making to models that assign a convex set of outcome distributions to each decision. Outcomes may be selected adversarially and depend on prior history. It develops regret bounds and characterizes power-law learnability, with applications to robust linear bandits and tabular online reinforcement learning. Computational efficiency is outside the guarantees.",
+      "abstract_sha256": "a94e2cf66248c506ee6615401bc92124b1ee574643e01b37ce2c772e829cdcc7",
+      "primary_venue": "colt",
+      "acceptable_venues": ["colt", "icml", "aistats", "uai"],
+      "source": "https://proceedings.mlr.press/v291/appel25a.html",
+      "publication": "PMLR 291 (2025)",
+      "abstract_kind": "English summary of author abstract"
+    },
+    {
+      "id": "appel25a-ja",
+      "language": "ja",
+      "title": "頑健なオンライン意思決定のリグレット上界",
+      "abstract": "各意思決定に対して結果の確率分布を一つに決めず、凸集合として与える頑健なオンライン意思決定を扱う。環境は過去の履歴に応じて敵対的に分布を選べる。構造化された観測を伴う意思決定の枠組みを拡張し、リグレットの上下界と、べき乗則に従う学習可能性を示す。頑健な線形バンディットと表形式のオンライン強化学習に適用するが、計算効率は保証の対象に含めない。",
+      "abstract_sha256": "7003227fc8425b31a7e707667f849f8dd4d94538de4247b5fb0fcc5086ecd977",
+      "primary_venue": "colt",
+      "acceptable_venues": ["colt", "icml", "aistats", "uai"],
+      "source": "https://proceedings.mlr.press/v291/appel25a.html",
+      "publication": "PMLR 291 (2025)",
+      "abstract_kind": "Japanese title translation and summary of author abstract; not a native-Japanese publication"
+    },
+    {
+      "id": "ashtiani25a",
+      "language": "en",
+      "title": "Simplifying Adversarially Robust PAC Learning With Tolerance",
+      "abstract": "This study gives a simpler tolerant robust PAC learner whose sample complexity grows linearly with VC dimension, without extra assumptions on the hypothesis class. The learner is improper but produces a hypothesis similar to one in the class. Related ideas yield an almost-proper semi-supervised learner with comparable bounds and fewer intricate subroutines than previous approaches.",
+      "abstract_sha256": "6be85a76a2f2b971cb815a226f672448b478da843410b20abcfe072b35486b56",
+      "primary_venue": "colt",
+      "acceptable_venues": ["colt", "icml", "aistats", "neurips"],
+      "source": "https://proceedings.mlr.press/v291/ashtiani25a.html",
+      "publication": "PMLR 291 (2025)",
+      "abstract_kind": "English summary of author abstract"
+    },
+    {
+      "id": "ashtiani25a-ja",
+      "language": "ja",
+      "title": "許容幅を用いた敵対的摂動に頑健なPAC学習の簡素化",
+      "abstract": "敵対的な摂動に頑健なPAC学習に許容幅を設けた設定を扱う。仮説クラスへの追加仮定を置かず、標本計算量がVC次元に線形となる簡単な学習器の存在を証明する。出力は仮説クラスの外にあり得るが、クラス内の仮説に似た形となる。同じ考え方で半教師あり学習器も構成し、従来と同程度の保証を複雑な補助手続きなしに得る。",
+      "abstract_sha256": "28fdfe88070eb7319cfc825dae8d0792d233685107b284c5a2e6ee74b2cdde25",
+      "primary_venue": "colt",
+      "acceptable_venues": ["colt", "icml", "aistats", "neurips"],
+      "source": "https://proceedings.mlr.press/v291/ashtiani25a.html",
+      "publication": "PMLR 291 (2025)",
+      "abstract_kind": "Japanese title translation and summary of author abstract; not a native-Japanese publication"
+    }
+  ]
+}

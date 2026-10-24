@@ -1,0 +1,86 @@
+{
+  "candidate_count": 696,
+  "top_k": 5,
+  "papers": [
+    {
+      "id": "llamp-en",
+      "language": "en",
+      "source": "https://arxiv.org/abs/2404.14193",
+      "title": "LLAMP: Assessing Network Latency Tolerance of HPC Applications with Linear Programming",
+      "abstract": "The shift towards high-bandwidth networks driven by AI workloads in data centers and HPC clusters has unintentionally aggravated network latency, adversely affecting the performance of communication-intensive HPC applications. As large-scale MPI applications often exhibit significant differences in their network latency tolerance, it is crucial to accurately determine the extent of network latency an application can withstand without significant performance degradation. Current approaches to assessing this metric often rely on specialized hardware or network simulators, which can be inflexible and time-consuming. In response, we introduce LLAMP, a novel toolchain that offers an efficient, analytical approach to evaluating HPC applications' network latency tolerance using the LogGPS model and linear programming. LLAMP equips software developers and network architects with essential insights for optimizing HPC infrastructures and strategically deploying applications to minimize latency impacts. Through our validation on a variety of MPI applications like MILC, LULESH, and LAMMPS, we demonstrate our tool's high accuracy, with relative prediction errors generally below 2%. Additionally, we include a case study of the ICON weather and climate model to illustrate LLAMP's broad applicability in evaluating collective algorithms and network topologies.",
+      "split": "confirmation",
+      "domain": "hpc",
+      "acceptable_venues": ["sc", "ics", "isc-hpc", "ipdps"]
+    },
+    {
+      "id": "llamp-ja",
+      "language": "ja",
+      "source": "https://arxiv.org/abs/2404.14193",
+      "title": "LLAMP：線形計画法によるHPCアプリケーションのネットワーク遅延耐性の評価",
+      "abstract": "データセンターやHPCクラスタでAIのワークロードに対応するためにネットワークの帯域を高めると、意図せず遅延が増え、通信の多いHPCアプリケーションの性能が悪化する。大規模なMPIアプリケーションはネットワーク遅延への耐性が大きく異なるため、性能を大幅に落とさずに許容できる遅延を正確に求める必要がある。既存の評価には専用ハードウェアやネットワークシミュレータを使うものが多く、柔軟性と時間の面に課題がある。LLAMPはLogGPSモデルと線形計画法を用い、HPCアプリケーションのネットワーク遅延耐性を効率的に解析する新しいツールチェーンである。開発者とネットワーク設計者に、HPC基盤の最適化や、遅延の影響を抑えるアプリケーション配置の判断材料を提供する。MILC、LULESH、LAMMPSなどのMPIアプリケーションで検証し、相対予測誤差がおおむね2％未満となる高い精度を示した。気象・気候モデルICONの事例を用い、集団通信アルゴリズムとネットワークトポロジーの評価にも広く使えることを示す。",
+      "split": "confirmation",
+      "domain": "hpc",
+      "acceptable_venues": ["sc", "ics", "isc-hpc", "ipdps"]
+    },
+    {
+      "id": "wolves-en",
+      "language": "en",
+      "source": "https://www.usenix.org/conference/osdi25/presentation/pan",
+      "title": "Fast and Synchronous Crash Consistency with Metadata Write-Once File System",
+      "abstract": "Low-latency persistent memory (PM) encourages file systems to pursue synchronous crash consistency. However, existing crash consistency approaches, such as journaling and log structure file system , incur many small, random, and ordered metadata I/Os, failing to exploit PM I/O potential. We propose a new file system model called metadata write-once file system (WOFS) to achieve fast and synchronous crash consistency. The key idea is to generate specific metadata for each file operation as a checksum-protected package and write it once with a single ordering point. The package is then managed to provide file abstractions through a package translation layer without extra writes. Using an array of techniques to generate, organize, and recover from packages, WOFS can provide practical, efficient, and reliable file system services. We implement WOLVES as a WOFS prototype in Linux kernel. Experiments using benchmarks and applications suggest that WOLVES can recover from crashes, improve operation throughput, and potentially reach PM I/O bandwidth limits.",
+      "split": "confirmation",
+      "domain": "systems",
+      "acceptable_venues": ["osdi", "sosp", "fast", "eurosys"]
+    },
+    {
+      "id": "wolves-ja",
+      "language": "ja",
+      "source": "https://www.usenix.org/conference/osdi25/presentation/pan",
+      "title": "メタデータを一度だけ書き込むファイルシステムによる高速な同期クラッシュ整合性",
+      "abstract": "低遅延の永続メモリ（PM）は、ファイルシステムで同期的にクラッシュ整合性を保証することを後押しする。しかし、ジャーナリングやログ構造ファイルシステムなどの既存手法は、細かくランダムで順序を守る必要のあるメタデータI/Oを多数発生させ、PMのI/O性能を十分に活用できない。高速な同期クラッシュ整合性を実現するため、メタデータを一度だけ書き込むファイルシステム（WOFS）という新しいモデルを提案する。各ファイル操作に必要なメタデータをチェックサムで保護したパッケージとして生成し、順序を確定する箇所を一つにして一回書き込む。その後は、パッケージ変換層で追加の書き込みなしにファイルの抽象化を提供する。パッケージの生成、編成、復旧の手法を組み合わせ、実用的で効率的かつ信頼できるファイルシステムを構成する。Linuxカーネル上にWOFSの試作WOLVESを実装した。ベンチマークとアプリケーションの実験では、クラッシュからの復旧と操作スループットの向上が可能で、PMのI/O帯域の限界に近づける可能性を示した。",
+      "split": "confirmation",
+      "domain": "systems",
+      "acceptable_venues": ["osdi", "sosp", "fast", "eurosys"]
+    },
+    {
+      "id": "posthammer-en",
+      "language": "en",
+      "source": "https://www.usenix.org/conference/usenixsecurity25/presentation/de-ridder",
+      "title": "Posthammer: Pervasive Browser-based Rowhammer Attacks with Postponed Refresh Commands",
+      "abstract": "Rowhammer attacks are pervasive in client systems when launched natively. The biggest Rowhammer threat for such systems, however, lies in the browser. Our large-scale evaluation of browser-based Rowhammer attacks shows that they can only trigger bit flips on a small fraction of DRAM devices. Postponing refresh commands that trigger in-DRAM mitigations can boost the performance of Rowhammer attacks, but it has never been demonstrated in practice. We introduce Posthammer, a new Rowhammer attack in JavaScript that forces the CPU's memory controller to postpone refresh commands by creating long durations of intense Rowhammer activity followed by sufficiently long delay windows to allow the memory controller to batch refresh commands. Posthammer features a new abstraction called lane, which enables a subset of addresses in a Rowhammer pattern to be accessed more often. Lanes enable Posthammer to support effective refresh-postponed non-uniform patterns in the browser for the first time. Our evaluation shows that Posthammer is 2.8× more effective than the state of the art, triggering bit flips on 86% of our 28 DDR4 test devices.",
+      "split": "confirmation",
+      "domain": "security",
+      "acceptable_venues": ["usenix-security", "ccs", "ndss", "sp"]
+    },
+    {
+      "id": "posthammer-ja",
+      "language": "ja",
+      "source": "https://www.usenix.org/conference/usenixsecurity25/presentation/de-ridder",
+      "title": "Posthammer：リフレッシュ命令の延期による広範なブラウザベースのRowhammer攻撃",
+      "abstract": "Rowhammer攻撃は、クライアントシステムでネイティブに実行すると広く成立するが、最大の脅威はブラウザ内の攻撃である。ブラウザベースの攻撃を大規模に評価したところ、ビット反転を起こせるDRAMはごく一部だった。DRAM内の緩和策を作動させるリフレッシュ命令を延期すれば攻撃性能が高まると考えられるが、実証されていなかった。PosthammerはJavaScriptによる新しいRowhammer攻撃である。強いRowhammerのアクセスを長時間続けた後、メモリコントローラがリフレッシュ命令をまとめて処理できる十分に長い待ち時間を設けることで、CPUのメモリコントローラにリフレッシュ命令を延期させる。レーンという新しい抽象化により、アクセスパターン内の一部のアドレスへ高い頻度でアクセスできる。これにより、リフレッシュを延期した非均一なパターンをブラウザ内で初めて効果的に実行できる。評価では最先端の手法より2.8倍効果的であり、28台のDDR4テスト機器の86％でビット反転を起こした。",
+      "split": "confirmation",
+      "domain": "security",
+      "acceptable_venues": ["usenix-security", "ccs", "ndss", "sp"]
+    },
+    {
+      "id": "relativistic-gpu-ja",
+      "language": "ja",
+      "source": "https://ipsj.ixsq.nii.ac.jp/records/2001270",
+      "title": "GPU演算加速による一般相対論的輻射磁気流体シミュレーションコードの性能評価",
+      "abstract": "ブラックホールの降着流や流出の物理的理解は，活動銀河核，X線連星，ガンマ線バーストなどの高エネルギーコンパクト現象におけるエネルギー生成機構の解明に直結するだけでなく，巨大ブラックホールの成長過程を捉える上でも極めて重要である．ブラックホールを取り囲む降着円盤では，物質が強大な重力に捕捉される過程で，エネルギーが熱，磁場，輻射へと変換され，その変換で生じた輻射および磁場が一部の物質を加速してジェットや円盤風を形成する．このような複雑な現象を正確に解明するには，ブラックホール周囲の強重力場下で電磁流体力学方程式と輻射輸送方程式を同時に解く必要があり，それには甚大な計算負荷を伴う．そのため、従来のCPUベース実装では降着円盤の超時間発展を現実的な時間内で完了することは困難であった．そこで我々は，特に計算負荷の高い輻射輸送方程式および磁気流体力学計算をGPUにオフローディングすることによるアプリケーションコードの高速化を試みた．その結果，CPUベースのflat MPIによる基準実装と比較して，約10.7倍の高速化を達成した．この高速化により，ブラックホール降着円盤やジェットの動態を従来よりも詳細に再現するとともに，高エネルギー天体のエネルギー生成機構について新たな知見を得られることが期待される．",
+      "split": "confirmation",
+      "domain": "domestic",
+      "acceptable_venues": ["ipsj-sighpc"]
+    },
+    {
+      "id": "relativistic-gpu-en",
+      "language": "en",
+      "source": "https://ipsj.ixsq.nii.ac.jp/records/2001270",
+      "title": "Performance Evaluation of a General Relativistic Radiation Magnetohydrodynamics Simulation Code Using GPU Acceleration",
+      "abstract": "Understanding accretion flows and outflows around black holes is essential for explaining energy generation in high-energy compact phenomena such as active galactic nuclei, X-ray binaries, and gamma-ray bursts, and for understanding the growth of massive black holes. In accretion disks around black holes, matter captured by strong gravity converts energy into heat, magnetic fields, and radiation. The resulting radiation and magnetic fields accelerate some of the matter into jets and disk winds. Accurately explaining these complex phenomena requires simultaneously solving magnetohydrodynamic equations and radiation transport equations in the strong gravitational field around a black hole, which imposes a substantial computational cost. Conventional CPU implementations therefore could not complete the long-term evolution of accretion disks within practical time limits. We attempt to accelerate the application by offloading the especially expensive radiation transport and magnetohydrodynamics calculations to GPUs. This achieves approximately 10.7 times the speed of the reference CPU implementation using flat MPI. The acceleration is expected to enable more detailed reproduction of the dynamics of black hole accretion disks and jets and provide new insights into energy generation in high-energy astronomical objects.",
+      "split": "confirmation",
+      "domain": "domestic",
+      "acceptable_venues": ["ipsj-sighpc"]
+    }
+  ]
+}

@@ -17,107 +17,107 @@
   "training_data_hash": "dd2cc261d388bfa93a0d0c7972eb2b3e86960ccea09cb5429cf13f286b179c81",
   "input_hashes": {
     "data/benchmarks/real-paper-dev.json": "dd2cc261d388bfa93a0d0c7972eb2b3e86960ccea09cb5429cf13f286b179c81",
-    "data/benchmarks/real-paper-features.jsonl#dev-records": "573e3105430b5aec9e31ec624a61b75c467d1ccb8f30c9b3be8d51687dea04ec",
+    "data/benchmarks/real-paper-features.jsonl#dev-records": "93243ae43dbb130016c0bd99e9f795bb9a3a7de5e0740e8069f7fa87b3ddfaaa",
     "data/venue-profiles.json": "3cb80b6eb1d28b5e1c36cc37a6888ad6a8eba249594f2bbf6521bdf33e3c5b0e"
   },
   "cv": {
     "folds": 5,
     "assignment": "primary-venue-grouped-round-robin",
     "dev_papers": 80,
-    "selected_lambda": 0.2,
-    "selected_blend": 0.3,
-    "oof_mrr": 0.30972193,
-    "oof_recall_at_5": 0.425,
+    "selected_lambda": 0.01,
+    "selected_blend": 0.05,
+    "oof_mrr": 0.31417543,
+    "oof_recall_at_5": 0.4375,
     "trials": [
-      {
-        "lambda": 0.2,
-        "blend": 0.3,
-        "mrr": 0.30972193,
-        "recall_at_5": 0.425
-      },
       {
         "lambda": 0.01,
         "blend": 0.05,
-        "mrr": 0.3082936,
-        "recall_at_5": 0.425
+        "mrr": 0.31417543,
+        "recall_at_5": 0.4375
       },
       {
         "lambda": 0.08,
         "blend": 0.05,
-        "mrr": 0.30777277,
-        "recall_at_5": 0.425
+        "mrr": 0.31410675,
+        "recall_at_5": 0.4375
       },
       {
         "lambda": 0.2,
         "blend": 0.05,
-        "mrr": 0.30776699,
-        "recall_at_5": 0.425
-      },
-      {
-        "lambda": 0.2,
-        "blend": 0.15,
-        "mrr": 0.30608713,
+        "mrr": 0.31399514,
         "recall_at_5": 0.4375
       },
       {
         "lambda": 0.08,
         "blend": 0.15,
-        "mrr": 0.3055258,
-        "recall_at_5": 0.425
+        "mrr": 0.31218108,
+        "recall_at_5": 0.4375
+      },
+      {
+        "lambda": 0.2,
+        "blend": 0.15,
+        "mrr": 0.31212006,
+        "recall_at_5": 0.4375
       },
       {
         "lambda": 0.01,
         "blend": 0.15,
-        "mrr": 0.30511313,
-        "recall_at_5": 0.425
+        "mrr": 0.31045423,
+        "recall_at_5": 0.4375
       },
       {
         "lambda": 0.08,
         "blend": 0.3,
-        "mrr": 0.30465226,
-        "recall_at_5": 0.425
-      },
-      {
-        "lambda": 0.01,
-        "blend": 0.3,
-        "mrr": 0.30361008,
-        "recall_at_5": 0.425
+        "mrr": 0.30832931,
+        "recall_at_5": 0.4375
       },
       {
         "lambda": 0.08,
         "blend": 0.5,
-        "mrr": 0.30299622,
+        "mrr": 0.30824572,
         "recall_at_5": 0.425
+      },
+      {
+        "lambda": 0.2,
+        "blend": 0.3,
+        "mrr": 0.3080143,
+        "recall_at_5": 0.4125
       },
       {
         "lambda": 0.01,
         "blend": 0.5,
-        "mrr": 0.30282317,
+        "mrr": 0.30764772,
         "recall_at_5": 0.425
       },
       {
         "lambda": 0.2,
         "blend": 0.5,
-        "mrr": 0.302236,
+        "mrr": 0.30740113,
         "recall_at_5": 0.425
       },
       {
         "lambda": 0.01,
+        "blend": 0.3,
+        "mrr": 0.30719067,
+        "recall_at_5": 0.4375
+      },
+      {
+        "lambda": 0.01,
         "blend": 1,
-        "mrr": 0.27630444,
-        "recall_at_5": 0.4
+        "mrr": 0.27536055,
+        "recall_at_5": 0.4125
       },
       {
         "lambda": 0.08,
         "blend": 1,
-        "mrr": 0.27526278,
-        "recall_at_5": 0.4
+        "mrr": 0.27370984,
+        "recall_at_5": 0.425
       },
       {
         "lambda": 0.2,
         "blend": 1,
-        "mrr": 0.27408378,
-        "recall_at_5": 0.4
+        "mrr": 0.27353317,
+        "recall_at_5": 0.425
       }
     ]
   },
@@ -127,10 +127,10 @@
   },
   "calibration": {
     "method": "platt",
-    "slope": 0.5730413237,
-    "intercept": -1.6116511885,
+    "slope": -0.0545221287,
+    "intercept": -1.6211548375,
     "comparison": {
-      "platt_brier": 0.03723588,
+      "platt_brier": 0.03162666,
       "isotonic": {
         "implemented": false,
         "note": "not implemented; Platt scaling only"
@@ -143,7 +143,6 @@
     "blocking_conditions": [
       "precision_ok",
       "wilson_lcb_ok",
-      "coverage_ok",
       "positives_ok"
     ],
     "chosen_threshold": null,
@@ -152,11 +151,11 @@
       "wilson_95_lcb": null,
       "sufficient_coverage": null,
       "sufficient_positives": null,
-      "best_observed_threshold": 0.27879718,
-      "best_observed_precision": 0.5,
-      "best_observed_wilson_95_lcb": 0.09452865,
-      "best_observed_coverage": 0.025,
-      "best_observed_positives": 1
+      "best_observed_threshold": 0.15243019,
+      "best_observed_precision": 0.19148936,
+      "best_observed_wilson_95_lcb": 0.10415816,
+      "best_observed_coverage": 0.5875,
+      "best_observed_positives": 9
     },
     "unlock_conditions": {
       "min_precision": 0.8,
@@ -171,27 +170,27 @@
     "wilson_95_lcb": null,
     "sufficient_coverage": null,
     "sufficient_positives": null,
-    "best_observed_threshold": 0.27879718,
-    "best_observed_precision": 0.5,
-    "best_observed_wilson_95_lcb": 0.09452865,
-    "best_observed_coverage": 0.025,
-    "best_observed_positives": 1,
+    "best_observed_threshold": 0.15243019,
+    "best_observed_precision": 0.19148936,
+    "best_observed_wilson_95_lcb": 0.10415816,
+    "best_observed_coverage": 0.5875,
+    "best_observed_positives": 9,
     "guard_margin": 0.05
   },
   "intercept": 0,
   "weights": {
-    "lexical_score": 0.3545455971,
-    "semantic_score": 0.1284941121,
-    "category_overlap": -0.2306444573,
-    "venue_name_evidence": 0.560303801,
+    "lexical_score": 0.7791092898,
+    "semantic_score": 0.2313843107,
+    "category_overlap": -0.1681803812,
+    "venue_name_evidence": 0.8959799304,
     "prior_venue": 0,
-    "language_match": 0.1638454471,
+    "language_match": 0.3536707398,
     "venue_kind": 0
   },
-  "blend": 0.3,
+  "blend": 0.05,
   "confidence_thresholds": {
-    "sufficient": 0.27879718,
-    "ambiguous": 0.24264076
+    "sufficient": 0.15243019,
+    "ambiguous": 0.15228036
   },
   "production_trainer_revision": "l2-pairwise-logistic-reranker-v3-grouped-cv",
   "candidate_trainer_revision": "l2-pairwise-logistic-reranker-v4-component-greedy-cv",

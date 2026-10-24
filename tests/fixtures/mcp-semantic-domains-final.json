@@ -1,0 +1,26 @@
+{
+  "candidate_count": 696,
+  "top_k": 5,
+  "papers": [
+    {
+      "id": "kamping-en",
+      "language": "en",
+      "source": "https://arxiv.org/abs/2404.05610",
+      "title": "KaMPIng: Flexible and (Near) Zero-Overhead C++ Bindings for MPI",
+      "abstract": "The Message-Passing Interface (MPI) and C++ form the backbone of high-performance computing, but MPI only provides C and Fortran bindings. While this offers great language interoperability, high-level programming languages like C++ make software development quicker and less error-prone. We propose novel C++ language bindings that cover all abstraction levels from low-level MPI calls to convenient STL-style bindings, where most parameters are inferred from a small subset of parameters, by bringing named parameters to C++. This enables rapid prototyping and fine-tuning runtime behavior and memory management. A flexible type system and additional safety guarantees help to prevent programming errors. By exploiting C++'s template metaprogramming capabilities, this has (near) zero overhead, as only required code paths are generated at compile time. We demonstrate that our library is a strong foundation for a future distributed standard library using multiple application benchmarks, ranging from text-book sorting algorithms to phylogenetic interference.",
+      "split": "final-confirmation",
+      "domain": "hpc",
+      "acceptable_venues": ["sc", "ics", "isc-hpc", "ipdps"]
+    },
+    {
+      "id": "kamping-ja",
+      "language": "ja",
+      "source": "https://arxiv.org/abs/2404.05610",
+      "title": "KaMPIng：柔軟でほぼ追加負荷のないMPI用C++バインディング",
+      "abstract": "Message-Passing Interface（MPI）とC++は高性能計算の基盤だが、MPIはCとFortranのバインディングしか提供しない。この仕組みは言語間の相互運用に優れる一方、C++のような高水準言語はソフトウェア開発を速くし、誤りを減らせる。C++へ名前付き引数を導入することで、低水準のMPI呼び出しから、一部の引数から残りのほとんどを推論する便利なSTL形式まで、すべての抽象化水準を扱える新しいC++バインディングを提案する。これにより、素早い試作と、実行時の挙動やメモリ管理の細かな調整を両立する。柔軟な型システムと追加の安全性保証がプログラミングの誤りを防ぐ。C++のテンプレートメタプログラミングを使い、必要なコード経路だけをコンパイル時に生成するため、追加負荷はほぼない。教科書的なソートアルゴリズムから系統推論まで、複数のアプリケーションのベンチマークで、このライブラリが将来の分散標準ライブラリの強い基盤となることを示す。",
+      "split": "final-confirmation",
+      "domain": "hpc",
+      "acceptable_venues": ["sc", "ics", "isc-hpc", "ipdps"]
+    }
+  ]
+}

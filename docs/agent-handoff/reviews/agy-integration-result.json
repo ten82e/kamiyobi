@@ -1,0 +1,20 @@
+{
+  "status": "SUCCESS",
+  "conversation_id": "f64ec7d2-1064-4934-84cf-0322eec37eae",
+  "duration_seconds": 556.903564,
+  "usage": {
+    "input_tokens": 63692,
+    "output_tokens": 60277,
+    "thinking_tokens": 58571,
+    "cache_read_tokens": 0,
+    "total_tokens": 123969
+  },
+  "num_turns": 2,
+  "raw_response_path": "work/agent-verification/agy-review/review-final-response.json",
+  "raw_response_sha256": "005f1973964d283df1da12ea26db7c9e7c4a2df1697d3075acdb5faade5924de",
+  "findings": "docs/agent-handoff/reviews/agy-integration-findings.json",
+  "disposition": "docs/agent-handoff/reviews/agy-integration-disposition.md",
+  "settings_unchanged": true,
+  "static_payload_only": true,
+  "auto_review_denied": false
+}

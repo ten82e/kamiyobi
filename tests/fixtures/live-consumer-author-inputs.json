@@ -1,0 +1,147 @@
+{
+  "description": "Official English abstracts and complete Japanese translations, with unchanged acceptable venues and Top-5 gate. Only abstract and title+abstract variants are added; title-only duplicates are excluded. No evaluated paper text is used in venue profiles.",
+  "candidate_count": 696,
+  "top_k": 5,
+  "papers": [
+    {
+      "id": "tigon-en-original",
+      "split": "development",
+      "source": "https://www.usenix.org/conference/osdi25/presentation/huang-yibo",
+      "language": "en",
+      "title": "Tigon: A Distributed Database for a CXL Pod",
+      "acceptable_venues": ["osdi", "sosp", "sigmod", "vldb", "asplos"],
+      "abstract": "Building efficient distributed transactional databases remains a challenging problem despite decades of research. Existing distributed databases synchronize cross-host concurrent data accesses over a network, which requires numerous message exchanges and introduces performance overhead. We describe Tigon, the first distributed in-memory database that synchronizes cross-host concurrent data accesses using atomic operations on CXL memory. Using CXL memory is more efficient than network-based approaches, however, Tigon must address the limitations of CXL memory. The limitations are CXL’s higher latency and lower bandwidth relative to local DRAM, and its limited hardware support for cross-host cache coherence. For TPC-C and a variant of YCSB, Tigon achieves up to 2.5× higher throughput compared with two optimized shared-nothing databases that use CXL memory as a transport and up to 18.5× higher throughput compared with an RDMA-based distributed database.",
+      "modes": ["abstract", "title+abstract"]
+    },
+    {
+      "id": "memory-traces-en-original",
+      "split": "development",
+      "source": "https://proceedings.mlr.press/v267/eberhard25a.html",
+      "language": "en",
+      "title": "Partially Observable Reinforcement Learning with Memory Traces",
+      "acceptable_venues": ["icml", "neurips", "iclr"],
+      "abstract": "Partially observable environments present a considerable computational challenge in reinforcement learning due to the need to consider long histories. Learning with a finite window of observations quickly becomes intractable as the window length grows. In this work, we introduce memory traces . Inspired by eligibility traces, these are compact representations of the history of observations in the form of exponential moving averages. We prove sample complexity bounds for the problem of offline on-policy evaluation that quantify the return errors achieved with memory traces for the class of Lipschitz continuous value estimates. We establish a close connection to the window approach, and demonstrate that, in certain environments, learning with memory traces is significantly more sample efficient. Finally, we underline the effectiveness of memory traces empirically in online reinforcement learning experiments for both value prediction and control.",
+      "modes": ["abstract", "title+abstract"]
+    },
+    {
+      "id": "email-tracking-en-original",
+      "split": "development",
+      "source": "https://www.usenix.org/conference/usenixsecurity25/presentation/chand",
+      "language": "en",
+      "title": "Doubly Dangerous: Evading Phishing Reporting Systems by Leveraging Email Tracking Techniques",
+      "acceptable_venues": ["usenix-security", "ccs", "ndss", "sp"],
+      "abstract": "Given the significant threat posed by email as a highly prevalent phishing attack vector, we undertake the first study focused on real-world phishing email reporting systems. Our key idea in performing this study is to repurpose email tracking, a well-known privacy threat vector, for profiling and evading anti-phishing systems employed by popular email services. Our results show that the reporting systems of all major email services we tested are vulnerable to evasive phishing attacks affecting more than 2 billion users worldwide. We propose several countermeasures that email service operators can adopt to help ameliorate this issue in the future. We disclosed our findings to the affected email providers which resulted in remedial changes and a vulnerability reward.",
+      "modes": ["abstract", "title+abstract"]
+    },
+    {
+      "id": "mutant-en-original",
+      "split": "confirmation",
+      "source": "https://www.usenix.org/conference/nsdi25/presentation/pappone",
+      "language": "en",
+      "title": "Mutant: Learning Congestion Control from Existing Protocols via Online Reinforcement Learning",
+      "acceptable_venues": ["nsdi", "sigcomm", "conext", "icnp"],
+      "abstract": "Learning how to control congestion remains a challenge despite years of progress. Existing congestion control protocols have demonstrated efficacy within specific network conditions, inevitably behaving suboptimally or poorly in others. Machine learning solutions to congestion control have been proposed, though relying on extensive training and specific network configurations. In this paper, we loosen such dependencies by proposing Mutant, an online reinforcement learning algorithm for congestion control that adapts to the behavior of the best-performing schemes, outperforming them in most network conditions. Design challenges included determining the best protocols to learn from, given a network scenario, and creating a system able to evolve to accommodate future protocols with minimal changes. Our evaluation on real-world and emulated scenarios shows that Mutant achieves lower delays and higher throughput than prior learning-based schemes while maintaining fairness by exhibiting negligible harm to competing flows, making it robust across diverse and dynamic network conditions.",
+      "modes": ["abstract", "title+abstract"]
+    },
+    {
+      "id": "less-en-original",
+      "split": "confirmation",
+      "source": "https://www.usenix.org/conference/fast26/presentation/cheng",
+      "language": "en",
+      "title": "LESS is More for I/O-Efficient Repairs in Erasure-Coded Storage",
+      "acceptable_venues": ["fast", "sosp", "osdi", "eurosys"],
+      "abstract": "I/O efficiency is critical for erasure-coded repair performance in modern distributed storage. We propose LESS, a family of repair-friendly erasure code constructions that reduces both the amount of data accessed and the number of I/O seeks in single-block repairs, while ensuring balanced reductions across blocks. LESS layers multiple extended sub-stripes formed by widely deployed Reed-Solomon coding, and is configurable to balance the trade-off between the amount of data accessed and I/O seeks. Evaluation shows that LESS on HDFS reduces both single-block repair and full-node recovery times compared to state-of-the-art I/O-optimal erasure codes.",
+      "modes": ["abstract", "title+abstract"]
+    },
+    {
+      "id": "category-discovery-en-original",
+      "split": "confirmation",
+      "source": "https://proceedings.mlr.press/v267/dai25a.html",
+      "language": "en",
+      "title": "Continual Generalized Category Discovery: Learning and Forgetting from a Bayesian Perspective",
+      "acceptable_venues": ["icml", "neurips", "iclr", "cvpr", "iccv", "eccv"],
+      "abstract": "Continual Generalized Category Discovery (C-GCD) faces a critical challenge: incrementally learning new classes from unlabeled data streams while preserving knowledge of old classes. Existing methods struggle with catastrophic forgetting, especially when unlabeled data mixes known and novel categories. We address this by analyzing C-GCD’s forgetting dynamics through a Bayesian lens, revealing that covariance misalignment between old and new classes drives performance degradation. Building on this insight, we propose Variational Bayes C-GCD (VB-CGCD), a novel framework that integrates variational inference with covariance-aware nearest-class-mean classification. VB-CGCD adaptively aligns class distributions while suppressing pseudo-label noise via stochastic variational updates. Experiments show VB-CGCD surpasses prior art by +15.21% with the overall accuracy in the final session on standard benchmarks. We also introduce a new challenging benchmark with only 10% labeled data and extended online phases—VB-CGCD achieves a 67.86% final accuracy, significantly higher than state-of-the-art (38.55%), demonstrating its robust applicability across diverse scenarios. Code is available at: https://github.com/daihao42/VB-CGCD",
+      "modes": ["abstract", "title+abstract"]
+    },
+    {
+      "id": "aliccs-en-original",
+      "language": "en",
+      "split": "final-confirmation",
+      "title": "Learning Production-Optimized Congestion Control Selection for Alibaba Cloud CDN",
+      "source": "https://www.usenix.org/conference/nsdi25/presentation/zeng",
+      "acceptable_venues": ["nsdi", "sigcomm", "conext", "icnp"],
+      "abstract": "Today's content delivery networks (CDNs) typically use static congestion control (CC) configurations, yet the diverse network environments preclude a universally optimal CC for all geographical regions, as evidenced by our extensive measurements. Current CC algorithms, limited by narrow applicability or high maintenance costs, struggle in large-scale CDNs. This work introduces AliCCS, the first CC Selection (CCS) approach tailored for production CDN, integrating fine-grained domain knowledge for learning to choose the best CC from existing, well-established ones. Through an over-one-year real-world deployment in Alibaba Cloud CDN, AliCCS has enhanced the Quality-of-Experience (QoE) by up to 9.31%, surpassing the competitive margin in the CDN market, and significantly reduced the retransmission rate by 25.51% to 174.36% across all provinces of China, leading to cost savings over 10 million US dollars. We also share key insights and experiences from deploying AliCCS at scale, highlighting traffic patterns in Alibaba Cloud CDN.",
+      "modes": ["abstract", "title+abstract"]
+    },
+    {
+      "id": "tigon-ja-original",
+      "split": "development",
+      "source": "https://www.usenix.org/conference/osdi25/presentation/huang-yibo",
+      "language": "ja",
+      "title": "Tigon：CXLポッド向け分散データベース",
+      "abstract": "効率的な分散トランザクションデータベースの構築は、数十年にわたる研究を経ても難しい問題である。既存の分散データベースは、ホスト間の並行データアクセスをネットワーク経由で同期するため、多数のメッセージ交換と性能上の負荷が生じる。TigonはCXLメモリのアトミック操作でホスト間の並行アクセスを同期する、初の分散インメモリデータベースである。CXLメモリはネットワーク経由の方式より効率的だが、ローカルDRAMより遅延が大きく帯域が狭いこと、ホスト間キャッシュコヒーレンスのハードウェア対応が限られることに対処する必要がある。TPC-CとYCSBの派生ワークロードで、CXLメモリを通信に使う最適化済みの2種類のシェアードナッシングデータベースに対して最大2.5倍、RDMAベースの分散データベースに対して最大18.5倍のスループットを達成する。",
+      "acceptable_venues": ["osdi", "sosp", "sigmod", "vldb", "asplos"],
+      "modes": ["abstract", "title+abstract"]
+    },
+    {
+      "id": "memory-traces-ja-original",
+      "split": "development",
+      "source": "https://proceedings.mlr.press/v267/eberhard25a.html",
+      "language": "ja",
+      "title": "記憶トレースを用いた部分観測下の強化学習",
+      "abstract": "部分観測環境では長い履歴を考慮する必要があるため、強化学習の計算は難しくなる。有限の観測窓を使う学習も、窓が長くなるとすぐに計算困難になる。適格度トレースに着想を得た記憶トレースを導入し、観測履歴を指数移動平均によるコンパクトな表現にする。リプシッツ連続な価値推定器のクラスについて、記憶トレースによるリターン推定誤差を定量化する、オフラインのオンポリシー評価の標本複雑性の上界を証明する。観測窓方式との密接な関係を示し、特定の環境では記憶トレースの方が標本効率に優れることを明らかにする。さらに、価値予測と制御の両方を対象とするオンライン強化学習の実験で、その有効性を示す。",
+      "acceptable_venues": ["icml", "neurips", "iclr"],
+      "modes": ["abstract", "title+abstract"]
+    },
+    {
+      "id": "email-tracking-ja-original",
+      "split": "development",
+      "source": "https://www.usenix.org/conference/usenixsecurity25/presentation/chand",
+      "language": "ja",
+      "title": "二重の危険：メール追跡技術によるフィッシング報告システムの回避",
+      "abstract": "メールはフィッシング攻撃で広く使われ、重大な脅威となっている。実際に運用されているフィッシングメール報告システムを対象とした初の調査を行う。プライバシーへの脅威として知られるメール追跡技術を転用し、主要メールサービスのフィッシング対策システムの処理を観測して、その防御を回避する。検証したすべての主要メールサービスの報告システムが回避型のフィッシング攻撃に弱く、世界で20億人を超える利用者に影響することを示す。事業者がこの問題を軽減するための対策を提案する。影響を受ける事業者への開示は、対策の変更と脆弱性報奨につながった。",
+      "acceptable_venues": ["usenix-security", "ccs", "ndss", "sp"],
+      "modes": ["abstract", "title+abstract"]
+    },
+    {
+      "id": "mutant-ja-original",
+      "split": "confirmation",
+      "source": "https://www.usenix.org/conference/nsdi25/presentation/pappone",
+      "language": "ja",
+      "title": "Mutant：オンライン強化学習で既存プロトコルから学ぶ輻輳制御",
+      "abstract": "長年の進歩にもかかわらず、輻輳制御を学習することは依然として難しい。既存の輻輳制御プロトコルは特定の通信状態では有効だが、別の状態では最適とは限らず、性能が悪化することもある。機械学習による輻輳制御も提案されているが、大量の学習と特定のネットワーク構成に依存する。Mutantは既存方式のうち性能のよいものの振る舞いに適応する、オンライン強化学習による輻輳制御アルゴリズムであり、こうした依存を緩めて多くの通信状態で既存方式を上回る。設計上の課題は、ネットワーク状態に応じて学ぶべきプロトコルを選ぶことと、将来のプロトコルを最小限の変更で取り込める仕組みを作ることである。実ネットワークとエミュレーションで、既存の学習型方式より低い遅延と高いスループットを実現する。競合フローへの悪影響をわずかに抑えて公平性を維持し、多様で変動する通信状態に対する頑健性を示す。",
+      "acceptable_venues": ["nsdi", "sigcomm", "conext", "icnp"],
+      "modes": ["abstract", "title+abstract"]
+    },
+    {
+      "id": "less-ja-original",
+      "split": "confirmation",
+      "source": "https://www.usenix.org/conference/fast26/presentation/cheng",
+      "language": "ja",
+      "title": "LESS：消失訂正符号を使うストレージのI/O効率を高める修復方式",
+      "abstract": "現在の分散ストレージでは、消失訂正符号による修復性能を左右するI/O効率が重要である。LESSは、単一ブロックの修復で読み取るデータ量とI/Oシーク回数をともに減らし、各ブロックで均等に改善できる、修復に適した消失訂正符号の構成方式である。広く使われるReed-Solomon符号による複数の拡張サブストライプを重ね、読み取り量とI/Oシーク回数のトレードオフを調整できる。HDFS上の評価により、最先端のI/O最適な消失訂正符号と比較して、単一ブロックの修復とノード全体の復旧の両方の時間を短縮することを示す。",
+      "acceptable_venues": ["fast", "sosp", "osdi", "eurosys"],
+      "modes": ["abstract", "title+abstract"]
+    },
+    {
+      "id": "category-discovery-ja-original",
+      "split": "confirmation",
+      "source": "https://proceedings.mlr.press/v267/dai25a.html",
+      "language": "ja",
+      "title": "継続的な汎用カテゴリ発見：ベイズ的視点による学習と忘却の解析",
+      "abstract": "継続的な汎用カテゴリ発見では、ラベルなしのデータ列から新しいクラスを逐次学習しながら、既存クラスの知識を維持することが課題となる。既存方式は、既知と未知のカテゴリが混在すると、特に破滅的忘却に弱い。ベイズ的な視点から忘却の動態を分析し、新旧クラスの共分散のずれが性能低下を引き起こすことを明らかにする。変分ベイズによるVB-CGCDは、変分推論と共分散を考慮した最近傍クラス平均分類を統合する。クラス分布を適応的に整合させ、確率的な変分更新で擬似ラベルの雑音を抑える。標準的なベンチマークの最終セッションで、全体の正解率を既存方式より15.21%改善する。ラベル付きデータを10%に抑え、オンライン段階を長くした新しいベンチマークでも、最終正解率67.86%を達成し、最先端方式の38.55%を上回る。コードも公開されている。",
+      "acceptable_venues": ["icml", "neurips", "iclr", "cvpr", "iccv", "eccv"],
+      "modes": ["abstract", "title+abstract"]
+    },
+    {
+      "id": "aliccs-ja-original",
+      "language": "ja",
+      "split": "final-confirmation",
+      "title": "Alibaba Cloud CDN向けに運用環境を考慮した輻輳制御方式の選択を学習する",
+      "abstract": "現在のコンテンツ配信ネットワークは通常、輻輳制御を固定設定で使うが、大規模な計測が示すように、地域ごとに多様な通信状態に対して一律に最適な方式は存在しない。既存の輻輳制御アルゴリズムは適用範囲が狭いか保守コストが高く、大規模なCDNでは課題がある。AliCCSは、運用中のCDNに適した初の輻輳制御方式選択手法である。詳細なネットワークの知識を学習と組み合わせ、既存の確立された方式から最適なものを選ぶ。Alibaba Cloud CDNで1年を超える実運用を行い、体験品質を最大9.31%改善し、中国の各省で再送率を25.51%から174.36%改善したと報告する。1000万米ドルを超えるコスト削減を実現し、大規模導入から得られた知見と通信トラフィックの特徴も共有する。",
+      "source": "https://www.usenix.org/conference/nsdi25/presentation/zeng",
+      "acceptable_venues": ["nsdi", "sigcomm", "conext", "icnp"],
+      "modes": ["abstract", "title+abstract"]
+    }
+  ]
+}

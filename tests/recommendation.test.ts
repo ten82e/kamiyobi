@@ -1,4 +1,4 @@
-import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { recommendationAxes } from "../site/recommendation-core.ts";
@@ -6,8 +6,10 @@ import recommender from "../site/recommender.ts";
 import {
   ROOT as BUILD_ROOT,
   setRoot as setBuildRoot,
+  toCatalog,
   toRecommendationIndex,
 } from "../src/build.ts";
+import { tempWork } from "./helpers.ts";
 
 const NOW = Date.parse("2026-08-25T00:00:00Z");
 
@@ -49,24 +51,24 @@ function conference(overrides: Record<string, unknown> = {}): Record<string, unk
 
 describe("recommendation axes", () => {
   it("labels research fit as an ordinal assessment rather than a probability", () => {
+    // 画面に出る語は「一致評価」で統一した（第 104 回まで、カードの頭のチップは
+    // 「一致評価」、その下の行は「研究適合度」と、同じ値に二つの名前を付けていた）。
+    // 順位の形であって確率ではない、という型はそのまま保つ。
     const app = readFileSync(new URL("../site/app.ts", import.meta.url), "utf8");
-    expect(app).toMatch(/研究適合度: \$\{r\._fitLabel \|\| "評価保留"\}（順位評価）/);
-    expect(app).not.toMatch(/研究適合度:[^\n]*%/);
+    expect(app).toMatch(/一致評価 \$\{r\._fitLabel \|\| "評価保留"\}/);
+    expect(app).not.toMatch(/一致評価[^\n]*%/);
+    expect(app).not.toContain("研究適合度");
   });
 
-  it("returns independent research fit, established maturity evidence, and deadline trust", () => {
+  it("returns independent research fit, venue records, and deadline trust", () => {
     expect(recommendationAxes(conference(), 82, NOW)).toMatchObject({
       research_fit: { score: 82, categories: ["systems"], tags: [] },
-      venue_maturity: {
-        status: "established",
-        profile_status: "profiled",
-        evidence: {
-          yearsObserved: 4,
-          dblpIndexed: true,
-          publisherVerified: true,
-          ranked: true,
-          profileCoverage: 2,
-        },
+      venue_evidence: {
+        yearsObserved: 4,
+        dblpLinked: true,
+        publisherSource: true,
+        rankListed: true,
+        profileCoverage: 2,
       },
       deadline_precision: "exact",
       deadline_trust: {
@@ -74,14 +76,14 @@ describe("recommendation axes", () => {
         time: "official",
         timezone: "official",
         kind: "official",
-        sourceFreshness: "fresh",
+        sourceFreshness: "unknown",
         conflicts: 0,
       },
       evidence_quality: "official",
     });
   });
 
-  it("does not call two editions or one paper established", () => {
+  it("reports two recorded years and one sample without inferring maturity", () => {
     const value = conference({
       dblp: null,
       rank: {},
@@ -91,9 +93,9 @@ describe("recommendation axes", () => {
         { year: 2026, estimated: false, deadlines: [] },
       ],
     });
-    expect(recommendationAxes(value, null, NOW).venue_maturity).toMatchObject({
-      status: "emerging",
-      evidence: { yearsObserved: 2, profileCoverage: 1 },
+    expect(recommendationAxes(value, null, NOW).venue_evidence).toMatchObject({
+      yearsObserved: 2,
+      profileCoverage: 1,
     });
     expect(
       recommendationAxes(
@@ -106,11 +108,11 @@ describe("recommendation axes", () => {
         }),
         null,
         NOW,
-      ).venue_maturity.evidence.publisherVerified,
+      ).venue_evidence.publisherSource,
     ).toBe(true);
   });
 
-  it("distinguishes new and unverified venues", () => {
+  it("distinguishes sparse records from absent records without assigning age", () => {
     expect(
       recommendationAxes(
         conference({
@@ -134,7 +136,7 @@ describe("recommendation axes", () => {
         NOW,
       ),
     ).toMatchObject({
-      venue_maturity: { status: "new", profile_status: "unprofiled" },
+      venue_evidence: { yearsObserved: 1, profileCoverage: 0 },
       deadline_precision: "date-only",
       deadline_trust: {
         date: "aggregator",
@@ -152,7 +154,7 @@ describe("recommendation axes", () => {
         NOW,
       ),
     ).toMatchObject({
-      venue_maturity: { status: "unverified" },
+      venue_evidence: { yearsObserved: 0, profileCoverage: 0 },
       deadline_precision: "none",
       deadline_trust: {
         date: "unverified",
@@ -334,13 +336,43 @@ describe("recommendation axes", () => {
     const published = (index.conferences as Array<Record<string, unknown>>)[0]!;
     expect(published.recommendation_axes).toMatchObject({
       research_fit: { score: null, categories: ["systems"] },
-      venue_maturity: { status: "established", evidence: { yearsObserved: 4 } },
-      deadline_trust: { date: "official", sourceFreshness: "fresh" },
+      venue_evidence: { yearsObserved: 4, profileCoverage: 2 },
+      deadline_trust: { date: "official", sourceFreshness: "unknown" },
     });
   });
 
+  /* 締切画面が最初に読む catalog にも同じ軸を載せる。此処が推薦索引と食ひ違ふと、
+   * 畫面のカードと MCP が**同じ噓**を付く（順位の元にした論文數と、カードの「論文サンプル」が
+   * 違ふ）。實測 2026-10-15: catalog は `papers` を載せない為に `profileCoverage` が 0 に
+   * 固まり、23 会議が推薦索引（8件）と不一致だつた。catalog は papers を載せない侭、
+   * 數へる時だけ正本を見る。 */
+  it("counts paper samples in the catalog axes without publishing the titles", () => {
+    const data = {
+      generated_at: "2026-08-25T00:00:00.000Z",
+      site: {},
+      sources: [],
+      categories: {},
+      conferences: [conference()],
+    };
+    const at = new Date("2026-08-25T00:00:00.000Z");
+    const catalog = toCatalog(data, at) as { conferences: Array<Record<string, unknown>> };
+    const index = toRecommendationIndex(data, at) as {
+      conferences: Array<Record<string, unknown>>;
+    };
+    const entry = catalog.conferences[0]!;
+    expect(entry.recommendation_axes).toMatchObject({
+      venue_evidence: { yearsObserved: 4, profileCoverage: 2 },
+    });
+    // 推薦索引と同じ軸（此処が割れると畫面と AI が違ふ数を言ふ）。
+    expect((entry.recommendation_axes as Record<string, unknown>).venue_evidence).toEqual(
+      (index.conferences[0]!.recommendation_axes as Record<string, unknown>).venue_evidence,
+    );
+    // catalog は題名を載せない（data.json と推薦索引が正本）。
+    expect(entry).not.toHaveProperty("papers");
+  });
+
   it("fails closed when the reranker artifact cannot be parsed", () => {
-    const root = mkdtempSync("/tmp/kamiyobi-reranker-artifact-");
+    const root = tempWork("kamiyobi-reranker-artifact-");
     const dataDir = join(root, "data");
     mkdirSync(dataDir, { recursive: true });
     const artifact = join(dataDir, "recommender-reranker.json");
@@ -357,7 +389,7 @@ describe("recommendation axes", () => {
   });
 
   it("fails closed when the reranker artifact violates its numeric contract", () => {
-    const root = mkdtempSync("/tmp/kamiyobi-reranker-contract-");
+    const root = tempWork("kamiyobi-reranker-contract-");
     const dataDir = join(root, "data");
     mkdirSync(dataDir, { recursive: true });
     const model = JSON.parse(
@@ -412,7 +444,7 @@ describe("recommendation axes", () => {
     );
     const published = (index.conferences as Array<Record<string, any>>)[0]!;
     expect(published.recommendation_axes).toMatchObject({
-      venue_maturity: { evidence: { ranked: false } },
+      venue_evidence: { rankListed: false },
       deadline_trust: { sourceFreshness: "snapshot-fallback" },
     });
   });
@@ -522,7 +554,7 @@ describe("recommendation axes", () => {
     });
   });
 
-  it("recognizes rankings and identity.dblpKey in venue maturity evidence", () => {
+  it("reports listed rankings and identity.dblpKey without assigning maturity", () => {
     const value = conference({
       dblp: null,
       identity: { dblpKey: "conf/test" },
@@ -532,9 +564,9 @@ describe("recommendation axes", () => {
       editions: [{ year: 2024 }, { year: 2025 }, { year: 2026 }],
     });
     const axes = recommendationAxes(value, null, NOW);
-    expect(axes.venue_maturity.evidence.dblpIndexed).toBe(true);
-    expect(axes.venue_maturity.evidence.ranked).toBe(true);
-    expect(axes.venue_maturity.status).toBe("established");
+    expect(axes.venue_evidence.dblpLinked).toBe(true);
+    expect(axes.venue_evidence.rankListed).toBe(true);
+    expect(axes).not.toHaveProperty("venue_maturity");
   });
 
   it("keeps trust axes independent for each ranked recommendation", () => {
@@ -578,7 +610,7 @@ describe("recommendation axes", () => {
     }).toMatchObject({
       venue_key: "venue",
       research_fit: { score: expect.any(Number), categories: ["systems"] },
-      venue_maturity: { status: "established" },
+      venue_evidence: { yearsObserved: 4 },
       deadline_trust: { date: "official" },
     });
     expect({
@@ -586,7 +618,7 @@ describe("recommendation axes", () => {
       venue_key: aggregator.venueKey,
     }).toMatchObject({
       venue_key: "aggregator",
-      venue_maturity: { status: "new", profile_status: "unprofiled" },
+      venue_evidence: { yearsObserved: 1, profileCoverage: 0 },
       deadline_precision: "date-only",
       deadline_trust: { date: "aggregator", time: "unverified" },
     });

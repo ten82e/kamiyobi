@@ -1,0 +1,5361 @@
+{
+  "_comment": "Immutable recommendation input metadata from main c06b9ff. No deadlines, embeddings, labels, features or model weights are refreshed here. Used only to reproduce existing pinned feature records; live data still passes the same quality floors.",
+  "categories": {
+    "hpc": "High Performance Computing",
+    "networking": "Networking",
+    "systems": "Systems, Architecture and Storage",
+    "ai": "AI and Machine Learning",
+    "security": "Security and Privacy",
+    "db": "Database and Data Mining",
+    "graphics": "Graphics and Multimedia",
+    "hci": "Human-Computer Interaction",
+    "theory": "Theory and Algorithms"
+  },
+  "conferences": [
+    {
+      "key": "1st-dl2-international-workshop",
+      "title": "DL2 Workshop",
+      "full_name": "1st DL2 International Workshop",
+      "acronym": "DL2 Workshop",
+      "tags": [],
+      "categories": ["ai"]
+    },
+    {
+      "key": "1st-symposium-on-neurosymbolic-artificial-intelligence-for-healthcare",
+      "title": "1st Symposium on Neurosymbolic Artificial Intelligence for Healthcare",
+      "full_name": "1st Symposium on Neurosymbolic Artificial Intelligence for Healthcare",
+      "acronym": "1st Symposium on Neurosymbolic Artificial Intelligence for Healthcare",
+      "tags": [],
+      "categories": ["ai", "security"]
+    },
+    {
+      "key": "24th-international-conference-on-service-oriented-computing-icsoc-2026-lodz-po",
+      "title": "24th International Conference on Service-Oriented Computing, ICSOC 2026 Lodz, Po",
+      "full_name": "24th International Conference on Service-Oriented Computing, ICSOC 2026 Lodz, Po",
+      "acronym": "24th International Conference on Service-Oriented Computing, ICSOC 2026 Lodz, Po",
+      "tags": [],
+      "categories": ["systems", "networking", "ai", "security", "db"]
+    },
+    {
+      "key": "3dv",
+      "title": "3DV",
+      "full_name": "International Conference on 3D Vision",
+      "acronym": "3DV",
+      "tags": ["machine-learning", "computer-vision"],
+      "categories": ["ai", "graphics"]
+    },
+    {
+      "key": "3rd-amict-2026",
+      "title": "3rd AMICT 2026",
+      "full_name": "3rd International Conference on Advances in Machine Intelligence and Cybersecurity Technologies",
+      "acronym": "3rd AMICT 2026",
+      "tags": [],
+      "categories": ["security"]
+    },
+    {
+      "key": "aaai",
+      "title": "AAAI",
+      "full_name": "AAAI Conference on Artificial Intelligence",
+      "acronym": "AAAI",
+      "tags": ["data-mining", "machine-learning", "natural-language-processing", "computer-vision"],
+      "categories": ["ai"]
+    },
+    {
+      "key": "aamas",
+      "title": "AAMAS",
+      "full_name": "International Conference on Autonomous Agents and Multiagent Systems",
+      "acronym": "AAMAS",
+      "tags": ["machine-learning", "robotics"],
+      "categories": ["ai"]
+    },
+    {
+      "key": "accv",
+      "title": "ACCV",
+      "full_name": "Asian Conference on Computer Vision",
+      "acronym": "ACCV",
+      "tags": [],
+      "categories": ["ai"]
+    },
+    {
+      "key": "acisp",
+      "title": "ACISP",
+      "full_name": "Australasia Conference on Information Security and Privacy",
+      "acronym": "ACISP",
+      "tags": [],
+      "categories": ["security"]
+    },
+    {
+      "key": "acl",
+      "title": "ACL",
+      "full_name": "Annual Meeting of the Association for Computational Linguistics",
+      "acronym": "ACL",
+      "tags": ["natural-language-processing"],
+      "categories": ["ai"]
+    },
+    {
+      "key": "acm-aiat-2026",
+      "title": "ACM AIAT 2026",
+      "full_name": "ACM--2026 6th International Conference on Artificial Intelligence and Application Technologies (AIAT 2026)",
+      "acronym": "ACM AIAT 2026",
+      "tags": [],
+      "categories": ["ai"]
+    },
+    {
+      "key": "acm-aibc-2026",
+      "title": "ACM AIBC 2026",
+      "full_name": "ACM--2026 7th International Artificial Intelligence and Blockchain Conference (AIBC 2026)",
+      "acronym": "ACM AIBC 2026",
+      "tags": [],
+      "categories": ["ai"]
+    },
+    {
+      "key": "acm-icacs-2026",
+      "title": "ACM ICACS 2026",
+      "full_name": "ACM--2026 The 10th International Conference on Algorithms, Computing and Systems (ICACS 2026)",
+      "acronym": "ACM ICACS 2026",
+      "tags": [],
+      "categories": ["theory"]
+    },
+    {
+      "key": "acm-mm",
+      "title": "ACM MM",
+      "full_name": "ACM Multimedia",
+      "acronym": "ACM MM",
+      "tags": ["computer-vision", "machine-learning", "human-computer-interaction"],
+      "categories": ["ai", "graphics"]
+    },
+    {
+      "key": "acm-sac-2027-dbdm-track",
+      "title": "ACM SAC 2027 - DBDM Track",
+      "full_name": "ACM SAC 2027 - DBDM Track",
+      "acronym": "ACM SAC 2027 - DBDM Track",
+      "tags": [],
+      "categories": ["hpc", "systems", "ai", "security", "db"]
+    },
+    {
+      "key": "acm-sigcite-2026",
+      "title": "ACM SIGCITE 2026",
+      "full_name": "27th Annual ACM Conference on Cybersecurity and Information Technology Education",
+      "acronym": "ACM SIGCITE 2026",
+      "tags": [],
+      "categories": ["security"]
+    },
+    {
+      "key": "acm-siggraph",
+      "title": "SIGGRAPH",
+      "full_name": "Conference on Computer Graphics and Interactive Techniques",
+      "acronym": "SIGGRAPH",
+      "tags": ["computer-graphics"],
+      "categories": ["ai", "graphics"]
+    },
+    {
+      "key": "acm-siggraph-asia",
+      "title": "ACM SIGGRAPH ASIA",
+      "full_name": "ACM SIGGRAPH Annual Conference in Asia",
+      "acronym": "ACM SIGGRAPH ASIA",
+      "tags": [],
+      "categories": ["graphics"]
+    },
+    {
+      "key": "acm-toit",
+      "title": "ACM TOIT",
+      "full_name": "ACM Transactions on Internet Technology",
+      "acronym": "ACM TOIT",
+      "tags": ["niche", "journal"],
+      "categories": ["networking", "systems"]
+    },
+    {
+      "key": "acml",
+      "title": "ACML",
+      "full_name": "Asian Conference on Machine Learning",
+      "acronym": "ACML",
+      "tags": [],
+      "categories": ["ai"]
+    },
+    {
+      "key": "acns",
+      "title": "ACNS",
+      "full_name": "Applied Cryptography and Network Security",
+      "acronym": "ACNS",
+      "tags": [],
+      "categories": ["security"]
+    },
+    {
+      "key": "acsac",
+      "title": "ACSAC",
+      "full_name": "Annual Computer Security Applications Conference",
+      "acronym": "ACSAC",
+      "tags": [],
+      "categories": ["security"]
+    },
+    {
+      "key": "adc-2026-second-round-cfp-and",
+      "title": "ADC 2026",
+      "full_name": "ADC 2026 (Applied Data Science Conference)",
+      "acronym": "ADC 2026",
+      "tags": [],
+      "categories": ["ai", "security", "db"]
+    },
+    {
+      "key": "adma",
+      "title": "ADMA",
+      "full_name": "The International Conference on Advanced Data Mining and Applications",
+      "acronym": "ADMA",
+      "tags": [],
+      "categories": ["db"]
+    },
+    {
+      "key": "admit-2026",
+      "title": "ADMIT 2026",
+      "full_name": "2026 5th International Conference on Algorithms, Data Mining, and Information Technology",
+      "acronym": "ADMIT 2026",
+      "tags": [],
+      "categories": ["db", "theory"]
+    },
+    {
+      "key": "aft",
+      "title": "AFT",
+      "full_name": "Advances in Financial Technologies",
+      "acronym": "AFT",
+      "tags": [],
+      "categories": ["security"]
+    },
+    {
+      "key": "agentarch-icsa2027",
+      "title": "AgentArch @ICSA2027",
+      "full_name": "AgentArch @ICSA2027",
+      "acronym": "AgentArch @ICSA2027",
+      "tags": [],
+      "categories": ["ai"]
+    },
+    {
+      "key": "agenticai4hpc-2026",
+      "title": "AgenticAI4HPC 2026",
+      "full_name": "The First International Workshop on Agentic AI for HPC (AgenticAI4HPC 2026)",
+      "acronym": "AgenticAI4HPC 2026",
+      "tags": ["workshop"],
+      "categories": ["hpc"]
+    },
+    {
+      "key": "ai-sec-2027",
+      "title": "AI-SEC 2027",
+      "full_name": "The 3rd International Workshop on Artificial Intelligence for Cybersecurity",
+      "acronym": "AI-SEC 2027",
+      "tags": [],
+      "categories": ["ai", "security"]
+    },
+    {
+      "key": "ai4demons-2026",
+      "title": "AI4DEMONS 2026",
+      "full_name": "The 1st International Workshop on Artificial Intelligence for Data Engineering and Management Of Networked Systems",
+      "acronym": "AI4DEMONS 2026",
+      "tags": [],
+      "categories": ["ai"]
+    },
+    {
+      "key": "ai4s-2026",
+      "title": "AI4S 2026",
+      "full_name": "8th Workshop on Artificial Intelligence and Machine Learning for Scientific Applications (AI4S)",
+      "acronym": "AI4S 2026",
+      "tags": ["workshop"],
+      "categories": ["hpc"]
+    },
+    {
+      "key": "ai4scisci-2026",
+      "title": "AI4SciSci 2026",
+      "full_name": "The 3nd International Workshop on Artificial Intelligence for the Science of Science",
+      "acronym": "AI4SciSci 2026",
+      "tags": [],
+      "categories": ["ai"]
+    },
+    {
+      "key": "aibt-2026",
+      "title": "AIBT 2026",
+      "full_name": "2026 The 5th International Conference on Artificial Intelligence and Blockchain Technology (AIBT 2026)",
+      "acronym": "AIBT 2026",
+      "tags": [],
+      "categories": ["ai"]
+    },
+    {
+      "key": "aidc-2026",
+      "title": "AIDC 2026",
+      "full_name": "AIDC 2026: Workshop on Agentic AI in Offensive and Defensive Cyber Operations",
+      "acronym": "AIDC 2026",
+      "tags": ["workshop"],
+      "categories": ["security", "ai"]
+    },
+    {
+      "key": "aila2027",
+      "title": "AILA2027",
+      "full_name": "The sixth International Conference on Artificial Intelligence Logic and Applications",
+      "acronym": "AILA2027",
+      "tags": [],
+      "categories": ["ai"]
+    },
+    {
+      "key": "aimlm-2026",
+      "title": "AIMLM 2026",
+      "full_name": "2026 International Conference on Artificial Intelligence, Machine Learning and Multimodality",
+      "acronym": "AIMLM 2026",
+      "tags": [],
+      "categories": ["ai"]
+    },
+    {
+      "key": "aipe-2027",
+      "title": "AIPE 2027",
+      "full_name": "2027 4th International Conference on Artificial Intelligence and Power Engineering",
+      "acronym": "AIPE 2027",
+      "tags": [],
+      "categories": ["ai"]
+    },
+    {
+      "key": "airc-2027",
+      "title": "AIRC 2027",
+      "full_name": "2027 8th International Conference on Artificial Intelligence, Robotics, and Control",
+      "acronym": "AIRC 2027",
+      "tags": [],
+      "categories": ["ai"]
+    },
+    {
+      "key": "aisec4hsg-2026",
+      "title": "AISEC4HSG 2026",
+      "full_name": "1st International Colloquium on Artificial Intelligence & Cybersecurity for Healthcare and Social Good",
+      "acronym": "AISEC4HSG 2026",
+      "tags": [],
+      "categories": ["ai", "security"]
+    },
+    {
+      "key": "aistats",
+      "title": "AISTATS",
+      "full_name": "International Conference on Artificial Intelligence and Statistics",
+      "acronym": "AISTATS",
+      "tags": ["machine-learning"],
+      "categories": ["ai"]
+    },
+    {
+      "key": "aivrch-2026",
+      "title": "AIVRCH 2026",
+      "full_name": "2026 International Conference on Artificial Intelligence, Virtual Reality and Cultural Heritage-EI/Scopus",
+      "acronym": "AIVRCH 2026",
+      "tags": [],
+      "categories": ["ai", "graphics"]
+    },
+    {
+      "key": "alt",
+      "title": "ALT",
+      "full_name": "International Conference on Algorithmic Learning Theory",
+      "acronym": "ALT",
+      "tags": ["machine-learning"],
+      "categories": ["ai"]
+    },
+    {
+      "key": "ambre-2026",
+      "title": "AMBRE-2026",
+      "full_name": "Adaptive Manipulation: Bridging Rigid and Soft Robotics in Underwater Environments",
+      "acronym": "AMBRE-2026",
+      "tags": [],
+      "categories": ["ai", "systems"]
+    },
+    {
+      "key": "anrw",
+      "title": "ANRW",
+      "full_name": "ACM/IRTF Applied Networking Research Workshop",
+      "acronym": "ANRW",
+      "tags": [],
+      "categories": ["networking"]
+    },
+    {
+      "key": "apbc",
+      "title": "APBC",
+      "full_name": "Asia Pacific Bioinformatics Conference",
+      "acronym": "APBC",
+      "tags": [],
+      "categories": ["db"]
+    },
+    {
+      "key": "apcc",
+      "title": "APCC",
+      "full_name": "Asia-Pacific Conference on Communications",
+      "acronym": "APCC",
+      "tags": [],
+      "categories": ["networking"]
+    },
+    {
+      "key": "apnet",
+      "title": "APNet",
+      "full_name": "Asia-Pacific Workshop on Networking",
+      "acronym": "APNet",
+      "tags": [],
+      "categories": ["networking"]
+    },
+    {
+      "key": "apnoms",
+      "title": "APNOMS",
+      "full_name": "Asia-Pacific Network Operations and Management Symposium",
+      "acronym": "APNOMS",
+      "tags": ["domestic-jp"],
+      "categories": ["networking"]
+    },
+    {
+      "key": "appt",
+      "title": "APPT",
+      "full_name": "International Symposium on Advanced Parallel Programming Technologies",
+      "acronym": "APPT",
+      "tags": [],
+      "categories": ["hpc"]
+    },
+    {
+      "key": "apsec",
+      "title": "APSEC",
+      "full_name": "Asia-Pacific Software Engineering Conference",
+      "acronym": "APSEC",
+      "tags": [],
+      "categories": ["systems"]
+    },
+    {
+      "key": "apsys",
+      "title": "APSys",
+      "full_name": "ACM SIGOPS Asia-Pacific Workshop on Systems",
+      "acronym": "APSys",
+      "tags": [],
+      "categories": ["systems"]
+    },
+    {
+      "key": "apweb-waim",
+      "title": "APWeb-WAIM",
+      "full_name": "APWeb-WAIM joint international conference on Web and Big Data",
+      "acronym": "APWeb-WAIM",
+      "tags": [],
+      "categories": ["db"]
+    },
+    {
+      "key": "aq-uasim-v2",
+      "title": "AQ²UASIM-v2",
+      "full_name": "Advancing Quantitative and QUAlitative SIMulators for marine applications",
+      "acronym": "AQ²UASIM-v2",
+      "tags": [],
+      "categories": ["ai", "systems"]
+    },
+    {
+      "key": "arc",
+      "title": "ARC 2027",
+      "full_name": "The 23rd International Symposium on Applied Reconfigurable Computing",
+      "acronym": "ARC 2027",
+      "tags": ["niche"],
+      "categories": ["hpc", "systems"]
+    },
+    {
+      "key": "artman-2026",
+      "title": "ARTMAN 2026",
+      "full_name": "ARTMAN: Workshop on Recent Advances in Resilient and Trustworthy Machine learning-driven systems",
+      "acronym": "ARTMAN 2026",
+      "tags": ["workshop"],
+      "categories": ["security", "ai"]
+    },
+    {
+      "key": "asap",
+      "title": "ASAP",
+      "full_name": "IEEE International Conference on Application-Specific Systems, Architectures, and Processors",
+      "acronym": "ASAP",
+      "tags": [],
+      "categories": ["systems"]
+    },
+    {
+      "key": "ase",
+      "title": "ASE",
+      "full_name": "International Conference on Automated Software Engineering",
+      "acronym": "ASE",
+      "tags": [],
+      "categories": ["systems"]
+    },
+    {
+      "key": "asiaccs",
+      "title": "AsiaCCS",
+      "full_name": "Asia Conference on Computer and Communications Security",
+      "acronym": "AsiaCCS",
+      "tags": [],
+      "categories": ["security"]
+    },
+    {
+      "key": "asiacrypt",
+      "title": "ASIACRYPT",
+      "full_name": "International Conference on the Theory and Application of Cryptology and Information Security",
+      "acronym": "ASIACRYPT",
+      "tags": [],
+      "categories": ["security"]
+    },
+    {
+      "key": "asma-2026",
+      "title": "ASMA 2026",
+      "full_name": "2026 4th International Conference on Applied Statistics, Modeling and Advanced Algorithms",
+      "acronym": "ASMA 2026",
+      "tags": [],
+      "categories": ["theory"]
+    },
+    {
+      "key": "asp-dac",
+      "title": "ASP-DAC",
+      "full_name": "Asia and South Pacific Design Automation Conference",
+      "acronym": "ASP-DAC",
+      "tags": [],
+      "categories": ["systems"]
+    },
+    {
+      "key": "asplos",
+      "title": "ASPLOS",
+      "full_name": "International Conference on Architectural Support for Programming Languages and Operating Systems",
+      "acronym": "ASPLOS",
+      "tags": [],
+      "categories": ["systems"]
+    },
+    {
+      "key": "assets",
+      "title": "ASSETS",
+      "full_name": "ACM SIGACCESS Conference on Computers and Accessibility",
+      "acronym": "ASSETS",
+      "tags": [],
+      "categories": ["hci"]
+    },
+    {
+      "key": "ats",
+      "title": "ATS",
+      "full_name": "IEEE Asian Test Symposium",
+      "acronym": "ATS",
+      "tags": [],
+      "categories": ["systems"]
+    },
+    {
+      "key": "b4ti-2026",
+      "title": "B4TI 2026",
+      "full_name": "B4TI: International Workshop on Blockchain for Decentralized Trust and Digital Identity",
+      "acronym": "B4TI 2026",
+      "tags": ["workshop"],
+      "categories": ["security"]
+    },
+    {
+      "key": "bdaa-2026",
+      "title": "BDAA' 2026",
+      "full_name": "2nd International Conference on Big Data Analytics & Applications",
+      "acronym": "BDAA' 2026",
+      "tags": [],
+      "categories": ["db"]
+    },
+    {
+      "key": "bdcat",
+      "title": "BDCAT",
+      "full_name": "IEEE/ACM International Conference on Big Data Computing, Applications and Technologies",
+      "acronym": "BDCAT",
+      "tags": [],
+      "categories": ["systems", "ai"]
+    },
+    {
+      "key": "bdiot-2026",
+      "title": "BDIOT 2026",
+      "full_name": "ACM--2026 10th International Conference on Big Data and Internet of Things (BDIOT 2026)",
+      "acronym": "BDIOT 2026",
+      "tags": [],
+      "categories": ["db"]
+    },
+    {
+      "key": "bdmlic-2026",
+      "title": "BDMLIC 2026",
+      "full_name": "2026 International Conference on Big Data, Machine Learning and Intelligent Computing-EI/Scopus",
+      "acronym": "BDMLIC 2026",
+      "tags": [],
+      "categories": ["ai", "db"]
+    },
+    {
+      "key": "bibm",
+      "title": "BIBM",
+      "full_name": "IEEE International Conference on Bioinformatics and Biomedicine",
+      "acronym": "BIBM",
+      "tags": [],
+      "categories": ["db"]
+    },
+    {
+      "key": "bigdata",
+      "title": "BigData",
+      "full_name": "IEEE International Conference on Big Data",
+      "acronym": "BigData",
+      "tags": [],
+      "categories": ["db"]
+    },
+    {
+      "key": "bis",
+      "title": "BIS",
+      "full_name": "International Conference on Business Information Systems",
+      "acronym": "BIS",
+      "tags": [
+        "information-systems",
+        "machine-learning",
+        "natural-language-processing",
+        "data-mining",
+        "large-language-models",
+        "knowledge-graphs"
+      ],
+      "categories": ["ai"]
+    },
+    {
+      "key": "blocksys",
+      "title": "BlockSys",
+      "full_name": "International Conference on Blockchain, Artificial Intelligence, and Trustworthy Systems",
+      "acronym": "BlockSys",
+      "tags": [],
+      "categories": ["security"]
+    },
+    {
+      "key": "bmvc",
+      "title": "BMVC",
+      "full_name": "British Machine Vision Conference",
+      "acronym": "BMVC",
+      "tags": [],
+      "categories": ["ai"]
+    },
+    {
+      "key": "bphte-26-2026",
+      "title": "BPHTE 26",
+      "full_name": "Thirteenth SC Workshop on Best Practices for HPC Training and Education (BPHTE 26)",
+      "acronym": "BPHTE 26",
+      "tags": ["workshop"],
+      "categories": ["hpc"]
+    },
+    {
+      "key": "btw-2027",
+      "title": "BTW 2027",
+      "full_name": "BTW 2027",
+      "acronym": "BTW 2027",
+      "tags": [],
+      "categories": ["ai", "db"]
+    },
+    {
+      "key": "cade",
+      "title": "CADE",
+      "full_name": "The Conference on Automated Deduction",
+      "acronym": "CADE",
+      "tags": [],
+      "categories": ["theory"]
+    },
+    {
+      "key": "cafcw-2026",
+      "title": "CAFCW 2026",
+      "full_name": "The 12th Computational Approaches for Cancer Workshop (CAFCW26)",
+      "acronym": "CAFCW 2026",
+      "tags": ["workshop"],
+      "categories": ["hpc"]
+    },
+    {
+      "key": "caise",
+      "title": "CAiSE",
+      "full_name": "International Conference on Advanced Information Systems Engineering",
+      "acronym": "CAiSE",
+      "tags": [],
+      "categories": ["systems"]
+    },
+    {
+      "key": "caldam-2027",
+      "title": "CALDAM 2027",
+      "full_name": "International Conference on Algorithms and Discrete Applied Mathematics",
+      "acronym": "CALDAM 2027",
+      "tags": [],
+      "categories": ["theory"]
+    },
+    {
+      "key": "canopie-2026",
+      "title": "CANOPIE-HPC 2026",
+      "full_name": "8th International Workshop on Containers and New Orchestration Paradigms for Isolated Environments in HPC (CANOPIE-HPC 2026)",
+      "acronym": "CANOPIE-HPC 2026",
+      "tags": ["workshop"],
+      "categories": ["hpc"]
+    },
+    {
+      "key": "casa",
+      "title": "CASA",
+      "full_name": "International Conference on Computer Animation and Social Agents",
+      "acronym": "CASA",
+      "tags": [],
+      "categories": ["graphics"]
+    },
+    {
+      "key": "cascade",
+      "title": "CASCADE",
+      "full_name": "Constructive Approaches for Security Analysis and Design of Embedded systems (CASCADE)",
+      "acronym": "CASCADE",
+      "tags": ["niche"],
+      "categories": ["security"]
+    },
+    {
+      "key": "cav",
+      "title": "CAV",
+      "full_name": "International Conference on Computer-Aided Verification",
+      "acronym": "CAV",
+      "tags": [],
+      "categories": ["theory"]
+    },
+    {
+      "key": "ccbdiot-2026",
+      "title": "CCBDIoT 2026",
+      "full_name": "2026 5th International Conference on Computing, Big Data and Internet of Things (CCBDIoT 2026)",
+      "acronym": "CCBDIoT 2026",
+      "tags": [],
+      "categories": ["db"]
+    },
+    {
+      "key": "cccg",
+      "title": "CCCG",
+      "full_name": "Canadian Conference on Computational Geometry",
+      "acronym": "CCCG",
+      "tags": [],
+      "categories": ["graphics"]
+    },
+    {
+      "key": "ccgrid",
+      "title": "CCGRID",
+      "full_name": "IEEE International Symposium on Cluster, Cloud and Internet Computing",
+      "acronym": "CCGRID",
+      "tags": [],
+      "categories": ["hpc"]
+    },
+    {
+      "key": "ccgrid-workshops",
+      "title": "CCGrid Workshops",
+      "full_name": "IEEE/ACM International Symposium on Cluster, Cloud and Grid Computing Workshops",
+      "acronym": "CCGrid Workshops",
+      "tags": ["niche", "workshop"],
+      "categories": ["hpc", "systems"]
+    },
+    {
+      "key": "ccisc-2026",
+      "title": "CCISC 2026",
+      "full_name": "2026 IEEE International Conference on Computer Communication, Information System and Cybersecurity",
+      "acronym": "CCISC 2026",
+      "tags": [],
+      "categories": ["security"]
+    },
+    {
+      "key": "ccnc27-track-on-networking-solutions-for-metaverse-social-applications-multimedia-and-games",
+      "title": "CCNC27 track on Networking Solutions for Metaverse, Social Applications, Multimedia, and Games",
+      "full_name": "CCNC27 track on Networking Solutions for Metaverse, Social Applications, Multimedia, and Games",
+      "acronym": "CCNC27 track on Networking Solutions for Metaverse, Social Applications, Multimedia, and Games",
+      "tags": [],
+      "categories": ["systems", "ai", "security", "db"]
+    },
+    {
+      "key": "ccns-2026",
+      "title": "CCNS 2026",
+      "full_name": "2026 7th International Conference on Computer Communication and Network Security",
+      "acronym": "CCNS 2026",
+      "tags": [],
+      "categories": ["security"]
+    },
+    {
+      "key": "ccpcdl-2026",
+      "title": "CCPCDL 2026",
+      "full_name": "2026 5th International Conference on Cloud Computing, Performance Computing and Deep Learning",
+      "acronym": "CCPCDL 2026",
+      "tags": [],
+      "categories": ["systems", "ai"]
+    },
+    {
+      "key": "ccpe",
+      "title": "CCPE",
+      "full_name": "Concurrency and Computation: Practice and Experience",
+      "acronym": "CCPE",
+      "tags": ["niche", "journal"],
+      "categories": ["hpc", "systems"]
+    },
+    {
+      "key": "ccs",
+      "title": "CCS",
+      "full_name": "ACM Conference on Computer and Communications Security",
+      "acronym": "CCS",
+      "tags": [],
+      "categories": ["security"]
+    },
+    {
+      "key": "cf",
+      "title": "CF",
+      "full_name": "ACM International Conference on Computing Frontiers",
+      "acronym": "CF",
+      "tags": [],
+      "categories": ["systems"]
+    },
+    {
+      "key": "cgi",
+      "title": "CGI",
+      "full_name": "Computer Graphics International",
+      "acronym": "CGI",
+      "tags": [],
+      "categories": ["graphics"]
+    },
+    {
+      "key": "ches",
+      "title": "CHES",
+      "full_name": "International Conference on Cryptographic Hardware and Embedded Systems",
+      "acronym": "CHES",
+      "tags": [],
+      "categories": ["security"]
+    },
+    {
+      "key": "chi",
+      "title": "CHI",
+      "full_name": "The ACM Conference on Human Factors in Computing Systems",
+      "acronym": "CHI",
+      "tags": ["human-computer-interaction"],
+      "categories": ["ai", "hci"]
+    },
+    {
+      "key": "chil",
+      "title": "CHIL",
+      "full_name": "AHLI Conference on Health, Inference, and Learning",
+      "acronym": "CHIL",
+      "tags": ["machine-learning"],
+      "categories": ["ai"]
+    },
+    {
+      "key": "cicai",
+      "title": "CICAI",
+      "full_name": "CAAI International Conference on Artificial Intelligence",
+      "acronym": "CICAI",
+      "tags": [],
+      "categories": ["ai"]
+    },
+    {
+      "key": "cidr",
+      "title": "CIDR",
+      "full_name": "International Conference on Innovative Data Systems Research",
+      "acronym": "CIDR",
+      "tags": [],
+      "categories": ["db"]
+    },
+    {
+      "key": "cikm",
+      "title": "CIKM",
+      "full_name": "Conference on Information and Knowledge Management",
+      "acronym": "CIKM",
+      "tags": ["web-search", "data-mining", "machine-learning"],
+      "categories": ["ai", "db"]
+    },
+    {
+      "key": "cisse-2026-cybersecurity-education-con-2026",
+      "title": "CISSE 2026 – Cybersecurity Education Con 2026",
+      "full_name": "30th Colloquium for Information Systems Security Education",
+      "acronym": "CISSE 2026 – Cybersecurity Education Con 2026",
+      "tags": [],
+      "categories": ["security"]
+    },
+    {
+      "key": "clinical-mirf-2026-multimodal-information-retrieval-and-fusion-in-clinical-workflows",
+      "title": "Clinical-MIRF 2026",
+      "full_name": "[Clinical-MIRF 2026] - Multimodal Information Retrieval and Fusion in Clinical Workflows",
+      "acronym": "Clinical-MIRF 2026",
+      "tags": [],
+      "categories": ["db"]
+    },
+    {
+      "key": "closer",
+      "title": "CLOSER",
+      "full_name": "International Conference on Cloud Computing and Services Science",
+      "acronym": "CLOSER",
+      "tags": ["niche"],
+      "categories": ["systems", "networking"]
+    },
+    {
+      "key": "cloud",
+      "title": "Cloud",
+      "full_name": "IEEE International Conference on Cloud Computing",
+      "acronym": "Cloud",
+      "tags": [],
+      "categories": ["systems"]
+    },
+    {
+      "key": "cloudcom",
+      "title": "CloudCom",
+      "full_name": "IEEE International Conference on Cloud Computing Technology and Science",
+      "acronym": "CloudCom",
+      "tags": [],
+      "categories": ["systems"]
+    },
+    {
+      "key": "cluster",
+      "title": "CLUSTER",
+      "full_name": "IEEE International Conference on Cluster Computing",
+      "acronym": "CLUSTER",
+      "tags": [],
+      "categories": ["hpc"]
+    },
+    {
+      "key": "cna",
+      "title": "Complex Networks & Their Applications",
+      "full_name": "International Conference on Complex Networks and Their Applications",
+      "acronym": "Complex Networks & Their Applications",
+      "tags": [],
+      "categories": ["theory"]
+    },
+    {
+      "key": "cocoa",
+      "title": "COCOA",
+      "full_name": "International Conference on Combinatorial Optimization and Applications",
+      "acronym": "COCOA",
+      "tags": [],
+      "categories": ["theory"]
+    },
+    {
+      "key": "cocoon",
+      "title": "COCOON",
+      "full_name": "International Computing and Combinatorics Conference",
+      "acronym": "COCOON",
+      "tags": [],
+      "categories": ["theory"]
+    },
+    {
+      "key": "codaspy",
+      "title": "CODASPY",
+      "full_name": "ACM Conference on Data and Application Security and Privacy",
+      "acronym": "CODASPY",
+      "tags": [],
+      "categories": ["security"]
+    },
+    {
+      "key": "codes-isss",
+      "title": "CODES+ISSS",
+      "full_name": "International Conference on Hardware/Software Co-design and System Synthesis",
+      "acronym": "CODES+ISSS",
+      "tags": [],
+      "categories": ["systems"]
+    },
+    {
+      "key": "cods-2026-14th-acm-ikdd-international-conference-on-data-science",
+      "title": "CODS 2026 [14th ACM IKDD International Conference on Data Science]",
+      "full_name": "CODS 2026 [14th ACM IKDD International Conference on Data Science]",
+      "acronym": "CODS 2026 [14th ACM IKDD International Conference on Data Science]",
+      "tags": [],
+      "categories": ["ai", "db"]
+    },
+    {
+      "key": "cogfintech-2026",
+      "title": "CogFinTech 2026",
+      "full_name": "Intelligent and Secure FinTech Systems for Cognitive Cities: Machine Learning, Embedded Pl",
+      "acronym": "CogFinTech 2026",
+      "tags": [],
+      "categories": ["ai"]
+    },
+    {
+      "key": "cogsci",
+      "title": "CogSci",
+      "full_name": "Annual Meeting of the Cognitive Science Society",
+      "acronym": "CogSci",
+      "tags": [],
+      "categories": ["ai"]
+    },
+    {
+      "key": "coling",
+      "title": "COLING",
+      "full_name": "International Conference on Computational Linguistics",
+      "acronym": "COLING",
+      "tags": ["natural-language-processing"],
+      "categories": ["ai"]
+    },
+    {
+      "key": "collaboratecom",
+      "title": "CollaborateCom",
+      "full_name": "International Conference on Collaborative Computing: Networking, Applications and Worksharing",
+      "acronym": "CollaborateCom",
+      "tags": [],
+      "categories": ["hci"]
+    },
+    {
+      "key": "collas",
+      "title": "CoLLAs",
+      "full_name": "Fifth Conference on Lifelong Learning Agents",
+      "acronym": "CoLLAs",
+      "tags": ["machine-learning", "lifelong-learning"],
+      "categories": ["ai"]
+    },
+    {
+      "key": "colm",
+      "title": "COLM",
+      "full_name": "Conference on Language Modeling",
+      "acronym": "COLM",
+      "tags": ["natural-language-processing", "large-language-models"],
+      "categories": ["ai"]
+    },
+    {
+      "key": "colt",
+      "title": "COLT",
+      "full_name": "Annual Conference on Learning Theory",
+      "acronym": "COLT",
+      "tags": ["machine-learning"],
+      "categories": ["ai"]
+    },
+    {
+      "key": "compsac",
+      "title": "COMPSAC",
+      "full_name": "IEEE International Conference on Computers, Software, and Applications",
+      "acronym": "COMPSAC",
+      "tags": [],
+      "categories": ["systems"]
+    },
+    {
+      "key": "computer-networks",
+      "title": "Computer Networks",
+      "full_name": "Computer Networks (Elsevier)",
+      "acronym": "Computer Networks",
+      "tags": ["niche", "journal"],
+      "categories": ["networking"]
+    },
+    {
+      "key": "comsys",
+      "title": "ComSys",
+      "full_name": "コンピュータシステム・シンポジウム (ComSys)",
+      "acronym": "ComSys",
+      "tags": ["domestic-jp"],
+      "categories": ["systems"]
+    },
+    {
+      "key": "concur",
+      "title": "CONCUR",
+      "full_name": "International Conference on Concurrency Theory",
+      "acronym": "CONCUR",
+      "tags": [],
+      "categories": ["theory"]
+    },
+    {
+      "key": "conext",
+      "title": "CoNEXT",
+      "full_name": "International Conference on emerging Networking EXperiments and Technologies",
+      "acronym": "CoNEXT",
+      "tags": [],
+      "categories": ["networking"]
+    },
+    {
+      "key": "conll",
+      "title": "CoNLL",
+      "full_name": "The SIGNLL Conference on Computational Natural Language Learning",
+      "acronym": "CoNLL",
+      "tags": ["natural-language-processing"],
+      "categories": ["ai"]
+    },
+    {
+      "key": "conversations",
+      "title": "CONVERSATIONS 2026",
+      "full_name": "10th International Symposium on Chatbots and Human-centred AI",
+      "acronym": "CONVERSATIONS 2026",
+      "tags": ["niche"],
+      "categories": ["ai"]
+    },
+    {
+      "key": "copa-2026",
+      "title": "COPA 2026",
+      "full_name": "2026 Concurrent Processes Architectures (COPA) and Embedded Systems",
+      "acronym": "COPA 2026",
+      "tags": [],
+      "categories": ["systems"]
+    },
+    {
+      "key": "corl",
+      "title": "CoRL",
+      "full_name": "The Conference on Robot Learning",
+      "acronym": "CoRL",
+      "tags": ["machine-learning", "robotics"],
+      "categories": ["ai"]
+    },
+    {
+      "key": "cpal",
+      "title": "CPAL",
+      "full_name": "The Conference on Parsimony and Learning",
+      "acronym": "CPAL",
+      "tags": ["machine-learning"],
+      "categories": ["ai"]
+    },
+    {
+      "key": "crypto",
+      "title": "CRYPTO",
+      "full_name": "International Cryptology Conference",
+      "acronym": "CRYPTO",
+      "tags": [],
+      "categories": ["security"]
+    },
+    {
+      "key": "csai-2026",
+      "title": "CSAI 2026",
+      "full_name": "The 10th International Conference on Computer Science and Artificial Intelligence",
+      "acronym": "CSAI 2026",
+      "tags": [],
+      "categories": ["ai"]
+    },
+    {
+      "key": "cscloud",
+      "title": "CSCloud",
+      "full_name": "IEEE International Conference on Cyber Security and Cloud Computing",
+      "acronym": "CSCloud",
+      "tags": [],
+      "categories": ["security"]
+    },
+    {
+      "key": "cscw",
+      "title": "CSCW",
+      "full_name": "ACM Conference on Computer Supported Cooperative Work and Social Computing",
+      "acronym": "CSCW",
+      "tags": [],
+      "categories": ["hci"]
+    },
+    {
+      "key": "cscwd",
+      "title": "CSCWD",
+      "full_name": "International Conference on Computer Supported Cooperative Work in Design",
+      "acronym": "CSCWD",
+      "tags": [],
+      "categories": ["hci"]
+    },
+    {
+      "key": "csfw",
+      "title": "CSFW",
+      "full_name": "IEEE Computer Security Foundations Symposium",
+      "acronym": "CSFW",
+      "tags": [],
+      "categories": ["security"]
+    },
+    {
+      "key": "csp-2027",
+      "title": "CSP 2027",
+      "full_name": "2027 11th International Conference on Cryptography, Security and Privacy (CSP 2027)",
+      "acronym": "CSP 2027",
+      "tags": [],
+      "categories": ["security"]
+    },
+    {
+      "key": "csta-2026",
+      "title": "CSTA 2026",
+      "full_name": "The International Conference on Cybersecurity Systems, Technologies and Applications",
+      "acronym": "CSTA 2026",
+      "tags": [],
+      "categories": ["security"]
+    },
+    {
+      "key": "ct-rsa",
+      "title": "CT-RSA",
+      "full_name": "Cryptographer's Track at RSA Conference",
+      "acronym": "CT-RSA",
+      "tags": [],
+      "categories": ["security"]
+    },
+    {
+      "key": "cvaa-2026",
+      "title": "CVAA 2026",
+      "full_name": "IEEE 2026 6th International Conference on Computer Vision, Application and Algorithm",
+      "acronym": "CVAA 2026",
+      "tags": [],
+      "categories": ["ai"]
+    },
+    {
+      "key": "cvm",
+      "title": "Computational Visual Media Conference",
+      "full_name": "Computational Visual Media Conference (CVM 2027)",
+      "acronym": "Computational Visual Media Conference",
+      "tags": [],
+      "categories": ["graphics"]
+    },
+    {
+      "key": "cvpr",
+      "title": "CVPR",
+      "full_name": "IEEE/CVF Conference on Computer Vision and Pattern Recognition",
+      "acronym": "CVPR",
+      "tags": [
+        "computer-vision",
+        "robotics",
+        "machine-learning",
+        "optimization-methods",
+        "representation-learning"
+      ],
+      "categories": ["ai"]
+    },
+    {
+      "key": "dac",
+      "title": "DAC",
+      "full_name": "Design Automation Conference",
+      "acronym": "DAC",
+      "tags": [],
+      "categories": ["systems"]
+    },
+    {
+      "key": "dai",
+      "title": "DAI",
+      "full_name": "International Conference on Distributed Artificial Intelligence",
+      "acronym": "DAI",
+      "tags": [],
+      "categories": ["ai"]
+    },
+    {
+      "key": "dasfaa",
+      "title": "DASFAA",
+      "full_name": "The 32nd International Conference on Database Systems for Advanced Applications (DASFAA 2027)",
+      "acronym": "DASFAA",
+      "tags": [],
+      "categories": ["db"]
+    },
+    {
+      "key": "date",
+      "title": "DATE",
+      "full_name": "Design, Automation & Test in Europe",
+      "acronym": "DATE",
+      "tags": [],
+      "categories": ["systems"]
+    },
+    {
+      "key": "dcc",
+      "title": "DCC",
+      "full_name": "Data Compression Conference",
+      "acronym": "DCC",
+      "tags": [],
+      "categories": ["graphics"]
+    },
+    {
+      "key": "dfrws",
+      "title": "DFRWS",
+      "full_name": "Digital Forensic Research Workshop",
+      "acronym": "DFRWS",
+      "tags": [],
+      "categories": ["security"]
+    },
+    {
+      "key": "dfrws-apac",
+      "title": "DFRWS APAC",
+      "full_name": "Digital Forensic Research Workshop Asia Pacific",
+      "acronym": "DFRWS APAC",
+      "tags": [],
+      "categories": ["security"]
+    },
+    {
+      "key": "dimva",
+      "title": "DIMVA",
+      "full_name": "Detection of Intrusions and Malware & Vulnerability Assessment",
+      "acronym": "DIMVA",
+      "tags": [],
+      "categories": ["security"]
+    },
+    {
+      "key": "dis",
+      "title": "DIS",
+      "full_name": "ACM Conference on Designing Interactive Systems",
+      "acronym": "DIS",
+      "tags": [],
+      "categories": ["hci"]
+    },
+    {
+      "key": "dm-aisc-2026",
+      "title": "DM-AISC 2026",
+      "full_name": "Data Mining for Ambient Intelligence and Secure Communications",
+      "acronym": "DM-AISC 2026",
+      "tags": [],
+      "categories": ["db"]
+    },
+    {
+      "key": "dml-icc-2026",
+      "title": "DML-ICC 2026",
+      "full_name": "6th Workshop on Distributed Machine Learning for the Intelligent Computing Continuum",
+      "acronym": "DML-ICC 2026",
+      "tags": [],
+      "categories": ["ai"]
+    },
+    {
+      "key": "dras-2026",
+      "title": "DRAS  2026",
+      "full_name": "The International Conference on Drones, Robotics and Autonomous Systems",
+      "acronym": "DRAS  2026",
+      "tags": [],
+      "categories": ["ai"]
+    },
+    {
+      "key": "dsn",
+      "title": "DSN",
+      "full_name": "International Conference on Dependable Systems and Networks",
+      "acronym": "DSN",
+      "tags": [],
+      "categories": ["security"]
+    },
+    {
+      "key": "eaai-27",
+      "title": "EAAI-27",
+      "full_name": "The 17th Symposium on Educational Advances in Artificial Intelligence",
+      "acronym": "EAAI-27",
+      "tags": [],
+      "categories": ["ai"]
+    },
+    {
+      "key": "eacl",
+      "title": "EACL",
+      "full_name": "The Annual Conference of the European Chapter of the Association for Computational Linguistics",
+      "acronym": "EACL",
+      "tags": [],
+      "categories": ["ai"]
+    },
+    {
+      "key": "ease",
+      "title": "EASE",
+      "full_name": "International Conference on Evaluation and Assessment in Software Engineering",
+      "acronym": "EASE",
+      "tags": [],
+      "categories": ["systems"]
+    },
+    {
+      "key": "ecai",
+      "title": "ECAI",
+      "full_name": "European Conference on Artificial Intelligence",
+      "acronym": "ECAI",
+      "tags": ["machine-learning"],
+      "categories": ["ai"]
+    },
+    {
+      "key": "eccv",
+      "title": "ECCV",
+      "full_name": "European Conference on Computer Vision",
+      "acronym": "ECCV",
+      "tags": ["computer-vision"],
+      "categories": ["ai"]
+    },
+    {
+      "key": "echo-workshop-2026",
+      "title": "ECHO Workshop 2026",
+      "full_name": "The 1st International Workshop on Edge-Cloud-HPC Operational Continuum (ECHO)",
+      "acronym": "ECHO Workshop 2026",
+      "tags": ["workshop"],
+      "categories": ["hpc"]
+    },
+    {
+      "key": "ecir",
+      "title": "ECIR",
+      "full_name": "European Conference on Information Retrieval",
+      "acronym": "ECIR",
+      "tags": ["data-mining"],
+      "categories": ["ai", "db"]
+    },
+    {
+      "key": "ecml-pkdd",
+      "title": "ECML PKDD",
+      "full_name": "European Conference on Machine Learning and Principles and Practice of Knowledge Discovery in Databases",
+      "acronym": "ECML PKDD",
+      "tags": ["machine-learning", "data-mining"],
+      "categories": ["ai", "db"]
+    },
+    {
+      "key": "ecrts",
+      "title": "ECRTS",
+      "full_name": "European Conference on Real-Time Systems",
+      "acronym": "ECRTS",
+      "tags": [],
+      "categories": ["systems"]
+    },
+    {
+      "key": "ecscw",
+      "title": "ECSCW",
+      "full_name": "European Conference on Computer Supported Cooperative Work",
+      "acronym": "ECSCW",
+      "tags": [],
+      "categories": ["hci"]
+    },
+    {
+      "key": "edai-2026",
+      "title": "EDAI 2026",
+      "full_name": "2026 3rd International Conference on Economic Data Analytics and Artificial Intelligence",
+      "acronym": "EDAI 2026",
+      "tags": [],
+      "categories": ["ai"]
+    },
+    {
+      "key": "edbt",
+      "title": "EDBT",
+      "full_name": "International Conference on Extending Database Technology",
+      "acronym": "EDBT",
+      "tags": [],
+      "categories": ["db"]
+    },
+    {
+      "key": "edgesys",
+      "title": "EdgeSys",
+      "full_name": "ACM International Workshop on Edge Systems, Analytics and Networking",
+      "acronym": "EdgeSys",
+      "tags": ["niche", "workshop"],
+      "categories": ["systems", "networking"]
+    },
+    {
+      "key": "eecr-2027",
+      "title": "EECR 2027",
+      "full_name": "2027 13th International Conference on Electrical Engineering, Control and Robotics",
+      "acronym": "EECR 2027",
+      "tags": [],
+      "categories": ["ai"]
+    },
+    {
+      "key": "egsr",
+      "title": "EGSR",
+      "full_name": "Eurographics Symposium on Rendering",
+      "acronym": "EGSR",
+      "tags": [],
+      "categories": ["graphics"]
+    },
+    {
+      "key": "ehacon-2026-springer-lnns-scopus-8th-international-ethical-hacking-conference",
+      "title": "eHaCON 2026 (Springer LNNS / Scopus) - 8th International Ethical Hacking Conference",
+      "full_name": "eHaCON 2026 (Springer LNNS / Scopus) - 8th International Ethical Hacking Conference",
+      "acronym": "eHaCON 2026 (Springer LNNS / Scopus) - 8th International Ethical Hacking Conference",
+      "tags": [],
+      "categories": ["ai", "security"]
+    },
+    {
+      "key": "ei-scopus-ai2a-2026",
+      "title": "Ei/Scopus-AI2A 2026",
+      "full_name": "2026 IEEE 6th International Conference on Artificial Intelligence, Automation and Algorithms (AI2A 2026)",
+      "acronym": "Ei/Scopus-AI2A 2026",
+      "tags": [],
+      "categories": ["ai", "theory"]
+    },
+    {
+      "key": "ei-scopus-ccnml-2026",
+      "title": "Ei/Scopus-CCNML  2026",
+      "full_name": "2026 6th International Conference on Communications, Networking and Machine Learning (CCNML 2026)",
+      "acronym": "Ei/Scopus-CCNML  2026",
+      "tags": [],
+      "categories": ["ai"]
+    },
+    {
+      "key": "ei-scopus-cvgip-2026",
+      "title": "Ei/Scopus-CVGIP 2026",
+      "full_name": "2026 3rd International Conference on Computer Vision, Graphics and Image Processing (CVGIP 2026)",
+      "acronym": "Ei/Scopus-CVGIP 2026",
+      "tags": [],
+      "categories": ["ai"]
+    },
+    {
+      "key": "eieai-2026",
+      "title": "EIEAI 2026",
+      "full_name": "2026 2nd International Conference on Electronic Information Engineering and Artificial Intelligence",
+      "acronym": "EIEAI 2026",
+      "tags": [],
+      "categories": ["ai"]
+    },
+    {
+      "key": "emnlp",
+      "title": "EMNLP",
+      "full_name": "The annual Conference on Empirical Methods in Natural Language Processing",
+      "acronym": "EMNLP",
+      "tags": ["natural-language-processing"],
+      "categories": ["ai"]
+    },
+    {
+      "key": "emnlp-industry-track",
+      "title": "EMNLP (Industry Track)",
+      "full_name": "The annual Conference on Empirical Methods in Natural Language Processing (Industry Track)",
+      "acronym": "EMNLP (Industry Track)",
+      "tags": ["natural-language-processing"],
+      "categories": ["ai"]
+    },
+    {
+      "key": "emnlp-system-demonstrations-track",
+      "title": "EMNLP (System Demonstrations Track)",
+      "full_name": "The annual Conference on Empirical Methods in Natural Language Processing (System Demonstrations Track)",
+      "acronym": "EMNLP (System Demonstrations Track)",
+      "tags": ["natural-language-processing"],
+      "categories": ["ai"]
+    },
+    {
+      "key": "emsoft",
+      "title": "EMSOFT",
+      "full_name": "International Conference on Embedded Software",
+      "acronym": "EMSOFT",
+      "tags": [],
+      "categories": ["systems"]
+    },
+    {
+      "key": "eocon-2026",
+      "title": "EOCON  2026",
+      "full_name": "EyesOpen Cybersecurity Conference - 7th edition",
+      "acronym": "EOCON  2026",
+      "tags": [],
+      "categories": ["security"]
+    },
+    {
+      "key": "eocon26",
+      "title": "EOCON26",
+      "full_name": "EyesOpen Cybersecurity Conference - 7th edition",
+      "acronym": "EOCON26",
+      "tags": [],
+      "categories": ["security"]
+    },
+    {
+      "key": "esann",
+      "title": "ESANN",
+      "full_name": "European Symposium on Artificial Neural Networks, Computational Intelligence and Machine Learning",
+      "acronym": "ESANN",
+      "tags": ["machine learning"],
+      "categories": ["ai"]
+    },
+    {
+      "key": "escience",
+      "title": "eScience",
+      "full_name": "IEEE International Conference on eScience",
+      "acronym": "eScience",
+      "tags": ["niche"],
+      "categories": ["hpc", "systems"]
+    },
+    {
+      "key": "esem",
+      "title": "ESEM",
+      "full_name": "International Symposium on Empirical Software Engineering and Measurement",
+      "acronym": "ESEM",
+      "tags": [],
+      "categories": ["systems"]
+    },
+    {
+      "key": "esorics",
+      "title": "ESORICS",
+      "full_name": "European Symposium on Research in Computer Security",
+      "acronym": "ESORICS",
+      "tags": [],
+      "categories": ["security"]
+    },
+    {
+      "key": "ets",
+      "title": "ETS",
+      "full_name": "IEEE European Test Symposium",
+      "acronym": "ETS",
+      "tags": [],
+      "categories": ["systems"]
+    },
+    {
+      "key": "eudat-conference",
+      "title": "EUDAT Conference 2026",
+      "full_name": "EUDAT Conference 2026",
+      "acronym": "EUDAT Conference 2026",
+      "tags": ["niche"],
+      "categories": ["db", "systems"]
+    },
+    {
+      "key": "euro-par",
+      "title": "Euro-Par",
+      "full_name": "European Conference on Parallel and Distributed Computing",
+      "acronym": "Euro-Par",
+      "tags": [],
+      "categories": ["hpc"]
+    },
+    {
+      "key": "eurocrypt",
+      "title": "EUROCRYPT",
+      "full_name": "European Cryptology Conference",
+      "acronym": "EUROCRYPT",
+      "tags": [],
+      "categories": ["security"]
+    },
+    {
+      "key": "eurographics",
+      "title": "Eurographics",
+      "full_name": "The 48th Annual Conference of the European Association for Computer Graphics",
+      "acronym": "Eurographics",
+      "tags": ["computer-graphics"],
+      "categories": ["ai", "graphics"]
+    },
+    {
+      "key": "euros-p",
+      "title": "EuroS&P",
+      "full_name": "IEEE European Symposium on Security and Privacy",
+      "acronym": "EuroS&P",
+      "tags": [],
+      "categories": ["security"]
+    },
+    {
+      "key": "eurosec",
+      "title": "EuroSec",
+      "full_name": "European Workshop on Systems Security",
+      "acronym": "EuroSec",
+      "tags": ["niche", "workshop"],
+      "categories": ["security", "systems"]
+    },
+    {
+      "key": "eurosys",
+      "title": "EuroSys",
+      "full_name": "European Conference on Computer Systems",
+      "acronym": "EuroSys",
+      "tags": [],
+      "categories": ["systems"]
+    },
+    {
+      "key": "eurovis",
+      "title": "EuroVis",
+      "full_name": "Eurographics Conference on Visualization",
+      "acronym": "EuroVis",
+      "tags": [],
+      "categories": ["graphics"]
+    },
+    {
+      "key": "eusipco",
+      "title": "EUSIPCO",
+      "full_name": "European Signal Processing Conference",
+      "acronym": "EUSIPCO",
+      "tags": [],
+      "categories": ["systems"]
+    },
+    {
+      "key": "euvip",
+      "title": "EUVIP",
+      "full_name": "European Conference on Visual Information Processing",
+      "acronym": "EUVIP",
+      "tags": [
+        "computer vision",
+        "image processing",
+        "signal processing",
+        "machine learning",
+        "deep learning",
+        "visual information processing"
+      ],
+      "categories": ["ai"]
+    },
+    {
+      "key": "evomusart-2027",
+      "title": "EvoMusArt 2027",
+      "full_name": "16th International Conference on Artificial Intelligence in Music, Sound, Art and Design",
+      "acronym": "EvoMusArt 2027",
+      "tags": [],
+      "categories": ["ai"]
+    },
+    {
+      "key": "facct",
+      "title": "FAccT",
+      "full_name": "ACM Conference on Fairness, Accountability, and Transparency",
+      "acronym": "FAccT",
+      "tags": ["fairness", "machine-learning", "natural-language-processing", "computer-vision"],
+      "categories": ["ai"]
+    },
+    {
+      "key": "fast",
+      "title": "FAST",
+      "full_name": "USENIX Conference on File and Storage Technologies",
+      "acronym": "FAST",
+      "tags": [],
+      "categories": ["systems"]
+    },
+    {
+      "key": "fc",
+      "title": "FC",
+      "full_name": "Financial Cryptography and Data Security",
+      "acronym": "FC",
+      "tags": [],
+      "categories": ["security"]
+    },
+    {
+      "key": "fccm",
+      "title": "FCCM",
+      "full_name": "IEEE Symposium on Field-Programmable Custom Computing Machines",
+      "acronym": "FCCM",
+      "tags": [],
+      "categories": ["systems"]
+    },
+    {
+      "key": "fg",
+      "title": "FG",
+      "full_name": "IEEE International Conference on Automatic Face and Gesture Recognition",
+      "acronym": "FG",
+      "tags": ["computer-vision"],
+      "categories": ["ai"]
+    },
+    {
+      "key": "fgcs",
+      "title": "FGCS",
+      "full_name": "Future Generation Computer Systems",
+      "acronym": "FGCS",
+      "tags": ["niche", "journal"],
+      "categories": ["hpc", "systems"]
+    },
+    {
+      "key": "fit",
+      "title": "FIT",
+      "full_name": "情報科学技術フォーラム (Forum on Information Technology)",
+      "acronym": "FIT",
+      "tags": ["domestic-jp"],
+      "categories": ["systems", "networking", "ai"]
+    },
+    {
+      "key": "fmas-2026",
+      "title": "FMAS 2026",
+      "full_name": "8th International Workshop on Formal Methods for Autonomous Systems",
+      "acronym": "FMAS 2026",
+      "tags": [],
+      "categories": ["ai", "systems"]
+    },
+    {
+      "key": "fmcad",
+      "title": "FMCAD",
+      "full_name": "Formal Methods in Computer-Aided Design",
+      "acronym": "FMCAD",
+      "tags": [],
+      "categories": ["theory"]
+    },
+    {
+      "key": "focs",
+      "title": "FOCS",
+      "full_name": "IEEE Symposium on Foundations of Computer Science",
+      "acronym": "FOCS",
+      "tags": [],
+      "categories": ["theory"]
+    },
+    {
+      "key": "forte",
+      "title": "FORTE",
+      "full_name": "International Conference on Formal Techniques for (Networked and) Distributed Systems",
+      "acronym": "FORTE",
+      "tags": [],
+      "categories": ["networking"]
+    },
+    {
+      "key": "fpga",
+      "title": "FPGA",
+      "full_name": "ACM/SIGDA International Symposium on Field-Programmable Gate Arrays",
+      "acronym": "FPGA",
+      "tags": [],
+      "categories": ["systems"]
+    },
+    {
+      "key": "fpt",
+      "title": "FPT",
+      "full_name": "International Conference on Field Programmable Technology",
+      "acronym": "FPT",
+      "tags": [],
+      "categories": ["systems"]
+    },
+    {
+      "key": "fse-sc",
+      "title": "FSE",
+      "full_name": "Fast Software Encryption",
+      "acronym": "FSE",
+      "tags": [],
+      "categories": ["security"]
+    },
+    {
+      "key": "fse-se",
+      "title": "FSE",
+      "full_name": "ACM International Conference on the Foundations of Software Engineering",
+      "acronym": "FSE",
+      "tags": [],
+      "categories": ["systems"]
+    },
+    {
+      "key": "ftxs-2026",
+      "title": "FTXS 2026",
+      "full_name": "Workshop for Faults, Trustworthiness, and eXplainability for AI Systems at Scale (FTXS)",
+      "acronym": "FTXS 2026",
+      "tags": ["workshop"],
+      "categories": ["hpc"]
+    },
+    {
+      "key": "gcetai26",
+      "title": "GCETAI26",
+      "full_name": "Global Conference on Emerging Trends in Artificial Intelligence: Comparative Approaches of",
+      "acronym": "GCETAI26",
+      "tags": [],
+      "categories": ["ai"]
+    },
+    {
+      "key": "gecco",
+      "title": "GECCO",
+      "full_name": "Genetic and Evolutionary Computation Conference",
+      "acronym": "GECCO",
+      "tags": [],
+      "categories": ["ai"]
+    },
+    {
+      "key": "genai4sg",
+      "title": "GenAI4SG @ CIKM 2026",
+      "full_name": "1st Workshop on Generative AI for Social Good and Vulnerable Populations",
+      "acronym": "GenAI4SG @ CIKM 2026",
+      "tags": ["niche", "workshop"],
+      "categories": ["ai"]
+    },
+    {
+      "key": "geoai-2026",
+      "title": "GeoAI 2026",
+      "full_name": "The 9th International Workshop on AI for Geographic Knowledge Discovery",
+      "acronym": "GeoAI 2026",
+      "tags": [],
+      "categories": ["ai"]
+    },
+    {
+      "key": "geoanomalies-2026",
+      "title": "GeoAnomalies 2026",
+      "full_name": "The 3rd ACM SIGSPATIAL International Workshop on Geospatial Anomaly Detection",
+      "acronym": "GeoAnomalies 2026",
+      "tags": [],
+      "categories": ["systems"]
+    },
+    {
+      "key": "geohealth-2026",
+      "title": "GeoHealth 2026",
+      "full_name": "The 2nd ACM SIGSPATIAL International Workshop on Geospatial Computing for Public Health",
+      "acronym": "GeoHealth 2026",
+      "tags": [],
+      "categories": ["systems"]
+    },
+    {
+      "key": "geoindustry-2026",
+      "title": "GeoIndustry 2026",
+      "full_name": "The 5th ACM SIGSPATIAL International Workshop on Spatial Big Data and AI for Industry",
+      "acronym": "GeoIndustry 2026",
+      "tags": [],
+      "categories": ["ai"]
+    },
+    {
+      "key": "geosearch-2026",
+      "title": "GeoSearch 2026",
+      "full_name": "The 5th ACM SIGSPATIAL International Workshop on Searching and Mining Large Collections of Geospatial Data",
+      "acronym": "GeoSearch 2026",
+      "tags": [],
+      "categories": ["ai"]
+    },
+    {
+      "key": "geosim-2026",
+      "title": "GeoSim 2026",
+      "full_name": "The 9th ACM SIGSPATIAL International Workshop on Geospatial Simulation (GeoSim 2026)",
+      "acronym": "GeoSim 2026",
+      "tags": ["niche", "workshop"],
+      "categories": ["systems"]
+    },
+    {
+      "key": "globecom",
+      "title": "GLOBECOM",
+      "full_name": "IEEE Global Communications Conference",
+      "acronym": "GLOBECOM",
+      "tags": [],
+      "categories": ["networking"]
+    },
+    {
+      "key": "glsvlsi",
+      "title": "GLSVLSI",
+      "full_name": "Great Lakes Symposium on VLSI",
+      "acronym": "GLSVLSI",
+      "tags": [],
+      "categories": ["systems"]
+    },
+    {
+      "key": "gmp",
+      "title": "GMP",
+      "full_name": "International Conference on Geometric Modeling and Processing",
+      "acronym": "GMP",
+      "tags": [],
+      "categories": ["graphics"]
+    },
+    {
+      "key": "greenai2027",
+      "title": "GreenAI2027",
+      "full_name": "International Conference on Green Artificial Intelligence and Industrial Applications",
+      "acronym": "GreenAI2027",
+      "tags": [],
+      "categories": ["ai"]
+    },
+    {
+      "key": "group",
+      "title": "GROUP",
+      "full_name": "ACM International Conference on Supporting Group Work",
+      "acronym": "GROUP",
+      "tags": [],
+      "categories": ["hci"]
+    },
+    {
+      "key": "h2rc-2026",
+      "title": "H2RC 2026",
+      "full_name": "Twelfth International Workshop on Heterogeneous High-performance Reconfigurable Computing (H2RC 2026)",
+      "acronym": "H2RC 2026",
+      "tags": ["workshop"],
+      "categories": ["hpc"]
+    },
+    {
+      "key": "hcai-2026",
+      "title": "HCAI 2026",
+      "full_name": "Frontiers in Computer Science: Human-Centered AI in Cyber Security, Privacy, and Trust for Critical Infrastructures",
+      "acronym": "HCAI 2026",
+      "tags": [],
+      "categories": ["security"]
+    },
+    {
+      "key": "hcc-ai-2026",
+      "title": "HCC-AI 2026",
+      "full_name": "WORKSHOP ON HUMAN-CENTERED CYBERSECURITY, DATA PRIVACY, AND AI RISKS",
+      "acronym": "HCC-AI 2026",
+      "tags": [],
+      "categories": ["security"]
+    },
+    {
+      "key": "hclh-sc-2026",
+      "title": "HCLH 2026",
+      "full_name": "High-Accuracy Computing on Low-Precision Hardware (HCLH)",
+      "acronym": "HCLH 2026",
+      "tags": ["workshop"],
+      "categories": ["hpc"]
+    },
+    {
+      "key": "hicss",
+      "title": "HICSS",
+      "full_name": "Hawaii International Conference on System Sciences",
+      "acronym": "HICSS",
+      "tags": ["information-systems"],
+      "categories": ["ai", "hci"]
+    },
+    {
+      "key": "hipeac",
+      "title": "HiPEAC",
+      "full_name": "International Conference on High Performance and Embedded Architectures and Compilers",
+      "acronym": "HiPEAC",
+      "tags": [],
+      "categories": ["systems"]
+    },
+    {
+      "key": "hmem-2026",
+      "title": "HMEM 2026",
+      "full_name": "7th Workshop on Heterogeneity and Memory Systems (HMEM)",
+      "acronym": "HMEM 2026",
+      "tags": ["workshop"],
+      "categories": ["hpc"]
+    },
+    {
+      "key": "host",
+      "title": "HOST",
+      "full_name": "IEEE International Symposium on Hardware Oriented Security and Trust",
+      "acronym": "HOST",
+      "tags": [],
+      "categories": ["security"]
+    },
+    {
+      "key": "hot-chips",
+      "title": "Hot Chips",
+      "full_name": "Hot Chips: A Symposium on High Performance Chips",
+      "acronym": "Hot Chips",
+      "tags": [],
+      "categories": ["systems"]
+    },
+    {
+      "key": "hoti",
+      "title": "HOTI",
+      "full_name": "IEEE Symposium on High-Performance Interconnects (Hot Interconnects)",
+      "acronym": "HOTI",
+      "tags": [],
+      "categories": ["networking", "hpc"]
+    },
+    {
+      "key": "hotnets",
+      "title": "HotNets",
+      "full_name": "ACM Workshop on Hot Topics in Networks",
+      "acronym": "HotNets",
+      "tags": [],
+      "categories": ["networking"]
+    },
+    {
+      "key": "hotos",
+      "title": "HotOS",
+      "full_name": "ACM SIGOPS Workshop on Hot Topics in Operating Systems",
+      "acronym": "HotOS",
+      "tags": [],
+      "categories": ["systems"]
+    },
+    {
+      "key": "hotsec",
+      "title": "HotSec",
+      "full_name": "USENIX Workshop on Hot Topics in Security",
+      "acronym": "HotSec",
+      "tags": ["discontinued", "workshop", "security"],
+      "categories": ["security"]
+    },
+    {
+      "key": "hotstorage",
+      "title": "HotStorage",
+      "full_name": "ACM Workshop on Hot Topics in Storage and File Systems",
+      "acronym": "HotStorage",
+      "tags": [],
+      "categories": ["systems"]
+    },
+    {
+      "key": "hpc-fabrics-2026",
+      "title": "Fabrics for AI and HPC 2026",
+      "full_name": "Workshop on High Performance Fabrics for AI and HPC (SC26)",
+      "acronym": "Fabrics for AI and HPC 2026",
+      "tags": ["workshop"],
+      "categories": ["hpc", "networking"]
+    },
+    {
+      "key": "hpc-oda-2026",
+      "title": "HPC-ODA 2026",
+      "full_name": "The 1st International Workshop on HPC Operational Data Analytics (HPC-ODA 2026)",
+      "acronym": "HPC-ODA 2026",
+      "tags": ["workshop"],
+      "categories": ["hpc"]
+    },
+    {
+      "key": "hpca",
+      "title": "HPCA",
+      "full_name": "IEEE International Symposium on High-Performance Computer Architecture",
+      "acronym": "HPCA",
+      "tags": [],
+      "categories": ["systems"]
+    },
+    {
+      "key": "hpcc",
+      "title": "HPCC",
+      "full_name": "IEEE International Conference on High Performance Computing and Communications",
+      "acronym": "HPCC",
+      "tags": [],
+      "categories": ["hpc"]
+    },
+    {
+      "key": "hpcsyspros-2026",
+      "title": "HPCSYSPROS 2026",
+      "full_name": "HPC Systems Professionals Workshop (HPCSYSPROS26)",
+      "acronym": "HPCSYSPROS 2026",
+      "tags": ["workshop"],
+      "categories": ["hpc"]
+    },
+    {
+      "key": "hpctests-2026",
+      "title": "HPCTESTS 2026",
+      "full_name": "Fourth International Workshop on HPC Testing and Evaluation of Systems, Tools, and Software (HPCTESTS 2026)",
+      "acronym": "HPCTESTS 2026",
+      "tags": ["workshop"],
+      "categories": ["hpc"]
+    },
+    {
+      "key": "hpdc",
+      "title": "HPDC",
+      "full_name": "ACM Symposium on High-Performance Parallel and Distributed Computing",
+      "acronym": "HPDC",
+      "tags": [],
+      "categories": ["hpc"]
+    },
+    {
+      "key": "hppss-2026",
+      "title": "HPPSS 2026",
+      "full_name": "SC26 Workshop: High Performance Python for Science at Scale (HPPSS)",
+      "acronym": "HPPSS 2026",
+      "tags": ["workshop"],
+      "categories": ["hpc"]
+    },
+    {
+      "key": "hpsr",
+      "title": "HPSR",
+      "full_name": "IEEE International Conference on High Performance Switching and Routing",
+      "acronym": "HPSR",
+      "tags": [],
+      "categories": ["networking"]
+    },
+    {
+      "key": "hscc",
+      "title": "HSCC",
+      "full_name": "International Conference on Hybrid Systems: Computation and Control",
+      "acronym": "HSCC",
+      "tags": [],
+      "categories": ["theory"]
+    },
+    {
+      "key": "humob-2026",
+      "title": "HuMoB 2026",
+      "full_name": "The 4th ACM SIGSPATIAL International Workshop on Human Mobility Prediction Challenge",
+      "acronym": "HuMoB 2026",
+      "tags": [],
+      "categories": ["ai"]
+    },
+    {
+      "key": "hust-26-2026",
+      "title": "HUST-26",
+      "full_name": "13th International Workshop on HPC User Support Tools (HUST-26)",
+      "acronym": "HUST-26",
+      "tags": ["workshop"],
+      "categories": ["hpc"]
+    },
+    {
+      "key": "iar-2026",
+      "title": "IAR 2026",
+      "full_name": "2026 3rd International Conference on Intelligent Algorithms and Robotics",
+      "acronym": "IAR 2026",
+      "tags": [],
+      "categories": ["ai", "theory"]
+    },
+    {
+      "key": "ica3pp",
+      "title": "ICA3PP",
+      "full_name": "International Conference on Algorithms and Architectures for Parallel Processing",
+      "acronym": "ICA3PP",
+      "tags": [],
+      "categories": ["hpc"]
+    },
+    {
+      "key": "icact",
+      "title": "ICACT",
+      "full_name": "International Conference on Advanced Communications Technology",
+      "acronym": "ICACT",
+      "tags": [],
+      "categories": ["networking"]
+    },
+    {
+      "key": "icadcml-2027",
+      "title": "ICADCML 2027",
+      "full_name": "8th International Conference on Advances in Distributed Computing and Machine Learning",
+      "acronym": "ICADCML 2027",
+      "tags": [],
+      "categories": ["ai"]
+    },
+    {
+      "key": "icahn-2026",
+      "title": "ICAHN 2026",
+      "full_name": "2026 2nd International Conference on Artificial Intelligence, Human-Computer Interaction and Natural Language Processing-EI/Scopus",
+      "acronym": "ICAHN 2026",
+      "tags": [],
+      "categories": ["ai", "hci"]
+    },
+    {
+      "key": "icai-2026",
+      "title": "ICAI 2026",
+      "full_name": "2026 International Conference on Artificial Intelligence and Information",
+      "acronym": "ICAI 2026",
+      "tags": [],
+      "categories": ["ai"]
+    },
+    {
+      "key": "icai-26",
+      "title": "ICAI'26",
+      "full_name": "IEEE International Conference Automatics and Informatics 2026",
+      "acronym": "ICAI'26",
+      "tags": [],
+      "categories": ["ai", "systems"]
+    },
+    {
+      "key": "icaibd-2027",
+      "title": "ICAIBD 2027",
+      "full_name": "2027 The 10th International Conference on Artificial Intelligence and Big Data",
+      "acronym": "ICAIBD 2027",
+      "tags": [],
+      "categories": ["ai", "db"]
+    },
+    {
+      "key": "icaici-2026",
+      "title": "ICAICI 2026",
+      "full_name": "IEEE 2026 International Conference on Artificial Intelligence, Cyber-Physical Systems and Intelligent Computing",
+      "acronym": "ICAICI 2026",
+      "tags": [],
+      "categories": ["ai"]
+    },
+    {
+      "key": "icaid-2027",
+      "title": "ICAID 2027",
+      "full_name": "The International Conference on Artificial Intelligence and Data Engineering",
+      "acronym": "ICAID 2027",
+      "tags": [],
+      "categories": ["ai"]
+    },
+    {
+      "key": "icaidm-2026",
+      "title": "ICAIDM 2026",
+      "full_name": "2026 3rd International Conference on Artificial Intelligence and Digital Management",
+      "acronym": "ICAIDM 2026",
+      "tags": [],
+      "categories": ["ai"]
+    },
+    {
+      "key": "icaie-2026",
+      "title": "ICAIE’2026",
+      "full_name": "The 3rd International Conference on Artificial Intelligence and Engineering 2026",
+      "acronym": "ICAIE’2026",
+      "tags": [],
+      "categories": ["ai"]
+    },
+    {
+      "key": "icaif",
+      "title": "ICAIF",
+      "full_name": "International Conference on AI in Finance",
+      "acronym": "ICAIF",
+      "tags": [],
+      "categories": ["ai"]
+    },
+    {
+      "key": "icaisg-2026",
+      "title": "ICAISG 2026",
+      "full_name": "2026 The 2nd International Conference on Artificial Intelligence Security and Governance",
+      "acronym": "ICAISG 2026",
+      "tags": [],
+      "categories": ["ai"]
+    },
+    {
+      "key": "icalp",
+      "title": "ICALP",
+      "full_name": "EATCS International Colloquium on Automata, Languages, and Programming",
+      "acronym": "ICALP",
+      "tags": [],
+      "categories": ["theory"]
+    },
+    {
+      "key": "icann",
+      "title": "ICANN",
+      "full_name": "35th International Conference on Artificial Neural Networks",
+      "acronym": "ICANN",
+      "tags": ["machine-learning"],
+      "categories": ["ai"]
+    },
+    {
+      "key": "icaps",
+      "title": "ICAPS",
+      "full_name": "International Conference on Automated Planning and Scheduling",
+      "acronym": "ICAPS",
+      "tags": [],
+      "categories": ["ai"]
+    },
+    {
+      "key": "icara-2027",
+      "title": "ICARA 2027",
+      "full_name": "The 13th International Conference on Automation, Robotics and Applications",
+      "acronym": "ICARA 2027",
+      "tags": [],
+      "categories": ["ai"]
+    },
+    {
+      "key": "icassp",
+      "title": "ICASSP",
+      "full_name": "International Conference on Acoustics, Speech and Signal Processing",
+      "acronym": "ICASSP",
+      "tags": ["speech", "signal-processing"],
+      "categories": ["ai", "graphics"]
+    },
+    {
+      "key": "icbda2027",
+      "title": "ICBDA 2027",
+      "full_name": "2027 the 12th International Conference on Big Data Analytics",
+      "acronym": "ICBDA 2027",
+      "tags": [],
+      "categories": ["db"]
+    },
+    {
+      "key": "icbdaia27",
+      "title": "ICBDAIA27",
+      "full_name": "the 6th International Conference on Big Data and Artificial Intelligence Applications",
+      "acronym": "ICBDAIA27",
+      "tags": [],
+      "categories": ["ai", "db"]
+    },
+    {
+      "key": "icbsr-2026",
+      "title": "ICBSR 2026",
+      "full_name": "2026 International Conference on Bio-inspired System and Robotics (ICBSR 2026)",
+      "acronym": "ICBSR 2026",
+      "tags": [],
+      "categories": ["ai"]
+    },
+    {
+      "key": "icc",
+      "title": "ICC",
+      "full_name": "IEEE International Conference on Communications",
+      "acronym": "ICC",
+      "tags": [],
+      "categories": ["networking"]
+    },
+    {
+      "key": "iccad",
+      "title": "ICCAD",
+      "full_name": "IEEE/ACM International Conference on Computer-Aided Design",
+      "acronym": "ICCAD",
+      "tags": [],
+      "categories": ["systems"]
+    },
+    {
+      "key": "iccbr",
+      "title": "ICCBR",
+      "full_name": "International Conference on Case-Based Reasoning",
+      "acronym": "ICCBR",
+      "tags": [],
+      "categories": ["ai"]
+    },
+    {
+      "key": "icccbda-2027",
+      "title": "ICCCBDA 2027",
+      "full_name": "2027 the 12th International Conference on Cloud Computing and Big Data Analytics",
+      "acronym": "ICCCBDA 2027",
+      "tags": [],
+      "categories": ["systems", "db"]
+    },
+    {
+      "key": "icccn",
+      "title": "ICCCN",
+      "full_name": "IEEE International Conference on Computer Communications and Networks",
+      "acronym": "ICCCN",
+      "tags": [],
+      "categories": ["networking"]
+    },
+    {
+      "key": "iccd",
+      "title": "ICCD",
+      "full_name": "International Conference on Computer Design",
+      "acronym": "ICCD",
+      "tags": [],
+      "categories": ["systems"]
+    },
+    {
+      "key": "icce",
+      "title": "IEEE ICCE",
+      "full_name": "IEEE International Conference on Consumer Electronics",
+      "acronym": "IEEE ICCE",
+      "tags": ["niche"],
+      "categories": ["systems"]
+    },
+    {
+      "key": "iccns-2026",
+      "title": "ICCNS 2026",
+      "full_name": "2026 The 16th International Conference on Communication and Network Security (ICCNS 2026)",
+      "acronym": "ICCNS 2026",
+      "tags": [],
+      "categories": ["security"]
+    },
+    {
+      "key": "iccr-2026",
+      "title": "ICCR 2026",
+      "full_name": "2026 8th International Conference on Control and Robotics",
+      "acronym": "ICCR 2026",
+      "tags": [],
+      "categories": ["ai"]
+    },
+    {
+      "key": "iccre-2027",
+      "title": "ICCRE 2027",
+      "full_name": "2027 12th International Conference on Control and Robotics Engineering",
+      "acronym": "ICCRE 2027",
+      "tags": [],
+      "categories": ["ai"]
+    },
+    {
+      "key": "iccta-2026",
+      "title": "ICCTA 2026",
+      "full_name": "36th International Conference on Computer Theory and Applications - Towards Smart Applications and AI-driven Secure Systems",
+      "acronym": "ICCTA 2026",
+      "tags": [],
+      "categories": ["theory"]
+    },
+    {
+      "key": "iccv",
+      "title": "ICCV",
+      "full_name": "IEEE International Conference on Computer Vision",
+      "acronym": "ICCV",
+      "tags": ["machine-learning", "computer-vision"],
+      "categories": ["ai"]
+    },
+    {
+      "key": "icdar",
+      "title": "ICDAR",
+      "full_name": "International Conference on Document Analysis and Recognition",
+      "acronym": "ICDAR",
+      "tags": ["computer-vision"],
+      "categories": ["ai"]
+    },
+    {
+      "key": "icdcn",
+      "title": "ICDCN",
+      "full_name": "International Conference on Distributed Computing and Networking",
+      "acronym": "ICDCN",
+      "tags": [],
+      "categories": ["systems", "networking"]
+    },
+    {
+      "key": "icdcs",
+      "title": "ICDCS",
+      "full_name": "IEEE International Conference on Distributed Computing Systems",
+      "acronym": "ICDCS",
+      "tags": [],
+      "categories": ["systems"]
+    },
+    {
+      "key": "icde",
+      "title": "ICDE",
+      "full_name": "IEEE International Conference on Data Engineering",
+      "acronym": "ICDE",
+      "tags": [],
+      "categories": ["db"]
+    },
+    {
+      "key": "icdf2c",
+      "title": "ICDF2C",
+      "full_name": "International Conference on Digital Forensics & Cyber Crime",
+      "acronym": "ICDF2C",
+      "tags": [],
+      "categories": ["security"]
+    },
+    {
+      "key": "icdiacs-2026",
+      "title": "ICDIACS 2026",
+      "full_name": "International Conference on Digital Intelligence: Ai, Cybersecurity and Computing for a Su",
+      "acronym": "ICDIACS 2026",
+      "tags": [],
+      "categories": ["security"]
+    },
+    {
+      "key": "icdm",
+      "title": "ICDM",
+      "full_name": "IEEE International Conference on Data Mining",
+      "acronym": "ICDM",
+      "tags": ["data-mining"],
+      "categories": ["ai", "db"]
+    },
+    {
+      "key": "icdt",
+      "title": "ICDT",
+      "full_name": "International Conference on Database Theory",
+      "acronym": "ICDT",
+      "tags": [],
+      "categories": ["db"]
+    },
+    {
+      "key": "icear-2026",
+      "title": "ICEAR 2026",
+      "full_name": "2026 International Conference on Embodied AI and Robotics",
+      "acronym": "ICEAR 2026",
+      "tags": [],
+      "categories": ["ai"]
+    },
+    {
+      "key": "icecai-2026",
+      "title": "ICECAI 2026",
+      "full_name": "IEEE 2026 7th International Conference on Electronic Communication and Artificial Intelligence",
+      "acronym": "ICECAI 2026",
+      "tags": [],
+      "categories": ["ai"]
+    },
+    {
+      "key": "iceccs",
+      "title": "ICECCS",
+      "full_name": "International Conference on Engineering of Complex Computer Systems",
+      "acronym": "ICECCS",
+      "tags": [],
+      "categories": ["systems"]
+    },
+    {
+      "key": "iceta-2026",
+      "title": "ICETA 2026",
+      "full_name": "International Conference of Engineering, Technology and Architecture 2026",
+      "acronym": "ICETA 2026",
+      "tags": [],
+      "categories": ["ai", "systems", "networking"]
+    },
+    {
+      "key": "icic",
+      "title": "ICIC",
+      "full_name": "International Conference on Intelligent Computing",
+      "acronym": "ICIC",
+      "tags": [],
+      "categories": ["ai"]
+    },
+    {
+      "key": "icics",
+      "title": "ICICS",
+      "full_name": "International Conference on Information and Communications Security",
+      "acronym": "ICICS",
+      "tags": [],
+      "categories": ["security"]
+    },
+    {
+      "key": "icies-2026",
+      "title": "ICIES 2026",
+      "full_name": "International Conference on Intelligent Enterprise Systems",
+      "acronym": "ICIES 2026",
+      "tags": [],
+      "categories": ["ai"]
+    },
+    {
+      "key": "icimt-2026",
+      "title": "ICIMT 2026",
+      "full_name": "2026 16th International Conference on Information and Multimedia Technology (ICIMT 2026)",
+      "acronym": "ICIMT 2026",
+      "tags": [],
+      "categories": ["graphics"]
+    },
+    {
+      "key": "icin",
+      "title": "ICIN",
+      "full_name": "International Conference on Innovation in Clouds, Internet and Networks",
+      "acronym": "ICIN",
+      "tags": [],
+      "categories": ["networking"]
+    },
+    {
+      "key": "icip",
+      "title": "ICIP",
+      "full_name": "The IEEE International Conference on Image Processing",
+      "acronym": "ICIP",
+      "tags": [],
+      "categories": ["graphics"]
+    },
+    {
+      "key": "icissp",
+      "title": "ICISSP",
+      "full_name": "International Conference on Information Systems Security and Privacy",
+      "acronym": "ICISSP",
+      "tags": [],
+      "categories": ["security"]
+    },
+    {
+      "key": "iclr",
+      "title": "ICLR",
+      "full_name": "The Fifteenth International Conference on Learning Representations",
+      "acronym": "ICLR",
+      "tags": [
+        "machine-learning",
+        "computer-vision",
+        "natural-language-processing",
+        "signal-processing",
+        "representation-learning"
+      ],
+      "categories": ["ai"]
+    },
+    {
+      "key": "icme",
+      "title": "ICME",
+      "full_name": "The IEEE International Conference on Multimedia & Expo",
+      "acronym": "ICME",
+      "tags": [],
+      "categories": ["graphics"]
+    },
+    {
+      "key": "icmi",
+      "title": "ICMI",
+      "full_name": "ACM International Conference on Multimodal Interaction",
+      "acronym": "ICMI",
+      "tags": [],
+      "categories": ["hci"]
+    },
+    {
+      "key": "icmip-2027",
+      "title": "ICMIP 2027",
+      "full_name": "SPIE--2027 12th International Conference on Multimedia and Image Processing (ICMIP 2027)",
+      "acronym": "ICMIP 2027",
+      "tags": [],
+      "categories": ["graphics"]
+    },
+    {
+      "key": "icml",
+      "title": "ICML",
+      "full_name": "International Conference on Machine Learning",
+      "acronym": "ICML",
+      "tags": ["machine-learning"],
+      "categories": ["ai"]
+    },
+    {
+      "key": "icmlc",
+      "title": "ICMLC",
+      "full_name": "International Conference on Machine Learning and Computing",
+      "acronym": "ICMLC",
+      "tags": ["niche"],
+      "categories": ["ai", "systems"]
+    },
+    {
+      "key": "icmr",
+      "title": "ICMR",
+      "full_name": "ACM SIGMM International Conference on Multimedia Retrieval",
+      "acronym": "ICMR",
+      "tags": [],
+      "categories": ["graphics"]
+    },
+    {
+      "key": "icmra-ei-2026",
+      "title": "ICMRA--EI 2026",
+      "full_name": "2026 8th International Conference on Mechatronics, Robotics and Automation (ICMRA 2026)",
+      "acronym": "ICMRA--EI 2026",
+      "tags": [],
+      "categories": ["ai"]
+    },
+    {
+      "key": "icmsr-2026",
+      "title": "ICMSR 2026",
+      "full_name": "2026 12th International Conference on Mechatronics Systems and Robotics (ICMSR 2026)--SCI",
+      "acronym": "ICMSR 2026",
+      "tags": [],
+      "categories": ["ai"]
+    },
+    {
+      "key": "icngn",
+      "title": "ICNGN 2026",
+      "full_name": "The 5th International Conference on Intelligent Computing and Next Generation Networks",
+      "acronym": "ICNGN 2026",
+      "tags": ["niche"],
+      "categories": ["ai", "networking"]
+    },
+    {
+      "key": "icnp",
+      "title": "ICNP",
+      "full_name": "IEEE International Conference on Network Protocols",
+      "acronym": "ICNP",
+      "tags": [],
+      "categories": ["networking"]
+    },
+    {
+      "key": "icoin",
+      "title": "ICOIN",
+      "full_name": "International Conference on Information Networking",
+      "acronym": "ICOIN",
+      "tags": ["niche"],
+      "categories": ["networking"]
+    },
+    {
+      "key": "icomp",
+      "title": "ICOMP",
+      "full_name": "International Conference on Computational Optimization",
+      "acronym": "ICOMP",
+      "tags": ["machine-learning", "optimization-methods"],
+      "categories": ["ai"]
+    },
+    {
+      "key": "iconip",
+      "title": "ICONIP",
+      "full_name": "International Conference on Neural Information Processing",
+      "acronym": "ICONIP",
+      "tags": [],
+      "categories": ["ai"]
+    },
+    {
+      "key": "icpads",
+      "title": "ICPADS",
+      "full_name": "IEEE International Conference on Parallel and Distributed Systems",
+      "acronym": "ICPADS",
+      "tags": [],
+      "categories": ["hpc"]
+    },
+    {
+      "key": "icpc",
+      "title": "ICPC",
+      "full_name": "IEEE/ACM International Conference on Program Comprehension",
+      "acronym": "ICPC",
+      "tags": [],
+      "categories": ["systems"]
+    },
+    {
+      "key": "icpp",
+      "title": "ICPP",
+      "full_name": "International Conference on Parallel Processing",
+      "acronym": "ICPP",
+      "tags": [],
+      "categories": ["hpc"]
+    },
+    {
+      "key": "icpr",
+      "title": "ICPR",
+      "full_name": "International Conference on Pattern Recognition",
+      "acronym": "ICPR",
+      "tags": [],
+      "categories": ["ai"]
+    },
+    {
+      "key": "icra",
+      "title": "ICRA",
+      "full_name": "IEEE International Conference on Robotics and Automation",
+      "acronym": "ICRA",
+      "tags": ["robotics", "computer-vision", "machine-learning"],
+      "categories": ["ai"]
+    },
+    {
+      "key": "icrae-2026",
+      "title": "ICRAE 2026",
+      "full_name": "2026 11th International Conference on Robotics and Automation Engineering (ICRAE 2026)",
+      "acronym": "ICRAE 2026",
+      "tags": [],
+      "categories": ["ai"]
+    },
+    {
+      "key": "icrai-2026",
+      "title": "ICRAI 2026",
+      "full_name": "2026 12th International Conference on Robotics and Artificial Intelligence (ICRAI 2026)",
+      "acronym": "ICRAI 2026",
+      "tags": [],
+      "categories": ["ai"]
+    },
+    {
+      "key": "icrcv-2026",
+      "title": "ICRCV 2026",
+      "full_name": "IEEE--2026 8th International Conference on Robotics and Computer Vision (ICRCV 2026)",
+      "acronym": "ICRCV 2026",
+      "tags": [],
+      "categories": ["ai"]
+    },
+    {
+      "key": "icric-2027",
+      "title": "ICRIC 2027",
+      "full_name": "2027 International Conference on Robotics and Intelligent Control (ICRIC 2027)",
+      "acronym": "ICRIC 2027",
+      "tags": [],
+      "categories": ["ai"]
+    },
+    {
+      "key": "ics",
+      "title": "ICS",
+      "full_name": "ACM International Conference on Supercomputing",
+      "acronym": "ICS",
+      "tags": [],
+      "categories": ["hpc"]
+    },
+    {
+      "key": "icse",
+      "title": "ICSE",
+      "full_name": "International Conference on Software Engineering",
+      "acronym": "ICSE",
+      "tags": [],
+      "categories": ["systems"]
+    },
+    {
+      "key": "icsme",
+      "title": "ICSME",
+      "full_name": "International Conference on Software Maintenance and Evolution",
+      "acronym": "ICSME",
+      "tags": [],
+      "categories": ["systems"]
+    },
+    {
+      "key": "icsoc",
+      "title": "ICSOC",
+      "full_name": "International Conference on Service Oriented Computing",
+      "acronym": "ICSOC",
+      "tags": [],
+      "categories": ["systems"]
+    },
+    {
+      "key": "icst",
+      "title": "ICST",
+      "full_name": "IEEE International Conference on Software Testing, Verification and Validation",
+      "acronym": "ICST",
+      "tags": [],
+      "categories": ["systems"]
+    },
+    {
+      "key": "ictai",
+      "title": "ICTAI",
+      "full_name": "International Conference on Tools with Artificial Intellignce",
+      "acronym": "ICTAI",
+      "tags": [],
+      "categories": ["ai"]
+    },
+    {
+      "key": "ictdse2026",
+      "title": "ICTDSE2026",
+      "full_name": "The 8th International Workshop on Information and Communication Technology for Disaster and Safety Education",
+      "acronym": "ICTDSE2026",
+      "tags": [],
+      "categories": ["ai", "networking", "systems", "security"]
+    },
+    {
+      "key": "icvrv",
+      "title": "ICVRV",
+      "full_name": "International Conference on Virtual Reality and Visualization (ICVRV 2026)",
+      "acronym": "ICVRV",
+      "tags": [],
+      "categories": ["graphics"]
+    },
+    {
+      "key": "icws",
+      "title": "ICWS",
+      "full_name": "IEEE International Conference on Web Services (Research Track)",
+      "acronym": "ICWS",
+      "tags": [],
+      "categories": ["systems"]
+    },
+    {
+      "key": "icwsm",
+      "title": "ICWSM",
+      "full_name": "The International AAAI Conference on Web and Social Media",
+      "acronym": "ICWSM",
+      "tags": [],
+      "categories": ["hci"]
+    },
+    {
+      "key": "ieee-3scea2027-20-22-april-2027-alexandria-egypt",
+      "title": "IEEE 3SCEA2027",
+      "full_name": "IEEE 3SCEA2027, 20-22 April 2027 Alexandria, Egypt",
+      "acronym": "IEEE 3SCEA2027",
+      "tags": [],
+      "categories": ["systems", "ai", "security"]
+    },
+    {
+      "key": "ieee-access",
+      "title": "IEEE Access",
+      "full_name": "IEEE Access",
+      "acronym": "IEEE Access",
+      "tags": ["niche", "journal"],
+      "categories": ["systems", "ai"]
+    },
+    {
+      "key": "ieee-acm-cgo",
+      "title": "IEEE/ACM CGO",
+      "full_name": "IEEE/ACM International Symposium on Code Generation and Optimization",
+      "acronym": "IEEE/ACM CGO",
+      "tags": [],
+      "categories": ["systems"]
+    },
+    {
+      "key": "ieee-aibdcc-2026",
+      "title": "IEEE-AIBDCC 2026",
+      "full_name": "2026 IEEE International Conference on Artificial Intelligence, Big Data and Cloud Computing (AIBDCC 2026)",
+      "acronym": "IEEE-AIBDCC 2026",
+      "tags": [],
+      "categories": ["systems", "ai", "db"]
+    },
+    {
+      "key": "ieee-aiot-2026",
+      "title": "IEEE AIoT 2026",
+      "full_name": "IEEE Annual Congress on Artificial Intelligence of Things",
+      "acronym": "IEEE AIoT 2026",
+      "tags": [],
+      "categories": ["ai"]
+    },
+    {
+      "key": "ieee-cec",
+      "title": "CEC",
+      "full_name": "IEEE Congress on Evolutionary Computation",
+      "acronym": "CEC",
+      "tags": ["machine-learning"],
+      "categories": ["ai"]
+    },
+    {
+      "key": "ieee-ceccc-2026",
+      "title": "IEEE CECCC 2026",
+      "full_name": "IEEE--2026 8th International on Communication Engineering and Cloud Computing Conference (CECCC 2026)",
+      "acronym": "IEEE CECCC 2026",
+      "tags": [],
+      "categories": ["systems"]
+    },
+    {
+      "key": "ieee-cret-2026",
+      "title": "IEEE CRET 2026",
+      "full_name": "IEEE--2026 International Conference on Control, Robotics Engineering and Technology (CRET 2026)",
+      "acronym": "IEEE CRET 2026",
+      "tags": [],
+      "categories": ["ai"]
+    },
+    {
+      "key": "ieee-gcce",
+      "title": "IEEE GCCE",
+      "full_name": "IEEE Global Conference on Consumer Electronics",
+      "acronym": "IEEE GCCE",
+      "tags": ["niche"],
+      "categories": ["systems"]
+    },
+    {
+      "key": "ieee-icacr-2026",
+      "title": "IEEE ICACR 2026",
+      "full_name": "IEEE--2026 10th International Conference on Automation, Control and Robotics (ICACR 2026)",
+      "acronym": "IEEE ICACR 2026",
+      "tags": [],
+      "categories": ["ai"]
+    },
+    {
+      "key": "ieee-icairs-2026",
+      "title": "IEEE-ICAIRS 2026",
+      "full_name": "2026 International Conference on Artificial Intelligence and Robotic Systems (ICAIRS 2026)",
+      "acronym": "IEEE-ICAIRS 2026",
+      "tags": [],
+      "categories": ["ai"]
+    },
+    {
+      "key": "ieee-icmre-2027",
+      "title": "IEEE ICMRE 2027",
+      "full_name": "IEEE--2027 the 13th International Conference on Mechatronics and Robotics Engineering (ICMRE 2027)",
+      "acronym": "IEEE ICMRE 2027",
+      "tags": [],
+      "categories": ["ai"]
+    },
+    {
+      "key": "ieee-micro",
+      "title": "IEEE Micro",
+      "full_name": "IEEE Micro Special Issues Call for Papers",
+      "acronym": "IEEE Micro",
+      "tags": ["niche", "journal"],
+      "categories": ["systems"]
+    },
+    {
+      "key": "ieee-mlnlp-2026",
+      "title": "IEEE-MLNLP 2026",
+      "full_name": "2026 IEEE 9th International Conference on Machine Learning and Natural Language Processing (MLNLP 2026)",
+      "acronym": "IEEE-MLNLP 2026",
+      "tags": [],
+      "categories": ["ai"]
+    },
+    {
+      "key": "ieee-network-6g-isac",
+      "title": "IEEE Network Special Issue: High-Reliability and Low-Latency Communications for 6G Network: ISAC-Enabled Architectures, Networking, and Services",
+      "full_name": "High-Reliability and Low-Latency Communications for 6G Network: ISAC-Enabled Architectures, Networking, and Services (IEEE Network Special Issue)",
+      "acronym": "IEEE Network Special Issue: High-Reliability and Low-Latency Communications for 6G Network: ISAC-Enabled Architectures, Networking, and Services",
+      "tags": ["niche", "special-issue"],
+      "categories": ["networking", "systems"]
+    },
+    {
+      "key": "ieee-risc",
+      "title": "IEEE RISC",
+      "full_name": "IEEE Conference on Resilience and Integrated Security for Space and Critical Systems",
+      "acronym": "IEEE RISC",
+      "tags": [],
+      "categories": ["security"]
+    },
+    {
+      "key": "ieee-tnsm",
+      "title": "IEEE TNSM",
+      "full_name": "IEEE Transactions on Network and Service Management",
+      "acronym": "IEEE TNSM",
+      "tags": ["niche", "journal"],
+      "categories": ["networking", "systems"]
+    },
+    {
+      "key": "ieee-tps",
+      "title": "IEEE TPS",
+      "full_name": "IEEE International Conference on Trust, Privacy and Security in Intelligent Systems, and Applications",
+      "acronym": "IEEE TPS",
+      "tags": [],
+      "categories": ["security"]
+    },
+    {
+      "key": "ieee-vis",
+      "title": "IEEE VIS",
+      "full_name": "IEEE Visualization Conference",
+      "acronym": "IEEE VIS",
+      "tags": [],
+      "categories": ["graphics"]
+    },
+    {
+      "key": "ieee-vr",
+      "title": "IEEE VR",
+      "full_name": "IEEE Virtual Reality",
+      "acronym": "IEEE VR",
+      "tags": [],
+      "categories": ["graphics"]
+    },
+    {
+      "key": "ieee-wsce-2026",
+      "title": "WSCE",
+      "full_name": "IEEE World Symposium on Communication Engineering",
+      "acronym": "WSCE",
+      "tags": [],
+      "categories": ["networking"]
+    },
+    {
+      "key": "ieeebc27",
+      "title": "IEEEBC27",
+      "full_name": "IEEE International Conference on Big Data and Smart Computing 2027",
+      "acronym": "IEEEBC27",
+      "tags": [],
+      "categories": ["db"]
+    },
+    {
+      "key": "ieice-comex",
+      "title": "IEICE ComEX",
+      "full_name": "IEICE Communications Express",
+      "acronym": "IEICE ComEX",
+      "tags": ["niche", "journal"],
+      "categories": ["networking"]
+    },
+    {
+      "key": "ieice-cpsy",
+      "title": "電子情報通信学会 CPSY 研究会",
+      "full_name": "電子情報通信学会 コンピュータシステム研究会 (CPSY)",
+      "acronym": "電子情報通信学会 CPSY 研究会",
+      "tags": ["domestic-jp"],
+      "categories": ["systems"]
+    },
+    {
+      "key": "ieice-cq",
+      "title": "電子情報通信学会 CQ 研究会",
+      "full_name": "電子情報通信学会 コミュニケーションクオリティ研究会 (CQ)",
+      "acronym": "電子情報通信学会 CQ 研究会",
+      "tags": ["domestic-jp"],
+      "categories": ["networking"]
+    },
+    {
+      "key": "ieice-cys",
+      "title": "電子情報通信学会 CyS 研究会",
+      "full_name": "電子情報通信学会 サイバーセキュリティ研究会 (CyS)",
+      "acronym": "電子情報通信学会 CyS 研究会",
+      "tags": ["domestic-jp"],
+      "categories": ["security"]
+    },
+    {
+      "key": "ieice-electron-analog-circuits-special",
+      "title": "IEICE Trans. Electron. 特集号（アナログ回路と応用技術）",
+      "full_name": "Special Section on Analog Circuits and Their Application Technologies（IEICE Trans. Electron.）",
+      "acronym": "IEICE Trans. Electron. 特集号（アナログ回路と応用技術）",
+      "tags": ["niche", "special-issue", "domestic-jp"],
+      "categories": ["systems"]
+    },
+    {
+      "key": "ieice-electron-microwave-special",
+      "title": "IEICE Trans. Electron. 特集号（マイクロ波・ミリ波技術）",
+      "full_name": "Special Section on Microwave and Millimeter-Wave Technologies（IEICE Trans. Electron.）",
+      "acronym": "IEICE Trans. Electron. 特集号（マイクロ波・ミリ波技術）",
+      "tags": ["niche", "special-issue", "domestic-jp"],
+      "categories": ["systems"]
+    },
+    {
+      "key": "ieice-elex",
+      "title": "IEICE ELEX",
+      "full_name": "IEICE Electronics Express",
+      "acronym": "IEICE ELEX",
+      "tags": ["niche", "journal", "domestic-jp"],
+      "categories": ["systems"]
+    },
+    {
+      "key": "ieice-fundamentals-discrete-math-special",
+      "title": "IEICE Trans. Fundamentals 特集号（離散数学とその応用）",
+      "full_name": "Special Section on Discrete Mathematics and Its Applications（IEICE Trans. Fundamentals）",
+      "acronym": "IEICE Trans. Fundamentals 特集号（離散数学とその応用）",
+      "tags": ["niche", "special-issue", "domestic-jp"],
+      "categories": ["theory"]
+    },
+    {
+      "key": "ieice-ia",
+      "title": "電子情報通信学会 IA 研究会",
+      "full_name": "電子情報通信学会 インターネットアーキテクチャ研究会 (IA)",
+      "acronym": "電子情報通信学会 IA 研究会",
+      "tags": ["domestic-jp"],
+      "categories": ["networking"]
+    },
+    {
+      "key": "ieice-icm",
+      "title": "電子情報通信学会 ICM 研究会",
+      "full_name": "電子情報通信学会 情報通信マネジメント研究会 (ICM)",
+      "acronym": "電子情報通信学会 ICM 研究会",
+      "tags": ["domestic-jp"],
+      "categories": ["networking", "systems"]
+    },
+    {
+      "key": "ieice-in",
+      "title": "電子情報通信学会 IN 研究会",
+      "full_name": "電子情報通信学会 情報ネットワーク研究会 (IN)",
+      "acronym": "電子情報通信学会 IN 研究会",
+      "tags": ["domestic-jp"],
+      "categories": ["networking"]
+    },
+    {
+      "key": "ieice-inf-syst-log-data-special",
+      "title": "IEICE Trans. Inf. & Syst. 特集号（ログデータ活用技術とオフィス情報システム）",
+      "full_name": "Special Section on Log Data Usage Technology and Office Information Systems（IEICE Trans. Inf. & Syst.）",
+      "acronym": "IEICE Trans. Inf. & Syst. 特集号（ログデータ活用技術とオフィス情報システム）",
+      "tags": ["niche", "special-issue", "domestic-jp"],
+      "categories": ["systems"]
+    },
+    {
+      "key": "ieice-isec",
+      "title": "電子情報通信学会 ISEC 研究会",
+      "full_name": "電子情報通信学会 情報セキュリティ研究会 (ISEC)",
+      "acronym": "電子情報通信学会 ISEC 研究会",
+      "tags": ["domestic-jp"],
+      "categories": ["security"]
+    },
+    {
+      "key": "ieice-nolta",
+      "title": "NOLTA",
+      "full_name": "International Symposium on Nonlinear Theory and Its Applications (NOLTA)",
+      "acronym": "NOLTA",
+      "tags": [],
+      "categories": ["theory", "systems"]
+    },
+    {
+      "key": "ieice-nolta-recent-advances-special",
+      "title": "IEICE NOLTA 特集号（非線形問題の最近の進展）",
+      "full_name": "Special Section on Recent Advances in Nonlinear Problems（IEICE NOLTA）",
+      "acronym": "IEICE NOLTA 特集号（非線形問題の最近の進展）",
+      "tags": ["niche", "special-issue", "domestic-jp"],
+      "categories": ["theory"]
+    },
+    {
+      "key": "ieice-nolta-recent-progress-special",
+      "title": "IEICE NOLTA 特集号（非線形理論とその応用の最近の進歩）",
+      "full_name": "Special Section on Recent Progress in Nonlinear Theory and Its Applications（IEICE NOLTA）",
+      "acronym": "IEICE NOLTA 特集号（非線形理論とその応用の最近の進歩）",
+      "tags": ["niche", "special-issue", "domestic-jp"],
+      "categories": ["theory"]
+    },
+    {
+      "key": "ieice-ns",
+      "title": "電子情報通信学会 NS 研究会",
+      "full_name": "電子情報通信学会 ネットワークシステム研究会 (NS)",
+      "acronym": "電子情報通信学会 NS 研究会",
+      "tags": ["domestic-jp"],
+      "categories": ["networking"]
+    },
+    {
+      "key": "ieice-rcs",
+      "title": "電子情報通信学会 RCS 研究会",
+      "full_name": "電子情報通信学会 無線通信システム研究会 (RCS)",
+      "acronym": "電子情報通信学会 RCS 研究会",
+      "tags": ["domestic-jp"],
+      "categories": ["networking"]
+    },
+    {
+      "key": "ieice-sita",
+      "title": "SITA",
+      "full_name": "情報理論とその応用シンポジウム (SITA)",
+      "acronym": "SITA",
+      "tags": ["domestic-jp", "symposium"],
+      "categories": ["theory", "security"]
+    },
+    {
+      "key": "ieice-trans-com",
+      "title": "IEICE Trans. Commun.",
+      "full_name": "IEICE Transactions on Communications",
+      "acronym": "IEICE Trans. Commun.",
+      "tags": ["niche", "journal"],
+      "categories": ["networking", "systems"]
+    },
+    {
+      "key": "ieice-trans-electron",
+      "title": "IEICE Trans. Electron.",
+      "full_name": "IEICE Transactions on Electronics",
+      "acronym": "IEICE Trans. Electron.",
+      "tags": ["niche", "journal"],
+      "categories": ["systems"]
+    },
+    {
+      "key": "ieice-trans-funda",
+      "title": "IEICE Trans. Fundamentals",
+      "full_name": "IEICE Transactions on Fundamentals of Electronics, Communications and Computer Sciences",
+      "acronym": "IEICE Trans. Fundamentals",
+      "tags": ["niche", "journal"],
+      "categories": ["systems", "theory"]
+    },
+    {
+      "key": "ieice-trans-inf",
+      "title": "IEICE Trans. Inf. & Syst.",
+      "full_name": "IEICE Transactions on Information and Systems",
+      "acronym": "IEICE Trans. Inf. & Syst.",
+      "tags": ["niche", "journal"],
+      "categories": ["systems", "networking"]
+    },
+    {
+      "key": "ieitai-2026",
+      "title": "IEITAI 2026",
+      "full_name": "2026 2nd International Conference on Information Engineering, Intelligent Information Technology and Artificial Intelligence",
+      "acronym": "IEITAI 2026",
+      "tags": [],
+      "categories": ["ai"]
+    },
+    {
+      "key": "ifip-wg-11-9",
+      "title": "IFIP WG 11.9",
+      "full_name": "IFIP WG 11.9 International Conference on Digital Forensics",
+      "acronym": "IFIP WG 11.9",
+      "tags": [],
+      "categories": ["security"]
+    },
+    {
+      "key": "ifou2026",
+      "title": "IFOU2026",
+      "full_name": "Urbanism & AI For Better Human Settlements: Reflection, Re-creation, and Regeneration",
+      "acronym": "IFOU2026",
+      "tags": [],
+      "categories": ["ai"]
+    },
+    {
+      "key": "ifs-27",
+      "title": "iFS'27",
+      "full_name": "International Conference on Foundations and Formal Methods for Software and Systems",
+      "acronym": "iFS'27",
+      "tags": [],
+      "categories": ["theory"]
+    },
+    {
+      "key": "ih-mmsec",
+      "title": "IH&MMSec",
+      "full_name": "ACM Workshop on Information Hiding and Multimedia Security",
+      "acronym": "IH&MMSec",
+      "tags": [],
+      "categories": ["security"]
+    },
+    {
+      "key": "iiai-aai",
+      "title": "IIAI AAI",
+      "full_name": "IIAI International Congress on Advanced Applied Informatics",
+      "acronym": "IIAI AAI",
+      "tags": [],
+      "categories": ["ai", "systems"]
+    },
+    {
+      "key": "iiswc",
+      "title": "IISWC",
+      "full_name": "IEEE International Symposium on Workload Characterization",
+      "acronym": "IISWC",
+      "tags": [],
+      "categories": ["systems"]
+    },
+    {
+      "key": "ijcai",
+      "title": "IJCAI",
+      "full_name": "International Joint Conference on Artificial Intelligence",
+      "acronym": "IJCAI",
+      "tags": ["machine-learning"],
+      "categories": ["ai"]
+    },
+    {
+      "key": "ijcar",
+      "title": "IJCAR",
+      "full_name": "International Joint Conference on Automated Reasoning",
+      "acronym": "IJCAR",
+      "tags": [],
+      "categories": ["theory"]
+    },
+    {
+      "key": "ijcb",
+      "title": "IJCB",
+      "full_name": "International Joint Conference on Biometrics",
+      "acronym": "IJCB",
+      "tags": [],
+      "categories": ["ai"]
+    },
+    {
+      "key": "ijcnlp",
+      "title": "IJCNLP & AACL",
+      "full_name": "International Joint Conference on Natural Language Processing & Asia-Pacific Chapter of the Association for Computational Linguistics",
+      "acronym": "IJCNLP & AACL",
+      "tags": ["natural-language-processing"],
+      "categories": ["ai"]
+    },
+    {
+      "key": "ijcnn",
+      "title": "IJCNN",
+      "full_name": "International Joint Conference on Neural Networks",
+      "acronym": "IJCNN",
+      "tags": ["machine-learning"],
+      "categories": ["ai"]
+    },
+    {
+      "key": "ijgca-2026",
+      "title": "IJGCA 2026",
+      "full_name": "International Journal of Grid Computing & Applications",
+      "acronym": "IJGCA 2026",
+      "tags": [],
+      "categories": ["hpc"]
+    },
+    {
+      "key": "ijgtt-2026",
+      "title": "IJGTT 2026",
+      "full_name": "International Journal of Game Theory and Technology",
+      "acronym": "IJGTT 2026",
+      "tags": [],
+      "categories": ["theory"]
+    },
+    {
+      "key": "imc",
+      "title": "IMC",
+      "full_name": "ACM Internet Measurement Conference",
+      "acronym": "IMC",
+      "tags": [],
+      "categories": ["networking"]
+    },
+    {
+      "key": "indocrypt",
+      "title": "INDOCRYPT",
+      "full_name": "International Conference on Cryptology in India",
+      "acronym": "INDOCRYPT",
+      "tags": [],
+      "categories": ["security"]
+    },
+    {
+      "key": "infocom",
+      "title": "INFOCOM",
+      "full_name": "IEEE International Conference on Computer Communications",
+      "acronym": "INFOCOM",
+      "tags": [],
+      "categories": ["networking"]
+    },
+    {
+      "key": "inlg",
+      "title": "INLG",
+      "full_name": "International Conference on Natural Language Generation",
+      "acronym": "INLG",
+      "tags": ["natural-language-processing"],
+      "categories": ["ai"]
+    },
+    {
+      "key": "inscrypt",
+      "title": "INSCRYPT",
+      "full_name": "International Conference on Information Security and Cryptology",
+      "acronym": "INSCRYPT",
+      "tags": [],
+      "categories": ["security"]
+    },
+    {
+      "key": "int-conf-on-data-science-and-digital-innovation-2026-in-lisbon-portugal",
+      "title": "Int. Conf. on Data Science and Digital Innovation 2026 in Lisbon, Portugal",
+      "full_name": "Int. Conf. on Data Science and Digital Innovation 2026 in Lisbon, Portugal",
+      "acronym": "Int. Conf. on Data Science and Digital Innovation 2026 in Lisbon, Portugal",
+      "tags": [],
+      "categories": ["ai"]
+    },
+    {
+      "key": "interactive-hpc-2026",
+      "title": "Interactive HPC Workshop 2026",
+      "full_name": "Eighth Workshop on Interactive and Urgent High-Performance Computing",
+      "acronym": "Interactive HPC Workshop 2026",
+      "tags": ["workshop"],
+      "categories": ["hpc"]
+    },
+    {
+      "key": "internet-conference",
+      "title": "インターネットコンファレンス",
+      "full_name": "インターネットコンファレンス (Internet Conference)",
+      "acronym": "インターネットコンファレンス",
+      "tags": ["domestic-jp"],
+      "categories": ["networking"]
+    },
+    {
+      "key": "internet-of-things",
+      "title": "Internet of Things",
+      "full_name": "Internet of Things (Elsevier)",
+      "acronym": "Internet of Things",
+      "tags": ["niche", "journal"],
+      "categories": ["networking", "systems"]
+    },
+    {
+      "key": "internetware",
+      "title": "Internetware",
+      "full_name": "Asia-Pacific Symposium on Internetware",
+      "acronym": "Internetware",
+      "tags": [],
+      "categories": ["systems"]
+    },
+    {
+      "key": "interspeech",
+      "title": "Interspeech",
+      "full_name": "Interspeech",
+      "acronym": "Interspeech",
+      "tags": ["speech", "signal-processing"],
+      "categories": ["ai", "graphics"]
+    },
+    {
+      "key": "iotbds-2027",
+      "title": "IoTBDS 2027",
+      "full_name": "12th International Conference on Internet of Things, Big Data and Security",
+      "acronym": "IoTBDS 2027",
+      "tags": [],
+      "categories": ["db"]
+    },
+    {
+      "key": "iotcct-2026",
+      "title": "IoTCCT 2026",
+      "full_name": "IEEE 2026 4th International Conference on Internet of Things and Cloud Computing Technology",
+      "acronym": "IoTCCT 2026",
+      "tags": [],
+      "categories": ["systems"]
+    },
+    {
+      "key": "iots",
+      "title": "IOTS",
+      "full_name": "インターネットと運用技術シンポジウム (IOTS)",
+      "acronym": "IOTS",
+      "tags": ["domestic-jp"],
+      "categories": ["networking", "systems"]
+    },
+    {
+      "key": "ipdps",
+      "title": "IPDPS",
+      "full_name": "IEEE International Parallel and Distributed Processing Symposium",
+      "acronym": "IPDPS",
+      "tags": [],
+      "categories": ["hpc"]
+    },
+    {
+      "key": "ipsj-27-l-superintelligence",
+      "title": "IPSJ 論文誌 特集号（超知能と新社会システム・高度交通システム）",
+      "full_name": "超知能と共に革新する新社会システムと高度交通システム（IPSJ 論文誌 特集号）",
+      "acronym": "IPSJ 論文誌 特集号（超知能と新社会システム・高度交通システム）",
+      "tags": ["niche", "special-issue", "domestic-jp"],
+      "categories": ["ai"]
+    },
+    {
+      "key": "ipsj-27-m-security",
+      "title": "IPSJ 論文誌 特集号（AI と社会基盤のコンピュータセキュリティ）",
+      "full_name": "AIによって変わる社会基盤を支えるコンピュータセキュリティ技術（IPSJ 論文誌 特集号）",
+      "acronym": "IPSJ 論文誌 特集号（AI と社会基盤のコンピュータセキュリティ）",
+      "tags": ["niche", "special-issue", "domestic-jp"],
+      "categories": ["security"]
+    },
+    {
+      "key": "ipsj-27-n-info-systems",
+      "title": "IPSJ 論文誌 特集号（情報システム論文）",
+      "full_name": "情報システム論文（IPSJ 論文誌 特集号）",
+      "acronym": "IPSJ 論文誌 特集号（情報システム論文）",
+      "tags": ["niche", "special-issue", "domestic-jp"],
+      "categories": ["systems"]
+    },
+    {
+      "key": "ipsj-27-p-ubiquitous",
+      "title": "IPSJ 論文誌 特集号（ユビキタスコンピューティングシステム XIV）",
+      "full_name": "ユビキタスコンピューティングシステム（XIV）（IPSJ 論文誌 特集号）",
+      "acronym": "IPSJ 論文誌 特集号（ユビキタスコンピューティングシステム XIV）",
+      "tags": ["niche", "special-issue", "domestic-jp"],
+      "categories": ["systems"]
+    },
+    {
+      "key": "ipsj-27-r-compsac",
+      "title": "IPSJ 論文誌 特集号（Applications and the Internet）",
+      "full_name": "Applications and the Internet（IPSJ 論文誌 特集号、COMPSAC 2026 連携）",
+      "acronym": "IPSJ 論文誌 特集号（Applications and the Internet）",
+      "tags": ["niche", "special-issue", "domestic-jp"],
+      "categories": ["systems"]
+    },
+    {
+      "key": "ipsj-css",
+      "title": "CSS",
+      "full_name": "コンピュータセキュリティシンポジウム (CSS)",
+      "acronym": "CSS",
+      "tags": ["domestic-jp", "symposium"],
+      "categories": ["security"]
+    },
+    {
+      "key": "ipsj-deim",
+      "title": "DEIM",
+      "full_name": "データ工学と情報マネジメントフォーラム (DEIM)",
+      "acronym": "DEIM",
+      "tags": ["domestic-jp", "symposium"],
+      "categories": ["db"]
+    },
+    {
+      "key": "ipsj-dicomo",
+      "title": "DICOMO",
+      "full_name": "マルチメディア、分散、協調とモバイルシンポジウム (DICOMO)",
+      "acronym": "DICOMO",
+      "tags": ["domestic-jp", "symposium"],
+      "categories": ["networking", "systems"]
+    },
+    {
+      "key": "ipsj-sigarc",
+      "title": "情報処理学会 ARC 研究会",
+      "full_name": "情報処理学会 システム・アーキテクチャ研究会 (SIGARC)",
+      "acronym": "情報処理学会 ARC 研究会",
+      "tags": ["domestic-jp"],
+      "categories": ["systems"]
+    },
+    {
+      "key": "ipsj-sigdps",
+      "title": "情報処理学会 DPS 研究会",
+      "full_name": "情報処理学会 マルチメディア通信と分散処理研究会 (SIGDPS)",
+      "acronym": "情報処理学会 DPS 研究会",
+      "tags": ["domestic-jp"],
+      "categories": ["networking", "systems"]
+    },
+    {
+      "key": "ipsj-sigemb",
+      "title": "情報処理学会 EMB 研究会",
+      "full_name": "情報処理学会 組込みシステム研究会 (EMB)",
+      "acronym": "情報処理学会 EMB 研究会",
+      "tags": ["domestic-jp"],
+      "categories": ["systems"]
+    },
+    {
+      "key": "ipsj-sighpc",
+      "title": "情報処理学会 HPC 研究会",
+      "full_name": "情報処理学会 ハイパフォーマンスコンピューティング研究会 (SIGHPC)",
+      "acronym": "情報処理学会 HPC 研究会",
+      "tags": ["domestic-jp"],
+      "categories": ["hpc"]
+    },
+    {
+      "key": "ipsj-sigkbs",
+      "title": "情報処理学会 KBS 研究会",
+      "full_name": "情報処理学会 知能システム研究会 (KBS)",
+      "acronym": "情報処理学会 KBS 研究会",
+      "tags": ["domestic-jp"],
+      "categories": ["ai"]
+    },
+    {
+      "key": "ipsj-sigos",
+      "title": "情報処理学会 OS 研究会",
+      "full_name": "情報処理学会 システムソフトウェアとオペレーティング・システム研究会 (SIGOS)",
+      "acronym": "情報処理学会 OS 研究会",
+      "tags": ["domestic-jp"],
+      "categories": ["systems"]
+    },
+    {
+      "key": "ipsj-sigpro",
+      "title": "情報処理学会 PRO 研究会",
+      "full_name": "情報処理学会 プログラミング研究会 (PRO)",
+      "acronym": "情報処理学会 PRO 研究会",
+      "tags": ["domestic-jp"],
+      "categories": ["systems"]
+    },
+    {
+      "key": "ipsj-sigse",
+      "title": "情報処理学会 SE 研究会",
+      "full_name": "情報処理学会 ソフトウェア工学研究会 (SE)",
+      "acronym": "情報処理学会 SE 研究会",
+      "tags": ["domestic-jp"],
+      "categories": ["systems"]
+    },
+    {
+      "key": "ipsj-sigsec",
+      "title": "情報処理学会 CSEC 研究会",
+      "full_name": "情報処理学会 コンピュータセキュリティ研究会 (CSEC)",
+      "acronym": "情報処理学会 CSEC 研究会",
+      "tags": ["domestic-jp"],
+      "categories": ["security"]
+    },
+    {
+      "key": "ipsj-sigubi",
+      "title": "情報処理学会 UBI 研究会",
+      "full_name": "情報処理学会 ユビキタスコンピューティングシステム研究会 (UBI)",
+      "acronym": "情報処理学会 UBI 研究会",
+      "tags": ["domestic-jp"],
+      "categories": ["hci", "networking"]
+    },
+    {
+      "key": "ipsj-wiss",
+      "title": "WISS",
+      "full_name": "ワークショップ インタラクティブシステムとソフトウェア (WISS)",
+      "acronym": "WISS",
+      "tags": ["domestic-jp", "workshop"],
+      "categories": ["hci", "systems"]
+    },
+    {
+      "key": "ipsn",
+      "title": "IPSN",
+      "full_name": "ACM/IEEE International Conference on Information Processing in Sensor Networks",
+      "acronym": "IPSN",
+      "tags": ["merged", "sensys", "networking", "iot"],
+      "categories": ["networking"]
+    },
+    {
+      "key": "iros",
+      "title": "IROS",
+      "full_name": "IEEE\\RSJ International Conference on Intelligent Robots and Systems",
+      "acronym": "IROS",
+      "tags": ["robotics"],
+      "categories": ["ai"]
+    },
+    {
+      "key": "iros2026-noc-workshop",
+      "title": "NOC Workshop",
+      "full_name": "Workshop on Nonverbal Cues for Human-Robot Cooperative Intelligence (IROS 2026)",
+      "acronym": "NOC Workshop",
+      "tags": [],
+      "categories": ["ai"]
+    },
+    {
+      "key": "isaac",
+      "title": "ISAAC",
+      "full_name": "International Symposium on Algorithms and Computation",
+      "acronym": "ISAAC",
+      "tags": [],
+      "categories": ["theory"]
+    },
+    {
+      "key": "isav-2026",
+      "title": "ISAV 2026",
+      "full_name": "ISAV 2026: In Situ AI, Analysis and Visualization",
+      "acronym": "ISAV 2026",
+      "tags": ["workshop"],
+      "categories": ["hpc"]
+    },
+    {
+      "key": "isbra",
+      "title": "ISBRA",
+      "full_name": "International Symposium on Bioinformatics Research and Applications",
+      "acronym": "ISBRA",
+      "tags": [],
+      "categories": ["db"]
+    },
+    {
+      "key": "isc",
+      "title": "ISC",
+      "full_name": "Information Security Conference",
+      "acronym": "ISC",
+      "tags": [],
+      "categories": ["security"]
+    },
+    {
+      "key": "isc-hpc",
+      "title": "ISC High Performance",
+      "full_name": "ISC High Performance",
+      "acronym": "ISC High Performance",
+      "tags": [],
+      "categories": ["hpc"]
+    },
+    {
+      "key": "isca",
+      "title": "ISCA",
+      "full_name": "International Symposium on Computer Architecture",
+      "acronym": "ISCA",
+      "tags": [],
+      "categories": ["systems"]
+    },
+    {
+      "key": "iscas",
+      "title": "ISCAS",
+      "full_name": "IEEE International Symposium on Circuits and Systems",
+      "acronym": "ISCAS",
+      "tags": [],
+      "categories": ["systems"]
+    },
+    {
+      "key": "iscc",
+      "title": "ISCC",
+      "full_name": "IEEE Symposium on Computers and Communications",
+      "acronym": "ISCC",
+      "tags": [],
+      "categories": ["networking"]
+    },
+    {
+      "key": "isit",
+      "title": "ISIT",
+      "full_name": "IEEE International Symposium on Information Theory",
+      "acronym": "ISIT",
+      "tags": [],
+      "categories": ["theory"]
+    },
+    {
+      "key": "ismar",
+      "title": "ISMAR",
+      "full_name": "International Symposium on Mixed and Augmented Reality",
+      "acronym": "ISMAR",
+      "tags": [],
+      "categories": ["graphics"]
+    },
+    {
+      "key": "ispa",
+      "title": "ISPA",
+      "full_name": "IEEE International Symposium on Parallel and Distributed Processing with Applications",
+      "acronym": "ISPA",
+      "tags": [],
+      "categories": ["hpc"]
+    },
+    {
+      "key": "ispass",
+      "title": "ISPASS",
+      "full_name": "International Symposium on Performance Analysis of Systems and Software",
+      "acronym": "ISPASS",
+      "tags": [],
+      "categories": ["systems"]
+    },
+    {
+      "key": "isrimt-2026",
+      "title": "ISRIMT 2026",
+      "full_name": "IEEE 2026 8th International Symposium on Robotics & Intelligent Manufacturing Technology",
+      "acronym": "ISRIMT 2026",
+      "tags": [],
+      "categories": ["ai"]
+    },
+    {
+      "key": "iss",
+      "title": "ISS",
+      "full_name": "ACM International Conference on Interactive Surfaces and Spaces",
+      "acronym": "ISS",
+      "tags": [],
+      "categories": ["hci"]
+    },
+    {
+      "key": "issre",
+      "title": "ISSRE",
+      "full_name": "International Symposium on Software Reliability Engineering",
+      "acronym": "ISSRE",
+      "tags": [],
+      "categories": ["systems"]
+    },
+    {
+      "key": "issta",
+      "title": "ISSTA",
+      "full_name": "ACM SIGSOFT International Symposium on Software Testing and Analysis",
+      "acronym": "ISSTA",
+      "tags": [],
+      "categories": ["systems"]
+    },
+    {
+      "key": "istai26",
+      "title": "ISTAI26",
+      "full_name": "International Sensor Technologies and Artificial Intelligence",
+      "acronym": "ISTAI26",
+      "tags": [],
+      "categories": ["ai"]
+    },
+    {
+      "key": "iswc",
+      "title": "ISWC",
+      "full_name": "International Semantic Web Conference",
+      "acronym": "ISWC",
+      "tags": [],
+      "categories": ["db"]
+    },
+    {
+      "key": "itc",
+      "title": "ITC",
+      "full_name": "International Test Conference",
+      "acronym": "ITC",
+      "tags": [],
+      "categories": ["systems"]
+    },
+    {
+      "key": "itc-asia",
+      "title": "ITC-Asia",
+      "full_name": "IEEE International Test Conference in Asia",
+      "acronym": "ITC-Asia",
+      "tags": [],
+      "categories": ["systems"]
+    },
+    {
+      "key": "itcs",
+      "title": "ITCS",
+      "full_name": "Innovations in Theoretical Computer Science",
+      "acronym": "ITCS",
+      "tags": [],
+      "categories": ["theory"]
+    },
+    {
+      "key": "iui",
+      "title": "IUI",
+      "full_name": "ACM Conference on Intelligent User Interfaces",
+      "acronym": "IUI",
+      "tags": ["human-computer-interaction"],
+      "categories": ["ai", "hci"]
+    },
+    {
+      "key": "iwqos",
+      "title": "IWQoS",
+      "full_name": "IEEE/ACM International Symposium on Quality of Service",
+      "acronym": "IWQoS",
+      "tags": [],
+      "categories": ["networking"]
+    },
+    {
+      "key": "jcc",
+      "title": "JCC",
+      "full_name": "International Conference on JointCloud Computing",
+      "acronym": "JCC",
+      "tags": [],
+      "categories": ["systems"]
+    },
+    {
+      "key": "jcrt-book-reviews-2027",
+      "title": "jcrt-book-reviews 2027",
+      "full_name": "Call for Book Reviews - Journal for Cultural and Religious Theory",
+      "acronym": "jcrt-book-reviews 2027",
+      "tags": [],
+      "categories": ["theory"]
+    },
+    {
+      "key": "jip",
+      "title": "JIP",
+      "full_name": "Journal of Information Processing (情報処理学会)",
+      "acronym": "JIP",
+      "tags": ["niche", "journal", "domestic-jp"],
+      "categories": ["systems", "networking", "ai"]
+    },
+    {
+      "key": "jpdc",
+      "title": "JPDC",
+      "full_name": "Journal of Parallel and Distributed Computing (Elsevier)",
+      "acronym": "JPDC",
+      "tags": ["niche", "journal"],
+      "categories": ["hpc", "systems"]
+    },
+    {
+      "key": "jss",
+      "title": "JSS",
+      "full_name": "Journal of Systems and Software (Elsevier)",
+      "acronym": "JSS",
+      "tags": ["niche", "journal"],
+      "categories": ["systems"]
+    },
+    {
+      "key": "jvac2027",
+      "title": "JVAC2027",
+      "full_name": "Jnana Vaani AI Conference 2027: A Bilingual Knowledge Ecosystem for Artificial Intelligence",
+      "acronym": "JVAC2027",
+      "tags": [],
+      "categories": ["ai"]
+    },
+    {
+      "key": "keir-cikm2026",
+      "title": "KEIR @ CIKM 2026",
+      "full_name": "The Third Workshop on Knowledge-Enhanced Information Retrieval",
+      "acronym": "KEIR @ CIKM 2026",
+      "tags": [],
+      "categories": ["db"]
+    },
+    {
+      "key": "kicss2026",
+      "title": "KICSS2026",
+      "full_name": "The 21st International Conference on Knowledge, Information and Creativity Support Systems",
+      "acronym": "KICSS2026",
+      "tags": [],
+      "categories": ["ai", "systems"]
+    },
+    {
+      "key": "kr",
+      "title": "KR",
+      "full_name": "International Conference on Principles of Knowledge Representation and Reasoning",
+      "acronym": "KR",
+      "tags": [],
+      "categories": ["ai"]
+    },
+    {
+      "key": "ksem",
+      "title": "KSEM",
+      "full_name": "International Conference on Knowledge Science, Engineering and Management",
+      "acronym": "KSEM",
+      "tags": ["machine-learning"],
+      "categories": ["ai"]
+    },
+    {
+      "key": "lascas",
+      "title": "LASCAS",
+      "full_name": "IEEE Latin American Symposium on Circuits and Systems",
+      "acronym": "LASCAS",
+      "tags": ["niche"],
+      "categories": ["systems"]
+    },
+    {
+      "key": "lcn",
+      "title": "LCN",
+      "full_name": "IEEE Conference on Local Computer Networks",
+      "acronym": "LCN",
+      "tags": [],
+      "categories": ["networking"]
+    },
+    {
+      "key": "lics",
+      "title": "LICS",
+      "full_name": "IEEE Symposium on Logic in Computer Science",
+      "acronym": "LICS",
+      "tags": [],
+      "categories": ["theory"]
+    },
+    {
+      "key": "lisa",
+      "title": "LISA",
+      "full_name": "Large Installation System Administration Conference",
+      "acronym": "LISA",
+      "tags": ["discontinued", "sysadmin", "systems"],
+      "categories": ["systems"]
+    },
+    {
+      "key": "llvm-hpc-2026",
+      "title": "LLVM-HPC 2026",
+      "full_name": "The Twelfth Workshop on the LLVM Compiler Infrastructure in HPC (LLVM-HPC 2026)",
+      "acronym": "LLVM-HPC 2026",
+      "tags": ["workshop"],
+      "categories": ["hpc"]
+    },
+    {
+      "key": "log",
+      "title": "LOG",
+      "full_name": "Learning on Graphs Conference",
+      "acronym": "LOG",
+      "tags": [],
+      "categories": ["ai"]
+    },
+    {
+      "key": "lpc",
+      "title": "LPC",
+      "full_name": "Linux Plumbers Conference",
+      "acronym": "LPC",
+      "tags": [],
+      "categories": ["systems"]
+    },
+    {
+      "key": "lrec",
+      "title": "LREC",
+      "full_name": "International Conference on Language Resources and Evaluation",
+      "acronym": "LREC",
+      "tags": ["natural-language-processing"],
+      "categories": ["ai"]
+    },
+    {
+      "key": "mathai",
+      "title": "MathAI",
+      "full_name": "The International Conference dedicated to mathematics in artificial intelligence",
+      "acronym": "MathAI",
+      "tags": ["machine-learning", "mathematics"],
+      "categories": ["ai"]
+    },
+    {
+      "key": "mdoa-2026",
+      "title": "MDOA 2026",
+      "full_name": "7th International Conference on Multidisciplinary Design Optimization and Applications",
+      "acronym": "MDOA 2026",
+      "tags": [],
+      "categories": ["theory"]
+    },
+    {
+      "key": "miccai",
+      "title": "MICCAI",
+      "full_name": "International Conference on Medical Image Computing and Computer-Assisted Intervention",
+      "acronym": "MICCAI",
+      "tags": ["computer-vision"],
+      "categories": ["ai"]
+    },
+    {
+      "key": "micro",
+      "title": "MICRO",
+      "full_name": "IEEE/ACM International Symposium on Microarchitecture",
+      "acronym": "MICRO",
+      "tags": [],
+      "categories": ["systems"]
+    },
+    {
+      "key": "mid4cc",
+      "title": "Mid4CC",
+      "full_name": "International Workshop on Middleware for the Computing Continuum",
+      "acronym": "Mid4CC",
+      "tags": ["niche", "workshop"],
+      "categories": ["systems", "networking"]
+    },
+    {
+      "key": "middleware",
+      "title": "Middleware",
+      "full_name": "ACM International Middleware Conference",
+      "acronym": "Middleware",
+      "tags": [],
+      "categories": ["systems"]
+    },
+    {
+      "key": "mig",
+      "title": "MIG",
+      "full_name": "ACM SIGGRAPH Conference on Motion, Interaction and Games",
+      "acronym": "MIG",
+      "tags": [],
+      "categories": ["graphics"]
+    },
+    {
+      "key": "mipro",
+      "title": "MIPRO",
+      "full_name": "International Convention on Information, Communication and Electronic Technology (MIPRO)",
+      "acronym": "MIPRO",
+      "tags": ["niche"],
+      "categories": ["systems", "networking"]
+    },
+    {
+      "key": "mirg-icair-2026",
+      "title": "MIRG-ICAIR 2026",
+      "full_name": "6th International Conference on Artificial Intelligence and Robotics",
+      "acronym": "MIRG-ICAIR 2026",
+      "tags": [],
+      "categories": ["ai"]
+    },
+    {
+      "key": "mlcc-2027",
+      "title": "MLCC 2027",
+      "full_name": "2027 International Conference on Machine Learning and Cognitive Computing",
+      "acronym": "MLCC 2027",
+      "tags": [],
+      "categories": ["ai"]
+    },
+    {
+      "key": "mlsys",
+      "title": "MLSys",
+      "full_name": "Conference on Machine Learning and Systems",
+      "acronym": "MLSys",
+      "tags": [],
+      "categories": ["systems", "ai"]
+    },
+    {
+      "key": "mmasia",
+      "title": "MMAsia",
+      "full_name": "ACM Multimedia Asia",
+      "acronym": "MMAsia",
+      "tags": [],
+      "categories": ["graphics"]
+    },
+    {
+      "key": "mmm",
+      "title": "MMM",
+      "full_name": "International Conference on Multimedia Modeling",
+      "acronym": "MMM",
+      "tags": [],
+      "categories": ["graphics"]
+    },
+    {
+      "key": "mmsys",
+      "title": "MMSys",
+      "full_name": "ACM International Conference on Multimedia Systems",
+      "acronym": "MMSys",
+      "tags": [],
+      "categories": ["networking"]
+    },
+    {
+      "key": "mobicom",
+      "title": "MobiCom",
+      "full_name": "ACM International Conference on Mobile Computing and Networking",
+      "acronym": "MobiCom",
+      "tags": [],
+      "categories": ["networking"]
+    },
+    {
+      "key": "mobihoc",
+      "title": "MobiHoc",
+      "full_name": "International Symposium on Mobile Ad Hoc Networking and Computing",
+      "acronym": "MobiHoc",
+      "tags": [],
+      "categories": ["networking"]
+    },
+    {
+      "key": "mobisys",
+      "title": "MobiSys",
+      "full_name": "ACM International Conference on Mobile Systems, Applications, and Services",
+      "acronym": "MobiSys",
+      "tags": [],
+      "categories": ["networking"]
+    },
+    {
+      "key": "models",
+      "title": "MoDELS",
+      "full_name": "International Conference on Model Driven Engineering Languages and Systems",
+      "acronym": "MoDELS",
+      "tags": [],
+      "categories": ["systems"]
+    },
+    {
+      "key": "msn",
+      "title": "MSN",
+      "full_name": "International Conference on Mobility, Sensing and Networking",
+      "acronym": "MSN",
+      "tags": [],
+      "categories": ["networking"]
+    },
+    {
+      "key": "msr",
+      "title": "MSR",
+      "full_name": "IEEE/ACM International Conference on Mining Software Repositories",
+      "acronym": "MSR",
+      "tags": [],
+      "categories": ["systems"]
+    },
+    {
+      "key": "msst",
+      "title": "MSST",
+      "full_name": "International Conference on Massive Storage Systems and Technology",
+      "acronym": "MSST",
+      "tags": [],
+      "categories": ["systems"]
+    },
+    {
+      "key": "mswim",
+      "title": "MSWiM",
+      "full_name": "International Conference on Modeling, Analysis and Simulation of Wireless and Mobile Systems",
+      "acronym": "MSWiM",
+      "tags": [],
+      "categories": ["networking"]
+    },
+    {
+      "key": "mtel-2026",
+      "title": "MTEL 2026",
+      "full_name": "The 20th IEEE International Workshop on Multimedia Technologies for E-Learning (MTEL)",
+      "acronym": "MTEL 2026",
+      "tags": [],
+      "categories": ["graphics"]
+    },
+    {
+      "key": "naacl",
+      "title": "NAACL",
+      "full_name": "The Annual Conference of the Nations of the Americas Chapter of the Association for Computational Linguistics",
+      "acronym": "NAACL",
+      "tags": ["natural-language-processing"],
+      "categories": ["ai"]
+    },
+    {
+      "key": "naiic6",
+      "title": "NAIIC6",
+      "full_name": "NorwAI Innovate Conference - 2026",
+      "acronym": "NAIIC6",
+      "tags": [],
+      "categories": ["ai"]
+    },
+    {
+      "key": "ncmmsc",
+      "title": "NCMMSC",
+      "full_name": "National Conference on Man-Machine Speech Communication",
+      "acronym": "NCMMSC",
+      "tags": [],
+      "categories": ["graphics"]
+    },
+    {
+      "key": "ndss",
+      "title": "NDSS",
+      "full_name": "Network and Distributed System Security (NDSS) Symposium",
+      "acronym": "NDSS",
+      "tags": [],
+      "categories": ["security"]
+    },
+    {
+      "key": "netdev",
+      "title": "Netdev",
+      "full_name": "Netdev Conference on Linux Networking",
+      "acronym": "Netdev",
+      "tags": [],
+      "categories": ["networking", "systems"]
+    },
+    {
+      "key": "network-flows-2-0",
+      "title": "Network Flows 2.0",
+      "full_name": "DIMACS Implementation Challenge: Network Flows 2.0",
+      "acronym": "Network Flows 2.0",
+      "tags": [],
+      "categories": ["theory"]
+    },
+    {
+      "key": "networking",
+      "title": "Networking",
+      "full_name": "IFIP International Conference on Networking",
+      "acronym": "Networking",
+      "tags": [],
+      "categories": ["networking"]
+    },
+    {
+      "key": "netys",
+      "title": "NETYS",
+      "full_name": "The International Conference on Networked Systems",
+      "acronym": "NETYS",
+      "tags": [],
+      "categories": ["systems"]
+    },
+    {
+      "key": "neurips",
+      "title": "NeurIPS",
+      "full_name": "Conference on Neural Information Processing Systems",
+      "acronym": "NeurIPS",
+      "tags": ["machine-learning"],
+      "categories": ["ai"]
+    },
+    {
+      "key": "nlbse",
+      "title": "NLBSE",
+      "full_name": "The 5th International Workshop on Natural Language-based Software Engineering",
+      "acronym": "NLBSE",
+      "tags": ["natural-language-processing", "software engineering"],
+      "categories": ["ai"]
+    },
+    {
+      "key": "nlp4call-2026",
+      "title": "NLP4CALL-2026",
+      "full_name": "Natural Language Processing for Computer-Assisted language Learning",
+      "acronym": "NLP4CALL-2026",
+      "tags": [],
+      "categories": ["networking", "ai"]
+    },
+    {
+      "key": "nlpcc",
+      "title": "NLPCC",
+      "full_name": "CCF International Conference on Natural Language Processing and Chinese Computing",
+      "acronym": "NLPCC",
+      "tags": [],
+      "categories": ["ai"]
+    },
+    {
+      "key": "noms",
+      "title": "NOMS",
+      "full_name": "IEEE/IFIP Network Operations and Management Symposium",
+      "acronym": "NOMS",
+      "tags": [],
+      "categories": ["networking", "security"]
+    },
+    {
+      "key": "nordsec",
+      "title": "NordSec",
+      "full_name": "Nordic Conference on Secure IT Systems",
+      "acronym": "NordSec",
+      "tags": [],
+      "categories": ["security"]
+    },
+    {
+      "key": "nossdav",
+      "title": "NOSSDAV",
+      "full_name": "International Workshop on Network and Operating System Support for Digital Audio and Video",
+      "acronym": "NOSSDAV",
+      "tags": [],
+      "categories": ["networking"]
+    },
+    {
+      "key": "nsdi",
+      "title": "NSDI",
+      "full_name": "USENIX Symposium on Networked Systems Design and Implementation",
+      "acronym": "NSDI",
+      "tags": [],
+      "categories": ["networking"]
+    },
+    {
+      "key": "nspw",
+      "title": "NSPW",
+      "full_name": "New Security Paradigms Workshop",
+      "acronym": "NSPW",
+      "tags": [],
+      "categories": ["security"]
+    },
+    {
+      "key": "nvmw",
+      "title": "NVMW",
+      "full_name": "Non-Volatile Memories Workshop",
+      "acronym": "NVMW",
+      "tags": ["niche", "workshop"],
+      "categories": ["systems"]
+    },
+    {
+      "key": "oasis-ai-2026",
+      "title": "OASIS-AI 2026",
+      "full_name": "Open Compute Architecture and Software Infrastructure for Heterogeneous AI Systems",
+      "acronym": "OASIS-AI 2026",
+      "tags": [],
+      "categories": ["ai"]
+    },
+    {
+      "key": "ocp-global-summit",
+      "title": "OCP Global Summit",
+      "full_name": "Open Compute Project Global Summit",
+      "acronym": "OCP Global Summit",
+      "tags": [],
+      "categories": ["systems"]
+    },
+    {
+      "key": "osdi",
+      "title": "OSDI",
+      "full_name": "USENIX Symposium on Operating Systems Design and Implementation",
+      "acronym": "OSDI",
+      "tags": [],
+      "categories": ["systems"]
+    },
+    {
+      "key": "p3hpc-2026",
+      "title": "P3HPC 2026",
+      "full_name": "P3HPC: International Workshop on Parallel Programming Models and Systems Software for High-End Computing (P3HPC 2026)",
+      "acronym": "P3HPC 2026",
+      "tags": ["workshop"],
+      "categories": ["hpc"]
+    },
+    {
+      "key": "p4-workshop",
+      "title": "P4 Workshop",
+      "full_name": "P4 Workshop (P4 Language Consortium)",
+      "acronym": "P4 Workshop",
+      "tags": [],
+      "categories": ["networking"]
+    },
+    {
+      "key": "pacificvis",
+      "title": "PacificVis",
+      "full_name": "IEEE Pacific Visualization Symposium (PacificVis 2027)",
+      "acronym": "PacificVis",
+      "tags": [],
+      "categories": ["graphics"]
+    },
+    {
+      "key": "pact",
+      "title": "PACT",
+      "full_name": "International Conference on Parallel Architectures and Compilation Techniques",
+      "acronym": "PACT",
+      "tags": [],
+      "categories": ["hpc"]
+    },
+    {
+      "key": "pakdd",
+      "title": "PAKDD",
+      "full_name": "Pacific-Asia Conference on Knowledge Discovery and Data Mining",
+      "acronym": "PAKDD",
+      "tags": [],
+      "categories": ["db"]
+    },
+    {
+      "key": "pam",
+      "title": "PAM",
+      "full_name": "Passive and Active Measurement Conference",
+      "acronym": "PAM",
+      "tags": [],
+      "categories": ["networking", "security"]
+    },
+    {
+      "key": "parallel2026",
+      "title": "Parallel2026",
+      "full_name": "The 5th International Conference on Theory, Applications and Future Trends  for Parallel R",
+      "acronym": "Parallel2026",
+      "tags": [],
+      "categories": ["theory"]
+    },
+    {
+      "key": "pdcat",
+      "title": "PDCAT",
+      "full_name": "International Conference on Parallel and Distributed Computing, Applications and Technologies",
+      "acronym": "PDCAT",
+      "tags": [],
+      "categories": ["hpc"]
+    },
+    {
+      "key": "pdp-2027",
+      "title": "PDP 2027",
+      "full_name": "PDP 2027",
+      "acronym": "PDP 2027",
+      "tags": [],
+      "categories": ["hpc", "systems", "ai", "security"]
+    },
+    {
+      "key": "pdsw-2026",
+      "title": "PDSW'26",
+      "full_name": "PDSW'26: The 11th International Parallel Data Systems Workshop",
+      "acronym": "PDSW'26",
+      "tags": ["workshop", "storage"],
+      "categories": ["hpc"]
+    },
+    {
+      "key": "pearc",
+      "title": "PEARC",
+      "full_name": "Practice and Experience in Advanced Research Computing",
+      "acronym": "PEARC",
+      "tags": ["niche"],
+      "categories": ["hpc", "systems"]
+    },
+    {
+      "key": "percom",
+      "title": "PerCom",
+      "full_name": "IEEE International Conference on Pervasive Computing and Communications",
+      "acronym": "PerCom",
+      "tags": [],
+      "categories": ["networking", "systems", "hci"]
+    },
+    {
+      "key": "percom-workshops",
+      "title": "PerCom Workshops",
+      "full_name": "IEEE International Conference on Pervasive Computing and Communications Workshops",
+      "acronym": "PerCom Workshops",
+      "tags": ["niche", "workshop"],
+      "categories": ["networking", "systems"]
+    },
+    {
+      "key": "performance",
+      "title": "Performance",
+      "full_name": "International Symposium on Computer Performance, Modeling, Measurements and Evaluation",
+      "acronym": "Performance",
+      "tags": [],
+      "categories": ["systems"]
+    },
+    {
+      "key": "pets",
+      "title": "PETS",
+      "full_name": "Privacy Enhancing Technologies Symposium",
+      "acronym": "PETS",
+      "tags": [],
+      "categories": ["security"]
+    },
+    {
+      "key": "pg",
+      "title": "PG",
+      "full_name": "Pacific Graphics, The Pacific Conference on Computer Graphics and Applications",
+      "acronym": "PG",
+      "tags": [],
+      "categories": ["graphics"]
+    },
+    {
+      "key": "pkc",
+      "title": "PKC",
+      "full_name": "International Conference on Practice and Theory of Public-Key Cryptography",
+      "acronym": "PKC",
+      "tags": [],
+      "categories": ["security"]
+    },
+    {
+      "key": "plsc-e-2026",
+      "title": "PLSC-E 2026",
+      "full_name": "Privacy Law Scholars Conference Europe",
+      "acronym": "PLSC-E 2026",
+      "tags": [],
+      "categories": ["security"]
+    },
+    {
+      "key": "pmbs-2026",
+      "title": "PMBS 26",
+      "full_name": "The 16th International Workshop on Performance Modeling, Benchmarking and Simulation of High Performance Computer Systems (PMBS 26)",
+      "acronym": "PMBS 26",
+      "tags": ["workshop"],
+      "categories": ["hpc"]
+    },
+    {
+      "key": "podc",
+      "title": "PODC",
+      "full_name": "ACM Symposium on Principles of Distributed Computing",
+      "acronym": "PODC",
+      "tags": [],
+      "categories": ["systems"]
+    },
+    {
+      "key": "pods",
+      "title": "PODS",
+      "full_name": "ACM Symposium on Principles of Database Systems",
+      "acronym": "PODS",
+      "tags": [],
+      "categories": ["db"]
+    },
+    {
+      "key": "polds-2026",
+      "title": "PolDS 2026",
+      "full_name": "The 2nd ACM International Workshop on Polar Data Science",
+      "acronym": "PolDS 2026",
+      "tags": [],
+      "categories": ["systems"]
+    },
+    {
+      "key": "ppopp",
+      "title": "PPoPP",
+      "full_name": "ACM SIGPLAN Symposium on Principles & Practice of Parallel Programming",
+      "acronym": "PPoPP",
+      "tags": [],
+      "categories": ["hpc"]
+    },
+    {
+      "key": "ppsn",
+      "title": "PPSN",
+      "full_name": "International Conference on Parallel Problem Solving From Nature",
+      "acronym": "PPSN",
+      "tags": [],
+      "categories": ["ai"]
+    },
+    {
+      "key": "prcv",
+      "title": "PRCV",
+      "full_name": "Chinese Conference on Pattern Recognition and Computer Vision",
+      "acronym": "PRCV",
+      "tags": [],
+      "categories": ["graphics"]
+    },
+    {
+      "key": "pricai",
+      "title": "PRICAI",
+      "full_name": "Pacific Rim International Conference on Artificial Intelligence",
+      "acronym": "PRICAI",
+      "tags": [],
+      "categories": ["ai"]
+    },
+    {
+      "key": "probml",
+      "title": "ProbML",
+      "full_name": "Symposium on Probabilistic Machine Learning",
+      "acronym": "ProbML",
+      "tags": [],
+      "categories": ["ai"]
+    },
+    {
+      "key": "protools-2026",
+      "title": "ProTools 2026",
+      "full_name": "8th Workshop on Programming and Performance Visualization Tools (ProTools)",
+      "acronym": "ProTools 2026",
+      "tags": ["workshop"],
+      "categories": ["hpc"]
+    },
+    {
+      "key": "qrs",
+      "title": "QRS",
+      "full_name": "IEEE International Conference on Software Quality, Reliability and Security",
+      "acronym": "QRS",
+      "tags": [],
+      "categories": ["systems"]
+    },
+    {
+      "key": "qspatial-2026",
+      "title": "Q-Spatial",
+      "full_name": "The 2nd ACM SIGSPATIAL International Workshop on Quantum Computing and Quantum-Inspired Computing for Spatial Applications",
+      "acronym": "Q-Spatial",
+      "tags": [],
+      "categories": ["theory"]
+    },
+    {
+      "key": "raai2026",
+      "title": "RAAI 2026",
+      "full_name": "2026 6th International Conference on Robotics, Automation, and Artificial Intelligence",
+      "acronym": "RAAI 2026",
+      "tags": [],
+      "categories": ["ai"]
+    },
+    {
+      "key": "raid",
+      "title": "RAID",
+      "full_name": "International Symposium on Recent Advances in Intrusion Detection",
+      "acronym": "RAID",
+      "tags": [],
+      "categories": ["security"]
+    },
+    {
+      "key": "ramt-2026",
+      "title": "RAMT 2026",
+      "full_name": "2026 3rd International Conference on Robotics and Advanced Manufacturing Technology",
+      "acronym": "RAMT 2026",
+      "tags": [],
+      "categories": ["ai"]
+    },
+    {
+      "key": "rcae-2026",
+      "title": "RCAE 2026",
+      "full_name": "2026 The 9th International Conference on Robotics, Control and Automation Engineering (RCAE 2026)",
+      "acronym": "RCAE 2026",
+      "tags": [],
+      "categories": ["ai"]
+    },
+    {
+      "key": "re",
+      "title": "RE",
+      "full_name": "IEEE International Requirements Engineering Conference",
+      "acronym": "RE",
+      "tags": [],
+      "categories": ["systems"]
+    },
+    {
+      "key": "recomb",
+      "title": "RECOMB",
+      "full_name": "International Conference on Research inComputational Molecular Biology",
+      "acronym": "RECOMB",
+      "tags": [],
+      "categories": ["db"]
+    },
+    {
+      "key": "recsys",
+      "title": "RecSys",
+      "full_name": "ACM Conference on Recommender Systems",
+      "acronym": "RecSys",
+      "tags": [],
+      "categories": ["db"]
+    },
+    {
+      "key": "refsq",
+      "title": "REFSQ",
+      "full_name": "Requirements Engineering: Foundation for Software Quality",
+      "acronym": "REFSQ",
+      "tags": [],
+      "categories": ["systems"]
+    },
+    {
+      "key": "resdis-2026",
+      "title": "RESDIS 2026",
+      "full_name": "6th International Workshop on RESource DISaggregation in High Performance Computing (RESDIS 2026)",
+      "acronym": "RESDIS 2026",
+      "tags": ["workshop"],
+      "categories": ["hpc"]
+    },
+    {
+      "key": "rlc",
+      "title": "RLC",
+      "full_name": "Reinforcement Learning Conference",
+      "acronym": "RLC",
+      "tags": ["machine-learning", "reinforcement-learning"],
+      "categories": ["ai"]
+    },
+    {
+      "key": "robovis-2027",
+      "title": "ROBOVIS 2027",
+      "full_name": "7th International Conference on Robotics, Computer Vision and Intelligent Systems",
+      "acronym": "ROBOVIS 2027",
+      "tags": [],
+      "categories": ["ai"]
+    },
+    {
+      "key": "rss",
+      "title": "RSS",
+      "full_name": "Robotics Science and Systems",
+      "acronym": "RSS",
+      "tags": ["robotics", "machine-learning"],
+      "categories": ["ai"]
+    },
+    {
+      "key": "rtas",
+      "title": "RTAS",
+      "full_name": "IEEE Real-Time and Embedded Technology and Applications Symposium",
+      "acronym": "RTAS",
+      "tags": [],
+      "categories": ["systems"]
+    },
+    {
+      "key": "rtss",
+      "title": "RTSS",
+      "full_name": "The IEEE Real-Time Systems Symposium",
+      "acronym": "RTSS",
+      "tags": [],
+      "categories": ["systems"]
+    },
+    {
+      "key": "ruleml-rr",
+      "title": "RuleML+RR",
+      "full_name": "International Joint Conference on Rules and Reasoning",
+      "acronym": "RuleML+RR",
+      "tags": ["reasoning", "machine-learning", "knowledge representation"],
+      "categories": ["ai"]
+    },
+    {
+      "key": "s-p",
+      "title": "S&P",
+      "full_name": "IEEE Symposium on Security and Privacy",
+      "acronym": "S&P",
+      "tags": [],
+      "categories": ["security"]
+    },
+    {
+      "key": "sac",
+      "title": "SAC",
+      "full_name": "Selected Areas in Cryptography",
+      "acronym": "SAC",
+      "tags": [],
+      "categories": ["security"]
+    },
+    {
+      "key": "sacmat",
+      "title": "SACMAT",
+      "full_name": "ACM Symposium on Access Control Models and Technologies",
+      "acronym": "SACMAT",
+      "tags": [],
+      "categories": ["security"]
+    },
+    {
+      "key": "saner",
+      "title": "SANER",
+      "full_name": "IEEE International Conference on Software Analysis, Evolution and Reengineering",
+      "acronym": "SANER",
+      "tags": [],
+      "categories": ["systems"]
+    },
+    {
+      "key": "sat",
+      "title": "SAT",
+      "full_name": "International Conference on Theory and Applications of Satisfiability Testing",
+      "acronym": "SAT",
+      "tags": [],
+      "categories": ["theory"]
+    },
+    {
+      "key": "satml",
+      "title": "SaTML",
+      "full_name": "IEEE Conference on Secure and Trustworthy Machine Learning",
+      "acronym": "SaTML",
+      "tags": [],
+      "categories": ["security", "ai"]
+    },
+    {
+      "key": "sc",
+      "title": "SC",
+      "full_name": "International Conference for High Performance Computing, Networking, Storage, and Analysis",
+      "acronym": "SC",
+      "tags": [],
+      "categories": ["hpc"]
+    },
+    {
+      "key": "sca",
+      "title": "SCA",
+      "full_name": "ACM SIGGRAPH/Eurographics Symposium on Computer Animation",
+      "acronym": "SCA",
+      "tags": [],
+      "categories": ["graphics"]
+    },
+    {
+      "key": "scalah-2026",
+      "title": "ScalAH 2026",
+      "full_name": "17th Workshop on Latest Advances in Scalable Algorithms for Large-Scale Heterogeneous Systems (ScalAH 2026)",
+      "acronym": "ScalAH 2026",
+      "tags": ["workshop"],
+      "categories": ["hpc"]
+    },
+    {
+      "key": "scale-to-see-2026",
+      "title": "Scale to See 2026",
+      "full_name": "Scale to See: Scalable AI for Scientific Imaging and Spatiotemporal Data",
+      "acronym": "Scale to See 2026",
+      "tags": ["workshop"],
+      "categories": ["hpc"]
+    },
+    {
+      "key": "scam",
+      "title": "SCAM",
+      "full_name": "IEEE International Working Conference on Source Code Analysis and Manipulation",
+      "acronym": "SCAM",
+      "tags": [],
+      "categories": ["systems"]
+    },
+    {
+      "key": "sdm",
+      "title": "SDM",
+      "full_name": "SIAM International Conference on Data Mining",
+      "acronym": "SDM",
+      "tags": [],
+      "categories": ["db"]
+    },
+    {
+      "key": "sec",
+      "title": "SEC",
+      "full_name": "ACM/IEEE Symposium on Edge Computing",
+      "acronym": "SEC",
+      "tags": [],
+      "categories": ["systems"]
+    },
+    {
+      "key": "sec-sc",
+      "title": "SEC",
+      "full_name": "IFIP International Information Security Conference",
+      "acronym": "SEC",
+      "tags": [],
+      "categories": ["security"]
+    },
+    {
+      "key": "secitc",
+      "title": "SECITC",
+      "full_name": "International Conference on Security for Information Technology and Communications",
+      "acronym": "SECITC",
+      "tags": [],
+      "categories": ["security"]
+    },
+    {
+      "key": "secon",
+      "title": "SECON",
+      "full_name": "IEEE International Conference on Sensing, Communication, and Networking",
+      "acronym": "SECON",
+      "tags": [],
+      "categories": ["networking"]
+    },
+    {
+      "key": "secupriv-iot-2026",
+      "title": "SecuPriv-IoT 2026",
+      "full_name": "The International workshop on Security and Privacy for Next-Generation Internet of Things (IoT)",
+      "acronym": "SecuPriv-IoT 2026",
+      "tags": [],
+      "categories": ["security"]
+    },
+    {
+      "key": "securecomm",
+      "title": "SecureComm",
+      "full_name": "EAI International Conference on Security and Privacy in Communication Networks",
+      "acronym": "SecureComm",
+      "tags": [],
+      "categories": ["security"]
+    },
+    {
+      "key": "seke",
+      "title": "SEKE",
+      "full_name": "International Conference on Software Engineering and Knowledge Engineering",
+      "acronym": "SEKE",
+      "tags": [],
+      "categories": ["systems"]
+    },
+    {
+      "key": "sensys",
+      "title": "SenSys",
+      "full_name": "ACM Conference on Embedded Networked Sensor Systems",
+      "acronym": "SenSys",
+      "tags": [],
+      "categories": ["networking"]
+    },
+    {
+      "key": "sesame",
+      "title": "SESAME @ JCDL 2026",
+      "full_name": "2nd Workshop on Smarter Extraction of Scholarly Metadata using Knowledge Graphs, Language Models, and Agents",
+      "acronym": "SESAME @ JCDL 2026",
+      "tags": ["niche", "workshop"],
+      "categories": ["ai", "db"]
+    },
+    {
+      "key": "setta",
+      "title": "SETTA",
+      "full_name": "Symposium on Dependable Software Engineering: Theories, Tools and Applications",
+      "acronym": "SETTA",
+      "tags": [],
+      "categories": ["theory"]
+    },
+    {
+      "key": "sfwm-2026",
+      "title": "SFWM 2026",
+      "full_name": "SFWM 2026: The 2nd International Workshop on Software Frameworks and Workload Management for Quantum and HPC Ecosystems",
+      "acronym": "SFWM 2026",
+      "tags": ["workshop", "quantum"],
+      "categories": ["hpc"]
+    },
+    {
+      "key": "sgp",
+      "title": "SGP",
+      "full_name": "Symposium on Geometry Processing",
+      "acronym": "SGP",
+      "tags": ["computer-vision", "machine-learning"],
+      "categories": ["ai", "graphics"]
+    },
+    {
+      "key": "si-dl2027",
+      "title": "SI&DL2027",
+      "full_name": "Swarm Intelligence and Deep Learning: Algorithms, Analysis and Applications",
+      "acronym": "SI&DL2027",
+      "tags": [],
+      "categories": ["ai", "theory"]
+    },
+    {
+      "key": "sibgrapi",
+      "title": "SIBGRAPI",
+      "full_name": "Conference on Graphics, Patterns and Images",
+      "acronym": "SIBGRAPI",
+      "tags": ["image-processing", "pattern-recognition", "computer-vision", "computer-graphics"],
+      "categories": ["ai"]
+    },
+    {
+      "key": "sibgrapi-wuw-2026",
+      "title": "SIBGRAPI WUW 2026",
+      "full_name": "SIBGRAPI 2026 Workshop of Undergraduate Works (WUW)",
+      "acronym": "SIBGRAPI WUW 2026",
+      "tags": ["workshop"],
+      "categories": ["graphics"]
+    },
+    {
+      "key": "sigcomm",
+      "title": "SIGCOMM",
+      "full_name": "ACM International Conference on Applications, Technologies, Architectures, and Protocols for Computer Communication",
+      "acronym": "SIGCOMM",
+      "tags": [],
+      "categories": ["networking"]
+    },
+    {
+      "key": "sigcse",
+      "title": "SIGCSE",
+      "full_name": "Technical Symposium on Computer Science Education Conference",
+      "acronym": "SIGCSE",
+      "tags": [],
+      "categories": ["hci"]
+    },
+    {
+      "key": "sigir",
+      "title": "SIGIR",
+      "full_name": "International ACM SIGIR Conference on Research and Development in Information Retrieval",
+      "acronym": "SIGIR",
+      "tags": ["information-retrieval", "natural-language-processing", "web-search", "data-mining"],
+      "categories": ["ai", "db"]
+    },
+    {
+      "key": "sigkdd",
+      "title": "KDD",
+      "full_name": "ACM SIGKDD Conference on Knowledge Discovery and Data Mining",
+      "acronym": "KDD",
+      "tags": ["data-mining", "machine-learning"],
+      "categories": ["ai", "db"]
+    },
+    {
+      "key": "sigmetrics",
+      "title": "SIGMETRICS",
+      "full_name": "ACM Special Interest Group on Measurement and Evaluation",
+      "acronym": "SIGMETRICS",
+      "tags": [],
+      "categories": ["systems"]
+    },
+    {
+      "key": "sigmod",
+      "title": "SIGMOD",
+      "full_name": "ACM Conference on Management of Data",
+      "acronym": "SIGMOD",
+      "tags": [],
+      "categories": ["db"]
+    },
+    {
+      "key": "sigops-atc",
+      "title": "SIGOPS ATC",
+      "full_name": "ACM SIGOPS Annual Technical Conference",
+      "acronym": "SIGOPS ATC",
+      "tags": [],
+      "categories": ["systems"]
+    },
+    {
+      "key": "sigspatial",
+      "title": "SIGSPATIAL",
+      "full_name": "ACM SIGSPATIAL International Conference on Advances in Geographic Information Systems",
+      "acronym": "SIGSPATIAL",
+      "tags": [],
+      "categories": ["db"]
+    },
+    {
+      "key": "slice-2026",
+      "title": "SLICE-2026",
+      "full_name": "The 8th International Workshop on Smart Living with IoT, Cloud, and Edge Computing",
+      "acronym": "SLICE-2026",
+      "tags": [],
+      "categories": ["systems"]
+    },
+    {
+      "key": "sls-optirob-2027",
+      "title": "SLS&OPTIROB 2027",
+      "full_name": "Space Launching Systems (SLS) & Artificial Inteligence applied in the fields of Aerospace,",
+      "acronym": "SLS&OPTIROB 2027",
+      "tags": [],
+      "categories": ["ai"]
+    },
+    {
+      "key": "slt",
+      "title": "SLT",
+      "full_name": "IEEE Spoken Language Technology (SLT) Workshop",
+      "acronym": "SLT",
+      "tags": [],
+      "categories": ["graphics"]
+    },
+    {
+      "key": "smc",
+      "title": "SMC",
+      "full_name": "IEEE International Conference on Systems, Man, and Cybernetics",
+      "acronym": "SMC",
+      "tags": [],
+      "categories": ["ai"]
+    },
+    {
+      "key": "smi",
+      "title": "SMI",
+      "full_name": "Shape Modeling International",
+      "acronym": "SMI",
+      "tags": [],
+      "categories": ["graphics"]
+    },
+    {
+      "key": "soc4ia-icsoc-2026-1st-international-workshop-on-service-oriented-computing-for-intelligent-ag",
+      "title": "SOC4IA@ICSOC 2026 - 1st International Workshop on Service-Oriented Computing for Intelligent Ag",
+      "full_name": "SOC4IA@ICSOC 2026 - 1st International Workshop on Service-Oriented Computing for Intelligent Ag",
+      "acronym": "SOC4IA@ICSOC 2026 - 1st International Workshop on Service-Oriented Computing for Intelligent Ag",
+      "tags": [],
+      "categories": ["hpc", "ai", "security"]
+    },
+    {
+      "key": "socc",
+      "title": "SoCC",
+      "full_name": "ACM Symposium on Cloud Computing",
+      "acronym": "SoCC",
+      "tags": [],
+      "categories": ["systems"]
+    },
+    {
+      "key": "socg",
+      "title": "SOCG",
+      "full_name": "International Symposium on Computational Geometry",
+      "acronym": "SOCG",
+      "tags": [],
+      "categories": ["theory"]
+    },
+    {
+      "key": "soda",
+      "title": "SODA",
+      "full_name": "ACM-SIAM Symposium on Discrete Algorithms",
+      "acronym": "SODA",
+      "tags": [],
+      "categories": ["theory"]
+    },
+    {
+      "key": "sosp",
+      "title": "SOSP",
+      "full_name": "ACM Symposium on Operating Systems Principles",
+      "acronym": "SOSP",
+      "tags": [],
+      "categories": ["systems"]
+    },
+    {
+      "key": "soups",
+      "title": "SOUPS",
+      "full_name": "Symposium On Usable Privacy and Security",
+      "acronym": "SOUPS",
+      "tags": [],
+      "categories": ["security"]
+    },
+    {
+      "key": "sovereignai",
+      "title": "SovereignAI 2026",
+      "full_name": "The First Workshop on Sovereign AI for Collaborative and Pluralistic AI Ecosystems",
+      "acronym": "SovereignAI 2026",
+      "tags": ["niche", "workshop"],
+      "categories": ["ai"]
+    },
+    {
+      "key": "spaa",
+      "title": "SPAA",
+      "full_name": "ACM Symposium on Parallelism in Algorithms and Architectures",
+      "acronym": "SPAA",
+      "tags": [],
+      "categories": ["hpc"]
+    },
+    {
+      "key": "spatialconnect-2026",
+      "title": "SpatialConnect 2026",
+      "full_name": "The 2nd ACM SIGSPATIAL International Workshop on Spatial Intelligence for Smart Connectivity",
+      "acronym": "SpatialConnect 2026",
+      "tags": [],
+      "categories": ["systems"]
+    },
+    {
+      "key": "spie-mcvr-2026",
+      "title": "SPIE MCVR 2026",
+      "full_name": "SPIE--2026 The 3rd International Conference on Measurement, Communication and Virtual Reality (MCVR 2026)",
+      "acronym": "SPIE MCVR 2026",
+      "tags": [],
+      "categories": ["graphics"]
+    },
+    {
+      "key": "spm",
+      "title": "SPM",
+      "full_name": "Symposium on Solid and Physical Modeling",
+      "acronym": "SPM",
+      "tags": [],
+      "categories": ["graphics"]
+    },
+    {
+      "key": "spnna-2026",
+      "title": "SPNNA 2026",
+      "full_name": "2026 3rd International Conference on Signal Processing and Neural Network Applications",
+      "acronym": "SPNNA 2026",
+      "tags": [],
+      "categories": ["ai"]
+    },
+    {
+      "key": "srds",
+      "title": "SRDS",
+      "full_name": "IEEE International Symposium on Reliable Distributed Systems",
+      "acronym": "SRDS",
+      "tags": [],
+      "categories": ["security"]
+    },
+    {
+      "key": "sse",
+      "title": "SSE",
+      "full_name": "IEEE International Conference on Software Services Engineering",
+      "acronym": "SSE",
+      "tags": [],
+      "categories": ["systems"]
+    },
+    {
+      "key": "ssr",
+      "title": "SSR",
+      "full_name": "Security Standardisation Research Conference",
+      "acronym": "SSR",
+      "tags": [],
+      "categories": ["security"]
+    },
+    {
+      "key": "stacs-2027-first",
+      "title": "STACS 2027",
+      "full_name": "STACS 2027 - First",
+      "acronym": "STACS 2027",
+      "tags": [],
+      "categories": ["ai", "security", "db"]
+    },
+    {
+      "key": "stoc",
+      "title": "STOC",
+      "full_name": "ACM Symposium on the Theory of Computing",
+      "acronym": "STOC",
+      "tags": [],
+      "categories": ["theory"]
+    },
+    {
+      "key": "systor",
+      "title": "SYSTOR",
+      "full_name": "ACM International Systems and Storage Conference",
+      "acronym": "SYSTOR",
+      "tags": [],
+      "categories": ["systems"]
+    },
+    {
+      "key": "tc",
+      "title": "IEEE TC",
+      "full_name": "IEEE Transactions on Computers",
+      "acronym": "IEEE TC",
+      "tags": ["niche", "journal"],
+      "categories": ["systems"]
+    },
+    {
+      "key": "tcc",
+      "title": "TCC",
+      "full_name": "Theory of Cryptography Conference",
+      "acronym": "TCC",
+      "tags": [],
+      "categories": ["security"]
+    },
+    {
+      "key": "tdsc",
+      "title": "IEEE TDSC",
+      "full_name": "IEEE Transactions on Dependable and Secure Computing",
+      "acronym": "IEEE TDSC",
+      "tags": ["niche", "journal"],
+      "categories": ["security", "systems"]
+    },
+    {
+      "key": "the-18th-international-conference-on-management-of-digital-ecosystems-medes-2026",
+      "title": "The 18th International Conference on Management of Digital EcoSystems (MEDES 2026)",
+      "full_name": "The 18th International Conference on Management of Digital EcoSystems (MEDES 2026)",
+      "acronym": "The 18th International Conference on Management of Digital EcoSystems (MEDES 2026)",
+      "tags": [],
+      "categories": ["ai", "security", "db"]
+    },
+    {
+      "key": "the-9th-ieee-international-workshop-on-big-spatial-data-bsd-2026",
+      "title": "The 9th IEEE International Workshop on Big Spatial Data (BSD 2026)",
+      "full_name": "The 9th IEEE International Workshop on Big Spatial Data (BSD 2026)",
+      "acronym": "The 9th IEEE International Workshop on Big Spatial Data (BSD 2026)",
+      "tags": [],
+      "categories": ["hpc", "systems", "ai", "security", "db"]
+    },
+    {
+      "key": "tmc",
+      "title": "IEEE TMC",
+      "full_name": "IEEE Transactions on Mobile Computing",
+      "acronym": "IEEE TMC",
+      "tags": ["niche", "journal"],
+      "categories": ["networking", "systems"]
+    },
+    {
+      "key": "ton",
+      "title": "IEEE/ACM ToN",
+      "full_name": "IEEE/ACM Transactions on Networking",
+      "acronym": "IEEE/ACM ToN",
+      "tags": ["niche", "journal"],
+      "categories": ["networking"]
+    },
+    {
+      "key": "tos",
+      "title": "ACM TOS",
+      "full_name": "ACM Transactions on Storage",
+      "acronym": "ACM TOS",
+      "tags": ["niche", "journal"],
+      "categories": ["systems"]
+    },
+    {
+      "key": "tpds",
+      "title": "IEEE TPDS",
+      "full_name": "IEEE Transactions on Parallel and Distributed Systems",
+      "acronym": "IEEE TPDS",
+      "tags": ["niche", "journal"],
+      "categories": ["hpc", "systems"]
+    },
+    {
+      "key": "trustcom",
+      "title": "TrustCom",
+      "full_name": "IEEE International Conference on Trust, Security and Privacy in Computing and Communications",
+      "acronym": "TrustCom",
+      "tags": [],
+      "categories": ["security"]
+    },
+    {
+      "key": "tsc-llm-service-ecosystems",
+      "title": "IEEE TSC Special Issue: Large Language Models in Service-Oriented Ecosystems Design: Advances and Applications",
+      "full_name": "Large Language Models in Service-Oriented Ecosystems Design: Advances and Applications (IEEE Transactions on Services Computing Special Issue)",
+      "acronym": "IEEE TSC Special Issue: Large Language Models in Service-Oriented Ecosystems Design: Advances and Applications",
+      "tags": ["niche", "special-issue"],
+      "categories": ["ai", "systems"]
+    },
+    {
+      "key": "uai",
+      "title": "UAI",
+      "full_name": "Conference on Uncertainty in Artificial Intelligence",
+      "acronym": "UAI",
+      "tags": ["machine-learning"],
+      "categories": ["ai"]
+    },
+    {
+      "key": "uasc",
+      "title": "uASC",
+      "full_name": "Microarchitecture Security Conference (uASC)",
+      "acronym": "uASC",
+      "tags": ["niche", "workshop"],
+      "categories": ["security"]
+    },
+    {
+      "key": "ubicomp-iswc",
+      "title": "UbiComp/ISWC",
+      "full_name": "ACM International Joint Conference on Pervasive and Ubiquitous Computing",
+      "acronym": "UbiComp/ISWC",
+      "tags": [],
+      "categories": ["hci"]
+    },
+    {
+      "key": "ucc",
+      "title": "UCC",
+      "full_name": "IEEE/ACM International Conference on Utility and Cloud Computing",
+      "acronym": "UCC",
+      "tags": [],
+      "categories": ["systems"]
+    },
+    {
+      "key": "uic",
+      "title": "UIC",
+      "full_name": "IEEE International Conference on Ubiquitous Intelligence and Computing",
+      "acronym": "UIC",
+      "tags": [],
+      "categories": ["hci"]
+    },
+    {
+      "key": "uist",
+      "title": "UIST",
+      "full_name": "ACM Symposium on User Interface Software and Technology",
+      "acronym": "UIST",
+      "tags": [],
+      "categories": ["hci"]
+    },
+    {
+      "key": "urbanai-2026",
+      "title": "UrbanAI 2026",
+      "full_name": "The 4th ACM SIGSPATIAL International Workshop on Advances in Urban-AI",
+      "acronym": "UrbanAI 2026",
+      "tags": [],
+      "categories": ["ai"]
+    },
+    {
+      "key": "usenix-security",
+      "title": "USENIX Security",
+      "full_name": "USENIX Security Symposium",
+      "acronym": "USENIX Security",
+      "tags": [],
+      "categories": ["security"]
+    },
+    {
+      "key": "vee",
+      "title": "VEE",
+      "full_name": "Virtual Execution Environments",
+      "acronym": "VEE",
+      "tags": ["dormant", "systems", "virtual-execution"],
+      "categories": ["systems"]
+    },
+    {
+      "key": "vinci",
+      "title": "VINCI",
+      "full_name": "International Symposium on Visual Information Communication and Interaction",
+      "acronym": "VINCI",
+      "tags": [],
+      "categories": ["graphics"]
+    },
+    {
+      "key": "vldb",
+      "title": "VLDB",
+      "full_name": "International Conference on Very Large Data Bases",
+      "acronym": "VLDB",
+      "tags": [],
+      "categories": ["db"]
+    },
+    {
+      "key": "waccpd-2026",
+      "title": "WACCPD 2026",
+      "full_name": "13th Workshop on Accelerator Programming and Directives",
+      "acronym": "WACCPD 2026",
+      "tags": [],
+      "categories": ["hpc"]
+    },
+    {
+      "key": "wacv",
+      "title": "WACV",
+      "full_name": "IEEE/CVF Winter Conference on Applications of Computer Vision",
+      "acronym": "WACV",
+      "tags": ["machine-learning", "computer-vision"],
+      "categories": ["ai"]
+    },
+    {
+      "key": "walcom-2027",
+      "title": "WALCOM 2027",
+      "full_name": "The 21st International Conference and Workshops on Algorithms and Computation",
+      "acronym": "WALCOM 2027",
+      "tags": [],
+      "categories": ["theory"]
+    },
+    {
+      "key": "wasa",
+      "title": "WASA",
+      "full_name": "International Conference on Wireless Algorithms, Systems, and Applications",
+      "acronym": "WASA",
+      "tags": [],
+      "categories": ["networking"]
+    },
+    {
+      "key": "wcm-agentic-ai-unmanned",
+      "title": "IEEE WCM Special Issue: Agentic AI-Enabled Networking for Heterogeneous Unmanned Systems in Low-Altitude Environments",
+      "full_name": "Agentic AI-Enabled Networking for Heterogeneous Unmanned Systems in Low-Altitude Environments (IEEE Wireless Communications Special Issue)",
+      "acronym": "IEEE WCM Special Issue: Agentic AI-Enabled Networking for Heterogeneous Unmanned Systems in Low-Altitude Environments",
+      "tags": ["niche", "special-issue"],
+      "categories": ["ai", "networking"]
+    },
+    {
+      "key": "wcnc",
+      "title": "WCNC",
+      "full_name": "IEEE Wireless Communications and Networking Conference",
+      "acronym": "WCNC",
+      "tags": [],
+      "categories": ["networking"]
+    },
+    {
+      "key": "whpc-2026",
+      "title": "WHPC at SC26",
+      "full_name": "WHPC: Building Community, Building Careers (SC26)",
+      "acronym": "WHPC at SC26",
+      "tags": ["workshop"],
+      "categories": ["hpc"]
+    },
+    {
+      "key": "wicon",
+      "title": "WiCON",
+      "full_name": "International Wireless Internet Conference",
+      "acronym": "WiCON",
+      "tags": [],
+      "categories": ["networking"]
+    },
+    {
+      "key": "wine",
+      "title": "WINE",
+      "full_name": "Conference on Web and Internet Economics",
+      "acronym": "WINE",
+      "tags": [],
+      "categories": ["theory"]
+    },
+    {
+      "key": "wisa",
+      "title": "WISA",
+      "full_name": "Web Information Systems and Applications",
+      "acronym": "WISA",
+      "tags": [],
+      "categories": ["db"]
+    },
+    {
+      "key": "wise",
+      "title": "WISE",
+      "full_name": "International Conference on Web Information Systems Engineering",
+      "acronym": "WISE",
+      "tags": [],
+      "categories": ["db"]
+    },
+    {
+      "key": "wisec",
+      "title": "WiSec",
+      "full_name": "ACM Conference on Security and Privacy in Wireless and Mobile Networks",
+      "acronym": "WiSec",
+      "tags": [],
+      "categories": ["security"]
+    },
+    {
+      "key": "wowmom",
+      "title": "WoWMoM",
+      "full_name": "IEEE International Symposium on a World of Wireless, Mobile and Multimedia Networks",
+      "acronym": "WoWMoM",
+      "tags": [],
+      "categories": ["networking"]
+    },
+    {
+      "key": "wqs",
+      "title": "WQS 2026",
+      "full_name": "4th Workshop on Quantum Software",
+      "acronym": "WQS 2026",
+      "tags": ["niche"],
+      "categories": ["systems", "theory"]
+    },
+    {
+      "key": "wsdm",
+      "title": "WSDM",
+      "full_name": "ACM International Conference on Web Search and Data Mining",
+      "acronym": "WSDM",
+      "tags": ["web-search", "data-mining"],
+      "categories": ["ai", "db"]
+    },
+    {
+      "key": "wsse-2026",
+      "title": "WSSE",
+      "full_name": "World Symposium on Software Engineering",
+      "acronym": "WSSE",
+      "tags": [],
+      "categories": ["systems"]
+    },
+    {
+      "key": "www",
+      "title": "WWW",
+      "full_name": "The Web Conference",
+      "acronym": "WWW",
+      "tags": [
+        "machine-learning",
+        "recommendation",
+        "semantics and knowledge",
+        "retrieval",
+        "web mining",
+        "content analysis"
+      ],
+      "categories": ["ai"]
+    },
+    {
+      "key": "xloop-2026",
+      "title": "XLOOP 2026",
+      "full_name": "XLOOP 2026: The 8th Annual Workshop on Extreme-Scale Experiment-in-the-Loop Computing",
+      "acronym": "XLOOP 2026",
+      "tags": ["workshop"],
+      "categories": ["hpc"]
+    }
+  ]
+}

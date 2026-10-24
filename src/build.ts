@@ -20,8 +20,41 @@ import {
 import { tmpdir } from "node:os";
 import { dirname, isAbsolute, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
-import { recommendationAxes } from "../site/recommendation-core.ts";
-import { isValidRerankerModel } from "../site/recommender.ts";
+import type { IcsCalendarMeta, IcsRow } from "../site/ics.ts";
+
+import {
+  ICS_CAL_NAME_JA,
+  icsCalendarMeta,
+  icsCalendarText,
+  icsCategoryLabels,
+  icsDeadlineUidKey,
+  icsEventBody,
+  icsUidSafe,
+  jstParts,
+  statusMarksJa,
+} from "../site/ics.ts";
+import { recommendationAxes, type SourceFreshness } from "../site/recommendation-core.ts";
+
+export type { IcsCalendarMeta, IcsRow } from "../site/ics.ts";
+export {
+  ICS_CAL_NAME_JA,
+  icsCalendarDescriptionJa,
+  icsCalendarMeta,
+  icsCalendarText,
+  icsCategoryLabels,
+  icsCategoryList,
+  icsDayIso,
+  icsEscapeText,
+  icsEventBody,
+  icsFoldLine,
+  icsNextDay,
+  icsUidSafe,
+  jstParts,
+  statusMarksJa,
+} from "../site/ics.ts";
+
+import Recommender, { isValidRerankerModel } from "../site/recommender.ts";
+import { consolidateReviewedSubmissions, reviewedSubmission } from "../site/submission-identity.ts";
 // 代表採択論文タイトル（会議のセマンティック/語彙プロファイル強化）。
 // データパイプラインで conferences に papers として載せ、ブラウザの語彙一致と
 // IDF（buildNameIdf）の両方に使えるようにする。
@@ -34,7 +67,7 @@ import {
   EMBEDDING_RUNTIME_VERSION,
   embeddingManifest,
   embeddingProfileHash,
-  VENUE_PAPERS,
+  getVenuePapers,
   venuePapersHash,
 } from "./embeddings.ts";
 import {
@@ -77,9 +110,15 @@ export let ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 
 export const SITE_RUNTIME_FILES = [
   "recommender.js",
+  "place-aliases.js",
+  "topic-aliases.js",
+  "latin-retype.js",
   "recommendation-core.js",
+  "recommendation.js",
   "publish.js",
+  "ics.js",
   "app.js",
+  "submission-identity.js",
 ] as const;
 
 const MANAGED_OUTPUT_FILES = [
@@ -92,7 +131,13 @@ const MANAGED_OUTPUT_FILES = [
   "recommendation-index.json",
   "data.csv",
   "upcoming.md",
+  "upcoming.html",
+  "404.html",
+  "robots.txt",
+  "sitemap.xml",
+  "deadlines.ics",
   "llms.txt",
+  "icon.svg",
   ".nojekyll",
   "embeddings.json",
   ...SITE_RUNTIME_FILES,
@@ -130,18 +175,9 @@ export function setRoot(root: string): void {
 
 // --- constants ---------------------------------------------------------------
 
-export const KIND_LABEL_JA: Record<string, string> = {
-  abstract: "概要締切",
-  paper: "論文締切",
-  supplementary: "補足資料締切",
-  notification: "採否通知",
-  camera_ready: "カメラレディ締切",
-  rebuttal_start: "反論期間開始",
-  rebuttal_end: "反論期間終了",
-  review_release: "査読結果公開",
-  registration: "登録締切",
-  other: "締切",
-};
+// 種別の日本語表記はサイト側（site/recommender.ts）が正典。md も同じ表を使うことで、
+// 「表示されている語で検索できる」状態を保つ。
+export const KIND_LABEL_JA: Record<string, string> = Recommender.kindLabelTable();
 
 export const DEFAULT_CATEGORIES: Record<string, string> = {
   hpc: "High Performance Computing",
@@ -187,33 +223,351 @@ const CSV_COLUMNS = [
   "estimate_window_end",
   "sources",
   "link",
+  /* 日本語の種別。`upcoming.md` と `deadlines.ics` は最初から日本語の種別を出していたのに、
+   * この表だけ上流の英語（`paper` など）と、揺れる自由文の `label`（'Paper submission' /
+   * 'Paper Submission' / 'Paper submission deadline' が同じ物として並ぶ）に頼る形だった
+   * （2026-09-23 実測: 3,253 行のうち日本語の種別欄は 0）。画面と同じ語を**同じ正本**
+   * （`KIND_LABEL_JA`）から入れるので、言い回しは増えない。列の順序で読む下流を壊さない
+   * よう、**末尾に置く**。 */
+  "kind_ja",
+
+  "date_field",
+  "event_segments",
+
+  "verification_status",
+  "verification_source_class",
+  "extended",
 ];
 
+/* `data.csv` の列辞書。列名は `CSV_COLUMNS` から書き出し、説明だけをここに持つ（列を足したときに
+ * 名前の方が古くなる事故を防ぐため、説明側は名前で引く）。空欄の意味や 'N' のような番兵を
+ * 書かないと、Excel で開いた人が「評価なし」と「ランク無し」を同じものとして扱ってしまう。 */
+const CSV_COLUMN_NOTES_JA: Record<string, string> = {
+  verification_status:
+    "締切の確認の状態（`data.json` の `deadlines[].verification.status` と同じ値）。" +
+    "'verified' は公式ページで確認した行、'manual-required' は公式ページから締切を 1 つに" +
+    "確定できなかった行（画面の札では「要確認」。理由は一つではない – 公式ページを自動で" +
+    "見に行けない・候補が複数で一意に決まらない・本文が取れなかった、のいずれか）、" +
+    "'parser-failed' は公式ページは取れたのに締切を読み取れなかった行（画面の札では" +
+    "「読み取り失敗」）、'pending' は次の確認に回した行。空欄は確認の記録がない行" +
+    "（上流の集約データの多くがこれで、**未確認とは別物**）。",
+  verification_source_class:
+    "確認の元の種類（`data.json` の `deadlines[].verification.source_class` と同じ値）。" +
+    "'official-cfp' は公式の募集ページ、'publisher' は出版社、'aggregator' は集約サイト、" +
+    "'unknown' は不明。空欄は確認の記録がない行。",
+  extended:
+    "'true' は上流が締切を後ろへ動かした行（画面の札では「延長後」。上流の締切名に Extended と" +
+    "付く行と、前の日付を持つ行で日付が後ろへ動いた物）。'false' は動いていない行。" +
+    "前倒しは 'false'（延長とは呼ばない）。",
+  key: "会議の正規化キー（slug）。`data.json` の `conferences[].key` と同じ。",
+  title: "会議の略称。例 'SIGCOMM'。",
+  full_name: "会議の正式名称（上流の原文）。",
+  categories:
+    "分野。`data.json` の `categories` のキーを `;` で連結する（例 'ai;db'）。" +
+    "画面の分野チップに出る日本語ではなく英語のキーである。",
+  rank_ccf:
+    "CCF の等級。空欄は未評価。値 'N' は上流でランクが付いていないことを示す番兵で、等級ではない。",
+  rank_core: "CORE の等級（例 'A*'）。空欄は未評価。値 'N' は CCF と同じ番兵。",
+  year: "開催年（整数）。",
+  edition_id: "開催回の ID（例 'sigcomm26'）。`data.json` の `editions[].id` と同じ。",
+  kind:
+    "日付の種別。'abstract'・'paper'・'supplementary'・'notification'・'camera_ready'・" +
+    "'rebuttal_start'・'rebuttal_end'・'review_release'・'registration'・'other' の 10 種。" +
+    "画面の「種別」で選べる概要・論文以外の種別もこの表には含まれる – 採否通知のように、その日" +
+    "が締切ではない物を含む（日付の列が何を指すかは `date_field` で決まる – 第 302 回）。",
+  label: "上流の表示用ラベル（原文。翻訳しない）。",
+  round: "投稿ラウンド（1 起点の整数）。複数のラウンドを持つ会議がある。",
+  deadline_precision:
+    "締切値の精度。'exact' は時刻まで確定、'date-only' は暦日までは確定で時刻は未確認。",
+  deadline_local_date:
+    "'YYYY-MM-DD'。`deadline_precision` が 'date-only' の行だけに入る。'exact' の行では空欄。" +
+    "`date_field` が「締切」以外の行では、この日は締切ではなくその他の予定日（第 302 回）。",
+  deadline_utc:
+    "その日の瞬間 'YYYY-MM-DDTHH:MM:SSZ'（UTC）。'date-only' の行では空欄（いつ始まるか終えるか分かっていないため書けない）。" +
+    /* 数は日付を添へて書く。*/
+    "`date_field` が「締切」以外（採否通知・査読結果公開・反論期間の開始）の行では、この日は**締切ではない** – 2026-10-06 の実測で 4,984 行のうち 311 行が該当する（収録が増えればこの数も動く。第 302 回）。",
+  deadline_aoe:
+    "AoE（UTC-12）基準で読み替えた瞬間 'YYYY-MM-DD HH:MM:SS AoE'。'date-only' の行では空欄。" +
+    "意味は `deadline_utc` と同じで、`date_field` が「締切」以外の行では締切ではない日に入る。",
+  tz_raw:
+    "上流が書いたままのタイムゾーン表記（'AoE'、'UTC-12'、'PT' など）。'date-only' の行では空欄。",
+  event_start:
+    "会期の開始日 'YYYY-MM-DD'。複数回開催では原文の期間の先頭であり、連続開催を意味しない。分かっていない行は空欄。",
+  event_end:
+    "会期の終了日 'YYYY-MM-DD'。複数回開催では原文の期間の末尾であり、各開催日は event_segments を参照。分かっていない行は空欄。",
+  event_segments:
+    "離れた開催日・週次セミナーの各回を start / end / label の JSON 配列で示す。連続開催では空欄。",
+  place:
+    "開催地（上流の原文。例 'Zurich, Switzerland'）。画面と `upcoming.md` に入れる日本語化" +
+    "（県名の補完や国名の変換）は施していないので、日本語で検索するときは画面を使う。",
+  date_text: "上流の自由文の会期表記（例 'October 21-23, 2019'）。構造化されていない。",
+  estimated:
+    "推定版かどうかの 'true' / 'false'。'true' は過去実績からの機械推定で、公式に裏を取ったデータではない。",
+  estimate_window_start:
+    "推定版の表示用の窓の開始日 'YYYY-MM-DD'。確定版の行は空欄。公式締切ではない。",
+  estimate_window_end:
+    "推定版の表示用の窓の終了日 'YYYY-MM-DD'。確定版の行は空欄。公式締切ではない。",
+  sources: "この行を出した出典名を `;` で連結したもの（例 'aideadlines;ccfddl'）。",
+  kind_ja:
+    "種別の日本語表記。画面の「種別」と同じ語で、`kind`（英語のキー）と 1 対 1。" +
+    "例 'paper' は '論文締切'、'abstract' は '概要締切'。上流の自由文を訳した物ではなく、" +
+    "画面・マークダウン・カレンダーと同じ表から引く。**この欄は種別の語だけで、その他を継がない**" +
+    "（第 301 回 – 実測で 3,253 行のうち 55 行が '論文締切: Paper submission' の様な値に割れて" +
+    "いた）。同じ年に同じ種別が重なる行の区別は `label`（上流の表示用ラベル）と `round` で見る。" +
+    "画面の「種別」は、区別の要る行だけ語の後ろに上流のラベルを添える – この欄は添えない。",
+  date_field:
+    "その日を何と呼ぶか（'締切'・'通知日'・'公開日'・'開始日'）。`deadlines.ics` の本文に書く語と" +
+    "同じで、語の正本も同じ（第 302 回）。**日付の列を締切として扱うかどうかを決めるのはこの欄** –" +
+    " '締切' 以外の行は、その日までに何かを出す必要がない日（採否通知の通知日、査読結果の公開日、" +
+    "反論期間の開始日）に入る。会期の行はこの表には入らない（会期は `data.json`・`upcoming.md`・" +
+    "画面に出る – カレンダーでは各予定の本文の「会期: 」に書く – 第 304 回）。",
+  link: "会議の公式サイトの URL。",
+};
+
+/* `llms.txt` の「出力一覧」に置く説明。名前は `MANAGED_OUTPUT_FILES` から書き出し、
+ * 実装側に置くのは説明だけ（公開物を増やしたときに索引だけが古くなる状態を作らない）。
+ * 2026-08-09 生成のビルドで実測: 出力一覧は 16 件のうち 10 件しか並べておらず、
+ * `recommendation-core.js`・`publish.js`・`index.html`・`icon.svg`・`.nojekyll`・
+ * `llms.txt` 自身へのふれが公開物の一覧のどこにも無かった。 */
+/* 締切の分布（件数と、JST の暦日での最初・最後）。`llms.txt` の索引は、この値を成果物から
+ * 数えて書く – 定数で書くと次のビルドで噓になる。 */
+export type DeadlineSpan = { deadline_count: number; first_day: string; last_day: string };
+
+export function deadlineSpan(root: unknown): DeadlineSpan | null {
+  const conferences = (root as { conferences?: unknown } | null)?.conferences;
+  if (!Array.isArray(conferences)) return null;
+  let count = 0;
+  let first = "";
+  let last = "";
+  const dayOf = (deadline: Record<string, unknown>): string => {
+    const utc = deadline.utc;
+    if (typeof utc === "string" && utc.length >= 19) {
+      // `utc` は協定世界時 – カレンダーと画面が見る JST の暦日に揃える。
+      const at = Date.parse(utc);
+      if (Number.isFinite(at)) return new Date(at + 9 * 3600000).toISOString().slice(0, 10);
+    }
+    const local = deadline.local_date ?? deadline.utc;
+    return typeof local === "string" && /^\d{4}-\d{2}-\d{2}/.test(local) ? local.slice(0, 10) : "";
+  };
+  conferences.forEach((conference) => {
+    const editions = (conference as { editions?: unknown })?.editions;
+    if (!Array.isArray(editions)) return;
+    editions.forEach((edition) => {
+      const deadlines = (edition as { deadlines?: unknown })?.deadlines;
+      if (!Array.isArray(deadlines)) return;
+      deadlines.forEach((deadline) => {
+        const rec = deadline as Record<string, unknown>;
+        const day = dayOf(rec);
+        if (!day) return;
+        count += 1;
+        if (!first || day < first) first = day;
+        if (!last || day > last) last = day;
+      });
+    });
+  });
+  return count > 0 ? { deadline_count: count, first_day: first, last_day: last } : null;
+}
+
+/* `llms.txt` の索引に添える実測の範囲。ビルドが書いた成果物と同じ物から導く。 */
+export type LlmsSpans = {
+  all?: DeadlineSpan | null;
+  catalog?: DeadlineSpan | null;
+  horizonDays?: number | null;
+  calendar?: IcsCalendarMeta | null;
+};
+
+const LLMS_OUTPUT_NOTES_JA: Record<string, string> = {
+  "index.html":
+    "画面そのもの。`app.js` をモジュールとして読み、`app.js` の側が `recommender.js`・" +
+    "`recommendation-core.js`・`publish.js` を import する（2026-08-09 生成ビルドの import 文で実測）。" +
+    "JavaScript が動かないときの案内と、`data.csv`・`upcoming.md`・`data.json`・`deadlines.ics` への導線を内側に持つ。" +
+    "人間の読み方はこのファイルではなく、画面の中の「見方のてびき」に書く。",
+  "data.json":
+    "正規化データ全体（機械可読の正）。画面の最初の一覧に並ぶのはこのうち `catalog.json` に" +
+    "収まる分だけで、過去の全履歴とそれより先の締切はここだけにある。",
+  "health.json":
+    "配信前ゲートにも使う確定/推定締切とソース状態の健全性レポート。" +
+    "締切の件数は**次回以降**（`latest_utc` が生成時刻より先）の物で、" +
+    "`confirmed_deadlines` と `confirmed_future_deadlines`、" +
+    "`estimated_deadlines` と `estimated_future_deadlines` は同じ値を指す（別々に数えない）。" +
+    "収録ぜんぶの締切の数は `data.json` から数える。",
+  "health.md":
+    "health.json の人間向け要約。載っていない公開物（`health.json` 自身・`health.md` 自身・" +
+    "`publish.json`）と完全なハッシュ一覧の所在を、表の直前に書いてある。",
+  "publish.json":
+    "最終公開セットのハッシュ、元 commit、入力 hash、build 条件と、意味検索用の埋め込みが公開物に" +
+    "含まれるかを示す semantic_status（ready / lexical-only）。自分自身のハッシュは持てない。",
+  "catalog.json":
+    "締切画面向けの現在・近日期間カタログ。画面の最初の一覧はこのファイルに載る締切だけを出し、" +
+    "それより先を見るには画面で「収録の全体を読み込む」を選ぶ。画面の判断に必要な 3 つの材料も" +
+    "この中に入る – `reranker`（投稿先推薦の再学習の重み）、`history_bytes`（`history_ref` の" +
+    "バイト数。画面は「収録の全体」を押す前に容量を数字で示す）、" +
+    "`conferences[].recommendation_axes`（`venue_evidence`: 収録開催年数・論文サンプル数など、" +
+    "`deadline_trust`: 日付・時刻・タイムゾーン・種別の確認状況、`research_fit`: 論文との一致評価）。",
+  "recommendation-index.json": "投稿先推薦の会議プロフィールと埋め込み参照。",
+  "data.csv":
+    "1 行 1 締切のフラット表。列の意味は下の「data.csv の列」に書く。文字コードは BOM を付けない" +
+    " UTF-8（画面のダウンロードボタンが書く CSV は Excel を助けるため BOM 付きで、別物）。" +
+    "種別は英語のキー `kind` と、画面と同じ日本語の `kind_ja` を併記する（`label` は上流の" +
+    "自由文で、つづりが揺れる – 'Paper submission' と 'Paper Submission' が同じ物として並ぶ）。" +
+    "日付の列が**締切の日を指すかその他の予定日かを区別する欄は `date_field`**（2026-10-06 の" +
+    "実測で 4,984 行のうち 311 行が締切ではない日 – 締切として数えると間違える。収録が増えれば" +
+    "この数も動く）。",
+  /* 出力一覧では `upcoming.md` だけ専用の組み立てが動的な日数（`site.upcoming_days`）で
+   * 書くので、この註は使わない（同じ事を 2 箇所に書くと片方だけ古くなる）。 */
+  "upcoming.md":
+    "直近の締切と開催の表。MCP の `list_upcoming` でも会期を取得できます。MCP の対象期間は `days` で指定します。購読カレンダー `deadlines.ics` は締切のみです。",
+  "upcoming.html":
+    "`upcoming.md` と同じ表を、ブラウザでそのまま読める形にしたもの（第 263 回）。Markdown の" +
+    " 方は機械が読む用のまま残してある。",
+  "404.html":
+    "見つけられなかった場所に対する日本語の案内（GitHub Pages がない場所に対して出すページ）。" +
+    "画面・直近の一覧・カレンダー・機械可読のデータへの口を、サイトの絶対 URL で並べる" +
+    "（第 307 回）。日付は載せない。",
+  "deadlines.ics":
+    "収録した会議の日付をカレンダーに入れるための 1 本（RFC 5545）。1 日 = 1 イベントの終日" +
+    "（JST の暦日）で、" +
+    "画面の絞り込みは効かない。時刻未確認と推定はそのまま書く（第 266 回）。確認の状態" +
+    "（`要確認` など）と延長（`延長後`）は、各予定の本文に `状態: ` の行で書く" +
+    "（画面の一覧の札と同じ語 – 購読した人はカレンダーしか見ないため。第 861 回）。" +
+    "**同じ締切には同じ UID を付ける**（`catalog.json` の締切の `ics_uid` に載せて、" +
+    "画面の書き出しもそれをそのまま使う – 両方を同じカレンダーに入れても二重に並ばない）。" +
+    "種別の語を ASCII に落とせる行はそのまま、落とせない行（日本語の種別名）は同じ語の" +
+    "SHA-1 の先頭 8 桁にする – 読めるかより、ビルドをまたいで同じ値になる事を取る。" +
+    "分野は画面と同じ日本語で " +
+    "`CATEGORIES` と説明行の `分野:` の両方に載せる（第 292 回）。受信側の表示対応は kamiyobi 側では" +
+    "検証していないが、説明行の語はカレンダー本文の検索に掛かる。",
+  "llms.txt": "このファイル。機械が読む索引で、人間の操作説明は画面の中に書く。",
+  "robots.txt":
+    "機械が最初に読む 1 枚（RFC 9309）。収録は全て公開なので `Allow: /` だけを書き、" +
+    "同じ場所の `sitemap.xml` と、AI の索引 `llms.txt` の絶対 URL を添える。",
+  "sitemap.xml":
+    "人が開く口（`/`・`upcoming.html`・`upcoming.md`・`llms.txt`）の絶対 URL と、" +
+    "生成した日を `lastmod` に書く。データのファイルは索引 `llms.txt` が名指す – " +
+    "ここに並べるのは頁として開ける物だけにする。",
+  "icon.svg": "ブラウザのタブとブックマークに出すアイコン（SVG）。",
+  ".nojekyll":
+    "GitHub Pages に Jekyll での処理をさせないための目印。中身は 0 バイトの空ファイルで、" +
+    "データとは関係ない。",
+  "embeddings.json":
+    "意味検索用の埋め込み。埋め込みを有効にしたビルドだけに出る（`--no-embeddings` では出ない）。" +
+    "ないときの検索は語の一致だけで動く。",
+  "recommender.js":
+    "site/recommender.ts から生成する推薦実行時処理。検索・絞り込み・並び・CSV 書き出しの本体で、" +
+    "画面の `app.js` が呼ぶ。",
+  "place-aliases.js":
+    "国名・都市名の日本語の打ち方を、この表の表記へ寄せる表（`recommender.js` が import する）。" +
+    "条目の増減はこのファイルでやる – 収録データの側は変えていません。",
+  "topic-aliases.js":
+    "site/topic-aliases.ts から生成する、主題の日本語の打ち方を会議名の英字検索語へ寄せる表" +
+    "（`recommender.js` が import する）。",
+  "latin-retype.js":
+    "site/latin-retype.ts から生成する、欧文の語を一文字違いに打った人へ収録の綴りを見当として出す表" +
+    "（`recommender.js` が import する。捜しは広げん – 打ち手の提案だけ）。",
+  "recommendation.js":
+    "語の一致だけで推薦する際に、指定した掲載先と分野名だけの誤一致を区別する共有処理。",
+  "recommendation-core.js":
+    "site/recommendation-core.ts から生成する共有の推薦軸。画面もビルド側も同じ軸を読む" +
+    "（`src/build.ts` が読み込んでいる）。",
+  "publish.js":
+    "site/publish.ts から生成する、公開物をつき合わせる部品。画面はここから `publish.json` と" +
+    "`recommendation-index.json` のハッシュ検証を読む。検証が通らないときは語の一致だけの推薦に" +
+    "落ちる（意味検索を黙って止めない）。",
+  "app.js": "site/app.ts から生成するブラウザ UI 実行時処理。",
+  "ics.js":
+    "site/ics.ts から生成する、カレンダー（RFC 5545）の組み立て。配付する `deadlines.ics` と、" +
+    "画面が「この一覧の N 件をカレンダー（.ics）で」と書き出す 1 本が、同じ器と同じ折り方に" +
+    "なるようにする（`app.js` が import する）。",
+  "submission-identity.js":
+    "公式CFPを照合済みの同じ募集を、元の記録を保持して1件に表示する共有方針。",
+};
+
+/* 索引に添える収録範囲の文。`llms.txt` だけが読める情報として、
+ * 「このファイルに何が入っているか」を件数と両端の暦日で書く。 */
+function llmsScopeJa(name: string, spans: LlmsSpans | null): string {
+  const countJa = (n: number) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  if (name === "data.json") {
+    const span = spans?.all;
+    return span
+      ? `収録している締切は ${countJa(span.deadline_count)} 件（${span.first_day} 〜 ${span.last_day}、JST の暦日）。`
+      : "";
+  }
+  if (name === "catalog.json") {
+    const span = spans?.catalog;
+    if (!span) return "";
+    const horizon =
+      typeof spans?.horizonDays === "number" && spans.horizonDays > 0
+        ? `生成から ${String(spans.horizonDays)} 日先で`
+        : "直近の期間で";
+    const calendar = spans?.calendar;
+    return (
+      `載る締切は ${countJa(span.deadline_count)} 件（${span.first_day} 〜 ${span.last_day}、` +
+      `JST の暦日）で、${horizon}切る。それより先の締切と過去の全履歴は \`data.json\` に在り、` +
+      (calendar
+        ? `カレンダー（\`deadlines.ics\`）には ${countJa(calendar.event_count)} 件` +
+          `（うち締切 ${countJa(calendar.deadline_count)} 件、` +
+          `${calendar.first_day} 〜 ${calendar.last_day}）が入る。`
+        : "カレンダー（`deadlines.ics`）にはこれより先も入る。")
+    );
+  }
+  if (name === "deadlines.ics") {
+    const meta = spans?.calendar;
+    return meta
+      ? `収録しているのは今後の日 ${countJa(meta.event_count)} 件（${meta.first_day} 〜 ${meta.last_day}、` +
+          `JST の暦日）で、うち締切は ${countJa(meta.deadline_count)} 件 – 残りは採否通知・` +
+          "査読結果公開・反論期間の開始のように、その日までに何かを出す必要のない日である" +
+          "（本文の日付の欄も「通知日」などになる）。この範囲は画面に並べる期間より長い。" +
+          "**会議が開かれている日（会期）を並べる予定は立てない**（終日が並ぶと締切が見えなくなるため）で、会期は各予定の本文の「会期: 」に書く。"
+      : "";
+  }
+  return "";
+}
+
 const TEMPLATE_MARKER = "/*__DATA__*/null";
+/* 機械可読の自己紹介（schema.org の Dataset）を差し込む印。雛形に置いておき、
+ * ビルドが実測値で埋める – 中身を雛形に書くと、件数や期間が次のビルドで噓になる。 */
+const JSONLD_MARKER = "<!--__JSONLD__-->";
 
 /**
  * タイトル + 開催年を組み立てる。タイトルが既にその年（例: `CANOPIE-HPC 2026`）
  * または短縮年（例: `SC '26`, `SC ’26`）で終わっている場合は年を二重に付けない。
  * year が 0 / 未指定の場合はタイトルのみを返す。
  */
+
+function 稀有な欄の實測(data: Record<string, unknown>): string {
+  const 會議 = (data.conferences ?? []) as Array<Record<string, unknown>>;
+  const 版 = 會議.flatMap((c) => (c.editions ?? []) as Array<Record<string, unknown>>);
+  const 締切 = 版.flatMap((e) => (e.deadlines ?? []) as Array<Record<string, unknown>>);
+  const 欄の數 = (箱: Array<Record<string, unknown>>, 名: string): number =>
+    箱.filter((r) => 名 in r).length;
+  const 切つた = (箱: Array<Record<string, unknown>>, 名: string): number =>
+    箱.filter((r) => {
+      const v = r[名];
+      if (v === undefined || v === null) return false;
+      if (typeof v === "string") return v.trim().length > 0;
+      if (Array.isArray(v)) return v.length > 0;
+      if (typeof v === "object") return Object.keys(v as object).length > 0;
+      return true;
+    }).length;
+  const 數 = (n: number): string => String(n).replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1,");
+  return (
+    `版 ${數(版.length)} のうち call_identity ${欄の數(版, "call_identity")}・` +
+    `legacy_ids ${欄の數(版, "legacy_ids")}・event_review ${欄の數(版, "event_review")}／` +
+    `締切 ${數(締切.length)} のうち track ${切つた(締切, "track")}・` +
+    `superseded_deadlines ${欄の數(締切, "superseded_deadlines")}・` +
+    `promotion_ref ${欄の數(締切, "promotion_ref")}。` +
+    `verification は ${欄の數(締切, "verification")} 件で殆どの締切に付く。` +
+    `upstream_sub は会議 ${數(會議.length)} のうち ${欄の數(會議, "upstream_sub")} 件`
+  );
+}
+
 export function titleWithYear(
   title: string | null | undefined,
   year: number | null | undefined,
 ): string {
-  const t = String(title ?? "").trim();
-  if (!t) return "";
-  if (!year) return t;
-  const yStr = String(year);
-  const yy = yStr.slice(-2);
-  const normT = t.normalize("NFKC").trim();
-  const hasYear =
-    normT.endsWith(yStr) ||
-    normT.endsWith(`'${yy}`) ||
-    (yy && new RegExp(`(?:20${yy}|['’]?${yy})$`).test(normT));
-  if (hasYear) {
-    return t;
-  }
-  return `${t} ${year}`;
+  // 組み立て式は site/recommender.ts が正本。サイトの表・行の詳細・CSV と同じ名前の列を
+  // md も出す（実装を 2 本持つと片方が古くなる）。
+  return Recommender.titleWithYearJa(title, year);
 }
 
 type EmbeddingFile = {
@@ -261,9 +615,10 @@ function nestedVectorMapHasDim(vectors: Record<string, unknown> | undefined, dim
 export function embeddingsStale(
   existing: EmbeddingFile | null | undefined,
   data: Parameters<typeof embeddingProfileHash>[0],
+  venuePapers?: Record<string, string[]>,
 ): boolean {
   if (!existing || typeof existing !== "object") return true;
-  const expected = embeddingManifest(data);
+  const expected = embeddingManifest(data, {}, venuePapers);
   const manifest = existing.manifest;
   const en = manifest?.models?.en;
   const multi = manifest?.models?.multi;
@@ -274,7 +629,7 @@ export function embeddingsStale(
     manifest.profile_hash !== expected.profile_hash
   )
     return true;
-  if (manifest.profile_hash !== embeddingProfileHash(data)) return true;
+  if (manifest.profile_hash !== embeddingProfileHash(data, venuePapers)) return true;
   if (
     !sameKeys(existing.embeddings, expected.keys) ||
     !sameKeys(existing.multi?.embeddings, expected.keys)
@@ -316,11 +671,95 @@ export function embeddingsStale(
   return false;
 }
 
+/* サイトの自前アイコン（favicon）。外部フォント・外部画像に依存しないよう、
+ * 文字を使わず図形で描く（日本語フォントが無い環境でも文字化けしない）。
+ * 色は site/template.html の --accent と揃える。 */
+const SITE_ICON_SVG = [
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="kamiyobi">',
+  '<rect width="32" height="32" rx="7" fill="#2f5fd0"/>',
+  '<rect x="6" y="9" width="20" height="17" rx="2.5" fill="#ffffff"/>',
+  '<rect x="6" y="9" width="20" height="4" rx="1.5" fill="#2f5fd0"/>',
+  '<rect x="9.5" y="6" width="2.6" height="5.5" rx="1.3" fill="#ffffff"/>',
+  '<rect x="19.9" y="6" width="2.6" height="5.5" rx="1.3" fill="#ffffff"/>',
+  '<rect x="9.5" y="16.5" width="7" height="2.4" rx="1.2" fill="#2f5fd0"/>',
+  '<rect x="9.5" y="21" width="4" height="2.4" rx="1.2" fill="#9dbdf5"/>',
+  '<circle cx="21.5" cy="22.2" r="3.1" fill="#d84343"/>',
+  "</svg>",
+  "",
+].join("\n");
+
 // --- record extraction -------------------------------------------------------
 
 /** Anywhere on Earth display: UTC-12 wall clock of `atUtc`. */
 function aoeText(atUtc: Date): string {
   return `${fmtUTC(addDays(atUtc, -0.5), "%Y-%m-%d %H:%M:%S")} AoE`;
+}
+
+function jstClock(atUtc: Date): string {
+  const jst = new Date(atUtc.getTime() + 9 * 3_600_000);
+  const day = fmtDate(jst);
+  const weekday = calendarDayJa(day);
+  return `${day}${weekday ? `(${weekday})` : ""} ${fmtUTC(jst, "%H:%M")}`;
+}
+
+/** JST 宣言の締切は JST の壁時計で出す（SPEC §7 の site 表示と同じ規則）。
+ * JST 23:59 締切を AoE 02:59 と見せると「当日早朝まで」と誤読される。 */
+function jstText(atUtc: Date): string {
+  return `${jstClock(atUtc)} JST`;
+}
+
+/** Markdown 表の日付列は締切の公式表記（`tz_raw`）にあった書き方をする。
+ * AoE を出すのは公式が AoE の締切だけ。それ以外を AoE 壁時計へ勝手に直さない。
+ * 未知の表記（PT・Europe/London など）は UTC 壁時計に公式表記を添え、換算はしない。 */
+/* Markdown 表の日付に添える曜日。閲覧者のタイムゾーンではなく `YYYY-MM-DD` の暦日を
+ * そのまま読む（site の weekdayJaFromDate と同じ規則）。Date.UTC は範囲外の日付を
+ * 翌月へ繰り越すので、読み直した暦日が元値と一致するときだけ曜日を返す。 */
+const CALENDAR_WEEKDAY_JA = ["日", "月", "火", "水", "木", "金", "土"];
+
+export function calendarDayJa(value: Date | string | null | undefined): string {
+  const raw = value instanceof Date ? fmtDate(value) : String(value ?? "").trim();
+  const matched = /^(\d{4})-(\d{2})-(\d{2})$/.exec(raw);
+  if (!matched) return "";
+  const y = Number(matched[1]);
+  const m = Number(matched[2]);
+  const d = Number(matched[3]);
+  if (m < 1 || m > 12 || d < 1 || d > 31) return "";
+  const instant = new Date(Date.UTC(y, m - 1, d));
+  if (
+    instant.getUTCFullYear() !== y ||
+    instant.getUTCMonth() + 1 !== m ||
+    instant.getUTCDate() !== d
+  )
+    return "";
+  return CALENDAR_WEEKDAY_JA[instant.getUTCDay()];
+}
+
+/** Markdown 専用の AoE 壁時計（`data.json` / `data.csv` の `aoe` は曜日を付けないので分ける）。 */
+function mdAoEText(atUtc: Date): string {
+  const shifted = addDays(atUtc, -0.5);
+  return `${fmtDate(shifted)}${calendarDayJa(shifted) ? `(${calendarDayJa(shifted)})` : ""} ${fmtUTC(shifted, "%H:%M:%S")} AoE`;
+}
+
+const JST_TZ_VALUES = ["JST", "UTC+9", "UTC+09", "UTC+09:00", "GMT+9", "ASIA/TOKYO"];
+const AOE_TZ_VALUES = ["AOE", "UTC-12", "UTC-12:00"];
+const UTC_TZ_VALUES = ["", "UTC", "UTC+0", "UTC+00", "GMT"];
+
+export function deadlineWhenText(atUtc: Date, tzRaw: string | null | undefined): string {
+  const raw = String(tzRaw ?? "").trim();
+  const zone = raw.toUpperCase().replace(/\s+/g, "");
+  if (JST_TZ_VALUES.indexOf(zone) >= 0) return jstText(atUtc);
+
+  if (AOE_TZ_VALUES.indexOf(zone) >= 0) return `${mdAoEText(atUtc)}（${jstReadingJa(atUtc)}）`;
+  const jstDay = fmtUTC(atUtc, "%Y-%m-%d");
+  const weekday = calendarDayJa(jstDay);
+  const utc = `${jstDay}${weekday ? `(${weekday})` : ""} ${fmtUTC(atUtc, "%H:%M:%S")} UTC`;
+  if (UTC_TZ_VALUES.indexOf(zone) >= 0) return `${utc}（${jstReadingJa(atUtc)}）`;
+  return `${utc}（公式 ${raw}・${jstReadingJa(atUtc)}）`;
+}
+
+/** 日付欄に添える日本時間の読み。単位は 1 度だけ。 */
+function jstReadingJa(atUtc: Date): string {
+  return `JST では ${jstClock(atUtc)}`;
 }
 
 function sortedDeadlines(edition: Edition): Deadline[] {
@@ -364,6 +803,12 @@ export interface DataRecord {
   type: "deadline" | "event";
   categories: string[];
   kind_label: string;
+  /** 種別の語だけ（接頭辞も接尾辞も足さない – 第 301 回）。`data.csv` の `kind_ja` はこれを書く。 */
+  kind_ja: string;
+
+  kind_note: string;
+  /** その日の行を何と呼ぶか（「締切」/「通知日」など – 第 299 回）。種別の正本で決める。 */
+  date_field: string;
   estimated: boolean;
   conf: Conference;
   edition: Edition;
@@ -391,7 +836,8 @@ export function recordsOf(confs: Conference[] | null | undefined): DataRecord[] 
         const dateValue = isDateOnlyDeadline(dl)
           ? `date:${dl.local_date}`
           : `instant:${dl.at_utc.getTime()}`;
-        let labelJa = KIND_LABEL_JA[dl.kind] ?? KIND_LABEL_JA.other;
+        const labelBase = KIND_LABEL_JA[dl.kind] ?? KIND_LABEL_JA.other;
+        let labelJa = labelBase;
         if (collides.has(`${ed.year}\u0000${dl.kind}\u0000${dateValue}`) && dl.label) {
           labelJa = `${labelJa}: ${dl.label}`;
         }
@@ -402,6 +848,15 @@ export function recordsOf(confs: Conference[] | null | undefined): DataRecord[] 
           type: "deadline",
           categories: cats,
           kind_label: labelJa,
+          // 表に計算（ピボット）を作る人は語で選ぶので、語の純粋な形を別に持つ。
+          // 同じ年の同じ種別が重ねてある行だけ `kind_label` に上流のラベルを続ける – 画面では
+          // それが要るが、表では語が割れる原因になる（区別は `label` と `round` で付く）。
+          kind_ja: labelBase,
+
+          kind_note:
+            String(dl.track ?? "").trim() ||
+            (labelJa === labelBase ? "" : String(dl.label ?? "").trim()),
+          date_field: Recommender.kindDateFieldJa(dl.kind),
           estimated: ed.estimated,
           conf,
           edition: ed,
@@ -411,18 +866,37 @@ export function recordsOf(confs: Conference[] | null | undefined): DataRecord[] 
           end: dateWindow?.latestPossibleUtc ?? anchor,
         });
       });
-      if (ed.event_start && !ed.estimated) {
+      const segments = ed.event_segments?.length
+        ? ed.event_segments
+        : ed.event_start
+          ? [
+              {
+                start: fmtDate(ed.event_start),
+                end: fmtDate(ed.event_end ?? ed.event_start),
+                label: "",
+              },
+            ]
+          : [];
+      for (const segment of !ed.estimated ? segments : []) {
+        const start = asDate(segment.start);
+        const end = asDate(segment.end);
+        if (!start || !end) continue;
         records.push({
           type: "event",
           categories: cats,
           kind_label: "開催",
+          kind_ja: "開催",
+          kind_note: segment.label,
+          /* 会期は締切ではない。この行がカレンダーに載ったとき、日付の欄を
+             「締切」にすると締切に見える。 */
+          date_field: "会期",
           estimated: false,
           conf,
           edition: ed,
           deadline: null,
           all_day: true,
-          start: ed.event_start,
-          end: ed.event_end ?? ed.event_start,
+          start,
+          end,
         });
       }
     });
@@ -447,6 +921,7 @@ export function toJson(
   confs: Conference[] | null | undefined,
   config: Record<string, unknown> | null | undefined,
   now: Date | null | undefined,
+  venuePapers?: Record<string, string[]>,
 ): Record<string, unknown> {
   const safeNow = now instanceof Date && !Number.isNaN(now.getTime()) ? now : new Date();
   const safeConfig = config ?? {};
@@ -556,12 +1031,18 @@ export function toJson(
         link: officialUrl,
         place: ed.place,
         date_text: ed.date_text,
-        event_date_precision: eventDatePrecisionOf(
-          ed.event_date_precision,
-          ed.date_text,
-          ed.event_start,
-          ed.event_end,
-        ),
+        event_date_precision:
+          ed.event_segments?.length &&
+          !["not-announced", "month-only"].includes(ed.event_date_precision || "")
+            ? "split-dates"
+            : eventDatePrecisionOf(
+                ed.event_date_precision,
+                ed.date_text,
+                ed.event_start,
+                ed.event_end,
+              ),
+        ...(ed.event_segments !== undefined ? { event_segments: ed.event_segments } : {}),
+        ...(ed.event_review !== undefined ? { event_review: ed.event_review } : {}),
         event_start: ed.event_start ? fmtDate(ed.event_start) : null,
         event_end: ed.event_end ? fmtDate(ed.event_end) : null,
         estimated: ed.estimated,
@@ -675,7 +1156,7 @@ export function toJson(
         : {}),
       editions,
       // 代表採択論文タイトル（無い会議は空配列）。語彙一致 + IDF + 埋め込み強化に使う
-      papers: VENUE_PAPERS[conf.key] ?? [],
+      papers: (venuePapers ?? getVenuePapers())[conf.key] ?? [],
     });
   }
   const data: Record<string, unknown> = {
@@ -711,7 +1192,10 @@ export function toJson(
     })(),
     conferences: outConfs,
   };
-  data.identity_migrations = identityMigrationManifestForData(data);
+  data.identity_migrations = identityMigrationManifestForData(
+    data,
+    safeConfig.deadline_identity_migrations,
+  );
   return data;
 }
 
@@ -748,6 +1232,110 @@ function jsonDeadlineRange(deadline: JsonRecord): [number, number] | null {
   return window ? [window.earliestPossibleUtc.getTime(), window.latestPossibleUtc.getTime()] : null;
 }
 
+function recordDeadlineLastDay(conf: JsonRecord): string | null | "" {
+  let last = Number.NaN;
+  let sawUndated = false;
+  jsonRecords(conf.editions).forEach((edition) => {
+    jsonRecords(edition.deadlines).forEach((deadline) => {
+      const range = jsonDeadlineRange(deadline);
+      if (range === null) {
+        sawUndated = true;
+        return;
+      }
+      if (!Number.isFinite(last) || range[1] > last) last = range[1];
+    });
+  });
+  if (!Number.isFinite(last)) return sawUndated ? "" : null;
+  // 協定世界時の幅の終端 – 画面とカレンダーが見る JST の暦日に揃える。
+  return new Date(last + 9 * 3600000).toISOString().slice(0, 10);
+}
+
+function recordEstimatedNextDay(conf: JsonRecord, nowMs: number): string {
+  let bestMs = Number.NaN;
+  jsonRecords(conf.editions).forEach((edition) => {
+    const 版ごと推定 = edition.estimated === true;
+    jsonRecords(edition.deadlines).forEach((deadline) => {
+      if (!版ごと推定 && deadline.estimated !== true) return;
+
+      const range = jsonDeadlineRange(deadline);
+      if (range === null) return;
+      if (range[1] < nowMs) return;
+      if (!Number.isFinite(bestMs) || range[1] < bestMs) bestMs = range[1];
+    });
+  });
+  return Number.isFinite(bestMs) ? new Date(bestMs + 9 * 3600000).toISOString().slice(0, 10) : "";
+}
+
+function recordDeadlineNext(
+  conf: JsonRecord,
+  nowMs: number,
+): { day: string; kind: string; count: number } {
+  let bestMs = Number.NaN;
+  let bestKind = "";
+  let count = 0;
+  jsonRecords(conf.editions).forEach((edition) => {
+    jsonRecords(edition.deadlines).forEach((deadline) => {
+      const range = jsonDeadlineRange(deadline);
+      if (range === null || range[1] < nowMs) return;
+      count += 1;
+      if (!Number.isFinite(bestMs) || range[1] < bestMs) {
+        bestMs = range[1];
+        bestKind = typeof deadline.kind === "string" ? deadline.kind : "";
+      }
+    });
+  });
+  if (!Number.isFinite(bestMs)) return { day: "", kind: "", count };
+  return {
+    day: new Date(bestMs + 9 * 3600000).toISOString().slice(0, 10),
+    kind: bestKind,
+    count,
+  };
+}
+
+/** 締切の JST の暦日（`YYYYMMDD`）。UID を引く鍵に使う – 配付物の ICS が使う日と
+ * 同じ組み方（`date-only` は公式の暦日、時刻のある物は JST へ寄せた日）。 */
+function jsonDeadlineDay(deadline: JsonRecord): string {
+  if (String(deadline.precision ?? "") === "date-only")
+    return String(deadline.local_date ?? "")
+      .replace(/-/g, "")
+      .slice(0, 8);
+  const at = jsonTime(deadline.utc);
+  return at === null ? "" : new Date(at + 9 * 3600000).toISOString().slice(0, 10).replace(/-/g, "");
+}
+
+/** 配付物の ICS が使った UID を、`data.json` の會議（と、そこから作る品書）へ載せる。
+ *
+ * 畫面は SHA-1 を持たないので自分では同じ UID を組めない。**正典にも載せる**のは、
+ * 畫面が「収録の全体を読み込む」で `data.json` を読んだ後に書き出しても同じ UID に
+ * なるようにするため（2026-10-17 實測: 品書にだけ載せて居た頃は、全履歴を讀み込んだ後の
+ * 書き出し 221 件が 1 つも購読側と一致しなかった）。 */
+export function attachIcsUidsToConferences(
+  conferences: unknown,
+  icsUids?: Map<string, string> | null,
+): void {
+  if (!icsUids || !Array.isArray(conferences)) return;
+  for (const conf of conferences as Array<Record<string, unknown>>) {
+    for (const edition of (conf.editions ?? []) as Array<Record<string, unknown>>) {
+      for (const list of [edition.deadlines, edition.schedule_deadlines]) {
+        if (!Array.isArray(list)) continue;
+        for (const deadline of list as Array<Record<string, unknown>>) {
+          if (deadline.ics_uid) continue;
+          const uid = icsUids.get(
+            icsDeadlineUidKey(
+              String(edition.id ?? ""),
+              String(deadline.kind ?? ""),
+              deadline.round,
+              String(deadline.label ?? ""),
+              jsonDeadlineDay(deadline),
+            ),
+          );
+          if (uid) deadline.ics_uid = uid;
+        }
+      }
+    }
+  }
+}
+
 function compactEdition(edition: JsonRecord, deadlines: JsonRecord[]): JsonRecord {
   return {
     year: edition.year,
@@ -761,6 +1349,8 @@ function compactEdition(edition: JsonRecord, deadlines: JsonRecord[]): JsonRecor
       asDate(edition.event_start),
       asDate(edition.event_end),
     ),
+    ...(edition.event_segments !== undefined ? { event_segments: edition.event_segments } : {}),
+    ...(edition.event_review !== undefined ? { event_review: edition.event_review } : {}),
     event_start: edition.event_start,
     event_end: edition.event_end,
     estimated: edition.estimated,
@@ -794,6 +1384,9 @@ function compactConference(
     tags: conf.tags,
     sources: conf.sources,
     ...(conf.category_assignments ? { category_assignments: conf.category_assignments } : {}),
+    ...(Array.isArray(conf.legacy_keys) && conf.legacy_keys.length
+      ? { legacy_keys: [...conf.legacy_keys] }
+      : {}),
     editions,
     ...(withPapers ? { papers: conf.papers ?? [] } : {}),
   };
@@ -804,6 +1397,10 @@ export function toCatalog(
   data: Record<string, unknown>,
   now: Date | null | undefined,
   days = 180,
+  // カレンダー配信の実測（件数と収録の最初/最後の締切日）。画面の注記はここを読む –
+  // 画面側で数え直すと、配信物と同じ数を言えなくなる。
+  calendar: IcsCalendarMeta | null | undefined = undefined,
+  reranker?: Record<string, unknown> | null,
 ): Record<string, unknown> {
   const safeNow = now instanceof Date && !Number.isNaN(now.getTime()) ? now : new Date();
   const horizon = safeNow.getTime() + Math.max(1, days) * DAY_MS;
@@ -818,11 +1415,58 @@ export function toCatalog(
         const eventStart = jsonTime(edition.event_start);
         const eventEnd = jsonTime(edition.event_end ?? edition.event_start);
         const inWindow =
-          eventStart !== null && eventEnd !== null && eventEnd >= lookback && eventStart <= horizon;
-        return inWindow || deadlines.length ? compactEdition(edition, deadlines) : null;
+          Array.isArray(edition.event_segments) && edition.event_segments.length
+            ? jsonRecords(edition.event_segments).some((part) => {
+                const start = jsonTime(part.start);
+                const end = jsonTime(part.end);
+                return start !== null && end !== null && end >= lookback && start <= horizon;
+              })
+            : eventStart !== null &&
+              eventEnd !== null &&
+              eventEnd >= lookback &&
+              eventStart <= horizon;
+        if (!inWindow && !deadlines.length && edition.event_date_precision !== "not-announced")
+          return null;
+        const compact = compactEdition(edition, deadlines);
+        // Supplemental dates belong only to the drawer; the list retains its existing window.
+        const scheduleDeadlines = jsonRecords(edition.deadlines).filter(
+          (deadline) => !deadlines.includes(deadline),
+        );
+        if (deadlines.length && scheduleDeadlines.length) {
+          compact.schedule_deadlines = scheduleDeadlines;
+        }
+        return compact;
       })
       .filter((edition): edition is JsonRecord => edition !== null);
-    return compactConference(conf, editions, false);
+    const entry = compactConference(conf, editions, false);
+
+    if (!editions.some((edition) => jsonRecords(edition.deadlines).length > 0)) {
+      entry.record_deadline_last = recordDeadlineLastDay(conf);
+      // 収録の側に締切があるときは、近い日も添える（第 298 回 – 待っている物が無い会には
+      // 書かないので、画面は「在らない」と「数えていない」を混めない）。
+      const next = recordDeadlineNext(conf, safeNow.getTime());
+      if (next.count) {
+        entry.record_deadline_next = next.day;
+        entry.record_deadline_next_kind = next.kind;
+        entry.record_deadline_count = next.count;
+      }
+
+      entry.record_estimated_next = recordEstimatedNextDay(conf, safeNow.getTime());
+    }
+
+    return {
+      ...entry,
+      recommendation_axes: recommendationAxes(
+        /* `papers` は catalog に載せない（data.json と推薦索引が正本 – 載せると窓の分が
+         * 膨らむ）。だが**論文サンプル數は其処から數へる**。載せないまま數へると
+         * `profileCoverage` が 0 に固まり、画面のカードと MCP が「論文サンプル 0件」と
+         * 出して居た（推薦索引は 8件 – 實測 2026-10-15 で 23 会議が不一致。畫面と AI が
+         * 同じ噓をつく状態で、順位の元にした論文數とカードの數が食ひ違って居た）。 */
+        { ...entry, all_editions: conf.editions, papers: conf.papers ?? [] },
+        null,
+        safeNow.getTime(),
+      ),
+    };
   });
   return {
     generated_at: data.generated_at,
@@ -833,27 +1477,60 @@ export function toCatalog(
     window: { lookback_days: 30, upcoming_days: Math.max(1, days) },
     history_ref: "data.json",
     recommendation_ref: "recommendation-index.json",
+    deadline_summary: consolidateReviewedSubmissions(
+      Recommender.candidateRows(data),
+      (row) => `${row.conf.key}|${row.ed.year ?? ""}|${row.kind}|${Math.trunc(row.t)}`,
+    )
+      .filter(
+        (row) =>
+          (row.kind === "abstract" || row.kind === "paper") &&
+          !row.est &&
+          !Recommender.deadlineRowIsPast(row, safeNow.getTime()),
+      )
+      .map((row) => ({
+        t: row.t,
+        tLast: row.tLast,
+        tShown: Number.isFinite(row.tShown) ? row.tShown : row.t,
+        dateOnly: row.dateOnly === true,
+      })),
+
+    reranker: readRerankerModel(reranker),
+    // カレンダー配信の中身の実測（件数と収録の最初/最後の締切日）。画面の注記はここを読む –
+    // 画面側で数え直すと、配信物と同じ数を言えなくなる。
+    calendar: calendar ?? null,
     conferences,
   };
 }
 
 /** The recommendation payload: venue profiles and one representative availability record. */
+
+function readRerankerModel(
+  supplied?: Record<string, unknown> | null,
+): Record<string, unknown> | null {
+  if (supplied !== undefined) {
+    if (supplied !== null && !isValidRerankerModel(supplied))
+      throw new Error("recommender reranker model contract is invalid");
+    return supplied;
+  }
+  const rerankerPath = join(ROOT, "data", "recommender-reranker.json");
+  try {
+    const value = JSON.parse(readFileSync(rerankerPath, "utf8"));
+    if (!isValidRerankerModel(value)) throw new Error("model contract is invalid");
+    return value as unknown as Record<string, unknown>;
+  } catch (error) {
+    throw new Error(`recommender reranker ${rerankerPath} を読めない: ${String(error)}`);
+  }
+}
+
 export function toRecommendationIndex(
   data: Record<string, unknown>,
   now: Date | null | undefined,
   sourceStatus: Record<string, string> = {},
+  venuePapers?: Record<string, string[]>,
+  rerankerInput?: Record<string, unknown> | null,
 ): Record<string, unknown> {
   const safeNow = now instanceof Date && !Number.isNaN(now.getTime()) ? now : new Date();
-  const rerankerPath = join(ROOT, "data", "recommender-reranker.json");
-  const reranker = (() => {
-    try {
-      const value = JSON.parse(readFileSync(rerankerPath, "utf8"));
-      if (!isValidRerankerModel(value)) throw new Error("model contract is invalid");
-      return value;
-    } catch (error) {
-      throw new Error(`recommender reranker ${rerankerPath} を読めない: ${String(error)}`);
-    }
-  })();
+  const reranker = readRerankerModel(rerankerInput);
   const conferences = jsonRecords(data.conferences).map((conf) => {
     const editions = jsonRecords(conf.editions)
       .map((edition) => {
@@ -884,8 +1561,9 @@ export function toRecommendationIndex(
               revision:
                 typeof evidence.sourceRevision === "string" ? evidence.sourceRevision : null,
               fetchedAt: typeof evidence.retrievedAt === "string" ? evidence.retrievedAt : null,
-              freshness:
-                status === "cache-fallback" || status === "snapshot-fallback" ? status : "fresh",
+              freshness: ["fresh", "cache-fallback", "snapshot-fallback"].includes(status)
+                ? status
+                : "unknown",
             };
           })
           .filter((origin) => origin.source);
@@ -910,7 +1588,11 @@ export function toRecommendationIndex(
     legacy_key_redirects: data.legacy_key_redirects,
     history_ref: "data.json",
     embedding_ref: "embeddings.json",
-    embedding_manifest: embeddingManifest(data as Parameters<typeof embeddingManifest>[0]),
+    embedding_manifest: embeddingManifest(
+      data as Parameters<typeof embeddingManifest>[0],
+      {},
+      venuePapers,
+    ),
     reranker,
     conferences,
   };
@@ -1219,7 +1901,7 @@ export interface HealthReport {
 export interface HealthReportOptions {
   sourceStatus?: Record<string, HealthSourceStatus>;
   sourceMetadata?: Record<string, HealthSourceMetadata>;
-  recommendationSourceStatus?: Record<string, HealthSourceStatus>;
+  recommendationSourceStatus?: Record<string, SourceFreshness>;
   buildInputMode?: "online-refresh" | "offline-snapshot";
   sourceFailures?: string[];
   snapshotFallback?: boolean;
@@ -2397,60 +3079,160 @@ export function evaluateHealthGate(
   return { ok: reasons.length === 0, reasons, warnings };
 }
 
-export function healthMarkdown(report: HealthReport): string {
+export function healthMarkdown(report: HealthReport, omittedOutputs: string[] = []): string {
+  /* 「health.md：health.json の人間向け要約」と書きながら、本文だけ英語のままだった
+   * （2026-09-23 確認）。読むのは収録を確かめる人なので日本語に寄せる。
+   * 機械可読の正は `health.json` なので、見出しには JSON のキーを併記する
+   * （日本語のラベルだけ見てキーを辿れなくしないため）。 */
+  const metric = (label: string, key: string, value: string | number) =>
+    `| ${label}（\`${key}\`） | ${value} |`;
+  const SOURCE_STATUS_JA: Record<string, string> = {
+    fresh: "今回取得",
+    "snapshot-fallback": "収録 snapshot から",
+    failed: "取得失敗",
+  };
+  const sourceNote = (status: string) => SOURCE_STATUS_JA[status] || `不明（${status}）`;
+  const fallbackSources = Object.entries(report.source_status)
+    .filter(([, status]) => status !== "fresh")
+    .map(([source]) => source);
   const lines = [
-    "# Build health",
+    "# ビルド健全性",
     "",
-    `Generated at: ${report.generated_at}`,
+    `生成時刻（\`generated_at\`）: ${report.generated_at}`,
     "",
-    "| Metric | Value |",
+    "## まとめ",
+    "",
+    `- 収録している会議は ${report.tracked_venues} 件。うち次回以降に確定した締切を持つ会議が ${report.future_confirmed_venues} 件、推定締切を持つ会議が ${report.future_estimated_venues} 件。`,
+    `- 次回以降の締切は確定 ${report.future_exact_deadlines ?? 0} 件（時刻まで確定）+ 日付のみ ${report.future_date_only_deadlines ?? 0} 件、推定 ${report.future_estimated_deadlines ?? 0} 件。推定は公式サイトで裏が取れるまで既定の一覧に出さない。`,
+    // グローバルなフォールバック旗とソース別の状況が食い違うことがある
+    // （上流にあたって一部だけ snapshot を使った組み立て）。両方出すと読者が迷うので、
+    // 実態の式を 1 つにまとめて書く。
+    fallbackSources.length === 0
+      ? "- 今回の組み立ては上流をその場であたって行った。"
+      : report.snapshot_fallback
+        ? "- 今回の組み立ては収録 snapshot（リポジトリに確定済みの上流データ）で組んだ。上流をその場で取っていないので、日付は snapshot を取った時点のまま。"
+        : `- 今回の組み立ては上流をその場であたったが、一部（${fallbackSources.join(" / ")}）は収録 snapshot の値を使った。`,
+    fallbackSources.length
+      ? `- 収録 snapshot にフォールバックしたソース: ${fallbackSources.join(" / ")}（未取得のぶんは snapshot の値で組んでいる）`
+      : "- 収録 snapshot にフォールバックしたソースはない。",
+    "",
+    "## 収録の数",
+    "",
+    "| 意味（`health.json` のキー） | 値 |",
     "|---|---:|",
-    `| Tracked venues | ${report.tracked_venues} |`,
-    `| Future confirmed venues | ${report.future_confirmed_venues} |`,
-    `| Future estimated venues | ${report.future_estimated_venues} |`,
-    `| Confirmed deadlines | ${report.confirmed_deadlines} |`,
-    `| Estimated deadlines | ${report.estimated_deadlines} |`,
-    `| Future exact deadlines | ${report.future_exact_deadlines ?? 0} |`,
-    `| Future date-only deadlines | ${report.future_date_only_deadlines ?? 0} |`,
-    `| Future estimated deadlines | ${report.future_estimated_deadlines ?? 0} |`,
-    `| Venues with future exact deadline | ${report.venues_with_exact_future_deadline ?? 0} |`,
-    `| Venues with future date-only deadline | ${report.venues_with_date_only_future_deadline ?? 0} |`,
-    `| Identity migrations | ${report.identity_migrations?.migrations.length ?? 0} |`,
-    `| Parse warning count | ${report.parse_warning_count} |`,
-    `| Snapshot fallback | ${report.snapshot_fallback ? "yes" : "no"} |`,
-    `| Profile hash | ${report.profile_hash} |`,
+    metric("収録している会議", "tracked_venues", report.tracked_venues),
+    metric(
+      "次回以降に確定した締切を持つ会議",
+      "future_confirmed_venues",
+      report.future_confirmed_venues,
+    ),
+    metric(
+      "次回以降に推定締切を持つ会議",
+      "future_estimated_venues",
+      report.future_estimated_venues,
+    ),
+    /* この 2 つは**次回以降**の数へ揃えてある（`healthReport` が同じ變數を
+     * `*_future_*` の鍵にも入れ、ゲートが兩者の一致を見て居る）。見出しに「次回以降」が
+     * 無いと、「確定した締切 865」を**收録ぜんぶの確定締切**と讀む – 實測 2026-10-17:
+     * 收録 4,990・確定 4,916 に對し、此の値は 865（次回以降の確定）。 */
+    metric("次回以降の確定した締切", "confirmed_deadlines", report.confirmed_deadlines),
+    metric("次回以降の推定締切", "estimated_deadlines", report.estimated_deadlines),
+    metric(
+      "次回以降の締切（時刻まで確定）",
+      "future_exact_deadlines",
+      report.future_exact_deadlines ?? 0,
+    ),
+    metric(
+      "次回以降の締切（日付のみ）",
+      "future_date_only_deadlines",
+      report.future_date_only_deadlines ?? 0,
+    ),
+    metric(
+      "次回以降の推定締切",
+      "future_estimated_deadlines",
+      report.future_estimated_deadlines ?? 0,
+    ),
+    metric(
+      "次回以降に時刻まで確定した締切を持つ会議",
+      "venues_with_exact_future_deadline",
+      report.venues_with_exact_future_deadline ?? 0,
+    ),
+    metric(
+      "次回以降に日付のみの締切を持つ会議",
+      "venues_with_date_only_future_deadline",
+      report.venues_with_date_only_future_deadline ?? 0,
+    ),
+    metric(
+      "会議 key の移行記録",
+      "identity_migrations",
+      report.identity_migrations?.migrations.length ?? 0,
+    ),
+    metric("解析上の注意の件数", "parse_warning_count", report.parse_warning_count),
+    `| 収録 snapshot で組んだか（\`snapshot_fallback\`） | ${report.snapshot_fallback ? "はい" : "いいえ"} |`,
+    `| 入力プロファイルのハッシュ（\`profile_hash\`） | ${report.profile_hash} |`,
     "",
-    "## Source status",
+    /* 同じ値を 2 つの鍵で持つ理由を書く（md だけを読む人にも分かるように）。
+     * 2026-10-17 實測: 見出しに「次回以降」が無い頃は「確定した締切 865」を
+     * **収録ぜんぶの確定締切**（4,916）と読めた。 */
+    "`confirmed_deadlines` と `confirmed_future_deadlines`、`estimated_deadlines` と",
+    "`estimated_future_deadlines` は、それぞれ**同じ値**です（次回以降の締切を数えています。",
+    "別々には数えていません）。収録ぜんぶの締切の数は `data.json` から数えてください。",
     "",
-    "| Source | Status |",
+    "## 上流ソースの状況",
+    "",
+    "| ソース | 状況 |",
     "|---|---|",
-    ...Object.entries(report.source_status).map(([source, status]) => `| ${source} | ${status} |`),
-    "",
-    `Source failures: ${report.source_failures.length > 0 ? report.source_failures.join(", ") : "none"}`,
-    "",
-    "## Categories",
-    "",
-    "| Category | Venues |",
-    "|---|---:|",
-    ...Object.entries(report.category_distribution).map(
-      ([category, count]) => `| ${category} | ${count} |`,
+    ...Object.entries(report.source_status).map(
+      ([source, status]) => `| ${source} | ${sourceNote(status)}（\`${status}\`） |`,
     ),
     "",
-    "## Parse warnings",
+
+    `上流の取得に失敗したソース: ${report.source_failures.length > 0 ? `${report.source_failures.join(", ")}（収録 snapshot の値で組んだ）` : "なし"}`,
+    "",
+    "## 分野の内訳",
+    "",
+    "> 分野は機械可読のキー（`data.json` の `categories` と同じ物）で出す。日本語の名前は画面のチップと行の詳細に出る物と同じ入口（`Recommender.categoryLabelJa`）から添える（第 703 回）。",
+    "",
+    "| 分野（キー） | 日本語 | 会議数 |",
+    "|---|---|---:|",
+    ...Object.entries(report.category_distribution).map(([category, count]) => {
+      const label = String(Recommender.categoryLabelJa(category) ?? "").trim();
+      return `| ${category} | ${label && label !== category ? label : "－"} | ${count} |`;
+    }),
+    "",
+    "## 解析上の注意",
     "",
     ...(Object.entries(report.parse_warnings).length
-      ? Object.entries(report.parse_warnings).map(([message, count]) => `- ${count}× ${message}`)
-      : ["- none"]),
+      ? Object.entries(report.parse_warnings).map(([message, count]) => `- ${count} 件: ${message}`)
+      : ["- なし"]),
     "",
-    "## Required venues",
+    "## 必ず収録しておきたい会議",
     "",
     ...(Object.entries(report.required_venues).length
-      ? Object.entries(report.required_venues).map(([venue, status]) => `- ${venue}: ${status}`)
-      : ["- none"]),
+      ? Object.entries(report.required_venues).map(
+          ([venue, status]) =>
+            `- ${venue}: ${status === "present" ? "収録済み" : `未取得（${status}）`}`,
+        )
+      : ["- なし"]),
     "",
-    "## Output files",
+    "## 出力ファイル",
     "",
-    "| File | Bytes | SHA-256 |",
+    /* 「出力ファイル」という見出しの下に一部だけを並べると、読者はそれが配付物の全部だと
+     * 読む（2026-08-09 生成のビルドで実測: 配付先に置くファイルは 16 件、この表は 13 件で、
+     * 除く 3 件のことをどこにも書いていなかった）。載らない物とその理由を、表の直前で
+     * 自分で言う。名前は呼び出し側の実際の書き出し順から渡す（書き写すと順が変わったとき
+     * に噓をつく）。 */
+    ...(omittedOutputs.length
+      ? [
+          `> この表に載るのは、表を組み立てた時点で書き終わっていた出力だけです。載らないのは ${omittedOutputs
+            .map((name) => `\`${name}\``)
+            .join(
+              "・",
+            )} です。\`health.json\` と \`health.md\` はこの表のうしろに書き出すので、自分自身のハッシュをここには書けません。\`publish.json\` は後段の公開手順が書き出します。配付物のバイト数とハッシュの完全な一覧は \`publish.json\` の \`artifacts\` にあります（そこに \`publish.json\` 自身は載りません）。`,
+          "",
+        ]
+      : []),
+    "| ファイル | バイト数 | SHA-256 |",
     "|---|---:|---|",
     ...Object.entries(report.output_files).map(
       ([name, file]) => `| ${name} | ${file.bytes} | ${file.sha256} |`,
@@ -2479,6 +3261,7 @@ export function writePublishManifest(
   now: Date | null | undefined,
   semanticStatus: SemanticStatus,
   provenance?: PublishProvenance,
+  venuePapers?: Record<string, string[]>,
 ): PublishManifest {
   const artifacts = Object.fromEntries(
     [...new Set(names)]
@@ -2494,7 +3277,7 @@ export function writePublishManifest(
   );
   const safeNow = now instanceof Date && !Number.isNaN(now.getTime()) ? now : new Date();
   const profileHash = existsSync(join(outdir, "data.json"))
-    ? embeddingProfileHash(JSON.parse(readFileSync(join(outdir, "data.json"), "utf8")))
+    ? embeddingProfileHash(JSON.parse(readFileSync(join(outdir, "data.json"), "utf8")), venuePapers)
     : "";
   const resolvedProvenance =
     provenance ?? priorPublishProvenance(outdir) ?? collectPublishProvenance();
@@ -2526,13 +3309,98 @@ function csvField(value: string | number | boolean | null | undefined): string {
   return s;
 }
 
-export function toCsv(records: DataRecord[] | null | undefined): string {
+/** 締切の枠（venue・開催回・種別・回次・トラック）の印。`data.json` の締切と
+ * `recordsOf` の締切を突き合わせるのに使う（`reverify` の `deadlineSlotId` と同じ組み方）。 */
+function deadlineSlotKeyJa(
+  venueKey: string,
+  editionId: string,
+  deadline: { kind?: string; round?: number; track?: string; label?: string },
+): string {
+  return [
+    venueKey,
+    editionId,
+    deadline.kind ?? "",
+    deadline.round ?? 1,
+    deadlineTrackKey(deadline.label ?? "", deadline.kind ?? "", deadline.track ?? ""),
+  ].join("\0");
+}
+
+/** `data.json` の締切が持つ確認の状態を、枠から引ける形にする。
+ *
+ * `data.csv` は `recordsOf` の生の締切を見るので、**保存された記録が無い行**（`toJson` が
+ * 証拠から足した `pending`・`manual-required`）が空欄になっていた（2026-10-17 実測:
+ * 2,480 行が `data.json` に状態を持ちながら CSV は空欄。畫面の札と暦は同じ状態を出している）。 */
+export function verificationBySlot(
+  data: { conferences?: unknown } | null | undefined,
+): Map<string, { status: string; source_class: string }> {
+  const 表 = new Map<string, { status: string; source_class: string }>();
+  const conferences = (data as { conferences?: unknown[] } | null | undefined)?.conferences;
+  if (!Array.isArray(conferences)) return 表;
+  for (const conf of conferences as Array<Record<string, unknown>>) {
+    const key = String(conf.key ?? "");
+    for (const ed of (conf.editions ?? []) as Array<Record<string, unknown>>) {
+      const editionId = String(ed.id ?? "");
+      for (const dl of (ed.deadlines ?? []) as Array<Record<string, unknown>>) {
+        const v = dl.verification as Record<string, unknown> | undefined;
+        if (!v) continue;
+        const status = String(v.status ?? "").trim();
+        const sourceClass = String(v.source_class ?? "").trim();
+        if (!status && !sourceClass) continue;
+        表.set(
+          deadlineSlotKeyJa(key, editionId, {
+            kind: String(dl.kind ?? ""),
+            round: Number(dl.round ?? 1),
+            track: String(dl.track ?? ""),
+            label: String(dl.label ?? ""),
+          }),
+          { status, source_class: sourceClass },
+        );
+      }
+    }
+  }
+  return 表;
+}
+
+/** 記録の締切に、`data.json` が持つ確認の状態を埋める（記録が無い行だけ）。
+ *
+ * 記録（`recordsOf`）の締切が持つ `verification` は、**入力と台帳が付けた物だけ**である。
+ * `data.json` は其れに加へて證據から狀態を足す（`bootstrapVerification`）ので、其れを
+ * 讀まんと、同じ行が出口ごとに違ふ事に成る（2026-10-17 實測: 配付の ICS・`upcoming.md`・
+ * `upcoming.html` は 348 行にしか狀態を書いて居なかつた。畫面と CSV は 4,474 行）。
+ * **記録を書き換へず、寫しを差し替える**（呼び手の會議データを汚さない）。 */
+export function fillVerificationFromData(
+  records: DataRecord[] | null | undefined,
+  確認の寫?: Map<string, { status: string; source_class: string }> | null,
+): void {
+  if (!確認の寫 || !Array.isArray(records)) return;
+  for (const rec of records) {
+    const dl = rec?.deadline;
+    if (!dl || dl.verification) continue;
+    const 寫 = 確認の寫.get(
+      deadlineSlotKeyJa(rec.conf?.key ?? "", rec.edition?.edition_id ?? "", dl),
+    );
+    if (!寫?.status) continue;
+    rec.deadline = {
+      ...dl,
+      verification: {
+        ...(寫.status ? { status: 寫.status } : {}),
+        ...(寫.source_class ? { source_class: 寫.source_class } : {}),
+      },
+    } as typeof dl;
+  }
+}
+
+export function toCsv(
+  records: DataRecord[] | null | undefined,
+  確認の寫?: Map<string, { status: string; source_class: string }>,
+): string {
   const lines: string[] = [];
   lines.push(CSV_COLUMNS.join(","));
   for (const rec of records ?? []) {
     if (!rec || typeof rec !== "object" || rec.type !== "deadline") continue;
     const { conf, edition: ed, deadline: dl } = rec;
     if (!conf || !ed || dl === null || dl === undefined) continue;
+    const 寫 = 確認の寫?.get(deadlineSlotKeyJa(conf.key, ed.edition_id, dl));
     lines.push(
       [
         conf.key,
@@ -2560,6 +3428,19 @@ export function toCsv(records: DataRecord[] | null | undefined): string {
         ed.estimate?.window_end ?? "",
         conf.sources.join(";"),
         ed.link || conf.link || "",
+
+        String(rec.kind_ja ?? rec.kind_label ?? "").trim() || KIND_LABEL_JA.other,
+        // 日付の列が締切の日を指しているかどうかは、この欄で決まる。
+        String(rec.date_field ?? "").trim() || "締切",
+        ed.event_segments?.length ? JSON.stringify(ed.event_segments) : "",
+        /* 確認の状態。**`data.json` と同じ値**を書く（列の説明がそう言っている）。
+         * 保存された記録が無い行は、`toJson` が証拠から足した状態を表から引く –
+         * 畫面の札と暦（`deadlines.ics`）は同じ状態を出しているので、CSV だけ空欄だと
+         * 同じ行が出口ごとに違う事になる（第 861 回の暦と同じ理由）。表にも無い行だけ
+         * 空欄にする（「未確認」とは書かない – 空欄は「その値が分からん」の意）。 */
+        寫?.status ?? dl.verification?.status ?? "",
+        寫?.source_class ?? dl.verification?.source_class ?? "",
+        Recommender.isExtendedDeadline(dl) ? "true" : "false",
       ]
         .map((v) => csvField(v))
         .join(","),
@@ -2588,6 +3469,631 @@ export function escapeMdUrl(url: string | null | undefined): string {
   return u;
 }
 
+/** HTML に出す文字をエスケープする（セルに `<` を含む表記が来ない保証は無いため）。 */
+function escapeHtmlText(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+/* ------------------------------------------------------------------ カレンダー配信 */
+
+export function sessionSpanJa(
+  start: unknown,
+  end: unknown,
+  estimated: boolean | null | undefined,
+): string {
+  const from = asDate(start);
+  if (!from) return "";
+  const to = asDate(end) ?? from;
+  const one = (d: Date): string => {
+    const day = calendarDayJa(d);
+    return day ? `${fmtDate(d)}(${day})` : fmtDate(d);
+  };
+  const span = from.getTime() === to.getTime() ? one(from) : `${one(from)} 〜 ${one(to)}`;
+  return estimated ? `${span}（推定）` : span;
+}
+
+export function editionSessionJa(ed: Edition): string {
+  if (ed.event_date_precision === "not-announced") {
+    const text = Recommender.eventCellJa({ ed });
+    return ed.estimated ? `${text}（推定）` : text;
+  }
+  if (ed.event_date_precision === "month-only" && !ed.event_start && !ed.event_segments?.length) {
+    const text = Recommender.eventCellJa({ ed: { ...ed, event_end: fmtDate(ed.event_end) } });
+    return ed.estimated ? `${text}（推定）` : text;
+  }
+  if (!ed.event_start && !ed.event_segments?.length) return "";
+  if (ed.event_segments?.length)
+    return ed.event_segments
+      .map((part) => {
+        const text = Recommender.eventCellJa({
+          ed: {
+            event_start: part.start,
+            event_end: part.end,
+            event_date_precision: ed.event_date_precision,
+          },
+        });
+        return `${text}${ed.estimated ? "（推定）" : ""}${part.label ? `（${part.label}）` : ""}`;
+      })
+      .join(" / ");
+  const text = Recommender.eventCellJa({
+    ed: { ...ed, event_start: fmtDate(ed.event_start), event_end: fmtDate(ed.event_end) },
+  });
+  return text && ed.estimated ? `${text}（推定）` : text;
+}
+
+export function icsEventRows(
+  records: DataRecord[] | null | undefined,
+  now: Date | null | undefined,
+): IcsRow[] {
+  return icsRowsWithUids(records, now).rows;
+}
+
+/** カレンダーの行と、その行が使った UID を一度に組む。
+ *
+ * UID を別に組み直すと、片方だけ直した日に食い違う（それが元の不具合だった – 畫面の
+ * 書き出しは ASCII の種別の鍵、配付物は日本語の種別名の SHA-1 で、同じ締切が別の予定に
+ * なっていた）。**同じ一巡で両方を作る**。
+ *
+ * 鍵は「開催回・種別・回次・原表記・JST の暦日」。畫面（`catalog.json` の締切）と
+ * 同じ材料で組める形にしてある – 畫面は SHA-1 を持たないので、配付物の UID を
+ * データに載せて渡す。 */
+export function icsRowsWithUids(
+  records: DataRecord[] | null | undefined,
+  now: Date | null | undefined,
+): { rows: IcsRow[]; uids: Map<string, string> } {
+  const uids = new Map<string, string>();
+  const safeNow = now instanceof Date && !Number.isNaN(now.getTime()) ? now : new Date();
+  const stamp = jstParts(safeNow);
+  const rows: IcsRow[] = [];
+  const used = new Map<string, number>();
+  const submissionOf = (rec: DataRecord) => {
+    if (rec.conf?.key !== "jip" && rec.conf?.key !== "ipsj-27-r-compsac") return null;
+    return reviewedSubmission({
+      venueKey: rec.conf.key,
+      editionId: rec.edition?.edition_id,
+      editionYear: rec.edition?.year,
+      label: rec.deadline?.label,
+      officialUrl: rec.edition?.link || rec.conf.link,
+      kind: rec.deadline?.kind,
+      round: rec.deadline?.round,
+      track: rec.deadline?.track,
+      precision: rec.deadline?.precision,
+      localDate: rec.deadline?.local_date,
+    });
+  };
+  const canonicalPresent = (records ?? []).some(
+    (rec) => rec?.type === "deadline" && rec.conf?.key === "jip" && submissionOf(rec),
+  );
+  const reviewedSeen = new Set<string>();
+  for (const rec of records ?? []) {
+    if (!rec || typeof rec !== "object" || rec.type !== "deadline") continue;
+    const dl = rec.deadline;
+    if (!dl) continue;
+    const submission = submissionOf(rec);
+    if (
+      submission &&
+      ((canonicalPresent && rec.conf.key !== "jip") || reviewedSeen.has(submission.key))
+    )
+      continue;
+    if (submission) reviewedSeen.add(submission.key);
+    const conf = rec.conf ?? {};
+    const ed = rec.edition ?? {};
+    const kind = String(rec.kind_label ?? "").trim() || "締切";
+    let day: string;
+    let whenText: string;
+    let atMs: number;
+    if (isDateOnlyDeadline(dl)) {
+      if (dateOnlyState(dl.local_date, safeNow) === "definitely-past") continue;
+      const raw = String(dl.local_date ?? "")
+        .replace(/-/g, "")
+        .slice(0, 8);
+      if (!/^\d{8}$/.test(raw)) continue;
+      day = raw;
+      whenText = `${raw.slice(0, 4)}-${raw.slice(4, 6)}-${raw.slice(6, 8)}（時刻未確認）`;
+      // 並び順のための時刻（JST 正午）。表示には使わない – 終日イベントにするため。
+      atMs = Date.UTC(
+        Number(raw.slice(0, 4)),
+        Number(raw.slice(4, 6)) - 1,
+        Number(raw.slice(6, 8)),
+        12 - 9,
+      );
+    } else {
+      if (exactDeadlineState(dl.at_utc, safeNow) === "past") continue;
+      const parts = jstParts(dl.at_utc);
+      if (!parts) continue;
+      day = parts.day;
+      whenText = `${parts.human}（JST）`;
+      atMs = dl.at_utc.getTime();
+    }
+    const title = submission
+      ? titleWithYear(submission.title, submission.publicationYear)
+      : titleWithYear(conf.title, ed.year);
+
+    const kindWord = String(rec.kind_ja ?? "").trim() || kind;
+    const kindNote = String(rec.kind_note ?? "").trim();
+    const kindShown = kindNote ? `${kindWord}（${kindNote}）` : kindWord;
+    const summary = rec.estimated ? `${title}：${kindShown}（推定）` : `${title}：${kindShown}`;
+    const link = ed.link || conf.link || "";
+
+    const 状態 = statusMarksJa(dl);
+    const placeJa = String(
+      Recommender.placeJa(Recommender.placeWithPrefectureJa(ed.place)) ?? "",
+    ).trim();
+    const catsJa = icsCategoryLabels(conf.categories);
+    /* 畫面のランク列と同じ語（`rankPairLabelJa`）。空の等級は落とす。 */
+    const rankJa = Object.entries((conf.rank ?? {}) as Record<string, string>)
+      .filter(([, grade]) => Boolean(grade))
+      .map(([scale, grade]) => Recommender.rankPairLabelJa(`${scale}:${grade}`))
+      .filter(Boolean)
+      .join("・");
+    const desc = [
+      `会議: ${title}`,
+      `種別: ${kindShown}`,
+
+      catsJa.length ? `分野: ${catsJa.join("・")}` : "",
+      /* ランクも本文に載せる（購読した人はカレンダーしか見ない – 狀態と同じ理由。
+       * 2026-10-17 まで無く、投稿先を選ぶ主要な判斷材料がカレンダーからは見えなかつた）。
+       * 無い會議には行を立てない（「未確認」を每回書くと本文が instruct で埋まる）。 */
+      rankJa ? `ランク: ${rankJa}` : "",
+      `${rec.date_field}: ${whenText}`,
+
+      submission
+        ? `掲載予定: ${submission.issueLabel}／${submission.language}`
+        : `会期: ${editionSessionJa(ed) || Recommender.unconfirmedLabelJa()}`,
+      `開催地: ${placeJa || Recommender.unconfirmedLabelJa()}`,
+      rec.estimated ? "この日付は上流が推定として出したもので、公式で裏を取れていません" : "",
+
+      状態.length ? `状態: ${状態.join("・")}` : "",
+      link ? `詳細: ${link}` : "",
+      `収録: ${ICS_CAL_NAME_JA}（データ生成: ${stamp ? `${stamp.human}（JST）` : "未確認"}）`,
+    ].filter(Boolean);
+
+    const kindTag =
+      icsUidSafe(kind) || createHash("sha1").update(kind, "utf8").digest("hex").slice(0, 8);
+    const base = [
+      "kamiyobi",
+      icsUidSafe(ed.edition_id || `${conf.key ?? "conf"}-${ed.year ?? ""}`),
+      kindTag,
+    ]
+      .filter(Boolean)
+      .join("-");
+    const n = used.get(base) ?? 0;
+    used.set(base, n + 1);
+    const uid = `${base}${n === 0 ? "" : `-${n + 1}`}@kamiyobi`;
+    uids.set(
+      icsDeadlineUidKey(
+        String(ed.edition_id ?? ""),
+        String(dl.kind ?? ""),
+        dl.round,
+        String(dl.label ?? ""),
+        day,
+      ),
+      uid,
+    );
+    rows.push({
+      day,
+      at: atMs,
+      // 欄名を決めた所で「締切かどうか」も決めておく（数え方を後から真似ない – 第 300 回）。
+      deadline: rec.date_field === "締切",
+
+      body: icsEventBody(
+        {
+          uid,
+          day,
+          summary,
+          description: desc.join("\n"),
+          link,
+          categories: catsJa,
+          location: placeJa,
+        },
+        safeNow,
+      ),
+    });
+  }
+  rows.sort((a, b) => a.at - b.at || cmpStr(a.body[5] ?? "", b.body[5] ?? ""));
+  return { rows, uids };
+}
+
+/** 締切ごとの UID を引く鍵。**配付物と畫面の両方が同じ材料で組める形**にする
+ * （開催回・種別・回次・原表記・JST の暦日）。日付を入れるのは引くためだけで、
+ * UID その物は日付を含まない（締切が動いても購読者の予定が入れ替わらないため）。 */
+/* 購読先に申告する事実。行から導く – 別々に数えると、申告と中身がズレる
+ * （「928 件」と書いて 927 件しか入っていない、が一番信用を失う）。 */
+/** 入口（行を作ってカレンダーの本文に組む）。行だけが必要なら `icsEventRows` を使う。 */
+export function toIcsText(
+  records: DataRecord[] | null | undefined,
+  now: Date | null | undefined,
+): string {
+  return icsCalendarText(icsEventRows(records, now), now);
+}
+
+/* 静的な一覧（`upcoming.html`）の入口と終端で使う言い回し。同じ語を 2 か所に書くと
+ * 片方だけ直してズレるので、1 個の正本から組む。このページの本文は 1,127 行あり、
+ * 「戻る」は先頭に 1 つしか無かった（最後の行を読んだ人は約 50 画面ぶん上に戻ら
+ * なければならなかった – 2026-09-23 実測: `index.html` へのリンクは文書全体で 1 個、
+ * `</table>` のうしろには何も無い）。 */
+
+const UPCOMING_TITLE_JA = "直近の締切と会期 | kamiyobi";
+/* 面板と同じ 2 色。`site/template.html` に書いてある物と必ず揃える（ズレは検査で止める）。 */
+const UPCOMING_THEME_LIGHT = "#f7f7f8";
+const UPCOMING_THEME_DARK = "#18181b";
+/* このページは JavaScript を 1 文字も読み込まない（実測: 画面の `script` は 0 個）ので、
+   画面より強く締められる。`style-src` の `'unsafe-inline'` は埋め込む様式（`siteStyleBlock`）用。
+   `frame-ancestors` は meta 経由では効かないので書かない（画面と同じ理由）。 */
+const UPCOMING_CSP =
+  "default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'none'; " +
+  "style-src 'unsafe-inline'; img-src 'self' data:; form-action 'none'";
+
+/* 画面の表へ戻る口の言い回し。HTML（`upcoming.html`）とマークダウン（`upcoming.md`）で
+ * 同じ語を使うため、矢印を外した本文だけをここに持つ（同じ語を 2 か所に持たない）。 */
+const UPCOMING_BACK_TEXT_JA = "締切の一覧に戻る";
+const UPCOMING_BACK_LABEL_JA = `&larr; ${UPCOMING_BACK_TEXT_JA}`;
+const UPCOMING_TOP_LABEL_JA = "&uarr; 先頭に戻る";
+
+function pageDescription(heading: string, columns: string[]): string {
+  const title = heading.trim() || "直近の締切と会期";
+  const cols = columns.length ? `${columns.join("・")}の列で、` : "";
+  return (
+    `${title}を一覧にしたページです。${cols}日時は日本時間（JST）と曜日で出します。` +
+    "画面の絞り込みを使わない方向けの静的な表で、同じデータは upcoming.md・data.csv・" +
+    "deadlines.ics でも配信しています。"
+  );
+}
+
+export function toNotFoundHtml(styleBlock = "", baseUrl = ""): string {
+  const base = baseUrl.replace(/\/+$/, "");
+  const link = (file: string): string => (base ? `${base}/${file}` : file);
+  const row = (file: string, label: string, note: string): string =>
+    `<li><a href="${escapeHtmlText(link(file))}">${label}</a>${note}</li>`;
+  return [
+    "<!doctype html>",
+    '<html lang="ja">',
+    "<head>",
+    '<meta charset="utf-8">',
+    '<meta name="viewport" content="width=device-width, initial-scale=1">',
+    // 無い場所の応答なので、検索エンジンに本文として拾わせない。
+    '<meta name="robots" content="noindex">',
+    "<title>ページが見つかりません - kamiyobi</title>",
+    `<link rel="icon" href="${escapeHtmlText(link("icon.svg"))}" type="image/svg+xml">`,
+    styleBlock,
+    "</head>",
+    "<body>",
+    /* 樣式の塊は雛形から渡すが、幅と余白は `.wrap` が持っている。付け忘れると本文が
+     * 畫面の端から端まで屆き、廣い畫面で 1 行が長くなり過ぎる（2026-10-17 實測:
+     * `upcoming.html` は `<main class="wrap">`、404 だけ素の `<main>` だった）。 */
+    '<main class="wrap">',
+    "<h1>そのページは見つかりません</h1>",
+    "<p>URL の打ち間違いか、リンクが古くなっています。締切と会期の情報は次の場所に在ります。</p>",
+    "<ul>",
+    row(
+      "index.html",
+      "締切の一覧（画面）",
+      " – 残り日数・日本時間への換算・絞り込み・検索はそちらでできます。収録の全体を読むこともできます",
+    ),
+    row(
+      "upcoming.html",
+      "直近の締切と会期の表",
+      " – 実行処理を必要としない版（印刷・JavaScript なしで読める）",
+    ),
+    row("deadlines.ics", "カレンダー（deadlines.ics）", " – 収録している今後の締切を全て"),
+
+    row("data.csv", "表計算のための表（data.csv）", " – 1 行 1 締切。過去の分も入っている"),
+    row(
+      "upcoming.md",
+      "文字だけの表（upcoming.md）",
+      " – 直近の締切と開催（対象期間は表の先頭）。grep や他ツールに渡せる形",
+    ),
+    row(
+      "data.json",
+      "機械可読のデータ（data.json）",
+      " – 画面より広い期間（過去の全履歴とそれより先の締切）まで入っている",
+    ),
+    row(
+      "llms.txt",
+      "機械向けの索引（llms.txt）",
+      " – 出口が何で、それぞれに何が載っているかを並べた物",
+    ),
+    "</ul>",
+    "<p>探している会議が収録にあるか分からないときは、画面の検索欄に会議名の固有名詞を打ってください。" +
+      "0 件のときは、その名前が収録の名簿にあるかどうかも画面が言います。</p>",
+    "<p>このページ自体は締切も会期も載せません（日付を推測しないため）。</p>",
+    "</main>",
+    "</body>",
+    "</html>",
+    "",
+  ].join("\n");
+}
+
+/** 機械可読の自己紹介（schema.org の `Dataset`）。
+ *
+ * 頁を開いた AI と検索の側に「これは何のデータで、どこにあり、いつ作られ、どこまでを
+ * 覆うか」を一度に言う。値は**ビルドが数えた実測**を使う – 定数を書くと次のビルドで
+ * 噓になる（件数・期間・生成時刻）。 */
+export function toDatasetJsonLd(input: {
+  baseUrl?: string;
+  title?: string;
+  description?: string;
+  generatedAt?: string;
+  span?: DeadlineSpan | null;
+  repoUrl?: string;
+  keywords?: string[];
+}): string {
+  const base = String(input.baseUrl ?? "").replace(/\/+$/, "");
+  const link = (file: string): string => (base ? `${base}/${file}` : file);
+  const repo = String(input.repoUrl ?? "").replace(/\/+$/, "");
+  const node: Record<string, unknown> = {
+    "@context": "https://schema.org",
+    "@type": "Dataset",
+    name: String(input.title ?? "kamiyobi"),
+    url: base ? `${base}/` : "index.html",
+    inLanguage: "ja",
+    isAccessibleForFree: true,
+    /* 配付する 4 本。どれも毎回のビルドで書く物だけを並べる（`embeddings.json` は
+     * `--no-embeddings` で消えるので入れない）。 */
+    distribution: [
+      ["data.json", "application/json", "正規化した収録データ全体（機械可読の正）"],
+      ["data.csv", "text/csv", "1 行 1 締切の平坦な表"],
+      ["deadlines.ics", "text/calendar", "今後の締切の購読用カレンダー（RFC 5545）"],
+      ["llms.txt", "text/plain", "出力ファイルとデータ形式の索引（AI 向け）"],
+    ].map(([file, format, name]) => ({
+      "@type": "DataDownload",
+      name: String(name),
+      encodingFormat: String(format),
+      contentUrl: link(String(file)),
+    })),
+  };
+  if (input.description) node.description = String(input.description);
+  if (input.generatedAt) node.dateModified = String(input.generatedAt);
+  if (input.span) node.temporalCoverage = `${input.span.first_day}/${input.span.last_day}`;
+  if (repo) node.creator = { "@type": "Organization", name: "kamiyobi", url: repo };
+  if (repo) node.license = `${repo}/blob/main/LICENSE`;
+  if (input.keywords?.length) node.keywords = [...input.keywords];
+  /* 頁の中に置くので、`</script>` で早く閉じさせない（値は全て自分で組んだ物だが、
+   * 説明文は雛形から取るので、念のため）。 */
+  const json = JSON.stringify(node, null, 2).replace(/<\//g, "<\\/");
+  return `<script type="application/ld+json">\n${json}\n</script>`;
+}
+
+/** 機械が最初に読む 1 枚（RFC 9309）。AI の索引（`llms.txt`）への道もここに書く –
+ * 索引はページからも辿れるが、クローラは最初にこのファイルを読む。 */
+export function toRobotsTxt(baseUrl = ""): string {
+  const base = baseUrl.replace(/\/+$/, "");
+  const lines = [
+    "# kamiyobi - submission deadlines of CS conferences, workshops and journals",
+    `# Machine-readable index for AI agents: ${base ? `${base}/llms.txt` : "llms.txt"}`,
+    "User-agent: *",
+    "Allow: /",
+    "",
+  ];
+  /* `Sitemap` は群の外に置く（RFC 9309 の群は空行で切れる）。 */
+  if (base) lines.push(`Sitemap: ${base}/sitemap.xml`, "");
+  return `${lines.join("\n")}\n`;
+}
+
+/** 人が開く口の一覧。データのファイル（`data.json` など）は索引（`llms.txt`）が名指す –
+ * ここに並べるのは頁として開ける物だけにする。 */
+export function toSitemapXml(baseUrl = "", lastmod = ""): string {
+  const base = baseUrl.replace(/\/+$/, "");
+  const day = /^\d{4}-\d{2}-\d{2}$/.test(lastmod) ? lastmod : "";
+  const 口 = ["", "upcoming.html", "upcoming.md", "llms.txt"].map((file) =>
+    base ? `${base}/${file}` : file || "index.html",
+  );
+  return [
+    '<?xml version="1.0" encoding="UTF-8"?>',
+    '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
+    ...口.map(
+      (loc) =>
+        `  <url><loc>${escapeHtmlText(loc)}</loc>${day ? `<lastmod>${day}</lastmod>` : ""}</url>`,
+    ),
+    "</urlset>",
+    "",
+  ].join("\n");
+}
+
+export function toUpcomingHtml(markdown: string, styleBlock = "", baseUrl = ""): string {
+  const inlineMd = (value: string): string =>
+    escapeHtmlText(value)
+      /* 行き先は絶対 URL だけでなく**同じ場所のファイル**（`index.html`）も受ける。絕対 URL だけを
+       * 見ていた為、`[絞り込みの効く一覧（\`index.html\`）](index.html)` と
+       * `[${UPCOMING_BACK_TEXT_JA}](index.html)` の二つが**生のマークダウンの侭**頁に出ていた
+       * （2026-10-06 実測 – upcoming.html の冒頭と末尾。読者は括弧と丸括弧の並びを読まされ、
+       * 行き先も押せなかつた）。筋（`javascript:` の樣な物）は通さない – 相対と http(s) だけ。*/
+
+      .replace(/\[([\s\S]*?)\]\(([^)\s]+)\)/g, (_all, text: string, url: string) => {
+        const 筋付き = /^[A-Za-z][A-Za-z0-9+.-]*:/.test(url);
+        if (筋付き && !/^https?:\/\//.test(url)) return _all;
+        // URL は `escapeMdUrl` でパーセント形式（`&` を含まない）にしているが、
+        // 属性の引用符は念のため守る。
+        return `<a href="${url.replace(/"/g, "%22")}" rel="noopener">${text}</a>`;
+      })
+      .replace(/`([^`]+)`/g, "<code>$1</code>");
+
+  const out: string[] = [];
+  let quote: string[] = [];
+  let table: string[] = [];
+
+  let heading = "";
+  /* 表を組み立てる最中にしか分からない列の名前を、head の説明にも使う。 */
+  let pageColumns: string[] = [];
+  /* 表の前の但し書きは 20 行を超え、初めて開いた人は表に辿り着く前に文の壁に当たっていた
+   * （2026-10-17 実測: 800×600 の画面では表の見出しが下端にやっと出る）。生成時刻と対象期間
+   * だけを見せ、列の意味と但し書きは畳む。文はページに残すので、AI と読み上げには届く。 */
+  const flushQuote = (): void => {
+    if (!quote.length) return;
+    const 見せる = (l: string): boolean => /^(?:生成時刻|対象期間)[:：]/.test(l.trim());
+    const 表に出す = quote.filter(見せる);
+    const 畳む = quote.filter((l) => !見せる(l));
+    const 段落 = (lines: string[]): string => lines.map((l) => `<p>${inlineMd(l)}</p>`).join("\n");
+    if (表に出す.length) out.push(`<blockquote>\n${段落(表に出す)}\n</blockquote>`);
+    // 引用の塊が幾つあっても畳みは一つ（最初の塊の場所に、全部の文をまとめて置く）。
+    if (畳む.length) {
+      if (畳みの場所 < 0) {
+        畳みの場所 = out.length;
+        out.push("");
+      }
+      畳みの文.push(...畳む);
+    }
+    quote = [];
+  };
+  let 畳みの場所 = -1;
+  const 畳みの文: string[] = [];
+  const 畳みを置く = (): void => {
+    if (畳みの場所 < 0) return;
+    out[畳みの場所] =
+      `<details class="upcoming-notes">\n<summary><h2 class="upcoming-notes-title">列の意味と但し書き（「残り」「推定」「要確認」「AoE」などの読み方）</h2></summary>\n<blockquote>\n${畳みの文.map((l) => `<p>${inlineMd(l)}</p>`).join("\n")}\n</blockquote>\n</details>`;
+  };
+  const flushTable = (): void => {
+    if (!table.length) return;
+    const rows = table.map((line) =>
+      line
+        .replace(/^\s*\|/, "")
+        .replace(/\|\s*$/, "")
+        .split(/(?<!\\)\|/)
+        .map((cell) => cell.trim().replace(/\\\|/g, "|")),
+    );
+    const body = rows.filter((cells) => !cells.every((cell) => /^:?-{2,}:?$/.test(cell)));
+    const head = body.length ? body[0] : null;
+    const rest = body.slice(1);
+    const parts: string[] = [];
+    if (head) {
+      /* 表の題は**表の外**に置く（`<table>` の中に置くと不正な HTML）。表その物には
+       * 上の `caption` が付く。 */
+      out.push(`<h2 class="only-sr">${inlineMd(heading || "直近の締切と会期")}の一覧</h2>`);
+      /* 支援技術には「何の表か」「何が何列並ぶか」が先に入ってほしい。この表は
+       * 1,127 行あるので、名前の無い表では現在地が分からない（2026-08-09 生成ビルドで
+       * 実測: `upcoming.html` の `<table>` に `<caption>` は 0 個で、一覧の側には有った）。
+       * 画面には出さない（一覧の `<caption>` と同じ `only-sr` を使う）。 */
+      parts.push(
+        `<caption class="only-sr">${inlineMd(heading)}の一覧。列は ${head
+          .map((cell) => inlineMd(cell))
+          .join("・")} です。列の意味と但し書きは表のうえに書いてあります。</caption>`,
+      );
+      parts.push(
+        `<thead><tr>${head
+          .map((cell) => `<th scope="col">${inlineMd(cell)}</th>`)
+          .join("")}</tr></thead>`,
+      );
+    }
+    /* 幅せま画面（`@media (max-width: 640px)`）では列見出しを消し、各マスの先頭に
+     * `data-label` の値を接頭（先頭に付く語）として添えてカードに積む。`upcoming.html` の全マス 6,756 個に
+     * `data-label` が **1 個も無く**（2026-09-24 実測）、その幅では各行が「：論文締切」の
+     * ようにラベルの空いた記号だけが出て、何が何列か読めなかった。列名は上の
+     * 列ヘッダー（`scope="col"`）と同じ物を使う（手で書き写すと列の並びが変わる）。 */
+    const columnLabels = head ? head.map((cell) => inlineMd(cell).replace(/<[^>]*>/g, "")) : [];
+    pageColumns = columnLabels.map((cell) => cell.trim()).filter((cell) => cell.length > 0);
+    /* 「会議」の列を**行ヘッダー**にする。1,126 行を一マスずつ読む時、列名だけでは
+     * 「どの会議の行か」が分からず、種別や「推定」が何に対する値か取り出せない
+     * （2026-09-24 実測: 行ヘッダーは 0 個で、全マスが `td` だった）。
+     * 列名は上の列ヘッダーと同じ語を使うので、番号は書き込まない。 */
+    const rowHeadColumn = columnLabels.findIndex((cell) => cell.trim() === "会議");
+    if (rest.length) {
+      parts.push(
+        `<tbody>\n${rest
+          .map(
+            (cells) =>
+              `<tr>${cells
+                .map((cell, i) => {
+                  const label = columnLabels[i]
+                    ? ` data-label="${escapeHtmlText(columnLabels[i])}"`
+                    : "";
+                  return i === rowHeadColumn
+                    ? `<th scope="row"${label}>${inlineMd(cell)}</th>`
+                    : `<td${label}>${inlineMd(cell)}</td>`;
+                })
+                .join("")}</tr>`,
+          )
+          .join("\n")}\n</tbody>`,
+      );
+    }
+
+    out.push(
+      `<div class="tablewrap">\n<table class="upcoming" id="upcoming-table">\n${parts.join("\n")}\n</table>\n</div>`,
+    );
+    table = [];
+  };
+
+  for (const line of markdown.split("\n")) {
+    if (line.startsWith("|")) {
+      flushQuote();
+      table.push(line);
+      continue;
+    }
+    flushTable();
+    if (line.startsWith("# ")) heading = line.slice(2).trim();
+    if (line.startsWith("# ") || line.startsWith("## ")) {
+      flushQuote();
+      const level = line.startsWith("# ") ? 1 : 2;
+      out.push(`<h${level}>${inlineMd(line.slice(level + 1))}</h${level}>`);
+      continue;
+    }
+    if (line.startsWith(">")) {
+      quote.push(line.replace(/^>\s?/, ""));
+      continue;
+    }
+    flushQuote();
+    if (line.trim()) out.push(`<p>${inlineMd(line)}</p>`);
+  }
+  flushTable();
+  flushQuote();
+  畳みを置く();
+
+  return [
+    "<!doctype html>",
+    '<html lang="ja">',
+    "<head>",
+    '<meta charset="utf-8">',
+    '<meta name="viewport" content="width=device-width, initial-scale=1">',
+    `<meta http-equiv="Content-Security-Policy" content="${UPCOMING_CSP}">`,
+    `<title>${UPCOMING_TITLE_JA}</title>`,
+    `<meta name="description" content="${escapeHtmlText(pageDescription(heading, pageColumns))}">`,
+    '<meta property="og:type" content="website">',
+    '<meta property="og:site_name" content="kamiyobi">',
+    '<meta property="og:locale" content="ja_JP">',
+    `<meta property="og:title" content="${escapeHtmlText(UPCOMING_TITLE_JA)}">`,
+    `<meta property="og:description" content="${escapeHtmlText(pageDescription(heading, pageColumns))}">`,
+    '<meta name="twitter:card" content="summary">',
+    // tab で他タブと見分けるための自前アイコン（画面と同じ物。外部アセットは読まない）。
+    '<link rel="icon" type="image/svg+xml" href="icon.svg">',
+    // 自分の場所（og:url と canonical は config.yaml の site.base_url から組み立てる）。
+    ...(baseUrl
+      ? [
+          `<meta property="og:url" content="${escapeHtmlText(`${baseUrl}/upcoming.html`)}">`,
+          `<link rel="canonical" href="${escapeHtmlText(`${baseUrl}/upcoming.html`)}">`,
+        ]
+      : []),
+    `<meta name="theme-color" content="${UPCOMING_THEME_LIGHT}">`,
+    `<meta name="theme-color" media="(prefers-color-scheme: dark)" content="${UPCOMING_THEME_DARK}">`,
+    styleBlock,
+    "</head>",
+    "<body>",
+    '<main class="wrap">',
+    '<p id="top"><a href="index.html">' +
+      UPCOMING_BACK_LABEL_JA +
+      "</a>（同じ収録内容の一覧で、日本時間への" +
+      "換算と残り日数も出します。機械が読む形のマークダウンは " +
+      '<a href="upcoming.md">upcoming.md</a>、全件は <a href="data.csv">data.csv</a> にあります。' +
+      '締切を自分のカレンダーに入れるには <a href="deadlines.ics">deadlines.ics</a>（今後の締切が全て、' +
+      "1 件 = 1 つの終日（JST の暦日）で、このページの絞り込みはありません）。</p>",
+
+    '<p class="skip-to-table"><a href="#upcoming-table">表へ（列の意味と但し書きを飛ばす）</a></p>',
+    out.join("\n"),
+    // 長い表の終端にも出口を置く（先頭まで戻れないまま画面を閉じないために）。
+    '<p><a href="#top">' +
+      UPCOMING_TOP_LABEL_JA +
+      '</a> <a href="index.html">' +
+      UPCOMING_BACK_LABEL_JA +
+      "</a></p>",
+    "</main>",
+    "</body>",
+    "</html>",
+    "",
+  ].join("\n");
+}
+
 export function toUpcomingMd(
   records: DataRecord[] | null | undefined,
   now: Date | null | undefined,
@@ -2598,7 +4104,13 @@ export function toUpcomingMd(
   const safeDays =
     Number.isFinite(rawDays) && Number.isInteger(rawDays) && rawDays > 0 ? rawDays : 180;
   const horizon = addDays(safeNow, safeDays);
-  const today = dateOnly(safeNow);
+  /* 「本日開催」「残り N 日」「N 日後」の 今日 は **JST の暦日**で決める。この表の日付は会期
+   * そのもの（時刻を持たない暦日）で、サイトの一覧も JST 固定。UTC の暦日を今日にすると、
+   * 日本の午前 9 時までのあいだだけ表が一日古くなる（2026-08-10 08:30 JST 生成で実測: 前日に
+   * 終わった会期が「開催中(残り1日)」、当日開始の 2 件が「1日」＝明日になっていた）。日本の朝に
+   * この表で出張の予定を読む人が、噓をつかずに済む側へ寄せる。 */
+  const today = dateOnly(new Date(safeNow.getTime() + 9 * 3_600_000));
+  const horizonDay = dateOnly(new Date(horizon.getTime() + 9 * 3_600_000));
   const rows: string[] = [];
   for (const rec of records ?? []) {
     if (!rec || typeof rec !== "object") continue;
@@ -2608,7 +4120,26 @@ export function toUpcomingMd(
     const link = rawLink ? escapeMdUrl(rawLink) : "";
     const titleEscaped = escapeMdCell(titleWithYear(conf.title, ed.year));
     const name = link ? `[${titleEscaped}](${link})` : titleEscaped;
-    const placeEscaped = escapeMdCell(ed.place);
+    // md の開催地列は、サイトの表が見せている日本語表記をそのまま使う。
+    // `placeWithPrefectureJa` だけだと海外行が "Kunming, China" のまま残り、
+    // 「日本」で grep しても国内の行に当たらない（国名の日本語化は `placeJa` が持つ）。
+    // 都道府県を添えるのは md 側だけ（サイトは title に原文を落とせるが、md は持てない）。
+    // 空の開催地は、空欄にせずサイトと同じ「未確認」を出す。空欄だと公式が出ていないのと
+    // 収録漏れが区別できない（SPEC §7 の表と同じ判断）。語は recommender の正本を使い、
+    // md に書いた語がサイトの検索で引ける状態も保つ。
+    const placeEscaped = escapeMdCell(
+      Recommender.placeJa(Recommender.placeWithPrefectureJa(ed.place)) ||
+        Recommender.unconfirmedLabelJa(),
+    );
+    /* 画面のランク列と同じ入口・同じ語（`rankPairLabelJa`）。無い行は畫面と同じ「未確認」。
+     * 2026-10-17 まで此の列が無く、**JavaScript を使へない讀者だけがランクを見られなかつた**
+     * （畫面にも CSV にも有る – `rank_ccf`・`rank_core`）。 */
+    const rankText = escapeMdCell(
+      Object.entries((rec.conf?.rank ?? {}) as Record<string, string>)
+        .filter(([, grade]) => Boolean(grade))
+        .map(([scale, grade]) => Recommender.rankPairLabelJa(`${scale}:${grade}`))
+        .join("・") || Recommender.unconfirmedLabelJa(),
+    );
     if (rec.type === "deadline") {
       const dl = rec.deadline;
       if (dl === null) continue;
@@ -2628,7 +4159,8 @@ export function toUpcomingMd(
           state === "uncertain-on-date"
             ? "締切日"
             : `${Math.max(1, Math.ceil((window.earliestPossibleUtc.getTime() - safeNow.getTime()) / DAY_MS))}日`;
-        when = `${dl.local_date}（時刻未確認）`;
+        const day = calendarDayJa(dl.local_date);
+        when = `${dl.local_date}${day ? `(${day})` : ""}（時刻未確認）`;
       } else {
         if (
           exactDeadlineState(dl.at_utc, safeNow) === "past" ||
@@ -2643,28 +4175,46 @@ export function toUpcomingMd(
           const hours = Math.floor(remainMs / 3_600_000);
           if (hours >= 1) {
             left = `${hours}時間`;
+          } else if (Math.floor(remainMs / 60_000) >= 1) {
+            left = `${Math.floor(remainMs / 60_000)}分`;
           } else {
-            const mins = Math.max(1, Math.floor(remainMs / 60_000));
-            left = `${mins}分`;
+            /* 1 分を切った行を「1分」と書かない。上は 日・時間・分 いずれも切り下げなのに、
+             * ここだけ 1 に切り上げていた（2026-08-09 実測: 生成時刻ちょうどに締まる行が
+             * 「1分」になっていた。同じ行の画面は「まもなく」を出す）。存在しない猶予を
+             * 約束するのがいちばん悪いので、画面と同じ語で「猶予を数えられない」を出す。 */
+            left = "まもなく";
           }
         }
-        when =
-          ed.estimated && ed.estimate
-            ? `推定期間 ${ed.estimate.window_start}〜${ed.estimate.window_end}`
-            : aoeText(dl.at_utc);
+
+        when = Recommender.estimateWindowJa(ed) || deadlineWhenText(dl.at_utc, dl.tz_raw);
       }
-      const kindText = escapeMdCell(rec.kind_label);
+      // 投稿トラックを補い、種別ラベルに含まれる注記は重ねない。
+      const kindText = escapeMdCell(
+        rec.kind_note && !rec.kind_label.endsWith(`: ${rec.kind_note}`)
+          ? `${rec.kind_label}（${rec.kind_note}）`
+          : rec.kind_label,
+      );
       const roundText = `R${dl.round}`;
+
+      const sessionText = editionSessionJa(ed) || Recommender.unconfirmedLabelJa();
+
+      const 状態 = statusMarksJa(dl).join("・");
       rows.push(
-        `| ${when} | ${left} | ${name} | ${kindText} | ${roundText} | ${ed.estimated ? "推定" : ""} | ${placeEscaped} |`,
+        `| ${when} | ${left} | ${name} | ${kindText} | ${roundText} | ${ed.estimated ? "推定" : ""} | ${placeEscaped} | ${sessionText} | ${状態} | ${rankText} |`,
       );
     } else {
-      const start = ed.event_start;
-      if (start === null) continue;
-      const end = ed.event_end ?? start;
+      const start = rec.start;
+      const end = rec.end;
+      const bounds = Recommender.eventDateBoundsMs(
+        fmtDate(start),
+        fmtDate(end),
+        ed.event_date_precision,
+      );
       if (
-        dateOnly(start).getTime() > dateOnly(horizon).getTime() ||
-        today.getTime() > dateOnly(end).getTime()
+        ed.event_date_precision === "not-announced" ||
+        !bounds ||
+        bounds[0] > horizonDay.getTime() ||
+        today.getTime() > bounds[1]
       ) {
         continue;
       }
@@ -2678,26 +4228,99 @@ export function toUpcomingMd(
       } else {
         left = `開催中(残り${(endDay - today.getTime()) / DAY_MS + 1}日)`;
       }
-      const when =
-        end.getTime() !== start.getTime() ? `${fmtDate(start)} 〜 ${fmtDate(end)}` : fmtDate(start);
+      if (["month-only", "unverified", "not-announced"].includes(ed.event_date_precision || "")) {
+        left = "日付未確認";
+      }
+      const when = Recommender.eventCellJa({
+        ed: {
+          event_start: fmtDate(start),
+          event_end: fmtDate(end),
+          event_date_precision: ed.event_date_precision,
+        },
+      });
       rows.push(
-        `| ${when} | ${left} | ${name} | 開催 | - | ${ed.estimated ? "推定" : ""} | ${placeEscaped} |`,
+        `| ${when} | ${left} | ${name} | ${escapeMdCell(rec.kind_note ? `開催（${rec.kind_note}）` : "開催")} | - | ${ed.estimated ? "推定" : ""} | ${placeEscaped} | ${when} |  | ${rankText} |`,
       );
     }
   }
+  // md を単体で読む人（grep する人、他ツールに食わせる人）にとって、
+  // 「いつの時点で」「いつまで」を網羅した表なのかが分からないと表を使えない。
+  // サイト側は JST 基準で揃えているので、生成時刻の JST での読み方も添える。
+  const spanEnd = fmtDate(horizonDay);
+  const spanEndWeekday = calendarDayJa(spanEnd);
   const head = [
     `# 直近 ${safeDays} 日の締切と開催`,
     "",
-    `生成時刻: ${fmtUTC(safeNow, "%Y-%m-%dT%H:%M:%SZ")}`,
+    `生成時刻: ${fmtUTC(safeNow, "%Y-%m-%dT%H:%M:%SZ")}（JST では ${jstClock(safeNow)}）`,
+    `対象期間: ${fmtDate(today)} 〜 ${spanEnd}${spanEndWeekday ? `(${spanEndWeekday})` : ""}（日本時間の暦日。生成時刻から ${safeDays} 日先まで。進行中の会期は開始日が生成時刻より前でも載る）`,
     "",
-    "| 日付 | 残り | 会議 | 種別 | R | 推定 | 開催地 |",
-    "|---|---|---|---|---|---|---|",
+
+    "> 日付列は締切の公式表記（AoE / UTC / JST 宣言）をそのまま載せ、日本時間での読みを後に添える",
+    "> （`2026-02-06(金) 23:59:00 AoE（JST では 2026-02-07(土) 20:59）` の形。AoE 23:59 は",
+    "> 日本では翌日の夜で、日が変わる行が多い）。行の並びは締切の瞬間の古い順で、日付列に書いた",
+    "> 暦日の順ではない（時刻未確認の行はその日の 00:00 UTC に並ぶ）。絞り込みと並び替えは、",
+    "> 同じ式を出す [絞り込みの効く一覧（`index.html`）](index.html) が早い。",
+    "> 会期行の日付は開催日そのもの（暦日）で、時刻は持たない。",
+    "",
+    // 列の名前だけでは読めない（特に短縮した見出し）。この表を単体で開いた人が、
+    // 表のうえだけで列の意味を確定できるようにする（サイトと同じ語を使う）。
+    "> 列の意味: 「残り」は生成時刻からの残り（1 分未満は 1 分、以降は日）。種別が「開催」の行は",
+    "> 締切ではなく会議の会期そのもので、残りの列は「本日開催」「開催中(残り N 日)」と書く。",
+    "> 「ラウンド」は同じ会議の中の繰り返しの募集（R1・R2 のように数える。会期行は「-」）。",
+    "> 「会期」は会議が開かれている日の範囲で、出張の段取りはこの列を見る（`deadlines.ics` の",
+    "> 各予定の本文に書いた物と同じ値で、上流が推定とした会期には「（推定）」を添える）。種別が",
+    "> 「開催」の行は日付列が会期その物なので、同じ値を繰り返す。",
+    "> 「推定」は前年までの実績から機械的に置いた未確認の値で、公式の発表ではない。",
+    "> 「状態」は、公式ページから締切を 1 つに確定できなかった日（「要確認」）や、",
+    "> 上流が締切を後ろへ動かした日（「延長後」）に付く（画面の一覧の札と同じ語）。空欄は、",
+    "> 公式で確認済みか、確認の記録がない日のいずれか。",
+
+    "> 上流が推定とした締切は、日付の欄に『推定期間 A〜B』の形で幅を書く（どの日かは決まっていないので、一日に決めない）。",
+
+    "> 種別は日本語の名（『論文締切』など）。上流が同じ種別に**元の呼び名**を付けている行は、『論文締切: Paper submission』の様に後ろへ添える（元の呼び名は上流の言葉の侭）。",
+    /* 目印の語はこの表に実際に並ぶ物だけ説明する（2026-08-09 生成ビルドの実測: 1,127 行の
+     * うち開催地が「未確認」182 行、日付に「（時刻未確認）」を持つ行 180 行、AoE の宣言が
+     * 410 箇所）。「未確認」を「収録元が無いと決めた意味」と誤読されると、探している会議を
+     * 捨ててしまう。意味の文は画面のてびき・印刷の但し書きと同じ正本から取る。 */
+    /* ランクの列の意味（2026-10-17 に足した列）。「評価なし」と「未確認」の區別は、
+     * 畫面の吹き出し（`RANK_UNRATED_TITLE_JA`）と同じ事を言ふ。 */
+    "> 「ランク」は CCF・CORE・THCPL の一覧の評価（「CCF A」の形）。「評価なし」はその一覧に",
+    "> 載っているが評価が付いていない行で、「未確認」は一覧でも確認できていない行です。",
+    `> 「${Recommender.unconfirmedLabelJa()}」は${Recommender.unconfirmedMeaningJa()}です。この表では開催地の列に`,
+    "> 出ます。",
+    `> 日付列の「（${Recommender.timeUnconfirmedLabelJa()}）」は、その日であることだけを確認できて、何時までに`,
+    "> 出すかが公式に出ていない行。",
+    `> ${Recommender.aoeMeaningJa()}。`,
+    "",
+    /* 列は**末尾に足す**（列の順序で讀む下流を壊さない – `kind_ja` と同じ判斷）。
+     * 畫面の列の並びとは違ふが、表としての讀み易さより、既に在る讀み手を壊さない事を取る。 */
+    "| 日付 | 残り | 会議 | 種別 | ラウンド | 推定 | 開催地 | 会期 | 状態 | ランク |",
+    "|---|---|---|---|---|---|---|---|---|---|",
   ];
-  if (rows.length === 0) rows.push("| - | - | 該当なし | - | - | - | - |");
-  return `${[...head, ...rows].join("\n")}\n`;
+  if (rows.length === 0) rows.push("| - | - | 該当なし | - | - | - | - | - | - | - |");
+  /* 1,000 行を超える表なので、最後まで読んだ人にも出口を置く（`upcoming.html` と同じ言い回しを
+   * 同じ正本から使う）。GitHub の生的な表示では、この名前はコードのスパンになるだけで辿れない。 */
+  const tail = [
+    "",
+    `[${UPCOMING_BACK_TEXT_JA}](index.html) ―― 日本時間への換算・残り日数・絞り込みはそちら。` +
+      ` この表は生成時刻の時点の静的な写しで、直近 ${String(safeDays)} 日を並べています。`,
+  ];
+  return `${[...head, ...rows, ...tail].join("\n")}\n`;
 }
 
-export function toLlmsTxt(config: Record<string, unknown> | null | undefined): string {
+const UPCOMING_DAYS_CAP = 400;
+
+function upcomingWindowDays(value: unknown): { requested: number; days: number } {
+  const raw = Number(value ?? 180);
+  const requested = Number.isFinite(raw) && Number.isInteger(raw) && raw > 0 ? raw : 180;
+  return { requested, days: Math.min(requested, UPCOMING_DAYS_CAP) };
+}
+
+export function toLlmsTxt(
+  config: Record<string, unknown> | null | undefined,
+  spans?: LlmsSpans | null,
+  data?: Record<string, unknown> | null,
+): string {
   const safeConfig = config ?? {};
   const categories = (safeConfig.categories as Record<string, string> | null) ?? DEFAULT_CATEGORIES;
   const sources = (safeConfig.sources as Array<Record<string, unknown>> | null) ?? DEFAULT_SOURCES;
@@ -2708,24 +4331,121 @@ export function toLlmsTxt(config: Record<string, unknown> | null | undefined): s
   const lines = [
     `# ${siteTitle}`,
     "",
-    "HPC・ネットワーク・システム・AI 系の国際会議の投稿締切と開催日を、",
+    "HPC・ネットワーク・システム・AI・セキュリティ・DB・グラフィックス・HCI・理論の国際会議と論文誌の投稿締切と開催日を、",
     "上流の公開データから日次で正規化して配信する静的データ集である。",
     "サーバは無く、GitHub Pages 上の静的ファイルだけで構成される。",
+    "国際会議に加えて国内研究会・国内シンポジウム（情報処理学会・電子情報通信学会など）も収録する",
+    "（`tags` に `domestic-jp` を付けた会議で、`data.json` からも絞り込める）。",
+    "国内の締切は JST 宣言が多く、サイトは日本時間（JST）と曜日を最初に表示して",
+    "2 行目に公式表記を添える。国際会議は AoE（UTC-12）や UTC 宣言のまま併記し、",
+    "時刻を公式で確認できていない日付は「時刻未確認」として幅を持つ値として扱う。",
+    "",
+    /* 「出力一覧」は名前の通り公開物全体の索引だが、10 件だけを並べて残りを黙っていた
+     * （2026-08-09 生成のビルドで実測: ビルドが置くファイルは 16 件、この表は 10 件で、
+     * `recommendation-core.js`・`publish.js`・`index.html`・`icon.svg`・`.nojekyll`・
+     * `llms.txt` 自身にはどこにもふれていなかった）。名前はビルドが管理する出力一覧
+     * `MANAGED_OUTPUT_FILES` から書き出す（書き写すと、公開物を増やしたときに索引だけ古くなる）。 */
+    /* 配信の絕対 URL（`site.base_url` が正本 – 404 の頁や `upcoming.html` と同じ）。
+     * 索引を読む機械が「カレンダーを購読したい」に答えられる様に、**購読先の URL** を書く。
+     * ファイル名だけでは 1 度ダウンロードするやり方になり、每日入れ替はる物が古い儘になる
+     * （実測 2026-10-12: 索引に `github.io` が 1 箇所も無く、答へるのに README を読む必要が
+     * 在った）。 */
+    ...(() => {
+      const base = String(
+        (safeConfig.site as Record<string, unknown> | null)?.base_url ?? "",
+      ).replace(/\/+$/, "");
+      if (!base) return [];
+      // 空行は導入文との境に一つ（配列の前にある物）で足りる。
+      return [
+        `配信している絶対 URL（\`site.base_url\` が正本）: ${base}`,
+        `- 画面: ${base}/`,
+        `- カレンダーの購読先に指定する URL: ${base}/deadlines.ics`,
+        "  （毎日朝の更新のあと、新しい一覧に置き換わります。ファイルを一度ダウンロードするだけでは",
+        "  古くなります。画面の絞り込みは効きません。分野は各予定の `CATEGORIES` にも入ります）",
+        "  本文には会議・種別・分野・ランク・日付・会期・開催地・状態を書きます（ランクは等級が無い会議には立てません）",
+      ];
+    })(),
+    "",
+    /* 索引は 38KB あり、「何をしたいときに何を読むか」は全体を読まないと分からなかった
+     * （2026-10-17 実測）。問いから 1 つへ飛べる近道を先に置く。名指すファイルと節は
+     * `tests/llms_shortcuts.test.ts` が実在を確かめる。 */
+    "## 用途別の近道",
+    "",
+    "全体を読む前に、問いに合う 1 つから読む。",
+    `- 近いうちに締切が来る会議を知りたい → \`upcoming.md\`（直近 ${upcomingWindowDays((safeConfig.site as Record<string, unknown> | null)?.upcoming_days).days} 日の締切と開催の表）`,
+    "- 会議 X の締切を知りたい → `data.json` の `conferences[]` を `key`・`title` で引く（過去の開催回も在る）。人には画面の URL `?q=<略称>` を渡す",
+    "- カレンダーに入れたい → 上の購読先 URL（`deadlines.ics`）",
+    "- 表計算で扱いたい → `data.csv`（列の意味は「data.csv の列」）",
+    "- 絞り込んだ一覧や 1 行を人に見せたい → 「サイト（index.html）の日本語での引き方」の URL の名前（`q`・`cats`・`row` など）",
+    "- 日時を比べたい → 「利用上の注意」（`utc` と `earliest_utc`・`latest_utc` で比べ、`aoe` は表示用）",
+    "- 論文に合う投稿先を探したい → 画面の『投稿先を探す』に題名・概要を貼る。道具からは MCP の `search_venues`（研究テーマ・題名・概要）か `recommend_venues`（論文情報）",
+    "- 道具として引きたい → 「AI から引く（MCP）」",
     "",
     "## 出力一覧",
     "",
-    "- data.json：正規化データ全体（機械可読の正）。",
-    "- health.json：配信前ゲートにも使う確定/推定締切とソース状態の健全性レポート。",
-    "- publish.json：最終公開セットのハッシュ、元 commit、入力 hash、build 条件と、意味検索用の埋め込みが公開物に含まれるかを示す semantic_status（ready / lexical-only）。",
-    "- catalog.json：締切画面向けの現在・近日期間カタログ。",
-    "- recommendation-index.json：投稿先推薦の会議プロフィールと埋め込み参照。",
-    "- app.js：site/app.ts から生成するブラウザ UI 実行時処理。",
-    "- recommender.js：site/recommender.ts から生成する推薦実行時処理。",
-    "- health.md：health.json の人間向け要約。",
-    "- data.csv：1 行 1 締切のフラット表。",
-    `- upcoming.md：直近 ${String((safeConfig.site as Record<string, unknown> | null)?.upcoming_days ?? 180)} 日の締切と開催の表。`,
+    ...MANAGED_OUTPUT_FILES.map((name) => {
+      const note = LLMS_OUTPUT_NOTES_JA[name] ?? "";
+      if (name === "upcoming.md") {
+        return (
+          `- ${name}：直近 ${String(
+            upcomingWindowDays((safeConfig.site as Record<string, unknown> | null)?.upcoming_days)
+              .days,
+          )} 日の締切と開催の表。MCP の \`list_upcoming\` でも会期を取得できます。` +
+          "MCP の対象期間は `days` で指定します。購読カレンダー `deadlines.ics` は締切のみです。"
+        );
+      }
+
+      // 句点の後に空白を挟むと、機械が 2 つの項目と取り違える。読み終えた文の後ろに
+      // 実測の範囲をそのまま続ける。
+      const spanOf = llmsScopeJa(name, spans ?? null);
+      return `- ${name}：${spanOf ? `${note}${spanOf}` : note}`;
+    }),
   ];
   lines.push(
+    "",
+
+    "## AI から引く（MCP）",
+    "",
+    "`node src/mcp.ts` で起動する読み取り専用の stdio サーバです。収録 snapshot と、存在すれば初期カタログ・推薦インデックスを読みます。外部への送信や書き込みは行いません。",
+    "",
+    "| ツール | 内容 |",
+    "|---|---|",
+    "| `search_deadlines` | 日本語検索。語を省いて kind / kinds / within_days などの条件だけでも絞れます。既定は今後の投稿締切で、推定は除きます。 |",
+    "| `list_upcoming` | 今日から指定日数以内の締切と開催。既定は全種別で、推定も含みます。 |",
+    "| `venue_info` | 会議の開催回・締切・ランク・会期。今後の物から並べ、過去の締切も表示します。 |",
+    "| `explain_word` | 絞り込み前の照合件数と検索語への案内。代表行を最大3行表示します。 |",
+    "| `collection_stats` | 収録数、生成時刻、確認状態、データ源、配布ファイルの要約。 |",
+    "| `search_venues` | 研究テーマ・題名・概要に合う会議と論文誌を全収録から検索。締切不明・締切済みの会議も候補に入ります。 |",
+    "| `recommend_venues` | 論文情報に合う投稿先を一致評価付きで並べます。長い論文は最初の20行で調べます。 |",
+    "",
+    '全種別は `kinds: ["all"]` で指定できます。`search_deadlines` の引数は `query`・`limit`・`offset`・`include_past`・`include_estimated`・`kind`・`kinds`・`rank`・`category`・`categories`・`domestic`・`online`・`within_days`・`scope` です。`category` は画面の分野のチップと同じ絞り込みで、鍵（`security`）・画面の札（`セキュリティ`）・英字の名（`Security and Privacy`）のどれでも受けます。',
+    '他のツールでは `days`・`key`・`name`・`word`・`paper`・`query` を使います（論文情報は `recommend_venues` が `paper`、研究テーマ・題名・概要は `search_venues` が `query`。取り違えると「query に…を指定してください」と返ります）。`rank` は `search_deadlines` のほか `recommend_venues` と `list_upcoming` も受けます（`search_venues` は受け取っても無視します）。`search_venues` と `recommend_venues` は既定で語彙の一致を使い、`retrieval: "semantic"` でローカルの実モデルによる意味検索に切り替わります（モデル未準備ならエラーを返します。最初の 1 回はモデルの読み込みで十数秒かかるので、呼び出し側の待ち時間を長めに取ってください。2 回目からは速くなります）。各ツールの inputSchema で受け付ける項目と既定値を確認してください。',
+    "収録 snapshot と公開物はビルド時の統合・選択で件数が異なる場合があります。収録全体と初期一覧を同じ範囲として比較しないでください。",
+    "`scope: screen` は初期一覧、`scope: all` は収録全体です。初期カタログがない場合は全体へ切り替え、その旨を返します。画面と件数を比べる場合は、期間・種別・推定・過去表示を揃えてください。",
+    "`list_upcoming` の structuredContent.items は type（deadline / event）で分かれ、**どちらも同じ欄**（`categories`・`categories_ja`・`rank`・`domestic`・`full_name`）を持ちます（締切の側だけ `ics_uid` が付きます）。`search_deadlines` の structuredContent は total・rows・next_offset を持ちます。続きは同じ条件で next_offset を offset に渡します。日付のみの行の utc・jst は null です。推定期間、確認状態、投稿トラックは別の項目です。行に `domestic`（国内の学会か。開催地が日本とは別で、日本で開かれる国際会議は false）と `full_name`（正式名。画面の一覧が会議名の下に出すのと同じ）と `categories`（分野の鍵。`security` など）と `categories_ja`（画面の分野の札と配付カレンダーの `分野:` と同じ日本語）を持たせてあります。`ics_uid`（配付カレンダー `deadlines.ics` の予定の UID。`data.json` の締切と同じ値）は、**カレンダーに予定がある締切**に入ります（初期カタログと公開の `data.json` から引きます。`list_upcoming` の締切の行も同じです。実測 2026-10-17: 今後の締切 939 のうち 938 が持ちます）。行のテキストでは `domestic` を「国内」の札で出します。公式確認（確認した日時・確認元・確認範囲・状態・次回確認予定）は `verification_ja` に、画面の行の詳細が並べるのと同じ日本語で入ります。",
+    "0件では画面と同じ案内を使い、次の一手まで返す設計です。入力や結果の切り詰めは黙らない方針で、採択率・参加費・投稿要件など未収録の情報を推測して答えません。",
+    "",
+    "## サイト（index.html）の日本語での引き方",
+    "",
+    "会議名・分野・主題・開催地を検索できます。複数語は空白で区切ります。日時は日本時間（JST）で、時刻未確認の締切は公式の暦日のままです。",
+    /* 日本語の分野名を英字表記へ寄せる仕組みを書く（2026-10-17 實測: 收録の英字は
+     * 數〜數十行に當たるのに、日本語の分野名は 0 件だつた物が 8 語あつた）。 */
+    "日本語の分野名（`オペレーティングシステム`・`コンピュータグラフィックス` など）は、収録の英字表記（`operating systems`・`graphics` など）に寄せて探します。寄せたときは、画面も MCP も「英語で書かれた会議名（… など）も探しています」と言います。",
+    "`国際会議`（`国際学会`・`国際カンファレンス` なども同じ）は、国内研究会・国内シンポジウム以外の会議で探します（会議名の International では探さないので、NSDI・SOSP・CHI のように名前に International の無い会議も出ます。論文誌は入りません）。`CCF A`・`CORE A*` のような尺度と等級は 1 つの条件として探します。",
+    "相対日付は実行時の日本時間で解釈し、判定した期間を表示します。`今月`・`来月`・`再来月`・`先月` はその時点の暦月で解決します。日付語は別ラウンドや会期にも当たるため、締切の期間だけを絞るには「締切まで」を使います。曖昧な期間や未収録の情報は推測しません。",
+    "「投稿先を探す」の候補CSVは、順位・一致評価・一致の点・言葉の一致・意味の近さを含みます。一致評価は証拠の強さを表す区分で、点とは別です。論文を入れたまま締切の一覧を書き出した場合も、同じ 4 列が先頭に付きます（一致評価の札が付いていない行は空欄）。",
+    "CSV・画面のICS出力は絞り込み後の全行です。購読用 deadlines.ics は収録全体の今後の締切で、絞り込みを引き継ぎません。共有URLには一覧条件を含めますが、論文の本文は含めません。",
+    /* URL の引数を名指す（2026-10-17 まで、索引のどこにも書いておらず、AI も人も
+     * 絞り込んだ一覧のリンクを自分で組めなかった）。値は画面が受け取る物と同じ。 */
+    "画面の URL には、絞り込みを次の名前で載せます: " +
+      "`mode`（`deadlines`・`recommend`）・`q`（検索語）・`kind`（種別。`abstract`・`paper`・`journal`）・`cats`（分野の鍵を `,` で。`security` など）・" +
+      "`rank`（`A*`・`A`・`B`・`C`・`N`。締切の一覧では行を、`mode=recommend` では候補の会場を絞ります）・`win`（`7d`・`30d`・`90d`・`180d`）・`est`・`past`・`domestic`・`online`（`1` で入）・" +
+      "`open`（`1` で「投稿先を探す」の候補から締切が過ぎた会議を除く。締切の一覧では効きません）・" +
+      "`order`（`deadline` で「投稿先を探す」の候補を締切の近い順に並べる。既定は論文との一致順。締切の一覧では効きません）・" +
+      "`sort`（`rem`・`date`・`event`・`conf`・`rank`）・`dir=desc`・`help=1`・`row`（1 行の詳細を開く）・`venue`（会議の鍵。`sigmod` などで 1 会場の行だけに絞る。`mode=recommend` では候補を絞りません。行の詳細と推薦のカードの「この会議の締切を一覧で見る」が使う。`row` と同時に渡したときは `row`（1 行の詳細）が勝つ）。",
+    "`row` の値は `<venue key>|<year>|<kind>|<ミリ秒>` で、ミリ秒は `data.json` のその締切の " +
+      "`utc`（時刻のある行）または `earliest_utc`（日付のみの行）です。同じ版で同じ種別・同じ年・同じ日時に " +
+      "重なる行には、末尾に `|slot=<…>` が付きます（重なる行がある会場だけです）。",
     "",
     "## data.json のスキーマ要約",
     "",
@@ -2741,32 +4461,67 @@ export function toLlmsTxt(config: Record<string, unknown> | null | undefined): s
     "- identity_migrations: object：旧 slot から現在の slot への明示的な移行契約。",
     "- conferences: array：会議の配列。各要素は次の形である。",
     "  - key: string：正規化キー（slug）。例 'sigcomm'。",
+    "  - upstream_sub: string|null：上流（ccfddl）が付けた分野の略号（例 'CG'）。この計画の分野（categories）とは別の欄で、空のこともある。",
     "  - title: string：略称。例 'SIGCOMM'。",
     "  - full_name: string：正式名称。",
     "  - acronym: string：検索用の会議略称。存在時のみ。",
     "  - scope / official_scope: array of string：検索用の対象分野。存在時のみ。",
     "  - paper_abstracts / keywords: array of string：検索用の代表概要・キーワード。存在時のみ。",
     "  - categories: array of string：上記 categories のキー。",
-    "  - rank: object：{'ccf': 'A', 'core': 'A*'} 等。欠けうる。",
+    "  - rank: object：{'ccf': 'A', 'core': 'A*', 'thcpl': 'B'} の形。欠けうる（'thcpl' を持つ会議は実測 2026-10-16 で 696 のうち 344）。",
     "    値 'N' は上流でランクが付いていないことを表す番兵であり、等級ではない。",
     "  - link: string：会議の公式サイト。",
     "  - tags: array of string：補助タグ。カテゴリではない。",
     "  - sources: array of string：この会議の出典名。",
-    "  - dblp: string|null：DBLP の会議キー。無い場合は null。",
-    "  - identity: object：明示的な venue ID、DBLP key、公式 domain、alias、source ID。存在時のみ。",
+    "  - dblp: string|null：DBLP の会議キー。ない場合は null。",
+    "  - identity: object：明示的な同一性。{venueId, dblpKey, officialDomains, aliases, sourceIds}。存在時のみ。`sourceIds` は出典名（'ccfddl'・'aideadlines'・'local'）からその出典での ID への写像。",
     "  - legacy_keys: array of string：正規 key へ移行した旧 key。存在時のみ。",
     "  - category_assignments: array：カテゴリと付与理由。存在時のみ。",
     "  - papers: array of string：代表採択論文タイトル。語彙一致・推薦に使う。",
-    "    無い会議は空配列。",
+    "    ない会議は空配列。",
     "  - editions: array：開催回。各要素は次の形である。",
     "    - year: integer, id: string（例 'sigcomm26'）, link: string, place: string",
     "    - date_text: string：上流の自由文の会期表記。構造化されていないことがある。",
     "    - event_start / event_end: string|null：'YYYY-MM-DD'。パース不能なら null。",
+    // 件数は出力するデータから集計し、収録内容の変更を説明にも反映する。
+    (() => {
+      const 版 = jsonRecords(data?.conferences).flatMap((conf) =>
+        jsonRecords(conf.editions).map((edition) => ({
+          確かさ: String(edition.event_date_precision ?? ""),
+          始まる日: edition.event_start,
+        })),
+      );
+      // 他の件数表示と同じく、3桁ごとに区切る。
+      const 千の桁 = (n: number): string => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+      const 數 = (確かさ: string): number => 版.filter((e) => e.確かさ === 確かさ).length;
+      // 確定した日付範囲・単日の開催回を除き、日付が記録されている件数も示す。
+      const 其の外 = 版.filter((e) => e.確かさ !== "exact-range" && e.確かさ !== "single-day");
+      const 其の外で日が入る = 其の外.filter((e) => String(e.始まる日 ?? "").trim()).length;
+      return (
+        "    - event_date_precision: string：会期の日付の確かさ。" +
+        `'exact-range'（開始と終了が確定・${千の桁(數("exact-range"))} 版）` +
+        `・'single-day'（1 日・${千の桁(數("single-day"))} 版）` +
+        `・'month-only'（月までしか分からない・${千の桁(數("month-only"))} 版）` +
+        `・'split-dates'（飛び石・${千の桁(數("split-dates"))} 版）` +
+        `・'unverified'（未確認・${千の桁(數("unverified"))} 版）` +
+        `・'not-announced'（未発表・${千の桁(數("not-announced"))} 版）。` +
+        `'exact-range' と 'single-day' 以外の ${千の桁(其の外.length)} 版のうち、` +
+        `${千の桁(其の外で日が入る)} 版には event_start が記録されている。件数は出力データから集計する。`
+      );
+    })(),
+    "    - call_identity: object：{seriesId, editionId, callId, parentEventId}。呼びかけ（call）の同一性。",
+    "    - legacy_ids: string[]：以前の版の識別子（改名・統合の前に使っていた物）。",
+    /* `event_segments` は README が「機械処理ではこれを参照する」と名指している欄なのに、
+     * この要約の版の箇条書きに無かった（2026-10-16 実測: 版 2,606 のうち 3 版が持つ。
+     * CSV の列の節には前から書いてあった）。`event_start`/`event_end` だけを見ると、
+     * 離れた開催日や週次セミナーを連続開催と読み違える。 */
+    "    - event_segments: array：離れた開催日・週次セミナーの各回を {start, end, label} で並べた物（実測 2026-10-16: 版 2,606 のうち 3 版）。連続開催では付かない – `event_start`/`event_end` だけでは連続開催を意味しないので、各回が要る時はこちらを見る。",
+    "    - event_review: object：会期の見直しの記録（上流の原文の日付文言 source_date_text・確かめた日 reviewed_on・覚え書き note など。正本は src/model.ts の EventReview）。",
     "    - estimated: boolean：true は過去実績からの推定。実データではない。",
-    "    - estimate: object|null：推定版の点推定・日付窓・根拠版・信頼度。確定版には無い。",
+    "    - estimate: object|null：推定版の作り方。{method, point_estimate, window_start, window_end, source_editions, confidence}。確定版にはない（実測 2026-10-16: 48 版）。`method` は 'median-interval'（直近の版の間隔の中央値）のみ、`confidence` は 'low'|'medium'（実測: medium 39・low 9）。`source_editions` は根拠にした版の年。",
     "      window_start / window_end は表示用の日付範囲であり、公式締切ではない。",
     "    - source: string：この開催回を提供した出典名。",
-    "    - identity: object：明示的な edition ID と公式 URL。存在時のみ。",
+    "    - identity: object：明示的な同一性。{editionId, officialUrls, sourceIds}。存在時のみ（sourceIds を持つ版は実測 2026-10-16 で 2,606 のうち 2,554。`sourceIds` は会議と同じく出典名から ID への写像）。",
     "    - deadlines: array：各要素は次の形である。",
     "      - kind: string：'abstract'|'paper'|'supplementary'|'notification'" +
       "|'camera_ready'|'rebuttal_start'|'rebuttal_end'|'review_release'" +
@@ -2776,11 +4531,59 @@ export function toLlmsTxt(config: Record<string, unknown> | null | undefined): s
     "      - exact は utc: 'YYYY-MM-DDTHH:MM:SSZ'、aoe、tz_raw を持つ。",
     "      - date-only は local_date: 'YYYY-MM-DD' と earliest_utc/latest_utc を持ち、utc/aoe/tz_raw は null。",
     "      - round: integer：1 起点。複数投稿ラウンドを持つ会議がある。",
+    "      - track: string：投稿のトラック（例 'research track'）。空の行が多い。",
+    "      - ics_uid: string：この締切が配付のカレンダー（`deadlines.ics`）で使う UID。配付に載る締切だけが持つ（実測 2026-10-17: 締切 4,990 のうち 938 = 配付の予定数と同じ）。画面の書き出しもこれをそのまま使うので、同じ締切が購読と書き出しで同じ予定になる（画面は SHA-1 を持たず、自分では同じ UID を組めない）。",
+    "      - verification: object：公式 URL を確かめた記録。{official_url, last_attempt_at, last_verified_at, next_check_at, content_hash, status, source_class, source_name, provider_identity, label_signature, selector_or_field, adapter, promotion_ref}。**画面の札と「確認元」はここから出る** – `status` は 'verified'(35)|'manual-required'(4,435)|'parser-failed'(2)|'pending'(2)、`source_class` は 'official-cfp'(39)|'publisher'(3)|'aggregator'(4,097)|'unknown'(335)（実測 2026-10-16。'unknown' は確かめた元が分からない行で、値を推測しない）。**数は語の側に付ける** – 並びだけを書くと、語を並べ替えた日に数が別の語に付く。`provider_identity` は {provider, providerKey, strength} で、`provider` は 'easychair'|'openreview'|'hotcrp'|'github-pages'|'acm'|'ieee'|'dedicated-domain'|'unknown'、`strength` は 'explicit'|'provider-scoped'|'dedicated-domain'|'weak'。実測 2026-10-16: 締切 4,990 のうち 4,474 が持つ。",
+    "      - superseded_deadlines: array：上書きされた古い締切の記録。{value, precision, source, supersededBy, reason, status, supersededAt, evidenceRef}。`reason` は 'manual-resolution'(36)|'official-extension'(2)、`status` は 'superseded'（実測 2026-10-16。締切 4,990 のうち 38 行）。",
+    "      - promotion_ref: object：{batch, resolution}。公開した締切から、それを載せた判断（昇格）への参照。",
+    `    - 項目ごとに記録の有無が異なります（ビルド時の実測: ${data ? 稀有な欄の實測(data) : "データがないため集計できません"}）。`,
     "      - comment: string|null：上流の注記。",
     "      - status: 'confirmed'|'estimated'：開催回の確定/推定状態。",
     "      - selection_rule: string：採用値を選んだ決定規則。",
-    "      - evidence: array：source_name/source_url/observed_at/original_value/confidence。",
-    "      - conflicts: array：採用しなかった候補値とその evidence（存在時のみ）。",
+    "      - evidence: array：その値をどこで見たかの記録。**二つの書き方が混ざる** – 旧来の snake_case（source_name・source_url・observed_at・original_value・confidence）と、欄ごとの来歴の camelCase（sourceClass・sourceUrl・sourceRevision・retrievedAt・verifiedAt・contentHash・evidenceRef・rawExcerpt・verifiedFields・adapter・structured・selectorOrField）。実測 2026-10-16: `confidence` は 'official'(21)|'aggregator'(5,023)|'estimated'(74)、`sourceClass` が確かめた元の種類（'official-cfp'(41)|'publisher'(3)|'curated-manual'(787)|'aggregator'(4,213)|'assumption'(74)）、`verifiedFields` が確かめた欄（'date'(46)|'time'(10)|'timezone'(10)|'kind'(40)|'round'(27)|'track'(6)）、`contentHash` と `verifiedAt` が揃って初めてその行を「公式で確認した」と数える。実測 2026-10-16: 締切 4,990 の全行が持ち、件数は 5,118（sourceClass 5,118・verifiedFields 46・contentHash 43・verifiedAt 45）。",
+    "      - conflicts: array：採用しなかった候補値。{source, label, at_utc, local_date, precision, original_value, evidence}（存在時のみ。実測 2026-10-16: 51 行。`precision` は 'exact'|'date-only'、`local_date` は date-only の時だけ）。",
+    "",
+    /* `data.csv` は README でも入口に挙がる成果物なのに、列の辞書がどの公開文書にも無かった
+     * （2026-08-09 生成のビルドで実測: 25 本の列名のうち 7 本 ― `rank_ccf`・`rank_core`・
+     * `edition_id`・`deadline_utc`・`deadline_aoe`・`estimate_window_start`・
+     * `estimate_window_end` ― は `llms.txt` のどこにも出てこなかった）。Excel で開いた人は
+     * 空欄と 'N' の違いを確かめようが無い。列名はビルドの列定義から書き出す（書き写すと、
+     * 列を足したときに辞書だけが残る）。 */
+    /* 品書（`catalog.json`）の形。画面が最初に読むファイルで、`index.html` に埋め込む JSON も
+     * 同じ物である。data.json の節だけでは、AI が品書を読むときに欄の意味を辿れない
+     * （2026-10-17 実測: 品書だけが持つ欄は会議 6・版 1・締切 1。うち `ics_uid` は
+     * 誤って data.json の節に書いてあった）。 */
+    "## catalog.json の形",
+    "",
+    "画面が最初に読む窓（現在・近日）のカタログ。`index.html` に埋め込む JSON はこれと同じである。",
+    "会議・版・締切の欄は `data.json` と同じで、次を足す。",
+    "",
+    "- トップレベルは `data.json` の `generated_at`・`site`・`sources`・`categories`・`legacy_key_redirects`・`conferences` に加えて次を持つ。",
+    "  - window: object：窓の決め方。{lookback_days, upcoming_days}（既定 30・180）。",
+    "  - history_ref: string：全履歴のファイル名（`data.json`）。画面は「収録の全体を読み込む」で一度だけ取る。",
+    "  - history_bytes: number：`history_ref` のバイト数（画面は押す前に容量を数字で示す）。",
+    "  - recommendation_ref: string：推薦索引のファイル名（`recommendation-index.json`）。",
+    "  - deadline_summary: array：件数を数えるための軽い写し。各要素は {t, tLast, tShown, dateOnly}（最早・最遅の UTC ミリ秒、表示に使う暦日のミリ秒、時刻未確認か）。",
+    "  - reranker: object：投稿先推薦の再学習の重み（版・特徴・学習の条件）。",
+    "  - calendar: object：配付カレンダーの実測。{event_count, deadline_count, first_day, last_day}。",
+    "  - source_updates: array：上流ごとの取得の状態。{name, status, fetched_at}。",
+    "  - conferences: array：この窓に入る会議。",
+    "    - 会議は `data.json` と同じ欄に加えて `recommendation_axes`（{venue_evidence, deadline_trust, research_fit}）と `record_deadline_*`（一覧に出ない日程の申告: `record_deadline_last`・`record_deadline_next`・`record_deadline_next_kind`・`record_deadline_count`・`record_estimated_next`）を持つ。",
+    "    - 版は `data.json` と同じ欄に加えて `schedule_deadlines`（窓の外の日程。一覧には出さず、行の詳細だけが出す）を持つ。",
+    "    - 締切の欄は `data.json` と同じ（`ics_uid` もそのまま載る）。",
+    "",
+    "## data.csv の列",
+    "",
+    "1 行 1 締切の平坦な表で、`data.json` の `conferences[].editions[].deadlines[]` を展開した物である。",
+    "列の名は、多くが `data.json` の鍵と同じ名である（`deadline_*` は `deadlines[]`、`event_*` は `editions[]`、`rank_*` は `conferences[].rank`、`estimate_window_*` は `editions[].estimate`、`verification_*` は `deadlines[].verification` の下）。この規則にない列は、その列の説明を見る（`kind_ja`・`date_field`・`extended` など – 実測 2026-10-08: 31 列のうち 26 列がこの規則で辿れる）。",
+    "推定版と過去の締切もそのまま含まれる。画面や `upcoming.md` と違い、**値は機械可読のまま**にしてある。",
+    "**このサイトが付ける印としての日本語は書かない**（「未確認」「該当なし」など。空欄は「その値が分かっていない」を意味する – 実測 2026-10-06: その種の印が値として出ている列は一つもない）。ただし**上流の原文に日本語が在ればその侭出す** – 国内の催し物では `title` `full_name` `label` `place` `date_text` `date_field` `event_segments` の七列に日本語が入る（「値は機械可読のまま」と言うのは**このサイトが語を足さない**と言う意味である）。",
+    "**上流が英語の印を書いている事がある**（実測 2026-10-06: `date_text` 65 行・`place` 10 行が `TBD`）。これはこちらが付けた印では無く**上流の原文**なので、その侭出す（空欄と `TBD` は意味が違う – 空欄はその値が分からない、`TBD` は上流が「未定」と書いている）。",
+    "ただ 1 つの例外が `kind_ja` で、種別だけは英語のキー（`paper` など）だけでは",
+    "絞り込み・並べ替えに困る人がいるため、画面と同じ日本語を併記している（語の正本も画面と同じ表）。",
+    `列はこの順で ${String(CSV_COLUMNS.length)} 本。`,
+    "",
+    ...CSV_COLUMNS.map((name) => `- ${name}：${CSV_COLUMN_NOTES_JA[name] ?? ""}`),
     "",
     "## 利用上の注意",
     "",
@@ -2788,7 +4591,7 @@ export function toLlmsTxt(config: Record<string, unknown> | null | undefined): s
     "- date-only の UTC 境界は状態判定用であり、公式時刻や時刻単位の残り時間として扱わない。",
     "- estimated=true の版は推定窓であり、公式サイトで締切を確認してから利用する。",
     "- data.csv は 1 行 1 締切のフラット表で、deadline_precision と deadline_local_date を持つ。",
-    "  comment・tags・thcpl ランクは列に無い。全情報が要るときは data.json を使う。",
+    "  comment・tags・thcpl ランクは列にない。全情報が要るときは data.json を使う。",
     "- 権威は上流と各会議の公式サイトである。重要な判断の前に link 先を確認すること。",
     "",
     "## 出典とライセンス",
@@ -2850,6 +4653,8 @@ export async function buildAll(
   now: Date | null | undefined,
   opts: {
     noEmbeddings?: boolean;
+    venuePapers?: Record<string, string[]>;
+    reranker?: Record<string, unknown> | null;
     localEmbeddingsOnly?: boolean;
     health?: HealthReportOptions;
     publishProvenance?: PublishProvenance;
@@ -2865,13 +4670,15 @@ export async function buildAll(
   const nowUtc = new Date(safeNow.getTime());
   // DTSTAMP is derived from --now (floored to the day).
   const site = (safeConfig.site as Record<string, unknown>) ?? {};
-  // config.yaml の site.upcoming_days（既定 180）: upcoming.md の窓を決める。
-  // 設定値を読まないと 180 に固定されるため、site.upcoming_days を反映する。
-  const rawUpcomingDays = Number(site.upcoming_days ?? 180);
-  const upcomingDays =
-    Number.isFinite(rawUpcomingDays) && Number.isInteger(rawUpcomingDays) && rawUpcomingDays > 0
-      ? rawUpcomingDays
-      : 180;
+  const { requested: upcomingDays, days: upcomingDays使ふ } = upcomingWindowDays(
+    site.upcoming_days,
+  );
+  if (upcomingDays使ふ < upcomingDays) {
+    process.stderr.write(
+      `warning: site.upcoming_days=${upcomingDays} は上限 ${UPCOMING_DAYS_CAP} を超えたので ${UPCOMING_DAYS_CAP} 日として扱います` +
+        "（収録の果てより先は行がないので、大きな日数は飾りに成ります）\n",
+    );
+  }
 
   const records = recordsOf(safeConfs);
   records.sort((a, b) => {
@@ -2885,13 +4692,39 @@ export async function buildAll(
     written.push(name);
   };
 
-  const data = toJson(safeConfs, safeConfig, nowUtc);
+  const data = toJson(safeConfs, safeConfig, nowUtc, opts.venuePapers);
+  /* 記録にも同じ確認の状態を渡す（配付の ICS・`upcoming.md`・`upcoming.html` が、畫面や
+   * CSV と同じ事を言ふように）。カレンダーの行を組む**前**に埋める。 */
+  fillVerificationFromData(records, verificationBySlot(data));
+  /* カレンダーの行は 1 回だけ作る – 件数と期間の申告（`catalog.json` 経由で画面に出す）は、
+   * 同じ行から導かないと本文とズレる。UID も同じ一巡で組む。 */
+  const { rows: icsRows, uids: icsUids } = icsRowsWithUids(records, nowUtc);
+  /* 締切ごとの UID は `data.json` にも載せる（畫面が全履歴を讀み込んだ後に書き出しても、
+   * 購読と同じ予定になるように）。品書はこの data から作るので、そのまま受け取る。 */
+  attachIcsUidsToConferences((data as { conferences?: unknown }).conferences, icsUids);
+  const icsMeta = icsCalendarMeta(icsRows);
+  // 品書は 1 回だけ組む（`catalog.json` と、画面に差し込む物と、索引の申告が
+  // それぞれ違う品書を指さないため。第 289 回と同じ轍を踏まない）。
+  const catalog = toCatalog(data, nowUtc, upcomingDays使ふ, icsMeta, opts.reranker);
+  // A new page build does not imply that upstream deadlines were checked again.
+  catalog.source_updates = Object.values(opts.health?.sourceMetadata ?? {})
+    .filter((source) => source.source !== "local")
+    .map((source) => ({
+      name: source.source,
+      status: source.status,
+      fetched_at: source.fetchedAt,
+    }));
   const jsonText = JSON.stringify(data, null, 2);
   write("data.json", `${jsonText}\n`);
-  write("catalog.json", `${JSON.stringify(toCatalog(data, nowUtc, upcomingDays), null, 2)}\n`);
+
+  catalog.history_bytes = Buffer.byteLength(`${jsonText}\n`, "utf8");
+  write("catalog.json", `${JSON.stringify(catalog, null, 2)}\n`);
   const publishProvenance =
     opts.publishProvenance ?? collectPublishProvenance(ROOT, undefined, { now: nowUtc });
-  const contentId = publishContentId(publishProvenance, embeddingProfileHash(data));
+  const contentId = publishContentId(
+    publishProvenance,
+    embeddingProfileHash(data, opts.venuePapers),
+  );
   const buildId = publishBuildId(nowUtc, contentId);
   write(
     "recommendation-index.json",
@@ -2901,6 +4734,8 @@ export async function buildAll(
           data,
           nowUtc,
           opts.health?.recommendationSourceStatus ?? opts.health?.sourceStatus,
+          opts.venuePapers,
+          opts.reranker,
         ),
         content_id: contentId,
         build_id: buildId,
@@ -2909,8 +4744,13 @@ export async function buildAll(
       2,
     )}\n`,
   );
-  write("data.csv", toCsv(records));
-  write("upcoming.md", toUpcomingMd(records, nowUtc, upcomingDays));
+  /* `data.json` の状態を CSV にも載せる（表は `data.json` を書いた後の `data` から作る）。 */
+  write("data.csv", toCsv(records, verificationBySlot(data)));
+  /* 「直近の締切と会期」の表はここが 1 本。ブラウザで読める版（下の `upcoming.html`）は
+   * この文字列から作る（同じ表を二重に作らないため）。 */
+  const upcomingMd = toUpcomingMd(records, nowUtc, upcomingDays使ふ);
+  write("upcoming.md", upcomingMd);
+  write("deadlines.ics", icsCalendarText(icsRows, nowUtc));
 
   // セマンティックレコメンド用の埋め込み（transformers.js が無ければスキップして語彙のみで動作）
   if (!opts.noEmbeddings) {
@@ -2921,7 +4761,7 @@ export async function buildAll(
         const existing = JSON.parse(readFileSync(embPath, "utf8")) as {
           embeddings?: Record<string, unknown>;
         };
-        needEmb = embeddingsStale(existing, data);
+        needEmb = embeddingsStale(existing, data, opts.venuePapers);
       } catch {
         needEmb = true;
       }
@@ -2931,6 +4771,7 @@ export async function buildAll(
           join(outdir, "data.json"),
           embPath,
           opts.localEmbeddingsOnly === true,
+          opts.venuePapers,
         );
       }
       written.push("embeddings.json");
@@ -2942,7 +4783,20 @@ export async function buildAll(
     }
   }
 
-  write("llms.txt", toLlmsTxt(safeConfig));
+  write(
+    "llms.txt",
+    toLlmsTxt(
+      safeConfig,
+      {
+        all: deadlineSpan(data),
+        catalog: deadlineSpan(catalog),
+        horizonDays: upcomingDays使ふ,
+        calendar: icsMeta,
+      },
+      data as Record<string, unknown>,
+    ),
+  );
+  write("icon.svg", SITE_ICON_SVG);
   write(".nojekyll", "");
 
   const template = String(safeConfig.template ?? "site/template.html");
@@ -2957,18 +4811,55 @@ export async function buildAll(
     if (!templateText.includes(TEMPLATE_MARKER)) {
       throw new Error(`required site template marker missing: ${templatePath}`);
     }
+    if (!templateText.includes(JSONLD_MARKER)) {
+      throw new Error(`required site template marker missing: ${JSONLD_MARKER}`);
+    }
+    // 画面と同じ見た目にするため、`index.html` と同じ様子の塊を取り出して使う
+    // （データを書き込む前の本文から読む – JSON をまたぐ正規表現にしない）。
+    const siteStyleBlock = /<style>[\s\S]*?<\/style>/.exec(templateText)?.[0] ?? "";
+    // サイトの所在地は 1 か所で決める（`upcoming.html` の canonical と `404.html` の口が同じ値を向く）。
+    const siteBaseUrl = String(
+      site.base_url ?? `https://${String(site.domain ?? "kamiyobi")}`,
+    ).replace(/\/+$/, "");
+    templateText = templateText.replace(TEMPLATE_MARKER, embedJson(jsonCompact(catalog)));
+    /* 機械可読の自己紹介。題と説明は雛形の `<title>`・`<meta name="description">` から取る
+     * （同じ文を二か所に書くと、片方だけ直した日に食い違う）。 */
     templateText = templateText.replace(
-      TEMPLATE_MARKER,
-      embedJson(jsonCompact(toCatalog(data, nowUtc, upcomingDays))),
+      JSONLD_MARKER,
+      toDatasetJsonLd({
+        baseUrl: siteBaseUrl,
+        title: /<title>([\s\S]*?)<\/title>/.exec(templateText)?.[1]?.trim() ?? "kamiyobi",
+        description:
+          /<meta name="description" content="([^"]*)"/.exec(templateText)?.[1]?.trim() ?? "",
+        generatedAt: String(data.generated_at ?? ""),
+        span: deadlineSpan(data),
+        /* 帰属とライセンスの行き先は `site.repo`（`ten82e/kamiyobi` の形）。 */
+        repoUrl: /^https?:\/\//.test(String(site.repo ?? ""))
+          ? String(site.repo)
+          : site.repo
+            ? `https://github.com/${String(site.repo)}`
+            : siteBaseUrl,
+        keywords: ["締切", "国際会議", "国内研究会", "ワークショップ", "ジャーナル特集号", "学会"],
+      }),
     );
     write("index.html", templateText);
     for (const [name, source] of Object.entries(compileSiteRuntime())) write(name, source);
+    // `upcoming.md` は Markdown のまま渡すとブラウザが表に整形してくれないので、
+    // 同じ内容の読みやすい版を隣に置く。画面からの導線はこっちに向ける。
+    write("upcoming.html", toUpcomingHtml(upcomingMd, siteStyleBlock, siteBaseUrl));
+    // 無い場所を開いた人に日本語で口を渡す。画面の見た目のままにする。
+    write("404.html", toNotFoundHtml(siteStyleBlock, siteBaseUrl));
+    /* 機械が最初に読む 1 枚と、人が開く口の一覧。索引（`llms.txt`）への道を
+     * ここにも書く – クローラは頁より先に robots.txt を読む。 */
+    write("robots.txt", toRobotsTxt(siteBaseUrl));
+    write("sitemap.xml", toSitemapXml(siteBaseUrl, nowUtc.toISOString().slice(0, 10)));
   } else {
     throw new Error(`required site template missing: ${templatePath}`);
   }
 
   const report = healthReport(data, nowUtc, {
     ...opts.health,
+    profileHash: opts.health?.profileHash ?? embeddingProfileHash(data, opts.venuePapers),
     parseWarnings: opts.health?.parseWarnings ?? warningCounts(),
     warningCodes:
       opts.health?.warningCodes ??
@@ -2978,13 +4869,18 @@ export async function buildAll(
     outputFiles: outputFileManifest(outdir, written),
   });
   write("health.json", `${JSON.stringify(report, null, 2)}\n`);
-  write("health.md", healthMarkdown(report));
+  // この表に載せられなかった物（後から書き出す物）を、md の側に名前で宣言させる。
+  const omittedOutputs = [...new Set([...written, "health.md", "publish.json"])].filter(
+    (name) => !Object.hasOwn(report.output_files, name),
+  );
+  write("health.md", healthMarkdown(report, omittedOutputs));
   writePublishManifest(
     outdir,
     written,
     nowUtc,
     written.includes("embeddings.json") ? "ready" : "lexical-only",
     publishProvenance,
+    opts.venuePapers,
   );
   if (!written.includes("publish.json")) written.push("publish.json");
 

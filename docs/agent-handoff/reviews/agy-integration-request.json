@@ -1,0 +1,19 @@
+{
+  "recipient": "Existing Google Antigravity CLI account; service observed at daily-cloudcode-pa.googleapis.com",
+  "cli_version": "1.2.16",
+  "existing_project": "default-cli-project (CLI Project; projectResources empty)",
+  "payload": "docs/agent-handoff/reviews/agy-integration-payload.json",
+  "payload_sha256": "96a8a3b55f25279ce349fe9945200e66684b73bed0e8472e19338fa0b77b423c",
+  "payload_bytes": 42441,
+  "mode": "plan",
+  "sandbox": true,
+  "model_override": false,
+  "billing_or_auth_configuration_changed": false,
+  "tool_use_allowed_by_prompt": false,
+  "new_project": false,
+  "sent_at": "2026-10-03T17:52:16.104199+00:00",
+  "process_exit_code": 0,
+  "existing_settings_unchanged": true,
+  "original_sent_payload_path": "docs/agent-handoff/reviews/agy-integration-payload.md",
+  "payload_representation": "Exact text stored as JSON.payload to preserve whitespace in included unified diffs without whitespace-check exemptions"
+}

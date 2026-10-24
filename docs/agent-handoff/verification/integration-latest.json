@@ -1,0 +1,262 @@
+{
+  "recorded_at": "2026-10-03T19:56:23.277470+00:00",
+  "branch": "fix/site-ja-usability",
+  "ui_revision": "f9fc4956df70ab8183c1dc45a7bcbf4d73f046ef",
+  "review_fix_code_revision": "393b3c6c478c22ffb242c4ae2e303d1e43012059",
+  "shared_base": "c06b9fffc82ba91037d9ff374451eaff88c13f6e",
+  "candidate_revision": "0717f506192e05517bb57af9ae260c702f90078c",
+  "candidate_requires_main": "b35010f7a11fb217417b2fdf0d675ea1af9a555b",
+  "actual_updater_sources_applied": false,
+  "new_branch_worktree_clone": false,
+  "published": false,
+  "archive": "work/agent-verification/integration/tree",
+  "reproduction": [
+    "python3 scripts/agent-handoff/prepare-integration.py (fresh archive only)",
+    "node scripts/agent-handoff/resolve-integration.mjs",
+    "python3 scripts/agent-handoff/apply-compatibility.py",
+    "python3 scripts/agent-handoff/verify-integration.py",
+    "python3 scripts/agent-handoff/browser-integration.py"
+  ],
+  "conflict_files": [
+    "SPEC.md",
+    "config.yaml",
+    "data/overrides.yaml",
+    "src/build.ts",
+    "src/merge.ts",
+    "tests/event_schedule.test.ts",
+    "tests/local_sources.test.ts",
+    "tests/promotion.test.ts",
+    "tests/update_data_canary.test.ts"
+  ],
+  "preparation": "work/agent-verification/integration/preparation.json",
+  "resolutions": "work/agent-verification/integration/resolutions.json",
+  "checks": [
+    {
+      "check": "typecheck",
+      "exit_code": 0,
+      "seconds": 0.59
+    },
+    {
+      "check": "lint",
+      "exit_code": 0,
+      "seconds": 0.47
+    },
+    {
+      "check": "fixed-build",
+      "exit_code": 0,
+      "seconds": 1.21
+    },
+    {
+      "check": "tests",
+      "exit_code": 0,
+      "seconds": 322.07
+    },
+    {
+      "check": "fixed-validation",
+      "exit_code": 0,
+      "seconds": 0.46
+    },
+    {
+      "check": "fixed-health",
+      "exit_code": 0,
+      "seconds": 0.35
+    },
+    {
+      "check": "semantic-recommendation",
+      "exit_code": 0,
+      "seconds": 0.22
+    },
+    {
+      "check": "recommendation-data-delta",
+      "exit_code": 0,
+      "seconds": 1.13
+    },
+    {
+      "check": "real-paper-recommendation",
+      "exit_code": 0,
+      "seconds": 54.56
+    },
+    {
+      "check": "build",
+      "exit_code": 0,
+      "seconds": 3.62
+    },
+    {
+      "check": "data-validation",
+      "exit_code": 0,
+      "seconds": 0.45
+    },
+    {
+      "check": "public-validation",
+      "exit_code": 0,
+      "seconds": 0.46
+    },
+    {
+      "check": "health-gate",
+      "exit_code": 0,
+      "seconds": 0.34
+    }
+  ],
+  "tests": {
+    "total": 5337,
+    "passed": 5337,
+    "failed": 0,
+    "files_passed": 353,
+    "files_failed": 0,
+    "log": "work/agent-verification/integration/tests.log",
+    "log_sha256": "23674d8cb6434e612424aa08125ebc96f336b771c388f5c03754ee903fa91178",
+    "max_workers": 4,
+    "test_timeout_relaxed": false
+  },
+  "browser_checks": [
+    {
+      "check": "compsac",
+      "mode": "reduce",
+      "exit_code": 0
+    },
+    {
+      "check": "identity",
+      "mode": "reduce",
+      "exit_code": 0
+    },
+    {
+      "check": "researcher",
+      "mode": "reduce",
+      "exit_code": 0
+    },
+    {
+      "check": "updater",
+      "mode": "reduce",
+      "exit_code": 0
+    },
+    {
+      "check": "compsac",
+      "mode": "no-preference",
+      "exit_code": 0
+    },
+    {
+      "check": "identity",
+      "mode": "no-preference",
+      "exit_code": 0
+    },
+    {
+      "check": "researcher",
+      "mode": "no-preference",
+      "exit_code": 0
+    },
+    {
+      "check": "updater",
+      "mode": "no-preference",
+      "exit_code": 0
+    }
+  ],
+  "old_legacy_links": {
+    "examined": 14,
+    "opened": 9,
+    "ambiguous_choices": 2,
+    "corrected_date_explicit_choice": 1,
+    "missing_with_notice": 2,
+    "report": "work/agent-verification/integration/browser/updater-reduce.json",
+    "scope": "Actual pre-integration UI timestamp keys. Changed EvoMUSART paper timestamp requires explicit selection of current date-only deadline; its canonical URL survives reload. No automatic transfer to a different date."
+  },
+  "historical_preservation": {
+    "historical_through_year": 2025,
+    "original_editions": 1673,
+    "unchanged_editions": 1673,
+    "fields": [
+      "id",
+      "year",
+      "link",
+      "date_text",
+      "event_start",
+      "event_end",
+      "event_date_precision"
+    ],
+    "missing_or_changed": []
+  },
+  "identity_audit": [
+    {
+      "file": "data.json",
+      "conferences": 696,
+      "rows": 4964,
+      "shown": 4963,
+      "only_reviewed_pair_consolidated": true,
+      "canonical_share_keys_unique": true,
+      "shared_key_collision_groups": 38
+    },
+    {
+      "file": "catalog.json",
+      "conferences": 696,
+      "rows": 716,
+      "shown": 715,
+      "only_reviewed_pair_consolidated": true,
+      "canonical_share_keys_unique": true,
+      "shared_key_collision_groups": 4
+    }
+  ],
+  "accepted_integration_adjustments": [
+    "Keep reviewed EvoMUSART abstract; paper correction uses merge-slots plus removal limited to observed values, not an unconditional withdrawal.",
+    "Keep historical query-count fixture DASFAA instant; production still uses the official correction.",
+    "Local source precision input count 192 to 194 reflects incoming official EvoMUSART paper and ECIR notification overrides."
+  ],
+  "remaining_blockers": [],
+  "agy_review": "docs/agent-handoff/reviews/agy-integration-disposition.md",
+  "screenshots": [
+    "work/agent-verification/integration/browser/screenshots/integration-evomusart-mobile.png",
+    "work/agent-verification/integration/browser/screenshots/integration-corrected-link-mobile.png",
+    "work/agent-verification/integration/browser/screenshots/shared-link-choices-mobile.png",
+    "work/agent-verification/integration/browser/screenshots/compsac-publication-mobile.png"
+  ],
+  "prepared_ui_revision": "beaddd7c2d1d77702fb536e34ce05b5c44db535f",
+  "source_reproduction": {
+    "ui_revision": "f9fc4956df70ab8183c1dc45a7bcbf4d73f046ef",
+    "checked": 518,
+    "differing_files": [],
+    "scope": "All tracked UI and incoming production src/site/tests/data/config/SPEC inputs; protected inputs independently SHA checked",
+    "report": "work/agent-verification/reproduction-final/source-comparison.json",
+    "note": "Initial archive was prepared before later local fixes; all 518 production/test/data/config/SPEC inputs now equal the newly committed UI archive plus original updater candidate and reviewed overlay."
+  },
+  "checks_sha256": "6adceb88157b3410a91e9b43dda28fc839c883f4d25a612465a406b0b2f917b3",
+  "full_real_paper_quality": {
+    "passed": true,
+    "coverage": "full",
+    "queries": {
+      "dev": 80,
+      "heldout": 80,
+      "negative": 41
+    },
+    "fused_quality": {
+      "dev": {
+        "mrr": 0.306722,
+        "recall_at_5": 0.4375
+      },
+      "heldout": {
+        "mrr": 0.403111,
+        "recall_at_5": 0.5375
+      }
+    },
+    "log": "work/agent-verification/integration/full-real-paper-recommendation.log",
+    "log_sha256": "cb8340a22aa78a36e6ed6be3c4ee27ab16eeb819701bdbb469266d441b28e281",
+    "final_artifacts_sha256": {
+      "site/recommender.ts": "bc5c73bbed9e09c36df21906aec7e7582da3e97f328051b2d0d88c48298980d6",
+      "src/bench-recommender.ts": "2b98cba1ec53c6ad2e1a1e20f12370e4ec3db34de92bf9635a1e5b5fd69c6809",
+      "data/recommender-reranker.json": "a7c771c5ac6740def2eca58f8a1251d189a6bfa31535fc4baa62e72ccaceacc6",
+      "data/benchmarks/real-paper-features.jsonl": "be70f5648bece9a8ff3cb1c5edd1d9015ced0b16f75f363754e5a471a017a12d",
+      "data/benchmarks/real-paper-feature-baseline.json": "a9dfcff7c8f46cbbf3437c94e66021cf661751111251a2461e2a0062536cf0d6"
+    }
+  },
+  "compatibility_manifest": "docs/agent-handoff/candidates/updater-compatibility-manifest.json",
+  "compatibility_sha256": "642a823b745fbfaaa1ee06fb465c6a6caeb4a8677bf8aacb9310a1f8f5f2dedd",
+  "frozen_baseline_sha256_unchanged": "a9dfcff7c8f46cbbf3437c94e66021cf661751111251a2461e2a0062536cf0d6",
+  "initial_blockers_report": "docs/agent-handoff/verification/integration-initial-blockers.json",
+  "resolved_causes": [
+    "Committed Japanese segmentation/category/acronym changes in ca305a3 postdate the frozen lexical features; regenerate on immutable input using existing semantic values and dev-only v3 training. All 201 non-candidate fields and 3 manifests unchanged; full and required quality floors pass.",
+    "Isolate original CVM/EvoMUSART overrides and venue identity in query-count fixture; production official corrections and expected counts remain unchanged.",
+    "Preserve published EvoMUSART canonical key with explicit former UI alias in merge, compact catalog and URL restoration. Changed old paper instant offers current date-only choice with an explicit mismatch notice.",
+    "Avoid duplicate pool-depth diagnostics inside immutable baseline; outer run still measures all depths. Bound CPU concurrency to 4 workers; original 60-second timeout and every test remain unchanged."
+  ],
+  "limitations": [
+    "Updater remains applied only in an ignored Git archive; source branch config/features/model and original candidate patch are unchanged.",
+    "No push/merge/deploy or PR955 retry. Remote/public state must be rechecked before future authorized publication."
+  ]
+}

@@ -1,0 +1,144 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+import { describe, expect, it } from "vitest";
+import Recommender from "../site/recommender.ts";
+import { builtSite } from "./built_site.ts";
+
+const 基準 = Date.parse("2026-08-09T00:00:00Z");
+
+function 目録(): ReturnType<typeof Recommender.candidateRows> {
+  return Recommender.candidateRows(
+    JSON.parse(readFileSync(join(builtSite(), "catalog.json"), "utf8")),
+  );
+}
+
+function 行列表(語: string): string[] {
+  const マッチ = Recommender.searchMatcher(語, 基準);
+  return 目録()
+    .filter((行) => マッチ(行.hay) === true)
+    .map((行) => 行.hay);
+}
+
+function 対称差(a: string, b: string): number {
+  const x = new Set(行列表(a));
+  const y = new Set(行列表(b));
+  return [...x].filter((k) => !y.has(k)).length + [...y].filter((k) => !x.has(k)).length;
+}
+
+function 幅の案内(語: string): string {
+  const 組 = Recommender.dayRangePairs(語, 基準) as unknown as Array<[string, string]>;
+  return 組.map(([, 範囲]) => 範囲).join(" ") || "（なし）";
+}
+
+describe("旬を端に持つ幅", () => {
+  it("区切りの記号が違っても同じ行を出す（その方の旬はその方の幅）", () => {
+    for (const 形 of [
+      ["8月上旬から中旬", "8月上旬〜中旬", "8月上旬から中旬まで"],
+      ["来月上旬から中旬", "来月上旬〜中旬"],
+      ["8月中旬から下旬まで", "8月中旬から下旬", "8月中旬〜下旬"],
+    ] as Array<string[]>) {
+      const 頭 = 形[0];
+      for (const 語 of 形.slice(1)) {
+        expect(対称差(頭, 語), `『${語}』が『${頭}』と違う行を出している`).toBe(0);
+      }
+    }
+  });
+
+  it("その旬の日めくりに解ける（暦日に書き直した形と同じ行）", () => {
+    for (const [語, 暦] of [
+      ["8月上旬から中旬", "2026年8月1日から2026年8月20日"],
+      ["8月中旬から下旬まで", "2026年8月11日から2026年8月31日"],
+      ["8月中旬〜9月上旬", "2026年8月11日から2026年9月10日"],
+      ["8月10日から中旬", "2026年8月10日から2026年8月20日"],
+      ["中旬から8月20日", "2026年8月11日から2026年8月20日"],
+      /* 冠の無い旬（尾側の `中旬`）は頭側の月を継ぐ – 今月に直すと幅が逆向きになる。 */
+      ["来月上旬から中旬", "2026年9月1日から2026年9月20日"],
+      ["先月中旬から下旬", "2026年7月11日から2026年7月31日"],
+    ] as Array<[string, string]>) {
+      expect(対称差(語, 暦), `『${語}』が『${暦}』と違う行を出している`).toBe(0);
+      expect(行列表(語).length, `『${語}』が行を出さない`).toBeGreaterThan(0);
+    }
+  });
+
+  it("その方の旬だけで通る行を必ず含む（幅はその方の旬より狭くならない）", () => {
+    for (const [幅, 片側] of [
+      ["8月上旬から中旬", "8月上旬"],
+      ["8月上旬から中旬", "中旬"],
+      ["8月中旬から下旬まで", "下旬"],
+      /* 『来月上旬から中旬』と『中旬`』を一緒にしない – 冠の無い『中旬』は今月なので、
+       * 頭側が来月の幅はその行を含まない（含む筈だという期待が嘘だった – 第 374 回）。 */
+    ] as Array<[string, string]>) {
+      const 幅の行 = new Set(行列表(幅));
+      for (const 行 of 行列表(片側)) {
+        expect(幅の行.has(行), `『${幅}』が『${片側}』の行を落とした`).toBe(true);
+      }
+    }
+    /* その方の語を並べただけの形（幅ではなく両方の語を含む行）より広い。 */
+    expect(
+      行列表("8月上旬から中旬").length,
+      "『8月上旬から中旬』が『8月上旬 中旬』と同じ幅のない形の侭",
+    ).toBeGreaterThan(行列表("8月上旬 中旬").length);
+  });
+
+  it("件数欄に打たれた語と解決した暦日の範囲を書く（固定時刻 2026-08-09T00:00:00Z）", () => {
+    expect(幅の案内("8月上旬から中旬"), "旬の二つ幅の範囲が違う").toBe(
+      "2026年8月1日から2026年8月20日",
+    );
+    expect(幅の案内("8月中旬〜9月上旬"), "月をまたいだ旬の幅の範囲が違う").toBe(
+      "2026年8月11日から2026年9月10日",
+    );
+    expect(幅の案内("中旬から8月20日"), "旬と暦日を混ぜた幅の範囲が違う").toBe(
+      "2026年8月11日から2026年8月20日",
+    );
+    expect(幅の案内("来月上旬から中旬"), "冠のない旬が頭側の月を継がない").toBe(
+      "2026年9月1日から2026年9月20日",
+    );
+  });
+
+  it("解けない形は黙る – 長すぎる幅・逆向きの幅（締切の推測はしない）", () => {
+    for (const 語 of ["8月上旬から12月上旬", "9月上旬から8月20日"]) {
+      expect(幅の案内(語), `『${語}』を無理に解いた`).toBe("（なし）");
+      expect(行列表(語).length, `『${語}』が行を出した`).toBe(0);
+    }
+  });
+
+  it("「下旬以降」はその初日からの幅で絞る（第 328 回の「絞らない」決まりは第 475 回で改めた）", () => {
+    expect(行列表("下旬以降").length, "『下旬以降』がその初日からの幅で絞れて居ない").toBe(414);
+    const 案内 = (Recommender.relativeDayNotes as (q: string, n: number) => string[])(
+      "下旬以降",
+      基準,
+    ).join("");
+    expect(案内, "絞れる形に案内を残すと幅の名乗りが行とズレる").toBe("");
+  });
+
+  it("それ以外の語の形（その方の旬・その方の幅）は其侭通る", () => {
+    for (const 語 of ["中旬", "8月中旬", "来月中旬", "8月中旬まで", "下旬までに", "上旬〜中旬"]) {
+      expect(行列表(語).length, `『${語}』が通らなくなった`).toBeGreaterThan(0);
+    }
+    expect(対称差("8月10日から8月20日", "8/10〜8/20")).toBe(0);
+    expect(対称差("来月から再来月", "来月〜再来月")).toBe(0);
+    expect(対称差("明日から明後日", "明日〜明後日")).toBe(0);
+  });
+});
+
+describe("成果物", () => {
+  it("直し方が実測どおりの形で成果物に入っている", () => {
+    const rec = readFileSync(join(builtSite(), "recommender.js"), "utf8");
+    for (const [条目, 数] of [
+      /* その方の旬を読む所は二箇所 – その日の案内とこの幅の片側。 */
+      ["const 旬 = monthPartRangeJa(", 2],
+      ["旬.year, 旬.month, 旬.from", 1],
+      ["旬.year, 旬.month, 旬.to", 1],
+      /* 語を結ぶ規則の語の列挙は旬と冠の無い日を持つ。 */
+      /* 曜日を並べた幅も結ぶ。 */
+      ["(?:上旬|中旬|下旬)|[0-9]{1,2}日|[月火水木金土日]曜(?:日)?)", 1],
+
+      ["月のhint &&", 3],
+      ["月のhint[0]}年", 1],
+      /* その月の最終週も同じ継ぐ語に入れた。 */
+      ["/^(?:上旬|中旬|下旬|最終週|最後の週|第[0-9一二三四五六七八九十]{1,3}週)$/.test(柄)", 1],
+    ] as Array<[string, number]>) {
+      expect(rec.split(条目).length - 1, `成果物の中の語の数: ${条目.slice(0, 18)}`).toBe(数);
+    }
+  });
+});

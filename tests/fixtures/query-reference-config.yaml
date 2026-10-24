@@ -1,0 +1,5 @@
+# Historical query fixture uses the original a844570 series identity.
+# Production preserves the published evomusart-2027 key with the reviewed UI alias.
+remove_venue_identities: [evomusart-2027]
+venue_identities:
+  evomusart: {source_ids: {ccfddl: AI/evomusart, local: evomusart-2027}}

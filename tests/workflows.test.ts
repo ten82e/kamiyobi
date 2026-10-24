@@ -3,7 +3,13 @@ import { load as loadYaml } from "js-yaml";
 import { describe, expect, it } from "vitest";
 import { parseArgs } from "../src/cli.ts";
 
-type Step = { name?: string; run?: string; uses?: string; with?: Record<string, unknown> };
+type Step = {
+  name?: string;
+  run?: string;
+  uses?: string;
+  if?: string;
+  with?: Record<string, unknown>;
+};
 type Workflow = {
   jobs?: Record<
     string,
@@ -20,6 +26,7 @@ const PINS = [
   "actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128 # v5.0.0",
   "actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0",
   "actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2",
+  "actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5",
 ];
 
 function workflow(path: string): { text: string; value: Workflow } {
@@ -119,10 +126,14 @@ describe("workflow separation", () => {
     );
     const run = String(step(writer!, "Create or update guarded data PR").run);
     expect(run).toContain("automation/data-update");
-    expect(run).toContain("git push --force-with-lease");
+    expect(run).not.toContain("--force");
+    expect(run).toContain('git push origin "$branch"');
+    expect(run).toContain("refusing to replace them");
     expect(run).toContain("git rev-parse origin/main");
     expect(run).toContain("gh pr close");
-    expect(run).toContain("Validator category changes");
+    const render = "node scripts/update-data-pr-body.ts /tmp/kamiyobi-update";
+    expect(run).toContain(render);
+    expect(run.indexOf(render)).toBeLessThan(run.indexOf('git push origin "$branch"'));
     expect(run).toContain("gh pr edit");
     expect(run).toContain('git push origin --delete "$branch"');
     expect(String(step(fallback!, "Trigger CI for GITHUB_TOKEN update").run)).toContain(
@@ -156,6 +167,10 @@ describe("workflow separation", () => {
       "workflow_run.head_sha",
     );
     expect(String(step(build!, "Build merged site").run)).toContain("--offline");
+    expect(step(build!, "Upload Pages artifact").with).toEqual({
+      path: "public",
+      "include-hidden-files": true,
+    });
     expect(String(step(gate!, "Check trigger is current main").run)).toContain("TRIGGER_SHA");
     expect(String(build?.if)).toContain("needs.gate.outputs.current == 'true'");
     expect(String(step(build!, "Restore immutable recommendation bundle").run)).toContain(
@@ -185,7 +200,26 @@ describe("workflow separation", () => {
 });
 
 describe("CI contracts", () => {
-  it("keeps eight CI checks, reports dispatch statuses, and reserves the full benchmark for nightly", () => {
+  it("checks frozen feature integrity against immutable inputs in every real-paper workflow", () => {
+    for (const name of ["ci.yml", "nightly.yml", "recommendation-bundle.yml"]) {
+      const { value } = workflow(`../.github/workflows/${name}`);
+      const commands = Object.values(value.jobs ?? {})
+        .flatMap((job) => (job.steps ?? []).map((candidate) => String(candidate.run ?? "")))
+        .filter((run) => run.includes("--real-v2-features"));
+      expect(commands.length, name).toBeGreaterThan(0);
+      for (const run of commands) {
+        expect(run, name).toContain(
+          "--real-v2-feature-baseline data/benchmarks/real-paper-feature-baseline.json",
+        );
+      }
+    }
+    const manifest = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8"));
+    expect(manifest.scripts.bench).toContain(
+      "--real-v2-feature-baseline data/benchmarks/real-paper-feature-baseline.json",
+    );
+  });
+
+  it("keeps nine CI checks, reports dispatch statuses, and reserves the full benchmark for nightly", () => {
     const { text, value } = workflow("../.github/workflows/ci.yml");
     expect(text).toContain("workflow_dispatch:");
     expect(Object.keys(value.jobs ?? {}).sort()).toEqual([
@@ -193,6 +227,7 @@ describe("CI contracts", () => {
       "lint",
       "offline-build",
       "production-health-self-check",
+      "real-embedding-models",
       "recommendation-regression",
       "report-dispatch-statuses",
       "typecheck",
@@ -204,6 +239,7 @@ describe("CI contracts", () => {
       "typecheck",
       "lint",
       "unit-integration-tests",
+      "real-embedding-models",
       "offline-build",
       "validate-data",
       "health-transition",
@@ -220,6 +256,29 @@ describe("CI contracts", () => {
     expect(integrationBuild).toContain("--out public");
     expect(integrationBuild).toContain("--offline");
     expect(integrationBuild).toContain("--no-embeddings");
+    const models = value.jobs!["real-embedding-models"]!;
+    expect(models.if).toBeUndefined();
+    const modelRun = step(
+      models,
+      "Generate and verify English and Japanese embeddings with real models",
+    );
+    expect(modelRun.run).toBe("npm run test:models");
+    // 当面は必須にしない（2026-10-17 決定）: 手順の失敗でジョブを落とさず、結果を表示する。
+    expect((modelRun as Record<string, unknown>)["continue-on-error"]).toBe(true);
+    expect((modelRun as Record<string, unknown>).id).toBe("models");
+    // 手順の制限はジョブの制限より短い（ジョブごと打ち切られると cancelled で判定を塞ぐ）。
+    const stepLimit = Number((modelRun as Record<string, unknown>)["timeout-minutes"]);
+    const jobLimit = Number((models as Record<string, unknown>)["timeout-minutes"]);
+    expect(stepLimit).toBeGreaterThan(0);
+    expect(jobLimit - stepLimit).toBeGreaterThanOrEqual(3);
+    const shown = step(models, "Show real-model result (not required)");
+    expect(String(shown.if)).toContain("always()");
+    expect(String((shown as { env?: Record<string, string> }).env?.OUTCOME)).toContain(
+      "steps.models.outcome",
+    );
+    expect(String(shown.run)).toContain("::warning title=real-embedding-models::");
+    expect(String(shown.run)).toContain("GITHUB_STEP_SUMMARY");
+    expect(step(models, "Cache pinned model weights").with?.path).toBe(".cache/embedding-models");
     const report = String(step(reporter!, "Report required dispatch statuses").run);
     expect(report).toContain("'.[$context].result'");
     expect(report).toContain('if [ "$result" != success ]');
@@ -282,8 +341,24 @@ describe("CI contracts", () => {
 
   it("uses approved full-SHA actions and normal npm installs", () => {
     for (const path of ["ci.yml", "update-data.yml", "deploy.yml", "nightly.yml"]) {
-      const text = workflow(`../.github/workflows/${path}`).text;
-      expect(text).not.toMatch(/continue-on-error|npm ci --ignore-scripts/);
+      const { text, value } = workflow(`../.github/workflows/${path}`);
+      expect(text).not.toMatch(/npm ci --ignore-scripts/);
+      /* 失敗を黙って飲み込まない。例外は 1 か所だけ: ci.yml の実モデルの検査（当面は必須に
+       * しない – 2026-10-17 の持ち主の判断）。結果を表示する手順と対で置く（上の検査が張る）。 */
+      const 例外 =
+        path === "ci.yml"
+          ? (value.jobs?.["real-embedding-models"]?.steps ?? []).filter(
+              (s) => (s as Record<string, unknown>)["continue-on-error"] === true,
+            )
+          : [];
+      expect(例外.map((s) => s.name)).toEqual(
+        path === "ci.yml"
+          ? ["Generate and verify English and Japanese embeddings with real models"]
+          : [],
+      );
+      expect((text.match(/continue-on-error/g) ?? []).length, `${path} の continue-on-error`).toBe(
+        例外.length,
+      );
       expect(text).not.toMatch(/@v\d/);
       for (const pin of PINS.filter((candidate) => text.includes(candidate.split("@")[0]))) {
         expect(text).toContain(pin);

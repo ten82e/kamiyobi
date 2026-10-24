@@ -1,0 +1,315 @@
+{
+  "recorded_at": "2026-10-03T20:19:03.496877+00:00",
+  "verification_scope": "Actual /Users/ten82e/kamiyobi checkout and its public assets; real Git HEAD, no archive adapter",
+  "branch": "fix/site-ja-usability",
+  "pre_application_revision": "6394994095edae309aede89519422dcd53600e94",
+  "code_revision": "6bdb20e735540dd4800c673664ff15b2a223dc83",
+  "code_commits": [
+    "2abaf056b487df548c79b3ad048453bdac046f5f",
+    "6bdb20e735540dd4800c673664ff15b2a223dc83"
+  ],
+  "actual_updater_sources_applied": true,
+  "actual_files_applied": 35,
+  "protected_overlap": [],
+  "new_branch_worktree_clone": false,
+  "published": false,
+  "pr955_merge_retried": false,
+  "application": "work/agent-verification/main-integration/application.json",
+  "owned_source_sha256": {
+    ".github/workflows/ci.yml": "ab4fab68217d9d772751872fdd8a324100a907699ed12f279f22cae8c55acb7c",
+    ".github/workflows/update-data.yml": "3a16773dedbaf37b75f2faf61ef6f94e4278d69f5b59c7be06d0e180a6636889",
+    "SPEC.md": "41bc2c917ea6215de69ebd7f078c62b8137bcf8799ae1259fab0e99c46769f91",
+    "config.yaml": "456daf5f68825f64cfbeca1d40cea7b5d50126e8915c8e5bf005b09c9190b23a",
+    "data/benchmarks/real-paper-feature-baseline.json": "a9dfcff7c8f46cbbf3437c94e66021cf661751111251a2461e2a0062536cf0d6",
+    "data/benchmarks/real-paper-features.jsonl": "be70f5648bece9a8ff3cb1c5edd1d9015ced0b16f75f363754e5a471a017a12d",
+    "data/evidence/blobs/08810cdea05169d3110106df6b6e8cf461c5ebda2f74feb757b712753b878c37.body": "08810cdea05169d3110106df6b6e8cf461c5ebda2f74feb757b712753b878c37",
+    "data/evidence/blobs/24a85164b842fa0b7b5f98c75e1fa9dfa8851372f73571cbe2de94dc9141dd2d.body": "24a85164b842fa0b7b5f98c75e1fa9dfa8851372f73571cbe2de94dc9141dd2d",
+    "data/evidence/blobs/2710171d2ee3d422ec6bb0842872cac5add2e18259de3da70b4e6d7d00b190aa.body": "2710171d2ee3d422ec6bb0842872cac5add2e18259de3da70b4e6d7d00b190aa",
+    "data/evidence/blobs/313329e1b1243fb8c8297930dd410fccd368943906e10b6493354439916f6027.body": "313329e1b1243fb8c8297930dd410fccd368943906e10b6493354439916f6027",
+    "data/evidence/blobs/4cec899d14b03fb294dac055b5a7aec7ab28ba32c9fdad86ff2ad535eca68d35.body": "4cec899d14b03fb294dac055b5a7aec7ab28ba32c9fdad86ff2ad535eca68d35",
+    "data/evidence/blobs/77f70f1aceb8fb84775488920b2af7c6d2bf44be386c954f2cfb86925e744e9c.body": "77f70f1aceb8fb84775488920b2af7c6d2bf44be386c954f2cfb86925e744e9c",
+    "data/evidence/blobs/b95f7e84da5a57d058767466da8a40d298849459bd0bfb354450c91adfe2ce65.body": "b95f7e84da5a57d058767466da8a40d298849459bd0bfb354450c91adfe2ce65",
+    "data/evidence/blobs/e36a837b58b55e998aa952e7e15a50a502e2c7dbb122ac881e6e63989e0bdc30.body": "e36a837b58b55e998aa952e7e15a50a502e2c7dbb122ac881e6e63989e0bdc30",
+    "data/overrides.yaml": "f2a09809cd40f4a73841ceca2361c495f9c2126e75a0049f5c8210a37775bf3a",
+    "data/recommender-reranker.json": "a7c771c5ac6740def2eca58f8a1251d189a6bfa31535fc4baa62e72ccaceacc6",
+    "src/bench-recommender.ts": "2b98cba1ec53c6ad2e1a1e20f12370e4ec3db34de92bf9635a1e5b5fd69c6809",
+    "src/build.ts": "ea330387e2b87df0d3c7dd5736e0578df00268cae3797af2f46318127310751d",
+    "src/cli.ts": "68bccc93328bccdd0b3dde6f0bd7cae4e064ee56f18ee9049902fa195cfdc113",
+    "src/identity-migration.ts": "ae9dfe9b7680959b567cc8acbf44ee31f57b40e47e797f96a3cc0fd3e25918e8",
+    "src/merge.ts": "fd17227e634c398b6525d89e855e482f277cad12a797dc53d3615e1123f1d29b",
+    "tests/autoupdate_hosted_regression.test.ts": "dd67c34a86f6dd49fc74a94799ad0ba13d17a5532283869ab8168e49fc155177",
+    "tests/bench_recommender.test.ts": "1d5737ae70d144f88ece7ba63fcc70b244fa56e84ffed52860d0217c176b8c75",
+    "tests/curation.test.ts": "5134adc854a22c06af173112bc9dcfd710dac241f02f5f414b6fa08f9ca28ad0",
+    "tests/event_schedule.test.ts": "dbb1febd186730c24488427e5e72b608814d0fefbb1ff22a6a3b5433bf0a4440",
+    "tests/fixtures/autoupdate-committed-ecir.json": "ec356822e964e4f0bc4eaa217cf4d003d4b405694ab3625b3c1eb955da797650",
+    "tests/fixtures/autoupdate-deadline-conflicts.json": "f8225c573999b7c9ffeced29c1897881fe6233333f395811079f92fbe8c0adca",
+    "tests/fixtures/autoupdate-deadline-transitions.json": "fc2303ada57622d9b827999a2a639322a33fcfdd9afc28c4a9ae978e081d83f8",
+    "tests/fixtures/autoupdate-hosted-regression.json": "7048fb113d6775b26651cc46cb0f81daef9d6280c5a9759612cd8ed749ddbf1f",
+    "tests/fixtures/autoupdate-published-identities.json": "c1203953ff85d738bb59b094df39e191bb05a5b1fb486cae8fd480d874244b92",
+    "tests/fixtures/canary-primary-observations.yaml": "ff07557e580767ac59ea9b813061ada5940397c75dc2ed0e9ead139774567461",
+    "tests/local_sources.test.ts": "7bf14e55da9c6e702ecabfe50b25e1c964da0ce33c6914ca178050a4ca80e0a4",
+    "tests/merge.test.ts": "7742432c28a80355151f5612bad43d7dff50779f39a4dc1534f086a82a5a1152",
+    "tests/reverify.test.ts": "4a55324195a7d9c31da53c3875db30830139bcfc80811f3c6dac90e0f37a7bae",
+    "tests/update_data_canary.test.ts": "edb051fd537c1ecf6feb2873d3d9aa2ee195ea2f4a18f7446a9c9727464800d2"
+  },
+  "protected_paths_sha256": {
+    "site/recommender.ts": "bc5c73bbed9e09c36df21906aec7e7582da3e97f328051b2d0d88c48298980d6",
+    "tests/japanese_glued_kind_fold_query.test.ts": "f18101e643e27549f80ffa03d88b37fa48ad3f37feeb6464db20e2cd3a570a13",
+    "tests/held_in_suffix_query.test.ts": "6cb084a50369e0ce48298e1b64adbb191d8f7b4f178cf17af2ba4e78861e3700",
+    "data/source-snapshots/aideadlines.json": "c1411d15de9699dc5aa3e279aeccd8407e8c842744fc3f07f8bde8a226d52377",
+    "data/source-snapshots/ccfddl.json": "608d21d5f83e1a0886c5a75ec9c1fe3e37c0b0e07cc3bf701f9dc8b334bca87d",
+    "data/source-snapshots/local.json": "1b8a058ca8415710541d6a137233f27fc85b59fa0ca1658e9d2df9bceb95cbe8",
+    "data/source-snapshots/primary.json": "73b86e439978a1c36f16eedb34e6a09371e46b8bbcf6f64621a0e39cd5b5b346"
+  },
+  "all_protected_hashes_unchanged": true,
+  "tests": {
+    "passed": 5337,
+    "total": 5337,
+    "files_passed": 353,
+    "failed": 0,
+    "log": "work/agent-verification/main-integration/tests.log",
+    "log_sha256": "d334d9b31424f3a07328146e67bc35f9d5b1d0630f2989850e9ef36e7acc4471",
+    "max_workers": 4,
+    "test_timeout_relaxed": false
+  },
+  "checks": [
+    {
+      "check": "typecheck",
+      "exit_code": 0,
+      "seconds": 1.3
+    },
+    {
+      "check": "lint",
+      "exit_code": 0,
+      "seconds": 0.56
+    },
+    {
+      "check": "fixed-build",
+      "exit_code": 0,
+      "seconds": 1.22
+    },
+    {
+      "check": "tests",
+      "exit_code": 0,
+      "seconds": 314.23
+    },
+    {
+      "check": "fixed-validation",
+      "exit_code": 0,
+      "seconds": 0.46
+    },
+    {
+      "check": "fixed-health",
+      "exit_code": 0,
+      "seconds": 0.34
+    },
+    {
+      "check": "semantic-recommendation",
+      "exit_code": 0,
+      "seconds": 0.22
+    },
+    {
+      "check": "recommendation-data-delta",
+      "exit_code": 0,
+      "seconds": 1.13
+    },
+    {
+      "check": "real-paper-recommendation",
+      "exit_code": 0,
+      "seconds": 53.56
+    },
+    {
+      "check": "build",
+      "exit_code": 0,
+      "seconds": 3.58
+    },
+    {
+      "check": "data-validation",
+      "exit_code": 0,
+      "seconds": 0.44
+    },
+    {
+      "check": "public-validation",
+      "exit_code": 0,
+      "seconds": 0.45
+    },
+    {
+      "check": "health-gate",
+      "exit_code": 0,
+      "seconds": 0.34
+    },
+    {
+      "check": "diff-check",
+      "exit_code": 0,
+      "seconds": 0.14
+    }
+  ],
+  "checks_sha256": "5c7fc6792e69d663ccaf2b87cbf198088ee10b0b7fb8f79afd4a7d129838024d",
+  "post_commit_build": {
+    "code_revision": "6bdb20e735540dd4800c673664ff15b2a223dc83",
+    "public_source_commit": "6bdb20e735540dd4800c673664ff15b2a223dc83",
+    "checks": [
+      {
+        "check": "final-committed-build",
+        "exit_code": 0,
+        "log": "work/agent-verification/main-integration/final-committed-build.log"
+      },
+      {
+        "check": "final-public-validation",
+        "exit_code": 0,
+        "log": "work/agent-verification/main-integration/final-public-validation.log"
+      },
+      {
+        "check": "final-health-gate",
+        "exit_code": 0,
+        "log": "work/agent-verification/main-integration/final-health-gate.log"
+      }
+    ],
+    "comparison_to_prior_verified_archive": {
+      "expected_next_verification_time_changes": 4000,
+      "all_other_conference_fields_identical": true,
+      "deadline_and_event_dates_unchanged": true,
+      "recommendation_inputs_identical": true
+    },
+    "full_quality_passed": true,
+    "full_quality_log_sha256": "3b7368e752e55281259c32ad777d252db450b7d6b1bc68e8d7e68b4816e507d1"
+  },
+  "browser_checks": [
+    {
+      "check": "compsac",
+      "mode": "reduce",
+      "exit_code": 0,
+      "actual_worktree": true
+    },
+    {
+      "check": "identity",
+      "mode": "reduce",
+      "exit_code": 0,
+      "actual_worktree": true
+    },
+    {
+      "check": "researcher",
+      "mode": "reduce",
+      "exit_code": 0,
+      "actual_worktree": true
+    },
+    {
+      "check": "updater",
+      "mode": "reduce",
+      "exit_code": 0,
+      "actual_worktree": true
+    },
+    {
+      "check": "compsac",
+      "mode": "no-preference",
+      "exit_code": 0,
+      "actual_worktree": true
+    },
+    {
+      "check": "identity",
+      "mode": "no-preference",
+      "exit_code": 0,
+      "actual_worktree": true
+    },
+    {
+      "check": "researcher",
+      "mode": "no-preference",
+      "exit_code": 0,
+      "actual_worktree": true
+    },
+    {
+      "check": "updater",
+      "mode": "no-preference",
+      "exit_code": 0,
+      "actual_worktree": true
+    }
+  ],
+  "browser_reports_sha256": {
+    "compsac-reduce": "e855a810987abf9165481928751419b3324a7f33a8ad774100e1bfb11863764d",
+    "identity-reduce": "6d510429dea1f343cab112fdfc9b03d75d0516618ba6304e0e613efe4bcd652d",
+    "researcher-reduce": "d646f0f50278333047ee621a927fc50d356e721cd340e00d8d6634c3597fd65d",
+    "updater-reduce": "7e3c6eaf1ea4d1933675f8e156c18aa31c36b73aaa13c04a74c2b953b06f0ee5",
+    "compsac-no-preference": "3b9e4b2f95d71855b97a443c64e6203faa35c144b35165f3b33dc1995669d952",
+    "identity-no-preference": "610d05f7e165482a6e40c3b694f351ac934af368fc465542603d74e8985faeff",
+    "researcher-no-preference": "3d378d78cb978956b048b680cbad691b2615a773aa76a47ea57cae876601d486",
+    "updater-no-preference": "69f1910a21b938a7c914d9e21ad2ee761858f80ed0f9ede2d15a961451e261a3"
+  },
+  "full_real_paper_quality": {
+    "passed": true,
+    "coverage": "full",
+    "queries": {
+      "dev": 80,
+      "heldout": 80,
+      "negative": 41
+    },
+    "fused_quality": {
+      "dev": {
+        "mrr": 0.306722,
+        "recall_at_5": 0.4375
+      },
+      "heldout": {
+        "mrr": 0.403111,
+        "recall_at_5": 0.5375
+      }
+    },
+    "log": "work/agent-verification/main-integration/full-real-paper-recommendation.log",
+    "log_sha256": "3b7368e752e55281259c32ad777d252db450b7d6b1bc68e8d7e68b4816e507d1"
+  },
+  "old_legacy_links": {
+    "examined": 14,
+    "directly_opened": 9,
+    "ambiguous_choices": 2,
+    "corrected_date_explicitly_selected": 1,
+    "missing_with_notice": 2,
+    "report": "work/agent-verification/main-integration/browser/updater-reduce.json"
+  },
+  "historical_preservation": {
+    "original_editions": 1673,
+    "unchanged_editions": 1673,
+    "historical_through_year": 2025,
+    "fields": [
+      "id",
+      "year",
+      "link",
+      "date_text",
+      "event_start",
+      "event_end",
+      "event_date_precision"
+    ],
+    "missing_or_changed": [],
+    "reference_revision": "6394994095edae309aede89519422dcd53600e94",
+    "reference": "work/agent-verification/main-integration/pre-application-reference/public/data.json"
+  },
+  "identity_audit": [
+    {
+      "file": "data.json",
+      "conferences": 696,
+      "rows": 4964,
+      "shown": 4963,
+      "only_reviewed_pair_consolidated": true,
+      "canonical_share_keys_unique": true,
+      "untouched_identity_rows": 4962,
+      "continuous_journal_rows": 22,
+      "shared_key_collision_groups": 38
+    },
+    {
+      "file": "catalog.json",
+      "conferences": 696,
+      "rows": 716,
+      "shown": 715,
+      "only_reviewed_pair_consolidated": true,
+      "canonical_share_keys_unique": true,
+      "untouched_identity_rows": 714,
+      "continuous_journal_rows": 22,
+      "shared_key_collision_groups": 4
+    }
+  ],
+  "archive_verification_report": "docs/agent-handoff/verification/integration-latest.json",
+  "archive_distinction": "Archive report records prior dry-run only. This report verifies the 35 changes applied to actual source/config/data on the same branch.",
+  "remaining_blockers": [],
+  "screenshots": [
+    "work/agent-verification/main-integration/browser/screenshots/integration-corrected-link-mobile.png",
+    "work/agent-verification/main-integration/browser/screenshots/integration-evomusart-mobile.png",
+    "work/agent-verification/main-integration/browser/screenshots/shared-link-choices-mobile.png"
+  ]
+}

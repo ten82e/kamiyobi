@@ -1,6 +1,5 @@
 import { spawnSync } from "node:child_process";
-import { existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { expect, it } from "vitest";
 import {
@@ -9,7 +8,6 @@ import {
   HEALTH_SCHEMA_VERSION,
   type HealthDeadlineRef,
   type HealthReport,
-  healthMarkdown,
   healthReport,
   toJson,
 } from "../src/build.ts";
@@ -20,7 +18,7 @@ import {
 import { mergeDeadlineSlots } from "../src/merge.ts";
 import { deadlinesOf as localDeadlines } from "../src/sources/local.ts";
 import { resolvePrimaryObservations } from "../src/sources/primary.ts";
-import { makeConference, makeEdition, REPO_ROOT } from "./helpers.ts";
+import { makeConference, makeEdition, REPO_ROOT, tempWork } from "./helpers.ts";
 
 const report = {
   schema_version: 1,
@@ -38,7 +36,7 @@ const report = {
 };
 
 it("health-gate reads last-known-good and writes the next explicit artifact", () => {
-  const dir = mkdtempSync(join(tmpdir(), "kamiyobi-health-gate-"));
+  const dir = tempWork("kamiyobi-health-gate-");
   const current = join(dir, "health.json");
   const previous = join(dir, "last-known-good.json");
   const next = join(dir, "next-last-known-good.json");
@@ -708,7 +706,6 @@ it("groups full slot identities, resolves contained precision, and reports count
     venues_with_exact_future_deadline: 1,
     venues_with_date_only_future_deadline: 1,
   });
-  expect(healthMarkdown(stats)).toContain("| Future date-only deadlines | 1 |");
 });
 
 it("turns serialized merge conflicts into a health slot collision", () => {

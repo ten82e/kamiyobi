@@ -1,0 +1,150 @@
+{
+  "sampling": "First two full research papers in the published contents order of PMLR 267, 258 and 291 (2025); preface and one-page extended abstracts excluded. Selected and labeled before the new implementation was evaluated.",
+  "profile_policy": "Use only the existing frozen 27 official CFP profiles. None of these evaluation titles or summaries may enter profiles or training.",
+  "papers": [
+    {
+      "id": "a-mancisidor25a",
+      "language": "en",
+      "title": "Aggregation of Dependent Expert Distributions in Multimodal Variational Autoencoders",
+      "abstract": "This study revises how multimodal variational autoencoders combine distributions from separate modalities. Instead of treating those distributions as independent, the proposed CoDE approach models their dependence and learns how subsets of modalities contribute to a joint likelihood bound. Experiments examine generation consistency, output quality, likelihood estimates and classification, including how the method behaves as more modalities are added.",
+      "abstract_sha256": "6c54d65e73102d2319580c3a089d45041acda4766d703cc5b7638a4b9b17e9b2",
+      "primary_venue": "icml",
+      "acceptable_venues": ["icml", "aistats", "uai", "neurips"],
+      "source": "https://proceedings.mlr.press/v267/a-mancisidor25a.html",
+      "publication": "PMLR 267 (2025)",
+      "abstract_kind": "English summary of author abstract"
+    },
+    {
+      "id": "a-mancisidor25a-ja",
+      "language": "ja",
+      "title": "マルチモーダル変分自己符号化器における、依存する専門家分布の集約",
+      "abstract": "マルチモーダル変分自己符号化器で、各モダリティの分布をどう集約するかを扱う。従来の積や混合による集約が置く独立性の仮定を避け、依存する専門家の合意に基づくCoDEを導入する。モダリティの部分集合ごとの寄与を学び、同時尤度の下界を構成する。生成の一貫性と品質、尤度推定、分類精度を比較し、モダリティ数が増えた場合の性能も検証している。",
+      "abstract_sha256": "90cf2a6a926f6026749f6b7203c0d3292d06466a5021d0a656c4ee50104ec500",
+      "primary_venue": "icml",
+      "acceptable_venues": ["icml", "aistats", "uai", "neurips"],
+      "source": "https://proceedings.mlr.press/v267/a-mancisidor25a.html",
+      "publication": "PMLR 267 (2025)",
+      "abstract_kind": "Japanese title translation and summary of author abstract; not a native-Japanese publication"
+    },
+    {
+      "id": "aamand25a",
+      "language": "en",
+      "title": "Lightweight Protocols for Distributed Private Quantile Estimation",
+      "abstract": "The paper studies quantile estimation when individual users each hold one data point and can be queried once through a private mechanism. It gives adaptive algorithms for local and shuffle differential privacy, with improved user requirements compared with nonadaptive approaches. Lower bounds establish optimality for local privacy at small privacy parameters and distinguish adaptive from nonadaptive protocols.",
+      "abstract_sha256": "b51e8dc7c5cbb5a5074590b50d5880a3d4cd1af0a608d433cd14ccf84d13c9e7",
+      "primary_venue": "icml",
+      "acceptable_venues": ["icml", "aistats", "colt", "stoc"],
+      "source": "https://proceedings.mlr.press/v267/aamand25a.html",
+      "publication": "PMLR 267 (2025)",
+      "abstract_kind": "English summary of author abstract"
+    },
+    {
+      "id": "aamand25a-ja",
+      "language": "ja",
+      "title": "分散環境でプライバシーを保って分位点を推定する軽量プロトコル",
+      "abstract": "各利用者が一つのデータ点を持ち、プライバシーを保つ仕組みを通じて一度だけ問い合わせられる状況で、中央値などの分位点を推定する。局所差分プライバシーとシャッフル差分プライバシーについて適応的なアルゴリズムを示し、非適応的な方法より少ない利用者数で所定の誤差を達成する。必要な利用者数の下界も導き、低いプライバシー予算での最適性と、適応的・非適応的プロトコルの違いを示す。",
+      "abstract_sha256": "e0ccc25fc7c11181d6110977d1acef15189ca3eb1fccf4f6af6ca6f772779154",
+      "primary_venue": "icml",
+      "acceptable_venues": ["icml", "aistats", "colt", "stoc"],
+      "source": "https://proceedings.mlr.press/v267/aamand25a.html",
+      "publication": "PMLR 267 (2025)",
+      "abstract_kind": "Japanese title translation and summary of author abstract; not a native-Japanese publication"
+    },
+    {
+      "id": "schulte25a",
+      "language": "en",
+      "title": "Additive Model Boosting: New Insights and Path(ologie)s",
+      "abstract": "The authors analyze optimization and regularization in boosting additive models. They study solution trajectories, relate them to alternative methods for particular problem classes, and derive convergence results. The analysis both supports common practical uses and identifies classes of additive models with problematic convergence behavior. Numerical experiments check these theoretical conclusions.",
+      "abstract_sha256": "df2b7eb3c3578b9928744c4c92021dd965b857a369d3c77658a1a178a10dc28e",
+      "primary_venue": "aistats",
+      "acceptable_venues": ["aistats", "icml", "colt", "neurips"],
+      "source": "https://proceedings.mlr.press/v258/schulte25a.html",
+      "publication": "PMLR 258 (2025)",
+      "abstract_kind": "English summary of author abstract"
+    },
+    {
+      "id": "schulte25a-ja",
+      "language": "ja",
+      "title": "加法モデルのブースティング：解の経路と収束の問題",
+      "abstract": "加法モデルをブースティングで学習するときの最適化と正則化を調べる。解がたどる経路を解析し、一部の問題クラスで他の方法との関係を示す。新たな収束結果から手法の振る舞いを説明する一方、特定の加法モデルでは収束に問題が生じることも示す。数値実験によって理論上の結果を確認している。",
+      "abstract_sha256": "244d4dc38e0ec3822fa3af99f934d1b85112ae4650cf2debd9a8f7afeced81d4",
+      "primary_venue": "aistats",
+      "acceptable_venues": ["aistats", "icml", "colt", "neurips"],
+      "source": "https://proceedings.mlr.press/v258/schulte25a.html",
+      "publication": "PMLR 258 (2025)",
+      "abstract_kind": "Japanese title translation and summary of author abstract; not a native-Japanese publication"
+    },
+    {
+      "id": "dold25a",
+      "language": "en",
+      "title": "Paths and Ambient Spaces in Neural Loss Landscapes",
+      "abstract": "This work investigates low-loss paths in neural network parameter spaces by embedding such tunnels directly in the loss landscape. It examines their length and structure and challenges existing interpretations. Applying the construction to Bayesian neural networks reveals problems in subspace inference; a revised prior is proposed to improve the sampling process.",
+      "abstract_sha256": "63ebca3c098aaec0a5dfa543daf0ba44154a197c1bbd04c4f7b2623838741005",
+      "primary_venue": "aistats",
+      "acceptable_venues": ["aistats", "icml", "uai", "neurips"],
+      "source": "https://proceedings.mlr.press/v258/dold25a.html",
+      "publication": "PMLR 258 (2025)",
+      "abstract_kind": "English summary of author abstract"
+    },
+    {
+      "id": "dold25a-ja",
+      "language": "ja",
+      "title": "ニューラルネットワークの損失地形における経路と周囲の空間",
+      "abstract": "ニューラルネットワークのパラメータ空間に現れる低損失の経路を調べる。損失地形の中にそのような経路を直接埋め込む方法を提案し、長さや構造を解析して、従来の理解にある問題を示す。ベイズニューラルネットワークに応用して部分空間での推論の問題を指摘し、サンプリングを導く事前分布を改善する。",
+      "abstract_sha256": "4a082220e17c701302d29fbb6b946c7f8419f9b7d109fd87547d78eae352225c",
+      "primary_venue": "aistats",
+      "acceptable_venues": ["aistats", "icml", "uai", "neurips"],
+      "source": "https://proceedings.mlr.press/v258/dold25a.html",
+      "publication": "PMLR 258 (2025)",
+      "abstract_kind": "Japanese title translation and summary of author abstract; not a native-Japanese publication"
+    },
+    {
+      "id": "akbari25a",
+      "language": "en",
+      "title": "Computable learning of natural hypothesis classes",
+      "abstract": "The study concerns computable PAC learning, between purely statistical learnability and polynomial-time learning. Some known PAC-learnable classes cannot be learned by a computable learner, but their constructions are not canonical. Using tools from computability theory, the authors prove that learnability implies computable learnability for natural hypothesis classes satisfying specified assumptions.",
+      "abstract_sha256": "180461485671bb6e339664c1ef460747f929d66e8ff910fdd51a6c1ee6cae392",
+      "primary_venue": "colt",
+      "acceptable_venues": ["colt", "stoc", "focs"],
+      "source": "https://proceedings.mlr.press/v291/akbari25a.html",
+      "publication": "PMLR 291 (2025)",
+      "abstract_kind": "English summary of author abstract"
+    },
+    {
+      "id": "akbari25a-ja",
+      "language": "ja",
+      "title": "自然な仮説クラスの計算可能な学習",
+      "abstract": "統計的な学習可能性と多項式時間での学習の間に位置する、計算可能なPAC学習を扱う。PAC学習可能でも計算可能な学習器では学べない仮説クラスが知られているが、その構成は自然なものとは言いにくい。計算可能性理論の手法を用い、所定の仮定を満たす自然な仮説クラスでは、学習可能性から計算可能な学習可能性が導かれることを証明する。",
+      "abstract_sha256": "3ff0491ad903c5769cbeaee94fcc91bb24da1b84ba45cbbe298f51df003d01bb",
+      "primary_venue": "colt",
+      "acceptable_venues": ["colt", "stoc", "focs"],
+      "source": "https://proceedings.mlr.press/v291/akbari25a.html",
+      "publication": "PMLR 291 (2025)",
+      "abstract_kind": "Japanese title translation and summary of author abstract; not a native-Japanese publication"
+    },
+    {
+      "id": "aliakbarpour25a",
+      "language": "en",
+      "title": "Better Private Distribution Testing by Leveraging Unverified Auxiliary Data",
+      "abstract": "The authors extend distribution testing with auxiliary information to differential privacy. An analyst may have public knowledge about a sensitive distribution that is inaccurate or untrusted. Algorithms address uniformity, identity and closeness testing, with sample requirements depending on the claimed auxiliary quality. Information-theoretic lower bounds match the guarantees up to logarithmic factors.",
+      "abstract_sha256": "41d64b994c42c8bbd4143db156ac27208cf714792c8f19b710e833721722d966",
+      "primary_venue": "colt",
+      "acceptable_venues": ["colt", "aistats", "stoc", "focs"],
+      "source": "https://proceedings.mlr.press/v291/aliakbarpour25a.html",
+      "publication": "PMLR 291 (2025)",
+      "abstract_kind": "English summary of author abstract"
+    },
+    {
+      "id": "aliakbarpour25a-ja",
+      "language": "ja",
+      "title": "未検証の補助データを活用した、プライバシーを保つ分布検定",
+      "abstract": "補助情報を用いる分布検定を、差分プライバシーのある設定に拡張する。機微なデータを検定する際に、誤りや信頼性の問題がある公開情報も利用できる状況を扱う。一様性、同一性、近接性の検定アルゴリズムを示し、補助情報の品質に応じた標本数を導く。情報理論的な下界によって、対数因子を除いた標本数の最適性を示す。",
+      "abstract_sha256": "52f88ba71e996662f1f4c67b0a3ffcdf5cb8703b7d34e4aec513b77e054bbb32",
+      "primary_venue": "colt",
+      "acceptable_venues": ["colt", "aistats", "stoc", "focs"],
+      "source": "https://proceedings.mlr.press/v291/aliakbarpour25a.html",
+      "publication": "PMLR 291 (2025)",
+      "abstract_kind": "Japanese title translation and summary of author abstract; not a native-Japanese publication"
+    }
+  ]
+}

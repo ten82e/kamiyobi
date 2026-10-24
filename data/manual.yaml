@@ -229,7 +229,11 @@ conferences:
         place: 名古屋大学 基盤センター２F演習室
         year: 2026
       - date_text: 2026年12月1日-2日 (第207回)
-        deadlines: []
+        deadlines:
+          - date: '2026-09-30'
+            kind: abstract
+            label: 発表申込締切
+            precision: date-only
         event_end: '2026-12-02'
         event_start: '2026-12-01'
         id: ipsj-hpc-2026-12
@@ -262,7 +266,11 @@ conferences:
         place: 飛騨・世界生活文化センター（岐阜県高山市）
         year: 2026
       - date_text: 2026年12月1日-2日
-        deadlines: []
+        deadlines:
+          - date: '2026-09-30'
+            kind: abstract
+            label: 発表申込締切
+            precision: date-only
         event_end: '2026-12-02'
         event_start: '2026-12-01'
         id: ipsj-arc-2026-12
@@ -378,7 +386,12 @@ conferences:
         place: 大分県（未定）／オンライン
         year: 2026
       - date_text: 2026年12月17日-18日
-        deadlines: []
+        # 根拠: https://ken.ieice.org/ken/program/?tgid=IEICE-NS (2026-09-22 取得) 発表申込締切日
+        deadlines:
+          - date: '2026-10-13'
+            kind: abstract
+            label: 発表申込締切
+            precision: date-only
         event_end: '2026-12-18'
         event_start: '2026-12-17'
         id: ieice-ns-2026-12
@@ -435,7 +448,12 @@ conferences:
         place: 東北大学 電気通信研究所／オンライン（宮城）
         year: 2026
       - date_text: 2026年12月3日-4日
-        deadlines: []
+        # 根拠: https://ken.ieice.org/ken/program/?tgid=IEICE-IN (2026-09-22 取得) 発表申込締切日
+        deadlines:
+          - date: '2026-10-09'
+            kind: abstract
+            label: 発表申込締切
+            precision: date-only
         event_end: '2026-12-04'
         event_start: '2026-12-03'
         id: ieice-in-2026-12
@@ -3923,6 +3941,14 @@ conferences:
         link: https://www.ieice.org/iss/isec/
         place: Japan
         year: 2026
+      - date_text: 2026年11月19日-20日
+        deadlines: []
+        event_end: '2026-11-20'
+        event_start: '2026-11-19'
+        id: ieice-isec-2026-11
+        link: https://ken.ieice.org/ken/program/?tgid=IEICE-ISEC
+        place: 御影公会堂（兵庫県）
+        year: 2026
     full_name: 電子情報通信学会 情報セキュリティ研究会 (ISEC)
     key: ieice-isec
     link: https://www.ieice.org/iss/isec/
@@ -4045,6 +4071,51 @@ conferences:
         link: https://www.ieice.org/cs/rcs/
         place: Japan
         year: 2026
+      - date_text: 2026年10月15日-16日
+        deadlines: []
+        event_end: '2026-10-16'
+        event_start: '2026-10-15'
+        id: ieice-rcs-2026-10
+        link: https://ken.ieice.org/ken/program/?tgid=IEICE-RCS
+        place: ATR（京都府）／オンライン
+        year: 2026
+      - date_text: 2026年11月18日-20日
+        deadlines: []
+        event_end: '2026-11-20'
+        event_start: '2026-11-18'
+        id: ieice-rcs-2026-11
+        link: https://ken.ieice.org/ken/program/?tgid=IEICE-RCS
+        place: 富山国際会議場（富山県）／オンライン
+        year: 2026
+      - date_text: 2026年12月17日-18日
+        # 根拠: https://ken.ieice.org/ken/program/?tgid=IEICE-RCS (2026-09-22 取得) 発表申込締切日
+        deadlines:
+          - date: '2026-10-13'
+            kind: abstract
+            label: 発表申込締切
+            precision: date-only
+        event_end: '2026-12-18'
+        event_start: '2026-12-17'
+        id: ieice-rcs-2026-12
+        link: https://ken.ieice.org/ken/program/?tgid=IEICE-RCS
+        place: 函館サーモン・まるなまアリーナ（北海道）／オンライン
+        year: 2026
+      - date_text: 2027年1月19日-20日
+        deadlines: []
+        event_end: '2027-01-20'
+        event_start: '2027-01-19'
+        id: ieice-rcs-2027-01
+        link: https://ken.ieice.org/ken/program/?tgid=IEICE-RCS
+        place: 北海道大学 学術交流会館（北海道）／オンライン
+        year: 2027
+      - date_text: 2027年3月1日-3日
+        deadlines: []
+        event_end: '2027-03-03'
+        event_start: '2027-03-01'
+        id: ieice-rcs-2027-03
+        link: https://ken.ieice.org/ken/program/?tgid=IEICE-RCS
+        place: 大阪公立大学 中百舌鳥キャンパス B1棟（大阪府）／オンライン
+        year: 2027
     full_name: 電子情報通信学会 無線通信システム研究会 (RCS)
     key: ieice-rcs
     link: https://www.ieice.org/cs/rcs/
@@ -4059,6 +4130,19 @@ conferences:
         id: ieice-cpsy-2026
         link: https://www.ieice.org/cpsy/
         place: Japan
+        year: 2026
+      - date_text: 2026年12月1日-2日
+        # 根拠: https://ken.ieice.org/ken/program/?tgid=IEICE-CPSY (2026-09-22 取得) 発表申込締切日
+        deadlines:
+          - date: '2026-09-30'
+            kind: abstract
+            label: 発表申込締切
+            precision: date-only
+        event_end: '2026-12-02'
+        event_start: '2026-12-01'
+        id: ieice-cpsy-2026-12
+        link: https://ken.ieice.org/ken/program/?tgid=IEICE-CPSY
+        place: 沖縄産業支援センター（沖縄県）／オンライン
         year: 2026
     full_name: 電子情報通信学会 コンピュータシステム研究会 (CPSY)
     key: ieice-cpsy
@@ -5020,8 +5104,13 @@ conferences:
   - categories:
       - ai
     editions:
-      - date_text: Mar 31, 2027
+      # 主催者CFP https://easychair.org/cfp/evomusart2027 (2026-10-02確認)。時刻・TZは未公表。
+      - date_text: March 31-April 2, 2027
         deadlines:
+          - date: '2026-11-01'
+            kind: abstract
+            label: Abstract registration deadline
+            precision: date-only
           - date: '2026-11-01'
             kind: paper
             label: Submission deadline
@@ -5030,10 +5119,10 @@ conferences:
         link: https://easychair.org/cfp/evomusart2027
         place: Mainz, Germany
         year: 2027
-    full_name: 16th International Conference on Artificial Intelligence in Music, Sound, Art and Design
+    full_name: International Conference on Artificial Intelligence in Music, Sound, Art and Design
     key: evomusart-2027
     link: https://easychair.org/cfp/evomusart2027
-    title: EvoMusArt 2027
+    title: EvoMUSART
   - categories:
       - ai
     editions:
@@ -6755,4 +6844,564 @@ conferences:
     key: ccnc27-track-on-networking-solutions-for-metaverse-social-applications-multimedia-and-games
     link: https://ccnc2027.ieee-ccnc.org/authors/call-technical-papers
     title: CCNC27 track on Networking Solutions for Metaverse, Social Applications, Multimedia, and Games
+  # 根拠: https://ken.ieice.org/ken/program/?tgid=IEICE-NV (2026-09-22 取得) 研究会開催スケジュールの表
+  - categories:
+      - networking
+    editions:
+      - date_text: 2026年11月5日-6日
+        deadlines: []
+        event_end: '2026-11-06'
+        event_start: '2026-11-05'
+        id: ieice-nv-2026-11
+        link: https://ken.ieice.org/ken/program/?tgid=IEICE-NV
+        place: 別府国際コンベンションセンター/ビーコンプラザ（大分県）／オンライン
+        year: 2026
+    full_name: 電子情報通信学会 ネットワーク仮想化研究会 (NV)
+    key: ieice-nv
+    link: https://ken.ieice.org/ken/program/?tgid=IEICE-NV
+    tags:
+      - domestic-jp
+    title: 電子情報通信学会 NV 研究会
+  - categories:
+      - networking
+    editions:
+      - date_text: 2027年1月21日-22日
+        deadlines: []
+        event_end: '2027-01-22'
+        event_start: '2027-01-21'
+        id: ieice-nws-2027-01
+        link: https://ken.ieice.org/ken/program/?tgid=IEICE-NWS
+        place: 愛媛県男女共同参画センター（愛媛県）／オンライン
+        year: 2027
+    full_name: 電子情報通信学会 ネットワークソフトウェア研究会 (NWS)
+    key: ieice-nws
+    link: https://ken.ieice.org/ken/program/?tgid=IEICE-NWS
+    tags:
+      - domestic-jp
+    title: 電子情報通信学会 NWS 研究会
+  - categories:
+      - systems
+    editions:
+      - date_text: 2026年12月2日-4日
+        deadlines: []
+        event_end: '2026-12-04'
+        event_start: '2026-12-02'
+        id: ieice-dc-2026-12
+        link: https://ken.ieice.org/ken/program/?tgid=IEICE-DC
+        place: 札幌市教育文化会館(札幌)（北海道）
+        year: 2026
+    full_name: 電子情報通信学会 ディペンダブルコンピューティング研究会 (DC)
+    key: ieice-dc
+    link: https://ken.ieice.org/ken/program/?tgid=IEICE-DC
+    tags:
+      - domestic-jp
+    title: 電子情報通信学会 DC 研究会
+  - categories:
+      - security
+    editions:
+      - date_text: 2026年11月17日-18日
+        deadlines: []
+        event_end: '2026-11-18'
+        event_start: '2026-11-17'
+        id: ieice-icss-2026-11
+        link: https://ken.ieice.org/ken/program/?tgid=IEICE-ICSS
+        place: ステータシー武道館(大津市)（滋賀県）
+        year: 2026
+    full_name: 電子情報通信学会 情報通信システムセキュリティ研究会 (ICSS)
+    key: ieice-icss
+    link: https://ken.ieice.org/ken/program/?tgid=IEICE-ICSS
+    tags:
+      - domestic-jp
+    title: 電子情報通信学会 ICSS 研究会
+  - categories:
+      - ai
+    editions:
+      - date_text: 2026年12月16日-17日
+        deadlines:
+          - date: '2026-10-23'
+            kind: abstract
+            label: 発表申込締切
+            precision: date-only
+        event_end: '2026-12-17'
+        event_start: '2026-12-16'
+        id: ieice-ibisml-2026-12
+        link: https://ken.ieice.org/ken/program/?tgid=IEICE-IBISML
+        place: 京都大学 楽友会館（京都府）／オンライン
+        year: 2026
+    full_name: 電子情報通信学会 情報論的学習理論と機械学習研究会 (IBISML)
+    key: ieice-ibisml
+    link: https://ken.ieice.org/ken/program/?tgid=IEICE-IBISML
+    tags:
+      - domestic-jp
+    title: 電子情報通信学会 IBISML 研究会
+  - categories:
+      - db
+    editions:
+      - date_text: 2026年12月18日-19日
+        deadlines:
+          - date: '2026-10-23'
+            kind: abstract
+            label: 発表申込締切
+            precision: date-only
+        event_end: '2026-12-19'
+        event_start: '2026-12-18'
+        id: ieice-de-2026-12
+        link: https://ken.ieice.org/ken/program/?tgid=IEICE-DE
+        place: 北國会館 香林坊プラザ（石川県）／オンライン
+        year: 2026
+    full_name: 電子情報通信学会 データ工学研究会 (DE)
+    key: ieice-de
+    link: https://ken.ieice.org/ken/program/?tgid=IEICE-DE
+    tags:
+      - domestic-jp
+    title: 電子情報通信学会 DE 研究会
+  - categories:
+      - systems
+    editions:
+      - date_text: 2026年12月10日-11日
+        deadlines:
+          - date: '2026-10-13'
+            kind: abstract
+            label: 発表申込締切
+            precision: date-only
+        event_end: '2026-12-11'
+        event_start: '2026-12-10'
+        id: ieice-ss-2026-12
+        link: https://ken.ieice.org/ken/program/?tgid=IEICE-SS
+        place: 高知工科大学 永国寺キャンパス（高知県）
+        year: 2026
+    full_name: 電子情報通信学会 ソフトウェアサイエンス研究会 (SS)
+    key: ieice-ss
+    link: https://ken.ieice.org/ken/program/?tgid=IEICE-SS
+    tags:
+      - domestic-jp
+    title: 電子情報通信学会 SS 研究会
+  - categories:
+      - db
+    editions:
+      - date_text: 2026年12月18日-19日
+        deadlines:
+          - date: '2026-10-23'
+            kind: abstract
+            label: 発表申込締切
+            precision: date-only
+        event_end: '2026-12-19'
+        event_start: '2026-12-18'
+        id: ipsj-dbs-2026-12
+        link: https://ken.ieice.org/ken/program/?tgid=IPSJ-DBS
+        place: 北國会館 香林坊プラザ（石川県）／オンライン
+        year: 2026
+    full_name: 情報処理学会 データベースシステム研究会 (DBS)
+    key: ipsj-sigdbs
+    link: https://ken.ieice.org/ken/program/?tgid=IPSJ-DBS
+    tags:
+      - domestic-jp
+    title: 情報処理学会 DBS 研究会
+  - categories:
+      - theory
+    editions:
+      - date_text: 2026年11月12日-13日
+        deadlines: []
+        event_end: '2026-11-13'
+        event_start: '2026-11-12'
+        id: ipsj-al-2026-11
+        link: https://ken.ieice.org/ken/program/?tgid=IPSJ-AL
+        place: 松江テルサ（島根県）
+        year: 2026
+    full_name: 情報処理学会 アルゴリズム研究会 (AL)
+    key: ipsj-sigal
+    link: https://ken.ieice.org/ken/program/?tgid=IPSJ-AL
+    tags:
+      - domestic-jp
+    title: 情報処理学会 AL 研究会
+  - categories:
+      - theory
+      - networking
+    editions:
+      - date_text: 2026年12月18日-19日
+        deadlines:
+          - date: '2026-10-23'
+            kind: abstract
+            label: 発表申込締切
+            precision: date-only
+        event_end: '2026-12-19'
+        event_start: '2026-12-18'
+        id: ipsj-ifat-2026-12
+        link: https://ken.ieice.org/ken/program/?tgid=IPSJ-IFAT
+        place: 北國会館 香林坊プラザ（石川県）／オンライン
+        year: 2026
+    full_name: 情報処理学会 情報基礎とアクセス技術研究会 (IFAT)
+    key: ipsj-sigifat
+    link: https://ken.ieice.org/ken/program/?tgid=IPSJ-IFAT
+    tags:
+      - domestic-jp
+    title: 情報処理学会 IFAT 研究会
+  - categories:
+      - graphics
+    editions:
+      - date_text: 2026年11月26日-27日
+        deadlines: []
+        event_end: '2026-11-27'
+        event_start: '2026-11-26'
+        id: ipsj-cgvi-2026-11
+        link: https://ken.ieice.org/ken/program/?tgid=IPSJ-CGVI
+        place: 同志社大学 新町キャンパス 尋真館（京都府）
+        year: 2026
+    full_name: 情報処理学会 コンピュータグラフィックスとビジュアル情報学研究会 (CGVI)
+    key: ipsj-sigcgvi
+    link: https://ken.ieice.org/ken/program/?tgid=IPSJ-CGVI
+    tags:
+      - domestic-jp
+    title: 情報処理学会 CGVI 研究会
+  - categories:
+      - networking
+      - systems
+    editions:
+      - date_text: 2027年3月1日-3日
+        deadlines: []
+        event_end: '2027-03-03'
+        event_start: '2027-03-01'
+        id: ipsj-iot-2027-03
+        link: https://ken.ieice.org/ken/program/?tgid=IPSJ-IOT
+        place: 未定
+        year: 2027
+    full_name: 情報処理学会 インターネットと運用技術研究会 (IOT)
+    key: ipsj-sigiot
+    link: https://ken.ieice.org/ken/program/?tgid=IPSJ-IOT
+    tags:
+      - domestic-jp
+    title: 情報処理学会 IOT 研究会
+
 schema_version: 1
+
+# 公式CFP・研究会の案内に記載された対象分野。開催回や締切、採択論文は含めない。
+venue_scopes:
+  mlsys:
+    source_url: https://mlsys.org/Conferences/2026/CallForPapers
+    topics:
+      - "Computer systems supporting machine learning, and machine learning applied to system design."
+      - "Training efficiency and deployment of models for prediction services."
+      - "Language model pretraining, adaptation and inference infrastructure."
+      - "Scaling reinforcement learning for large language models."
+      - "Infrastructure for autonomous AI agents and multimodal applications."
+      - "Storage infrastructure serving training, inference and reinforcement learning workloads."
+      - "Distributed learning and federated training algorithms."
+      - "Security and privacy protections in deployed ML applications."
+      - "Applying machine learning to compute-job placement and scheduling."
+      - "Diagnosing, testing and monitoring ML software."
+      - "System support for fair, explainable and interpretable ML applications."
+      - "Preparing and cleaning training data."
+      - "Abstractions, programming languages, compilers and runtime software for ML."
+      - "Visual exploration of model behavior, predictions and datasets."
+      - "Hardware specialization and hardware-efficient ML algorithms."
+      - "Using language models to optimize hardware or computing systems."
+      - "Tools, benchmarks and datasets for evaluating ML systems."
+  ipsj-sighpc:
+    source_url: https://www.sighpc.ipsj.or.jp/hpc_chater.html
+    topics:
+      - Numerical computation and numerical simulation, modeling, discretization, algorithms, standard libraries, numerical representations, high precision and quality assurance. 数値計算・数値シミュレーション、モデル化、離散化、アルゴリズム、標準ライブラリ、数値表現、高精度計算、品質保証。
+      - High-performance architecture usage and performance evaluation, parallel and distributed processing, vector processing, workstations, experimental systems, superscalar execution, cache and memory access. 高性能計算用アーキテクチャの利用と性能評価、並列・分散処理、ベクトル処理、ワークステーション、実験システム、スーパースカラ、キャッシュ、メモリーアクセス。
+      - Technologies connecting scientific computation and computers, programming languages, optimization, data placement, mapping, visualization, debugging tools, performance evaluation models and measurements. 計算と計算機を結ぶ技術、プログラミング言語、最適化、データ配置、マッピング、可視化、デバッグツール、性能評価モデルと実測。
+  fast:
+    source_url: https://www.usenix.org/conference/fast25/call-for-papers
+    topics:
+      - File system design and deployment, distributed and networked storage, database and key-value storage.
+      - RAID and erasure coding, storage reliability, availability, disaster recovery and data integrity.
+      - Caching, data replication, consistency, deduplication and compression in storage systems.
+      - Storage hardware, emerging memory hierarchies, memory-only systems and parallel I/O for HPC.
+      - Storage for artificial intelligence and artificial intelligence methods for storage systems.
+      - Cloud storage, mobile and embedded storage, energy efficiency and storage quality of service.
+      - Empirical storage evaluation, deployed system experience, auditing, provenance and storage security.
+  icml:
+    source_url: https://icml.cc/Conferences/2024/CallForPapers
+    topics:
+      - Machine learning theory, deep learning, reinforcement learning, supervised and unsupervised learning, optimization and representation learning.
+      - 'General machine learning: active learning, clustering, online learning, ranking, reinforcement learning, supervised, semi-supervised and self-supervised learning, time series analysis'
+      - 'Deep learning: architectures, generative models, deep reinforcement learning'
+      - 'Learning theory: bandits, game theory, statistical learning theory'
+      - 'Optimization: convex and non-convex optimization, matrix and tensor methods, stochastic and online optimization, non-smooth and composite optimization'
+      - 'Probabilistic inference: Bayesian methods, graphical models, Monte Carlo methods'
+      - 'Trustworthy machine learning: accountability, causality, fairness, privacy, robustness'
+      - 'Applications: computational biology, crowdsourcing, healthcare, neuroscience, social good, climate science'
+  aistats:
+    source_url: https://github.com/aistats/aistats2024/blob/gh-pages/call-for-papers.md
+    topics:
+      - Statistical machine learning, Bayesian methods, regression, statistical inference, probabilistic modeling and learning theory.
+      - 'Machine learning methods and algorithms: classification, regression, unsupervised and semi-supervised learning, clustering, logic programming'
+      - 'Probabilistic methods: Bayesian methods, approximate inference, density estimation, tractable probabilistic models, probabilistic programming'
+      - 'Theory of machine learning and statistics: optimization, computational learning theory, decision theory, online learning and bandits, game theory, frequentist statistics, information theory'
+      - 'Deep learning: theory, architectures, generative models, optimization for neural networks'
+      - 'Reinforcement learning: theory, offline and online learning, deep reinforcement learning, multi-agent reinforcement learning'
+      - 'Ethical and trustworthy machine learning: causality, fairness, interpretability, privacy, robustness, safety'
+      - 'Applications of machine learning and statistics: natural language, signal processing, computer vision, physical sciences, social sciences, sustainability and climate, healthcare'
+  colt:
+    source_url: https://learningtheory.org/colt2024/cfp.html
+    topics:
+      - Mathematical foundations of machine learning, generalization, statistical learning, online learning, bandits, sample complexity and computational learning theory.
+      - Design and analysis of learning algorithms
+      - Statistical and computational complexity of learning
+      - Optimization methods for learning, including online and stochastic optimization
+      - Theory of artificial neural networks, including deep learning
+      - Theoretical explanation of empirical phenomena in learning
+      - Supervised learning
+      - Unsupervised and semi-supervised learning, domain adaptation
+      - Learning geometric and topological structures in data, manifold learning
+      - Active and interactive learning
+      - Reinforcement learning
+      - Online learning and decision-making
+      - Interactions of learning theory with other mathematical fields
+      - High-dimensional and non-parametric statistics
+      - Kernel methods
+      - Causality
+      - Theoretical analysis of probabilistic graphical models
+      - Bayesian methods in learning
+      - Game theory and learning
+      - 'Learning with system constraints: privacy, fairness, memory, communication'
+      - 'Learning from complex data: networks, time series'
+      - Learning in neuroscience, social science, economics and other subjects
+    additional_source_urls:
+      - https://www.learningtheory.org/colt2024/cfp.html
+  uai:
+    source_url: https://www.auai.org/uai2024/subject_areas
+    topics:
+      - Reasoning under uncertainty, probabilistic graphical models, Bayesian inference, causal discovery, decision making and learning.
+      - 'Algorithms: approximate and exact inference, Bayesian methods, belief propagation, kernel methods, missing data handling, Monte Carlo methods, combinatorial, convex, discrete and non-convex optimization, probabilistic programming, randomized algorithms, spectral and variational methods'
+      - 'Applications: cognitive science, computational biology, computer vision, crowdsourcing, earth system science, education, forensic science, healthcare, natural language processing, neuroscience, planning and control, privacy and security, robotics, social good, sustainability and climate science, text and web data'
+      - 'Learning: active, adversarial and causal learning, classification, clustering, compressed sensing, dictionary learning, deep learning, density estimation, dimensionality reduction, ensemble learning, feature selection, hashing, multitask and transfer learning, online learning, policy learning, ranking, recommender systems, reinforcement learning, relational learning, representation learning, semi-supervised learning, structure learning, structured prediction, unsupervised learning'
+      - 'Models: bandits, Bayesian networks, generative models, graphical models, Markov decision processes, relational models, neural networks, probabilistic circuits, regression models, spatial and temporal models, topic models, latent variable models'
+      - 'Principles: explainability, causality, computational and statistical trade-offs, fairness, privacy, reliability, robustness, structured sparsity'
+      - 'Representation: constraints, Dempster-Shafer theory, description logics, imprecise probabilities, influence diagrams, knowledge representation languages'
+      - 'Theory: computational complexity, control theory, decision theory, game theory, information theory, learning theory, probability theory, statistical theory'
+    additional_source_urls:
+      - https://www.auai.org/uai2024/call_for_papers
+  usenix-security:
+    source_url: https://www.usenix.org/conference/usenixsecurity25/call-for-papers
+    topics:
+      - Computer security and privacy, software vulnerabilities, malware, authentication, cryptographic systems, network security and usable security.
+      - 'System security: operating systems, web, mobile, distributed systems and cloud computing security'
+      - 'Network security: intrusion and anomaly detection, infrastructure security, denial of service, wireless security, analysis of network and security protocols'
+      - 'Software analyses: malware analysis, forensics, diagnostics, automated security analysis of source code and binaries, program analysis, fuzzing and vulnerability discovery'
+      - 'Machine learning and AI security and privacy: applications to security, privacy risks and security of AI'
+      - 'Data-driven security and measurement studies: fraud, malware, spam and human behavior'
+      - 'Privacy: metrics, anonymity, web and mobile privacy, privacy-preserving computation, privacy attacks'
+      - 'Usable security and privacy: user studies, human-centered design'
+      - Formal methods and language-based security
+      - 'Hardware security: secure architectures, embedded and cyber-physical systems, malicious hardware detection, side channels, automated analysis of designs and implementations'
+      - Surveillance and censorship
+      - 'Social issues: security law and policy, information manipulation, misinformation, disinformation, at-risk users, online threats, harassment and abuse'
+      - 'Applications of cryptography: deployed protocols, implementations and real-world protocols'
+      - Blockchains and distributed ledger security
+      - 'Meta-science: ethics, education, training, replication and reproduction'
+      - Attacks with novel insights, techniques or results
+  sigops-atc:
+    source_url: https://www.usenix.org/conference/atc25/call-for-papers
+    topics:
+      - Computer systems research with implementations and experimental results, from embedded and mobile devices to data centers and clouds
+      - Operating systems
+      - Runtime systems
+      - Parallel and distributed systems
+      - Storage
+      - Networking
+      - Security and privacy
+      - Virtualization
+      - Software-hardware interactions
+      - Performance evaluation and workload characterization
+      - Reliability, availability and scalability
+      - Energy and power management
+      - Bug-finding, tracing, analyzing and troubleshooting
+  nsdi:
+    source_url: https://www.usenix.org/conference/nsdi25/call-for-papers
+    topics:
+      - Design, implementation and practical evaluation of networked and distributed systems, networks, cloud systems, distributed storage and resource management.
+      - Highly available and reliable networked systems
+      - Security and privacy of networked systems
+      - Distributed storage, caching and query processing systems
+      - Sustainable, low-energy and low-carbon networked systems
+      - Cloud and multi-tenant systems
+      - Mobile and embedded sensor applications and systems
+      - Systems aspects of networking hardware and physical layer communication technologies
+      - Network and workload measurement systems
+      - Self-organizing, autonomous and federated networked systems
+      - Managing, debugging and diagnosing problems in networked systems
+      - Virtualization and resource management for networked systems
+      - Experience with deployed networked systems
+      - Networked systems for big data
+      - Testing and verification applied to networked systems
+      - Networked systems for machine learning and machine learning for networked systems
+  osdi:
+    source_url: https://www.usenix.org/conference/osdi25/call-for-papers
+    topics:
+      - Design and implementation of computer systems, operating systems, storage, distributed systems, resource management and system reliability.
+      - Operating systems
+      - File and storage systems
+      - Distributed systems
+      - Cloud computing
+      - Mobile systems
+      - Secure and reliable systems
+      - Systems aspects of big data
+      - Embedded systems
+      - Virtualization
+      - Networking as it relates to operating systems
+      - Management and troubleshooting of complex systems
+      - Interfaces of systems software to computer architecture, networking, programming languages, analytics and databases
+  neurips:
+    source_url: https://neurips.cc/Conferences/2024/CallForPapers
+    topics:
+      - Machine learning, deep learning, reinforcement learning, probabilistic methods, optimization, neuroscience and AI applications.
+      - 'Applications: vision, language, speech, audio, Creative AI'
+      - 'Deep learning: architectures, generative models, optimization for deep networks, foundation models, large language models'
+      - 'Evaluation: methodology, meta studies, replicability, validity, human-in-the-loop'
+      - 'General machine learning: supervised, unsupervised, online and active learning'
+      - 'Infrastructure: libraries, improved implementation and scalability, distributed solutions'
+      - 'Machine learning for sciences: climate, health, life sciences, physics and social sciences'
+      - 'Neuroscience and cognitive science: neural coding, brain-computer interfaces'
+      - 'Optimization: convex, non-convex, stochastic and robust optimization'
+      - 'Probabilistic methods: variational inference, causal inference and Gaussian processes'
+      - 'Reinforcement learning: decision and control, planning, hierarchical reinforcement learning and robotics'
+      - 'Social and economic aspects of machine learning: fairness, interpretability, human-AI interaction, privacy, safety, strategic behavior'
+      - 'Theory: control theory, learning theory and algorithmic game theory'
+  chi:
+    source_url: https://chi2024.acm.org/subcommittees/selecting-a-subcommittee/
+    topics:
+      - Human-computer interaction, user experience, collaborative work, accessibility, interactive systems, user studies and design.
+      - Accessibility and Aging
+      - 'Blending Interaction: Engineering Interactive Systems & Tools'
+      - 'Developing Novel Devices: Hardware, Materials, and Fabrication'
+      - Computational Interaction
+      - Critical Computing, Sustainability, and Social Justice
+      - Design
+      - Games and Play
+      - Health
+      - 'Interacting with Devices: Interaction Techniques & Modalities'
+      - Interaction Beyond the Individual
+      - Learning, Education, and Families
+      - Privacy and Security
+      - Specific Applications Areas
+      - Understanding People
+      - User Experience and Usability
+      - Visualization
+    additional_source_urls:
+      - https://chi2024.acm.org/for-authors/papers/
+  uist:
+    source_url: https://uist.acm.org/2024/
+    topics:
+      - User interface software and technology, novel interaction techniques, input devices, interactive hardware, augmented reality and tools.
+      - Graphical and web user interfaces
+      - Tangible and ubiquitous computing
+      - Virtual and augmented reality
+      - Multimedia
+      - New input and output devices
+      - Human-Centered AI
+      - Computer-supported cooperative work
+    additional_source_urls:
+      - https://uist.acm.org/2024/cfp/
+  sigmod:
+    source_url: https://2025.sigmod.org/calls_papers_sigmod_research.shtml
+    topics:
+      - Database systems, query processing and optimization, information retrieval, data management, transactions, indexing and database applications.
+      - Benchmarking, monitoring, testing and tuning database systems
+      - Cloud, distributed, decentralized and parallel data management
+      - Database systems on emerging hardware
+      - Embedded databases, IoT and sensor networks
+      - Storage, indexing and physical database design
+      - Query processing and optimization
+      - Transaction processing
+      - Data warehousing, OLAP and analytics
+      - Data models and semantics
+      - Declarative programming languages and optimization
+      - Spatial and temporal data management
+      - Graphs, social networks, web data and semantic web
+      - Multimedia and information retrieval
+      - Uncertain, probabilistic and approximate databases
+      - Streams and complex event processing
+      - Data exploration, visualization, query languages and user interfaces
+      - Crowdsourced and collaborative data management
+      - User-centric and human-in-the-loop data management
+      - Natural language processing for databases
+      - Data provenance and workflows
+      - Data integration, information extraction and schema matching
+      - Data quality and cleaning
+      - Data security, privacy and access control
+      - Responsible data management and data fairness
+      - Metadata management
+      - 'Structured queries over unstructured data: images, video and natural language'
+      - Natural language queries
+      - Machine learning methods for database engine internals and database tuning
+      - Data management and metadata for machine learning pipelines
+      - Knowledge base management
+      - Data mining
+      - Prescriptive analytics
+      - Data-intensive applications
+      - Data science pipelines
+    additional_source_urls:
+      - https://2024.sigmod.org/calls_papers_sigmod_research.shtml
+  vldb:
+    source_url: https://www.vldb.org/2025/
+    topics:
+      - Data management, databases, query processing, data mining, information retrieval, analytics, distributed databases and large scale data.
+      - Data mining and analytics
+      - Data privacy and security
+      - Database engines
+      - Database performance and manageability
+      - Distributed database systems
+      - Graph and network data
+      - Information integration and data quality
+      - Languages
+      - Machine learning, AI and databases
+      - Novel database architectures
+      - Provenance and workflows
+      - Specialized and domain-specific data management
+      - Text and semi-structured data
+      - User interfaces
+    additional_source_urls:
+      - https://www.vldb.org/2024/?call-for-research-track
+  acl:
+    source_url: https://2024.aclweb.org/calls/main_conference_papers/
+    topics:
+      - Natural language processing, computational linguistics, language models, machine translation, text generation, multilingual language understanding and evaluation.
+  cvpr:
+    source_url: https://cvpr.thecvf.com/Conferences/2024/CallForPapers
+    topics:
+      - Computer vision, image and video understanding, object detection, segmentation, 3D perception, image generation and visual recognition.
+  stoc:
+    source_url: https://acm-stoc.org/stoc2024/
+    topics:
+      - Theoretical computer science, algorithms, computational complexity, randomized algorithms, graph algorithms and mathematical foundations.
+  focs:
+    source_url: https://focs.computer.org/2024/call-for-papers/
+    topics:
+      - Foundations of computer science, algorithms, complexity theory, discrete mathematics, computational learning and theoretical computation.
+  sc:
+    source_url: https://sc26.supercomputing.org/program/papers/
+    topics:
+      - "High performance computing, parallel algorithms, supercomputers, large scale simulation, scientific computing, performance and parallel architectures."
+      - "Scalable numerical and graph algorithms, scheduling algorithms, load balancing and energy-aware parallel algorithms."
+      - "Parallel scientific applications and high-performance simulation in biology, medicine, materials, physics and engineering."
+      - "Heterogeneous processor and accelerator architectures, interconnects, memory hierarchies and hardware-software co-design."
+      - "Large-scale analytics, visualization, parallel storage and data-intensive scientific workflows."
+      - "HPC infrastructure for distributed model training and inference, model parallelism, accelerated ML and deployment at scale."
+      - "Measuring and modeling the performance of parallel computers, accelerators and software."
+      - "Quantum, neuromorphic and other post-Moore technologies for high-performance computing."
+      - "Parallel compilers, languages, programming models, communication libraries and runtime software."
+      - "Operating supercomputing facilities, scientific software deployment, energy use, emissions and production workloads."
+      - "Cloud and HPC system software, task scheduling, resource allocation, load balancing, reliability, carbon-aware computing and accelerator support."
+  ipsj-css:
+    source_url: https://www.iwsec.org/css/2024/cfp.html
+    topics:
+      - コンピュータセキュリティ、プライバシー、暗号、認証、マルウェア、フィッシング、ソフトウェア脆弱性、AIの安全性、ユーザブルセキュリティ。
+  ipsj-sigdps:
+    source_url: https://www.ipsj.or.jp/kenkyukai/bunya2026.html
+    topics:
+      - マルチメディア通信、分散処理、ネットワーク、クラウド、分散システム、ネットワークサービスとプロトコル。
+  ipsj-sigpro:
+    source_url: https://sigpro.ipsj.or.jp/
+    topics:
+      - プログラミング言語、プログラム解析、型、コンパイラ、ソフトウェア保守、プログラム理解、プログラミング方法論。
+  icse:
+    source_url: https://conf.researchr.org/track/icse-2024/icse-2024-research-track
+    topics:
+      - Software engineering, program analysis, software maintenance, testing, code comprehension, software development and empirical studies.
+  sigcomm:
+    source_url: https://conferences.sigcomm.org/sigcomm/2024/cfp/
+    topics:
+      - Computer communication networks, internet architecture and protocols, data center networking, congestion control, network measurement, programmable switches and network management.

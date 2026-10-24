@@ -1,0 +1,725 @@
+{
+  "schema": 1,
+  "sampling": "First three non-editorial research papers in publisher volume order for ICML/AISTATS/UAI/COLT 2024; all eight native-Japanese title-and-abstract records in existing dev/heldout source fixtures. Labels fixed before running models. Plus PRED (NSDI 2025) and NanoFlow (OSDI 2025), selected for deployed networking and LLM serving; these two abstracts are explicitly marked as summaries of author abstracts. Published venue and suitable scope labels are fixed before running these inputs.",
+  "profile_policy": "Official call topics only; no paper titles, abstracts, prototypes, trained reranker, frozen features or published catalogs.",
+  "venues": [
+    {
+      "key": "icml",
+      "title": "ICML",
+      "full_name": "International Conference on Machine Learning",
+      "categories": ["ai"],
+      "scope": "Machine learning theory, deep learning, reinforcement learning, supervised and unsupervised learning, optimization and representation learning.",
+      "scope_source": "https://icml.cc/Conferences/2024/CallForPapers",
+      "tags": []
+    },
+    {
+      "key": "aistats",
+      "title": "AISTATS",
+      "full_name": "International Conference on Artificial Intelligence and Statistics",
+      "categories": ["ai"],
+      "scope": "Statistical machine learning, Bayesian methods, regression, statistical inference, probabilistic modeling and learning theory.",
+      "scope_source": "https://github.com/aistats/aistats2024/blob/gh-pages/call-for-papers.md",
+      "tags": []
+    },
+    {
+      "key": "uai",
+      "title": "UAI",
+      "full_name": "Conference on Uncertainty in Artificial Intelligence",
+      "categories": ["ai"],
+      "scope": "Reasoning under uncertainty, probabilistic graphical models, Bayesian inference, causal discovery, decision making and learning.",
+      "scope_source": "https://www.auai.org/uai2024/call_for_papers",
+      "tags": []
+    },
+    {
+      "key": "colt",
+      "title": "COLT",
+      "full_name": "Conference on Learning Theory",
+      "categories": ["theory", "ai"],
+      "scope": "Mathematical foundations of machine learning, generalization, statistical learning, online learning, bandits, sample complexity and computational learning theory.",
+      "scope_source": "https://www.learningtheory.org/colt2024/cfp.html",
+      "tags": []
+    },
+    {
+      "key": "neurips",
+      "title": "NeurIPS",
+      "full_name": "Conference on Neural Information Processing Systems",
+      "categories": ["ai"],
+      "scope": "Machine learning, deep learning, reinforcement learning, probabilistic methods, optimization, neuroscience and AI applications.",
+      "scope_source": "https://neurips.cc/Conferences/2024/CallForPapers",
+      "tags": []
+    },
+    {
+      "key": "acl",
+      "title": "ACL",
+      "full_name": "Annual Meeting of the Association for Computational Linguistics",
+      "categories": ["ai"],
+      "scope": "Natural language processing, computational linguistics, language models, machine translation, text generation, multilingual language understanding and evaluation.",
+      "scope_source": "https://2024.aclweb.org/calls/main_conference_papers/",
+      "tags": []
+    },
+    {
+      "key": "cvpr",
+      "title": "CVPR",
+      "full_name": "Computer Vision and Pattern Recognition",
+      "categories": ["graphics", "ai"],
+      "scope": "Computer vision, image and video understanding, object detection, segmentation, 3D perception, image generation and visual recognition.",
+      "scope_source": "https://cvpr.thecvf.com/Conferences/2024/CallForPapers",
+      "tags": []
+    },
+    {
+      "key": "chi",
+      "title": "CHI",
+      "full_name": "ACM Conference on Human Factors in Computing Systems",
+      "categories": ["hci"],
+      "scope": "Human-computer interaction, user experience, collaborative work, accessibility, interactive systems, user studies and design.",
+      "scope_source": "https://chi2024.acm.org/for-authors/papers/",
+      "tags": []
+    },
+    {
+      "key": "uist",
+      "title": "UIST",
+      "full_name": "ACM Symposium on User Interface Software and Technology",
+      "categories": ["hci"],
+      "scope": "User interface software and technology, novel interaction techniques, input devices, interactive hardware, augmented reality and tools.",
+      "scope_source": "https://uist.acm.org/2024/cfp/",
+      "tags": []
+    },
+    {
+      "key": "sigmod",
+      "title": "SIGMOD",
+      "full_name": "ACM International Conference on Management of Data",
+      "categories": ["db"],
+      "scope": "Database systems, query processing and optimization, information retrieval, data management, transactions, indexing and database applications.",
+      "scope_source": "https://2024.sigmod.org/calls_papers_sigmod_research.shtml",
+      "tags": []
+    },
+    {
+      "key": "vldb",
+      "title": "VLDB",
+      "full_name": "International Conference on Very Large Data Bases",
+      "categories": ["db"],
+      "scope": "Data management, databases, query processing, data mining, information retrieval, analytics, distributed databases and large scale data.",
+      "scope_source": "https://www.vldb.org/2024/?call-for-research-track",
+      "tags": []
+    },
+    {
+      "key": "stoc",
+      "title": "STOC",
+      "full_name": "ACM Symposium on Theory of Computing",
+      "categories": ["theory"],
+      "scope": "Theoretical computer science, algorithms, computational complexity, randomized algorithms, graph algorithms and mathematical foundations.",
+      "scope_source": "https://acm-stoc.org/stoc2024/",
+      "tags": []
+    },
+    {
+      "key": "focs",
+      "title": "FOCS",
+      "full_name": "IEEE Symposium on Foundations of Computer Science",
+      "categories": ["theory"],
+      "scope": "Foundations of computer science, algorithms, complexity theory, discrete mathematics, computational learning and theoretical computation.",
+      "scope_source": "https://focs.computer.org/2024/call-for-papers/",
+      "tags": []
+    },
+    {
+      "key": "nsdi",
+      "title": "NSDI",
+      "full_name": "USENIX Symposium on Networked Systems Design and Implementation",
+      "categories": ["systems", "networking"],
+      "scope": "Design, implementation and practical evaluation of networked and distributed systems, networks, cloud systems, distributed storage and resource management.",
+      "scope_source": "https://www.usenix.org/conference/nsdi25/call-for-papers",
+      "tags": []
+    },
+    {
+      "key": "osdi",
+      "title": "OSDI",
+      "full_name": "USENIX Symposium on Operating Systems Design and Implementation",
+      "categories": ["systems"],
+      "scope": "Design and implementation of computer systems, operating systems, storage, distributed systems, resource management and system reliability.",
+      "scope_source": "https://www.usenix.org/conference/osdi25/call-for-papers",
+      "tags": []
+    },
+    {
+      "key": "sc",
+      "title": "SC",
+      "full_name": "International Conference for High Performance Computing, Networking, Storage and Analysis",
+      "categories": ["hpc"],
+      "scope": "High performance computing, parallel algorithms, supercomputers, large scale simulation, scientific computing, performance and parallel architectures.",
+      "scope_source": "https://sc24.supercomputing.org/program/papers/",
+      "tags": []
+    },
+    {
+      "key": "usenix-security",
+      "title": "USENIX Security",
+      "full_name": "USENIX Security Symposium",
+      "categories": ["security"],
+      "scope": "Computer security and privacy, software vulnerabilities, malware, authentication, cryptographic systems, network security and usable security.",
+      "scope_source": "https://www.usenix.org/conference/usenixsecurity25/call-for-papers",
+      "tags": []
+    },
+    {
+      "key": "css",
+      "title": "CSS",
+      "full_name": "コンピュータセキュリティシンポジウム",
+      "categories": ["security"],
+      "scope": "コンピュータセキュリティ、プライバシー、暗号、認証、マルウェア、フィッシング、ソフトウェア脆弱性、AIの安全性、ユーザブルセキュリティ。",
+      "scope_source": "https://www.iwsec.org/css/2024/cfp.html",
+      "tags": ["domestic-jp"]
+    },
+    {
+      "key": "interaction",
+      "title": "インタラクション",
+      "full_name": "情報処理学会 インタラクション",
+      "categories": ["hci"],
+      "scope": "ヒューマンコンピュータインタラクション、ユーザインタフェース、情報可視化、協調作業、対話、インタラクティブシステム、入力デバイスとユーザ評価。",
+      "scope_source": "https://www.interaction-ipsj.org/2024/submissions/",
+      "tags": ["domestic-jp"]
+    },
+    {
+      "key": "ipsj-sigdps",
+      "title": "DPS研究会",
+      "full_name": "情報処理学会 マルチメディア通信と分散処理研究会",
+      "categories": ["systems", "networking"],
+      "scope": "マルチメディア通信、分散処理、ネットワーク、クラウド、分散システム、ネットワークサービスとプロトコル。",
+      "scope_source": "https://www.ipsj.or.jp/kenkyukai/bunya2026.html",
+      "tags": ["domestic-jp"]
+    },
+    {
+      "key": "ipsj-sigfi",
+      "title": "FI研究会",
+      "full_name": "情報処理学会 情報基礎とアクセス技術研究会",
+      "categories": ["db"],
+      "scope": "情報検索、情報アクセス、検索エンジン、文書検索、情報推薦、情報抽出、テキスト処理と情報の組織化。",
+      "scope_source": "https://www.ipsj.or.jp/kenkyukai/bunya2026.html",
+      "tags": ["domestic-jp"]
+    },
+    {
+      "key": "ipsj-sigpro",
+      "title": "PRO研究会",
+      "full_name": "情報処理学会 プログラミング研究会",
+      "categories": ["systems"],
+      "scope": "プログラミング言語、プログラム解析、型、コンパイラ、ソフトウェア保守、プログラム理解、プログラミング方法論。",
+      "scope_source": "https://sigpro.ipsj.or.jp/",
+      "tags": ["domestic-jp"]
+    },
+    {
+      "key": "icse",
+      "title": "ICSE",
+      "full_name": "International Conference on Software Engineering",
+      "categories": ["systems"],
+      "scope": "Software engineering, program analysis, software maintenance, testing, code comprehension, software development and empirical studies.",
+      "scope_source": "https://conf.researchr.org/track/icse-2024/icse-2024-research-track",
+      "tags": []
+    },
+    {
+      "key": "pldi",
+      "title": "PLDI",
+      "full_name": "ACM SIGPLAN Conference on Programming Language Design and Implementation",
+      "categories": ["systems"],
+      "scope": "Programming languages, compilers, type systems, program analysis, programming tools, language implementation and verification.",
+      "scope_source": "https://pldi24.sigplan.org/track/pldi-2024-papers",
+      "tags": []
+    },
+    {
+      "key": "ipsj-journal",
+      "title": "情報処理学会論文誌",
+      "full_name": "情報処理学会論文誌 ジャーナル",
+      "categories": ["systems", "networking", "ai", "security", "db", "hci"],
+      "scope": "情報処理・情報技術全般。コンピュータ科学、システム、ネットワーク、人工知能、セキュリティ、データベース、ヒューマンコンピュータインタラクション。",
+      "scope_source": "https://www.ipsj.or.jp/journal/index.html",
+      "tags": ["domestic-jp", "journal"]
+    },
+    {
+      "key": "sigcomm",
+      "title": "SIGCOMM",
+      "full_name": "ACM SIGCOMM Conference",
+      "categories": ["networking"],
+      "scope": "Computer communication networks, internet architecture and protocols, data center networking, congestion control, network measurement, programmable switches and network management.",
+      "scope_source": "https://conferences.sigcomm.org/sigcomm/2024/cfp/",
+      "tags": []
+    },
+    {
+      "key": "ipsj-tod",
+      "title": "TOD",
+      "full_name": "情報処理学会論文誌データベース",
+      "categories": ["db"],
+      "scope": "データベース技術、データ管理、情報検索、Webデータ、データサイエンス、データモデルとデータベースシステムの応用。",
+      "scope_source": "https://www.ipsj.or.jp/katsudou/sig/sighp/dbs/",
+      "tags": ["domestic-jp", "journal"]
+    }
+  ],
+  "papers": [
+    {
+      "id": "abad-rocamora24a",
+      "language": "en",
+      "year": 2024,
+      "title": "Revisiting Character-level Adversarial Attacks for Language Models",
+      "abstract": "Adversarial attacks in Natural Language Processing apply perturbations in the character or token levels. Token-level attacks, gaining prominence for their use of gradient-based methods, are susceptible to altering sentence semantics, leading to invalid adversarial examples. While character-level attacks easily maintain semantics, they have received less attention as they cannot easily adopt popular gradient-based methods, and are thought to be easy to defend. Challenging these beliefs, we introduce Charmer, an efficient query-based adversarial attack capable of achieving high attack success rate (ASR) while generating highly similar adversarial examples. Our method successfully targets both small (BERT) and large (Llama 2) models. Specifically, on BERT with SST-2, Charmer improves the ASR in $4.84$% points and the USE similarity in $8$% points with respect to the previous art. Our implementation is available in https://github.com/LIONS-EPFL/Charmer.",
+      "primary_venue": "icml",
+      "acceptable_venues": ["icml", "aistats", "uai", "neurips"],
+      "source": "https://proceedings.mlr.press/v235/abad-rocamora24a.html",
+      "authors": [
+        "Elias Abad Rocamora",
+        "Yongtao Wu",
+        "Fanghui Liu",
+        "Grigorios Chrysos",
+        "Volkan Cevher"
+      ],
+      "publication": "PMLR 235, 2024",
+      "license": "CC-BY-4.0",
+      "abstract_sha256": "d5751c7884691832abc115942eddc11e4a15782a75f4fd6792d615e225af60da",
+      "acceptable_venue_sources": {
+        "icml": "https://icml.cc/Conferences/2024/CallForPapers",
+        "aistats": "https://github.com/aistats/aistats2024/blob/gh-pages/call-for-papers.md",
+        "uai": "https://www.auai.org/uai2024/call_for_papers",
+        "neurips": "https://neurips.cc/Conferences/2024/CallForPapers"
+      }
+    },
+    {
+      "id": "abe24a",
+      "language": "en",
+      "year": 2024,
+      "title": "Adaptively Perturbed Mirror Descent for Learning in Games",
+      "abstract": "This paper proposes a payoff perturbation technique for the Mirror Descent (MD) algorithm in games where the gradient of the payoff functions is monotone in the strategy profile space, potentially containing additive noise. The optimistic family of learning algorithms, exemplified by optimistic MD, successfully achieves last-iterate convergence in scenarios devoid of noise, leading the dynamics to a Nash equilibrium. A recent re-emerging trend underscores the promise of the perturbation approach, where payoff functions are perturbed based on the distance from an anchoring, or slingshot , strategy. In response, we propose Adaptively Perturbed MD (APMD), which adjusts the magnitude of the perturbation by repeatedly updating the slingshot strategy at a predefined interval. This innovation empowers us to find a Nash equilibrium of the underlying game with guaranteed rates. Empirical demonstrations affirm that our algorithm exhibits significantly accelerated convergence.",
+      "primary_venue": "icml",
+      "acceptable_venues": ["icml", "aistats", "uai", "neurips"],
+      "source": "https://proceedings.mlr.press/v235/abe24a.html",
+      "authors": ["Kenshi Abe", "Kaito Ariu", "Mitsuki Sakamoto", "Atsushi Iwasaki"],
+      "publication": "PMLR 235, 2024",
+      "license": "CC-BY-4.0",
+      "abstract_sha256": "6ac39f637d0142a6cbeb55485ca52c67529ec97e641b9478fced4d4c35d0bf48",
+      "acceptable_venue_sources": {
+        "icml": "https://icml.cc/Conferences/2024/CallForPapers",
+        "aistats": "https://github.com/aistats/aistats2024/blob/gh-pages/call-for-papers.md",
+        "uai": "https://www.auai.org/uai2024/call_for_papers",
+        "neurips": "https://neurips.cc/Conferences/2024/CallForPapers"
+      }
+    },
+    {
+      "id": "abhyankar24a",
+      "language": "en",
+      "year": 2024,
+      "title": "InferCept: Efficient Intercept Support for Augmented Large Language Model Inference",
+      "abstract": "Large language models are increasingly integrated with external environments, tools, and agents like ChatGPT plugins to extend their capability beyond language-centric tasks. However, today’s LLM inference systems are designed for standalone LLMs. They treat each external interaction as the end of LLM generation and form a new request when the interaction finishes, causing unnecessary recomputation of already computed contexts, which accounts for 37-40% of total model forwarding time. This paper presents InferCept, the first LLM inference framework targeting augmented LLMs and supporting the efficient interception of LLM generation. InferCept minimizes the GPU resource waste caused by LLM interceptions and dedicates saved memory for serving more requests.InferCept improves the overall serving throughput by 1.6x-2x and completes 2x more requests per second compared to the state-of-the-art LLM inference systems.",
+      "primary_venue": "icml",
+      "acceptable_venues": ["icml", "aistats", "uai", "neurips"],
+      "source": "https://proceedings.mlr.press/v235/abhyankar24a.html",
+      "authors": ["Reyna Abhyankar", "Zijian He", "Vikranth Srivatsa", "Hao Zhang", "Yiying Zhang"],
+      "publication": "PMLR 235, 2024",
+      "license": "CC-BY-4.0",
+      "abstract_sha256": "cba4cdce44a300c018dbe7030053117a9166d6cf8b8635d4365927b32f7cb0e2",
+      "acceptable_venue_sources": {
+        "icml": "https://icml.cc/Conferences/2024/CallForPapers",
+        "aistats": "https://github.com/aistats/aistats2024/blob/gh-pages/call-for-papers.md",
+        "uai": "https://www.auai.org/uai2024/call_for_papers",
+        "neurips": "https://neurips.cc/Conferences/2024/CallForPapers"
+      }
+    },
+    {
+      "id": "ruegamer24a",
+      "language": "en",
+      "year": 2024,
+      "title": "Scalable Higher-Order Tensor Product Spline Models",
+      "abstract": "In the current era of vast data and transparent machine learning, it is essential for techniques to operate at a large scale while providing a clear mathematical comprehension of the internal workings of the method. Although there already exist interpretable semi-parametric regression methods for large-scale applications that take into account non-linearity in the data, the complexity of the models is still often limited. One of the main challenges is the absence of interactions in these models, which are left out for the sake of better interpretability but also due to impractical computational costs. To overcome this limitation, we propose a new approach using a factorization method to derive a highly scalable higher-order tensor product spline model. Our method allows for the incorporation of all (higher-order) interactions of non-linear feature effects while having computational costs proportional to a model without interactions. We further develop a meaningful penalization scheme and examine the induced optimization problem. We conclude by evaluating the predictive and estimation performance of our method.",
+      "primary_venue": "aistats",
+      "acceptable_venues": ["aistats", "icml", "uai", "neurips"],
+      "source": "https://proceedings.mlr.press/v238/ruegamer24a.html",
+      "authors": ["David Ruegamer"],
+      "publication": "PMLR 238, 2024",
+      "license": "CC-BY-4.0",
+      "abstract_sha256": "35e5f22c62f8a0ac80b52a826cc4f4b6c41e9f4d99d88bc978a95a1891b86575",
+      "acceptable_venue_sources": {
+        "aistats": "https://github.com/aistats/aistats2024/blob/gh-pages/call-for-papers.md",
+        "icml": "https://icml.cc/Conferences/2024/CallForPapers",
+        "uai": "https://www.auai.org/uai2024/call_for_papers",
+        "neurips": "https://neurips.cc/Conferences/2024/CallForPapers"
+      }
+    },
+    {
+      "id": "amagata24a",
+      "language": "en",
+      "year": 2024,
+      "title": "Fair k-center Clustering with Outliers",
+      "abstract": "The importance of dealing with big data is further increasing, as machine learning (ML) systems obtain useful knowledge from big datasets. However, using all data is practically prohibitive because of the massive sizes of the datasets, so summarizing them by centers obtained from k-center clustering is a promising approach. We have two concerns here. One is fairness, because if the summary does not have some specific groups, subsequent applications may provide unfair results for the groups. The other is the presence of outliers, and if outliers dominate the summary, it cannot be useful. To overcome these concerns, we address the problem of fair k-center clustering with outliers. Although prior works studied the fair k-center clustering problem, they do not consider outliers. This paper yields a linear time algorithm that satisfies the fairness constraint of our problem and probabilistically guarantees the almost 3-approximation bound. Its empirical efficiency and effectiveness are also reported.",
+      "primary_venue": "aistats",
+      "acceptable_venues": ["aistats", "icml", "uai", "neurips"],
+      "source": "https://proceedings.mlr.press/v238/amagata24a.html",
+      "authors": ["Daichi Amagata"],
+      "publication": "PMLR 238, 2024",
+      "license": "CC-BY-4.0",
+      "abstract_sha256": "31b14d2f5b3fe8418b7ecbb7e85c4676754bbd9621046ba13b48eeb59ab48e3a",
+      "acceptable_venue_sources": {
+        "aistats": "https://github.com/aistats/aistats2024/blob/gh-pages/call-for-papers.md",
+        "icml": "https://icml.cc/Conferences/2024/CallForPapers",
+        "uai": "https://www.auai.org/uai2024/call_for_papers",
+        "neurips": "https://neurips.cc/Conferences/2024/CallForPapers"
+      }
+    },
+    {
+      "id": "shankar24a",
+      "language": "en",
+      "year": 2024,
+      "title": "A/B testing under Interference with Partial Network Information",
+      "abstract": "A/B tests are often required to be conducted on subjects that might have social connections. For e.g., experiments on social media, or medical and social interventions to control the spread of an epidemic. In such settings, the SUTVA assumption for randomized-controlled trials is violated due to network interference, or spill-over effects, as treatments to group A can potentially also affect the control group B. When the underlying social network is known exactly, prior works have demonstrated how to conduct A/B tests adequately to estimate the global average treatment effect (GATE). However, in practice, it is often impossible to obtain knowledge about the exact underlying network. In this paper, we present UNITE: a novel estimator that relax this assumption and can identify GATE while only relying on knowledge of the superset of neighbors for any subject in the graph. Through theoretical analysis and extensive experiments, we show that the proposed approach performs better in comparison to standard estimators.",
+      "primary_venue": "aistats",
+      "acceptable_venues": ["aistats", "icml", "uai", "neurips"],
+      "source": "https://proceedings.mlr.press/v238/shankar24a.html",
+      "authors": [
+        "Shiv Shankar",
+        "Ritwik Sinha",
+        "Yash Chandak",
+        "Saayan Mitra",
+        "Madalina Fiterau"
+      ],
+      "publication": "PMLR 238, 2024",
+      "license": "CC-BY-4.0",
+      "abstract_sha256": "73a1028dd82372dae0cd36a4a0dbc7ee9047e7243ae921fbd42501106515b73e",
+      "acceptable_venue_sources": {
+        "aistats": "https://github.com/aistats/aistats2024/blob/gh-pages/call-for-papers.md",
+        "icml": "https://icml.cc/Conferences/2024/CallForPapers",
+        "uai": "https://www.auai.org/uai2024/call_for_papers",
+        "neurips": "https://neurips.cc/Conferences/2024/CallForPapers"
+      }
+    },
+    {
+      "id": "an24a",
+      "language": "en",
+      "year": 2024,
+      "title": "Convergence Behavior of an Adversarial Weak Supervision Method",
+      "abstract": "Labeling data via rules-of-thumb and minimal label supervision is central to Weak Supervision, a paradigm subsuming subareas of machine learning such as crowdsourced learning and semi-supervised ensemble learning. By using this labeled data to train modern machine learning methods, the cost of acquiring large amounts of hand labeled data can be ameliorated. Approaches to combining the rules-of-thumb falls into two camps, reflecting different ideologies of statistical estimation. The most common approach, exemplified by the Dawid-Skene model, is based on probabilistic modeling. The other, developed in the work of Balsubramani-Freund and others, is adversarial and game-theoretic. We provide a variety of statistical results for the adversarial approach under log-loss: we characterize the form of the solution, relate it to logistic regression, demonstrate consistency, and give rates of convergence. On the other hand, we find that probabilistic approaches for the same model class can fail to be consistent. Experimental results are provided to corroborate the theoretical results.",
+      "primary_venue": "uai",
+      "acceptable_venues": ["uai", "icml", "aistats", "neurips"],
+      "source": "https://proceedings.mlr.press/v244/an24a.html",
+      "authors": ["Steven An", "Sanjoy Dasgupta"],
+      "publication": "PMLR 244, 2024",
+      "license": "CC-BY-4.0",
+      "abstract_sha256": "dba4aaeec839843cf89e2bad4106b39222023faa85142d4aac478f7d369e51cf",
+      "acceptable_venue_sources": {
+        "uai": "https://www.auai.org/uai2024/call_for_papers",
+        "icml": "https://icml.cc/Conferences/2024/CallForPapers",
+        "aistats": "https://github.com/aistats/aistats2024/blob/gh-pages/call-for-papers.md",
+        "neurips": "https://neurips.cc/Conferences/2024/CallForPapers"
+      }
+    },
+    {
+      "id": "anderka24a",
+      "language": "en",
+      "year": 2024,
+      "title": "Iterated INLA for State and Parameter Estimation in Nonlinear Dynamical Systems",
+      "abstract": "Data assimilation (DA) methods use priors arising from differential equations to robustly interpolate and extrapolate data. Popular techniques such as ensemble methods that handle high-dimensional, nonlinear PDE priors focus mostly on state estimation, however can have difficulty learning the parameters accurately. On the other hand, machine learning based approaches can naturally learn the state and parameters, but their applicability can be limited, or produce uncertainties that are hard to interpret. Inspired by the Integrated Nested Laplace Approximation (INLA) method in spatial statistics, we propose an alternative approach to DA based on iteratively linearising the dynamical model. This produces a Gaussian Markov random field at each iteration, enabling one to use INLA to infer the state and parameters. Our approach can be used for arbitrary nonlinear systems, while retaining interpretability, and is furthermore demonstrated to outperform existing methods on the DA task. By providing a more nuanced approach to handling nonlinear PDE priors, our methodology offers improved accuracy and robustness in predictions, especially where data sparsity is prevalent.",
+      "primary_venue": "uai",
+      "acceptable_venues": ["uai", "icml", "aistats", "neurips"],
+      "source": "https://proceedings.mlr.press/v244/anderka24a.html",
+      "authors": ["Rafael Anderka", "Marc Peter Deisenroth", "So Takao"],
+      "publication": "PMLR 244, 2024",
+      "license": "CC-BY-4.0",
+      "abstract_sha256": "f74d7232d89c85dd84c1abc938a89af16844f0968b91ca90506e151127ae17ee",
+      "acceptable_venue_sources": {
+        "uai": "https://www.auai.org/uai2024/call_for_papers",
+        "icml": "https://icml.cc/Conferences/2024/CallForPapers",
+        "aistats": "https://github.com/aistats/aistats2024/blob/gh-pages/call-for-papers.md",
+        "neurips": "https://neurips.cc/Conferences/2024/CallForPapers"
+      }
+    },
+    {
+      "id": "ao24a",
+      "language": "en",
+      "year": 2024,
+      "title": "CSS: Contrastive Semantic Similarities for Uncertainty Quantification of LLMs",
+      "abstract": "Despite the impressive capability of large language models (LLMs), knowing when to trust their generations remains an open challenge. The recent literature on uncertainty quantification of natural language generation (NLG) utilizes a conventional natural language inference (NLI) classifier to measure the semantic dispersion of LLMs responses. These studies employ logits of NLI classifier for semantic clustering to estimate uncertainty. However, logits represent the probability of the predicted class and barely contain feature information for potential clustering. Alternatively, CLIP (Contrastive Language{–}Image Pre-training) performs impressively in extracting image-text pair features and measuring their similarity. To extend its usability, we propose Contrastive Semantic Similarity, the CLIP-based feature extraction module to obtain similarity features for measuring uncertainty for text pairs. We apply this method to selective NLG, which detects and rejects unreliable generations for better trustworthiness of LLMs. We conduct extensive experiments with three LLMs on several benchmark question-answering datasets with comprehensive evaluation metrics. Results show that our proposed method performs better in estimating reliable responses of LLMs than comparable baselines.",
+      "primary_venue": "uai",
+      "acceptable_venues": ["uai", "icml", "aistats", "neurips"],
+      "source": "https://proceedings.mlr.press/v244/ao24a.html",
+      "authors": ["Shuang Ao", "Stefan Rueger", "Advaith Siddharthan"],
+      "publication": "PMLR 244, 2024",
+      "license": "CC-BY-4.0",
+      "abstract_sha256": "f4c2181820129a10292910206ce77c28f5b9b13d99f6aba28376009466daccae",
+      "acceptable_venue_sources": {
+        "uai": "https://www.auai.org/uai2024/call_for_papers",
+        "icml": "https://icml.cc/Conferences/2024/CallForPapers",
+        "aistats": "https://github.com/aistats/aistats2024/blob/gh-pages/call-for-papers.md",
+        "neurips": "https://neurips.cc/Conferences/2024/CallForPapers"
+      }
+    },
+    {
+      "id": "addanki24a",
+      "language": "en",
+      "year": 2024,
+      "title": "Limits of Approximating the Median Treatment Effect",
+      "abstract": "Average Treatment Effect (ATE) estimation is a well-studied problem in causal inference. However, it does not necessarily capture the heterogeneity in the data, and several approaches have been proposed to tackle the issue, including estimating the Quantile Treatment Effects. In the finite population setting containing $n$ individuals, with treatment and control values denoted by the potential outcome vectors $\\mathbf{a}, \\mathbf{b}$, much of the prior work focused on estimating median$(\\mathbf{a}) -$ median$(\\mathbf{b})$, as it is easier to estimate than the desired estimand of median$(\\mathbf{a-b})$, called the Median Treatment Effect (MTE). In this work, we argue that MTE is not estimable and detail a novel notion of approximation that relies on the sorted order of the values in $\\mathbf{a-b}$: we approximate the median by a value whose quantiles in $\\mathbf{a-b}$ are close to $0.5$ (median). Next, we identify a quantity called \\emph{variability} that exactly captures the complexity of MTE estimation. Using this, we establish that when potential outcomes take values in the set $\\{0,1,\\ldots,k-1\\}$ the worst-case (over inputs $\\mathbf{a,b}$) optimal (over algorithms) approximation factor of the MTE is $\\frac{1}{2}\\cdot \\frac{2k-3}{2k-1}$. Further, by drawing connections to the notions of instance-optimality studied in theoretical computer science, we show that \\emph{every} algorithm for estimating the MTE obtains an approximation error that is no better than the error of an algorithm that computes variability, on roughly a per input basis: hence, variability leads to an almost instance optimal approximation algorithm for estimating the MTE. Finally, we provide a simple linear time algorithm for computing the variability exactly. Unlike much prior works, a particular highlight of our work is that we make no assumptions about how the potential outcome vectors are generated or how they are correlated, except that the potential outcome values are $k$-ary, i.e., take one of $k$ discrete values $\\{0,1,\\ldots,k-1\\}$.",
+      "primary_venue": "colt",
+      "acceptable_venues": ["colt", "icml", "stoc", "focs"],
+      "source": "https://proceedings.mlr.press/v247/addanki24a.html",
+      "authors": ["Raghavendra Addanki", "Siddharth Bhandari"],
+      "publication": "PMLR 247, 2024",
+      "license": "CC-BY-4.0",
+      "abstract_sha256": "ab1da0e2ed1bd2a338a8cfe4f6ba3092b6386d293016efa8a5b5ddc5ca5d75c0",
+      "acceptable_venue_sources": {
+        "colt": "https://www.learningtheory.org/colt2024/cfp.html",
+        "icml": "https://icml.cc/Conferences/2024/CallForPapers",
+        "stoc": "https://acm-stoc.org/stoc2024/",
+        "focs": "https://focs.computer.org/2024/call-for-papers/"
+      }
+    },
+    {
+      "id": "aden-ali24a",
+      "language": "en",
+      "year": 2024,
+      "title": "Majority-of-Three: The Simplest Optimal Learner?",
+      "abstract": "Developing an optimal PAC learning algorithm in the realizable setting, where empirical risk minimization (ERM) is suboptimal, was a major open problem in learning theory for decades. The problem was finally resolved by Hanneke a few years ago. Unfortunately, Hanneke’s algorithm is quite complex as it returns the majority vote of many ERM classifiers that are trained on carefully selected subsets of the data. It is thus a natural goal to determine the simplest algorithm that is optimal. In this work we study the arguably simplest algorithm that could be optimal: returning the majority vote of three ERM classifiers. We show that this algorithm achieves the optimal in-expectation bound on its error which is provably unattainable by a single ERM classifier. Furthermore, we prove a near-optimal high-probability bound on this algorithm’s error. We conjecture that a better analysis will prove that this algorithm is in fact optimal in the high-probability regime.",
+      "primary_venue": "colt",
+      "acceptable_venues": ["colt", "icml", "stoc", "focs"],
+      "source": "https://proceedings.mlr.press/v247/aden-ali24a.html",
+      "authors": [
+        "Ishaq Aden-Ali",
+        "Mikael Møller Høandgsgaard",
+        "Kasper Green Larsen",
+        "Nikita Zhivotovskiy"
+      ],
+      "publication": "PMLR 247, 2024",
+      "license": "CC-BY-4.0",
+      "abstract_sha256": "3fe6bfa9f7d7ea7e32a396ac81b903258737ad9b24e14f656da17fee0b42b09b",
+      "acceptable_venue_sources": {
+        "colt": "https://www.learningtheory.org/colt2024/cfp.html",
+        "icml": "https://icml.cc/Conferences/2024/CallForPapers",
+        "stoc": "https://acm-stoc.org/stoc2024/",
+        "focs": "https://focs.computer.org/2024/call-for-papers/"
+      }
+    },
+    {
+      "id": "aliakbarpour24a",
+      "language": "en",
+      "year": 2024,
+      "title": "Metalearning with Very Few Samples Per Task",
+      "abstract": "Metalearning and multitask learning are two frameworks for solving a group of related learning tasks more efficiently than we could hope to solve each of the individual tasks on their own. In multitask learning, we are given a fixed set of related learning tasks and need to output one accurate model per task, whereas in metalearning we are given tasks that are drawn i.i.d. from a metadistribution and need to output some common information that can be easily specialized to new, previously unseen tasks from the metadistribution. In this work, we consider a binary classification setting where tasks are related by a shared representation, that is, every task $P$ of interest can be solved by a classifier of the form $f_{P} \\circ h$ where $h \\in \\mathcal{H}$ is a map from features to some representation space that is shared across tasks, and $f_{P} \\in \\mathcal{F}$ is a task-specific classifier from the representation space to labels. The main question we ask in this work is how much data do we need to metalearn a good representation? Here, the amount of data is measured in terms of both the number of tasks $t$ that we need to see and the number of samples $n$ per task. We focus on the regime where the number of samples per task is extremely small. Our main result shows that, in a distribution-free setting where the feature vectors are in $\\mathbb{R}^d$, the representation is a linear map from $\\mathbb{R}^d \\to \\mathbb{R}^k$, and the task-specific classifiers are halfspaces in $\\mathbb{R}^k$, we can metalearn a representation with error $\\varepsilon$ using just $n = k+2$ samples per task, and $d \\cdot (1/\\varepsilon)^{O(k)}$ tasks. Learning with so few samples per task is remarkable because metalearning would be impossible with $k+1$ samples per task, and because we cannot even hope to learn an accurate task-specific classifier with just $k+2$ samples per task. To obtain this result, we develop a sample-and-task-complexity theory for distribution-free metalearning and multitask learning, which identifies what properties of $\\mathcal{F}$ and $\\mathcal{H}$ make metalearning possible with few samples per task. Our theory also yields a simple characterization of distribution-free multitask learning. Finally, we give sample-efficient reductions between metalearning and multitask learning, which, when combined with our characterization of multitask learning, give a characterization of metalearning in certain parameter regimes.",
+      "primary_venue": "colt",
+      "acceptable_venues": ["colt", "icml", "stoc", "focs"],
+      "source": "https://proceedings.mlr.press/v247/aliakbarpour24a.html",
+      "authors": [
+        "Maryam Aliakbarpour",
+        "Konstantina Bairaktari",
+        "Gavin Brown",
+        "Adam Smith",
+        "Nathan Srebro",
+        "Jonathan Ullman"
+      ],
+      "publication": "PMLR 247, 2024",
+      "license": "CC-BY-4.0",
+      "abstract_sha256": "ff533ebd3734198877243fbc6b4e083266093ebe9ee0de6959768a4f0de0706c",
+      "acceptable_venue_sources": {
+        "colt": "https://www.learningtheory.org/colt2024/cfp.html",
+        "icml": "https://icml.cc/Conferences/2024/CallForPapers",
+        "stoc": "https://acm-stoc.org/stoc2024/",
+        "focs": "https://focs.computer.org/2024/call-for-papers/"
+      }
+    },
+    {
+      "id": "dev-2025-ipsj-journal-01",
+      "language": "ja",
+      "year": 2025,
+      "title": "チャルディーニの法則を用いた標的型メールがAIに及ぼす影響に関する調査",
+      "abstract": "ソーシャルエンジニアリング攻撃の被害は依然増加傾向にある．近年では，AIエージェントが多くの業務を担うようになり，ソーシャルエンジニアリング攻撃の対象が人間からAIエージェントに拡大する危険性がある．AIエージェントには使用者が使いやすいように，使用者の性格特性に合わせた性格特性チューニングが施されることが考えられる．そのため，AIエージェントも人間の有するような「性格」を持つことになる．西川らの既存研究では，「標的型メールの文面に用いられるチャルディーニの法則」と「個人の性格因子および行動特性」には関係があり，人の性格特性によって効果的なチャルディーニの法則が異なることが確認されている．同様に，チャルディーニの法則を用いた標的型メール攻撃に対するAIエージェントの反応も，その性格特性によって異なる可能性があると考えられる．本論文は，性格特性チューニングを施した大規模言語モデル（LLM）をターゲットとし，性格特性の違いによってチャルディーニの法則が含まれたフィッシングメールを提示した際の反応の違いを調査する．これにより，チャルディーニの法則に対して，同じ性格特性を有する人間とAIエージェント間でどのような反応の違いがあるのかを明らかにする．",
+      "primary_venue": "ipsj-journal",
+      "acceptable_venues": ["css", "usenix-security", "ipsj-journal"],
+      "source": "https://ipsj.ixsq.nii.ac.jp/records/2006313",
+      "publication": "情報処理学会論文誌",
+      "abstract_sha256": "93ccf575f1ee5afce7d5e8de750d667e8668b413b6e5c6fbf1dbb32e036369bd",
+      "acceptable_venue_sources": {
+        "css": "https://www.iwsec.org/css/2024/cfp.html",
+        "usenix-security": "https://www.usenix.org/conference/usenixsecurity25/call-for-papers",
+        "ipsj-journal": "https://www.ipsj.or.jp/journal/index.html"
+      }
+    },
+    {
+      "id": "dev-2025-ipsj-journal-02",
+      "language": "ja",
+      "year": 2025,
+      "title": "Webページ表示後のリアルタイム検出によるフィッシング対策の強化",
+      "abstract": "フィッシング詐欺は増加傾向にあり，インターネット上の重要な課題となっている．フィッシング詐欺への対策は行われているが，フィッシング詐欺が増加傾向であることを考慮すると現状のフィッシング対策は十分だとはいいがたい．既存対策の1つであるWebブロックリストではすべてのフィッシングページに対応できず，アクセスしたユーザ自身による判定も各ユーザの能力の違いから有効とはいえない．そこで本研究では，Webブラウザ内で動作するフィッシング検出システムを提案する．本システムはユーザのWebブラウザでフィッシングページが表示された後に検出処理を行うものであり，Webブロックリストで防げなかったフィッシングページを検出可能である．フィッシングページ表示後にはユーザのみが行っていたフィッシングページ判定に，本システムが追加されることでフィッシング対策を強化することができる．本研究ではこのシステムをWebブラウザ拡張機能として実装するとともに，検出率と検出時間について評価を行った．",
+      "primary_venue": "ipsj-journal",
+      "acceptable_venues": ["css", "usenix-security", "ipsj-journal"],
+      "source": "https://ipsj.ixsq.nii.ac.jp/records/2004343",
+      "publication": "情報処理学会論文誌",
+      "abstract_sha256": "704c50a5f211cd8bc78bf24fbafbdad3732b8401fb1aab0af10b51858e989126",
+      "acceptable_venue_sources": {
+        "css": "https://www.iwsec.org/css/2024/cfp.html",
+        "usenix-security": "https://www.usenix.org/conference/usenixsecurity25/call-for-papers",
+        "ipsj-journal": "https://www.ipsj.or.jp/journal/index.html"
+      }
+    },
+    {
+      "id": "dev-2025-ipsj-journal-03",
+      "language": "ja",
+      "year": 2025,
+      "title": "フラフープ型ゲームコントローラ“Connected Hoop”の提案",
+      "abstract": "本稿では，新たなゲーム体験を提供するためのデバイスであるフラフープ型ゲームコントローラ“Connected Hoop”を提案する．このデバイスは，一般的なフラフープと同じ形状を持ち，同じ操作性を保持しながらも，内蔵されたセンシングユニットにより「回す」「転がす」「揺らす」などの状態をデバイス単体で識別することが可能である．さらにこのデバイスは，一般的なBluetoothゲームコントローラとしてのインタフェースを有し，フラフープの状態をボタンの押し込みやスティックの傾きとしてプラットフォームに伝達できる．本稿では，Connected Hoopの利用面と開発面での特徴や利便性について述べるとともに，このデバイスを活用したゲームが提供しうる体験について報告する．",
+      "primary_venue": "ipsj-journal",
+      "acceptable_venues": ["interaction", "chi", "uist", "ipsj-journal"],
+      "source": "https://ipsj.ixsq.nii.ac.jp/records/2006333",
+      "publication": "情報処理学会論文誌",
+      "abstract_sha256": "809393bbd5e5b039907f5a5ad5328d4a707fe614d7aa74132041f2a5490fa099",
+      "acceptable_venue_sources": {
+        "interaction": "https://www.interaction-ipsj.org/2024/submissions/",
+        "chi": "https://chi2024.acm.org/for-authors/papers/",
+        "uist": "https://uist.acm.org/2024/cfp/",
+        "ipsj-journal": "https://www.ipsj.or.jp/journal/index.html"
+      }
+    },
+    {
+      "id": "dev-2025-ipsj-journal-04",
+      "language": "ja",
+      "year": 2025,
+      "title": "物体振動とLED照射点滅を用いた実物体への視覚効果適用システム：Tangible VFX",
+      "abstract": "本研究では，実物体振動とLED照射点滅を組み合わせることで，映像由来の視覚効果であるブラー，グリッチ，色ズレの実現手法を提案する．従来のプロジェクションマッピングや先行研究・作品では，視覚効果が光の投射や回転運動に制限され，2次元的なピクセル移動をともなう表現が困難であった．それに対し我々は，実物体の振動とLED照射点滅を活用することで，非装着型で視認可能な映像由来の視覚効果を実現する手法Tangible VFXを開発した．本稿では，提案手法のアクチュエーション技術および視覚効果生成手法について述べる．さらに，過去に行った展示から得られた評価を基に，本研究の芸術，エンタテインメント，広告分野への応用可能性を考察した．",
+      "primary_venue": "ipsj-journal",
+      "acceptable_venues": ["interaction", "chi", "uist", "ipsj-journal"],
+      "source": "https://ipsj.ixsq.nii.ac.jp/records/2006329",
+      "publication": "情報処理学会論文誌",
+      "abstract_sha256": "23d10378ef75e6adde2c4b40a71741127e4cbddc42e35ff0dc0a62ea20944d63",
+      "acceptable_venue_sources": {
+        "interaction": "https://www.interaction-ipsj.org/2024/submissions/",
+        "chi": "https://chi2024.acm.org/for-authors/papers/",
+        "uist": "https://uist.acm.org/2024/cfp/",
+        "ipsj-journal": "https://www.ipsj.or.jp/journal/index.html"
+      }
+    },
+    {
+      "id": "heldout-2026-ipsj-journal-01",
+      "language": "ja",
+      "year": 2026,
+      "title": "大規模言語モデルを用いたクエリ拡張と文書拡張による過去会話検索",
+      "abstract": "本研究では，人間の会話を支援するために，現在の発話途中の内容から会話ログを検索することで，会話中の文脈理解を支援する手法を提案する．会話中の過去会話検索の課題として，発話途中で入力が未完成なため不完全なクエリ，および過去発話の文脈不足に起因する検索精度の低下という2つの課題がある．我々はそれらの課題に対して，(1)発話の続きを大規模言語モデルにより予測してクエリを拡張する「クエリ拡張」，(2)検索対象の発話文に前後の文脈を考慮し大規模言語モデルにより生成した補足情報を付加する「文書拡張」の2手法を組み合わせて対処する．NTCIR-9 SpokenDocデータセットを用いた評価実験により，未完成な発話文を用いた検索性能を評価した．提案手法の「クエリ拡張」では，統計的有意に検索精度が向上することが分かったが，「文書拡張」では検索精度向上が見られなかった．",
+      "primary_venue": "ipsj-tod",
+      "acceptable_venues": ["ipsj-sigfi", "sigmod", "vldb", "ipsj-journal", "ipsj-tod"],
+      "source": "https://ipsj.ixsq.nii.ac.jp/records/2006873",
+      "publication": "情報処理学会論文誌データベース（TOD）",
+      "abstract_sha256": "7d75d5ea11dd9938b33d938027392c8c3e91593292e47532ed326efe17f72e14",
+      "acceptable_venue_sources": {
+        "ipsj-sigfi": "https://www.ipsj.or.jp/kenkyukai/bunya2026.html",
+        "sigmod": "https://2024.sigmod.org/calls_papers_sigmod_research.shtml",
+        "vldb": "https://www.vldb.org/2024/?call-for-research-track",
+        "ipsj-journal": "https://www.ipsj.or.jp/journal/index.html",
+        "ipsj-tod": "https://www.ipsj.or.jp/katsudou/sig/sighp/dbs/"
+      },
+      "publication_source": "https://ipsj.ixsq.nii.ac.jp/records/2006873"
+    },
+    {
+      "id": "heldout-2026-ipsj-journal-02",
+      "language": "ja",
+      "year": 2026,
+      "title": "発言に含まれる単語の抽象度を用いた協調的議論における知識収束の定量化および評価",
+      "abstract": "本研究では，発言に含まれる単語の抽象度を用いて，協調的議論における知識収束を定量化する手法を提案する．協調的議論では，個々の参加者が持つ具体的な意見を，全員が合意できる普遍的な意見へと抽象化する知識収束と呼ばれるプロセスが生じる．しかし，既存の知識収束の分析手法は質的な分析に基づいており，具体化や抽象化の程度が十分に定量化されていなかった．そこで，本研究では，発言に含まれる単語の抽象度を定量化する手法を提案した．評価実験では，6グループを対象として協調的議論を実施し，知識収束の過程と抽象度の変化とを比較した．その結果，知識収束の過程で生じる具体化や抽象化は，抽象度の移動平均の変化として現れることが分かった．本研究は，知識収束に関する質的研究と量的研究を架橋するものであり，抽象度を軸とした新たな知識収束の分析手法への展開が期待される．",
+      "primary_venue": "ipsj-journal",
+      "acceptable_venues": ["interaction", "chi", "uist", "ipsj-journal"],
+      "source": "https://ipsj.ixsq.nii.ac.jp/records/2006752",
+      "publication": "情報処理学会論文誌",
+      "abstract_sha256": "1a4659dfe8c67fbf70aefef45622b11cea562c7f9540397584ecbf2f2b4b4343",
+      "acceptable_venue_sources": {
+        "interaction": "https://www.interaction-ipsj.org/2024/submissions/",
+        "chi": "https://chi2024.acm.org/for-authors/papers/",
+        "uist": "https://uist.acm.org/2024/cfp/",
+        "ipsj-journal": "https://www.ipsj.or.jp/journal/index.html"
+      }
+    },
+    {
+      "id": "heldout-2026-ipsj-journal-03",
+      "language": "ja",
+      "year": 2026,
+      "title": "Javaにおける一文字変数の型とスコープに着目した利用実態調査",
+      "abstract": "プログラム理解において，変数名は保守性に大きく影響するため，一般的には複数文字の名前が推奨される．一方で，一文字変数もJavaソースコードの約9%を占めるなど無視できない存在である．変数名の利用や命名において型やスコープを考慮することの重要性が示されているが，一文字変数については狭いスコープで使うという推奨にとどまっており，型やスコープごとに異なるであろう利用実態は調査されていない．本論文では，Javaソースコードにおける一文字変数の利用実態を，型とスコープ，そして使用されるアルファベットに着目して定量的に分析する．分析の結果，一文字変数の使用割合，使用されるアルファベット，そしてスコープの広さが，いずれも変数の型によって異なることを明らかにした．これらの結果は，一文字変数の利用においては型に基づいたアルファベット選択の慣習ならびにスコープの文脈を考慮する必要性を示している．",
+      "primary_venue": "ipsj-journal",
+      "acceptable_venues": ["ipsj-sigpro", "icse", "pldi", "ipsj-journal"],
+      "source": "https://ipsj.ixsq.nii.ac.jp/records/2006757",
+      "publication": "情報処理学会論文誌",
+      "abstract_sha256": "fda0659aa878ed06e9fe51e9ab3c144ce637939cad51480a0577f9e422416608",
+      "acceptable_venue_sources": {
+        "ipsj-sigpro": "https://sigpro.ipsj.or.jp/",
+        "icse": "https://conf.researchr.org/track/icse-2024/icse-2024-research-track",
+        "pldi": "https://pldi24.sigplan.org/track/pldi-2024-papers",
+        "ipsj-journal": "https://www.ipsj.or.jp/journal/index.html"
+      }
+    },
+    {
+      "id": "heldout-2026-ipsj-journal-04",
+      "language": "ja",
+      "year": 2026,
+      "title": "対話の雰囲気を正確に伝える映像要約技術",
+      "abstract": "映像記録機器が安価で容易に入手できるようになり，またオンライン会議を利用することが一般的になったため，対話内容の映像記録が広く行われるようになった．この映像は対話の正確な記録である反面，視聴に実際の対話と同等の時間がかかるため，対話内容を効率的に把握する対話映像の要約手法が求められている．これまでの対話要約研究では，対話の結論をはじめとする内容の伝達のみが評価の対象であった．しかし，対話を理解するうえでは，結論だけでなく，結論に至るまでの議論の流れや参加者の発話が与える対話の印象（雰囲気）も重要である．そこで本研究では，対話の雰囲気を伝達できる映像要約技術を提案し，その有効性を検証した．被験者実験により，雰囲気の伝達にはテキストではなく映像を用いた要約が有効であること，従来の映像要約技術では削除される質問や応答を要約に含めることで，雰囲気の変化を抑えた映像要約を生成できることを確認した．",
+      "primary_venue": "ipsj-journal",
+      "acceptable_venues": ["interaction", "chi", "uist", "ipsj-journal"],
+      "source": "https://ipsj.ixsq.nii.ac.jp/records/2006750",
+      "publication": "情報処理学会論文誌",
+      "abstract_sha256": "f958c66c6bf5e7ffc40f5625ee1cc82c840af39e1c4bf72d7f77cac212ddde37",
+      "acceptable_venue_sources": {
+        "interaction": "https://www.interaction-ipsj.org/2024/submissions/",
+        "chi": "https://chi2024.acm.org/for-authors/papers/",
+        "uist": "https://uist.acm.org/2024/cfp/",
+        "ipsj-journal": "https://www.ipsj.or.jp/journal/index.html"
+      }
+    },
+    {
+      "id": "nsdi25-pred",
+      "language": "en",
+      "year": 2025,
+      "title": "PRED: Performance-oriented Random Early Detection for Consistently Stable Performance in Datacenters",
+      "abstract": "A switch queue management mechanism can perform poorly when its thresholds remain unchanged while data center workloads vary. Learning-based tuning can react to traffic, but unpredictable behavior makes its worst-case latency unsuitable for deployment. PRED adjusts queue management settings dynamically using two loosely coupled controllers. One controller regulates flow concurrency and the other adjusts queue lengths, separating their responsibilities to maintain stable behavior as demand changes. Hardware testbeds and larger simulations evaluate throughput, queue occupancy and the time required to complete flows. The study reports shorter queues and faster completion than fixed thresholds, and improved worst-case completion time over an earlier learning-based controller. The contribution concerns reliable traffic control in deployed data center networking equipment.",
+      "abstract_kind": "summary of author abstract",
+      "abstract_sha256": "d976053b2f5da1badfb432add9474f063f94c143b913906b9640c68ab9a5cfeb",
+      "primary_venue": "nsdi",
+      "acceptable_venues": ["nsdi", "sigcomm"],
+      "source": "https://www.usenix.org/conference/nsdi25/presentation/du",
+      "authors": [
+        "Xinle Du",
+        "Tong Li",
+        "Guangmeng Zhou",
+        "Zhuotao Liu",
+        "Hanlin Huang",
+        "Xiangyu Gao",
+        "Mowei Wang",
+        "Kun Tan",
+        "Ke Xu"
+      ],
+      "publication": "NSDI 2025",
+      "acceptable_venue_sources": {
+        "nsdi": "https://www.usenix.org/conference/nsdi25/call-for-papers",
+        "sigcomm": "https://conferences.sigcomm.org/sigcomm/2024/cfp/"
+      }
+    },
+    {
+      "id": "osdi25-nanoflow",
+      "language": "en",
+      "year": 2025,
+      "title": "NanoFlow: Towards Optimal Large Language Model Serving Throughput",
+      "abstract": "Serving large language models at high request volumes requires coordinated use of GPU computation, memory and communication bandwidth. An analysis of common workloads finds that overall execution is limited by computation even though attention includes memory-intensive work. Existing serving software leaves resources unused by scheduling these heterogeneous operations sequentially. NanoFlow introduces a serving runtime that divides work into small batches and overlaps operations inside each device. It automatically chooses batch sizes, execution order and resource allocations while accounting for interference between overlapping tasks. Evaluations on several language models and realistic request workloads compare end-to-end throughput with existing serving engines and an estimated hardware optimum. The reported improvement comes from runtime scheduling and device resource utilization rather than changes to the language model itself.",
+      "abstract_kind": "summary of author abstract",
+      "abstract_sha256": "4620442811c8a576ab35dffecbc827c22ecc1fb1d156bc073affad844530f85a",
+      "primary_venue": "osdi",
+      "acceptable_venues": ["osdi", "nsdi", "sc"],
+      "source": "https://www.usenix.org/conference/osdi25/presentation/zhu-kan",
+      "authors": [
+        "Kan Zhu",
+        "Yufei Gao",
+        "Yilong Zhao",
+        "Liangyu Zhao",
+        "Gefei Zuo",
+        "Yile Gu",
+        "Dedong Xie",
+        "Tian Tang",
+        "Qinyu Xu",
+        "Zihao Ye",
+        "Keisuke Kamahori",
+        "Chien-Yu Lin",
+        "Ziren Wang",
+        "Stephanie Wang",
+        "Arvind Krishnamurthy",
+        "Baris Kasikci"
+      ],
+      "publication": "OSDI 2025",
+      "acceptable_venue_sources": {
+        "osdi": "https://www.usenix.org/conference/osdi25/call-for-papers",
+        "nsdi": "https://www.usenix.org/conference/nsdi25/call-for-papers",
+        "sc": "https://sc24.supercomputing.org/program/papers/"
+      }
+    }
+  ],
+  "scope_text_kind": "Independent summaries of official call topics; not paper-derived profiles."
+}

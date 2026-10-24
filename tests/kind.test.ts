@@ -169,9 +169,10 @@ describe("kind_of", () => {
     },
   );
 
-  it("mapping is total and pure", () => {
+  it("mapping is total and agrees with the spec", () => {
     for (const raw of [...UPSTREAM_TYPES, "???", "PAPER"]) {
-      expect(kindOf(raw)).toBe(kindOf(raw));
+      const expected = new Map(SPEC_TABLE).get(raw.toLowerCase()) ?? "other";
+      expect(kindOf(raw), raw).toBe(expected);
       expect(KINDS_SET.has(kindOf(raw))).toBe(true);
     }
   });

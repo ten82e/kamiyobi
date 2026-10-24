@@ -10,12 +10,15 @@ import { fileURLToPath } from "node:url";
 import { isDeepStrictEqual, parseArgs as parseNodeArgs } from "node:util";
 import { dump as dumpYaml, load as loadYaml } from "js-yaml";
 import { generateCurated } from "../scripts/generate-curated.ts";
+import { recommendationRetrievalStatus } from "../site/recommendation-core.ts";
 import { booleanValue, normalizeShortEquals, positiveIntegerValue, stringValue } from "./args.ts";
 import { buildAll, collectPublishProvenance, type HealthSourceMetadata, toJson } from "./build.ts";
 import { gcEvidence, verifyEvidence, writeEvidenceIndex } from "./evidence.ts";
+import { retainPublishedHistory } from "./history.ts";
 import {
   applyAliases,
   applyOverrides,
+  applyVenueScopes,
   classify,
   deadlineSlotKey,
   dedupDeadlinesAfterRollforward,
@@ -80,7 +83,7 @@ export function parseNow(text: string | null | undefined): Date {
     const d = Number(m[3]);
     const chk = new Date(Date.UTC(y, mo - 1, d));
     if (chk.getUTCFullYear() !== y || chk.getUTCMonth() !== mo - 1 || chk.getUTCDate() !== d) {
-      throw new Error(`unparsable --now: ${JSON.stringify(text)}`);
+      throw new UsageError(`unparsable --now: ${JSON.stringify(text)}`);
     }
   }
   // Date は時刻あり・offset 無しをローカル時刻にし、T24:00:00Z を翌日へ繰り上げる。
@@ -92,15 +95,19 @@ export function parseNow(text: string | null | undefined): Date {
     const second = Number(time[3] ?? "0");
     const zone = time[4] ?? "";
     if (hour > 23 || minute > 59 || second > 59 || !/^[+-]\d{2}:?\d{2}$/.test(zone)) {
-      throw new Error(`unparsable --now: ${JSON.stringify(text)}`);
+      throw new UsageError(`unparsable --now: ${JSON.stringify(text)}`);
     }
   }
   const dt = new Date(normalized);
   if (Number.isNaN(dt.getTime())) {
-    throw new Error(`unparsable --now: ${JSON.stringify(text)}`);
+    throw new UsageError(`unparsable --now: ${JSON.stringify(text)}`);
   }
   return dt;
 }
+
+/* 利用者の打ち間違い（引数の値）を、内部の不具合と区別する。トップレベルはこれだけ
+ * メッセージで短く伝え、それ以外はスタックごと出す（2026-10-24）。 */
+class UsageError extends Error {}
 
 function loadYamlFile(path: string, opts?: { strict?: boolean }): Record<string, unknown> {
   if (!existsSync(path)) return {};
@@ -750,6 +757,8 @@ export interface BuildArgs {
   now: string | null;
   cache: string;
   noEmbeddings?: boolean;
+  historyBaseline?: string;
+  historyReport?: string;
 }
 
 export async function cmdBuild(args: BuildArgs): Promise<number> {
@@ -902,7 +911,14 @@ export async function cmdBuild(args: BuildArgs): Promise<number> {
     // Snapshot keys may carry a collision suffix from an older partial source set.
     // Re-apply configured source identities before overrides address canonical keys. Overrides
     // run only after restoration so a patch cannot manufacture a duplicate placeholder edition.
-    confs = classify(normalizeConfiguredVenueIdentities(restoredMaterial, config), config);
+    confs = classify(
+      mergeSources(
+        [normalizeConfiguredVenueIdentities(restoredMaterial, config)],
+        config,
+        mergeStats,
+      ),
+      config,
+    );
   }
 
   confs = applyOverrides(confs, overrides);
@@ -917,7 +933,34 @@ export async function cmdBuild(args: BuildArgs): Promise<number> {
   // SPEC.md 3.6: roll-forward copies a real edition's deadlines into the
   // estimated one, so the fold runs once more behind it.
   confs = dedupDeadlinesAfterRollforward(confs, config, mergeStats);
+  // The updater supplies a hash-verified actual publication. Direct online builds use
+  // the saved snapshot. Offline builds enforce the same history boundary.
+  let history = { conferences: confs, retained: [] } as ReturnType<typeof retainPublishedHistory>;
+  const historyPath = args.historyBaseline
+    ? resolve(args.historyBaseline)
+    : existsSync(snapshot)
+      ? snapshot
+      : null;
+  if (historyPath && existsSync(historyPath)) {
+    const payload = JSON.parse(readFileSync(historyPath, "utf8"));
+    if (!Array.isArray(payload.conferences) || !payload.conferences.length)
+      throw new Error(`published history baseline is empty or malformed: ${historyPath}`);
+    let published = applyOverrides(conferencesFromJson(payload), overrides);
+    published = applyOverrides(
+      published,
+      resolvePrimaryObservations(primaryObservations, config, published),
+    );
+    history = retainPublishedHistory(confs, published, now);
+    confs = history.conferences;
+  } else if (args.historyBaseline) {
+    throw new Error(`published history baseline is missing: ${historyPath}`);
+  }
+
   confs = select(confs, config);
+  confs = applyVenueScopes(
+    confs,
+    loadYamlFile(join(ROOT, "data", "manual.yaml"), { strict: true }).venue_scopes,
+  );
   if (verificationLedger) confs = applyVerificationLedger(confs, verificationLedger);
 
   const outdir = resolve(args.out);
@@ -976,13 +1019,9 @@ export async function cmdBuild(args: BuildArgs): Promise<number> {
   const recommendationSourceStatus = Object.fromEntries(
     Object.entries(sourceMetadata).map(([source, metadata]) => [
       source,
-      metadata.observationStatus === "fresh"
-        ? "fresh"
-        : metadata.status === "cache-fallback"
-          ? "cache-fallback"
-          : "snapshot-fallback",
+      recommendationRetrievalStatus(metadata as unknown as Record<string, unknown>),
     ]),
-  ) as Record<string, SourceStatus>;
+  );
   const stats = await buildAll(confs, config, outdir, now, {
     noEmbeddings: Boolean(args.noEmbeddings),
     localEmbeddingsOnly: offline,
@@ -1013,6 +1052,21 @@ export async function cmdBuild(args: BuildArgs): Promise<number> {
       identityConflicts: mergeStats.identity_conflicts,
     },
   });
+  if (historyPath && args.historyReport) {
+    const reportPath = resolve(args.historyReport);
+    mkdirSync(dirname(reportPath), { recursive: true });
+    writeFileSync(
+      reportPath,
+      `${JSON.stringify(
+        {
+          baseline_sha256: createHash("sha256").update(readFileSync(historyPath)).digest("hex"),
+          retained: history.retained,
+        },
+        null,
+        2,
+      )}\n`,
+    );
+  }
   // 統合件数は出力に載った会議のぶんだけ数える。
   const byKey = mergeStats.merged_by_key ?? {};
   stats.merged = degraded ? 0 : confs.reduce((n, c) => n + (byKey[c.key] ?? 0), 0);
@@ -1767,6 +1821,8 @@ export interface CliArgs {
   dryRun?: boolean;
   append?: boolean;
   noEmbeddings?: boolean;
+  historyBaseline?: string;
+  historyReport?: string;
   candidates?: string;
   limit?: number;
   data?: string;
@@ -1794,6 +1850,8 @@ export function usage(): string {
     "    --offline             上流や埋め込みモデルを取りに行かず、キャッシュのみ使う",
     "    -n, --now <iso>       基準時刻。例 2026-08-09T00:00:00Z",
     "    --cache <dir>         上流アーカイブのキャッシュ先 (既定: .cache)",
+    "    --history-baseline PATH 公開済みの履歴を比較・保持する JSON",
+    "    --history-report PATH 履歴保持の判断を診断 JSON に保存する",
     "    --no-embeddings       埋め込み (embeddings.json) を生成しない（テスト用・高速化）",
     "  discover 穴場の会議・ジャーナルを自律探索する",
     "    -o, --out <path>      出力 YAML パス（未指定時は標準出力表示）",
@@ -1848,6 +1906,8 @@ export function parseArgs(argv: string[] | null | undefined): CliArgs {
     "min-year": { type: "string", short: "y" },
     offline: { type: "boolean" },
     "no-embeddings": { type: "boolean" },
+    "history-baseline": { type: "string" },
+    "history-report": { type: "string" },
     "dry-run": { type: "boolean", short: "d" },
     append: { type: "boolean", short: "a" },
     candidates: { type: "string", short: "C" },
@@ -1877,6 +1937,15 @@ export function parseArgs(argv: string[] | null | undefined): CliArgs {
     }
   }
   const command = positionals[0];
+
+  /* 0 番目（コマンド）と、reverify・evidence の 1 番目（動作）は使う – それ以外を拔く。 */
+  const 予約 = command === "reverify" || command === "evidence" ? 2 : 1;
+  const 使はぬ位置 = positionals.slice(予約);
+  if (使はぬ位置.length > 0) {
+    process.stderr.write(
+      `warning: ${使はぬ位置.map((p) => JSON.stringify(p)).join("・")} は此のコマンドでは使はれません（無視します）\n`,
+    );
+  }
   const reverifyAction = command === "reverify" ? positionals[1] : undefined;
   const evidenceAction = command === "evidence" ? positionals[1] : undefined;
   const args: CliArgs = {};
@@ -1900,6 +1969,10 @@ export function parseArgs(argv: string[] | null | undefined): CliArgs {
   if (values.config !== undefined) args.config = stringValue(values.config) ?? "config.yaml";
   if (values.cache !== undefined) args.cache = stringValue(values.cache) ?? ".cache";
   if (values.now !== undefined) args.now = stringValue(values.now) ?? null;
+  if (values["history-baseline"] !== undefined)
+    args.historyBaseline = stringValue(values["history-baseline"]) ?? undefined;
+  if (values["history-report"] !== undefined)
+    args.historyReport = stringValue(values["history-report"]) ?? undefined;
   if (values.categories !== undefined) args.categories = stringValue(values.categories) ?? null;
   if (values["min-year"] !== undefined) {
     args.minYear = positiveIntegerValue(stringValue(values["min-year"]), DEFAULT_MIN_YEAR);
@@ -1961,6 +2034,8 @@ export async function main(
       now: args.now ?? null,
       cache: args.cache ?? ".cache",
       noEmbeddings: Boolean(args.noEmbeddings),
+      historyBaseline: args.historyBaseline,
+      historyReport: args.historyReport,
     });
   }
   if (args.command === "reverify") {
@@ -2013,7 +2088,9 @@ if (isMain) {
       process.exitCode = code;
     },
     (err) => {
-      console.error(err);
+      /* 引数の誤りは短く（スタックは打ち直す人の役に立たない）。内部の不具合はスタックごと。 */
+      if (err instanceof UsageError) console.error(err.message);
+      else console.error(err);
       process.exitCode = 1;
     },
   );

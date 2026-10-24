@@ -1,0 +1,115 @@
+{
+  "description": "Previously unevaluated papers. English abstracts are independent summaries of the official abstracts; Japanese titles and abstracts are translations of the same content. Labels and Top-5 gate fixed before consumer evaluation.",
+  "top_k": 5,
+  "candidate_count": 696,
+  "papers": [
+    {
+      "id": "tigon-en",
+      "split": "development",
+      "source": "https://www.usenix.org/conference/osdi25/presentation/huang-yibo",
+      "language": "en",
+      "title": "Tigon: A Distributed Database for a CXL Pod",
+      "abstract": "Tigon coordinates transactions in a distributed in-memory database through atomic operations on shared CXL memory. Its concurrency-control and software coherence mechanisms handle limited hardware coherence while avoiding expensive cross-host network exchanges. Experiments compare transaction throughput against distributed databases using CXL transport and RDMA.",
+      "acceptable_venues": ["osdi", "sosp", "sigmod", "vldb", "asplos"]
+    },
+    {
+      "id": "tigon-ja",
+      "split": "development",
+      "source": "https://www.usenix.org/conference/osdi25/presentation/huang-yibo",
+      "language": "ja",
+      "title": "Tigon：CXLポッド向け分散データベース",
+      "abstract": "Tigonは、共有CXLメモリのアトミック操作を使って、分散インメモリデータベースのトランザクションを調整する。ハードウェアのキャッシュコヒーレンスが限られる環境でも、並行制御とソフトウェアによる整合性管理でホスト間のネットワーク通信を減らす。CXLやRDMAを使う既存の分散データベースとトランザクション処理性能を比較する。",
+      "acceptable_venues": ["osdi", "sosp", "sigmod", "vldb", "asplos"]
+    },
+    {
+      "id": "memory-traces-en",
+      "split": "development",
+      "source": "https://proceedings.mlr.press/v267/eberhard25a.html",
+      "language": "en",
+      "title": "Partially Observable Reinforcement Learning with Memory Traces",
+      "abstract": "Reinforcement learning with partial observations needs information from past observations. Memory traces represent that history as exponential moving averages rather than growing observation windows. The work derives sample-complexity bounds for offline policy evaluation with Lipschitz value estimators and tests value prediction and control in online learning.",
+      "acceptable_venues": ["icml", "neurips", "iclr"]
+    },
+    {
+      "id": "memory-traces-ja",
+      "split": "development",
+      "source": "https://proceedings.mlr.press/v267/eberhard25a.html",
+      "language": "ja",
+      "title": "記憶トレースを用いた部分観測下の強化学習",
+      "abstract": "部分観測環境での強化学習では、過去の観測履歴を考慮する必要がある。記憶トレースは履歴を指数移動平均で表し、観測窓を長くする計算負荷を避ける。リプシッツ連続な価値推定器によるオフライン方策評価の標本複雑性を解析し、オンライン学習で価値予測と制御の有効性を検証する。",
+      "acceptable_venues": ["icml", "neurips", "iclr"]
+    },
+    {
+      "id": "email-tracking-en",
+      "split": "development",
+      "source": "https://www.usenix.org/conference/usenixsecurity25/presentation/chand",
+      "language": "en",
+      "title": "Doubly Dangerous: Evading Phishing Reporting Systems by Leveraging Email Tracking Techniques",
+      "abstract": "This security study examines phishing-email reporting services. It uses email tracking to identify how anti-phishing systems process reported messages and to evade those defenses. Tests across major email providers expose weaknesses in reporting pipelines, and the researchers propose countermeasures and disclose the vulnerabilities to affected services.",
+      "acceptable_venues": ["usenix-security", "ccs", "ndss", "sp"]
+    },
+    {
+      "id": "email-tracking-ja",
+      "split": "development",
+      "source": "https://www.usenix.org/conference/usenixsecurity25/presentation/chand",
+      "language": "ja",
+      "title": "二重の危険：メール追跡技術によるフィッシング報告システムの回避",
+      "abstract": "フィッシングメールの報告サービスを調査し、メール追跡技術で報告後の処理を観測して、フィッシング対策を回避できることを示す。主要なメール事業者で報告処理の弱点を検証し、対策を提案するとともに、影響を受けるサービスへ脆弱性を報告する。",
+      "acceptable_venues": ["usenix-security", "ccs", "ndss", "sp"]
+    },
+    {
+      "id": "mutant-en",
+      "split": "confirmation",
+      "source": "https://www.usenix.org/conference/nsdi25/presentation/pappone",
+      "language": "en",
+      "title": "Mutant: Learning Congestion Control from Existing Protocols via Online Reinforcement Learning",
+      "abstract": "Mutant adapts network congestion control through online reinforcement learning that learns from existing protocols. It selects suitable protocols for changing network conditions without extensive environment-specific pretraining. Real-network and emulated experiments evaluate throughput, delay and fairness against learning-based congestion controllers and competing flows.",
+      "acceptable_venues": ["nsdi", "sigcomm", "conext", "icnp"]
+    },
+    {
+      "id": "mutant-ja",
+      "split": "confirmation",
+      "source": "https://www.usenix.org/conference/nsdi25/presentation/pappone",
+      "language": "ja",
+      "title": "Mutant：オンライン強化学習で既存プロトコルから学ぶ輻輳制御",
+      "abstract": "Mutantは既存プロトコルからオンライン強化学習で学び、ネットワークの状態に応じて輻輳制御を適応させる。環境ごとの大規模な事前学習に依存せず、適切なプロトコルを選択する。実ネットワークとエミュレーションで、スループット、遅延、競合フローとの公平性を評価する。",
+      "acceptable_venues": ["nsdi", "sigcomm", "conext", "icnp"]
+    },
+    {
+      "id": "less-en",
+      "split": "confirmation",
+      "source": "https://www.usenix.org/conference/fast26/presentation/cheng",
+      "language": "en",
+      "title": "LESS is More for I/O-Efficient Repairs in Erasure-Coded Storage",
+      "abstract": "LESS constructs erasure codes for distributed storage that reduce both data read volume and I/O seeks during repair. It combines extended sub-stripes built with Reed-Solomon coding and balances the improvements across blocks. Experiments on HDFS measure single-block repair and whole-node recovery against I/O-optimal coding schemes.",
+      "acceptable_venues": ["fast", "sosp", "osdi", "eurosys"]
+    },
+    {
+      "id": "less-ja",
+      "split": "confirmation",
+      "source": "https://www.usenix.org/conference/fast26/presentation/cheng",
+      "language": "ja",
+      "title": "LESS：消失訂正符号を使うストレージのI/O効率を高める修復方式",
+      "abstract": "LESSは分散ストレージの消失訂正符号を構成し、修復時の読み取り量とI/Oシーク回数をともに減らす。Reed-Solomon符号で作った拡張サブストライプを組み合わせ、各ブロックの改善を均等にする。HDFS上で、単一ブロックの修復とノード全体の復旧時間を既存のI/O最適符号と比較する。",
+      "acceptable_venues": ["fast", "sosp", "osdi", "eurosys"]
+    },
+    {
+      "id": "category-discovery-en",
+      "split": "confirmation",
+      "source": "https://proceedings.mlr.press/v267/dai25a.html",
+      "language": "en",
+      "title": "Continual Generalized Category Discovery: Learning and Forgetting from a Bayesian Perspective",
+      "abstract": "This work studies continual category discovery from unlabeled data containing both old and new classes. A Bayesian analysis connects catastrophic forgetting to covariance differences between classes. Variational inference and covariance-aware nearest-class-mean classification align class distributions and reduce pseudo-label noise, improving recognition when labeled data are scarce.",
+      "acceptable_venues": ["icml", "neurips", "iclr", "cvpr", "iccv", "eccv"]
+    },
+    {
+      "id": "category-discovery-ja",
+      "split": "confirmation",
+      "source": "https://proceedings.mlr.press/v267/dai25a.html",
+      "language": "ja",
+      "title": "継続的な汎用カテゴリ発見：ベイズ的視点による学習と忘却の解析",
+      "abstract": "既知と未知のクラスが混在するラベルなしデータから、カテゴリを継続的に発見する問題を扱う。ベイズ的解析により、クラス間の共分散のずれが破滅的忘却を引き起こすことを示す。変分推論と共分散を考慮した最近傍クラス平均分類で分布を整合させ、擬似ラベルの雑音を抑えて少量のラベル付きデータでも認識性能を改善する。",
+      "acceptable_venues": ["icml", "neurips", "iclr", "cvpr", "iccv", "eccv"]
+    }
+  ]
+}

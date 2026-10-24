@@ -1,0 +1,31 @@
+{
+  "venue": "cpal",
+  "edition": "cpal25",
+  "year": 2025,
+  "reviewed_at": "2026-10-04T14:49:57Z",
+  "sources": [
+    {
+      "url": "https://2025.cpal.cc/deadlines/",
+      "sha256": "8882e74d3a87ccfd3c7b29b013dc3bf4e3bc12a9690fce22364beb67d266361d",
+      "evidenceRef": "data/evidence/blobs/8882e74d3a87ccfd3c7b29b013dc3bf4e3bc12a9690fce22364beb67d266361d.body",
+      "bytes": 22264,
+      "retrieved_at": "2026-10-04T14:49:57Z"
+    },
+    {
+      "url": "https://2025.cpal.cc/program_schedule/",
+      "sha256": "984409d0cee40bef1215c500f87799963cbd4ce0840a32b58a4bcbe2f1f1c989",
+      "evidenceRef": "data/evidence/blobs/984409d0cee40bef1215c500f87799963cbd4ce0840a32b58a4bcbe2f1f1c989.body",
+      "bytes": 26863,
+      "retrieved_at": "2026-10-04T14:49:57Z"
+    }
+  ],
+  "decision": {
+    "identity": "Bind aideadlines/cpal25 and ccfddl/cpal25 to cpal-2025.",
+    "event_start": "2025-03-24",
+    "event_end": "2025-03-27",
+    "proceedings_deadline_utc": "2024-12-03T11:59:00Z",
+    "recent_spotlight_deadline_utc": "2025-01-13T11:59:00Z",
+    "time_basis": "Official page specifies 23:59 Anywhere-on-Earth; use minute precision without inventing :59 seconds.",
+    "old_values": "Retain 2024-11-26T11:59:59Z and 2024-12-03T11:59:59Z as superseded, without certifying their original correctness."
+  }
+}

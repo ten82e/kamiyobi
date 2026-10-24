@@ -1,0 +1,197 @@
+{
+  "recorded_at": "2026-10-03T18:35:00.211254+00:00",
+  "branch": "fix/site-ja-usability",
+  "ui_revision": "beaddd7c2d1d77702fb536e34ce05b5c44db535f",
+  "review_fix_code_revision": "393b3c6c478c22ffb242c4ae2e303d1e43012059",
+  "shared_base": "c06b9fffc82ba91037d9ff374451eaff88c13f6e",
+  "candidate_revision": "0717f506192e05517bb57af9ae260c702f90078c",
+  "candidate_requires_main": "b35010f7a11fb217417b2fdf0d675ea1af9a555b",
+  "actual_updater_sources_applied": false,
+  "new_branch_worktree_clone": false,
+  "published": false,
+  "archive": "work/agent-verification/integration/tree",
+  "reproduction": [
+    "python3 scripts/agent-handoff/prepare-integration.py (fresh archive only)",
+    "node scripts/agent-handoff/resolve-integration.mjs",
+    "python3 scripts/agent-handoff/verify-integration.py",
+    "python3 scripts/agent-handoff/browser-integration.py"
+  ],
+  "conflict_files": [
+    "SPEC.md",
+    "config.yaml",
+    "data/overrides.yaml",
+    "src/build.ts",
+    "src/merge.ts",
+    "tests/event_schedule.test.ts",
+    "tests/local_sources.test.ts",
+    "tests/promotion.test.ts",
+    "tests/update_data_canary.test.ts"
+  ],
+  "preparation": "work/agent-verification/integration/preparation.json",
+  "resolutions": "work/agent-verification/integration/resolutions.json",
+  "checks": [
+    {
+      "check": "typecheck",
+      "exit_code": 0,
+      "seconds": 0.59
+    },
+    {
+      "check": "lint",
+      "exit_code": 0,
+      "seconds": 0.47
+    },
+    {
+      "check": "fixed-build",
+      "exit_code": 0,
+      "seconds": 1.48
+    },
+    {
+      "check": "tests",
+      "exit_code": 1,
+      "seconds": 122.8
+    },
+    {
+      "check": "fixed-validation",
+      "exit_code": 0,
+      "seconds": 0.47
+    },
+    {
+      "check": "fixed-health",
+      "exit_code": 0,
+      "seconds": 0.35
+    },
+    {
+      "check": "semantic-recommendation",
+      "exit_code": 0,
+      "seconds": 0.22
+    },
+    {
+      "check": "recommendation-data-delta",
+      "exit_code": 0,
+      "seconds": 1.11
+    },
+    {
+      "check": "real-paper-recommendation",
+      "exit_code": 1,
+      "seconds": 0.53
+    },
+    {
+      "check": "build",
+      "exit_code": 0,
+      "seconds": 3.73
+    },
+    {
+      "check": "data-validation",
+      "exit_code": 0,
+      "seconds": 0.45
+    },
+    {
+      "check": "public-validation",
+      "exit_code": 0,
+      "seconds": 0.47
+    },
+    {
+      "check": "health-gate",
+      "exit_code": 0,
+      "seconds": 0.35
+    }
+  ],
+  "tests": {
+    "passed": 5326,
+    "failed": 7,
+    "files_passed": 347,
+    "files_failed": 6,
+    "log": "work/agent-verification/integration/tests.log"
+  },
+  "browser_checks": [
+    {
+      "check": "compsac",
+      "mode": "reduce",
+      "exit_code": 0
+    },
+    {
+      "check": "identity",
+      "mode": "reduce",
+      "exit_code": 0
+    },
+    {
+      "check": "researcher",
+      "mode": "reduce",
+      "exit_code": 0
+    },
+    {
+      "check": "updater",
+      "mode": "reduce",
+      "exit_code": 0
+    },
+    {
+      "check": "compsac",
+      "mode": "no-preference",
+      "exit_code": 0
+    },
+    {
+      "check": "identity",
+      "mode": "no-preference",
+      "exit_code": 0
+    },
+    {
+      "check": "researcher",
+      "mode": "no-preference",
+      "exit_code": 0
+    },
+    {
+      "check": "updater",
+      "mode": "no-preference",
+      "exit_code": 0
+    }
+  ],
+  "old_legacy_links": {
+    "examined": 14,
+    "opened": 8,
+    "ambiguous_choices": 2,
+    "missing_with_notice": 4,
+    "report": "work/agent-verification/integration/browser/updater-reduce.json",
+    "scope": "Legacy timestamp-only keys drawn from the actual pre-integration UI data. Colliding precise suffix keys are separately tested by the identity browser suite."
+  },
+  "historical_preservation": {
+    "historical_through_year": 2025,
+    "original_editions": 1673,
+    "unchanged_editions": 1673,
+    "missing_or_changed": []
+  },
+  "identity_audit": [
+    {
+      "file": "data.json",
+      "conferences": 696,
+      "rows": 4964,
+      "shown": 4963,
+      "canonical_share_keys_unique": true,
+      "shared_key_collision_groups": 38
+    },
+    {
+      "file": "catalog.json",
+      "conferences": 696,
+      "rows": 716,
+      "shown": 715,
+      "canonical_share_keys_unique": true,
+      "shared_key_collision_groups": 4
+    }
+  ],
+  "accepted_integration_adjustments": [
+    "Keep reviewed EvoMUSART abstract; paper correction uses merge-slots plus removal limited to observed values, not an unconditional withdrawal.",
+    "Keep historical query-count fixture DASFAA instant; production still uses the official correction.",
+    "Local source precision input count 192 to 194 reflects incoming official EvoMUSART paper and ECIR notification overrides."
+  ],
+  "remaining_blockers": [
+    "Frozen recommendation feature gate: 826 candidate records mismatch using the committed UI engine, identical count with protected changes present. Shared-base c06b9ff engine has zero mismatches. Do not refresh pins to hide this. Fields: {'venue_name_evidence': 11, 'base_score': 744, 'lexical_score': 61}",
+    "Five query assertions (four files) change by one because CVM correction history adds Japanese 前 and EvoMUSART fixture conflict status adds の. Preserve historical fixture metadata before expecting these to pass; production corrected history remains enabled.",
+    "One merge assertion expects UI canonical evomusart; candidate explicitly preserves published evomusart-2027. Final canonical-key contract and pre-integration UI URL aliases need reconciliation.",
+    "Two EvoMUSART pre-integration UI keys (abstract/paper under evomusart) show a missing-row notice after candidate canonical rename. Two retired/corrected ECIR keys also show missing-row notices; two colliding ECIR legacy keys offer explicit choices. No alternative row is silently opened."
+  ],
+  "agy_review": "docs/agent-handoff/reviews/agy-integration-disposition.md",
+  "screenshots": [
+    "work/agent-verification/integration/browser/screenshots/integration-evomusart-mobile.png",
+    "work/agent-verification/integration/browser/screenshots/shared-link-choices-mobile.png",
+    "work/agent-verification/integration/browser/screenshots/compsac-publication-mobile.png"
+  ]
+}

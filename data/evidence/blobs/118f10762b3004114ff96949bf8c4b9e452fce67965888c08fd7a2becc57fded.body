@@ -1,0 +1,1103 @@
+<!DOCTYPE html>
+
+
+<html lang="ja" itemtype="https://schema.org/WebPage" itemscope>
+
+
+<head prefix="og: https://ogp.me/ns# article: https://ogp.me/ns/article#">
+<meta charset="UTF-8">
+
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no" id="vp">
+<meta name="format-detection" content="telephone=no">
+<meta name="keywords" content="情報処理,情報,IPSJ,Information Processing Society of Japan,論文募集,トピックス">
+<meta name="description" content="情報処理学会は、1960年の設立以来、めまぐるしく発展する情報処理分野のパイオニアとして、産業界・学界および官界の協力を得て、指導的役割を果たしてきました。投稿締切：2026年12月4日（金）">
+<meta property="og:description" content="情報処理学会は、1960年の設立以来、めまぐるしく発展する情報処理分野のパイオニアとして、産業界・学界および官界の協力を得て、指導的役割を果たしてきました。投稿締切：2026年12月4日（金）">
+<meta property="og:type" content="article">
+<meta property="og:image" content="https://www.ipsj.or.jp/system/g5dn8200000000fl-img/ca39ob0000000akm.png">
+<meta property="og:url" content="https://www.ipsj.or.jp/journal/cfp/27-P.html">
+<meta property="og:site_name" content="情報処理学会">
+<meta property="og:title" content="論文誌「ユビキタスコンピューティングシステム（XIV）」特集 論文募集-情報処理学会">
+<title>論文誌「ユビキタスコンピューティングシステム（XIV）」特集 論文募集-情報処理学会</title>
+<link rel="canonical" href="https://www.ipsj.or.jp/journal/cfp/27-P.html">
+<link rel="stylesheet" href="../../assets/css/style.css?update=250114">
+<link rel="stylesheet" href="../../assets/css/2023.css">
+<link rel="stylesheet" href="../../assets/css/cms.css">
+<!-- Facebook用設定 -->
+<meta property="fb:app_id" content="148384509075551">
+<!-- ※Twitter共通設定 -->
+<meta name="twitter:card" content="summary_large_image">
+
+<link rel="shortcut icon" href="/ipsj.ico">
+<!-- our project just needs Font Awesome Solid + Brands -->
+  <link href="/fontdate/css/fontawesome.css" rel="stylesheet">
+  <link href="/fontdate/css/brands.css" rel="stylesheet">
+  <link href="/fontdate/css/solid.css" rel="stylesheet">
+  <link href="/fontdate/css/v5-font-face.css" rel="stylesheet">
+
+<!-- <link href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" rel="stylesheet"> -->
+
+<meta content="一般社団法人情報処理学会" name="author">
+<meta content="一般社団法人情報処理学会" name="copyright">
+<meta name="msvalidate.01" content="4387A4799E5B3382D707BF232271C2B4">
+
+<!-- Google Tag Manager -->
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-PPB6C7Z');</script>
+<!-- End Google Tag Manager -->
+
+
+
+</head>
+
+<body class="pg-detail">
+<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-PPB6C7Z"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->
+
+
+
+<div id="fb-root"></div>
+
+<div class="l-wrapper" id="l-wrapper">
+	
+
+<div class="l-header" id="l-header">
+	<header>
+		<div class="container">
+			<p class="logo"><a href="../../index.html"><img src="../../system/g5dn8200000000fl-img/logo_ipsj.png" alt="一般社団法人 情報処理学会"></a></p>
+			<div class="menuArea">
+				<nav>
+					<ul class="gNavList">
+						
+								<li>
+									
+
+									<div class="lvl1 -hasLvl2">
+										
+												<a href="../../annai/gakkai.html">学会について</a>
+											
+											<button class="accordionBtn" type="button" aria-label="下層ページメニューを開閉"><span class="icon"></span></button>
+										
+									</div>
+									
+										<div class="lvl2">
+											<ul>
+												
+														<li><a href="../../annai/aboutipsj/aboutipsj.html">情報処理学会とは</a></li>
+													
+														<li><a href="../../award/sho_index.html">表彰</a></li>
+													
+														<li><a href="../../annai/committee/iinkai-katsudo.html">委員会</a></li>
+													
+														<li><a href="../../annai/shibu/shibu.html">支部</a></li>
+													
+														<li><a href="../../annai/outward/gaibu-katsudo.html">外部に対する活動</a></li>
+													
+														<li><a href="../../annai/report/houkooku.html">報告</a></li>
+													
+														<li><a href="../../annai/kanrenlink/kanrenlink.html">関連団体</a></li>
+													
+														<li><a href="../../annai/other/other.html">その他</a></li>
+													
+											</ul>
+										</div>
+									
+								</li>
+							
+								<li>
+									
+
+									<div class="lvl1 -hasLvl2">
+										
+												<a href="../../member/kaiin.html">会員サービス</a>
+											
+											<button class="accordionBtn" type="button" aria-label="下層ページメニューを開閉"><span class="icon"></span></button>
+										
+									</div>
+									
+										<div class="lvl2">
+											<ul>
+												
+														<li><a href="../../member/service-seikaiin.html">正会員サービス</a></li>
+													
+														<li><a href="../../member/service-gakusei.html">学生会員サービス</a></li>
+													
+														<li><a href="../../member/junior_tenso.html">ジュニア会員のページ</a></li>
+													
+														<li><a href="../../member/service-sanjo.html">賛助会員サービス</a></li>
+													
+														<li><a href="../../member/service-kodokuin.html">購読員サービス</a></li>
+													
+														<li><a href="../../member/tetuduki.html">個人会員各種手続き</a></li>
+													
+														<li><a href="../../member/other/yutai.html">個人会員優待サービス</a></li>
+													
+														<li><a href="../../member/kaiin_sonota.html">その他の情報</a></li>
+													
+											</ul>
+										</div>
+									
+								</li>
+							
+								<li>
+									
+
+									<div class="lvl1 -hasLvl2">
+										
+												<a href="../../9faeag00000027kz.html">入会方法</a>
+											
+											<button class="accordionBtn" type="button" aria-label="下層ページメニューを開閉"><span class="icon"></span></button>
+										
+									</div>
+									
+										<div class="lvl2">
+											<ul>
+												
+														<li><a href="../../nyukai_hiyoichiran_kojin.html">個人会員の入会費用一覧</a></li>
+													
+														<li><a href="../../member/service-ichiran.html">会員サービス一覧表</a></li>
+													
+														<li><a href="../../member/kyoryoku.html">協力協定学会との正会員会費相互割引制度</a></li>
+													
+											</ul>
+										</div>
+									
+								</li>
+							
+								<li>
+									
+
+									<div class="lvl1 -hasLvl2">
+										
+												<a href="../../gavls70000003ir8.html">会誌・論文誌・研究会・DP・図書</a>
+											
+											<button class="accordionBtn" type="button" aria-label="下層ページメニューを開閉"><span class="icon"></span></button>
+										
+									</div>
+									
+										<div class="lvl2">
+											<ul>
+												
+														<li><a href="../../magazine/magazine.html">学会誌「情報処理」</a></li>
+													
+														<li><a href="../../ronbun.html">論文誌</a></li>
+													
+														<li><a href="../../kenkyukai/kenkyukai.html">研究会</a></li>
+													
+														<li><a href="../../qe83kf0000001gxp.html">デジタルプラクティス</a></li>
+													
+														<li><a href="../../tosho/tosho.html">図書販売</a></li>
+													
+											</ul>
+										</div>
+									
+								</li>
+							
+								<li>
+									
+
+									<div class="lvl1 -hasLvl2">
+										
+												<a href="../../gavls70000003nib.html">イベント・ITフォーラム</a>
+											
+											<button class="accordionBtn" type="button" aria-label="下層ページメニューを開閉"><span class="icon"></span></button>
+										
+									</div>
+									
+										<div class="lvl2">
+											<ul>
+												
+														<li><a href="../../event/event.html">イベント一覧</a></li>
+													
+														<li><a href="../../event/national_conv/national-conv.html">全国大会</a></li>
+													
+														<li><a href="../../event/fit/fit.html">FIT 情報科学技術フォーラム</a></li>
+													
+														<li><a href="../../event/seminar/conti_seminar.html">連続セミナー</a></li>
+													
+														<li><a href="../../event/s-seminar/single_seminar.html">短期集中セミナー</a></li>
+													
+														<li><a href="../../event/9faeag0000012esm.html">情処ウェビナー</a></li>
+													
+														<li><a href="../../event/sj.html">イベントITフォーラム</a></li>
+													
+														<li><a href="../../event/prosym.html">プログラミング・シンポジウム</a></li>
+													
+														<li><a href="../../kenkyukai/kenkyukai.html">研究会</a></li>
+													
+														<li><a href="../../event/international/intl_conf.html">国際会議</a></li>
+													
+														<li><a href="../../event/event_IPSJ-ONE.html">IPSJ-ONE</a></li>
+													
+														<li><a href="../../event/event_chukousei.html">中高生情報学研究コンテスト</a></li>
+													
+														<li><a href="../../event/event_sanjo.html">賛助企業との交流会</a></li>
+													
+														<li><a href="../../event/event_gakusei.html">学生交流イベント</a></li>
+													
+														<li><a href="../../event/non-serial.html">単発セミナー</a></li>
+													
+														<li><a href="../../event/other.html">関連機関等のイベント</a></li>
+													
+														<li><a href="../../it-forum/index.html">ITフォーラム</a></li>
+													
+											</ul>
+										</div>
+									
+								</li>
+							
+								<li>
+									
+
+									<div class="lvl1 -hasLvl2">
+										
+												<a href="../../gavls70000003xsm.html">教育・人材育成・資格制度</a>
+											
+											<button class="accordionBtn" type="button" aria-label="下層ページメニューを開閉"><span class="icon"></span></button>
+										
+									</div>
+									
+										<div class="lvl2">
+											<ul>
+												
+														<li><a href="../../annai/committee/education/public_comment/ed_public_comment.html">パブリックコメント</a></li>
+													
+														<li><a href="../../annai/committee/education/jinzai_ikusei/ed_jinzai_ikusei.html">高度IT人材育成</a></li>
+													
+														<li><a href="../../annai/committee/education/contest/ed_contest.html">コンテスト</a></li>
+													
+														<li><a href="../../annai/committee/education/awrard/ed_award.html">表彰</a></li>
+													
+														<li><a href="../../magazine/peta-gogy.html">ぺた語義</a></li>
+													
+														<li><a href="../../annai/committee/education/weblearningplaza.html2">Webラーニングプラザ</a></li>
+													
+														<li><a href="../../annai/committee/education/sympo/ed_sympo.html">シンポジウム</a></li>
+													
+														<li><a href="../../annai/committee/education/ed_contents.html">教育コンテンツ</a></li>
+													
+														<li><a href="../../annai/committee/education/accreditation/9faeag0000002ff5.html">アクレディテーション（AC）</a></li>
+													
+														<li><a href="../../annai/committee/education/kanren_soshiki/ed_kanren_soshiki.html">関連組織</a></li>
+													
+														<li><a href="../../9faeag000000td1k.html">CITP認定情報技術者制度</a></li>
+													
+											</ul>
+										</div>
+									
+								</li>
+							
+								<li>
+									
+
+									<div class="lvl1 -hasLvl2">
+										
+												<a href="../../e-library/digital_library.html">電子図書館（情報学広場）</a>
+											
+											<button class="accordionBtn" type="button" aria-label="下層ページメニューを開閉"><span class="icon"></span></button>
+										
+									</div>
+									
+										<div class="lvl2">
+											<ul>
+												
+														<li><a href="../../e-library/ixsq.html">電子図書館（情報学広場）利用方法（個人会員・準登録用）</a></li>
+													
+														<li><a href="../../e-library/ixsq-2.html">電子図書館（情報学広場）利用方法（法人アカウント）</a></li>
+													
+														<li><a href="../../e-library/kinou.html">電子図書館（情報学広場）の便利な機能</a></li>
+													
+														<li><a href="../../faq/ixsq-faq.html">電子図書館（情報学広場）</a></li>
+													
+											</ul>
+										</div>
+									
+								</li>
+							
+								<li>
+									
+
+									<div class="lvl1 -hasLvl2">
+										
+												<a href="../../award/award_honor.html">表彰・称号</a>
+											
+											<button class="accordionBtn" type="button" aria-label="下層ページメニューを開閉"><span class="icon"></span></button>
+										
+									</div>
+									
+										<div class="lvl2">
+											<ul>
+												
+														<li><a href="../../award/sho_index.html">表彰</a></li>
+													
+														<li><a href="../../annai/aboutipsj/meiyo/meiyo.html">名誉会員</a></li>
+													
+														<li><a href="../../annai/aboutipsj/fellow/fellow.html">フェロー</a></li>
+													
+														<li><a href="../../annai/aboutipsj/seniormember/seniormember.html">シニア会員</a></li>
+													
+											</ul>
+										</div>
+									
+								</li>
+							
+								<li>
+									
+
+									<div class="lvl1 ">
+										
+												<a href="../../9faeag00000067rl.html">情報規格調査会</a>
+											
+									</div>
+									
+								</li>
+							
+					</ul>
+				</nav>
+				<a class="c-linkBtn myPageBtn" href="https://www.ipsj.or.jp/mypage.html" target="_blank"><div>
+					<p class="text">マイページ</p>
+					<div class="arrow"><img src="../../assets/images/arrow_navy.png" alt="" width="10"></div>
+				</div></a>
+				<form class="gForm" action="https://cse.google.com/cse">
+					<input type="hidden" name="cx" value="005960164513048960843:p5p4d9jyl3q">
+					<input type="text" name="q" placeholder="Google検索">
+					<button><img src="../../assets/images/icon_m-glass.png" alt="検索" width="16"></button>
+				</form>
+				<div class="subLinkListArea">
+					<ul class="subLinkList">
+						
+								<li><a href="../../annai/aboutipsj/sanjo.html">賛助会員一覧</a></li>
+							
+								<li><a href="../../jimukyoku.html">アクセス・お問い合わせ</a></li>
+							
+								<li><a href="../../faq/faq.html">よくある質問</a></li>
+							
+								<li><a href="../../saiyo/index.html">採用情報</a></li>
+							
+								<li><a href="../../annai/kanrenlink/kanrenlink.html">関連団体</a></li>
+							
+								<li><a href="../../sitemap.html">サイトマップ</a></li>
+							
+								<li><a href="../../9faeag0000004p85.html">English</a></li>
+							
+					</ul>
+				</div>
+				<div class="adsArea">
+					           <p>
+<script type="text/javascript">
+(function(){
+	src = ('https:' == document.location.protocol ? 'https://' : 'http://') + 's2.aspservice.jp/adcom/data.php?id=5de48a1aaa2a2';
+	document.write ('<scr' + 'ipt type="text/javascript" src="' + src + '"></scr' + 'ipt>');
+})();
+</script>           </p>
+           <p>
+<script type="text/javascript">
+(function(){
+	src = ('https:' == document.location.protocol ? 'https://' : 'http://') + 's2.aspservice.jp/adcom/data.php?id=5de48a11585f6';
+	document.write ('<scr' + 'ipt type="text/javascript" src="' + src + '"></scr' + 'ipt>');
+})();
+</script>           </p>
+           <p>
+<script type="text/javascript">
+(function(){
+	src = ('https:' == document.location.protocol ? 'https://' : 'http://') + 's2.aspservice.jp/adcom/data.php?id=5de489ec6a274';
+	document.write ('<scr' + 'ipt type="text/javascript" src="' + src + '"></scr' + 'ipt>');
+})();
+</script>           </p>
+           <p>
+<script type="text/javascript">
+(function(){
+	src = ('https:' == document.location.protocol ? 'https://' : 'http://') + 's2.aspservice.jp/adcom/data.php?id=5de489ddbe8b6';
+	document.write ('<scr' + 'ipt type="text/javascript" src="' + src + '"></scr' + 'ipt>');
+})();
+</script>           </p>
+           <p>
+<script type="text/javascript">
+(function(){
+	src = ('https:' == document.location.protocol ? 'https://' : 'http://') + 's2.aspservice.jp/adcom/data.php?id=5de489cdd0b31';
+	document.write ('<scr' + 'ipt type="text/javascript" src="' + src + '"></scr' + 'ipt>');
+})();
+</script>
+           </p>
+					
+							<p>
+								
+
+<a href="https://www.jka-cycle.jp" target="_blank">
+
+								
+									<img src="../../system/g5dn8200000000ff-img/JKA.png" alt="JKAバナー広告-JKA Social Action">
+								
+									</a>
+								
+							</p>
+						
+							<p>
+								
+
+<a href="https://keirin.jp/" target="_blank">
+
+								
+									<img src="../../system/g5dn8200000000ff-img/keirin.png" alt="JKAバナー広告-keirin.jp">
+								
+									</a>
+								
+							</p>
+						
+							<p>
+								
+
+<a href="../../magazine/adweb/catalog.html">
+
+								
+									<img src="../../system/g5dn8200000000ff-img/bn_catalog.png" alt="Webカタログ">
+								
+									</a>
+								
+							</p>
+						
+							<p>
+								
+
+<a href="https://www.ipsj.or.jp/60anv/" target="_blank">
+
+								
+									<img src="../../system/g5dn8200000000ff-img/qe83kf0000002cd6.png" alt="60周年記念事業Webサイト">
+								
+									</a>
+								
+							</p>
+						
+							<p>
+								
+
+<a href="https://www.ipsj.or.jp/member/other/wkx.html">
+
+								
+									<img src="../../system/g5dn8200000000ff-img/nh6cpr00000017xd.png" alt="All Japan 学協会連携ICサークル活動コンソーシアム事業">
+								
+									</a>
+								
+							</p>
+						
+				</div>
+			</div>
+		</div>
+		<button class="menuBtn" type="button"><span class="icon"><span></span></span><span class="text"><span>メニュー</span><span>閉じる</span></span></button>
+	</header>
+	<div class="l-header__overlay" id="l-header__overlay"></div>
+</div>
+
+	<div class="l-contents">
+		
+		
+
+<nav class="p-breadcrumb u-pcOnly">
+	<div class="c-container">
+		<ol itemtype="https://schema.org/BreadcrumbList" itemscope>
+			<li itemtype="https://schema.org/ListItem" itemprop="itemListElement" itemscope>
+				<a href="../../index.html" itemprop="item">
+					<span itemprop="name">情報処理学会</span>
+					<meta itemprop="position" content="1">
+				</a>
+			</li>
+
+			
+					<li itemtype="https://schema.org/ListItem" itemprop="itemListElement" itemscope>
+						<a href="../../ronbun.html" itemprop="item">
+							<span itemprop="name">論文誌</span>
+							<meta itemprop="position" content="2">
+							
+						</a>
+					</li>
+				
+					<li itemtype="https://schema.org/ListItem" itemprop="itemListElement" itemscope>
+						<a href="../index.html" itemprop="item">
+							<span itemprop="name">論文誌ジャーナル</span>
+							<meta itemprop="position" content="3">
+							
+						</a>
+					</li>
+				
+
+			<li itemtype="https://schema.org/ListItem" itemprop="itemListElement" itemscope>
+				<a href="27-P.html" itemprop="item">
+					<span itemprop="name">論文誌「ユビキタスコンピューティングシステム（XIV）」特集 論文募集</span>
+					<meta itemprop="position" content="4">
+				</a>
+			</li>
+		</ol>
+	</div>
+</nav>
+
+		<main>
+			<div class="p-pageHeader">
+				<div class="c-container">
+					<h1 class="p-pageHeader__hdg">論文誌「ユビキタスコンピューティングシステム（XIV）」特集 論文募集</h1>
+				</div>
+			</div>
+			
+	<div class="p-snsShare u-pcOnly">
+		<div class="c-container">
+			<ul class="p-snsShare__list">
+				
+					<li><a href="https://www.facebook.com/sharer/sharer.php?u=https://www.ipsj.or.jp/journal/cfp/27-P.html" target="_blank" id="click_facebook" data-title="Facebook"><img src="data:image/png;base64,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" alt="シェアする" width="90"/></a></li>
+				
+					<li><a href="https://twitter.com/share?url=https://www.ipsj.or.jp/journal/cfp/27-P.html&hashtags=情報処理学会" target="_blank" id="click_twitter" data-title="Twitter"><img src="data:image/png;base64,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" alt="ポスト" width="77"/></a></li>
+				
+					<li><a href="https://note.com/intent/post?url=https://www.ipsj.or.jp/journal/cfp/27-P.html" target="_blank" id="click_note"　data-title="note"><img src="data:image/png;base64,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" alt="noteで書く" width="70"/></a></li>
+				
+					<li><a href="https://social-plugins.line.me/lineit/share?url=https://www.ipsj.or.jp/journal/cfp/27-P.html" target="_blank" id="click_line" data-title="LINE"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAKwAAAAoCAYAAABjEBEWAAAABHNCSVQICAgIfAhkiAAACilJREFUeF7tXXtwFdUZ/9aYBIIQUIkYMUEQA4rQonSQVqWOoWNbLQ5cq1LUarEzUDudKvxRYAYn8g/Qx6AwbdNpKYx9EDoV2vqi46DyEpCWVJC3EDDGEJUgwTyA7f4OfJvvbnbvPbv37iUznDOT4WbP+9vf+Z3vxY1FouRvTky1bHsi2dZYsqhU1pnPRgI5lYBN9WTZm23LeqljbM0KnttSH7Ylygra7WqyrAk5XZSZzEhARwK2/Xp7gTWNbq2pU4DN35RY73z4qk5f08ZI4EJIwCZa33Fbze1W/ubJ37ds6/cXYhFmTiOBMBKwLftxq2Bj4lVHX/1GmI6mrZHABZGATa9ZjjrQ4KgDV12QBZhJjQRCSMBRCz62CjYlnH+zU0YWDaI7+tyofvpe2otG9RpEffN6qcF3nDpEx0+30I6WQ/TWiZ3Ozy5qPnMqOxObUS4aCWQM2OK8Irr38jE0d2CCBhWWaAvu+JkWWvPpVnruaA0dbjum3c80vLglkBFg7+s3hqqvn+6yaFRRLv7oXwq4hnGjSvDi6RcZsL8bMp2m9h+fNUkdamukxJ5FVOuoDqYYCQRJIBJgsw1WXhzUhMqdzxrQGrwGSiA0YOMCqwTtDdtnhFYP9n55CZUX9lfDvNH8P7rn/aq0r71t7Eq3zaL61TS77kX3dzkedOwb/jOjy3jzy6bQM6XfUc+9bWRdqoUEjR3Up7J4FI0vHqGqYT8M6THAbXpFfm+lnh1obdDaP3f84/U/pkf3L/bdHx5KuaQVaswNQgEWOmtNxcyYl0S0+tMt9MDeRaHmiROwWIgX0HgWB2BfGT5X7bvnJQVUWnC5+7kkv1hbHt5DAJDPL5+iwDzj4G9pbfMONRae/23YLCq08pUX5yu1s5LmYJnCtpiy95duP+2FnJ8DBwweooX1L4Xp6ts2FGAbxyxTpzoXpXLXPOX60i1xA7axo5mufXda0nLCABas71cwrmQ3yfq6e/e28wIWh+Cu4ptVsza7gybtXuCCT9bJQyn39o/PttHkPQt8l6N7k2DeqiM1GYNWG7B+7Pqm40+VvlbsCMZTXVuT8sWiHtc0u7tkHU508+lOP2zxpUU0yvHjclnz2VbHCFuo/c7iBiwW8pem9UngCgPYws0PaO3FC1gA+ouz7eqa58Lgw++Q45bP99G2lgO0rPGNwDlw7T945de6gJZZFhUbTux2VYnaL/2KKnqU0p7Wehr5358EjqsLWAygq6qlEpQ2YKEKALRcAMYJu56lOQMnOz7YzpdRdXSl46JaRRA8XhIYee/oJeo68tbJhd3uAPzfN85LWmvvdx6mdvu01ouOC7BghtazHWofuBpLtj7mricOwAJYR9s/oX2tH3UB4GMld9Hi655QVzjWtbxxHf3og2p3PTNLJ1LiynFU07TRl8kYtADh0x/8gZYMftLV+9MJ2bt3bo81ffeKzryp7S0HVdXoXoOTWN271nTzBdVrA3atAyawZljAoj36ob8XsDcXldPPB50DgIqMCYbFs/LtT1JD+3GtvcUFWEwOZmV2kiwbB2BTbZZZD22qP16rwAqG/F7/Owk6LsACI9BPfeFxX7humgtyKbN0Qg4CrLcf1jPbIbHbeleoqk2f76H5DoGx3pxunnT12oD1XlW6DNvHYaYTDjOBiVEk+0JdeOS8L7dMfOZFD90+neram9LtQdXHCVjcFKy/SwMkl4AFez5X9rDaq9dA4r1DB0XUEVd5Kr0zSKBSn/3hwV+nVDH8xoA8pl1VqW4jHJrlx9Zl3cMQO2AB1Dcd4+lt5wdMC0OK1QW5aT+VoLsw7Lffn08/Lb3PveJYFwsDWD+jy2twpTqZ626qclnLCyYGMw7TrMPLaUH5I7SyaYPLpKjHDcYFFvux0ydoaI+rk6as7DvKveVwk0A1kcVPTeF6CXY8w97YswEjsPbUYfpNw2sZM602YKOqBADsU1d/i4Y6vlUwLQoD1g+kUkDdBbBgrnXN77kuILa04a7JxA8bxgcrXUxSj2Z5QV1odYyzpQ2vdmFG79UPYL978oB7ALWuMB9m535bRi7oos75jQkQzz3y59DMLcfSBqw3YMAqgRxsYfmjjmHSknTts1Em2/sx7L39bqVVFZ1+QF2dieePUyVgd4+0tMGYv6hfQ/8cPlstIUrgIAxgWSUL08dPNniWTcBKsOIgw9MA2bDPFew+tWS8UlOYeb3uQd0Dg3bagPW6teCi+sGBpUlzsT4K3QUW/92OLxXP+DmMLqgHqINf77hIL4TBxQYYBu1Obi3pn2RdlllWF7C6bq2gl5cJYL3Xth8ZyCACt4cqlMpYkmBNx56yrdc9GAtgMWgYqzLMIvzaIhQaJu0wFwyLdUqWld6DdAybKWBl0CaKQYS1s57pB1gvU8J1lorNvWB9fP8LKcGdLqqmixdthsWA7J7SHTxqu+cbXqZnDi0L1T1XgFXX2vmIH6dDwiqOG7DSpeUXRtURlh9gOWzLLkUORMDa5yvcD4x8cNlrgrYwTG+5bIjrJXjn5L6kCBm/oyhqDe8vFGDRaZHjN31qwDd15BOpDdIL7945r1slv3jzCPyiO3ED1jsngDX78IuhrG4JWHgTvt5nBN3Tb7QbbueAAtQAryGFuhVOoELmAwC0752qU8+Cbl95uI7cUq08BzkFLFAYV8YWNjKmdmZosHrVFYwjQ5ny5MgsLt1sLb/EF+8LSgfYoFwCrE0nswztvCCCHr37iw+1QrNgUhnZglpRde1DCkBsLMGIlDorjOAJjqsL6gF01KBrX/qI59T9SQFYurkQ5Oid19MNvkTxEUdmWO4IlgXbZqvghU92cgeiJnDr6tdSl8wEsF7GSwfYVHIKo9+mciEFxf2lQ5/XwSBFSqKfK4zbcegVUbSgNEMJWAlGqTpx0pQ3+SYsfkKrBHIC6LTII5Ah27ALQPuoaoCcK9eA9WN1mTMbJikkDGAxr2Q+KQM/6xvMyp4MtEWodPRlgxVrSvCmC4EPKOirwuR+ecEYh6/7VO8/GxlbGQGWFweXF3xtMjlGF7grHBfY046BZf4/l67EOttBhxxeNFAlFgFQMm1QjsaszBE6sObPrpmknfjCY6W6ytl4G9bzmqTDgL7s9/WqHOF3HMIPqzM4aP/OPjeplMM7nH/TMS88AfAImBKvBHBljygq6/K/CgBcGF66yeF//WSDVpRKhoIRIcxW4guklBWGDRJ3kJ4LFeCJ/Usj66vxvl4zeneWQKyA9Uv6juJj7c4CNGvLrQRiBSy+XGOO84OCLC3oqlG9ALkVi5mtu0ogVsDC7QWWrXK+JAPGlSlGAplKwHwZXKYSNP1zJoFzXwZnvm4zZwI3E2UoAXzdZt7GSRPzrEv+nuFQpruRQOwSOGOfvV99Zbxh2dhlbSbIVAK2vbp93KqJ5/4ox9ZERX6HvcOyrMJMxzX9jQSyLQHbppMdRMNoXM2H5wB7vpg/e5RtUZvxIksg4M8e/R/VIPrRqWjkCgAAAABJRU5ErkJggg==" alt="LINEで送る" width="86"/></a></li>
+				
+			</ul>
+		</div>
+	</div>
+
+			<div class="c-container">
+				
+				<div class="c-boxSet">
+					
+						<div class="c-box">
+							
+										<h2 class="c-hdgLg" id="hdg0">論文誌「ユビキタスコンピューティングシステム（XIV）」特集 論文募集</h2>
+									
+
+									<div class="c-bodyAndImageSet ">
+										<div class="c-bodyAndImageSet__container">
+											
+											<div class="c-bodyAndImageSet__body">
+												
+													<div class="c-body">
+														
+															<p><div align="right">2026年7月7日<br>
+論文誌ジャーナル編集委員会</div><br>
+<br>
+情報処理学会論文誌において、下記の要領で「ユビキタスコンピューティングシステム(XIV)」と題した特集号を企画いたします。ユビキタスコンピューティングはセンシング、情報理論、ネットワーキング、モバイルコンピューティング、ミドルウェア、インタラクションおよび各種アプリケーション技術など多方面の学術的工学的分野を融合して成り立つものであり、基礎理論から各種要素技術、プラットフォームからアプリケーションにいたるまでのユビキタスコンピューティングを実現するための研究成果を広く集め、速やかに公表することを狙いとしていますので、奮ってご投稿くださいますようご案内いたします。なお本特集は、東京農工大学の藤波香織氏をゲストエディタに迎えて編集されます。<br>
+以下に主な対象分野を示しますが、ユビキタスコンピューティングシステムに関連する論文であれば、これに限りません。<br>
+<br>
+・ユビキタスサービス<br>
+　- ウェルビーイング、ヘルスケア、スポーツ<br>
+　- 都市、環境、モビリティ<br>
+　- 産業、観光、技能伝承<br>
+<br>
+・インタラクション方法/装置<br>
+　- 実世界/身体性インタラクション<br>
+　- エージェント インタラクション<br>
+　- モバイル/ウェアラブル/空間型インタラクション<br>
+<br>
+・センシング、認識、実世界データ処理<br>
+　- モバイル/ウェアラブル/環境センシング、センサネットワーク<br>
+　- 行動認識、位置推定、健康/感情/認知状態推定、個人認証<br>
+　- マルチモーダル/時空間データ処理<br>
+<br>
+・IoT、ユビキタスシステム基盤<br>
+　- サイバーフィジカルシステム、デジタルツイン<br>
+　- エッジコンピューティング、クラウド連携<br>
+　- システムアーキテクチャ、ミドルウェア</p>
+														
+													</div>
+												
+											</div>
+										</div>
+									</div>
+								
+						</div>
+					
+						<div class="c-box">
+							
+										<h3 class="c-hdgMd" id="hdg1">投稿要領</h3>
+									
+
+									<div class="c-bodyAndImageSet ">
+										<div class="c-bodyAndImageSet__container">
+											
+											<div class="c-bodyAndImageSet__body">
+												
+													<div class="c-body">
+														
+															<p><B>（1）論文の執筆要領</B><br>
+「情報処理学会論文誌（IPSJ Journal）」原稿執筆案内によります。<br>
+論文は電子投稿により受け付けますので、下記のURLにアクセスし手続きを進めてください。<br>
+<br>
+<a href="https://mc.manuscriptcentral.com/ipsj">https://mc.manuscriptcentral.com/ipsj</a><br>
+<br>
+　ご投稿後の論文差替えはできませんので、必ず最終版をご投稿ください。<br>
+投稿後にやむを得ず再度提出する場合は、手続きについて学会事務局＜s1m-at-ipsj.or.jp＞（-at- を @ に置き換えてください）までお問合せください。<br>
+<br>
+　なお、ご投稿いただく際は初回のみアカウント作成が必要となります。<br>
+アカウント作成は、投稿窓口のURLから行えます。<br>
+詳細は投稿窓口URLの上部にある「投稿規定・各種書類」内のマニュアルをご参照ください。<br>
+<br>
+論文募集の英語版は<a href="https://www.ipsj.or.jp/english/jip/cfp/27-P.html">JIP (Journal of Information Processing) のページ</a>よりご覧ください。<br>
+<br>
+<B>（2）査読手続き</B><br>
+通常の論文誌投稿論文と同一ですが、特集号編集期限の関係上、著者への照会期間は通常（8週間）より短縮されますので、投稿に際し、あらかじめご了承ください。<br>
+<br>
+<B>（3）投稿締切</B>　　　2026年12月4日（金）<br>
+<br>
+<B>（4）特集号予定</B>　　2027年10月号<br>
+<br>
+<B>（5）特集号編集委員会</B><br>
+編集委員長：藤波香織（東京農工大学）<br>
+幹　　事　：榎堀 優（名古屋大学）、大越 匡（慶應義塾大学）、下坂正倫（東京科学大学）<br>
+委　　員　：新井イスマイル（奈良先端科学技術大学院大学）、大西鮎美（神戸大学）、中村優吾（立命館大学）、雨坂宇宙（慶應義塾大学）、安納爽響（NTT）、池 司（東芝）、磯山直也（大妻女子大学）、浦野健太（名古屋大学）、大北 剛（九州工業大学）、大村 廉（豊橋技術科学大学）、河崎隆文（富山県立大学）、清田陽司（麗澤大学）、佐々木航（奈良先端科学技術大学院大学）、​笹谷拓也（東京大学）、​佐野渉二（金沢工業大学）、高木 健（東京大学）、髙橋秀幸（東北学院大学）、田谷昭仁（東京大学）、馮 晨（芝浦工業大学）、寺田憲司（職業能力開発総合大学校）、寺田 努（神戸大学）、西岡千文（京都大学）、長谷川達人（福井大学）、前川卓也（大阪大学）、松木 萌（富士通）、宮田章裕（日本大学）、矢谷浩司（東京大学）、吉田航輝（沖電気工業）、米澤拓郎（名古屋大学）、渡邉拓貴（神戸大学）</p>
+														
+													</div>
+												
+											</div>
+										</div>
+									</div>
+								
+						</div>
+					
+				</div>
+			</div>
+		</main>
+		
+	<div class="p-snsShare ">
+		<div class="c-container">
+			<ul class="p-snsShare__list">
+				
+					<li><a href="https://www.facebook.com/sharer/sharer.php?u=https://www.ipsj.or.jp/journal/cfp/27-P.html" target="_blank" id="click_facebook" data-title="Facebook"><img src="data:image/png;base64,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" alt="シェアする" width="90"/></a></li>
+				
+					<li><a href="https://twitter.com/share?url=https://www.ipsj.or.jp/journal/cfp/27-P.html&hashtags=情報処理学会" target="_blank" id="click_twitter" data-title="Twitter"><img src="data:image/png;base64,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" alt="ポスト" width="77"/></a></li>
+				
+					<li><a href="https://note.com/intent/post?url=https://www.ipsj.or.jp/journal/cfp/27-P.html" target="_blank" id="click_note"　data-title="note"><img src="data:image/png;base64,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" alt="noteで書く" width="70"/></a></li>
+				
+					<li><a href="https://social-plugins.line.me/lineit/share?url=https://www.ipsj.or.jp/journal/cfp/27-P.html" target="_blank" id="click_line" data-title="LINE"><img src="data:image/png;base64,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" alt="LINEで送る" width="86"/></a></li>
+				
+			</ul>
+		</div>
+	</div>
+
+		
+
+<nav class="p-breadcrumb u-spOnly">
+	<div class="c-container">
+		<ol itemtype="https://schema.org/BreadcrumbList" itemscope>
+			<li itemtype="https://schema.org/ListItem" itemprop="itemListElement" itemscope>
+				<a href="../../index.html" itemprop="item">
+					<span itemprop="name">情報処理学会</span>
+					<meta itemprop="position" content="1">
+				</a>
+			</li>
+
+			
+					<li itemtype="https://schema.org/ListItem" itemprop="itemListElement" itemscope>
+						<a href="../../ronbun.html" itemprop="item">
+							<span itemprop="name">論文誌</span>
+							<meta itemprop="position" content="2">
+							
+						</a>
+					</li>
+				
+					<li itemtype="https://schema.org/ListItem" itemprop="itemListElement" itemscope>
+						<a href="../index.html" itemprop="item">
+							<span itemprop="name">論文誌ジャーナル</span>
+							<meta itemprop="position" content="3">
+							
+						</a>
+					</li>
+				
+
+			<li itemtype="https://schema.org/ListItem" itemprop="itemListElement" itemscope>
+				<a href="27-P.html" itemprop="item">
+					<span itemprop="name">論文誌「ユビキタスコンピューティングシステム（XIV）」特集 論文募集</span>
+					<meta itemprop="position" content="4">
+				</a>
+			</li>
+		</ol>
+	</div>
+</nav>
+
+	</div>
+	<footer class="l-footer" id="l-footer">
+	<a class="pageTopBtn" id="pageTopBtn" href="#l-wrapper"><span></span></a>
+	<div class="c-container">
+		<div class="topArea">
+			<div class="linkListWrapper">
+				
+						<div class="item">
+							<ul class="linkList">
+								<li>
+									
+
+									<div class="lvl2">
+										<a href="../../annai/gakkai.html">学会について</a>
+										
+											<button class="accordionBtn" type="button"><span class="icon"></span></button>
+										
+									</div>
+									
+										<div class="lvl3">
+											<ul>
+												
+														<li><a href="../../annai/aboutipsj/aboutipsj.html">情報処理学会とは</a></li>
+													
+														<li><a href="../../award/sho_index.html">表彰</a></li>
+													
+														<li><a href="../../annai/committee/iinkai-katsudo.html">委員会</a></li>
+													
+														<li><a href="../../annai/shibu/shibu.html">支部</a></li>
+													
+														<li><a href="../../annai/outward/gaibu-katsudo.html">外部に対する活動</a></li>
+													
+														<li><a href="../../annai/report/houkooku.html">報告</a></li>
+													
+														<li><a href="../../annai/kanrenlink/kanrenlink.html">関連団体</a></li>
+													
+														<li><a href="../../annai/other/other.html">その他</a></li>
+													
+											</ul>
+										</div>
+									
+								</li>
+							</ul>
+						</div>
+					
+						<div class="item">
+							<ul class="linkList">
+								<li>
+									
+
+									<div class="lvl2">
+										<a href="../../member/kaiin.html">会員サービス</a>
+										
+											<button class="accordionBtn" type="button"><span class="icon"></span></button>
+										
+									</div>
+									
+										<div class="lvl3">
+											<ul>
+												
+														<li><a href="../../member/service-seikaiin.html">正会員サービス</a></li>
+													
+														<li><a href="../../member/service-gakusei.html">学生会員サービス</a></li>
+													
+														<li><a href="../../member/junior_tenso.html">ジュニア会員のページ</a></li>
+													
+														<li><a href="../../member/service-sanjo.html">賛助会員サービス</a></li>
+													
+														<li><a href="../../member/service-kodokuin.html">購読員サービス</a></li>
+													
+														<li><a href="../../member/tetuduki.html">個人会員各種手続き</a></li>
+													
+														<li><a href="../../member/other/yutai.html">個人会員優待サービス</a></li>
+													
+														<li><a href="../../member/kaiin_sonota.html">その他の情報</a></li>
+													
+											</ul>
+										</div>
+									
+								</li>
+							</ul>
+						</div>
+					
+						<div class="item">
+							<ul class="linkList">
+								<li>
+									
+
+									<div class="lvl2">
+										<a href="../../9faeag00000027kz.html">入会方法</a>
+										
+											<button class="accordionBtn" type="button"><span class="icon"></span></button>
+										
+									</div>
+									
+										<div class="lvl3">
+											<ul>
+												
+														<li><a href="../../nyukai_hiyoichiran_kojin.html">個人会員の入会費用一覧</a></li>
+													
+														<li><a href="../../member/service-ichiran.html">会員サービス一覧表</a></li>
+													
+														<li><a href="../../member/kyoryoku.html">協力協定学会との正会員会費相互割引制度</a></li>
+													
+											</ul>
+										</div>
+									
+								</li>
+							</ul>
+						</div>
+					
+						<div class="item">
+							<ul class="linkList">
+								<li>
+									
+
+									<div class="lvl2">
+										<a href="../../gavls70000003ir8.html">会誌・論文誌・研究会・DP・図書</a>
+										
+											<button class="accordionBtn" type="button"><span class="icon"></span></button>
+										
+									</div>
+									
+										<div class="lvl3">
+											<ul>
+												
+														<li><a href="../../magazine/magazine.html">学会誌「情報処理」</a></li>
+													
+														<li><a href="../../ronbun.html">論文誌</a></li>
+													
+														<li><a href="../../kenkyukai/kenkyukai.html">研究会</a></li>
+													
+														<li><a href="../../qe83kf0000001gxp.html">デジタルプラクティス</a></li>
+													
+														<li><a href="../../tosho/tosho.html">図書販売</a></li>
+													
+											</ul>
+										</div>
+									
+								</li>
+							</ul>
+						</div>
+					
+						<div class="item">
+							<ul class="linkList">
+								<li>
+									
+
+									<div class="lvl2">
+										<a href="../../gavls70000003nib.html">イベント・ITフォーラム</a>
+										
+											<button class="accordionBtn" type="button"><span class="icon"></span></button>
+										
+									</div>
+									
+										<div class="lvl3">
+											<ul>
+												
+														<li><a href="../../event/event.html">イベント一覧</a></li>
+													
+														<li><a href="../../event/national_conv/national-conv.html">全国大会</a></li>
+													
+														<li><a href="../../event/fit/fit.html">FIT 情報科学技術フォーラム</a></li>
+													
+														<li><a href="../../event/seminar/conti_seminar.html">連続セミナー</a></li>
+													
+														<li><a href="../../event/s-seminar/single_seminar.html">短期集中セミナー</a></li>
+													
+														<li><a href="../../event/9faeag0000012esm.html">情処ウェビナー</a></li>
+													
+														<li><a href="../../event/sj.html">イベントITフォーラム</a></li>
+													
+														<li><a href="../../event/prosym.html">プログラミング・シンポジウム</a></li>
+													
+														<li><a href="../../kenkyukai/kenkyukai.html">研究会</a></li>
+													
+														<li><a href="../../event/international/intl_conf.html">国際会議</a></li>
+													
+														<li><a href="../../event/event_IPSJ-ONE.html">IPSJ-ONE</a></li>
+													
+														<li><a href="../../event/event_chukousei.html">中高生情報学研究コンテスト</a></li>
+													
+														<li><a href="../../event/event_sanjo.html">賛助企業との交流会</a></li>
+													
+														<li><a href="../../event/event_gakusei.html">学生交流イベント</a></li>
+													
+														<li><a href="../../event/non-serial.html">単発セミナー</a></li>
+													
+														<li><a href="../../event/other.html">関連機関等のイベント</a></li>
+													
+														<li><a href="../../it-forum/index.html">ITフォーラム</a></li>
+													
+											</ul>
+										</div>
+									
+								</li>
+							</ul>
+						</div>
+					
+						<div class="item">
+							<ul class="linkList">
+								<li>
+									
+
+									<div class="lvl2">
+										<a href="../../gavls70000003xsm.html">教育・人材育成・資格制度</a>
+										
+											<button class="accordionBtn" type="button"><span class="icon"></span></button>
+										
+									</div>
+									
+										<div class="lvl3">
+											<ul>
+												
+														<li><a href="../../annai/committee/education/public_comment/ed_public_comment.html">パブリックコメント</a></li>
+													
+														<li><a href="../../annai/committee/education/jinzai_ikusei/ed_jinzai_ikusei.html">高度IT人材育成</a></li>
+													
+														<li><a href="../../annai/committee/education/contest/ed_contest.html">コンテスト</a></li>
+													
+														<li><a href="../../annai/committee/education/awrard/ed_award.html">表彰</a></li>
+													
+														<li><a href="../../magazine/peta-gogy.html">ぺた語義</a></li>
+													
+														<li><a href="../../annai/committee/education/weblearningplaza.html2">Webラーニングプラザ</a></li>
+													
+														<li><a href="../../annai/committee/education/sympo/ed_sympo.html">シンポジウム</a></li>
+													
+														<li><a href="../../annai/committee/education/ed_contents.html">教育コンテンツ</a></li>
+													
+														<li><a href="../../annai/committee/education/accreditation/9faeag0000002ff5.html">アクレディテーション（AC）</a></li>
+													
+														<li><a href="../../annai/committee/education/kanren_soshiki/ed_kanren_soshiki.html">関連組織</a></li>
+													
+														<li><a href="../../9faeag000000td1k.html">CITP認定情報技術者制度</a></li>
+													
+											</ul>
+										</div>
+									
+								</li>
+							</ul>
+						</div>
+					
+						<div class="item">
+							<ul class="linkList">
+								<li>
+									
+
+									<div class="lvl2">
+										<a href="../../e-library/digital_library.html">電子図書館（情報学広場）</a>
+										
+											<button class="accordionBtn" type="button"><span class="icon"></span></button>
+										
+									</div>
+									
+										<div class="lvl3">
+											<ul>
+												
+														<li><a href="../../e-library/ixsq.html">電子図書館（情報学広場）利用方法（個人会員・準登録用）</a></li>
+													
+														<li><a href="../../e-library/ixsq-2.html">電子図書館（情報学広場）利用方法（法人アカウント）</a></li>
+													
+														<li><a href="../../e-library/kinou.html">電子図書館（情報学広場）の便利な機能</a></li>
+													
+														<li><a href="../../faq/ixsq-faq.html">電子図書館（情報学広場）</a></li>
+													
+											</ul>
+										</div>
+									
+								</li>
+							</ul>
+						</div>
+					
+						<div class="item">
+							<ul class="linkList">
+								<li>
+									
+
+									<div class="lvl2">
+										<a href="../../award/award_honor.html">表彰・称号</a>
+										
+											<button class="accordionBtn" type="button"><span class="icon"></span></button>
+										
+									</div>
+									
+										<div class="lvl3">
+											<ul>
+												
+														<li><a href="../../award/sho_index.html">表彰</a></li>
+													
+														<li><a href="../../annai/aboutipsj/meiyo/meiyo.html">名誉会員</a></li>
+													
+														<li><a href="../../annai/aboutipsj/fellow/fellow.html">フェロー</a></li>
+													
+														<li><a href="../../annai/aboutipsj/seniormember/seniormember.html">シニア会員</a></li>
+													
+											</ul>
+										</div>
+									
+								</li>
+							</ul>
+						</div>
+					
+						<div class="item">
+							<ul class="linkList">
+								<li>
+									
+
+									<div class="lvl2">
+										<a href="../../9faeag00000067rl.html">情報規格調査会</a>
+										
+									</div>
+									
+								</li>
+							</ul>
+						</div>
+					
+			</div>
+			<ul class="subLinkList">
+				
+						<li><a href="../../annai/aboutipsj/sanjo.html">賛助会員一覧</a></li>
+					
+						<li><a href="../../jimukyoku.html">アクセス・お問い合わせ</a></li>
+					
+						<li><a href="../../faq/faq.html">よくある質問</a></li>
+					
+						<li><a href="../../saiyo/index.html">採用情報</a></li>
+					
+						<li><a href="../../annai/kanrenlink/kanrenlink.html">関連団体</a></li>
+					
+						<li><a href="../../sitemap.html">サイトマップ</a></li>
+					
+						<li><a href="../../9faeag0000004p85.html">English</a></li>
+					
+						<li><a href="../../sitepolicy.html">サイトポリシー</a></li>
+					
+						<li><a href="../../system/sec.html">セキュリティについて</a></li>
+					
+						<li><a href="../../privacypolicy.html">プライバシーポリシー</a></li>
+					
+						<li><a href="../../accessibilitypolicy.html">アクセシビリティポリシー</a></li>
+					
+						<li><a href="../../harassment.html">アンチハラスメントポリシー</a></li>
+					
+						<li><a href="../../socialmediapolicy.html">ソーシャルメディア運用ポリシー</a></li>
+					
+						<li><a href="../../ipsjcode.html">倫理綱領</a></li>
+					
+						<li><a href="../../copyright/copyrightnotice.html">著作権について</a></li>
+					
+						<li><a href="../../ad/ad.html">広告のお申し込み</a></li>
+					
+						<li><a href="../../SecurityTradeManagement.html">安全保障貿易管理</a></li>
+					
+						<li><a href="../../annai/other/tokusho.html">特定商取引法に基づく表記</a></li>
+					
+						<li><a href="../../about_mailnews.html">IPSJメールニュース</a></li>
+					
+			</ul>
+		</div>
+		<div class="btmArea">
+			<p class="copyright"><small>©︎2021 情報処理学会</small></p>
+		</div>
+	</div>
+</footer>
+
+</div>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
+<script>window.jQuery || document.write('<script src="../../assets/js/jquery-2.2.4.min.js"><\/script>')</script>
+<script>
+jQuery.ajaxPrefilter(function(s) {
+	if (s.crossDomain) { s.contents.script = false; }
+});
+</script>
+<script src="../../assets/js/vendor.js"></script>
+<script src="../../assets/js/bundle.js?update=250114"></script>
+<script src="../../assets/js/cc.js"></script>
+<!-- 以下をページ内の全Placementタグよりも後に実装してください -->
+<script>ADTECH.executeQueue();</script>
+<script src="/js/tracking-pdf.js"></script>
+<script src="https://kit.fontawesome.com/e0a6387928.js" crossorigin="anonymous"></script>
+
+
+
+</body>
+</html>

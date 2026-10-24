@@ -1,0 +1,2959 @@
+{
+  "_provenance": {
+    "run": 37079425961,
+    "artifact": 11257938372,
+    "archive_sha256": "b0f0c925f8397339de70ca63633a1e4d7d220daa0e6aed5c6138e44c718b34f9",
+    "source_path": "current/data.json",
+    "selection": "Original validator/merge conference fields, full edition/deadline records; only offending historical editions and latest common duplicate editions selected. Recommendation profile metadata omitted."
+  },
+  "conferences": [
+    {
+      "key": "adma",
+      "title": "ADMA",
+      "full_name": "The International Conference on Advanced Data Mining and Applications",
+      "categories": ["db"],
+      "link": "https://adma2026.github.io/",
+      "upstream_sub": "DB",
+      "identity": {
+        "dblpKey": "adma",
+        "officialDomains": ["https://adma2026.github.io/"],
+        "sourceIds": {
+          "ccfddl": "DB/adma"
+        }
+      },
+      "editions": [
+        {
+          "year": 2021,
+          "id": "adma21",
+          "link": "https://adma21.webflow.io/",
+          "place": "Online",
+          "date_text": "February 2-4, 2022",
+          "event_date_precision": "exact-range",
+          "event_start": "2022-02-02",
+          "event_end": "2022-02-04",
+          "estimated": false,
+          "source": "ccfddl",
+          "identity": {
+            "officialUrls": ["https://adma21.webflow.io/"],
+            "sourceIds": {
+              "ccfddl": "adma21"
+            }
+          },
+          "deadlines": [
+            {
+              "kind": "paper",
+              "label": "Paper submission",
+              "round": 1,
+              "track": "",
+              "comment": null,
+              "status": "confirmed",
+              "selection_rule": "source_priority_then_nearest_within_configured_window",
+              "evidence": [
+                {
+                  "source_name": "ccfddl",
+                  "source_url": "https://adma21.webflow.io/",
+                  "observed_at": "",
+                  "original_value": "2021-08-15 23:59:00",
+                  "confidence": "aggregator",
+                  "sourceClass": "aggregator",
+                  "sourceUrl": "https://adma21.webflow.io/",
+                  "rawExcerpt": "2021-08-15 23:59:00"
+                }
+              ],
+              "verification": {
+                "official_url": "https://adma21.webflow.io/",
+                "last_attempt_at": null,
+                "last_verified_at": null,
+                "next_check_at": "2026-10-09T23:50:31.000Z",
+                "content_hash": null,
+                "source_name": "ccfddl",
+                "status": "manual-required",
+                "source_class": "aggregator"
+              },
+              "precision": "exact",
+              "utc": "2021-08-16T11:59:00Z",
+              "aoe": "2021-08-15 23:59:00 AoE",
+              "tz_raw": "AoE"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "dai",
+      "title": "DAI",
+      "full_name": "International Conference on Distributed Artificial Intelligence",
+      "categories": ["ai"],
+      "link": "https://www.adai.ai/dai/2026/index.html",
+      "upstream_sub": "AI",
+      "identity": {
+        "dblpKey": "dai2",
+        "officialDomains": ["https://www.adai.ai/dai/2026/index.html"],
+        "sourceIds": {
+          "ccfddl": "AI/dai"
+        }
+      },
+      "editions": [
+        {
+          "year": 2021,
+          "id": "dai2021",
+          "link": "https://adai.ai/dai/2021/index.html",
+          "place": "Shanghai, China (Hybrid)",
+          "date_text": "January 4-5, 2022",
+          "event_date_precision": "exact-range",
+          "event_start": "2022-01-04",
+          "event_end": "2022-01-05",
+          "estimated": false,
+          "source": "ccfddl",
+          "identity": {
+            "officialUrls": ["https://adai.ai/dai/2021/index.html"],
+            "sourceIds": {
+              "ccfddl": "dai2021"
+            }
+          },
+          "deadlines": [
+            {
+              "kind": "paper",
+              "label": "Paper submission",
+              "round": 1,
+              "track": "",
+              "comment": null,
+              "status": "confirmed",
+              "selection_rule": "source_priority_then_nearest_within_configured_window",
+              "evidence": [
+                {
+                  "source_name": "ccfddl",
+                  "source_url": "https://adai.ai/dai/2021/index.html",
+                  "observed_at": "",
+                  "original_value": "2021-09-30 23:59:00",
+                  "confidence": "aggregator",
+                  "sourceClass": "aggregator",
+                  "sourceUrl": "https://adai.ai/dai/2021/index.html",
+                  "rawExcerpt": "2021-09-30 23:59:00"
+                }
+              ],
+              "verification": {
+                "official_url": "https://adai.ai/dai/2021/index.html",
+                "last_attempt_at": null,
+                "last_verified_at": null,
+                "next_check_at": "2026-10-09T23:50:31.000Z",
+                "content_hash": null,
+                "source_name": "ccfddl",
+                "status": "manual-required",
+                "source_class": "aggregator"
+              },
+              "precision": "exact",
+              "utc": "2021-10-01T11:59:00Z",
+              "aoe": "2021-09-30 23:59:00 AoE",
+              "tz_raw": "UTC-12"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "focs",
+      "title": "FOCS",
+      "full_name": "IEEE Symposium on Foundations of Computer Science",
+      "categories": ["theory"],
+      "link": "https://sanjeevkhanna.org/FOCS2026_CFP.html",
+      "upstream_sub": "CT",
+      "identity": {
+        "dblpKey": "focs",
+        "officialDomains": ["https://sanjeevkhanna.org/FOCS2026_CFP.html"],
+        "sourceIds": {
+          "ccfddl": "CT/focs"
+        }
+      },
+      "editions": [
+        {
+          "year": 2021,
+          "id": "focs21",
+          "link": "https://focs2021.cs.colorado.edu/",
+          "place": "Online",
+          "date_text": "February 7-10, 2022",
+          "event_date_precision": "exact-range",
+          "event_start": "2022-02-07",
+          "event_end": "2022-02-10",
+          "estimated": false,
+          "source": "ccfddl",
+          "identity": {
+            "officialUrls": ["https://focs2021.cs.colorado.edu/"],
+            "sourceIds": {
+              "ccfddl": "focs21"
+            }
+          },
+          "deadlines": [
+            {
+              "kind": "abstract",
+              "label": "Abstract submission",
+              "round": 1,
+              "track": "",
+              "comment": null,
+              "status": "confirmed",
+              "selection_rule": "source_priority_then_nearest_within_configured_window",
+              "evidence": [
+                {
+                  "source_name": "ccfddl",
+                  "source_url": "https://focs2021.cs.colorado.edu/",
+                  "observed_at": "",
+                  "original_value": "2021-05-31 17:00:00",
+                  "confidence": "aggregator",
+                  "sourceClass": "aggregator",
+                  "sourceUrl": "https://focs2021.cs.colorado.edu/",
+                  "rawExcerpt": "2021-05-31 17:00:00"
+                }
+              ],
+              "verification": {
+                "official_url": "https://focs2021.cs.colorado.edu/",
+                "last_attempt_at": null,
+                "last_verified_at": null,
+                "next_check_at": "2026-10-09T23:50:31.000Z",
+                "content_hash": null,
+                "source_name": "ccfddl",
+                "status": "manual-required",
+                "source_class": "aggregator"
+              },
+              "precision": "exact",
+              "utc": "2021-05-31T21:00:00Z",
+              "aoe": "2021-05-31 09:00:00 AoE",
+              "tz_raw": "UTC-4"
+            },
+            {
+              "kind": "paper",
+              "label": "Paper submission",
+              "round": 1,
+              "track": "",
+              "comment": null,
+              "status": "confirmed",
+              "selection_rule": "source_priority_then_nearest_within_configured_window",
+              "evidence": [
+                {
+                  "source_name": "ccfddl",
+                  "source_url": "https://focs2021.cs.colorado.edu/",
+                  "observed_at": "",
+                  "original_value": "2021-06-03 17:00:00",
+                  "confidence": "aggregator",
+                  "sourceClass": "aggregator",
+                  "sourceUrl": "https://focs2021.cs.colorado.edu/",
+                  "rawExcerpt": "2021-06-03 17:00:00"
+                }
+              ],
+              "verification": {
+                "official_url": "https://focs2021.cs.colorado.edu/",
+                "last_attempt_at": null,
+                "last_verified_at": null,
+                "next_check_at": "2026-10-09T23:50:31.000Z",
+                "content_hash": null,
+                "source_name": "ccfddl",
+                "status": "manual-required",
+                "source_class": "aggregator"
+              },
+              "precision": "exact",
+              "utc": "2021-06-03T21:00:00Z",
+              "aoe": "2021-06-03 09:00:00 AoE",
+              "tz_raw": "UTC-4"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "mobicom",
+      "title": "MobiCom",
+      "full_name": "ACM International Conference on Mobile Computing and Networking",
+      "categories": ["networking"],
+      "link": "https://www.sigmobile.org/mobicom/2026/",
+      "upstream_sub": "NW",
+      "identity": {
+        "dblpKey": "mobicom",
+        "officialDomains": [
+          "https://www.sigmobile.org/mobicom/2026/",
+          "https://www.sigmobile.org/mobicom/2027/"
+        ],
+        "sourceIds": {
+          "ccfddl": "NW/mobicom",
+          "local": "mobicom"
+        }
+      },
+      "editions": [
+        {
+          "year": 2021,
+          "id": "mobicom21",
+          "link": "https://www.sigmobile.org/mobicom/2021/",
+          "place": "New Orleans, LA, USA",
+          "date_text": "March 29 - April 1, 2022",
+          "event_date_precision": "exact-range",
+          "event_start": "2022-03-29",
+          "event_end": "2022-04-01",
+          "estimated": false,
+          "source": "ccfddl",
+          "identity": {
+            "officialUrls": ["https://www.sigmobile.org/mobicom/2021/"],
+            "sourceIds": {
+              "ccfddl": "mobicom21"
+            }
+          },
+          "deadlines": [
+            {
+              "kind": "abstract",
+              "label": "Abstract submission",
+              "round": 1,
+              "track": "",
+              "comment": "Summer cycle",
+              "status": "confirmed",
+              "selection_rule": "source_priority_then_nearest_within_configured_window",
+              "evidence": [
+                {
+                  "source_name": "ccfddl",
+                  "source_url": "https://www.sigmobile.org/mobicom/2021/",
+                  "observed_at": "",
+                  "original_value": "2020-08-14 23:59:00",
+                  "confidence": "aggregator",
+                  "sourceClass": "aggregator",
+                  "sourceUrl": "https://www.sigmobile.org/mobicom/2021/",
+                  "rawExcerpt": "2020-08-14 23:59:00"
+                }
+              ],
+              "verification": {
+                "official_url": "https://www.sigmobile.org/mobicom/2021/",
+                "last_attempt_at": null,
+                "last_verified_at": null,
+                "next_check_at": "2026-10-09T23:50:31.000Z",
+                "content_hash": null,
+                "source_name": "ccfddl",
+                "status": "manual-required",
+                "source_class": "aggregator"
+              },
+              "precision": "exact",
+              "utc": "2020-08-15T03:59:00Z",
+              "aoe": "2020-08-14 15:59:00 AoE",
+              "tz_raw": "UTC-4"
+            },
+            {
+              "kind": "paper",
+              "label": "Paper submission",
+              "round": 1,
+              "track": "",
+              "comment": "Summer cycle",
+              "status": "confirmed",
+              "selection_rule": "source_priority_then_nearest_within_configured_window",
+              "evidence": [
+                {
+                  "source_name": "ccfddl",
+                  "source_url": "https://www.sigmobile.org/mobicom/2021/",
+                  "observed_at": "",
+                  "original_value": "2020-08-21 23:59:00",
+                  "confidence": "aggregator",
+                  "sourceClass": "aggregator",
+                  "sourceUrl": "https://www.sigmobile.org/mobicom/2021/",
+                  "rawExcerpt": "2020-08-21 23:59:00"
+                }
+              ],
+              "verification": {
+                "official_url": "https://www.sigmobile.org/mobicom/2021/",
+                "last_attempt_at": null,
+                "last_verified_at": null,
+                "next_check_at": "2026-10-09T23:50:31.000Z",
+                "content_hash": null,
+                "source_name": "ccfddl",
+                "status": "manual-required",
+                "source_class": "aggregator"
+              },
+              "precision": "exact",
+              "utc": "2020-08-22T03:59:00Z",
+              "aoe": "2020-08-21 15:59:00 AoE",
+              "tz_raw": "UTC-4"
+            },
+            {
+              "kind": "abstract",
+              "label": "Abstract submission",
+              "round": 2,
+              "track": "",
+              "comment": "Winter cycle",
+              "status": "confirmed",
+              "selection_rule": "source_priority_then_nearest_within_configured_window",
+              "evidence": [
+                {
+                  "source_name": "ccfddl",
+                  "source_url": "https://www.sigmobile.org/mobicom/2021/",
+                  "observed_at": "",
+                  "original_value": "2021-03-19 23:59:00",
+                  "confidence": "aggregator",
+                  "sourceClass": "aggregator",
+                  "sourceUrl": "https://www.sigmobile.org/mobicom/2021/",
+                  "rawExcerpt": "2021-03-19 23:59:00"
+                }
+              ],
+              "verification": {
+                "official_url": "https://www.sigmobile.org/mobicom/2021/",
+                "last_attempt_at": null,
+                "last_verified_at": null,
+                "next_check_at": "2026-10-09T23:50:31.000Z",
+                "content_hash": null,
+                "source_name": "ccfddl",
+                "status": "manual-required",
+                "source_class": "aggregator"
+              },
+              "precision": "exact",
+              "utc": "2021-03-20T03:59:00Z",
+              "aoe": "2021-03-19 15:59:00 AoE",
+              "tz_raw": "UTC-4"
+            },
+            {
+              "kind": "paper",
+              "label": "Paper submission",
+              "round": 2,
+              "track": "",
+              "comment": "Winter cycle",
+              "status": "confirmed",
+              "selection_rule": "source_priority_then_nearest_within_configured_window",
+              "evidence": [
+                {
+                  "source_name": "ccfddl",
+                  "source_url": "https://www.sigmobile.org/mobicom/2021/",
+                  "observed_at": "",
+                  "original_value": "2021-03-26 23:59:00",
+                  "confidence": "aggregator",
+                  "sourceClass": "aggregator",
+                  "sourceUrl": "https://www.sigmobile.org/mobicom/2021/",
+                  "rawExcerpt": "2021-03-26 23:59:00"
+                }
+              ],
+              "verification": {
+                "official_url": "https://www.sigmobile.org/mobicom/2021/",
+                "last_attempt_at": null,
+                "last_verified_at": null,
+                "next_check_at": "2026-10-09T23:50:31.000Z",
+                "content_hash": null,
+                "source_name": "ccfddl",
+                "status": "manual-required",
+                "source_class": "aggregator"
+              },
+              "precision": "exact",
+              "utc": "2021-03-27T03:59:00Z",
+              "aoe": "2021-03-26 15:59:00 AoE",
+              "tz_raw": "UTC-4"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "slt",
+      "title": "SLT",
+      "full_name": "IEEE Spoken Language Technology (SLT) Workshop",
+      "categories": ["graphics"],
+      "link": "https://attend.ieee.org/slt-2026/",
+      "upstream_sub": "CG",
+      "identity": {
+        "dblpKey": "slt",
+        "officialDomains": ["https://attend.ieee.org/slt-2026/"],
+        "sourceIds": {
+          "ccfddl": "CG/slt"
+        }
+      },
+      "editions": [
+        {
+          "year": 2022,
+          "id": "slt22",
+          "link": "https://www.slt2022.signalprocessingsociety.org/SLT%202022/slt2022.org/index.html",
+          "place": "Doha, Qatar",
+          "date_text": "January 9-12, 2023",
+          "event_date_precision": "exact-range",
+          "event_start": "2023-01-09",
+          "event_end": "2023-01-12",
+          "estimated": false,
+          "source": "ccfddl",
+          "identity": {
+            "officialUrls": [
+              "https://www.slt2022.signalprocessingsociety.org/SLT%202022/slt2022.org/index.html"
+            ],
+            "sourceIds": {
+              "ccfddl": "slt22"
+            }
+          },
+          "deadlines": [
+            {
+              "kind": "paper",
+              "label": "Paper submission",
+              "round": 1,
+              "track": "",
+              "comment": null,
+              "status": "confirmed",
+              "selection_rule": "source_priority_then_nearest_within_configured_window",
+              "evidence": [
+                {
+                  "source_name": "ccfddl",
+                  "source_url": "https://www.slt2022.signalprocessingsociety.org/SLT%202022/slt2022.org/index.html",
+                  "observed_at": "",
+                  "original_value": "2022-07-15 23:59:59",
+                  "confidence": "aggregator",
+                  "sourceClass": "aggregator",
+                  "sourceUrl": "https://www.slt2022.signalprocessingsociety.org/SLT%202022/slt2022.org/index.html",
+                  "rawExcerpt": "2022-07-15 23:59:59"
+                }
+              ],
+              "verification": {
+                "official_url": "https://www.slt2022.signalprocessingsociety.org/SLT%202022/slt2022.org/index.html",
+                "last_attempt_at": null,
+                "last_verified_at": null,
+                "next_check_at": "2026-10-09T23:50:31.000Z",
+                "content_hash": null,
+                "source_name": "ccfddl",
+                "status": "manual-required",
+                "source_class": "aggregator"
+              },
+              "precision": "exact",
+              "utc": "2022-07-16T11:59:59Z",
+              "aoe": "2022-07-15 23:59:59 AoE",
+              "tz_raw": "AoE"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "wasa",
+      "title": "WASA",
+      "full_name": "International Conference on Wireless Algorithms, Systems, and Applications",
+      "categories": ["networking"],
+      "link": "http://wasa-conference.org/WASA2026/",
+      "upstream_sub": "NW",
+      "identity": {
+        "dblpKey": "wasa",
+        "officialDomains": ["http://wasa-conference.org/WASA2026/"],
+        "sourceIds": {
+          "ccfddl": "NW/wasa"
+        }
+      },
+      "editions": [
+        {
+          "year": 2022,
+          "id": "wasa22",
+          "link": "http://wasa-conference.org/WASA2022/",
+          "place": "Dalian, China",
+          "date_text": "April 7-9, 2023",
+          "event_date_precision": "exact-range",
+          "event_start": "2023-04-07",
+          "event_end": "2023-04-09",
+          "estimated": false,
+          "source": "ccfddl",
+          "identity": {
+            "officialUrls": ["http://wasa-conference.org/WASA2022/"],
+            "sourceIds": {
+              "ccfddl": "wasa22"
+            }
+          },
+          "deadlines": [
+            {
+              "kind": "paper",
+              "label": "Paper submission",
+              "round": 1,
+              "track": "",
+              "comment": "2022 edition postponed to April 2023",
+              "status": "confirmed",
+              "selection_rule": "source_priority_then_nearest_within_configured_window",
+              "evidence": [
+                {
+                  "source_name": "ccfddl",
+                  "source_url": "http://wasa-conference.org/WASA2022/",
+                  "observed_at": "",
+                  "original_value": "2022-05-24 23:59:00",
+                  "confidence": "aggregator",
+                  "sourceClass": "aggregator",
+                  "sourceUrl": "http://wasa-conference.org/WASA2022/",
+                  "rawExcerpt": "2022-05-24 23:59:00"
+                }
+              ],
+              "verification": {
+                "official_url": "http://wasa-conference.org/WASA2022/",
+                "last_attempt_at": null,
+                "last_verified_at": null,
+                "next_check_at": "2026-10-09T23:50:31.000Z",
+                "content_hash": null,
+                "source_name": "ccfddl",
+                "status": "manual-required",
+                "source_class": "aggregator"
+              },
+              "precision": "exact",
+              "utc": "2022-05-25T11:59:00Z",
+              "aoe": "2022-05-24 23:59:00 AoE",
+              "tz_raw": "AoE"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "probml",
+      "title": "ProbML",
+      "full_name": "Symposium on Probabilistic Machine Learning",
+      "categories": ["ai"],
+      "link": "https://probml.cc",
+      "upstream_sub": "AI",
+      "identity": {
+        "dblpKey": "probml",
+        "officialDomains": ["https://probml.cc"],
+        "sourceIds": {
+          "ccfddl": "AI/probml"
+        }
+      },
+      "editions": [
+        {
+          "year": 2021,
+          "id": "probml2021",
+          "link": "https://probml.cc/archives/2021/index.html",
+          "place": "Virtual",
+          "date_text": "January 13 - February 17, 2021",
+          "event_date_precision": "exact-range",
+          "event_start": "2021-01-13",
+          "event_end": "2021-02-17",
+          "estimated": false,
+          "source": "ccfddl",
+          "identity": {
+            "officialUrls": ["https://probml.cc/archives/2021/index.html"],
+            "sourceIds": {
+              "ccfddl": "probml2021"
+            }
+          },
+          "deadlines": [
+            {
+              "kind": "paper",
+              "label": "Paper submission",
+              "round": 1,
+              "track": "",
+              "comment": null,
+              "status": "confirmed",
+              "selection_rule": "source_priority_then_nearest_within_configured_window",
+              "evidence": [
+                {
+                  "source_name": "ccfddl",
+                  "source_url": "https://probml.cc/archives/2021/index.html",
+                  "observed_at": "",
+                  "original_value": "2020-11-13 23:59:00",
+                  "confidence": "aggregator",
+                  "sourceClass": "aggregator",
+                  "sourceUrl": "https://probml.cc/archives/2021/index.html",
+                  "rawExcerpt": "2020-11-13 23:59:00"
+                }
+              ],
+              "verification": {
+                "official_url": "https://probml.cc/archives/2021/index.html",
+                "last_attempt_at": null,
+                "last_verified_at": null,
+                "next_check_at": "2026-10-09T23:50:31.000Z",
+                "content_hash": null,
+                "source_name": "ccfddl",
+                "status": "manual-required",
+                "source_class": "aggregator"
+              },
+              "precision": "exact",
+              "utc": "2020-11-14T11:59:00Z",
+              "aoe": "2020-11-13 23:59:00 AoE",
+              "tz_raw": "AoE"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "colm-ai",
+      "title": "COLM",
+      "full_name": "Conference on Language Modeling",
+      "categories": ["ai"],
+      "link": "https://colm.cc/Conferences/2026/CallForPapers",
+      "upstream_sub": "AI",
+      "identity": {
+        "dblpKey": "colm",
+        "officialDomains": ["https://colm.cc/Conferences/2026/CallForPapers"],
+        "sourceIds": {
+          "ccfddl": "AI/colm"
+        }
+      },
+      "editions": [
+        {
+          "year": 2026,
+          "id": "colm26",
+          "link": "https://colm.cc/Conferences/2026/CallForPapers",
+          "place": "Hilton Union Square, San Francisco, USA",
+          "date_text": "October 6-8, 2026",
+          "event_date_precision": "exact-range",
+          "event_start": "2026-10-06",
+          "event_end": "2026-10-08",
+          "estimated": false,
+          "source": "ccfddl",
+          "identity": {
+            "officialUrls": ["https://colm.cc/Conferences/2026/CallForPapers"],
+            "sourceIds": {
+              "ccfddl": "colm26"
+            }
+          },
+          "deadlines": [
+            {
+              "kind": "abstract",
+              "label": "Abstract submission",
+              "round": 1,
+              "track": "",
+              "comment": null,
+              "status": "confirmed",
+              "selection_rule": "source_priority_then_nearest_within_configured_window",
+              "evidence": [
+                {
+                  "source_name": "ccfddl",
+                  "source_url": "https://colm.cc/Conferences/2026/CallForPapers",
+                  "observed_at": "",
+                  "original_value": "2026-03-26 23:59:59",
+                  "confidence": "aggregator",
+                  "sourceClass": "aggregator",
+                  "sourceUrl": "https://colm.cc/Conferences/2026/CallForPapers",
+                  "rawExcerpt": "2026-03-26 23:59:59"
+                }
+              ],
+              "verification": {
+                "official_url": "https://colm.cc/Conferences/2026/CallForPapers",
+                "last_attempt_at": null,
+                "last_verified_at": null,
+                "next_check_at": "2026-10-09T23:50:31.000Z",
+                "content_hash": null,
+                "source_name": "ccfddl",
+                "status": "manual-required",
+                "source_class": "aggregator"
+              },
+              "precision": "exact",
+              "utc": "2026-03-27T11:59:59Z",
+              "aoe": "2026-03-26 23:59:59 AoE",
+              "tz_raw": "AoE"
+            },
+            {
+              "kind": "paper",
+              "label": "Paper submission",
+              "round": 1,
+              "track": "",
+              "comment": null,
+              "status": "confirmed",
+              "selection_rule": "source_priority_then_nearest_within_configured_window",
+              "evidence": [
+                {
+                  "source_name": "ccfddl",
+                  "source_url": "https://colm.cc/Conferences/2026/CallForPapers",
+                  "observed_at": "",
+                  "original_value": "2026-03-31 23:59:59",
+                  "confidence": "aggregator",
+                  "sourceClass": "aggregator",
+                  "sourceUrl": "https://colm.cc/Conferences/2026/CallForPapers",
+                  "rawExcerpt": "2026-03-31 23:59:59"
+                }
+              ],
+              "verification": {
+                "official_url": "https://colm.cc/Conferences/2026/CallForPapers",
+                "last_attempt_at": null,
+                "last_verified_at": null,
+                "next_check_at": "2026-10-09T23:50:31.000Z",
+                "content_hash": null,
+                "source_name": "ccfddl",
+                "status": "manual-required",
+                "source_class": "aggregator"
+              },
+              "precision": "exact",
+              "utc": "2026-04-01T11:59:59Z",
+              "aoe": "2026-03-31 23:59:59 AoE",
+              "tz_raw": "AoE"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "colm-aideadlines-colm",
+      "title": "COLM",
+      "full_name": "Conference on Language Modeling",
+      "categories": ["ai"],
+      "link": "https://colmweb.org/",
+      "identity": {
+        "officialDomains": ["https://colmweb.org/"],
+        "sourceIds": {
+          "aideadlines": "colm"
+        }
+      },
+      "editions": [
+        {
+          "year": 2026,
+          "id": "colm26",
+          "link": "https://colmweb.org/",
+          "place": "San Francisco, USA",
+          "date_text": "October 6-9, 2026",
+          "event_date_precision": "exact-range",
+          "event_start": "2026-10-06",
+          "event_end": "2026-10-09",
+          "estimated": false,
+          "source": "aideadlines",
+          "identity": {
+            "officialUrls": ["https://colmweb.org/"],
+            "sourceIds": {
+              "aideadlines": "colm26"
+            }
+          },
+          "deadlines": [
+            {
+              "kind": "abstract",
+              "label": "Abstract Submission",
+              "round": 1,
+              "track": "",
+              "comment": null,
+              "status": "confirmed",
+              "selection_rule": "source_priority_then_nearest_within_configured_window",
+              "evidence": [
+                {
+                  "source_name": "aideadlines",
+                  "source_url": "https://colmweb.org/",
+                  "observed_at": "",
+                  "original_value": "2026-03-26 23:59:59",
+                  "confidence": "aggregator",
+                  "sourceClass": "aggregator",
+                  "sourceUrl": "https://colmweb.org/",
+                  "rawExcerpt": "2026-03-26 23:59:59"
+                }
+              ],
+              "verification": {
+                "official_url": "https://colmweb.org/",
+                "last_attempt_at": null,
+                "last_verified_at": null,
+                "next_check_at": "2026-10-09T23:50:31.000Z",
+                "content_hash": null,
+                "source_name": "aideadlines",
+                "status": "manual-required",
+                "source_class": "aggregator"
+              },
+              "precision": "exact",
+              "utc": "2026-03-27T11:59:59Z",
+              "aoe": "2026-03-26 23:59:59 AoE",
+              "tz_raw": "AoE"
+            },
+            {
+              "kind": "paper",
+              "label": "Paper Submission",
+              "round": 1,
+              "track": "",
+              "comment": null,
+              "status": "confirmed",
+              "selection_rule": "source_priority_then_nearest_within_configured_window",
+              "evidence": [
+                {
+                  "source_name": "aideadlines",
+                  "source_url": "https://colmweb.org/",
+                  "observed_at": "",
+                  "original_value": "2026-03-31 23:59:59",
+                  "confidence": "aggregator",
+                  "sourceClass": "aggregator",
+                  "sourceUrl": "https://colmweb.org/",
+                  "rawExcerpt": "2026-03-31 23:59:59"
+                }
+              ],
+              "verification": {
+                "official_url": "https://colmweb.org/",
+                "last_attempt_at": null,
+                "last_verified_at": null,
+                "next_check_at": "2026-10-09T23:50:31.000Z",
+                "content_hash": null,
+                "source_name": "aideadlines",
+                "status": "manual-required",
+                "source_class": "aggregator"
+              },
+              "precision": "exact",
+              "utc": "2026-04-01T11:59:59Z",
+              "aoe": "2026-03-31 23:59:59 AoE",
+              "tz_raw": "AoE"
+            },
+            {
+              "kind": "rebuttal_start",
+              "label": "Rebuttal Period Start",
+              "round": 1,
+              "track": "",
+              "comment": null,
+              "status": "confirmed",
+              "selection_rule": "source_priority_then_nearest_within_configured_window",
+              "evidence": [
+                {
+                  "source_name": "aideadlines",
+                  "source_url": "https://colmweb.org/",
+                  "observed_at": "",
+                  "original_value": "2026-05-22 00:00:00",
+                  "confidence": "aggregator",
+                  "sourceClass": "aggregator",
+                  "sourceUrl": "https://colmweb.org/",
+                  "rawExcerpt": "2026-05-22 00:00:00"
+                }
+              ],
+              "verification": {
+                "official_url": "https://colmweb.org/",
+                "last_attempt_at": null,
+                "last_verified_at": null,
+                "next_check_at": "2026-10-09T23:50:31.000Z",
+                "content_hash": null,
+                "source_name": "aideadlines",
+                "status": "manual-required",
+                "source_class": "aggregator"
+              },
+              "precision": "exact",
+              "utc": "2026-05-22T12:00:00Z",
+              "aoe": "2026-05-22 00:00:00 AoE",
+              "tz_raw": "AoE"
+            },
+            {
+              "kind": "rebuttal_end",
+              "label": "Rebuttal Period End",
+              "round": 1,
+              "track": "",
+              "comment": null,
+              "status": "confirmed",
+              "selection_rule": "source_priority_then_nearest_within_configured_window",
+              "evidence": [
+                {
+                  "source_name": "aideadlines",
+                  "source_url": "https://colmweb.org/",
+                  "observed_at": "",
+                  "original_value": "2026-06-08 23:59:59",
+                  "confidence": "aggregator",
+                  "sourceClass": "aggregator",
+                  "sourceUrl": "https://colmweb.org/",
+                  "rawExcerpt": "2026-06-08 23:59:59"
+                }
+              ],
+              "verification": {
+                "official_url": "https://colmweb.org/",
+                "last_attempt_at": null,
+                "last_verified_at": null,
+                "next_check_at": "2026-10-09T23:50:31.000Z",
+                "content_hash": null,
+                "source_name": "aideadlines",
+                "status": "manual-required",
+                "source_class": "aggregator"
+              },
+              "precision": "exact",
+              "utc": "2026-06-09T11:59:59Z",
+              "aoe": "2026-06-08 23:59:59 AoE",
+              "tz_raw": "AoE"
+            },
+            {
+              "kind": "notification",
+              "label": "Decision Notification",
+              "round": 1,
+              "track": "",
+              "comment": null,
+              "status": "confirmed",
+              "selection_rule": "source_priority_then_nearest_within_configured_window",
+              "evidence": [
+                {
+                  "source_name": "aideadlines",
+                  "source_url": "https://colmweb.org/",
+                  "observed_at": "",
+                  "original_value": "2026-07-08 23:59:59",
+                  "confidence": "aggregator",
+                  "sourceClass": "aggregator",
+                  "sourceUrl": "https://colmweb.org/",
+                  "rawExcerpt": "2026-07-08 23:59:59"
+                }
+              ],
+              "verification": {
+                "official_url": "https://colmweb.org/",
+                "last_attempt_at": null,
+                "last_verified_at": null,
+                "next_check_at": "2026-10-09T23:50:31.000Z",
+                "content_hash": null,
+                "source_name": "aideadlines",
+                "status": "manual-required",
+                "source_class": "aggregator"
+              },
+              "precision": "exact",
+              "utc": "2026-07-09T11:59:59Z",
+              "aoe": "2026-07-08 23:59:59 AoE",
+              "tz_raw": "AoE"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "evomusart",
+      "title": "EvoMUSART",
+      "full_name": "International Conference on Artificial Intelligence in Music, Sound, Art and Design",
+      "categories": ["ai"],
+      "link": "https://www.evostar.org/2027/evomusart/",
+      "upstream_sub": "AI",
+      "identity": {
+        "dblpKey": "evomusart",
+        "officialDomains": ["https://www.evostar.org/2027/evomusart/"],
+        "sourceIds": {
+          "ccfddl": "AI/evomusart"
+        }
+      },
+      "editions": [
+        {
+          "year": 2027,
+          "id": "evomusart27",
+          "link": "https://www.evostar.org/2027/evomusart/",
+          "place": "Mainz, Germany (hybrid)",
+          "date_text": "March 31-April 2, 2027",
+          "event_date_precision": "exact-range",
+          "event_start": "2027-03-31",
+          "event_end": "2027-04-02",
+          "estimated": false,
+          "source": "ccfddl",
+          "identity": {
+            "officialUrls": ["https://www.evostar.org/2027/evomusart/"],
+            "sourceIds": {
+              "ccfddl": "evomusart27"
+            }
+          },
+          "deadlines": [
+            {
+              "kind": "paper",
+              "label": "Paper submission",
+              "round": 1,
+              "track": "",
+              "comment": "Full papers",
+              "status": "confirmed",
+              "selection_rule": "source_priority_then_nearest_within_configured_window",
+              "evidence": [
+                {
+                  "source_name": "ccfddl",
+                  "source_url": "https://www.evostar.org/2027/evomusart/",
+                  "observed_at": "",
+                  "original_value": "2026-11-01 23:59:00",
+                  "confidence": "aggregator",
+                  "sourceClass": "aggregator",
+                  "sourceUrl": "https://www.evostar.org/2027/evomusart/",
+                  "rawExcerpt": "2026-11-01 23:59:00"
+                }
+              ],
+              "verification": {
+                "official_url": "https://www.evostar.org/2027/evomusart/",
+                "last_attempt_at": null,
+                "last_verified_at": null,
+                "next_check_at": "2026-10-05T23:50:31.000Z",
+                "content_hash": null,
+                "source_name": "ccfddl",
+                "status": "manual-required",
+                "source_class": "aggregator"
+              },
+              "precision": "exact",
+              "utc": "2026-11-02T11:59:00Z",
+              "aoe": "2026-11-01 23:59:00 AoE",
+              "tz_raw": "AoE"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "evomusart-2027",
+      "title": "EvoMusArt 2027",
+      "full_name": "16th International Conference on Artificial Intelligence in Music, Sound, Art and Design",
+      "categories": ["ai"],
+      "link": "https://easychair.org/cfp/evomusart2027",
+      "identity": {
+        "officialDomains": ["https://easychair.org/cfp/evomusart2027"],
+        "sourceIds": {
+          "local": "evomusart-2027"
+        }
+      },
+      "editions": [
+        {
+          "year": 2027,
+          "id": "evomusart-202727",
+          "link": "https://easychair.org/cfp/evomusart2027",
+          "place": "Mainz, Germany",
+          "date_text": "Mar 31, 2027",
+          "event_date_precision": "single-day",
+          "event_start": "2027-03-31",
+          "event_end": "2027-03-31",
+          "estimated": false,
+          "source": "local",
+          "identity": {
+            "officialUrls": ["https://easychair.org/cfp/evomusart2027"],
+            "sourceIds": {
+              "local": "evomusart-202727"
+            }
+          },
+          "deadlines": [
+            {
+              "kind": "paper",
+              "label": "Submission deadline",
+              "round": 1,
+              "track": "",
+              "comment": null,
+              "status": "confirmed",
+              "selection_rule": "source_priority_then_nearest_within_configured_window",
+              "evidence": [
+                {
+                  "source_name": "local",
+                  "source_url": "https://easychair.org/cfp/evomusart2027",
+                  "observed_at": "",
+                  "original_value": "2026-11-01",
+                  "confidence": "aggregator",
+                  "sourceClass": "curated-manual",
+                  "sourceUrl": "https://easychair.org/cfp/evomusart2027",
+                  "rawExcerpt": "2026-11-01"
+                }
+              ],
+              "verification": {
+                "official_url": "https://easychair.org/cfp/evomusart2027",
+                "last_attempt_at": "2026-10-02T23:50:31.000Z",
+                "last_verified_at": null,
+                "next_check_at": "2026-10-05T23:50:31.000Z",
+                "content_hash": null,
+                "status": "manual-required",
+                "source_class": "unknown",
+                "source_name": "local",
+                "provider_identity": {
+                  "provider": "easychair",
+                  "providerKey": "cfp/evomusart2027",
+                  "strength": "provider-scoped"
+                },
+                "label_signature": "submission"
+              },
+              "precision": "date-only",
+              "local_date": "2026-11-01",
+              "earliest_utc": "2026-10-31T10:00:00.000Z",
+              "latest_utc": "2026-11-02T11:59:59.999Z",
+              "utc": null,
+              "aoe": null,
+              "tz_raw": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "ijcai-ai",
+      "title": "IJCAI",
+      "full_name": "International Joint Conference on Artificial Intelligence",
+      "categories": ["ai"],
+      "link": "https://www.ijcai.org/node/8",
+      "upstream_sub": "AI",
+      "identity": {
+        "dblpKey": "ijcai",
+        "officialDomains": ["https://www.ijcai.org/node/8"],
+        "sourceIds": {
+          "ccfddl": "AI/ijcai"
+        }
+      },
+      "editions": [
+        {
+          "year": 2026,
+          "id": "ijcai26",
+          "link": "https://2026.ijcai.org/",
+          "place": "Bremen, Germany",
+          "date_text": "August 18-21, 2026",
+          "event_date_precision": "exact-range",
+          "event_start": "2026-08-18",
+          "event_end": "2026-08-21",
+          "estimated": false,
+          "source": "ccfddl",
+          "identity": {
+            "officialUrls": ["https://2026.ijcai.org/"],
+            "sourceIds": {
+              "ccfddl": "ijcai26"
+            }
+          },
+          "deadlines": [
+            {
+              "kind": "abstract",
+              "label": "Abstract submission",
+              "round": 1,
+              "track": "",
+              "comment": null,
+              "status": "confirmed",
+              "selection_rule": "source_priority_then_nearest_within_configured_window",
+              "evidence": [
+                {
+                  "source_name": "ccfddl",
+                  "source_url": "https://2026.ijcai.org/",
+                  "observed_at": "",
+                  "original_value": "2026-01-12 23:59:59",
+                  "confidence": "aggregator",
+                  "sourceClass": "aggregator",
+                  "sourceUrl": "https://2026.ijcai.org/",
+                  "rawExcerpt": "2026-01-12 23:59:59"
+                }
+              ],
+              "verification": {
+                "official_url": "https://2026.ijcai.org/",
+                "last_attempt_at": null,
+                "last_verified_at": null,
+                "next_check_at": "2026-10-09T23:50:31.000Z",
+                "content_hash": null,
+                "source_name": "ccfddl",
+                "status": "manual-required",
+                "source_class": "aggregator"
+              },
+              "precision": "exact",
+              "utc": "2026-01-13T11:59:59Z",
+              "aoe": "2026-01-12 23:59:59 AoE",
+              "tz_raw": "UTC-12"
+            },
+            {
+              "kind": "paper",
+              "label": "Paper submission",
+              "round": 1,
+              "track": "",
+              "comment": null,
+              "status": "confirmed",
+              "selection_rule": "source_priority_then_nearest_within_configured_window",
+              "evidence": [
+                {
+                  "source_name": "ccfddl",
+                  "source_url": "https://2026.ijcai.org/",
+                  "observed_at": "",
+                  "original_value": "2026-01-19 23:59:59",
+                  "confidence": "aggregator",
+                  "sourceClass": "aggregator",
+                  "sourceUrl": "https://2026.ijcai.org/",
+                  "rawExcerpt": "2026-01-19 23:59:59"
+                }
+              ],
+              "verification": {
+                "official_url": "https://2026.ijcai.org/",
+                "last_attempt_at": null,
+                "last_verified_at": null,
+                "next_check_at": "2026-10-09T23:50:31.000Z",
+                "content_hash": null,
+                "source_name": "ccfddl",
+                "status": "manual-required",
+                "source_class": "aggregator"
+              },
+              "precision": "exact",
+              "utc": "2026-01-20T11:59:59Z",
+              "aoe": "2026-01-19 23:59:59 AoE",
+              "tz_raw": "UTC-12"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "ijcai-aideadlines-ijcai",
+      "title": "IJCAI",
+      "full_name": "International Joint Conference on Artificial Intelligence",
+      "categories": ["ai"],
+      "link": "https://2026.ijcai.org/",
+      "identity": {
+        "officialDomains": ["https://2026.ijcai.org/"],
+        "sourceIds": {
+          "aideadlines": "ijcai"
+        }
+      },
+      "editions": [
+        {
+          "year": 2026,
+          "id": "ijcai26",
+          "link": "https://2026.ijcai.org/",
+          "place": "Bremen, Germany",
+          "date_text": "August 15-21, 2026",
+          "event_date_precision": "exact-range",
+          "event_start": "2026-08-15",
+          "event_end": "2026-08-21",
+          "estimated": false,
+          "source": "aideadlines",
+          "identity": {
+            "officialUrls": ["https://2026.ijcai.org/"],
+            "sourceIds": {
+              "aideadlines": "ijcai26"
+            }
+          },
+          "deadlines": [
+            {
+              "kind": "abstract",
+              "label": "Abstract submission deadline",
+              "round": 1,
+              "track": "",
+              "comment": null,
+              "status": "confirmed",
+              "selection_rule": "source_priority_then_nearest_within_configured_window",
+              "evidence": [
+                {
+                  "source_name": "aideadlines",
+                  "source_url": "https://2026.ijcai.org/",
+                  "observed_at": "",
+                  "original_value": "2026-01-12 23:59:59",
+                  "confidence": "aggregator",
+                  "sourceClass": "aggregator",
+                  "sourceUrl": "https://2026.ijcai.org/",
+                  "rawExcerpt": "2026-01-12 23:59:59"
+                }
+              ],
+              "verification": {
+                "official_url": "https://2026.ijcai.org/",
+                "last_attempt_at": null,
+                "last_verified_at": null,
+                "next_check_at": "2026-10-09T23:50:31.000Z",
+                "content_hash": null,
+                "source_name": "aideadlines",
+                "status": "manual-required",
+                "source_class": "aggregator"
+              },
+              "precision": "exact",
+              "utc": "2026-01-13T11:59:59Z",
+              "aoe": "2026-01-12 23:59:59 AoE",
+              "tz_raw": "AoE"
+            },
+            {
+              "kind": "paper",
+              "label": "Full paper submission deadline",
+              "round": 1,
+              "track": "",
+              "comment": null,
+              "status": "confirmed",
+              "selection_rule": "source_priority_then_nearest_within_configured_window",
+              "evidence": [
+                {
+                  "source_name": "aideadlines",
+                  "source_url": "https://2026.ijcai.org/",
+                  "observed_at": "",
+                  "original_value": "2026-01-19 23:59:59",
+                  "confidence": "aggregator",
+                  "sourceClass": "aggregator",
+                  "sourceUrl": "https://2026.ijcai.org/",
+                  "rawExcerpt": "2026-01-19 23:59:59"
+                }
+              ],
+              "verification": {
+                "official_url": "https://2026.ijcai.org/",
+                "last_attempt_at": null,
+                "last_verified_at": null,
+                "next_check_at": "2026-10-09T23:50:31.000Z",
+                "content_hash": null,
+                "source_name": "aideadlines",
+                "status": "manual-required",
+                "source_class": "aggregator"
+              },
+              "precision": "exact",
+              "utc": "2026-01-20T11:59:59Z",
+              "aoe": "2026-01-19 23:59:59 AoE",
+              "tz_raw": "AoE"
+            },
+            {
+              "kind": "notification",
+              "label": "Phase I notification",
+              "round": 1,
+              "track": "",
+              "comment": null,
+              "status": "confirmed",
+              "selection_rule": "source_priority_then_nearest_within_configured_window",
+              "evidence": [
+                {
+                  "source_name": "aideadlines",
+                  "source_url": "https://2026.ijcai.org/",
+                  "observed_at": "",
+                  "original_value": "2026-03-04 23:59:59",
+                  "confidence": "aggregator",
+                  "sourceClass": "aggregator",
+                  "sourceUrl": "https://2026.ijcai.org/",
+                  "rawExcerpt": "2026-03-04 23:59:59"
+                }
+              ],
+              "verification": {
+                "official_url": "https://2026.ijcai.org/",
+                "last_attempt_at": null,
+                "last_verified_at": null,
+                "next_check_at": "2026-10-09T23:50:31.000Z",
+                "content_hash": null,
+                "source_name": "aideadlines",
+                "status": "manual-required",
+                "source_class": "aggregator"
+              },
+              "precision": "exact",
+              "utc": "2026-03-05T11:59:59Z",
+              "aoe": "2026-03-04 23:59:59 AoE",
+              "tz_raw": "AoE"
+            },
+            {
+              "kind": "rebuttal_start",
+              "label": "Author response period start",
+              "round": 1,
+              "track": "",
+              "comment": null,
+              "status": "confirmed",
+              "selection_rule": "source_priority_then_nearest_within_configured_window",
+              "evidence": [
+                {
+                  "source_name": "aideadlines",
+                  "source_url": "https://2026.ijcai.org/",
+                  "observed_at": "",
+                  "original_value": "2026-04-07 00:00:00",
+                  "confidence": "aggregator",
+                  "sourceClass": "aggregator",
+                  "sourceUrl": "https://2026.ijcai.org/",
+                  "rawExcerpt": "2026-04-07 00:00:00"
+                }
+              ],
+              "verification": {
+                "official_url": "https://2026.ijcai.org/",
+                "last_attempt_at": null,
+                "last_verified_at": null,
+                "next_check_at": "2026-10-09T23:50:31.000Z",
+                "content_hash": null,
+                "source_name": "aideadlines",
+                "status": "manual-required",
+                "source_class": "aggregator"
+              },
+              "precision": "exact",
+              "utc": "2026-04-07T12:00:00Z",
+              "aoe": "2026-04-07 00:00:00 AoE",
+              "tz_raw": "AoE"
+            },
+            {
+              "kind": "rebuttal_end",
+              "label": "Author response period end",
+              "round": 1,
+              "track": "",
+              "comment": null,
+              "status": "confirmed",
+              "selection_rule": "source_priority_then_nearest_within_configured_window",
+              "evidence": [
+                {
+                  "source_name": "aideadlines",
+                  "source_url": "https://2026.ijcai.org/",
+                  "observed_at": "",
+                  "original_value": "2026-04-10 23:59:59",
+                  "confidence": "aggregator",
+                  "sourceClass": "aggregator",
+                  "sourceUrl": "https://2026.ijcai.org/",
+                  "rawExcerpt": "2026-04-10 23:59:59"
+                }
+              ],
+              "verification": {
+                "official_url": "https://2026.ijcai.org/",
+                "last_attempt_at": null,
+                "last_verified_at": null,
+                "next_check_at": "2026-10-09T23:50:31.000Z",
+                "content_hash": null,
+                "source_name": "aideadlines",
+                "status": "manual-required",
+                "source_class": "aggregator"
+              },
+              "precision": "exact",
+              "utc": "2026-04-11T11:59:59Z",
+              "aoe": "2026-04-10 23:59:59 AoE",
+              "tz_raw": "AoE"
+            },
+            {
+              "kind": "notification",
+              "label": "Paper notification",
+              "round": 1,
+              "track": "",
+              "comment": null,
+              "status": "confirmed",
+              "selection_rule": "source_priority_then_nearest_within_configured_window",
+              "evidence": [
+                {
+                  "source_name": "aideadlines",
+                  "source_url": "https://2026.ijcai.org/",
+                  "observed_at": "",
+                  "original_value": "2026-04-29 23:59:59",
+                  "confidence": "aggregator",
+                  "sourceClass": "aggregator",
+                  "sourceUrl": "https://2026.ijcai.org/",
+                  "rawExcerpt": "2026-04-29 23:59:59"
+                }
+              ],
+              "verification": {
+                "official_url": "https://2026.ijcai.org/",
+                "last_attempt_at": null,
+                "last_verified_at": null,
+                "next_check_at": "2026-10-09T23:50:31.000Z",
+                "content_hash": null,
+                "source_name": "aideadlines",
+                "status": "manual-required",
+                "source_class": "aggregator"
+              },
+              "precision": "exact",
+              "utc": "2026-04-30T11:59:59Z",
+              "aoe": "2026-04-29 23:59:59 AoE",
+              "tz_raw": "AoE"
+            },
+            {
+              "kind": "camera_ready",
+              "label": "Camera ready deadline",
+              "round": 1,
+              "track": "",
+              "comment": null,
+              "status": "confirmed",
+              "selection_rule": "source_priority_then_nearest_within_configured_window",
+              "evidence": [
+                {
+                  "source_name": "aideadlines",
+                  "source_url": "https://2026.ijcai.org/",
+                  "observed_at": "",
+                  "original_value": "2026-05-15 23:59:59",
+                  "confidence": "aggregator",
+                  "sourceClass": "aggregator",
+                  "sourceUrl": "https://2026.ijcai.org/",
+                  "rawExcerpt": "2026-05-15 23:59:59"
+                }
+              ],
+              "verification": {
+                "official_url": "https://2026.ijcai.org/",
+                "last_attempt_at": null,
+                "last_verified_at": null,
+                "next_check_at": "2026-10-09T23:50:31.000Z",
+                "content_hash": null,
+                "source_name": "aideadlines",
+                "status": "manual-required",
+                "source_class": "aggregator"
+              },
+              "precision": "exact",
+              "utc": "2026-05-16T11:59:59Z",
+              "aoe": "2026-05-15 23:59:59 AoE",
+              "tz_raw": "AoE"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "interspeech-aideadlines-interspeech",
+      "title": "Interspeech",
+      "full_name": "Interspeech",
+      "categories": ["ai"],
+      "link": "https://interspeech2026.org",
+      "identity": {
+        "officialDomains": ["https://interspeech2026.org"],
+        "sourceIds": {
+          "aideadlines": "interspeech"
+        }
+      },
+      "editions": [
+        {
+          "year": 2026,
+          "id": "interspeech2026",
+          "link": "https://interspeech2026.org",
+          "place": "Sydney, Australia",
+          "date_text": "September 28-October 1, 2026",
+          "event_date_precision": "exact-range",
+          "event_start": "2026-09-28",
+          "event_end": "2026-10-01",
+          "estimated": false,
+          "source": "aideadlines",
+          "identity": {
+            "officialUrls": ["https://interspeech2026.org"],
+            "sourceIds": {
+              "aideadlines": "interspeech2026"
+            }
+          },
+          "deadlines": [
+            {
+              "kind": "paper",
+              "label": "Paper submission deadline",
+              "round": 1,
+              "track": "",
+              "comment": null,
+              "status": "confirmed",
+              "selection_rule": "source_priority_then_nearest_within_configured_window",
+              "evidence": [
+                {
+                  "source_name": "aideadlines",
+                  "source_url": "https://interspeech2026.org",
+                  "observed_at": "",
+                  "original_value": "2026-02-25 23:59:59",
+                  "confidence": "aggregator",
+                  "sourceClass": "aggregator",
+                  "sourceUrl": "https://interspeech2026.org",
+                  "rawExcerpt": "2026-02-25 23:59:59"
+                }
+              ],
+              "verification": {
+                "official_url": "https://interspeech2026.org",
+                "last_attempt_at": null,
+                "last_verified_at": null,
+                "next_check_at": "2026-10-09T23:50:31.000Z",
+                "content_hash": null,
+                "source_name": "aideadlines",
+                "status": "manual-required",
+                "source_class": "aggregator"
+              },
+              "precision": "exact",
+              "utc": "2026-02-26T11:59:59Z",
+              "aoe": "2026-02-25 23:59:59 AoE",
+              "tz_raw": "AoE"
+            },
+            {
+              "kind": "supplementary",
+              "label": "Paper update deadline",
+              "round": 1,
+              "track": "",
+              "comment": null,
+              "status": "confirmed",
+              "selection_rule": "source_priority_then_nearest_within_configured_window",
+              "evidence": [
+                {
+                  "source_name": "aideadlines",
+                  "source_url": "https://interspeech2026.org",
+                  "observed_at": "",
+                  "original_value": "2026-03-04 23:59:59",
+                  "confidence": "aggregator",
+                  "sourceClass": "aggregator",
+                  "sourceUrl": "https://interspeech2026.org",
+                  "rawExcerpt": "2026-03-04 23:59:59"
+                }
+              ],
+              "verification": {
+                "official_url": "https://interspeech2026.org",
+                "last_attempt_at": null,
+                "last_verified_at": null,
+                "next_check_at": "2026-10-09T23:50:31.000Z",
+                "content_hash": null,
+                "source_name": "aideadlines",
+                "status": "manual-required",
+                "source_class": "aggregator"
+              },
+              "precision": "exact",
+              "utc": "2026-03-05T11:59:59Z",
+              "aoe": "2026-03-04 23:59:59 AoE",
+              "tz_raw": "AoE"
+            },
+            {
+              "kind": "rebuttal_start",
+              "label": "Rebuttal period start",
+              "round": 1,
+              "track": "",
+              "comment": null,
+              "status": "confirmed",
+              "selection_rule": "source_priority_then_nearest_within_configured_window",
+              "evidence": [
+                {
+                  "source_name": "aideadlines",
+                  "source_url": "https://interspeech2026.org",
+                  "observed_at": "",
+                  "original_value": "2026-04-24 23:59:59",
+                  "confidence": "aggregator",
+                  "sourceClass": "aggregator",
+                  "sourceUrl": "https://interspeech2026.org",
+                  "rawExcerpt": "2026-04-24 23:59:59"
+                }
+              ],
+              "verification": {
+                "official_url": "https://interspeech2026.org",
+                "last_attempt_at": null,
+                "last_verified_at": null,
+                "next_check_at": "2026-10-09T23:50:31.000Z",
+                "content_hash": null,
+                "source_name": "aideadlines",
+                "status": "manual-required",
+                "source_class": "aggregator"
+              },
+              "precision": "exact",
+              "utc": "2026-04-25T11:59:59Z",
+              "aoe": "2026-04-24 23:59:59 AoE",
+              "tz_raw": "AoE"
+            },
+            {
+              "kind": "rebuttal_end",
+              "label": "Rebuttal period end",
+              "round": 1,
+              "track": "",
+              "comment": null,
+              "status": "confirmed",
+              "selection_rule": "source_priority_then_nearest_within_configured_window",
+              "evidence": [
+                {
+                  "source_name": "aideadlines",
+                  "source_url": "https://interspeech2026.org",
+                  "observed_at": "",
+                  "original_value": "2026-05-01 23:59:59",
+                  "confidence": "aggregator",
+                  "sourceClass": "aggregator",
+                  "sourceUrl": "https://interspeech2026.org",
+                  "rawExcerpt": "2026-05-01 23:59:59"
+                }
+              ],
+              "verification": {
+                "official_url": "https://interspeech2026.org",
+                "last_attempt_at": null,
+                "last_verified_at": null,
+                "next_check_at": "2026-10-09T23:50:31.000Z",
+                "content_hash": null,
+                "source_name": "aideadlines",
+                "status": "manual-required",
+                "source_class": "aggregator"
+              },
+              "precision": "exact",
+              "utc": "2026-05-02T11:59:59Z",
+              "aoe": "2026-05-01 23:59:59 AoE",
+              "tz_raw": "AoE"
+            },
+            {
+              "kind": "notification",
+              "label": "Paper acceptance notification",
+              "round": 1,
+              "track": "",
+              "comment": null,
+              "status": "confirmed",
+              "selection_rule": "source_priority_then_nearest_within_configured_window",
+              "evidence": [
+                {
+                  "source_name": "aideadlines",
+                  "source_url": "https://interspeech2026.org",
+                  "observed_at": "",
+                  "original_value": "2026-06-05 23:59:59",
+                  "confidence": "aggregator",
+                  "sourceClass": "aggregator",
+                  "sourceUrl": "https://interspeech2026.org",
+                  "rawExcerpt": "2026-06-05 23:59:59"
+                }
+              ],
+              "verification": {
+                "official_url": "https://interspeech2026.org",
+                "last_attempt_at": null,
+                "last_verified_at": null,
+                "next_check_at": "2026-10-09T23:50:31.000Z",
+                "content_hash": null,
+                "source_name": "aideadlines",
+                "status": "manual-required",
+                "source_class": "aggregator"
+              },
+              "precision": "exact",
+              "utc": "2026-06-06T11:59:59Z",
+              "aoe": "2026-06-05 23:59:59 AoE",
+              "tz_raw": "AoE"
+            },
+            {
+              "kind": "camera_ready",
+              "label": "Camera-ready paper submission",
+              "round": 1,
+              "track": "",
+              "comment": null,
+              "status": "confirmed",
+              "selection_rule": "source_priority_then_nearest_within_configured_window",
+              "evidence": [
+                {
+                  "source_name": "aideadlines",
+                  "source_url": "https://interspeech2026.org",
+                  "observed_at": "",
+                  "original_value": "2026-06-19 23:59:59",
+                  "confidence": "aggregator",
+                  "sourceClass": "aggregator",
+                  "sourceUrl": "https://interspeech2026.org",
+                  "rawExcerpt": "2026-06-19 23:59:59"
+                }
+              ],
+              "verification": {
+                "official_url": "https://interspeech2026.org",
+                "last_attempt_at": null,
+                "last_verified_at": null,
+                "next_check_at": "2026-10-09T23:50:31.000Z",
+                "content_hash": null,
+                "source_name": "aideadlines",
+                "status": "manual-required",
+                "source_class": "aggregator"
+              },
+              "precision": "exact",
+              "utc": "2026-06-20T11:59:59Z",
+              "aoe": "2026-06-19 23:59:59 AoE",
+              "tz_raw": "AoE"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "interspeech-cg",
+      "title": "InterSpeech",
+      "full_name": "Conference of the International Speech Communication Association",
+      "categories": ["graphics"],
+      "link": "https://interspeech2027.org/",
+      "upstream_sub": "CG",
+      "identity": {
+        "dblpKey": "interspeech",
+        "officialDomains": ["https://interspeech2027.org/"],
+        "sourceIds": {
+          "ccfddl": "CG/interspeech"
+        }
+      },
+      "editions": [
+        {
+          "year": 2026,
+          "id": "interspeech26",
+          "link": "https://interspeech2026.org/",
+          "place": "Sydney, Australia",
+          "date_text": "September 28 - October 1, 2026",
+          "event_date_precision": "exact-range",
+          "event_start": "2026-09-28",
+          "event_end": "2026-10-01",
+          "estimated": false,
+          "source": "ccfddl",
+          "identity": {
+            "officialUrls": ["https://interspeech2026.org/"],
+            "sourceIds": {
+              "ccfddl": "interspeech26"
+            }
+          },
+          "deadlines": [
+            {
+              "kind": "paper",
+              "label": "Paper submission",
+              "round": 1,
+              "track": "",
+              "comment": null,
+              "status": "confirmed",
+              "selection_rule": "source_priority_then_nearest_within_configured_window",
+              "evidence": [
+                {
+                  "source_name": "ccfddl",
+                  "source_url": "https://interspeech2026.org/",
+                  "observed_at": "",
+                  "original_value": "2026-02-25 23:59:00",
+                  "confidence": "aggregator",
+                  "sourceClass": "aggregator",
+                  "sourceUrl": "https://interspeech2026.org/",
+                  "rawExcerpt": "2026-02-25 23:59:00"
+                }
+              ],
+              "verification": {
+                "official_url": "https://interspeech2026.org/",
+                "last_attempt_at": null,
+                "last_verified_at": null,
+                "next_check_at": "2026-10-09T23:50:31.000Z",
+                "content_hash": null,
+                "source_name": "ccfddl",
+                "status": "manual-required",
+                "source_class": "aggregator"
+              },
+              "precision": "exact",
+              "utc": "2026-02-26T11:59:00Z",
+              "aoe": "2026-02-25 23:59:00 AoE",
+              "tz_raw": "AoE"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "iros-ai",
+      "title": "IROS",
+      "full_name": "IEEE/RSJ International Conference on Intelligent Robots and Systems",
+      "categories": ["ai"],
+      "link": "https://2027.ieee-iros.org/",
+      "upstream_sub": "AI",
+      "identity": {
+        "dblpKey": "iros",
+        "officialDomains": ["https://2027.ieee-iros.org/"],
+        "sourceIds": {
+          "ccfddl": "AI/iros"
+        }
+      },
+      "editions": [
+        {
+          "year": 2026,
+          "id": "iros26",
+          "link": "https://2026.ieee-iros.org/",
+          "place": "Pittsburgh, PA, USA",
+          "date_text": "September 27 - October 1, 2026",
+          "event_date_precision": "exact-range",
+          "event_start": "2026-09-27",
+          "event_end": "2026-10-01",
+          "estimated": false,
+          "source": "ccfddl",
+          "identity": {
+            "officialUrls": ["https://2026.ieee-iros.org/"],
+            "sourceIds": {
+              "ccfddl": "iros26"
+            }
+          },
+          "deadlines": [
+            {
+              "kind": "paper",
+              "label": "Paper submission",
+              "round": 1,
+              "track": "",
+              "comment": null,
+              "status": "confirmed",
+              "selection_rule": "source_priority_then_nearest_within_configured_window",
+              "evidence": [
+                {
+                  "source_name": "ccfddl",
+                  "source_url": "https://2026.ieee-iros.org/",
+                  "observed_at": "",
+                  "original_value": "2026-03-02 23:59:59",
+                  "confidence": "aggregator",
+                  "sourceClass": "aggregator",
+                  "sourceUrl": "https://2026.ieee-iros.org/",
+                  "rawExcerpt": "2026-03-02 23:59:59"
+                }
+              ],
+              "verification": {
+                "official_url": "https://2026.ieee-iros.org/",
+                "last_attempt_at": null,
+                "last_verified_at": null,
+                "next_check_at": "2026-10-09T23:50:31.000Z",
+                "content_hash": null,
+                "source_name": "ccfddl",
+                "status": "manual-required",
+                "source_class": "aggregator"
+              },
+              "precision": "exact",
+              "utc": "2026-03-03T07:59:59Z",
+              "aoe": "2026-03-02 19:59:59 AoE",
+              "tz_raw": "UTC-8"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "iros-aideadlines-iros",
+      "title": "IROS",
+      "full_name": "IEEE\\RSJ International Conference on Intelligent Robots and Systems",
+      "categories": ["ai"],
+      "link": "https://2026.ieee-iros.org/",
+      "identity": {
+        "officialDomains": ["https://2026.ieee-iros.org/"],
+        "sourceIds": {
+          "aideadlines": "iros"
+        }
+      },
+      "editions": [
+        {
+          "year": 2026,
+          "id": "iros26",
+          "link": "https://2026.ieee-iros.org/",
+          "place": "Pittsburgh, USA",
+          "date_text": "September 27 - October 1, 2026",
+          "event_date_precision": "exact-range",
+          "event_start": "2026-09-27",
+          "event_end": "2026-10-01",
+          "estimated": false,
+          "source": "aideadlines",
+          "identity": {
+            "officialUrls": ["https://2026.ieee-iros.org/"],
+            "sourceIds": {
+              "aideadlines": "iros26"
+            }
+          },
+          "deadlines": [
+            {
+              "kind": "paper",
+              "label": "Paper submission deadline",
+              "round": 1,
+              "track": "",
+              "comment": null,
+              "status": "confirmed",
+              "selection_rule": "source_priority_then_nearest_within_configured_window",
+              "evidence": [
+                {
+                  "source_name": "aideadlines",
+                  "source_url": "https://2026.ieee-iros.org/",
+                  "observed_at": "",
+                  "original_value": "2026-03-02 23:59:59",
+                  "confidence": "aggregator",
+                  "sourceClass": "aggregator",
+                  "sourceUrl": "https://2026.ieee-iros.org/",
+                  "rawExcerpt": "2026-03-02 23:59:59"
+                }
+              ],
+              "verification": {
+                "official_url": "https://2026.ieee-iros.org/",
+                "last_attempt_at": null,
+                "last_verified_at": null,
+                "next_check_at": "2026-10-09T23:50:31.000Z",
+                "content_hash": null,
+                "source_name": "aideadlines",
+                "status": "manual-required",
+                "source_class": "aggregator"
+              },
+              "precision": "exact",
+              "utc": "2026-03-03T11:59:59Z",
+              "aoe": "2026-03-02 23:59:59 AoE",
+              "tz_raw": "AoE"
+            },
+            {
+              "kind": "paper",
+              "label": "Paper video submission deadline",
+              "round": 1,
+              "track": "",
+              "comment": null,
+              "status": "confirmed",
+              "selection_rule": "source_priority_then_nearest_within_configured_window",
+              "evidence": [
+                {
+                  "source_name": "aideadlines",
+                  "source_url": "https://2026.ieee-iros.org/",
+                  "observed_at": "",
+                  "original_value": "2026-03-07 23:59:59",
+                  "confidence": "aggregator",
+                  "sourceClass": "aggregator",
+                  "sourceUrl": "https://2026.ieee-iros.org/",
+                  "rawExcerpt": "2026-03-07 23:59:59"
+                }
+              ],
+              "verification": {
+                "official_url": "https://2026.ieee-iros.org/",
+                "last_attempt_at": null,
+                "last_verified_at": null,
+                "next_check_at": "2026-10-09T23:50:31.000Z",
+                "content_hash": null,
+                "source_name": "aideadlines",
+                "status": "manual-required",
+                "source_class": "aggregator"
+              },
+              "precision": "exact",
+              "utc": "2026-03-08T11:59:59Z",
+              "aoe": "2026-03-07 23:59:59 AoE",
+              "tz_raw": "AoE"
+            },
+            {
+              "kind": "notification",
+              "label": "Paper acceptance notification",
+              "round": 1,
+              "track": "",
+              "comment": null,
+              "status": "confirmed",
+              "selection_rule": "source_priority_then_nearest_within_configured_window",
+              "evidence": [
+                {
+                  "source_name": "aideadlines",
+                  "source_url": "https://2026.ieee-iros.org/",
+                  "observed_at": "",
+                  "original_value": "2026-06-16 23:59:59",
+                  "confidence": "aggregator",
+                  "sourceClass": "aggregator",
+                  "sourceUrl": "https://2026.ieee-iros.org/",
+                  "rawExcerpt": "2026-06-16 23:59:59"
+                }
+              ],
+              "verification": {
+                "official_url": "https://2026.ieee-iros.org/",
+                "last_attempt_at": null,
+                "last_verified_at": null,
+                "next_check_at": "2026-10-09T23:50:31.000Z",
+                "content_hash": null,
+                "source_name": "aideadlines",
+                "status": "manual-required",
+                "source_class": "aggregator"
+              },
+              "precision": "exact",
+              "utc": "2026-06-17T11:59:59Z",
+              "aoe": "2026-06-16 23:59:59 AoE",
+              "tz_raw": "AoE"
+            },
+            {
+              "kind": "camera_ready",
+              "label": "Final paper submission deadline",
+              "round": 1,
+              "track": "",
+              "comment": null,
+              "status": "confirmed",
+              "selection_rule": "source_priority_then_nearest_within_configured_window",
+              "evidence": [
+                {
+                  "source_name": "aideadlines",
+                  "source_url": "https://2026.ieee-iros.org/",
+                  "observed_at": "",
+                  "original_value": "2026-07-10 23:59:59",
+                  "confidence": "aggregator",
+                  "sourceClass": "aggregator",
+                  "sourceUrl": "https://2026.ieee-iros.org/",
+                  "rawExcerpt": "2026-07-10 23:59:59"
+                }
+              ],
+              "verification": {
+                "official_url": "https://2026.ieee-iros.org/",
+                "last_attempt_at": null,
+                "last_verified_at": null,
+                "next_check_at": "2026-10-09T23:50:31.000Z",
+                "content_hash": null,
+                "source_name": "aideadlines",
+                "status": "manual-required",
+                "source_class": "aggregator"
+              },
+              "precision": "exact",
+              "utc": "2026-07-11T11:59:59Z",
+              "aoe": "2026-07-10 23:59:59 AoE",
+              "tz_raw": "AoE"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "sgp-aideadlines-sgp",
+      "title": "SGP",
+      "full_name": "Symposium on Geometry Processing",
+      "categories": ["ai"],
+      "link": "https://sgp26.org/",
+      "identity": {
+        "officialDomains": ["https://sgp26.org/"],
+        "sourceIds": {
+          "aideadlines": "sgp"
+        }
+      },
+      "editions": [
+        {
+          "year": 2026,
+          "id": "sgp26",
+          "link": "https://sgp26.org/",
+          "place": "Bern, Switzerland",
+          "date_text": "July 1-3, 2026",
+          "event_date_precision": "exact-range",
+          "event_start": "2026-07-01",
+          "event_end": "2026-07-03",
+          "estimated": false,
+          "source": "aideadlines",
+          "identity": {
+            "officialUrls": ["https://sgp26.org/"],
+            "sourceIds": {
+              "aideadlines": "sgp26"
+            }
+          },
+          "deadlines": [
+            {
+              "kind": "abstract",
+              "label": "Abstract submission (Round 1)",
+              "round": 1,
+              "track": "",
+              "comment": null,
+              "status": "confirmed",
+              "selection_rule": "source_priority_then_nearest_within_configured_window",
+              "evidence": [
+                {
+                  "source_name": "aideadlines",
+                  "source_url": "https://sgp26.org/",
+                  "observed_at": "",
+                  "original_value": "2026-02-02 22:59:00",
+                  "confidence": "aggregator",
+                  "sourceClass": "aggregator",
+                  "sourceUrl": "https://sgp26.org/",
+                  "rawExcerpt": "2026-02-02 22:59:00"
+                }
+              ],
+              "verification": {
+                "official_url": "https://sgp26.org/",
+                "last_attempt_at": null,
+                "last_verified_at": null,
+                "next_check_at": "2026-10-09T23:50:31.000Z",
+                "content_hash": null,
+                "source_name": "aideadlines",
+                "status": "manual-required",
+                "source_class": "aggregator"
+              },
+              "precision": "exact",
+              "utc": "2026-02-02T22:59:00Z",
+              "aoe": "2026-02-02 10:59:00 AoE",
+              "tz_raw": "UTC"
+            },
+            {
+              "kind": "paper",
+              "label": "Paper submission (Round 1)",
+              "round": 1,
+              "track": "",
+              "comment": null,
+              "status": "confirmed",
+              "selection_rule": "source_priority_then_nearest_within_configured_window",
+              "evidence": [
+                {
+                  "source_name": "aideadlines",
+                  "source_url": "https://sgp26.org/",
+                  "observed_at": "",
+                  "original_value": "2026-02-04 22:59:00",
+                  "confidence": "aggregator",
+                  "sourceClass": "aggregator",
+                  "sourceUrl": "https://sgp26.org/",
+                  "rawExcerpt": "2026-02-04 22:59:00"
+                }
+              ],
+              "verification": {
+                "official_url": "https://sgp26.org/",
+                "last_attempt_at": null,
+                "last_verified_at": null,
+                "next_check_at": "2026-10-09T23:50:31.000Z",
+                "content_hash": null,
+                "source_name": "aideadlines",
+                "status": "manual-required",
+                "source_class": "aggregator"
+              },
+              "precision": "exact",
+              "utc": "2026-02-04T22:59:00Z",
+              "aoe": "2026-02-04 10:59:00 AoE",
+              "tz_raw": "UTC"
+            },
+            {
+              "kind": "notification",
+              "label": "Notification of acceptance (Round 1)",
+              "round": 1,
+              "track": "",
+              "comment": null,
+              "status": "confirmed",
+              "selection_rule": "source_priority_then_nearest_within_configured_window",
+              "evidence": [
+                {
+                  "source_name": "aideadlines",
+                  "source_url": "https://sgp26.org/",
+                  "observed_at": "",
+                  "original_value": "2026-03-16 23:59:59",
+                  "confidence": "aggregator",
+                  "sourceClass": "aggregator",
+                  "sourceUrl": "https://sgp26.org/",
+                  "rawExcerpt": "2026-03-16 23:59:59"
+                }
+              ],
+              "verification": {
+                "official_url": "https://sgp26.org/",
+                "last_attempt_at": null,
+                "last_verified_at": null,
+                "next_check_at": "2026-10-09T23:50:31.000Z",
+                "content_hash": null,
+                "source_name": "aideadlines",
+                "status": "manual-required",
+                "source_class": "aggregator"
+              },
+              "precision": "exact",
+              "utc": "2026-03-17T11:59:59Z",
+              "aoe": "2026-03-16 23:59:59 AoE",
+              "tz_raw": "AoE"
+            },
+            {
+              "kind": "camera_ready",
+              "label": "Revised version due (Round 1)",
+              "round": 1,
+              "track": "",
+              "comment": null,
+              "status": "confirmed",
+              "selection_rule": "source_priority_then_nearest_within_configured_window",
+              "evidence": [
+                {
+                  "source_name": "aideadlines",
+                  "source_url": "https://sgp26.org/",
+                  "observed_at": "",
+                  "original_value": "2026-03-26 23:59:59",
+                  "confidence": "aggregator",
+                  "sourceClass": "aggregator",
+                  "sourceUrl": "https://sgp26.org/",
+                  "rawExcerpt": "2026-03-26 23:59:59"
+                }
+              ],
+              "verification": {
+                "official_url": "https://sgp26.org/",
+                "last_attempt_at": null,
+                "last_verified_at": null,
+                "next_check_at": "2026-10-09T23:50:31.000Z",
+                "content_hash": null,
+                "source_name": "aideadlines",
+                "status": "manual-required",
+                "source_class": "aggregator"
+              },
+              "precision": "exact",
+              "utc": "2026-03-27T11:59:59Z",
+              "aoe": "2026-03-26 23:59:59 AoE",
+              "tz_raw": "AoE"
+            },
+            {
+              "kind": "camera_ready",
+              "label": "Camera ready due (Round 1)",
+              "round": 1,
+              "track": "",
+              "comment": null,
+              "status": "confirmed",
+              "selection_rule": "source_priority_then_nearest_within_configured_window",
+              "evidence": [
+                {
+                  "source_name": "aideadlines",
+                  "source_url": "https://sgp26.org/",
+                  "observed_at": "",
+                  "original_value": "2026-04-02 23:59:59",
+                  "confidence": "aggregator",
+                  "sourceClass": "aggregator",
+                  "sourceUrl": "https://sgp26.org/",
+                  "rawExcerpt": "2026-04-02 23:59:59"
+                }
+              ],
+              "verification": {
+                "official_url": "https://sgp26.org/",
+                "last_attempt_at": null,
+                "last_verified_at": null,
+                "next_check_at": "2026-10-09T23:50:31.000Z",
+                "content_hash": null,
+                "source_name": "aideadlines",
+                "status": "manual-required",
+                "source_class": "aggregator"
+              },
+              "precision": "exact",
+              "utc": "2026-04-03T11:59:59Z",
+              "aoe": "2026-04-02 23:59:59 AoE",
+              "tz_raw": "AoE"
+            },
+            {
+              "kind": "abstract",
+              "label": "Abstract submission (Round 2)",
+              "round": 2,
+              "track": "",
+              "comment": null,
+              "status": "confirmed",
+              "selection_rule": "source_priority_then_nearest_within_configured_window",
+              "evidence": [
+                {
+                  "source_name": "aideadlines",
+                  "source_url": "https://sgp26.org/",
+                  "observed_at": "",
+                  "original_value": "2026-04-13 22:59:00",
+                  "confidence": "aggregator",
+                  "sourceClass": "aggregator",
+                  "sourceUrl": "https://sgp26.org/",
+                  "rawExcerpt": "2026-04-13 22:59:00"
+                }
+              ],
+              "verification": {
+                "official_url": "https://sgp26.org/",
+                "last_attempt_at": null,
+                "last_verified_at": null,
+                "next_check_at": "2026-10-09T23:50:31.000Z",
+                "content_hash": null,
+                "source_name": "aideadlines",
+                "status": "manual-required",
+                "source_class": "aggregator"
+              },
+              "precision": "exact",
+              "utc": "2026-04-13T22:59:00Z",
+              "aoe": "2026-04-13 10:59:00 AoE",
+              "tz_raw": "UTC"
+            },
+            {
+              "kind": "paper",
+              "label": "Paper submission (Round 2)",
+              "round": 2,
+              "track": "",
+              "comment": null,
+              "status": "confirmed",
+              "selection_rule": "source_priority_then_nearest_within_configured_window",
+              "evidence": [
+                {
+                  "source_name": "aideadlines",
+                  "source_url": "https://sgp26.org/",
+                  "observed_at": "",
+                  "original_value": "2026-04-15 22:59:00",
+                  "confidence": "aggregator",
+                  "sourceClass": "aggregator",
+                  "sourceUrl": "https://sgp26.org/",
+                  "rawExcerpt": "2026-04-15 22:59:00"
+                }
+              ],
+              "verification": {
+                "official_url": "https://sgp26.org/",
+                "last_attempt_at": null,
+                "last_verified_at": null,
+                "next_check_at": "2026-10-09T23:50:31.000Z",
+                "content_hash": null,
+                "source_name": "aideadlines",
+                "status": "manual-required",
+                "source_class": "aggregator"
+              },
+              "precision": "exact",
+              "utc": "2026-04-15T22:59:00Z",
+              "aoe": "2026-04-15 10:59:00 AoE",
+              "tz_raw": "UTC"
+            },
+            {
+              "kind": "notification",
+              "label": "Notification of acceptance (Round 2)",
+              "round": 2,
+              "track": "",
+              "comment": null,
+              "status": "confirmed",
+              "selection_rule": "source_priority_then_nearest_within_configured_window",
+              "evidence": [
+                {
+                  "source_name": "aideadlines",
+                  "source_url": "https://sgp26.org/",
+                  "observed_at": "",
+                  "original_value": "2026-05-25 23:59:59",
+                  "confidence": "aggregator",
+                  "sourceClass": "aggregator",
+                  "sourceUrl": "https://sgp26.org/",
+                  "rawExcerpt": "2026-05-25 23:59:59"
+                }
+              ],
+              "verification": {
+                "official_url": "https://sgp26.org/",
+                "last_attempt_at": null,
+                "last_verified_at": null,
+                "next_check_at": "2026-10-09T23:50:31.000Z",
+                "content_hash": null,
+                "source_name": "aideadlines",
+                "status": "manual-required",
+                "source_class": "aggregator"
+              },
+              "precision": "exact",
+              "utc": "2026-05-26T11:59:59Z",
+              "aoe": "2026-05-25 23:59:59 AoE",
+              "tz_raw": "AoE"
+            },
+            {
+              "kind": "camera_ready",
+              "label": "Revised version due (Round 2)",
+              "round": 2,
+              "track": "",
+              "comment": null,
+              "status": "confirmed",
+              "selection_rule": "source_priority_then_nearest_within_configured_window",
+              "evidence": [
+                {
+                  "source_name": "aideadlines",
+                  "source_url": "https://sgp26.org/",
+                  "observed_at": "",
+                  "original_value": "2026-06-04 23:59:59",
+                  "confidence": "aggregator",
+                  "sourceClass": "aggregator",
+                  "sourceUrl": "https://sgp26.org/",
+                  "rawExcerpt": "2026-06-04 23:59:59"
+                }
+              ],
+              "verification": {
+                "official_url": "https://sgp26.org/",
+                "last_attempt_at": null,
+                "last_verified_at": null,
+                "next_check_at": "2026-10-09T23:50:31.000Z",
+                "content_hash": null,
+                "source_name": "aideadlines",
+                "status": "manual-required",
+                "source_class": "aggregator"
+              },
+              "precision": "exact",
+              "utc": "2026-06-05T11:59:59Z",
+              "aoe": "2026-06-04 23:59:59 AoE",
+              "tz_raw": "AoE"
+            },
+            {
+              "kind": "camera_ready",
+              "label": "Camera ready due (Round 2)",
+              "round": 2,
+              "track": "",
+              "comment": null,
+              "status": "confirmed",
+              "selection_rule": "source_priority_then_nearest_within_configured_window",
+              "evidence": [
+                {
+                  "source_name": "aideadlines",
+                  "source_url": "https://sgp26.org/",
+                  "observed_at": "",
+                  "original_value": "2026-06-11 23:59:59",
+                  "confidence": "aggregator",
+                  "sourceClass": "aggregator",
+                  "sourceUrl": "https://sgp26.org/",
+                  "rawExcerpt": "2026-06-11 23:59:59"
+                }
+              ],
+              "verification": {
+                "official_url": "https://sgp26.org/",
+                "last_attempt_at": null,
+                "last_verified_at": null,
+                "next_check_at": "2026-10-09T23:50:31.000Z",
+                "content_hash": null,
+                "source_name": "aideadlines",
+                "status": "manual-required",
+                "source_class": "aggregator"
+              },
+              "precision": "exact",
+              "utc": "2026-06-12T11:59:59Z",
+              "aoe": "2026-06-11 23:59:59 AoE",
+              "tz_raw": "AoE"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "sgp-cg",
+      "title": "SGP",
+      "full_name": "Eurographics Symposium on Geometry Processing",
+      "categories": ["graphics"],
+      "link": "https://igs2027singapore.github.io/",
+      "upstream_sub": "CG",
+      "identity": {
+        "dblpKey": "sgp",
+        "officialDomains": ["https://igs2027singapore.github.io/"],
+        "sourceIds": {
+          "ccfddl": "CG/sgp"
+        }
+      },
+      "editions": [
+        {
+          "year": 2026,
+          "id": "sgp26",
+          "link": "https://sgp26.org/",
+          "place": "Bern, Switzerland",
+          "date_text": "July 1 - 3, 2026",
+          "event_date_precision": "exact-range",
+          "event_start": "2026-07-01",
+          "event_end": "2026-07-03",
+          "estimated": false,
+          "source": "ccfddl",
+          "identity": {
+            "officialUrls": ["https://sgp26.org/"],
+            "sourceIds": {
+              "ccfddl": "sgp26"
+            }
+          },
+          "deadlines": [
+            {
+              "kind": "abstract",
+              "label": "Abstract submission",
+              "round": 1,
+              "track": "",
+              "comment": "First round: recommended abstract / full paper",
+              "status": "confirmed",
+              "selection_rule": "source_priority_then_nearest_within_configured_window",
+              "evidence": [
+                {
+                  "source_name": "ccfddl",
+                  "source_url": "https://sgp26.org/",
+                  "observed_at": "",
+                  "original_value": "2026-02-02 23:59:59",
+                  "confidence": "aggregator",
+                  "sourceClass": "aggregator",
+                  "sourceUrl": "https://sgp26.org/",
+                  "rawExcerpt": "2026-02-02 23:59:59"
+                }
+              ],
+              "verification": {
+                "official_url": "https://sgp26.org/",
+                "last_attempt_at": null,
+                "last_verified_at": null,
+                "next_check_at": "2026-10-09T23:50:31.000Z",
+                "content_hash": null,
+                "source_name": "ccfddl",
+                "status": "manual-required",
+                "source_class": "aggregator"
+              },
+              "precision": "exact",
+              "utc": "2026-02-02T23:59:59Z",
+              "aoe": "2026-02-02 11:59:59 AoE",
+              "tz_raw": "UTC+0"
+            },
+            {
+              "kind": "paper",
+              "label": "Paper submission",
+              "round": 1,
+              "track": "",
+              "comment": "First round: recommended abstract / full paper",
+              "status": "confirmed",
+              "selection_rule": "source_priority_then_nearest_within_configured_window",
+              "evidence": [
+                {
+                  "source_name": "ccfddl",
+                  "source_url": "https://sgp26.org/",
+                  "observed_at": "",
+                  "original_value": "2026-02-04 23:59:59",
+                  "confidence": "aggregator",
+                  "sourceClass": "aggregator",
+                  "sourceUrl": "https://sgp26.org/",
+                  "rawExcerpt": "2026-02-04 23:59:59"
+                }
+              ],
+              "verification": {
+                "official_url": "https://sgp26.org/",
+                "last_attempt_at": null,
+                "last_verified_at": null,
+                "next_check_at": "2026-10-09T23:50:31.000Z",
+                "content_hash": null,
+                "source_name": "ccfddl",
+                "status": "manual-required",
+                "source_class": "aggregator"
+              },
+              "precision": "exact",
+              "utc": "2026-02-04T23:59:59Z",
+              "aoe": "2026-02-04 11:59:59 AoE",
+              "tz_raw": "UTC+0"
+            },
+            {
+              "kind": "abstract",
+              "label": "Abstract submission",
+              "round": 2,
+              "track": "",
+              "comment": "Second round: recommended abstract / full paper",
+              "status": "confirmed",
+              "selection_rule": "source_priority_then_nearest_within_configured_window",
+              "evidence": [
+                {
+                  "source_name": "ccfddl",
+                  "source_url": "https://sgp26.org/",
+                  "observed_at": "",
+                  "original_value": "2026-04-13 23:59:59",
+                  "confidence": "aggregator",
+                  "sourceClass": "aggregator",
+                  "sourceUrl": "https://sgp26.org/",
+                  "rawExcerpt": "2026-04-13 23:59:59"
+                }
+              ],
+              "verification": {
+                "official_url": "https://sgp26.org/",
+                "last_attempt_at": null,
+                "last_verified_at": null,
+                "next_check_at": "2026-10-09T23:50:31.000Z",
+                "content_hash": null,
+                "source_name": "ccfddl",
+                "status": "manual-required",
+                "source_class": "aggregator"
+              },
+              "precision": "exact",
+              "utc": "2026-04-13T23:59:59Z",
+              "aoe": "2026-04-13 11:59:59 AoE",
+              "tz_raw": "UTC+0"
+            },
+            {
+              "kind": "paper",
+              "label": "Paper submission",
+              "round": 2,
+              "track": "",
+              "comment": "Second round: recommended abstract / full paper",
+              "status": "confirmed",
+              "selection_rule": "source_priority_then_nearest_within_configured_window",
+              "evidence": [
+                {
+                  "source_name": "ccfddl",
+                  "source_url": "https://sgp26.org/",
+                  "observed_at": "",
+                  "original_value": "2026-04-15 23:59:59",
+                  "confidence": "aggregator",
+                  "sourceClass": "aggregator",
+                  "sourceUrl": "https://sgp26.org/",
+                  "rawExcerpt": "2026-04-15 23:59:59"
+                }
+              ],
+              "verification": {
+                "official_url": "https://sgp26.org/",
+                "last_attempt_at": null,
+                "last_verified_at": null,
+                "next_check_at": "2026-10-09T23:50:31.000Z",
+                "content_hash": null,
+                "source_name": "ccfddl",
+                "status": "manual-required",
+                "source_class": "aggregator"
+              },
+              "precision": "exact",
+              "utc": "2026-04-15T23:59:59Z",
+              "aoe": "2026-04-15 11:59:59 AoE",
+              "tz_raw": "UTC+0"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "sigir-aideadlines-sigir",
+      "title": "SIGIR",
+      "full_name": "International ACM SIGIR Conference on Research and Development in Information Retrieval",
+      "categories": ["ai"],
+      "link": "https://sigir2026.org/en-AU",
+      "identity": {
+        "officialDomains": ["https://sigir2026.org/en-AU"],
+        "sourceIds": {
+          "aideadlines": "sigir"
+        }
+      },
+      "editions": [
+        {
+          "year": 2026,
+          "id": "sigir26",
+          "link": "https://sigir2026.org/en-AU",
+          "place": "Melbourne, Australia",
+          "date_text": "July 20-24, 2026",
+          "event_date_precision": "exact-range",
+          "event_start": "2026-07-20",
+          "event_end": "2026-07-24",
+          "estimated": false,
+          "source": "aideadlines",
+          "identity": {
+            "officialUrls": ["https://sigir2026.org/en-AU"],
+            "sourceIds": {
+              "aideadlines": "sigir26"
+            }
+          },
+          "deadlines": [
+            {
+              "kind": "abstract",
+              "label": "Full research paper abstract deadline",
+              "round": 1,
+              "track": "",
+              "comment": null,
+              "status": "confirmed",
+              "selection_rule": "source_priority_then_nearest_within_configured_window",
+              "evidence": [
+                {
+                  "source_name": "aideadlines",
+                  "source_url": "https://sigir2026.org/en-AU",
+                  "observed_at": "",
+                  "original_value": "2026-01-15 23:59:59",
+                  "confidence": "aggregator",
+                  "sourceClass": "aggregator",
+                  "sourceUrl": "https://sigir2026.org/en-AU",
+                  "rawExcerpt": "2026-01-15 23:59:59"
+                }
+              ],
+              "verification": {
+                "official_url": "https://sigir2026.org/en-AU",
+                "last_attempt_at": null,
+                "last_verified_at": null,
+                "next_check_at": "2026-10-09T23:50:31.000Z",
+                "content_hash": null,
+                "source_name": "aideadlines",
+                "status": "manual-required",
+                "source_class": "aggregator"
+              },
+              "precision": "exact",
+              "utc": "2026-01-16T11:59:59Z",
+              "aoe": "2026-01-15 23:59:59 AoE",
+              "tz_raw": "AoE"
+            },
+            {
+              "kind": "paper",
+              "label": "Full research paper submission deadline",
+              "round": 1,
+              "track": "",
+              "comment": null,
+              "status": "confirmed",
+              "selection_rule": "source_priority_then_nearest_within_configured_window",
+              "evidence": [
+                {
+                  "source_name": "aideadlines",
+                  "source_url": "https://sigir2026.org/en-AU",
+                  "observed_at": "",
+                  "original_value": "2026-01-22 23:59:59",
+                  "confidence": "aggregator",
+                  "sourceClass": "aggregator",
+                  "sourceUrl": "https://sigir2026.org/en-AU",
+                  "rawExcerpt": "2026-01-22 23:59:59"
+                }
+              ],
+              "verification": {
+                "official_url": "https://sigir2026.org/en-AU",
+                "last_attempt_at": null,
+                "last_verified_at": null,
+                "next_check_at": "2026-10-09T23:50:31.000Z",
+                "content_hash": null,
+                "source_name": "aideadlines",
+                "status": "manual-required",
+                "source_class": "aggregator"
+              },
+              "precision": "exact",
+              "utc": "2026-01-23T11:59:59Z",
+              "aoe": "2026-01-22 23:59:59 AoE",
+              "tz_raw": "AoE"
+            },
+            {
+              "kind": "notification",
+              "label": "Notification deadline",
+              "round": 1,
+              "track": "",
+              "comment": null,
+              "status": "confirmed",
+              "selection_rule": "source_priority_then_nearest_within_configured_window",
+              "evidence": [
+                {
+                  "source_name": "aideadlines",
+                  "source_url": "https://sigir2026.org/en-AU",
+                  "observed_at": "",
+                  "original_value": "2026-04-02 23:59:59",
+                  "confidence": "aggregator",
+                  "sourceClass": "aggregator",
+                  "sourceUrl": "https://sigir2026.org/en-AU",
+                  "rawExcerpt": "2026-04-02 23:59:59"
+                }
+              ],
+              "verification": {
+                "official_url": "https://sigir2026.org/en-AU",
+                "last_attempt_at": null,
+                "last_verified_at": null,
+                "next_check_at": "2026-10-09T23:50:31.000Z",
+                "content_hash": null,
+                "source_name": "aideadlines",
+                "status": "manual-required",
+                "source_class": "aggregator"
+              },
+              "precision": "exact",
+              "utc": "2026-04-03T11:59:59Z",
+              "aoe": "2026-04-02 23:59:59 AoE",
+              "tz_raw": "AoE"
+            },
+            {
+              "kind": "camera_ready",
+              "label": "Camera-ready deadline",
+              "round": 1,
+              "track": "",
+              "comment": null,
+              "status": "confirmed",
+              "selection_rule": "source_priority_then_nearest_within_configured_window",
+              "evidence": [
+                {
+                  "source_name": "aideadlines",
+                  "source_url": "https://sigir2026.org/en-AU",
+                  "observed_at": "",
+                  "original_value": "2026-04-29 23:59:59",
+                  "confidence": "aggregator",
+                  "sourceClass": "aggregator",
+                  "sourceUrl": "https://sigir2026.org/en-AU",
+                  "rawExcerpt": "2026-04-29 23:59:59"
+                }
+              ],
+              "verification": {
+                "official_url": "https://sigir2026.org/en-AU",
+                "last_attempt_at": null,
+                "last_verified_at": null,
+                "next_check_at": "2026-10-09T23:50:31.000Z",
+                "content_hash": null,
+                "source_name": "aideadlines",
+                "status": "manual-required",
+                "source_class": "aggregator"
+              },
+              "precision": "exact",
+              "utc": "2026-04-30T11:59:59Z",
+              "aoe": "2026-04-29 23:59:59 AoE",
+              "tz_raw": "AoE"
+            },
+            {
+              "kind": "registration",
+              "label": "Author registration deadline",
+              "round": 1,
+              "track": "",
+              "comment": null,
+              "status": "confirmed",
+              "selection_rule": "source_priority_then_nearest_within_configured_window",
+              "evidence": [
+                {
+                  "source_name": "aideadlines",
+                  "source_url": "https://sigir2026.org/en-AU",
+                  "observed_at": "",
+                  "original_value": "2026-04-29 23:59:59",
+                  "confidence": "aggregator",
+                  "sourceClass": "aggregator",
+                  "sourceUrl": "https://sigir2026.org/en-AU",
+                  "rawExcerpt": "2026-04-29 23:59:59"
+                }
+              ],
+              "verification": {
+                "official_url": "https://sigir2026.org/en-AU",
+                "last_attempt_at": null,
+                "last_verified_at": null,
+                "next_check_at": "2026-10-09T23:50:31.000Z",
+                "content_hash": null,
+                "source_name": "aideadlines",
+                "status": "manual-required",
+                "source_class": "aggregator"
+              },
+              "precision": "exact",
+              "utc": "2026-04-30T11:59:59Z",
+              "aoe": "2026-04-29 23:59:59 AoE",
+              "tz_raw": "AoE"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "sigir-db",
+      "title": "SIGIR",
+      "full_name": "International Conference on Research on Development in Information Retrieval",
+      "categories": ["db"],
+      "link": "https://sigir2027.org/",
+      "upstream_sub": "DB",
+      "identity": {
+        "dblpKey": "sigir",
+        "officialDomains": ["https://sigir2027.org/"],
+        "sourceIds": {
+          "ccfddl": "DB/sigir"
+        }
+      },
+      "editions": [
+        {
+          "year": 2026,
+          "id": "sigir26",
+          "link": "https://sigir2026.org/en-AU",
+          "place": "Melbourne, Australia",
+          "date_text": "July 21-23, 2026",
+          "event_date_precision": "exact-range",
+          "event_start": "2026-07-21",
+          "event_end": "2026-07-23",
+          "estimated": false,
+          "source": "ccfddl",
+          "identity": {
+            "officialUrls": ["https://sigir2026.org/en-AU"],
+            "sourceIds": {
+              "ccfddl": "sigir26"
+            }
+          },
+          "deadlines": [
+            {
+              "kind": "abstract",
+              "label": "Abstract submission",
+              "round": 1,
+              "track": "",
+              "comment": null,
+              "status": "confirmed",
+              "selection_rule": "source_priority_then_nearest_within_configured_window",
+              "evidence": [
+                {
+                  "source_name": "ccfddl",
+                  "source_url": "https://sigir2026.org/en-AU",
+                  "observed_at": "",
+                  "original_value": "2026-01-15 23:59:59",
+                  "confidence": "aggregator",
+                  "sourceClass": "aggregator",
+                  "sourceUrl": "https://sigir2026.org/en-AU",
+                  "rawExcerpt": "2026-01-15 23:59:59"
+                }
+              ],
+              "verification": {
+                "official_url": "https://sigir2026.org/en-AU",
+                "last_attempt_at": null,
+                "last_verified_at": null,
+                "next_check_at": "2026-10-09T23:50:31.000Z",
+                "content_hash": null,
+                "source_name": "ccfddl",
+                "status": "manual-required",
+                "source_class": "aggregator"
+              },
+              "precision": "exact",
+              "utc": "2026-01-16T11:59:59Z",
+              "aoe": "2026-01-15 23:59:59 AoE",
+              "tz_raw": "AoE"
+            },
+            {
+              "kind": "paper",
+              "label": "Paper submission",
+              "round": 1,
+              "track": "",
+              "comment": null,
+              "status": "confirmed",
+              "selection_rule": "source_priority_then_nearest_within_configured_window",
+              "evidence": [
+                {
+                  "source_name": "ccfddl",
+                  "source_url": "https://sigir2026.org/en-AU",
+                  "observed_at": "",
+                  "original_value": "2026-01-22 23:59:59",
+                  "confidence": "aggregator",
+                  "sourceClass": "aggregator",
+                  "sourceUrl": "https://sigir2026.org/en-AU",
+                  "rawExcerpt": "2026-01-22 23:59:59"
+                }
+              ],
+              "verification": {
+                "official_url": "https://sigir2026.org/en-AU",
+                "last_attempt_at": null,
+                "last_verified_at": null,
+                "next_check_at": "2026-10-09T23:50:31.000Z",
+                "content_hash": null,
+                "source_name": "ccfddl",
+                "status": "manual-required",
+                "source_class": "aggregator"
+              },
+              "precision": "exact",
+              "utc": "2026-01-23T11:59:59Z",
+              "aoe": "2026-01-22 23:59:59 AoE",
+              "tz_raw": "AoE"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

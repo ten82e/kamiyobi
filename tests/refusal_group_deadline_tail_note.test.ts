@@ -1,0 +1,123 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+import { describe, expect, it } from "vitest";
+import Recommender from "../site/recommender.ts";
+import { builtSite } from "./built_site.ts";
+
+const 基準 = Date.parse("2026-08-09T00:00:00Z");
+function 品書(): string[] {
+  return (
+    Recommender.candidateRows(
+      JSON.parse(readFileSync(join(builtSite(), "catalog.json"), "utf8")) as unknown as never,
+    ) as unknown as Array<{ hay: string }>
+  ).map((行) => String(行.hay));
+}
+const 全 = 品書();
+function 列(文: string) {
+  return new Set(全.filter((行) => Recommender.searchMatcher(文, 基準)(行) === true));
+}
+/** 画面が 0 件の時に立てる案内の四つの道（site/app.ts の matchedRows === 0 の節と同じ）。*/
+function 画面の案内(文: string) {
+  return [
+    Recommender.wholeTableQueryNoteJa(文) || "",
+    Recommender.columnQueryNoteJa(文) || "",
+    Recommender.uiWordNoteJa(文) || "",
+    Recommender.dayRangeNoteJa(文) || "",
+    ...(Recommender.relativeDayNotes(文, 基準) || []),
+  ]
+    .map((値) => String(値).trim())
+    .filter((値) => 値)
+    .join(" / ");
+}
+
+describe("収録にない物を告げる群が、締切らしい語尾を受ける（第 505 回）", () => {
+  it("費用の本隊 – `参加費の締切` `登録費の期限` `受講料の予定`", () => {
+    for (const [語, 文] of [
+      ["参加費", "参加費の締切"],
+      ["参加費", "参加費まで"],
+      ["登録費", "登録費の期限"],
+      ["受講料", "受講料の予定"],
+      ["参加費用", "参加費用の締切"],
+    ] as Array<[string, string]>) {
+      const 説 = 画面の案内(文);
+      expect(説 !== "", `「${文}」は無言だつた（黙つて 0 件）`).toBe(true);
+      expect(説, `「${文}」の案内が費用の欄の話をしない`).toContain("この表が持っていません");
+      expect(説, `「${文}」の案内が語を名乗つて居ない`).toContain(`「${語}」`);
+      expect(列(文).size, `「${文}」で行が出た`).toBe(0);
+    }
+  });
+  it("参加形式・著者の役・審査の方式・提出先・締切の確定扱いも同じ", () => {
+    for (const [語, 文] of [
+      ["対面", "対面の締切"],
+      ["対面開催", "対面開催の締切"],
+      ["オフライン", "オフラインまで"],
+      ["筆頭著者", "筆頭著者の締切"],
+      ["共著者", "共著者の締切"],
+      ["ピアレビュー", "ピアレビューの締切"],
+      ["査読方式", "査読方式の期限"],
+      ["提出方法", "提出方法の締切"],
+      ["未確定", "未確定の期限"],
+    ] as Array<[string, string]>) {
+      const 説 = 画面の案内(文);
+      expect(説 !== "", `「${文}」は無言だつた`).toBe(true);
+      expect(説, `「${文}」の案内が語を名乗つて居ない`).toContain(`「${語}」`);
+      expect(列(文).size, `「${文}」で行が出た`).toBe(0);
+    }
+  });
+  it("白一覧にない続きは受けない（その語が他の語の頭に成れる磁石の実測）", () => {
+    for (const 文 of ["費用対効果分析", "リアルタイム処理", "対面について", "筆頭著者について"]) {
+      expect(列(文).size).toBe(0);
+      expect(画面の案内(文), `「${文}」に案内が乘つた（强奪）`).toBe("");
+    }
+    /* 和暦の群はこの印を付けて居ない – 既に解ける打ち方に「和暦は書いていません」を疊まない。*/
+    expect(画面の案内("令和7年の締切")).toContain("2025年の締切");
+    expect(画面の案内("令和7年の締切")).not.toContain("和暦");
+
+    expect(画面の案内("オフラインの会議")).toContain("オフライン");
+    expect(画面の案内("参加費の安い会議")).toContain("参加費");
+    expect(画面の案内("過去の締切 関西")).toBe("");
+  });
+  it("その方で解ける打ち方を塞いで居ない（行の出る物は案内を立てない）", () => {
+    /* `オンラインの締切` は行が出る（実測 – 検査用ビルドで 20 件）ので、案内は出ない。*/
+    expect(列("オンラインの締切").size).toBe(20);
+    expect(画面の案内("オンラインの締切")).toBe("");
+  });
+  it("印を持つ群の数（第 503 回〜第 506 回で増えた順路を張る）", () => {
+    const 物 = readFileSync(join(builtSite(), "recommender.js"), "utf8");
+    /* 第 516 回で二つ增える（採否の数の群・当日の様子の群）。*/
+    /* 第 516 回で二つ增えて 37、第 517 回で『催し物の名前＋締切の言い方』の群が增えて 38。*/
+    /* 第 685 回で募集・応募の群が增えて 42（`応募締切` `募集期限` `募集の締切` を同じ群で受ける）。*/
+    expect(物.split("deadlineTail: true").length - 1).toBe(42);
+    /* 第 648 回で日をまたぐ重なりを数へる羣（祝日級の次に置いた）を增やしたので 14 → 15。*/
+    /* 第 649 回で分野の一覽の羣（語尾を問わん印を開いた）を增やしたので 15 → 16。*/
+    /* 2026-10-18 に『締切が無い・未確認』の群（カードの「締切未確認」「締切なし」）を増やしたので 16 → 17。*/
+    expect(物.split("anyTail: true").length - 1).toBe(17);
+    /* 白一覧は十四の形だけ。語尾を問わない印の群は其侭通る。*/
+    expect(物).toContain('"の締切日"');
+    expect(物).toContain('"のしめきり"');
+    expect(画面の案内("当面の締切")).toContain("曖昧な幅では絞り込めません");
+    expect(画面の案内("祝日の期限")).toContain("祝日・休日");
+  });
+  it("長い語が勝つ – `travel grantの締切` の名乗りが直つた（第 248 回）", () => {
+    /* 実測（実ビルド）で、旧はこの打ち方が「「travel」はこの表が…」と**切れた語を名乘つて**いた
+     *（`travel` が先に当かつていた）。印を付けた群の照合が長い語を選ぶやうになつたので、
+     * 打たれた語その物を名乘るやうに成つた。案内の本文は同じ群の物。*/
+    expect(列("travel grantの締切").size).toBe(0);
+    expect(画面の案内("travel grantの締切")).toContain("「travel grant」");
+    expect(画面の案内("travel grantの締切")).not.toContain("「travel」は");
+  });
+  it("第 470 回〜第 504 回の実測はこの回で変へて居ない", () => {
+    expect(列("年内").size).toBe(425);
+    expect(列("今年内").size).toBe(427);
+    expect(列("再来週内").size).toBe(18);
+    expect(列("年末中").size).toBe(84);
+    expect(列("年初1月").size).toBe(23);
+    expect(列("来月 末日").size).toBe(178);
+    expect(列("週 末").size).toBe(146);
+    expect(列("締切時刻").size).toBe(181);
+    expect(列("ml から").size).toBe(0);
+    expect(列("半 年後").size).toBe(2);
+    expect(列("一 週間後").size).toBe(13);
+    expect(画面の案内("前期")).toContain("という区分はこの表が持っていません");
+  });
+});

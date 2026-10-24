@@ -11,16 +11,26 @@
     "build": "b=$(mktemp) && cp data/snapshot.json \"$b\" && trap 'rc=$?; cp \"$b\" data/snapshot.json || rc=1; rm -f \"$b\" || rc=1; exit \"$rc\"' 0 && node src/cli.ts build",
     "discover": "node src/cli.ts discover",
     "generate:curated": "node scripts/generate-curated.ts",
-    "bench": "node src/bench-recommender.ts --real-v2-dev data/benchmarks/real-paper-dev.json --real-v2-heldout data/benchmarks/real-paper-heldout.json --real-v2-negative data/benchmarks/real-paper-negative.json --real-v2-features data/benchmarks/real-paper-features.jsonl",
+    "bench": "node src/bench-recommender.ts --real-v2-dev data/benchmarks/real-paper-dev.json --real-v2-heldout data/benchmarks/real-paper-heldout.json --real-v2-negative data/benchmarks/real-paper-negative.json --real-v2-features data/benchmarks/real-paper-features.jsonl --real-v2-feature-baseline data/benchmarks/real-paper-feature-baseline.json",
     "bench:synthetic": "node src/bench-recommender.ts --v2 tests/fixtures/bench-v2.json",
     "validate:data": "node scripts/validate-data.ts",
     "health-gate": "node scripts/health-gate.ts public/health.json --report work/health-gate-violations.json --observation-baseline data/source-observation-baseline.json",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit && tsc --noEmit -p site/tsconfig.json",
+    "test:models": "vitest run --config vitest.models.config.ts",
+    "test:real-papers": "vitest run --config vitest.models.config.ts tests/real_papers_models.integration.ts",
+    "test:recommendation-mutations": "node scripts/verify-recommendation-retrieval.ts",
+    "clean:tmp": "node scripts/clean_tmp.ts",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p site/tsconfig.json && tsc --noEmit -p scripts/tsconfig.json",
     "check": "biome check src scripts site/*.ts tests --files-ignore-unknown=false",
     "format": "biome format --write src scripts site/*.ts tests",
     "update": "npm run validate:data && npm run validate:data -- public/data.json && npm run health-gate",
-    "build:manual": "node src/cli.ts build --out public"
+    "build:manual": "node src/cli.ts build --out public",
+    "test:live-consumers": "vitest run --config vitest.models.config.ts tests/live_consumers.integration.ts",
+    "test:full-pool": "vitest run --config vitest.models.config.ts tests/full_pool_models.integration.ts",
+    "test:full-pool-mutations": "node scripts/verify-full-pool-retrieval.ts",
+    "test:mcp-recovery-mutations": "node scripts/verify-mcp-recovery.ts",
+    "test:mcp-interrupted-mutations": "node scripts/verify-mcp-interrupted.ts",
+    "test:llms-count-mutations": "node scripts/verify-llms-event-counts.ts"
   },
   "license": "MIT",
   "overrides": {
@@ -38,5 +48,8 @@
     "@types/node": "^26.2.0",
     "typescript": "^7.0.2",
     "vitest": "^4.1.10"
+  },
+  "bin": {
+    "kamiyobi-mcp": "src/mcp.ts"
   }
 }

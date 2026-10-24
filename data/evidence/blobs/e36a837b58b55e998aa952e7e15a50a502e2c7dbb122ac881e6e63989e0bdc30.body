@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en" >
+
+<head>
+  <title>ACM MMSys'27</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="css/mmsys.css" rel="stylesheet">
+  <link rel="icon" type="image/x-icon" href="img/favicon.ico">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <script src="javascript/jquery-3.7.1.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+
+<style>
+  .fade-in-up {
+    opacity: 0;
+    transform: translateX(50px);
+    animation: fadeInUp 1s ease forwards;
+  }
+
+  .fade-in-delay-1 {
+    animation-delay: 0.3s;
+  }
+
+  .fade-in-delay-2 {
+    animation-delay: 0.6s;
+  }
+
+  @keyframes fadeInUp {
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  .title {
+    border-image: linear-gradient(to right, var(--bs-primary), transparent 250px) 1;
+  }
+
+  @media (min-width: 1200px) {
+  .main-content {
+    border-right: 2px solid #f5f0eb;
+    padding-right: 1.5rem;
+  }
+}
+</style>
+
+
+</head>
+
+<body>
+  <script src="javascript/bootstrap.bundle.min.js"></script>
+
+  <!-- Navbar -->
+  <nav class="navbar navbar-dark bg-dark sticky-top navbar-expand-lg px-4" style="--bs-bg-opacity: .9; --bs-navbar-color: #f5f0eb; --bs-navbar-hover-color: #52bdec; --bs-navbar-brand-color: #f5f0eb;">
+    <div class="container">
+      <a class="navbar-brand fw-bold" href="index.html">
+        ACM MMSys'27
+      </a>
+      <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <ul class="navbar-nav ms-auto mb-0 mb-lg-0">
+          <!-- Menu item -->
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+              Authors
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end" style="--bs-dropdown-bg: #1e1e1e; --bs-dropdown-link-hover-bg: #52bdec;">
+              <li><a class="dropdown-item" href="research-track.html">Call for Research Track Papers</a></li>
+              <li><a class="dropdown-item" href="workshop-track.html">Call for Workshop Proposals</a></li>
+              <li><a class="dropdown-item" href="special-session-track.html">Call for Special Session Proposals</a></li>
+              <li><a class="dropdown-item" href="open-source-track.html">Open Source Software &amp; Datasets</a></li>
+              <li><a class="dropdown-item" href="demo-track.html">Demos &amp; Industry</a></li>
+              <li><a class="dropdown-item" href="deadlines.html">Important Dates</a></li>
+            </ul>
+          </li>
+          
+          <!-- Menu item -->
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+              Attendees
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end" style="--bs-dropdown-bg: #1e1e1e; --bs-dropdown-link-hover-bg: #52bdec;">
+              <li><a class="dropdown-item" href="venue.html">Venue &amp; Accommodation</a></li>
+              <!--<li><a class="dropdown-item" href="#">Accommodation</a></li>-->
+            </ul>
+          </li>
+          
+          <!-- Menu item -->
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+              Organization
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end" style="--bs-dropdown-bg: #1e1e1e; --bs-dropdown-link-hover-bg: #52bdec;">
+              <li><a class="dropdown-item" href="organizers.html">Organizing Committee</a></li>
+              <li><a class="dropdown-item" href="steerco.html">Steering Committee</a></li>
+            </ul>
+          </li>
+          
+          <!-- Menu item -->
+          <li class="nav-item">
+            <a class="nav-link" href="sponsors.html">Sponsorship</a>
+          </li>
+          
+          <!-- Menu item -->
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+              Archive
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end" style="--bs-dropdown-bg: #1e1e1e; --bs-dropdown-link-hover-bg: #52bdec;">
+              <li><a class="dropdown-item" href="https://2026.acmmmsys.org/" target="_blank">2026</a></li>
+              <li><a class="dropdown-item" href="https://2025.acmmmsys.org/" target="_blank">2025</a></li>
+              <li><a class="dropdown-item" href="https://2024.acmmmsys.org/" target="_blank">2024</a></li>
+              <li><a class="dropdown-item" href="https://2023.acmmmsys.org/" target="_blank">2023</a></li>
+              <li><a class="dropdown-item" href="https://2022.acmmmsys.org/" target="_blank">2022</a></li>
+              <li><a class="dropdown-item" href="https://2021.acmmmsys.org/" target="_blank">2021</a></li>
+              <li><a class="dropdown-item" href="https://2020.acmmmsys.org/" target="_blank">2020</a></li>
+              <li><a class="dropdown-item" href="https://2019.acmmmsys.org/" target="_blank">2019</a></li>
+              <li><a class="dropdown-item" href="https://2018.acmmmsys.org/" target="_blank">2018</a></li>
+              <li><a class="dropdown-item" href="https://2017.acmmmsys.org/" target="_blank">2017</a></li>
+              <li><a class="dropdown-item" href="https://2016.acmmmsys.org/" target="_blank">2016</a></li>
+              <li><a class="dropdown-item" href="https://acmmmsys.org/" target="_blank">ACM MMSys Official Website</a></li>
+            </ul>
+          </li>
+          
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+<!-- Hero image and text -->
+
+  <div class="position-relative" style="overflow:hidden">
+    <!-- Background image -->
+    <img src="images/ghent.jpg" class="w-100" style="height: 20vh; object-fit: cover; filter: brightness(85%) blur(5px);">
+    <!-- Fade overlay -->
+    <div class="position-absolute bottom-0 start-0 w-100" style="height: 15%; background: linear-gradient(to bottom, transparent, var(--bs-body-bg));"></div>
+    <!-- Overlay -->
+    <div class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center">
+      <div class="container-fluid">
+        <div class="d-flex flex-column flex-row align-items-left w-100 gap-3 px-md-5 px-4">
+            <div class="fw-bold fs-md-1 fs-2">Call for Papers - Research Track</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+
+<div class="d-flex flex-column flex-xl-row">
+  
+  <!-- Main content -->
+  <div class="flex-grow-1 flex-fill w-100">
+    <div class="container-fluid py-5 px-md-4 px-3">
+      <div class="main-content">
+          <!-- Intro Text -->
+  <div class="fw-bold fs-md-2 fs-3 text-primary border-bottom border-3 border-primary mb-3 pb-1 title">ACM MMSys 2027 Scope</div>
+  <div class="fs-md-5 fs-6">
+    <p>The 18th ACM Multimedia Systems Conference (MMSys 2027), together with its associated workshops, will take place from <span class="text-secondary fw-bold">March 30</span> to <span class="text-secondary fw-bold">April 2, 2027</span>, in <span class="text-secondary fw-bold">Ghent, Belgium</span>. MMSys 2027 will bring together leading researchers and practitioners from both academia and industry to present and discuss the latest advances in multimedia systems.</p>
+    <p>Unlike other venues that may focus on isolated aspects of multimedia, MMSys offers an inclusive and interdisciplinary forum covering a broad spectrum of topics, including networking, operating systems, real-time systems, databases, distributed computing, computer vision, and artificial intelligence. The conference fosters dialogue across these fields and provides a unique platform to explore the intersections and synergies among diverse approaches and solutions in multimedia systems research.</p>
+  </div>
+  
+  <!-- Topics of Interest -->
+  <div class="fw-bold fs-md-2 fs-3 text-primary border-bottom border-3 border-primary mb-3 mt-4 pb-1 title">Topics of Interest</div>
+
+  <div class="fs-md-5 fs-6">
+    <p>Submissions are solicited on all aspects of multimedia systems, including but not limited to:</p>
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-1 row-cols-xl-2 g-3">
+      <div class="col">
+        <div class="card h-100 border-light bg-light rounded-4 shadow-sm p-2 " style="--bs-bg-opacity:0.25;">
+          <div class="card-body">
+            <h3 class="card-title text-primary mb-1 fs-md-4 fs-5 fw-bold">AI and Machine Learning in Multimedia Systems</h3>
+           <ul class="text-muted fs-md-5 fs-6">
+              <li>Machine/Deep learning for multimedia understanding and all aspects of multimedia systems</li>
+              <li>Analytics for multimedia content and systems</li>
+              <li>Multimodal Large Language Models for multimedia systems</li>
+              <li>Generative Multimedia Systems</li>
+              <li>Multimodal Fusion</li>
+           </ul>
+          </div>
+        </div>
+      </div>
+      <div class="col">
+        <div class="card h-100 border-light bg-light rounded-4 shadow-sm p-2 " style="--bs-bg-opacity:0.25;">
+          <div class="card-body">
+            <h3 class="card-title text-primary mb-1 fs-md-4 fs-5 fw-bold">
+              Media Content
+            </h3>
+           <ul class="text-muted fs-md-5 fs-6">
+              <li>Content generation, adaptation, and summarization</li>
+              <li>Multiview, immersive media</li>
+              <li>3D and volumetric media, such as meshes, light fields, point clouds, and 3D Gaussian splats</li>
+              <li>Authoring language and tools</li>
+              <li>Video games and cloud gaming</li>
+           </ul>
+          </div>
+        </div>
+      </div>
+      <div class="col">
+        <div class="card h-100 border-light bg-light rounded-4 shadow-sm p-2 " style="--bs-bg-opacity:0.25;">
+          <div class="card-body">
+            <h3 class="card-title text-primary mb-1 fs-md-4 fs-5 fw-bold">
+              Networking and Communication
+            </h3>
+           <ul class="text-muted fs-md-5 fs-6">
+              <li>Adaptive streaming of multimedia content</li>
+              <li>Sustainable (green) multimedia systems</li>
+              <li>Network and system supports for multimedia</li>
+              <li>Mobile multimedia and 5G/6G cellular networks</li>
+           </ul>
+          </div>
+        </div>
+      </div>
+      <div class="col">
+        <div class="card h-100 border-light bg-light rounded-4 shadow-sm p-2 " style="--bs-bg-opacity:0.25;">
+          <div class="card-body">
+            <h3 class="card-title text-primary mb-1 fs-md-4 fs-5 fw-bold">Computing Paradigms for Multimedia</h3>
+           <ul class="text-muted fs-md-5 fs-6">
+              <li>Cloud and edge computing for multimedia systems</li>
+              <li>Distributed systems for multimedia</li>
+              <li>Cyber-physical systems</li>
+           </ul>
+          </div>
+        </div>
+      </div>
+      <div class="col">
+        <div class="card h-100 border-light bg-light rounded-4 shadow-sm p-2 " style="--bs-bg-opacity:0.25;">
+          <div class="card-body">
+            <h3 class="card-title text-primary mb-1 fs-md-4 fs-5 fw-bold">Quality and Performance</h3>
+           <ul class="text-muted fs-md-5 fs-6">
+              <li>Quality of Experience (QoE)</li>
+              <li>Evaluation Performance</li>
+              <li>User behaviour analysis and modelling</li>
+           </ul>
+          </div>
+        </div>
+      </div>
+      <div class="col">
+        <div class="card h-100 border-light bg-light rounded-4 shadow-sm p-2 " style="--bs-bg-opacity:0.25;">
+          <div class="card-body">
+            <h3 class="card-title text-primary mb-1 fs-md-4 fs-5 fw-bold">Multimedia Applications</h3>
+           <ul class="text-muted fs-md-5 fs-6">
+              <li>Multimedia systems for robotics and unmanned vehicles</li>
+              <li>Multimedia systems for health</li>
+              <li>Audio, image, and video coding for humans and machines</li>
+              <li>Multi-sensory experiences</li>
+              <li>Social VR/XR</li>
+              <li>Games/Entertainment</li>
+           </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Deadlines -->
+  <div class="fw-bold fs-md-2 fs-3 text-primary border-bottom border-3 border-primary mb-3 mt-4 pb-1 title">Deadlines</div>
+
+  <div class="fs-md-5 fs-6">
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-1 row-cols-xl-1 row-cols-xxl-2 g-3">
+      <div class="col">
+        <div class="card h-100 border-secondary bg-secondary rounded-4 shadow-sm p-2 " style="--bs-bg-opacity:0.15;">
+          <div class="card-body">
+            <h3 class="card-title text-secondary mb-1 fs-md-4 fs-5 fw-bold">First Submission Round</h3>
+           <ul class="fs-md-5 fs-6">
+              <li>Registration: <span class="text-muted"><s>September 17, 2026 (extended)</s></span></li>
+              <li>Submission: <span class="text-muted"><s>September 17, 2026</s></span></li>
+              <li>Notification: <span class="text-muted">October 24, 2026</span></li>
+              <li>Camera Ready: <span class="text-muted">February 19, 2027</span></li>
+           </ul>
+          </div>
+        </div>
+      </div>
+      <div class="col">
+        <div class="card h-100 border-secondary bg-secondary rounded-4 shadow-sm p-2 " style="--bs-bg-opacity:0.15;">
+          <div class="card-body">
+            <h3 class="card-title text-secondary mb-1 fs-md-4 fs-5 fw-bold">Second Submission Round</h3>
+           <ul class="fs-md-5 fs-6">
+              <li>Registration: <span class="text-muted">November 12, 2026</span></li>
+              <li>Submission: <span class="text-muted">November 19, 2026</span></li>
+              <li>Notification: <span class="text-muted">December 22, 2026</span></li>
+              <li>Camera Ready: <span class="text-muted">February 19, 2027</span></li>
+           </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Guidelines -->
+  <div class="fw-bold fs-md-2 fs-3 text-primary border-bottom border-3 border-primary mb-3 mt-4 pb-1 title">Submission guidelines</div>
+  <div class="fs-md-5 fs-6">
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-1 row-cols-xl-1 row-cols-xxl-2 g-3">
+      <div class="col">
+        <div class="card h-100 border-secondary bg-secondary rounded-4 shadow-sm p-2 " style="--bs-bg-opacity:0.15;">
+          <div class="card-body">
+            <h3 class="card-title text-secondary mb-1 fs-md-4 fs-5 fw-bold">Paper Format</h3>
+           <ul class="fs-md-5 fs-6">
+              <li>Up to 10 pages plus references</li>
+              <li><a href="https://www.acm.org/publications/proceedings-template" target="_blank">ACM proceedings style format</a></li>
+              <li>Two-column LaTeX template</li>
+              <li>Use <span class="font-monospace">\documentclass[sigconf,review,anonymous]{acmart}</span></li>
+           </ul>
+          </div>
+        </div>
+      </div>
+      <div class="col">
+        <div class="card h-100 border-secondary bg-secondary rounded-4 shadow-sm p-2 " style="--bs-bg-opacity:0.15;">
+          <div class="card-body">
+            <h3 class="card-title text-secondary mb-1 fs-md-4 fs-5 fw-bold">Review Process</h3>
+           <ul class="fs-md-5 fs-6">
+              <li>Double-blind peer review</li>
+              <li>Technical merit and novelty</li>
+              <li>Experimental validation</li>
+              <li>Clarity of presentation</li>
+           </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <a href="https://mmsys27research.hotcrp.com/" target="_blank" class="btn btn-secondary fs-md-5 fs-6 p-2 border-2 my-4">
+    <i class="bi bi-file-earmark-text"></i> <span>Submit your paper via HotCRP</span>
+  </a>
+
+  <h3 class="fs-md-4 fs-5 fw-bold text-secondary mt-3">ACM Policy on Authorship</h3>
+  <div class="fs-md-5 fs-6">
+    <p>We follow the <a href="https://www.acm.org/publications/policies/new-acm-policy-on-authorship" target="_blank">ACM Policy on Authorship</a> (updated by the ACM Publications Board on May 14, 2026). Specifically, be advised of the policy on the use of AI below.</p>
+    <p>Over the past few years, the computing community's use of large language models to support research and authorship has evolved rapidly, becoming a mainstream practice. ACM embraces any new technologies that have the potential to improve the efficiency and productivity of the research enterprise and assist with the authorship process.</p>
+    <p>At the same time, the use of such technologies, especially when in their infancy, introduces significant risks, including the risk of text and idea plagiarism, the potential for factual inaccuracies, fabricated or unverifiable research artifacts and citations, and the unintentional propagation of bias. These concerns raise questions about transparency, attribution, trust in scientific results, and the integrity of the scholarly record, underscoring the need for clear standards and responsible use of these technologies.</p>
+    <p>However, as with the use of any technology, especially new technology, it is incumbent upon the user of that technology to ensure its responsible use, and to be accountable for the misuse of that technology.</p>
+    <p>Rather than attempt to limit the use of Artificial Intelligence (AI) to conduct research or report on the results of that research by placing expectations on authors to disclose all uses of large language models in their Works, this updated Policy attempts to set clear expectations for their responsible use, as follows:
+      <ol>
+        <li>When using Artificial Intelligence to conduct research, including the design and methodology of the research project, creation and selection of data sources, designing experiments, generation and collection of data, coding, implementing models, running simulations, data analysis, testing, validating results, deploying software, archiving data and code for reproducibility, or any other aspects of the research lifecycle that are directly relevant to the conclusions of the research underlying the Work, the specific use(s) of AI tools must be described in detail in the methods section of the Work. This includes the creation of artifacts that are directly relevant to the conclusions of the research, such as code, datasets, and charts or figures that rely on the AI tools.</li>
+        <li>When using Artificial Intelligence to assist with writing an ACM submission, ACM no longer requires the disclosure of information regarding the use of AI (as distinct from AI used in the conduct of the research itself, addressed in item 1 above).</li>
+      </ol>
+    </p>
+    <p>All named authors on an ACM submission will be held responsible and accountable for any problematic content contained in the submission regardless of the source of that problematic content:
+      <ol>
+        <li>In the event content integrity issues stemming from the use of AI during authorship are identified prior to publication or posting in the ACM Digital Library, ACM reserves the right to reject submissions in their entirety and impose additional penalties.</li>
+        <li>In the event content integrity issues stemming from the use of AI during authorship are identified after publication or posting in the ACM Digital Library, ACM reserves the right to retract the published Work in its entirety.</li>
+      </ol>
+    </p>
+    <p>A retraction notice will be published on the citation page of the published Work, indicating the Work has been retracted because of integrity issues identified after publication, including the inclusion of fraudulent material. ACM may or may not include any reference to the use of Artificial Intelligence in the retraction notice.</p>
+    <p>Further details regarding the interpretation of ACM's policy on the use of AI tools and illustrative examples are provided in the <a href="https://www.acm.org/publications/policies/frequently-asked-questions" target="_blank">ACM FAQs</a>.</p>
+  </div>
+  <h3 class="fs-md-4 fs-5 fw-bold text-secondary mt-3">Reviewer Guidelines</h3>
+  <div class="fs-md-5 fs-6">
+    <p>The reviewing process adheres to the formal reviewing outlined in the  <a href="https://www.acm.org/publications/policies/pre-publication-evaluation" target="_blank">ACM Guidelines and Criteria for Evaluation of Submissions for ACM Publications</a>.</p>
+  </div>
+  <h3 class="fs-md-4 fs-5 fw-bold text-secondary mt-3">Revise and Resubmit Policy</h3>
+  <div class="fs-md-5 fs-6">
+    <p>Authors of papers submitted in the first round that have received a Revise and Resubmit recommendation are invited to submit a revision of their submission and a response to reviewers by the second submission deadline. Note that author lists are not allowed to be changed after the review period has started. No new authors may be added during the revise and resubmit period, or for the camera-ready version due to potential conflicts of interest (see <a href="https://www.acm.org/publications/policies/conflict-of-interest" target="_blank">ACM policy on Conflicts of Interest</a>). </p>
+  </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Sponsors sidebar -->
+  <div class="flex-shrink-0" style="flex-basis: 500px;">
+    <div class="container-fluid py-xl-5 pt-1 pe-md-4 pe-3 ps-xl-0 ps-md-4 ps-3 pb-5">
+      
+      <div class="fw-bold fs-md-2 fs-3 text-primary border-bottom border-3 border-primary mb-3 pb-1 title">Upcoming Deadlines</div>
+      <div class="card border-light bg-light rounded-4 shadow-sm my-3 flex-fill" style="--bs-bg-opacity:0.15;">
+        <div class="card-body">
+          <h3 class="card-title text-primary mb-1 fs-md-5 fs-6 fw-bold">Workshop Proposal Submission</h3>
+         <div class="fs-md-5 fs-6 text-muted">
+            October 25, 2026
+         </div>
+        </div>
+      </div>
+      <div class="card border-light bg-light rounded-4 shadow-sm my-3 flex-fill" style="--bs-bg-opacity:0.15;">
+        <div class="card-body">
+          <h3 class="card-title text-primary mb-1 fs-md-5 fs-6 fw-bold">Special Session Proposal Deadline</h3>
+         <div class="fs-md-5 fs-6 text-muted">
+            October 25, 2026
+         </div>
+        </div>
+      </div>
+      <a href="deadlines.html" class="btn btn-primary fs-md-5 fs-6 p-2 border-2 mb-4">
+        <i class="bi bi-calendar"></i> <span>All Important Dates</span>
+      </a>
+      
+      <div class="fw-bold fs-md-2 fs-3 text-primary border-bottom border-3 border-primary mb-3 pb-1 title">Sponsors</div>
+      
+      <div class="card border-primary bg-primary rounded-4" style="--bs-bg-opacity:0.15;">
+        <div class="card-body">
+          <p class="card-title fs-md-5 fs-6 text-primary fw-bold">Become a sponsor</p>
+          <p class="card-text fs-md-5 fs-6 text-wrap">Support MMSys 2027 and gain visibility in the multimedia systems community.</p>
+          <a href="sponsors.html" class="btn btn-primary fs-md-5 fs-6">
+            <span>Learn more</span><i class="bi bi-chevron-right"></i> 
+          </a>
+        </div>
+      </div>
+      
+    </div>
+  </div>
+
+</div>
+
+
+
+<!-- Footer -->
+<div class="container-fluid bg-dark p-4">
+  <p class="text-center fs-md-5 fs-6">
+    <a class="bi bi-twitter-x mx-1" href="https://x.com/acmmmsys" target="_blank"></a>
+    <a class="bi bi-facebook mx-1" href="https://www.facebook.com/acmmmsys/" target="_blank"></a>
+    <a class="bi bi-instagram mx-1" href="https://www.instagram.com/acmmmsys/" target="_blank"></a>
+    <a class="bi bi-slack mx-1" href="https://join.slack.com/t/acmmmsys/shared_invite/zt-epd55fpy-pXGkBflmdiZr9Jm~AcgsbA" target="_blank"></a>
+    <a class="bi bi-linkedin mx-1" href="https://www.linkedin.com/company/acm-mmsys" target="_blank"></a>
+    <a class="bi bi-github mx-1" href="https://github.com/acmmmsys" target="_blank"></a>
+  </p>
+  <p class="text-center fs-md-5 fs-6">
+    &copy; ACM MMSys. All rights reserved.
+  </p>
+</div>
+
+<!-- Scripts -->
+<script>
+function myFunction() {
+  var x = document.getElementById("dropdown-menu");
+  if (x.className.indexOf("w3-show") == -1) {
+    x.className += " w3-show";
+  } else {
+    x.className = x.className.replace(" w3-show", "");
+  }
+}
+</script>
+
+</body>
+</html>
