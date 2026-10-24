@@ -1,4 +1,7 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { expect, it } from "vitest";
+import { REPO_ROOT } from "./helpers.ts";
 import { jsFunction, siteRuntime } from "./runtime_extract.ts";
 
 /* ★ を付けた会議は、この端末にだけ覚える（共有 URL には載せない – 何を見たいかは人ごとに違い、
@@ -42,6 +45,11 @@ it("★ はこの端末にだけ覚え、会議の鍵で一覧へ渡す", () => 
   /* 今後の締切が無い会議は、押した先が 0 件にならないよう過去も出す条件を添える
    * （推薦のカードと同じ規則 – 2026-10-24 実測: RTSS の ★ は 0 件に着地していた）。 */
   expect(render, "締切の無い会議のリンクに過去の条件が無い").toContain('"&past=1"');
+
+  /* 紙には刷らない（★ はその人の私物で、紙は一覧そのものを読む物）。件数は読み上げにも出す。 */
+  const template = readFileSync(join(REPO_ROOT, "site", "template.html"), "utf8");
+  expect(template, "紙に ★ を刷っている").toContain(".watch-panel { display: none !important; }");
+  expect(template, "件数の変化を読み上げない").toContain('id="watchCount" aria-live="polite"');
 
   /* URL には載せない（状態は保存だけ）。 */
   const write = jsFunction(app, "writeUrl");

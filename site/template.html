@@ -985,6 +985,8 @@ footer a:hover { text-decoration: underline; }
    * 紙では開けないので、中身を刷る – 列の意味が無いと「残り」「状態」が読めない
    * （2026-10-23 実測: 印刷の模擬で `.upcoming-notes` の中身が display: none のまま）。 */
   .upcoming-notes > *:not(summary) { display: block !important; }
+  /* ★ はその人の私物で、紙は一覧そのものを読む物なので刷らない。 */
+  .watch-panel { display: none !important; }
   /* 但し書きは 1 ページに収める（列の意味がページをまたぐと読めない）。見出しの直後で
      ページを割らない（見出しだけが前のページの末尾に残らない）。 */
   .upcoming-notes, .upcoming-notes > blockquote { break-inside: avoid; }
@@ -1179,7 +1181,7 @@ footer a:hover { text-decoration: underline; }
     </details>
     <!-- あとで見たい会議（★）。この端末にだけ保存し、共有 URL には載せない。 -->
     <details id="watchPanel" class="watch-panel" hidden>
-      <summary>★ を付けた会議（<span id="watchCount">0</span> 件）</summary>
+      <summary>★ を付けた会議（<span id="watchCount" aria-live="polite">0</span> 件）</summary>
       <ul id="watchList" class="watch-list"></ul>
       <p class="stats-hint">行の詳細の「★ この会議をあとで見る」で足せます。保存先はこの端末（このブラウザ）だけで、共有 URL には入りません。</p>
     </details>
