@@ -1520,13 +1520,11 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     }
   }
 
-  function watchedVenueTitleJa(key: string): string {
+  function venueTitleJa(key: string): string {
     /* 会議の名簿（収録の全 696 件）から引く。行（`rows`）から引くと、締切が過ぎた会議
      * （RTSS など）は行が無いので鍵がそのまま出てしまう（2026-10-23 實測）。 */
     const conf = (DATA.conferences || []).find((c) => c.key === key);
-    if (conf?.title) return String(conf.title);
-    const found = rows.find((r) => r.conf.key === key);
-    return String(found?.conf.title || key);
+    return String(conf?.title || key);
   }
 
   function renderWatchPanel(): void {
@@ -1553,7 +1551,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       const li = document.createElement("li");
       const link = document.createElement("a");
       link.href = `?venue=${encodeURIComponent(key)}`;
-      link.textContent = watchedVenueTitleJa(key);
+      link.textContent = venueTitleJa(key);
       link.title = `この会議（${key}）の締切だけを一覧で見る`;
       li.appendChild(link);
       /* 次の締切（★ を付けた理由がその場で分かる）。読み込み済みの行から見るので、期間の外や
@@ -1567,7 +1565,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       const remove = document.createElement("button");
       remove.type = "button";
       remove.textContent = "×";
-      remove.setAttribute("aria-label", `${watchedVenueTitleJa(key)} を ★ から外す`);
+      remove.setAttribute("aria-label", `${venueTitleJa(key)} を ★ から外す`);
       remove.addEventListener("click", () => {
         writeWatchedVenues(readWatchedVenues().filter((k) => k !== key));
         /* 押したボタンは描き直しで消えるので、焦点が body に落ちないよう移す。一覧が残れば
@@ -1620,7 +1618,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       star.type = "button";
       star.className = "drawer-action";
       /* 押す所には会議の名前を出す（鍵は小文字の識別子で、人には読みにくい）。 */
-      const 名 = watchedVenueTitleJa(key);
+      const 名 = venueTitleJa(key);
       star.textContent = on ? `★ ${名} をはずす` : `★ ${名} をあとで見る`;
       star.title = "この端末（このブラウザ）にだけ覚えます。共有 URL には入りません。";
       star.setAttribute("aria-pressed", String(on));
@@ -3577,7 +3575,12 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     /* 説明欄にも、何の写しかを書く（候補を書き出した人と、絞り込みを書き出した人が、
      * カレンダーの情報欄で取り違へない樣に）。 */
     return icsViewText(shownIcsInput(), new Date(), generated, {
-      scopeJa: recMode ? "「投稿先を探す」が挙げた候補" : "絞り込んだ",
+      /* 会議で絞ったときは、どの会議かを書く（ファイルを持ち出した先で分かるように）。 */
+      scopeJa: recMode
+        ? "「投稿先を探す」が挙げた候補"
+        : state.venue
+          ? `絞り込んだ（会議: ${venueTitleJa(state.venue)}）`
+          : "絞り込んだ",
       /* 暦の棚に出る名前も分ける（同じ名が 2 つ並ぶと見分けられない）。 */
       calName: recMode ? ICS_VIEW_CANDIDATE_CAL_NAME_JA : ICS_VIEW_CAL_NAME_JA,
     });
@@ -4256,6 +4259,9 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     domestic: boolean;
     online: boolean;
     rank?: string;
+    /* 会議の絞り込み（`?venue=`）。掛けないと、1 会場の一覧の下に別の会議の会期が並ぶ
+     * （2026-10-24 実測: `?venue=sigmod` で 129 件のまま ACML・APPT などが出ていた）。 */
+    venue?: string;
   }): ScheduleOnlyMatch[] {
     const now = Date.now();
     const limit = windowLimitMs(filter.window, now);
@@ -4276,6 +4282,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
               ),
           );
         if (knownSubmission) return false;
+        if (filter.venue && m.key !== filter.venue) return false;
         if (filter.rank && !Recommender.rankMatches(m.rankPairs, filter.rank)) return false;
         if (searchQuery.trim() && !meetsQuery(m.hay)) return false;
         if (filter.domestic && m.tags.indexOf("domestic-jp") < 0) return false;
@@ -5595,7 +5602,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     if (state.venue)
       conditions.push({
         /* 押す所・一覧・紙と同じく、人には会議の名前で見せる（鍵は識別子で、行の詳細に在る）。 */
-        label: `会議: ${watchedVenueTitleJa(state.venue)}`,
+        label: `会議: ${venueTitleJa(state.venue)}`,
         clear: () => {
           state.venue = "";
         },
@@ -5707,6 +5714,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
             domestic: state.domestic,
             online: state.online,
             rank: state.rank,
+            venue: state.venue,
           });
     // 「全 M 件」との差をその場で説明する。内訳は独立に数えているので合計は全件にならない
     // （過去かつ投稿締切以外の行が両方に立つ）ため、「〜をのぞく」の形で書く。
@@ -5717,9 +5725,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       if (hidden.kind) parts.push(`投稿締切以外の種別 ${countJa(hidden.kind)} 件`);
       /* 札と同じく、人には会議の名前で見せる（鍵は行の詳細の「会議の識別子」と紙に在る）。 */
       if (hidden.venue)
-        parts.push(
-          `会議「${watchedVenueTitleJa(state.venue)}」以外の行 ${countJa(hidden.venue)} 件`,
-        );
+        parts.push(`会議「${venueTitleJa(state.venue)}」以外の行 ${countJa(hidden.venue)} 件`);
       // 「推定」の語は一覧の検索でも引ける（`推定` バッジの語を hay に入れている）が、
       // 既定ではここで行が落ちたままなので、出し方を同じ行に書く。
       if (hidden.est) parts.push(`推定 ${countJa(hidden.est)} 件（「推定締切を含める」で出ます）`);
@@ -7628,7 +7634,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     box.textContent =
       `この印刷物: ${describeFilters(
         /* 会議の絞り込みは、画面の札と同じく会議の名前で刷る（鍵は識別子で、行の詳細に在る）。 */
-        { ...state, venue: state.venue ? watchedVenueTitleJa(state.venue) : "" },
+        { ...state, venue: state.venue ? venueTitleJa(state.venue) : "" },
         (k) => KIND_LABEL[k] || k,
         rankFilterLabelJa,
         (c) => Recommender.categoryLabelJa(c),

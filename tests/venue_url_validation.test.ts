@@ -15,9 +15,20 @@ it("URL の venue に収録の無い鍵が来たら、絞り込みを外して�
     'urlValueNoticeJa("会議", rawVenue, "会議の絞り込みは外れています")',
   );
   /* 収録に在る鍵は、これまでどおり絞り込む（検証で落とさない）。 */
+  /* 会期だけの一覧にも掛ける（掛けないと、1 会場の一覧の下に別の会議の会期が並ぶ –
+   * 2026-10-24 実測: `?venue=sigmod` で 129 件のまま ACML・APPT などが出ていた）。 */
+  const 原文 = readFileSync(join(REPO_ROOT, "site", "app.ts"), "utf8");
+  expect(原文, "会期だけの一覧に掛けていない").toContain(
+    "if (filter.venue && m.key !== filter.venue) return false;",
+  );
+  expect(原文, "会期だけの一覧へ会議を渡していない").toContain("venue: state.venue,");
+  /* 持ち出した ICS の説明にも、どの会議で絞ったかを書く。 */
+  expect(原文, "ICS の説明に会議を書いていない").toContain(
+    "絞り込んだ（会議: " + "$" + "{venueTitleJa(state.venue)}）",
+  );
   /* 紙にも条件を書く（書かないと、1 会場だけの紙に「絞り込みなし（収録全体の一覧）」と刷れる –
    * 2026-10-23 実測）。 */
-  const 原本 = readFileSync(join(REPO_ROOT, "site", "app.ts"), "utf8");
+  const 原本 = 原文;
   expect(原本, "紙に会議の絞り込みを書いていない").toContain("if (s.venue) out.push(");
   expect(app, "収録の鍵まで外している").toContain(
     'state.venue = rawVenue && 収録の鍵.has(rawVenue) ? rawVenue : ""',
