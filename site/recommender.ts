@@ -13898,6 +13898,18 @@ const Recommender = (() => {
   }
 
   /* 英字 1〜2 文字の語か（ランクの A・B・C・N、会議の略称 SC など）。 */
+  /* URL の `venue` の値を、収録の鍵に寄せる。画面の札も件数欄も `SIGMOD`（大文字）と出すので、
+   * 大文字小文字を問わずに受ける（2026-10-24 実測: `?venue=SIGMOD` は絞り込みが黙って外れていた）。 */
+  function venueKeyFromInput(raw: unknown, keys: unknown): string {
+    const text = typeof raw === "string" ? raw.trim().toLowerCase() : "";
+    if (!text) return "";
+    for (const key of Array.isArray(keys) ? keys : []) {
+      const value = typeof key === "string" ? key : "";
+      if (value && value.toLowerCase() === text) return value;
+    }
+    return "";
+  }
+
   function isShortLatinTerm(term: string): boolean {
     return /^[a-z]{1,2}$/.test(term);
   }
@@ -16341,6 +16353,7 @@ const Recommender = (() => {
     fitLabel: fitLabel,
     journalRows: journalRows,
     rankMatches: rankMatches,
+    venueKeyFromInput: venueKeyFromInput,
     rankGradeJa: rankGradeJa,
     rankScaleJa: rankScaleJa,
     candidateRows: candidateRows,

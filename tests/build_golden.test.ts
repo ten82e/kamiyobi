@@ -2224,6 +2224,8 @@ it("the shared URL keeps the sort order the sender was looking at (SPEC §7)", (
     "let sortKey = DEFAULT_SORT_KEY, sortAsc = true;",
     "const state = { mode: 'deadlines', q: '', kind: '', rank: '', win: 'all', est: false, domestic: false, past: false, openOnly: false, order: 'fit', cats: [] };",
     "const DATA = { categories: { hpc: {}, systems: {} } };",
+    // readUrl は venue を会議の鍵に寄せる（この検査の DATA には会議が無いので常に空）。
+    "const Recommender = { venueKeyFromInput: () => '' };",
     "const KIND_LABEL = { abstract: '概要締切', paper: '論文締切', notification: '採否通知' };",
     runtime.match(/const SELECTABLE_KINDS = \[[^\]]*\];/)?.[0] ?? "",
     jsFunction(runtime, "selectableKind"),

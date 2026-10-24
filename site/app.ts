@@ -6320,8 +6320,12 @@ function semanticOutput(value: unknown): value is SemanticOutput {
      * 収録に無い鍵は絞り込みを外す（残すと「会議「xyz」以外の行 183 件」とだけ出て、
      * 何が起きたのか分からない – 2026-10-23 實測）。 */
     const rawVenue = (p.get("venue") || "").trim();
-    const 収録の鍵 = new Set((DATA.conferences || []).map((c) => String(c.key || "")));
-    state.venue = rawVenue && 収録の鍵.has(rawVenue) ? rawVenue : "";
+    /* 画面の札は `SIGMOD`（大文字）と出るので、大文字小文字を問わずに受ける（2026-10-24 実測:
+     * `?venue=SIGMOD` は絞り込みが黙って外れていた）。 */
+    state.venue = Recommender.venueKeyFromInput(
+      rawVenue,
+      (DATA.conferences || []).map((c) => String(c.key || "")),
+    );
     if (rawVenue && !state.venue)
       urlNotices.push(urlValueNoticeJa("会議", rawVenue, "会議の絞り込みは外れています"));
     if (urlKind.notice) urlNotices.push(urlKind.notice);
