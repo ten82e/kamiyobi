@@ -4442,7 +4442,7 @@ export function toLlmsTxt(
       "`rank`（`A*`・`A`・`B`・`C`・`N`。締切の一覧では行を、`mode=recommend` では候補の会場を絞ります）・`win`（`7d`・`30d`・`90d`・`180d`）・`est`・`past`・`domestic`・`online`（`1` で入）・" +
       "`open`（`1` で「投稿先を探す」の候補から締切が過ぎた会議を除く。締切の一覧では効きません）・" +
       "`order`（`deadline` で「投稿先を探す」の候補を締切の近い順に並べる。既定は論文との一致順。締切の一覧では効きません）・" +
-      "`sort`（`rem`・`date`・`event`・`conf`・`rank`）・`dir=desc`・`help=1`・`row`（1 行の詳細を開く）・`venue`（会議の鍵。`sigmod` などで 1 会場の行だけに絞る。`mode=recommend` では候補を絞りません。行の詳細と推薦のカードの「この会議の締切を一覧で見る」が使う）。",
+      "`sort`（`rem`・`date`・`event`・`conf`・`rank`）・`dir=desc`・`help=1`・`row`（1 行の詳細を開く）・`venue`（会議の鍵。`sigmod` などで 1 会場の行だけに絞る。`mode=recommend` では候補を絞りません。行の詳細と推薦のカードの「この会議の締切を一覧で見る」が使う。`row` と同時に渡したときは `row`（1 行の詳細）が勝つ）。",
     "`row` の値は `<venue key>|<year>|<kind>|<ミリ秒>` で、ミリ秒は `data.json` のその締切の " +
       "`utc`（時刻のある行）または `earliest_utc`（日付のみの行）です。同じ版で同じ種別・同じ年・同じ日時に " +
       "重なる行には、末尾に `|slot=<…>` が付きます（重なる行がある会場だけです）。",
