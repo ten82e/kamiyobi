@@ -5594,7 +5594,8 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       });
     if (state.venue)
       conditions.push({
-        label: `会議: ${state.venue}`,
+        /* 押す所・一覧・紙と同じく、人には会議の名前で見せる（鍵は識別子で、行の詳細に在る）。 */
+        label: `会議: ${watchedVenueTitleJa(state.venue)}`,
         clear: () => {
           state.venue = "";
         },
