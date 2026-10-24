@@ -7627,7 +7627,8 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     }
     box.textContent =
       `この印刷物: ${describeFilters(
-        state,
+        /* 会議の絞り込みは、画面の札と同じく会議の名前で刷る（鍵は識別子で、行の詳細に在る）。 */
+        { ...state, venue: state.venue ? watchedVenueTitleJa(state.venue) : "" },
         (k) => KIND_LABEL[k] || k,
         rankFilterLabelJa,
         (c) => Recommender.categoryLabelJa(c),
