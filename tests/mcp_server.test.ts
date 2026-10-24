@@ -1152,10 +1152,13 @@ it("行にランクが付き、等級で厳密に絞れる（画面のランク�
   expect(広, "行にランクがない").toMatch(/\| (CCF|CORE|THCPL) [^|]*\|/);
   expect(広, "ランクの内部の書き方を出している").not.toMatch(/\| (ccf|core|thcpl):/);
   /* どのランク表にも載って居ない行は、画面と同じく「ランク未確認」と書く。 */
+  /* 過去も含める（研究会の締切は毎月あるので、その日の時刻で 0 件になり得る –
+   * 2026-10-24 実測: 20:55 は緑・21:07 は赤。時計で赤くならない形にする）。 */
   const 全部 = await call("search_deadlines", {
     query: "研究会",
     kinds: ["all"],
     scope: "all",
+    include_past: true,
     limit: 20,
   });
   expect(全部, "「ランク未確認」を書いていない").toContain("ランク未確認");
