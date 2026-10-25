@@ -121,6 +121,7 @@ export const SEARCH_CANON = (() => {
     ["TOPIC_QUERY_ALIASES_JA", /const TOPIC_QUERY_ALIASES_JA[\s\S]*?\];/],
     ["METHOD_FIELD_ALIASES", /const METHOD_FIELD_ALIASES[\s\S]*?\];/],
     ["ENGLISH_RELATIVE_TIME_PHRASES", /const ENGLISH_RELATIVE_TIME_PHRASES[\s\S]*?\];/],
+    ["RANK_ADJECTIVE_WORDS", /const RANK_ADJECTIVE_WORDS[\s\S]*?\];/],
 
     ["寄せ表の和名の鍵cache", /let 寄せ表の和名の鍵cache[^\n]*;/],
 
@@ -394,6 +395,9 @@ export const SEARCH_CANON = (() => {
       // 手法の名を分野の語に直す部品（`queryTokenGroups` が呼ぶ）。
       "methodFieldOf",
       "collapseMethodField",
+      // 評価の形容詞（`top`）を上位の等級の条件にする部品。
+      "rankAdjectiveOf",
+      "collapseRankAdjective",
       "queryTokenGroups",
       "compoundSplitHit",
       "placeOffersOnline",

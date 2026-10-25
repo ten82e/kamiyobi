@@ -1041,6 +1041,42 @@ describe("分野の日本語表示名と検索語 (SPEC §7)", () => {
       expect(R.searchMatcher("GNN 2027")(rows[0])).toBe(true);
     });
 
+    it("評価の形容詞は上位の等級の条件として受ける（top security）", () => {
+      /* `top security conferences` は `top` を語として要求すると 0 件、`topics` に
+       * 当てると意味が違う（2026-10-26 実測）。上位の等級（CCF A・CORE A* など）の
+       * 条件として受け、件数欄でそのことを言う。 */
+      const confs = [
+        {
+          key: "topsec",
+          title: "Top Security Symposium",
+          rank: { ccf: "A" },
+          editions: [
+            {
+              year: 2027,
+              deadlines: [{ kind: "paper", utc: "2026-09-01T23:59:00Z" }],
+            },
+          ],
+        },
+        {
+          key: "midsec",
+          title: "Mid Security Symposium",
+          rank: { ccf: "B" },
+          editions: [
+            {
+              year: 2027,
+              deadlines: [{ kind: "paper", utc: "2026-09-02T23:59:00Z" }],
+            },
+          ],
+        },
+      ];
+      const rows = R.candidateRows(confs);
+      const m = R.searchMatcher("top security");
+      expect(rows.filter((r: any) => m(r)).map((r: any) => r.conf.key)).toEqual(["topsec"]);
+      expect(R.querySynonymNotes("top security").join(" ")).toContain("上位の等級");
+      // 名前に `topics` を持つ行を巻き込まない。
+      expect(R.hayMatches("hot topics in security", "topics")).toBe(true);
+    });
+
     it("英字の締切の言い方（deadline・CFP・call for papers）で引ける", () => {
       /* AI は `SIGCOMM 2027 deadline` のような形で聞く。収録の締切欄は日本語が主で、
        * 英字はラベルの `submission` だけだったので、`deadline` を要求すると 0 件になった

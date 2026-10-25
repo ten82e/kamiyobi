@@ -2303,6 +2303,9 @@ const Recommender = (() => {
       ["情報処理学会", "学会「IPSJ」", ["情報処理学会", "ipsj.or.jp"]],
       ["電子情報通信学会", "学会「IEICE」", ["電子情報通信学会", "ieice.org"]],
       ["nips", "会議「NeurIPS」", ["neurips"]],
+      /* 評価の形容詞は「上位の等級」の条件として受ける（`top security conferences` は
+       * `top` を語として要求すると 0 件だった – 2026-10-26 実測）。等級の語は行の hay に
+       * ある `ccf a` などの形に合わせる。 */
       ["日本時間", "行の時刻に書かれた JST という語", ["JST"]],
       ["日本標準時", "行の時刻に書かれた JST という語", ["JST"]],
       ["日本標準時間", "行の時刻に書かれた JST という語", ["JST"]],
@@ -6886,6 +6889,11 @@ const Recommender = (() => {
         const note = `「${method.phrase}」は手法の語なので、分野「${method.label}」で探しています`;
         if (notes.indexOf(note) < 0) notes.push(note);
       }
+      const rankAdj = rankAdjectiveOf(打たれた検索語);
+      if (rankAdj) {
+        const note = `「${rankAdj}」は上位の等級（CCF A・CORE A* など）で探しています`;
+        if (notes.indexOf(note) < 0) notes.push(note);
+      }
       /* 「国内」と「国際会議」は逆を指す（前者は国内研究会・国内シンポジウムに絞り、
        * 後者はその外側の会議）。両方打つと 0 件になるので、理由と、日本で開かれる国際会議の
        * 探し方を書く（2026-10-18 実測: `国内の国際会議` は 0 件で、案内は「国際会議」の
@@ -10149,6 +10157,53 @@ const Recommender = (() => {
     [/\b([0-9]{1,3})\s+days?\s+from\s+now\b/gi, "$1日後"],
     [/\bin\s+([0-9]{1,3})\s+days?\b/gi, "$1日後"],
   ];
+
+  /* 評価の形容詞（`top`・`best`・`トップ` など）は「上位の等級」の条件として受ける。
+   * 語としてそのまま探すと `top` が `topics` に当たるなど意味と違う行に絞られる
+   * （2026-10-26 実測: `top security conferences` 0 行）。hay の `〔高位〕` は
+   * CCF A・CORE A* などの等級を持つ行に付く（`candidateRows` が入れる）。 */
+  const RANK_ADJECTIVE_WORDS = [
+    "top",
+    "best",
+    "leading",
+    "premier",
+    "major",
+    "renowned",
+    "reputable",
+    "prestigious",
+    "top-tier",
+  ];
+
+  function rankAdjectiveOf(query: unknown): string {
+    const text = String(query == null ? "" : query)
+      .normalize("NFKC")
+      .toLowerCase();
+    const words = ` ${text
+      .replace(/[^a-z0-9-]+/g, " ")
+      .replace(/\s+/g, " ")
+      .trim()} `;
+    for (const word of RANK_ADJECTIVE_WORDS) {
+      if (/^[a-z-]+$/.test(word)) {
+        if (words.indexOf(` ${word} `) >= 0) return word;
+      } else if (text.indexOf(word) >= 0) return word;
+    }
+    return "";
+  }
+
+  function collapseRankAdjective(query: string): string {
+    let out = query;
+    for (const word of RANK_ADJECTIVE_WORDS) {
+      if (/^[a-z-]+$/.test(word)) {
+        out = out.replace(
+          new RegExp(`(^|[^a-z0-9])${word.replace(/-/g, "\\-")}(?![a-z0-9])`, "gi"),
+          (_m: string, head: string) => `${head}〔高位〕`,
+        );
+      } else {
+        out = out.split(word).join("〔高位〕");
+      }
+    }
+    return out;
+  }
 
   function collapseEnglishRelativeTime(query: string): string {
     let out = query;
@@ -13463,6 +13518,7 @@ const Recommender = (() => {
     if (typeof query === "string") query = collapseRankPhrase(query);
     if (typeof query === "string") query = collapseMethodField(query) as string;
     if (typeof query === "string") query = collapseEnglishRelativeTime(query);
+    if (typeof query === "string") query = collapseRankAdjective(query);
     /* `call for papers` は 3 語に割ると必ず 0 件になる（収録は `cfp` を持つ）。
      * 募集の英字語と同じ 1 語に直す（AI がこの形で聞く）。 */
     if (typeof query === "string")
@@ -13967,6 +14023,10 @@ const Recommender = (() => {
     "with",
     "from",
     "about",
+    // `top tier security` の `tier` は等級の言い方の一部（`top` は等級の条件になる）。
+    "tier",
+    "ranked",
+    "ranking",
   ];
   function withoutFunctionGroups(groups: string[][]): string[][] {
     if (groups.length < 2) return groups;
@@ -14932,6 +14992,8 @@ const Recommender = (() => {
          * `iccvm` に左端だけで当たり、別の会議（CVM）が出る（2026-10-25 実測: 24 行）。
          * ホストは `hostHay` に分け、照合側で語全体一致の規則に当てる。 */
         const hostHay = searchNormalize(linkSearchTerms(ed.link));
+        /* 評価の形容詞（`top`）の条件。CCF A・CORE A* などの等級を持つ会議に付ける。 */
+        const upperRank = rankPairs.some((pair) => /:A\*?$/.test(pair)) ? "〔高位〕" : "";
         const catHay = `${laterEditionSearchWords(conf, String(ed.event_start || ""), ed.id)} ${categorySearchTerms(conf.categories, confTags)} ${placeJa(ed.place)} ${placePrefectureJa(ed.place)} ${participationSearchTerms(ed.place)} ${domesticFacetSearchTerms(confTags, conf.title)} ${internationalFacetSearchTerms(confTags)}`;
         (ed.deadlines || []).forEach((dl) => {
           const dateOnly = dl.precision === "date-only";
@@ -14978,7 +15040,7 @@ const Recommender = (() => {
             tags: conf.tags || [],
             rankPairs,
             hay: searchNormalize(
-              `${baseHay} ${dl.label || ""} ${dl.kind || ""} ${deadlineWords} ${kindLabelJa(dl.kind)} ${statusBadgeWords(ed, dl).join(" ")} ${roundSearchTerms(dl.round).join(" ")} ${unconfirmedHayJa({ kind: dl.kind || "", ed, rankPairs })} ${rankSearchTerms(rankPairs)} ${catHay} ${tagSearchTerms(confTags)} ${monthTermsJa(dateOnly ? dl.local_date : t)} ${dayTermsJa(dateOnly ? dl.local_date : t)} ${ed.event_date_precision === "not-announced" ? "" : `${monthTermsJa(ed.event_start)} ${monthTermsJa(ed.event_end)}`} ${weekdaySearchTerms(
+              `${baseHay} ${dl.label || ""} ${dl.kind || ""} ${deadlineWords} ${upperRank} ${kindLabelJa(dl.kind)} ${statusBadgeWords(ed, dl).join(" ")} ${roundSearchTerms(dl.round).join(" ")} ${unconfirmedHayJa({ kind: dl.kind || "", ed, rankPairs })} ${rankSearchTerms(rankPairs)} ${catHay} ${tagSearchTerms(confTags)} ${monthTermsJa(dateOnly ? dl.local_date : t)} ${dayTermsJa(dateOnly ? dl.local_date : t)} ${ed.event_date_precision === "not-announced" ? "" : `${monthTermsJa(ed.event_start)} ${monthTermsJa(ed.event_end)}`} ${weekdaySearchTerms(
                 dateOnly ? dl.local_date : t,
               )} ${zoneSearchWords(dl, dateOnly)} ${cellWords} ${officialWords} ${shiftWords} ${eventDaySearchWords(
                 {
@@ -15027,6 +15089,7 @@ const Recommender = (() => {
         .join(" ")
         .toLowerCase();
       const cats = conf.categories || [];
+      const upperRank = pairs.some((pair) => /:A\*?$/.test(pair)) ? "〔高位〕" : "";
       out.push({
         conf: conf,
 
@@ -15043,7 +15106,7 @@ const Recommender = (() => {
         tags: tags,
         rankPairs: pairs,
         hay: searchNormalize(
-          `${baseHay} journal 常時受付 ${unconfirmedHayJa({
+          `${baseHay} ${upperRank} journal 常時受付 ${unconfirmedHayJa({
             kind: "journal",
             ed: { place: "", event_start: "" },
             rankPairs: pairs,
@@ -15073,6 +15136,8 @@ const Recommender = (() => {
         .filter(Boolean)
         .join(" ")
         .toLowerCase();
+      const pairs = Object.entries(conf.rank || {}).map(([source, grade]) => `${source}:${grade}`);
+      const upperRank = pairs.some((pair) => /:A\*?$/.test(pair)) ? "〔高位〕" : "";
       (conf.editions || []).forEach((ed) => {
         if (ed.estimated || (ed.deadlines || []).length || (ed.schedule_deadlines || []).length)
           return;
@@ -15091,7 +15156,7 @@ const Recommender = (() => {
           eventEnd: end,
           eventDatePrecision: ed.event_date_precision,
           eventSegments: segments,
-          rankPairs: Object.entries(conf.rank || {}).map(([source, grade]) => `${source}:${grade}`),
+          rankPairs: pairs,
           cats: conf.categories || [],
           tags: confTags,
           hay: searchNormalize(
@@ -15100,7 +15165,7 @@ const Recommender = (() => {
              * 開催回」として出る（2026-10-23 實測: `SIGCOMM` の 0 件の畫面に、IMC 2027
              * （https://conferences.sigcomm.org/imc/…）が出た）。締切の行の側は URL で引ける
              * ままにしてある。 */
-            `${baseHay} ${titleWithYearJa(conf.title || conf.key, ed.year)} ${ed.place || ""} ${eventSourceSearchText(ed)} ` +
+            `${baseHay} ${upperRank} ${titleWithYearJa(conf.title || conf.key, ed.year)} ${ed.place || ""} ${eventSourceSearchText(ed)} ` +
               `${categorySearchTerms(conf.categories, confTags)} ${tagSearchTerms(confTags)} ` +
               `${placeJa(ed.place)} ${placePrefectureJa(ed.place)} ` +
               `${ed.event_date_precision === "not-announced" ? "" : `${monthTermsJa(start)} ${monthTermsJa(end)}`} ${["month-only", "not-announced"].includes(String(ed.event_date_precision)) ? "" : weekdaySearchTerms(start)} ${eventDaySearchWords({ ed })}`,
@@ -15146,6 +15211,10 @@ const Recommender = (() => {
     return safeConfs
       .filter((conf) => !keys.has(conf.key))
       .map((conf) => {
+        const rankPairs = Object.entries(conf.rank ?? {}).map(
+          ([name, grade]) => `${name}:${grade}`,
+        );
+        const upperRank = rankPairs.some((pair) => /:A\*?$/.test(pair)) ? "〔高位〕" : "";
         const ed = [...(conf.editions ?? [])]
           .filter((edition) => !edition.estimated && !("estimate" in edition && edition.estimate))
           .sort((a, b) => Number(b.year ?? 0) - Number(a.year ?? 0))[0] ?? { id: conf.key };
@@ -15161,8 +15230,10 @@ const Recommender = (() => {
           tEvent: jstNoonMs(ed.event_start, Number.NaN),
           cats: conf.categories ?? [],
           tags: conf.tags ?? [],
-          rankPairs: Object.entries(conf.rank ?? {}).map(([name, grade]) => `${name}:${grade}`),
-          hay: searchNormalize([conf.title, conf.full_name, conf.key].filter(Boolean).join(" ")),
+          rankPairs,
+          hay: searchNormalize(
+            `${[conf.title, conf.full_name, conf.key].filter(Boolean).join(" ")} ${upperRank}`,
+          ),
           hostHay: "",
           name: conf.title,
           year: ed.year ?? null,
