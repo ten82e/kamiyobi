@@ -1041,6 +1041,17 @@ describe("分野の日本語表示名と検索語 (SPEC §7)", () => {
       expect(R.searchMatcher("GNN 2027")(rows[0])).toBe(true);
     });
 
+    it("英語の月名は、年が無ければ暦月として探す", () => {
+      /* `January` は原文の月名にしか当たらず 116 行だった（2026-10-26 実測）。
+       * 年を付けないときは `1月` として、その月の締切を年をまたいで探す。
+       * 年を付けた `January 2027` は原文の月名のまま（公式の原表記を落とさない）。 */
+      const at = Date.parse("2026-08-09T00:00:00Z");
+      expect(R.hayMatches("paper deadline 2026年1月 1月", "January")).toBe(true);
+      expect(R.hayMatches("paper deadline 2026年1月", "deadlines in January")).toBe(true);
+      expect(R.queryTokenGroups("January 2027", at)[0]).toContain("january");
+      expect(R.hayMatches("jan 2027 deadline", "Jan 2027")).toBe(true);
+    });
+
     it("英語の依頼文の語を落とす（find・show・any など）", () => {
       /* AI は `Find systems conferences with deadlines in Europe` のような文でも聞く。
        * 依頼の語は絞り込みに使わない（2026-10-26 実測: そのままでは 0 行）。 */
@@ -1189,7 +1200,9 @@ describe("分野の日本語表示名と検索語 (SPEC §7)", () => {
       const at = Date.parse("2026-08-09T00:00:00Z");
       expect(R.expandRelativeMonths("deadline today", at)).toBe("deadline 今日");
       expect(R.hayMatches("paper deadline 今日 2026年8月9日", "deadline today")).toBe(true);
-      expect(R.hayMatches("paper deadline december 2026", "submit by December")).toBe(true);
+      expect(
+        R.hayMatches("paper deadline december 2026 2026年12月 12月", "submit by December"),
+      ).toBe(true);
       expect(R.hayMatches("〔ws〕 workshop on hpc", "call for workshops")).toBe(true);
       expect(R.hayMatches("tutorial session", "call for tutorials")).toBe(true);
       // `today` 単体は今までどおり語として扱う（会議名を日付に化けさせない）。

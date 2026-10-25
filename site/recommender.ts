@@ -10281,6 +10281,51 @@ const Recommender = (() => {
    * 英語の言い方だけを受ける。 */
   /* `special track` は収録の `special session` と同じ物を指す（2026-10-26 実測:
    * `special session` 3 行 / `special track` 0 行）。 */
+  /* 英語の月名。年を付けない `January` は `1月` に直す（その月の締切を年をまたいで探す）。
+   * `January 2027` のように年を付けたときは原文の月名のまま探す（公式の原表記に当たる行を
+   * 落とさない – 2026-10-26 実測: `January 2027` 110 行 / `2027年1月` 108 行）。 */
+  const ENGLISH_MONTH_NUMBERS: Record<string, number> = {
+    january: 1,
+    jan: 1,
+    february: 2,
+    feb: 2,
+    march: 3,
+    mar: 3,
+    april: 4,
+    apr: 4,
+    may: 5,
+    june: 6,
+    jun: 6,
+    july: 7,
+    jul: 7,
+    august: 8,
+    aug: 8,
+    september: 9,
+    sept: 9,
+    sep: 9,
+    october: 10,
+    oct: 10,
+    november: 11,
+    nov: 11,
+    december: 12,
+    dec: 12,
+  };
+
+  function collapseEnglishMonths(query: string): string {
+    /* ハイフンで繋いだ語（`usa-november`）の一部は月名として扱わない – 前後が
+     * 英数字・ハイフンのときは語の一部（2026-10-26 実測: `usa-november` を
+     * `usa-11月` に化けさせ、`usa november` の行に会えなくなった）。 */
+    return query.replace(
+      /(^|[^a-z0-9-])(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)(\.?)(?![a-z0-9-])/gi,
+      (match: string, head: string, name: string, dot: string, offset: number, whole: string) => {
+        const rest = whole.slice(offset + match.length);
+        // 年が続くときは原文の月名のまま（点だけ落とす）。
+        if (/^\s+\d{4}\b/.test(rest)) return `${head}${name}${dot === "." ? "" : ""}`;
+        return `${head}${ENGLISH_MONTH_NUMBERS[name.toLowerCase()]}月`;
+      },
+    );
+  }
+
   /* `where is SIGCOMM 2027` のような疑問文の頭を落とす（`is`/`are` は残すと語になる）。 */
   function collapseQuestionPhrases(query: string): string {
     return query.replace(/\b(?:where|when|what)\s+(?:is|are)\s+/gi, "");
@@ -13667,6 +13712,7 @@ const Recommender = (() => {
     if (typeof query === "string") query = collapseWorkshopOnly(query);
     if (typeof query === "string") query = collapseSpecialTrack(query);
     if (typeof query === "string") query = collapseQuestionPhrases(query);
+    if (typeof query === "string") query = collapseEnglishMonths(query);
     /* `call for papers` は 3 語に割ると必ず 0 件になる（収録は `cfp` を持つ）。
      * 募集の英字語と同じ 1 語に直す（AI がこの形で聞く）。 */
     if (typeof query === "string")
