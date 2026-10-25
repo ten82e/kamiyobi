@@ -10188,6 +10188,11 @@ const Recommender = (() => {
    * 日本語の相対語に直してから、既存の展開（`expandRelativeMonths`・`queryTokenGroups`）に
    * 渡す – 日付の解き方を二重に持たない。 */
   const ENGLISH_RELATIVE_TIME_PHRASES: Array<[RegExp, string]> = [
+    /* 「今日・明日」は会議名とも衝突するので、`deadline`/`due` と組んだ形だけ受ける。 */
+    [/\bdeadlines?\s+today\b/gi, "deadline 今日"],
+    [/\bdeadlines?\s+tomorrow\b/gi, "deadline 明日"],
+    [/\bdue\s+today\b/gi, "今日"],
+    [/\bdue\s+tomorrow\b/gi, "明日"],
     [/\b(?:by|before|until)\s+(?:the\s+)?end\s+of\s+next\s+month\b/gi, "来月まで"],
     [/\bby\s+next\s+month\b/gi, "来月まで"],
     [/\bthe\s+month\s+after\s+next\b/gi, "再来月"],
@@ -13603,7 +13608,15 @@ const Recommender = (() => {
     /* `call for papers` は 3 語に割ると必ず 0 件になる（収録は `cfp` を持つ）。
      * 募集の英字語と同じ 1 語に直す（AI がこの形で聞く）。 */
     if (typeof query === "string")
-      query = query.replace(/\b(?:calls?)[\s-]+for[\s-]+papers?\b/gi, "cfp");
+      query = query.replace(
+        /\bcalls?[\s-]+for[\s-]+(papers?|workshops?|tutorials?)\b/gi,
+        (_m: string, what: string) =>
+          what.toLowerCase().startsWith("paper")
+            ? "cfp"
+            : what.toLowerCase().startsWith("workshop")
+              ? "〔WS〕"
+              : "tutorial",
+      );
     if (typeof query === "string")
       query = query.replace(/([0-9０-９]{4})年の開催回/g, (_, year: string) =>
         editionYearSearchTerm(year),
@@ -14108,6 +14121,10 @@ const Recommender = (() => {
     "tier",
     "ranked",
     "ranking",
+    // 「submit by December」の動詞。締切の語ではないので、ほかの語があるときは落とす。
+    "submit",
+    "submitted",
+    "submitting",
   ];
   function withoutFunctionGroups(groups: string[][]): string[][] {
     if (groups.length < 2) return groups;

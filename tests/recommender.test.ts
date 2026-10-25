@@ -1125,6 +1125,20 @@ describe("分野の日本語表示名と検索語 (SPEC §7)", () => {
       expect(keys("workshop")).toEqual(["tagged", "ws"]);
     });
 
+    it("英語の募集の言い方と、締切の今日・明日を受ける", () => {
+      /* AI は `call for workshops`・`deadline today`・`submit by December` の形でも聞く。
+       * 3 語に割ると 0 件になるものは 1 語に直し、`today` 単体は会議名と衝突するので
+       * `deadline`/`due` と組んだ形だけ受ける（2026-10-26 実測）。 */
+      const at = Date.parse("2026-08-09T00:00:00Z");
+      expect(R.expandRelativeMonths("deadline today", at)).toBe("deadline 今日");
+      expect(R.hayMatches("paper deadline 今日 2026年8月9日", "deadline today")).toBe(true);
+      expect(R.hayMatches("paper deadline december 2026", "submit by December")).toBe(true);
+      expect(R.hayMatches("〔ws〕 workshop on hpc", "call for workshops")).toBe(true);
+      expect(R.hayMatches("tutorial session", "call for tutorials")).toBe(true);
+      // `today` 単体は今までどおり語として扱う（会議名を日付に化けさせない）。
+      expect(R.queryTokenGroups("today", at)).toEqual([["today"]]);
+    });
+
     it("American は国か大陸かを案内する", () => {
       /* 国（USA）とも大陸（北アメリカ・南アメリカ）とも読めるので、勝手に寄せない。
        * 代わりに、どちらの語で探すかを件数欄で言う（2026-10-26 実測: そのまま 0 行）。 */
