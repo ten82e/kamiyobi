@@ -6917,6 +6917,13 @@ const Recommender = (() => {
       /* `American` は国（USA）とも大陸（北アメリカ・南アメリカ）とも読める。勝手に
        * どちらかへ寄せず、どちらの語で探すかを言う（2026-10-26 実測: そのままでは 0 行）。 */
       const workshopOnly = /\b(?:workshops?\s+only|only\s+workshops?)\b/i.exec(打たれた検索語);
+      /* `deadline soon` は幅の語ではない（`soon` を外すと全件に化ける）。窓の欄へ渡す。 */
+      if (/\b(?:soon|approaching|imminent)\b/i.test(打たれた検索語)) {
+        const note =
+          "「soon」は幅の語ではありません。画面の「締切まで」で 7 日以内などを選ぶか、MCP の `within_days` を指定してください";
+        if (notes.indexOf(note) < 0) notes.push(note);
+      }
+
       /* 投稿先を探す問い（`where to submit`）は、締切の語ではないので論文モードへ渡す。 */
       if (
         /\bwhere\b[^.]*\bsubmit\b|\bsubmit\b[^.]*\bwhere\b|\bwhich conference\b[^.]*\bsubmit\b/i.test(

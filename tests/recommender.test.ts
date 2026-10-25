@@ -1065,6 +1065,13 @@ describe("分野の日本語表示名と検索語 (SPEC §7)", () => {
       );
     });
 
+    it("soon は幅の語ではないと案内する", () => {
+      /* `deadline soon` の `soon` を外すと全件に化ける。窓の欄へ渡す。 */
+      const notes = R.querySynonymNotes("deadline soon").join(" ");
+      expect(notes).toContain("締切まで");
+      expect(notes).toContain("within_days");
+    });
+
     it("場所・日付を聞く英語の語を落とす", () => {
       /* AI は `SIGCOMM 2027 location`・`where is SIGCOMM 2027` の形でも聞く。
        * 場所・日付を指す語は行の値ではないので、ほかの語があるときは絞り込みに使わない
