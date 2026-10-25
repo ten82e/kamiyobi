@@ -2,6 +2,8 @@
 
 HPC・ネットワーク・システム・AI・セキュリティなどの国際会議、国内研究会、ワークショップ、ジャーナル特集号の投稿締切と開催日を集めています。
 
+収録は HPC・ネットワーク・システム・AI・セキュリティなどが中心です。プログラミング言語・形式手法系の一部（`PLDI`・`POPL`・`OOPSLA`・`FM` など）は、`config.yaml` の `exclude` で方針として対象外にしています。
+
 [締切を検索する](https://ten82e.github.io/kamiyobi/) · [直近の締切と開催](https://ten82e.github.io/kamiyobi/upcoming.html) · [カレンダーを購読する](https://ten82e.github.io/kamiyobi/deadlines.ics)
 
 ## 締切を探す
