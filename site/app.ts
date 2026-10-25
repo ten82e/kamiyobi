@@ -2673,6 +2673,8 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     clearable: boolean;
     pastShown: boolean;
     hidden: Record<string, number>;
+    // 名簿（収録の会議）に在る語。締切の行が 0 でも「データに無い」とは言わない。
+    nameOnly?: { terms: string[] } | null;
   }): string {
     // データその物が無いときは、他のどの説明より先にそれを言う（読み上げは短い形で）。
     if (!filter.catalogConferences) return " ｜ 締切のデータが入っていません";
@@ -2739,6 +2741,12 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         const 最 = ` ｜ 「${alt.word}」なら ${countJa(alt.count)} 件当たります`;
         if (最.length <= 60) return 最;
       }
+      /* 名簿には在る語（締切が過ぎた・窓の外）を「収録データにありません」と言わない。
+       * 下の長い案内は `nameOnly.terms` を除いて同じ判斷をしているので、読み上げだけが
+       * 逆のことを言う状態を残さない（2026-10-26 実測: ICCV は過去の締切だけを持つ）。 */
+      const 名簿の語 = filter.nameOnly?.terms ?? [];
+      if (名簿の語.indexOf(dead[0]) >= 0)
+        return ` ｜ 「${dead[0]}」は収録の名簿にありますが、いまの条件では 0 件です${pointer}`;
       return ` ｜ 語「${dead[0]}」は収録データにありません${pointer}`;
     }
     if (filter.hiddenKindWords.length)
