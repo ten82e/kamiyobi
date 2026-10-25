@@ -6916,6 +6916,11 @@ const Recommender = (() => {
       }
       /* `American` は国（USA）とも大陸（北アメリカ・南アメリカ）とも読める。勝手に
        * どちらかへ寄せず、どちらの語で探すかを言う（2026-10-26 実測: そのままでは 0 行）。 */
+      const workshopOnly = /\b(?:workshops?\s+only|only\s+workshops?)\b/i.exec(打たれた検索語);
+      if (workshopOnly) {
+        const note = `「${workshopOnly[0]}」はワークショップの行だけに絞っています`;
+        if (notes.indexOf(note) < 0) notes.push(note);
+      }
       if (/\bamerican\b/i.test(打たれた検索語)) {
         const note =
           "「American」は国（USA）とも大陸（北アメリカ・南アメリカ）とも読めます。国なら「USA」、大陸なら「North America」「South America」で探してください";
@@ -10235,6 +10240,16 @@ const Recommender = (() => {
   /* `journal special issue` は 3 語に割ると、特集号の行に `journal` が無いので 0 件に
    * なる（2026-10-26 実測）。特集号の言い方として 1 語に直す。 */
   /* 2 語の地域名（`North America`）は、1 語の地域まとめに直してから既存の展開に渡す。 */
+  /* `workshop only` は、会議名に workshop を持つ行・タグの行だけに絞る（普通に
+   * `workshop` と打つと、ワークショップを併設する本会議の行も混ざる）。日本語の
+   * 「だけ」「のみ」は助詞として落とす既存の約束（40 語の検査）があるので、ここでは
+   * 英語の言い方だけを受ける。 */
+  function collapseWorkshopOnly(query: string): string {
+    return query
+      .replace(/\bworkshops?\s+only\b/gi, "〔WS〕")
+      .replace(/\bonly\s+workshops?\b/gi, "〔WS〕");
+  }
+
   function collapseEnglishRegion(query: string): string {
     return query
       .replace(/\bnorth america\b/gi, "北米")
@@ -13584,6 +13599,7 @@ const Recommender = (() => {
     if (typeof query === "string") query = collapseRankAdjective(query);
     if (typeof query === "string") query = collapseJournalSpecialIssue(query);
     if (typeof query === "string") query = collapseEnglishRegion(query);
+    if (typeof query === "string") query = collapseWorkshopOnly(query);
     /* `call for papers` は 3 語に割ると必ず 0 件になる（収録は `cfp` を持つ）。
      * 募集の英字語と同じ 1 語に直す（AI がこの形で聞く）。 */
     if (typeof query === "string")
@@ -15027,6 +15043,18 @@ const Recommender = (() => {
     return raw.trim();
   }
 
+  /* ワークショップの行か（タグ、または会議名に workshop）。名前だけの行も拾う –
+   * タグは全件には付いていない（2026-10-26 実測: 名前に workshop を持つ 82 会議のうち
+   * タグがあるのは 47）。 */
+  function isWorkshopConference(conf: {
+    tags?: string[];
+    title?: string;
+    full_name?: string;
+  }): boolean {
+    if ((conf.tags || []).indexOf("workshop") >= 0) return true;
+    return /workshop/i.test(`${conf.title || ""} ${conf.full_name || ""}`);
+  }
+
   /** Shared candidate-to-row boundary for browser rendering and offline ranking. */
   function candidateRows(data: unknown): CandidateRow[] {
     const out: CandidateRow[] = [];
@@ -15059,6 +15087,7 @@ const Recommender = (() => {
         const hostHay = searchNormalize(linkSearchTerms(ed.link));
         /* 評価の形容詞（`top`）の条件。CCF A・CORE A* などの等級を持つ会議に付ける。 */
         const upperRank = rankPairs.some((pair) => /:A\*?$/.test(pair)) ? "〔高位〕" : "";
+        const workshopMark = isWorkshopConference(conf) ? "〔WS〕" : "";
         const catHay = `${laterEditionSearchWords(conf, String(ed.event_start || ""), ed.id)} ${categorySearchTerms(conf.categories, confTags)} ${placeJa(ed.place)} ${placePrefectureJa(ed.place)} ${participationSearchTerms(ed.place)} ${domesticFacetSearchTerms(confTags, conf.title)} ${internationalFacetSearchTerms(confTags)}`;
         (ed.deadlines || []).forEach((dl) => {
           const dateOnly = dl.precision === "date-only";
@@ -15105,7 +15134,7 @@ const Recommender = (() => {
             tags: conf.tags || [],
             rankPairs,
             hay: searchNormalize(
-              `${baseHay} ${dl.label || ""} ${dl.kind || ""} ${deadlineWords} ${upperRank} ${kindLabelJa(dl.kind)} ${statusBadgeWords(ed, dl).join(" ")} ${roundSearchTerms(dl.round).join(" ")} ${unconfirmedHayJa({ kind: dl.kind || "", ed, rankPairs })} ${rankSearchTerms(rankPairs)} ${catHay} ${tagSearchTerms(confTags)} ${monthTermsJa(dateOnly ? dl.local_date : t)} ${dayTermsJa(dateOnly ? dl.local_date : t)} ${ed.event_date_precision === "not-announced" ? "" : `${monthTermsJa(ed.event_start)} ${monthTermsJa(ed.event_end)}`} ${weekdaySearchTerms(
+              `${baseHay} ${dl.label || ""} ${dl.kind || ""} ${deadlineWords} ${upperRank} ${workshopMark} ${kindLabelJa(dl.kind)} ${statusBadgeWords(ed, dl).join(" ")} ${roundSearchTerms(dl.round).join(" ")} ${unconfirmedHayJa({ kind: dl.kind || "", ed, rankPairs })} ${rankSearchTerms(rankPairs)} ${catHay} ${tagSearchTerms(confTags)} ${monthTermsJa(dateOnly ? dl.local_date : t)} ${dayTermsJa(dateOnly ? dl.local_date : t)} ${ed.event_date_precision === "not-announced" ? "" : `${monthTermsJa(ed.event_start)} ${monthTermsJa(ed.event_end)}`} ${weekdaySearchTerms(
                 dateOnly ? dl.local_date : t,
               )} ${zoneSearchWords(dl, dateOnly)} ${cellWords} ${officialWords} ${shiftWords} ${eventDaySearchWords(
                 {
@@ -15155,6 +15184,7 @@ const Recommender = (() => {
         .toLowerCase();
       const cats = conf.categories || [];
       const upperRank = pairs.some((pair) => /:A\*?$/.test(pair)) ? "〔高位〕" : "";
+      const workshopMark = isWorkshopConference(conf) ? "〔WS〕" : "";
       out.push({
         conf: conf,
 
@@ -15171,7 +15201,7 @@ const Recommender = (() => {
         tags: tags,
         rankPairs: pairs,
         hay: searchNormalize(
-          `${baseHay} ${upperRank} journal 常時受付 ${unconfirmedHayJa({
+          `${baseHay} ${upperRank} ${workshopMark} journal 常時受付 ${unconfirmedHayJa({
             kind: "journal",
             ed: { place: "", event_start: "" },
             rankPairs: pairs,
@@ -15203,6 +15233,7 @@ const Recommender = (() => {
         .toLowerCase();
       const pairs = Object.entries(conf.rank || {}).map(([source, grade]) => `${source}:${grade}`);
       const upperRank = pairs.some((pair) => /:A\*?$/.test(pair)) ? "〔高位〕" : "";
+      const workshopMark = isWorkshopConference(conf) ? "〔WS〕" : "";
       (conf.editions || []).forEach((ed) => {
         if (ed.estimated || (ed.deadlines || []).length || (ed.schedule_deadlines || []).length)
           return;
@@ -15230,7 +15261,7 @@ const Recommender = (() => {
              * 開催回」として出る（2026-10-23 實測: `SIGCOMM` の 0 件の畫面に、IMC 2027
              * （https://conferences.sigcomm.org/imc/…）が出た）。締切の行の側は URL で引ける
              * ままにしてある。 */
-            `${baseHay} ${upperRank} ${titleWithYearJa(conf.title || conf.key, ed.year)} ${ed.place || ""} ${eventSourceSearchText(ed)} ` +
+            `${baseHay} ${upperRank} ${workshopMark} ${titleWithYearJa(conf.title || conf.key, ed.year)} ${ed.place || ""} ${eventSourceSearchText(ed)} ` +
               `${categorySearchTerms(conf.categories, confTags)} ${tagSearchTerms(confTags)} ` +
               `${placeJa(ed.place)} ${placePrefectureJa(ed.place)} ` +
               `${ed.event_date_precision === "not-announced" ? "" : `${monthTermsJa(start)} ${monthTermsJa(end)}`} ${["month-only", "not-announced"].includes(String(ed.event_date_precision)) ? "" : weekdaySearchTerms(start)} ${eventDaySearchWords({ ed })}`,
@@ -15280,6 +15311,7 @@ const Recommender = (() => {
           ([name, grade]) => `${name}:${grade}`,
         );
         const upperRank = rankPairs.some((pair) => /:A\*?$/.test(pair)) ? "〔高位〕" : "";
+        const workshopMark = isWorkshopConference(conf) ? "〔WS〕" : "";
         const ed = [...(conf.editions ?? [])]
           .filter((edition) => !edition.estimated && !("estimate" in edition && edition.estimate))
           .sort((a, b) => Number(b.year ?? 0) - Number(a.year ?? 0))[0] ?? { id: conf.key };
@@ -15297,7 +15329,7 @@ const Recommender = (() => {
           tags: conf.tags ?? [],
           rankPairs,
           hay: searchNormalize(
-            `${[conf.title, conf.full_name, conf.key].filter(Boolean).join(" ")} ${upperRank}`,
+            `${[conf.title, conf.full_name, conf.key].filter(Boolean).join(" ")} ${upperRank} ${workshopMark}`,
           ),
           hostHay: "",
           name: conf.title,

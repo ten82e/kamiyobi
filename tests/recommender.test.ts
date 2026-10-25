@@ -1076,6 +1076,55 @@ describe("分野の日本語表示名と検索語 (SPEC §7)", () => {
       expect(R.searchMatcher("Asia")(rows[0])).toBe(false);
     });
 
+    it("workshop only はワークショップの行だけに絞る", () => {
+      /* 普通に `workshop` と打つと、ワークショップを併設する本会議の行も混ざる
+       * （2026-10-26 実測: 238 行のうち 11 行は本会議）。`workshop only` で絞れる。 */
+      const confs = [
+        {
+          key: "ws",
+          title: "Workshop on HPC",
+          editions: [
+            {
+              year: 2027,
+              deadlines: [{ kind: "paper", utc: "2026-09-01T23:59:00Z" }],
+            },
+          ],
+        },
+        {
+          key: "main",
+          title: "Conference on HPC",
+          editions: [
+            {
+              year: 2027,
+              deadlines: [{ kind: "paper", utc: "2026-09-02T23:59:00Z" }],
+            },
+          ],
+        },
+        {
+          key: "tagged",
+          title: "HOTSEC",
+          tags: ["workshop"],
+          editions: [
+            {
+              year: 2027,
+              deadlines: [{ kind: "paper", utc: "2026-09-03T23:59:00Z" }],
+            },
+          ],
+        },
+      ];
+      const rows = R.candidateRows(confs);
+      const keys = (q: string): string[] =>
+        rows
+          .filter((r: any) => R.searchMatcher(q)(r))
+          .map((r: any) => r.conf.key)
+          .sort();
+      // タグの行（名前に workshop が無い）と、名前に workshop を持つ行。
+      expect(keys("workshop only")).toEqual(["tagged", "ws"]);
+      expect(R.querySynonymNotes("workshop only").join(" ")).toContain("絞っています");
+      // 普通の `workshop` は今までどおり（タグの行と、名前に workshop を持つ行）。
+      expect(keys("workshop")).toEqual(["tagged", "ws"]);
+    });
+
     it("American は国か大陸かを案内する", () => {
       /* 国（USA）とも大陸（北アメリカ・南アメリカ）とも読めるので、勝手に寄せない。
        * 代わりに、どちらの語で探すかを件数欄で言う（2026-10-26 実測: そのまま 0 行）。 */

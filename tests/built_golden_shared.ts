@@ -402,6 +402,9 @@ export const SEARCH_CANON = (() => {
       "collapseJournalSpecialIssue",
       // 英語の 2 語の地域名を日本語の地域まとめへ直す部品。
       "collapseEnglishRegion",
+      // `workshop only` をワークショップの印に直す部品。
+      "collapseWorkshopOnly",
+      "isWorkshopConference",
       "queryTokenGroups",
       "compoundSplitHit",
       "placeOffersOnline",
