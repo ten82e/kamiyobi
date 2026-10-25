@@ -189,6 +189,9 @@ export const SEARCH_CANON = (() => {
     ["EAST_ASIA_JA", /const EAST_ASIA_JA = [^\n]*;/],
     ["LATIN_AMERICA_JA", /const LATIN_AMERICA_JA = [^\n]*;/],
     ["MENA_JA", /const MENA_JA = [^\n]*;/],
+    ["BENELUX_JA", /const BENELUX_JA = [^\n]*;/],
+    ["IBERIA_JA", /const IBERIA_JA = [^\n]*;/],
+    ["BALTICS_JA", /const BALTICS_JA = [^\n]*;/],
     // 「海外」は地域まとめの構成員から導く（国を並べ直さない – 第 335 回）ので、先に要る。
     ["OVERSEAS_JA", /const OVERSEAS_JA =[\s\S]*?;/],
     ["CONTINENT_READINGS", /const CONTINENT_READINGS[\s\S]*?\];/],

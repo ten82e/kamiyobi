@@ -1086,6 +1086,12 @@ describe("分野の日本語表示名と検索語 (SPEC §7)", () => {
         ["br", "Sao Paulo, Brazil"],
         ["jp", "Tokyo, Japan"],
         ["ma", "Casablanca, Morocco"],
+        ["be", "Brussels, Belgium"],
+        ["nl", "Amsterdam, Netherlands"],
+        ["es", "Madrid, Spain"],
+        ["pt", "Lisbon, Portugal"],
+        ["ee", "Tallinn, Estonia"],
+        ["lt", "Vilnius, Lithuania"],
       ].map(([key, place]) => ({
         key,
         title: `Conference ${key}`,
@@ -1106,6 +1112,9 @@ describe("分野の日本語表示名と検索語 (SPEC §7)", () => {
       expect(keys("Latin America")).toEqual(["br"]);
       expect(keys("East Asia")).toEqual(["jp"]);
       expect(keys("MENA")).toEqual(["ma"]);
+      expect(keys("Benelux")).toEqual(["be", "nl"]);
+      expect(keys("Iberia")).toEqual(["es", "pt"]);
+      expect(keys("Baltics")).toEqual(["ee", "lt"]);
       expect(R.querySynonymNotes("Scandinavia").join(" ")).toContain("地域まとめ");
     });
 

@@ -13417,6 +13417,9 @@ const Recommender = (() => {
   const EAST_ASIA_JA = "中国,韓国,台湾,香港,日本";
   const LATIN_AMERICA_JA = `${CENTRAL_AMERICA_JA},${SOUTH_AMERICA_JA}`;
   const MENA_JA = `${MIDDLE_EAST_JA},モロッコ`;
+  const BENELUX_JA = "ベルギー,オランダ,ルクセンブルク";
+  const IBERIA_JA = "スペイン,ポルトガル";
+  const BALTICS_JA = "エストニア,リトアニア";
 
   const OVERSEAS_JA = `${EUROPE_JA},${ASIA_JA},${NORTH_AMERICA_JA},${CENTRAL_AMERICA_JA},${SOUTH_AMERICA_JA},${MIDDLE_EAST_JA},${AFRICA_JA},${OCEANIA_JA}`;
   const CONTINENT_READINGS: string[][] = [
@@ -13434,6 +13437,15 @@ const Recommender = (() => {
     ["南アジア", "みなみあじあ", SOUTH_ASIA_JA],
     ["ラテンアメリカ", "らてんあめりか", LATIN_AMERICA_JA],
     ["mena", "mena", MENA_JA],
+    ["ベネルクス", "べねるくす", BENELUX_JA],
+    ["benelux", "benelux", BENELUX_JA],
+    ["イベリア", "いべりあ", IBERIA_JA],
+    ["イベリア半島", "いべりあはんとう", IBERIA_JA],
+    ["iberia", "iberia", IBERIA_JA],
+    ["バルト", "ばると", BALTICS_JA],
+    ["バルト三国", "ばるとさんごく", BALTICS_JA],
+    ["baltics", "baltics", BALTICS_JA],
+    ["baltic", "baltic", BALTICS_JA],
     ["africa", "africa", AFRICA_JA],
     ["oceania", "oceania", OCEANIA_JA],
     ["北米", "ほくべい", NORTH_AMERICA_JA],
