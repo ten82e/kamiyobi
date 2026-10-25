@@ -4128,7 +4128,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       terms.length === 0 &&
       filter.termCounts.length === 1 &&
       /^[A-Z][A-Z0-9&+.-]{1,9}$/.test(trimmedQuery.trim());
-    if (略称の一語) {
+    if (略称の一語 && !uiNote) {
       termNote =
         ` 「${trimmedQuery.trim()}」は収録の名簿に見当たりません。` +
         "収録はすべての会議を網羅していないので、収録外の会議かもしれません。";

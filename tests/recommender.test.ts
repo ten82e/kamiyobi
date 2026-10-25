@@ -1184,6 +1184,14 @@ describe("分野の日本語表示名と検索語 (SPEC §7)", () => {
       expect(R.searchMatcher("Asia")(rows[0])).toBe(false);
     });
 
+    it("対象外にしたプログラミング言語系は、その旨を言う", () => {
+      /* `config.yaml` の `exclude` で方針として外している会議。名簿に無いことを
+       * 「収録漏れ」と読ませない（2026-10-26 実測: PLDI は「別の語で試す」だけだった）。 */
+      expect(R.uiWordNoteJa("PLDI")).toContain("プログラミング言語・形式手法系");
+      expect(R.uiWordNoteJa("PLDI")).toContain("対象外");
+      expect(R.uiWordNoteJa("MIDL")).toBe("");
+    });
+
     it("workshop only はワークショップの行だけに絞る", () => {
       /* 普通に `workshop` と打つと、ワークショップを併設する本会議の行も混ざる
        * （2026-10-26 実測: 238 行のうち 11 行は本会議）。`workshop only` で絞れる。 */

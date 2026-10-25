@@ -1706,6 +1706,13 @@ it("「と」「や」で繋いだ打ち方に、どちらかだけで打つ案�
   expect(欄と, "欄の名前と接続の案内を重ねた").not.toContain("繋いで打つと");
 });
 
+it("収録対象外のプログラミング言語系は、名簿の話を重ねず方針を言う", async () => {
+  const text = await call("search_deadlines", { query: "PLDI", scope: "all", limit: 1 });
+  expect(text).toContain("プログラミング言語・形式手法系");
+  expect(text).toContain("対象外");
+  expect(text).not.toContain("収録の名簿に見当たりません");
+});
+
 it("収録に無い会議名だけのとき、名簿に無いと言う", async () => {
   const text = await call("search_deadlines", { query: "ZZZCONF", scope: "all", limit: 1 });
   expect(text).toContain("「ZZZCONF」は収録の名簿に見当たりません");
