@@ -1179,6 +1179,37 @@ it("venue_info が、分野とランクを返す（第 858 回）", async () => 
   expect(text, "ランクの語を書き寫している").not.toMatch(/ランク: (ccf|core|thcpl):/);
 });
 
+it("venue_info はワークショップの会議に workshop を付ける", async () => {
+  /* AI が「この会議はワークショップか」を構造化結果から仕分けられるようにする。
+   * 判定は画面の「ワークショップのみ」と同じ（会議名の workshop・タグ workshop）。 */
+  const snap = JSON.parse(readFileSync(join(REPO_ROOT, "data", "snapshot.json"), "utf8")) as {
+    conferences?: Array<{ key?: string; title?: string; tags?: string[]; editions?: unknown[] }>;
+  };
+  const conf = (snap.conferences ?? []).find(
+    (c) =>
+      (c.editions ?? []).length > 0 &&
+      ((c.tags ?? []).includes("workshop") || /workshop/i.test(c.title ?? "")),
+  );
+  expect(conf, "この検査の前提（ワークショップの会議）が崩れた").toBeTruthy();
+  const res = (await client.ask({
+    jsonrpc: "2.0",
+    id: 2,
+    method: "tools/call",
+    params: { name: "venue_info", arguments: { key: conf!.key, scope: "all" } },
+  })) as {
+    result?: {
+      structuredContent?: { workshop?: boolean; editions?: Array<{ workshop?: boolean }> };
+    };
+  };
+  expect(res.result?.structuredContent?.workshop, "会議の workshop が無い").toBe(true);
+  expect(res.result?.structuredContent?.editions?.[0]?.workshop, "開催回の workshop が無い").toBe(
+    true,
+  );
+  expect(await call("venue_info", { key: conf!.key, scope: "all" })).toContain(
+    "区分: ワークショップ",
+  );
+});
+
 it("行に会期が付く（画面の「会期」列と同じ入口・第 859 回）", async () => {
   /* 画面の一覧には「会期」の列があるのに、MCP の行は締切だけを言つていた – AI は
    * 「NSDI 2027 はいつ開かれる?」にこの収録で答えられなかつた（出張の段取りはこれで決める）。 */

@@ -2064,6 +2064,7 @@ function venueClassification(conf: NonNullable<SnapshotFile["conferences"]>[numb
     rank: conf.rank ?? null,
     tags: conf.tags ?? [],
     domestic: Recommender.isDomesticTag(conf.tags),
+    workshop: isWorkshopFieldsMCP(conf.tags, conf.title, conf.full_name),
   };
 }
 
@@ -2080,6 +2081,7 @@ function venueClassificationLines(
     `ランク: ${ランクJa({ rankPairs })}`,
     ...(topics.length ? [`主題: ${topics.join("・")}`] : []),
     ...(metadata.domestic ? ["区分: 国内"] : []),
+    ...(metadata.workshop ? ["区分: ワークショップ"] : []),
   ];
 }
 
@@ -2107,7 +2109,14 @@ function venueEditionCounts(conf: Parameters<typeof venueIdentity>[0], nonEstima
   };
 }
 
-function venueSchedules(conf: { key?: unknown; editions?: unknown[] }) {
+function venueSchedules(conf: {
+  key?: unknown;
+  editions?: unknown[];
+  tags?: unknown;
+  title?: unknown;
+  full_name?: unknown;
+}) {
+  const workshop = isWorkshopFieldsMCP(conf.tags, conf.title, conf.full_name);
   return (conf.editions ?? []).flatMap((value) => {
     if (!value || typeof value !== "object") return [];
     const ed = value as Record<string, unknown>;
@@ -2127,6 +2136,7 @@ function venueSchedules(conf: { key?: unknown; editions?: unknown[] }) {
         place: text(ed.place),
         place_ja: placeDisplayJa(ed.place) || "未確認",
         official_url: officialLink(ed.link),
+        workshop,
       },
     ];
   });
