@@ -23,9 +23,8 @@ function 収録(): Row[] {
 
 function 当たり(rows: Row[], query: string): string[] {
   const match = Recommender.searchMatcher(query, AT);
-  return rows
-    .filter((row) => match(row.hay) === true)
-    .map((row) => String(row.conf?.name || row.hay));
+  // 行を渡す（URL のホストは名前と別の規則で当たる – SPEC §7）。
+  return rows.filter((row) => match(row) === true).map((row) => String(row.conf?.name || row.hay));
 }
 
 /** 案内の channels（件数欄に出る物）をまとめて一本にする。 */

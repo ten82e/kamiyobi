@@ -18,7 +18,7 @@ function 收錄(): Row[] {
 
 function 当たり(訪ね: string): number {
   const 目 = Recommender.searchMatcher(Recommender.expandRelativeMonths(訪ね, AT), AT);
-  return 收錄().filter((行) => 目(String(行.hay)) === true).length;
+  return 收錄().filter((行) => 目(行) === true).length;
 }
 
 function 讓り(訪ね: string): string {

@@ -12,14 +12,12 @@ const 聲 = zeroResultLiveFunction();
 const 品書 = Recommender.candidateRows(
   JSON.parse(readFileSync(queryReferenceSnapshotPath(), "utf8")),
 );
-const hays = 品書.map((r: { hay?: string }) => String(r.hay ?? ""));
-
 function 搜(文: string): number {
   const f = Recommender.searchMatcher(Recommender.expandRelativeMonths(文, 基準), 基準);
-  return hays.filter((h) => f(h) === true).length;
+  return 品書.filter((r) => f(r) === true).length;
 }
 function 見当(文: string): Array<{ word: string; count: number; how: string }> {
-  return (Recommender.shorterHitWordsJa(文, hays, 基準, 4) || []) as Array<{
+  return (Recommender.shorterHitWordsJa(文, 品書, 基準, 4) || []) as Array<{
     word: string;
     count: number;
     how: string;

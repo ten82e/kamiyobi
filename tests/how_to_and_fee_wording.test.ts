@@ -18,7 +18,7 @@ function 收錄(): Row[] {
 
 function 当たり(rows: Row[], query: string): number {
   const match = Recommender.searchMatcher(Recommender.expandRelativeMonths(query, AT), AT);
-  return rows.filter((r) => match(String(r.hay)) === true).length;
+  return rows.filter((r) => match(r) === true).length;
 }
 
 function 斷り(文: string): string {

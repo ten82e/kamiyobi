@@ -2545,7 +2545,7 @@ it("relative months in the query are resolved and shown (SPEC §7)", () => {
   // 照合式は recommender 側（`searchMatcher`）に置く。語の分解を行ごとにやり直すと、
   // 行の数だけ遅くなる（3234 行で 1 打鍵あたり約 83 ms 実測）。
   expect(runtime).toContain("Recommender.searchMatcher(searchQuery, now)");
-  expect(runtime).toContain("matchesQuery(r.hay)");
+  expect(runtime).toContain("matchesQuery(r)");
   expect(runtime).not.toContain("Recommender.hayMatches(r.hay, searchQuery)");
   // てびきに相対月の説明がある（仕様が画面から追える状態にする）。
   expect(template).toContain("「今月」「来月」「再来月」「先月」");
@@ -2938,7 +2938,7 @@ it("site UI is readable for Japanese researchers: field names, JST header, help 
   // 照合式は recommender 側（`searchMatcher`）に置く。語の分解を行ごとにやり直すと、
   // 行の数だけ遅くなる（3234 行で 1 打鍵あたり約 83 ms 実測）。
   expect(runtime).toContain("Recommender.searchMatcher(searchQuery, now)");
-  expect(runtime).toContain("matchesQuery(r.hay)");
+  expect(runtime).toContain("matchesQuery(r)");
   expect(runtime).not.toContain("Recommender.hayMatches(r.hay, searchQuery)");
   // 主題タグ（tags）も日本語で詳細に出す（会議名から場を推定させないため）。
   expect(runtime).toContain("Recommender.topicTagsJa(r.conf.tags)");

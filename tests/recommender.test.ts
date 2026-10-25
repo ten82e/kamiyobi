@@ -949,6 +949,55 @@ describe("分野の日本語表示名と検索語 (SPEC §7)", () => {
       expect(R.hayMatches(row.hay, "日本 symposium")).toBe(true);
       expect(R.hayMatches(row.hay, "ネットワーク 存在しない語")).toBe(false);
     });
+
+    it("URL のホストは語全体でだけ当てる（ICCV を iccvm.org に当てない）", () => {
+      /* `ICCV` は `iccvm.org` の左端に在るだけなので、名前の側の規則（左端だけ閉じる）で
+       * 当てると別の会議（CVM）が出ていた。ホストは語全体一致に限る（SPEC §7）。 */
+      const confs = [
+        {
+          key: "cvm",
+          title: "Computational Visual Media Conference",
+          full_name: "Computational Visual Media Conference (CVM)",
+          categories: ["graphics"],
+          tags: [],
+          editions: [
+            {
+              year: 2027,
+              link: "http://iccvm.org/2027/",
+              place: "Qingdao, China",
+              deadlines: [{ kind: "paper", utc: "2026-09-01T23:59:00Z" }],
+            },
+          ],
+        },
+        {
+          key: "iccv",
+          title: "International Conference on Computer Vision",
+          full_name: "IEEE/CVF International Conference on Computer Vision (ICCV)",
+          categories: ["ai"],
+          tags: [],
+          editions: [
+            {
+              year: 2027,
+              link: "https://iccv2027.thecvf.com/",
+              place: "Honolulu, USA",
+              deadlines: [{ kind: "paper", utc: "2026-10-01T23:59:00Z" }],
+            },
+          ],
+        },
+      ];
+      const rows = R.candidateRows(confs);
+      const keys = (q: string): string[] => {
+        const m = R.searchMatcher(q);
+        return rows.filter((r: any) => m(r)).map((r: any) => r.conf.key);
+      };
+      expect(keys("ICCV")).toEqual(["iccv"]);
+      // ホストの語そのもの（URL を貼った人・ドメインで探す人）は今までどおり引ける。
+      expect(keys("iccvm")).toEqual(["cvm"]);
+      // 名前の側は今までどおり左端だけで開く（`computational` は `computational` に当たる）。
+      expect(keys("computational")).toEqual(["cvm"]);
+      // ホストの語と名前の語が混ざっても、語ごとにどちらかへ当たれば引ける。
+      expect(keys("iccvm 2027")).toEqual(["cvm"]);
+    });
   });
 
   describe("相対月での検索（expandRelativeMonths）", () => {

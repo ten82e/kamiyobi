@@ -20,7 +20,7 @@ function 品書(): Array<{ hay: string }> {
 function 当たり列表(語: string): string[] {
   const 当 = Recommender.searchMatcher(語, 基準);
   return 品書()
-    .filter((行) => 当(String(行.hay)) === true)
+    .filter((行) => 当(行) === true)
     .map((行) => String(行.hay))
     .sort();
 }

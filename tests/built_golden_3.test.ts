@@ -2697,7 +2697,7 @@ it("公式ページの URL を検索欄に貼るとその会議が見つかる�
     "  const host = bare.split('/')[0];",
     "  for (const q of [t.link, bare, host]) {",
     "    const m = Recommender.searchMatcher(q, now);",
-    "    const hit = rows.filter((r) => m(r.hay));",
+    "    const hit = rows.filter((r) => m(r));",
     "    out.push({ q, hits: hit.length, self: hit.some((r) => r.conf.key === t.key) });",
     "  }",
     "}",

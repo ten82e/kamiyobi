@@ -399,12 +399,11 @@ export const SEARCH_CANON = (() => {
       "placeLatinTerms",
       "cityQueryForms",
       "regionEntryMembers",
-      // 英字語の当たり門は `matchFoldedGroups` が呼ぶので、注入も一緒にする
+      // 英字語の当たり門は `matchOneFoldedGroup` が呼ぶので、注入も一緒にする
       // （ここへ足さんとしは `latinFoldedHit is not defined` で eval が落ちる – 第 257 回と同じ穴）。
       "latinFoldedHit",
-      // 括った等級の語を行の並びに当てる門（`matchFoldedGroups` が呼ぶ）。
+      // 括った等級の語を行の並びに当てる門（`matchOneFoldedGroup` が呼ぶ）。
       "rankPhraseTermHit",
-      "matchFoldedGroups",
       // `searchMatcher` は述語の組み立てを `searchGroups` に移したので、注入も一緒にする
       // （共有部品を 1 本足すたびに、ハーネスはそれを知らないまま古い形を組む – 第 257 回と同じ穴）。
       "searchGroups",
@@ -412,6 +411,14 @@ export const SEARCH_CANON = (() => {
       // 呼ぶので、注入も一緒にする（此処へ足さないと `withoutFunctionGroups is not defined`
       // で eval が落ちる – 第 257 回と同じ穴。実際に十四本落ちた）。
       "withoutFunctionGroups",
+      // 行（名前と URL のホスト）を 1 つの照合の口にまとめる部品と、ホストを語全体で
+      // 見る門。`searchMatcher` が呼ぶので、注入も一緒にする（第 257 回と同じ穴）。
+      "isRecord",
+      "searchTargetParts",
+      "matchOneFoldedGroup",
+      "matchOneHostGroup",
+      "matchRowGroup",
+      "matchRowGroups",
       "searchMatcher",
       "hayMatches",
       "幅の語尾を継いだ形が解けるJa",
@@ -455,7 +462,7 @@ export const FILTER_RUNTIME_STUBS = [
   "const activeData = { conferences: [] };",
   ...SEARCH_CANON,
   "let searchQuery = '';",
-  "const Recommender = { searchNormalize: searchNormalize, queryTokens: queryTokens, kanaFold: kanaFold, queryTokenGroups: queryTokenGroups, searchMatcher: searchMatcher, matchFoldedGroups: matchFoldedGroups, placeOffersOnline: placeOffersOnline, monthTermsJa: monthTermsJa, expandRelativeMonths: expandRelativeMonths, hayMatches: hayMatches, parsePaperLines: (text) => text ? [{ title: text }] : [], hasJapanese: () => false, contentWordCount: () => 0, autoDetectCats: () => [], venueCategories: () => [], unmatchedVenues: () => [], journalRows: () => [], pastRepresentatives: () => [], rankMatches: (pairs, rank) => pairs.includes(rank), venueRecommendations: (rows) => rows.map((row) => ({ row, boosted: false, match: null, availability: null, fit: { score: 10, lexicalScore: 10, label: '', lexicalRank: 0, semanticRank: 0, semanticScore: 0 } })), comparePapers: () => 0 };",
+  "const Recommender = { searchNormalize: searchNormalize, queryTokens: queryTokens, kanaFold: kanaFold, queryTokenGroups: queryTokenGroups, searchMatcher: searchMatcher, placeOffersOnline: placeOffersOnline, monthTermsJa: monthTermsJa, expandRelativeMonths: expandRelativeMonths, hayMatches: hayMatches, parsePaperLines: (text) => text ? [{ title: text }] : [], hasJapanese: () => false, contentWordCount: () => 0, autoDetectCats: () => [], venueCategories: () => [], unmatchedVenues: () => [], journalRows: () => [], pastRepresentatives: () => [], rankMatches: (pairs, rank) => pairs.includes(rank), venueRecommendations: (rows) => rows.map((row) => ({ row, boosted: false, match: null, availability: null, fit: { score: 10, lexicalScore: 10, label: '', lexicalRank: 0, semanticRank: 0, semanticScore: 0 } })), comparePapers: () => 0 };",
 ].join("\n");
 
 /** ビルド後の CSS をルール単位に割る（ネストは @media のみ）。

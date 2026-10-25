@@ -94,6 +94,8 @@ interface ScheduleOnlyEdition {
   cats: string[];
   tags: string[];
   hay: string;
+  /** 会期だけの行は URL のホストを入れない（別の会議の名前で別の会議が出るのを避ける）。 */
+  hostHay?: string;
 }
 
 interface ConferenceRecord {
@@ -149,6 +151,9 @@ interface CandidateRow {
   tags: string[];
   rankPairs: string[];
   hay: string;
+  /** URL のホストから作った検索用の文字列。名前の `hay` とは**別の規則**（語全体一致）で
+   * 照合する – `ICCV` を `iccvm.org` に当てないため（SPEC §7）。 */
+  hostHay?: string;
   dupLabel?: string;
   name?: string;
   year?: number | null;
@@ -8575,8 +8580,11 @@ const Recommender = (() => {
     const list = Array.isArray(hays) ? hays : [];
     const groups = queryTokenGroups(query, nowMs);
 
-    const folded: string[] = [];
-    for (let i = 0; i < list.length; i++) folded.push(kanaFold(list[i]));
+    const folded: Array<{ hay: string; hostHay: string }> = [];
+    for (let i = 0; i < list.length; i++) {
+      const row = searchTargetParts(list[i]);
+      folded.push({ hay: kanaFold(row.hay), hostHay: kanaFold(row.hostHay) });
+    }
     return groups.map((group) => {
       const alts = (group || []).length ? group : [""];
       const matchers = alts.map((alt) => searchGroups(alt, nowMs));
@@ -8584,7 +8592,7 @@ const Recommender = (() => {
       for (let i = 0; i < folded.length; i++) {
         for (let j = 0; j < matchers.length; j++) {
           // `searchMatcher` と同じく、述語が空の語は全行に当たる。
-          if (!matchers[j].length || matchFoldedGroups(folded[i], matchers[j])) {
+          if (!matchers[j].length || matchRowGroups(folded[i], matchers[j])) {
             count += 1;
             break;
           }
@@ -8637,8 +8645,11 @@ const Recommender = (() => {
      * 3,275 行 / 210 万字で実測: `分散並列処理基盤システム` 1 語の見当に **640 ms**、
      * `高速計算` 157 ms – 1 打鍵で検索欄が固まる。畳んでから数えると 35 ms）。
      * 述語の作り方は `searchMatcher` と同じ `searchGroups` を使うので、数は同じものになる。 */
-    const folded: string[] = [];
-    for (let i = 0; i < list.length; i++) folded.push(kanaFold(list[i]));
+    const folded: Array<{ hay: string; hostHay: string }> = [];
+    for (let i = 0; i < list.length; i++) {
+      const row = searchTargetParts(list[i]);
+      folded.push({ hay: kanaFold(row.hay), hostHay: kanaFold(row.hostHay) });
+    }
     const cache: Record<string, number> = {};
     const countOf = (word: string): number => {
       if (!word) return 0;
@@ -8647,7 +8658,7 @@ const Recommender = (() => {
       let n = 0;
       if (groups.length) {
         for (let i = 0; i < folded.length; i++) {
-          if (matchFoldedGroups(folded[i], groups)) n += 1;
+          if (matchRowGroups(folded[i], groups)) n += 1;
         }
       }
       cache[word] = n;
@@ -8774,7 +8785,9 @@ const Recommender = (() => {
 
     const 寄 = new Map<string, string>();
     {
-      const 語彙 = latinVocabularyJa(folded);
+      /* 打ち間違いの語彙は**名前の側**から作る。URL のホストを混ぜると、`ICCV` に
+       * `iccvm`（別の会議のドメイン）を打ち直しとして勧めてしまう。 */
+      const 語彙 = latinVocabularyJa(folded.map((row) => row.hay));
       words.forEach((word) => {
         if (countOf(word) > 0) return;
         for (const 近 of latinNearestJa(語彙, latinSkeletonJa(word))) 寄.set(近.word, 近.word);
@@ -13888,12 +13901,60 @@ const Recommender = (() => {
     );
   }
 
-  function searchMatcher(query: unknown, nowMs?: number): (hay: unknown) => boolean {
+  /* 名前の hay と URL のホストの hay を、1 つの照合の口にまとめる。行そのもの
+   * （`{hay, hostHay}`）を受け取るほか、文字列だけを渡されたら名前の側だけを見る
+   * （行を持たない呼び口と検査のため）。 */
+  function searchTargetParts(target: unknown): { hay: string; hostHay: string } {
+    if (isRecord(target)) {
+      return {
+        hay: typeof target.hay === "string" ? target.hay : "",
+        hostHay: typeof target.hostHay === "string" ? target.hostHay : "",
+      };
+    }
+    return {
+      hay: typeof target === "string" ? target : target == null ? "" : String(target),
+      hostHay: "",
+    };
+  }
+
+  /* ホストの語は**語全体**で立つときだけ当てる。`ICCV` は `iccvm` の左端に在るが、
+   * 語の続き（`m`）が在るので当たらない。`biometrics` は `ieee-biometrics.org` の
+   * 成分として語全体で立つので当たる（和語の寄せの再現率を落とさない）。 */
+  function matchOneHostGroup(target: string, group: string[]): boolean {
+    for (let k = 0; k < group.length; k++) {
+      const term = group[k];
+      if (!LATIN_TERM_TOKEN.test(term)) continue;
+      const 語列 = term.split(/\s+/).filter(Boolean);
+      if (語列.length && 語列.every((w) => foldedLetterAtWordBoundary(target, w, false)))
+        return true;
+    }
+    return false;
+  }
+
+  /* 1 つの語グループを、**名前の規則と URL の規則のどちらか**で当てる。語グループの
+   * 間は AND（呼び口が順に回す）。名前とホストを別の文字列に分けたので、片方にしか
+   * 無い語の組（`warwick aamas` のホスト語＋会議名）も前と同じように当たる。 */
+  function matchRowGroup(nameTarget: string, hostTarget: string, group: string[]): boolean {
+    if (matchOneFoldedGroup(nameTarget, group)) return true;
+    return hostTarget !== "" && matchOneHostGroup(hostTarget, group);
+  }
+
+  function matchRowGroups(row: { hay: string; hostHay: string }, groups: string[][]): boolean {
+    for (let i = 0; i < groups.length; i++) {
+      if (!matchRowGroup(row.hay, row.hostHay, groups[i])) return false;
+    }
+    return true;
+  }
+
+  function searchMatcher(query: unknown, nowMs?: number): (target: unknown) => boolean {
     const groups = searchGroups(query, nowMs);
     if (!groups.length) return () => true;
-    return (hay: unknown): boolean => {
-      const target = kanaFold(hay);
-      return matchFoldedGroups(target, groups);
+    return (target: unknown): boolean => {
+      const row = searchTargetParts(target);
+      return matchRowGroups(
+        { hay: kanaFold(row.hay), hostHay: row.hostHay ? kanaFold(row.hostHay) : "" },
+        groups,
+      );
     };
   }
 
@@ -13990,53 +14051,50 @@ const Recommender = (() => {
     );
   }
 
-  function matchFoldedGroups(target: string, groups: string[][]): boolean {
-    for (let i = 0; i < groups.length; i++) {
-      let hit = false;
-      for (let k = 0; k < groups[i].length; k++) {
-        const term = groups[i][k];
-        const rank = rankPhraseTermHit(target, term);
-        if (rank !== null) {
-          if (rank) {
-            hit = true;
+  function matchOneFoldedGroup(target: string, group: string[]): boolean {
+    let hit = false;
+    for (let k = 0; k < group.length; k++) {
+      const term = group[k];
+      const rank = rankPhraseTermHit(target, term);
+      if (rank !== null) {
+        if (rank) {
+          hit = true;
+          break;
+        }
+        continue;
+      }
+
+      if (LATIN_TERM_TOKEN.test(term) && /\s/.test(term)) {
+        const 語列 = term.split(/\s+/).filter(Boolean);
+
+        let 皆當 = true;
+        for (let w = 0; w < 語列.length; w++) {
+          if (!latinFoldedHit(target, 語列[w])) {
+            皆當 = false;
             break;
           }
-          continue;
         }
-
-        if (LATIN_TERM_TOKEN.test(term) && /\s/.test(term)) {
-          const 語列 = term.split(/\s+/).filter(Boolean);
-
-          let 皆當 = true;
-          for (let w = 0; w < 語列.length; w++) {
-            if (!latinFoldedHit(target, 語列[w])) {
-              皆當 = false;
-              break;
-            }
-          }
-          if (皆當) {
-            hit = true;
-            break;
-          }
-          continue;
+        if (皆當) {
+          hit = true;
+          break;
         }
-        if (latinFoldedHit(target, term)) {
+        continue;
+      }
+      if (latinFoldedHit(target, term)) {
+        hit = true;
+        break;
+      }
+    }
+    // どの候補も語そのものでは当たらなかったときだけ、長い和語の分割を試す。
+    if (!hit) {
+      for (let k = 0; k < group.length; k++) {
+        if (compoundSplitHit(target, group[k])) {
           hit = true;
           break;
         }
       }
-      // どの候補も語そのものでは当たらなかったときだけ、長い和語の分割を試す。
-      if (!hit) {
-        for (let k = 0; k < groups[i].length; k++) {
-          if (compoundSplitHit(target, groups[i][k])) {
-            hit = true;
-            break;
-          }
-        }
-      }
-      if (!hit) return false;
     }
-    return true;
+    return hit;
   }
 
   function hayMatches(hay: unknown, query: unknown): boolean {
@@ -14744,11 +14802,14 @@ const Recommender = (() => {
           conf.key,
           ed.place,
           eventSourceSearchText(ed),
-          linkSearchTerms(ed.link),
         ]
           .filter(Boolean)
           .join(" ")
           .toLowerCase();
+        /* URL のホストは名前の hay に混ぜない。混ぜると `ICCV` が `iccvm.org` の
+         * `iccvm` に左端だけで当たり、別の会議（CVM）が出る（2026-10-25 実測: 24 行）。
+         * ホストは `hostHay` に分け、照合側で語全体一致の規則に当てる。 */
+        const hostHay = searchNormalize(linkSearchTerms(ed.link));
         const catHay = `${laterEditionSearchWords(conf, String(ed.event_start || ""), ed.id)} ${categorySearchTerms(conf.categories, confTags)} ${placeJa(ed.place)} ${placePrefectureJa(ed.place)} ${participationSearchTerms(ed.place)} ${domesticFacetSearchTerms(confTags, conf.title)} ${internationalFacetSearchTerms(confTags)}`;
         (ed.deadlines || []).forEach((dl) => {
           const dateOnly = dl.precision === "date-only";
@@ -14798,6 +14859,7 @@ const Recommender = (() => {
                 },
               )}`,
             ),
+            hostHay,
             dupLabel: dl.comment || "",
           });
         });
@@ -14862,6 +14924,7 @@ const Recommender = (() => {
         ),
         name: conf.title,
         year: null,
+        hostHay: "",
       });
     });
     return out;
@@ -14915,6 +14978,7 @@ const Recommender = (() => {
               `${placeJa(ed.place)} ${placePrefectureJa(ed.place)} ` +
               `${ed.event_date_precision === "not-announced" ? "" : `${monthTermsJa(start)} ${monthTermsJa(end)}`} ${["month-only", "not-announced"].includes(String(ed.event_date_precision)) ? "" : weekdaySearchTerms(start)} ${eventDaySearchWords({ ed })}`,
           ),
+          hostHay: "",
         });
       });
     });
@@ -14972,6 +15036,7 @@ const Recommender = (() => {
           tags: conf.tags ?? [],
           rankPairs: Object.entries(conf.rank ?? {}).map(([name, grade]) => `${name}:${grade}`),
           hay: searchNormalize([conf.title, conf.full_name, conf.key].filter(Boolean).join(" ")),
+          hostHay: "",
           name: conf.title,
           year: ed.year ?? null,
         };
@@ -15122,7 +15187,7 @@ const Recommender = (() => {
   /* 掲載先に入れた語で行が引けるか（1 語について 1 回だけ照合式を作る）。 */
   function rowHayMatcher(venue: string, rows: readonly CandidateRow[]): boolean {
     const match = searchMatcher(venue);
-    return rows.some((r) => match(r.hay));
+    return rows.some((r) => match(r));
   }
 
   function venueLookupNoticeJa(venues: readonly string[]): string {

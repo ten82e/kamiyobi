@@ -107,6 +107,8 @@ interface Row {
   localDate: string;
   dateOnly: boolean;
   hay: string;
+  /** URL のホストの検索用文字列（名前の `hay` とは別の規則で照合する）。 */
+  hostHay?: string;
 }
 
 let screenCache: Row[] | null = null;
@@ -564,17 +566,13 @@ function line(r: Row, now: number): string {
 }
 
 function retypeTips(query: string, list: Row[], now: number): string[] {
-  const 候補 = Recommender.shorterHitWordsJa(
-    query,
-    list.map((r) => r.hay),
-    now,
-  );
+  const 候補 = Recommender.shorterHitWordsJa(query, list, now);
   const out: string[] = [];
   for (const hit of 候補) {
     const word = String(hit.word ?? "").trim();
     if (!word) continue;
     const 照合 = Recommender.searchMatcher(Recommender.expandRelativeMonths(word, now), now);
-    const 件數 = list.filter((r) => 照合(r.hay) === true).length;
+    const 件數 = list.filter((r) => 照合(r) === true).length;
     if (!件數) continue;
     const how = String(hit.how ?? "");
     if (how === "split") out.push(`検索語を「${word}」に分けて打つ（両方を書く行が ${件數} 件）`);
@@ -596,13 +594,13 @@ function guidance(query: string, matched: number, list: Row[], now: number): str
   const word = String(Recommender.uiWordNoteJa(query, false) ?? "").trim();
   if (word) out.push(word);
   /* 語を照らすのは 1 描画に 1 度で足りる（同じ語を何度も分解しない）。 */
-  const 照合を組む = (語: string): ((hay: string) => boolean) =>
+  const 照合を組む = (語: string): ((target: unknown) => boolean) =>
     Recommender.searchMatcher(Recommender.expandRelativeMonths(語, now), now);
   /* 欄の名前（`分野` `種別` `会場` など）を打たれた人。値ではないので、語を
    * 短くしても増えない – 値の例を名指して送る。 */
   const column = String(
     Recommender.columnQueryNoteJa(query, (語: string) =>
-      list.some((r) => 照合を組む(語)(r.hay) === true),
+      list.some((r) => 照合を組む(語)(r) === true),
     ) ?? "",
   ).trim();
   if (column) out.push(column);
@@ -610,7 +608,7 @@ function guidance(query: string, matched: number, list: Row[], now: number): str
   const 日數の幅 = Boolean(String(Recommender.dayRangeNoteJa(query) ?? "").trim());
   if (!column && !word && !日數の幅) {
     const 件が当たるか = (文: string): number =>
-      list.filter((r) => 照合を組む(文)(r.hay) === true).length;
+      list.filter((r) => 照合を組む(文)(r) === true).length;
     const conjunction = String(
       Recommender.conjunctionQueryNoteJa(query, 件が当たるか) ?? "",
     ).trim();
@@ -874,7 +872,7 @@ interface ScopeComparisonError {
 }
 
 function 窓の外の件數(
-  照合: (hay: string) => boolean,
+  照合: (target: unknown) => boolean,
   名: string,
   now: number,
   args: Parameters<typeof 畫面の既定>[2] = {},
@@ -904,7 +902,7 @@ function 窓の外の件數(
     };
   }
   const matches = withJournals(displayRows(allRows()), data.conferences, now).filter(
-    (r) => 照合(r.hay) === true,
+    (r) => 照合(r) === true,
   );
   return {
     raw: matches.length,
@@ -947,12 +945,8 @@ function 語ごとの案號(query: string, list: Row[], now: number, 全部の�
    * 「沖縄で開催」は「絞る前は 4 行」と言いながら「語をすべて含む行はありません」とも
    * 言い、照合では外している機能語「開催」の件数を理由に挙げていた）。 */
   const 問いの照合 = Recommender.searchMatcher(寄せた問い, now);
-  if (數へる對照.some((r) => 問いの照合(r.hay))) return [];
-  const 件數 = Recommender.queryTermCounts(
-    寄せた問い,
-    數へる對照.map((r) => r.hay),
-    now,
-  );
+  if (數へる對照.some((r) => 問いの照合(r))) return [];
+  const 件數 = Recommender.queryTermCounts(寄せた問い, 數へる對照, now);
   if (件數.length < 2) return []; // 語が一つの時は他の家（打ち直し・種別の話）が受持ちを持つ。
   const 死んだ語 = 件數.filter((t) => t.count === 0).map((t) => t.term);
   const 殘り = 件數.filter((t) => t.count > 0);
@@ -1474,7 +1468,7 @@ function searchDeadlines(
   const 照合 = 絞り込みだけ
     ? () => true
     : Recommender.searchMatcher(Recommender.expandRelativeMonths(query, now), now);
-  const 素の = list.filter((r) => 照合(r.hay) === true);
+  const 素の = list.filter((r) => 照合(r) === true);
 
   const 絞り込みが効く = !Recommender.searchMatcher(query, now)("・ー()");
   const 記号だけの文 =
@@ -2571,7 +2565,7 @@ function explainWord(args: { word?: unknown; scope?: unknown }, now: number): st
   const { list, 名, 生成, 窓が無い } = pickSearch(args.scope, now);
   const 古さ = 古さの斷り(生成, now);
   const 照合 = Recommender.searchMatcher(Recommender.expandRelativeMonths(word, now), now);
-  const 素の行 = list.filter((r) => 照合(r.hay) === true);
+  const 素の行 = list.filter((r) => 照合(r) === true);
   const 件數 = 素の行.length;
   const 畫面の行 = 畫面の既定(素の行, now, {});
   const 窓の外 = 畫面の行.length

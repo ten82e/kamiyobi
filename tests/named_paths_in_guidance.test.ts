@@ -22,7 +22,7 @@ function 收錄(): Row[] {
 
 function 当たり(打ち方: string): number {
   const m = Recommender.searchMatcher(Recommender.expandRelativeMonths(打ち方, AT), AT);
-  return 收錄().filter((r) => m(String(r.hay)) === true).length;
+  return 收錄().filter((r) => m(r) === true).length;
 }
 
 /** 画面が立てる讓り（app.ts と同じ順 – 列訪ね → 羣 → 日数 → 全行）。 */

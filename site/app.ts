@@ -2629,11 +2629,11 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     const matches = Recommender.searchMatcher(Recommender.expandRelativeMonths(trimmed, 今), 今);
     let catalog = 0;
     rows.forEach((row) => {
-      if (matches(row.hay)) catalog += 1;
+      if (matches(row)) catalog += 1;
     });
     let journal = 0;
     Recommender.journalRows(activeData.conferences, Date.now()).forEach((row) => {
-      if (matches((row as unknown as AppRow).hay)) journal += 1;
+      if (matches(row)) journal += 1;
     });
     return { catalog, journal };
   }
@@ -2778,16 +2778,20 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     const now = Date.now();
 
     const seen: Record<string, boolean> = {};
-    const hays: string[] = [];
+    const targets: unknown[] = [];
     (rows as AppRow[])
       .concat(Recommender.journalRows(activeData.conferences, now) as unknown as AppRow[])
       .forEach((row) => {
-        const hay = String(row.hay);
-        if (seen[hay]) return;
-        seen[hay] = true;
-        hays.push(hay);
+        const key = `${String(row.hay)}\u0000${String(row.hostHay ?? "")}`;
+        if (seen[key]) return;
+        seen[key] = true;
+        targets.push(row);
       });
-    return Recommender.queryTermCounts(Recommender.expandRelativeMonths(trimmed, now), hays, now);
+    return Recommender.queryTermCounts(
+      Recommender.expandRelativeMonths(trimmed, now),
+      targets,
+      now,
+    );
   }
 
   function deadTermRemainderCount(query: string): number | null {
@@ -2823,18 +2827,18 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     if (!trimmed) return [];
     const now = Date.now();
     const seen: Record<string, boolean> = {};
-    const hays: string[] = [];
+    const targets: unknown[] = [];
     /* 数へる集合は、呼び出し側が渡した行（打ち直した時に見える行）を優先する。 */
     ((基準の行 ?? (rows as AppRow[])) as AppRow[])
       .concat(Recommender.journalRows(activeData.conferences, now) as unknown as AppRow[])
       .forEach((row) => {
-        const hay = String(row.hay);
-        if (seen[hay]) return;
-        seen[hay] = true;
-        hays.push(hay);
+        const key = `${String(row.hay)}\u0000${String(row.hostHay ?? "")}`;
+        if (seen[key]) return;
+        seen[key] = true;
+        targets.push(row);
       });
 
-    return Recommender.shorterHitWordsJa(trimmed, hays, now).filter((hit) => {
+    return Recommender.shorterHitWordsJa(trimmed, targets, now).filter((hit) => {
       const 語 = String(hit.word || "").trim();
       return !(HIRAGANA_ONLY_JA.test(語) && 語.length <= 3);
     });
@@ -3154,7 +3158,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       }
       // 検索は正規化した語の AND 判定（全角入力・全角スペース・複数語に対応するため
       // 照合式は recommender の searchMatcher を単一正典にする）。
-      if (!inRecommend && !matchesQuery(r.hay)) {
+      if (!inRecommend && !matchesQuery(r)) {
         // 「他の条件を通った行のうち、検索語だけで何行落ちたか」。0 のときは検索語が
         // 何も絞れていないので、件数欄で打ち直し方を示す（同じ述語を外に書き出して
         // 二重実装しないため、通過条件を見るこの場所で数える）。
@@ -4308,7 +4312,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         if (knownSubmission) return false;
         if (filter.venue && m.key !== filter.venue) return false;
         if (filter.rank && !Recommender.rankMatches(m.rankPairs, filter.rank)) return false;
-        if (searchQuery.trim() && !meetsQuery(m.hay)) return false;
+        if (searchQuery.trim() && !meetsQuery(m)) return false;
         if (filter.domestic && m.tags.indexOf("domestic-jp") < 0) return false;
         if (filter.online && !Recommender.placeOffersOnline(m.place)) return false;
         if (filter.cats.length && !filter.cats.some((c) => m.cats.indexOf(c) >= 0)) return false;
