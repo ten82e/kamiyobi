@@ -198,6 +198,9 @@ describe("MCP の手順が話せる（第 714 回）", () => {
     expect(手引き).toContain("`list_upcoming`・`venue_info` は `all`");
     for (const 約束 of ["date-only", "estimated", "scope", "structuredContent", "next_offset"])
       expect(手引き, `手引きが ${約束} を書いて居ない`).toContain(約束);
+    /* 検索語の言語と、手法の名の寄せ。AI は最初にこの手引きを読む。 */
+    expect(手引き).toContain("日本語・英語");
+    expect(手引き).toContain("graph neural networks");
     /* 支度の通知（返事を書かない物）を送つても、それらしい返事が來ない事。 */
     client.send({ jsonrpc: "2.0", method: "notifications/initialized" });
     const pong = (await client.ask({ jsonrpc: "2.0", id: 99, method: "ping" })) as {
