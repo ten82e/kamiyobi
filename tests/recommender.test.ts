@@ -1065,6 +1065,20 @@ describe("分野の日本語表示名と検索語 (SPEC §7)", () => {
       );
     });
 
+    it("英語の週の幅は日へ直して探す", () => {
+      /* `within two weeks` は 2 日ではなく 14 日（2026-10-26 実測: 0 行）。
+       * `a week` は 7 日。`deadline approaching` は `soon` と同じ 30 日以内。 */
+      const at = Date.parse("2026-08-09T00:00:00Z");
+      const twoWeeks = R.searchMatcher("deadline within two weeks", at);
+      expect(twoWeeks("paper deadline 2026年8月19日")).toBe(true);
+      expect(twoWeeks("paper deadline 2026年8月30日")).toBe(false);
+      const oneWeek = R.searchMatcher("within a week", at);
+      expect(oneWeek("paper deadline 2026年8月15日")).toBe(true);
+      expect(oneWeek("paper deadline 2026年8月19日")).toBe(false);
+      expect(R.querySynonymNotes("deadline approaching").join(" ")).toContain("approaching");
+      expect(R.querySynonymNotes("deadline approaching").join(" ")).toContain("30 日以内");
+    });
+
     it("soon は既定の 30 日以内として探す", () => {
       /* `deadline soon` の `soon` を外すと全件に化ける。この表の既定の「これからの
        * 30 日間」に合わせる（2026-10-26 実測: 0 行 → 892 行）。 */

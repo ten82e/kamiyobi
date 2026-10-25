@@ -6918,9 +6918,9 @@ const Recommender = (() => {
        * どちらかへ寄せず、どちらの語で探すかを言う（2026-10-26 実測: そのままでは 0 行）。 */
       const workshopOnly = /\b(?:workshops?\s+only|only\s+workshops?)\b/i.exec(打たれた検索語);
       /* `soon` はこの表の既定の「これからの 30 日間」として探す（外すと全件に化ける）。 */
-      if (/\b(?:soon|approaching|imminent)\b/i.test(打たれた検索語)) {
-        const note =
-          "「soon」は 30 日以内として探しています（画面の「締切まで」で変えられます。MCP は `within_days`）";
+      const soonWord = /\b(soon|approaching|imminent)\b/i.exec(打たれた検索語);
+      if (soonWord) {
+        const note = `「${soonWord[1]}」は 30 日以内として探しています（画面の「締切まで」で変えられます。MCP は \`within_days\`）`;
         if (notes.indexOf(note) < 0) notes.push(note);
       }
 
@@ -10290,8 +10290,39 @@ const Recommender = (() => {
    * `deadline soon` は 0 行だった）。 */
   function collapseSoonWindow(query: string): string {
     return query
-      .replace(/\b(?:deadlines?|due|closing)\s+soon\b/gi, "30日以内")
-      .replace(/\bsoon\b/gi, "30日以内");
+      .replace(/\b(?:deadlines?|due|closing)\s+(?:soon|approaching)\b/gi, "30日以内")
+      .replace(/\b(?:soon|imminent)\b/gi, "30日以内");
+  }
+
+  /* 英語の「N 週間以内」。`within 30 days` は数の日だけを受けるので、週の言い方を
+   * 日へ直してから既存の窓に渡す（2026-10-26 実測: `deadline within two weeks` 0 行）。 */
+  const ENGLISH_WEEK_NUMBERS: Record<string, number> = {
+    a: 1,
+    an: 1,
+    one: 1,
+    two: 2,
+    three: 3,
+    four: 4,
+    five: 5,
+    six: 6,
+    seven: 7,
+    eight: 8,
+    nine: 9,
+    ten: 10,
+  };
+
+  function collapseEnglishWeeks(query: string): string {
+    return query
+      .replace(
+        /\b(?:within|in\s+the\s+next|next)\s+(a|an|one|two|three|four|five|six|seven|eight|nine|ten|\d{1,2})\s+weeks?\b/gi,
+        (_m: string, word: string) => {
+          const n = /^\d+$/.test(word)
+            ? Number(word)
+            : (ENGLISH_WEEK_NUMBERS[word.toLowerCase()] ?? 1);
+          return `${n * 7}日以内`;
+        },
+      )
+      .replace(/\bwithin\s+(?:a|one|the\s+next)\s+month\b/gi, "30日以内");
   }
 
   /* `special track` は収録の `special session` と同じ物を指す（2026-10-26 実測:
@@ -13739,6 +13770,7 @@ const Recommender = (() => {
     if (typeof query === "string") query = collapseWorkshopOnly(query);
     if (typeof query === "string") query = collapseSpecialTrack(query);
     if (typeof query === "string") query = collapseSoonWindow(query);
+    if (typeof query === "string") query = collapseEnglishWeeks(query);
     if (typeof query === "string") query = collapseQuestionPhrases(query);
     if (typeof query === "string") query = collapseEnglishMonths(query);
     /* `call for papers` は 3 語に割ると必ず 0 件になる（収録は `cfp` を持つ）。

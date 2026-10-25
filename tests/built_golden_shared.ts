@@ -122,6 +122,7 @@ export const SEARCH_CANON = (() => {
     ["METHOD_FIELD_ALIASES", /const METHOD_FIELD_ALIASES[\s\S]*?\];/],
     ["ENGLISH_RELATIVE_TIME_PHRASES", /const ENGLISH_RELATIVE_TIME_PHRASES[\s\S]*?\];/],
     ["ENGLISH_MONTH_NUMBERS", /const ENGLISH_MONTH_NUMBERS[\s\S]*?\};/],
+    ["ENGLISH_WEEK_NUMBERS", /const ENGLISH_WEEK_NUMBERS[\s\S]*?\};/],
     ["RANK_ADJECTIVE_WORDS", /const RANK_ADJECTIVE_WORDS[\s\S]*?\];/],
 
     ["寄せ表の和名の鍵cache", /let 寄せ表の和名の鍵cache[^\n]*;/],
@@ -418,6 +419,7 @@ export const SEARCH_CANON = (() => {
       "collapseQuestionPhrases",
       "collapseEnglishMonths",
       "collapseSoonWindow",
+      "collapseEnglishWeeks",
       "isWorkshopConference",
       "queryTokenGroups",
       "compoundSplitHit",
