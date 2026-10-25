@@ -3726,6 +3726,8 @@ it("収録状況の四つ組は、何を数えているかと単位がラベル�
   const help = template.slice(template.indexOf('id="helpPanel"'));
   const guide = help.slice(0, help.indexOf("</details>"));
   expect(guide).toContain("画面上部の四つの数");
+  expect(guide, "うちワークショップの数え方を書いていない").toContain("うちワークショップ");
+  expect(guide, "ワークショップのみと同じ判定だと書いていない").toContain("ワークショップのみ");
   expect(guide, "四つ組が絞り込みで動かないことをてびきが書いていない").toContain(
     "絞り込み前の収録全体",
   );
