@@ -1706,6 +1706,18 @@ it("「と」「や」で繋いだ打ち方に、どちらかだけで打つ案�
   expect(欄と, "欄の名前と接続の案内を重ねた").not.toContain("繋いで打つと");
 });
 
+it("収録に無い会議名＋年のとき、年を外しても出ないと言う", async () => {
+  /* `MIDL 2027` のような形で「その語を外すと増えます」と言うと、年を外しただけの
+   * 別の会議の行が出るだけで、探している会議の締切は出ない（2026-10-26 実測）。 */
+  const text = await call("search_deadlines", {
+    query: "ZZZCONF 2027",
+    scope: "all",
+    limit: 1,
+  });
+  expect(text).toContain("年を外しても、その会議の締切は出ません");
+  expect(text).toContain("その会議は収録外の可能性があります");
+});
+
 it("list_upcoming の workshop は、ワークショップの行・開催回だけに絞る", async () => {
   const 全 = await call("list_upcoming", { days: 400, scope: "all", limit: 1 });
   const 絞 = await call("list_upcoming", { days: 400, scope: "all", limit: 1, workshop: true });

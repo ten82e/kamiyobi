@@ -1102,6 +1102,7 @@ conferences:
 - 英語の `location`・`place`・`venue`・`date`・`dates`・`when`・`where`・`timezone` は、ほかの語があるときに落とす。`where is …`・`when is …`・`what are …` の疑問文の頭も落とす。2026-10-26 実測: `SIGCOMM 2027 location` 0 → 13 行、`SIGCOMM 2027 dates` 0 → 13 行、`where is SIGCOMM 2027` 0 → 13 行。
 - 英語の `upcoming`・`coming`・`next` は、ほかの語があるときに落とす（`upcoming deadlines` 0 → 4981 行）。`special track` は `special session` に、`call for workshop proposals` は `workshop proposal` に、`call for special sessions` は `special session` に直す。`where to submit`・`which conference should I submit to` は、`recommend_venues`（画面の「投稿先を探す」）へ案内する。
 - 英語の `call for workshops` / `call for tutorials` は、ワークショップの印・`tutorial` に直す。`deadline today`・`deadlines tomorrow`・`due today`・`due tomorrow` は今日・明日の暦日に直す（`today` 単体は会議名と衝突するので受けない）。`submit` は動詞として落とす。2026-10-26 実測: `call for workshops` 0 → 227 行、`deadline today` 0 → 41 行、`submit by December` 0 → 333 行。
+- `MIDL 2027` のように収録に無い会議名＋年だけのときは、「その語を外すと増えます」と言わない（年を外しても別の会議の行が出るだけ）。「年を外しても、その会議の締切は出ません。収録はすべての会議を網羅していないので、その会議は収録外の可能性があります」と案内する。
 - 細目の主題（`federated` など）が 0 件のときは、分野名で打ち直す案内に加えて、`recommend_venues`（画面の「投稿先を探す」）へも渡すように書く。
 - `American` は国（USA）とも大陸（北アメリカ・南アメリカ）とも読めるので寄せず、件数欄で「国なら USA、大陸なら North America・South America」と案内する（2026-10-26 実測: そのまま 0 行）。
 - 国の形容詞（`Japanese`・`Korean`・`Chinese`・`German` など）は開催地の国名（`japan`・`korea`・`china`・`germany`）に寄せる。`American` は大陸とも国とも読めるので載せない。2026-10-26 実測: `Japanese conferences` 0 行 → `Japan conferences` と同じ 78 行。

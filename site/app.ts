@@ -4114,13 +4114,25 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     let termNote = "";
     if (deadTerms.length) {
       const 外しても零件 = filter.termRemainder === 0;
+      /* `MIDL 2027` のように会議名＋年だけのときは、年を外しても他の会議の 2027 が
+       * 出るだけで、その会議の締切は出ない。 */
+      const 年の語 = /^(?:\d{4}|\d{4}年)$/;
+      const 年の外だけ =
+        deadTerms.length === 1 &&
+        terms.length === 2 &&
+        terms.filter((t) => t.count > 0).length === 1 &&
+        terms.filter((t) => t.count > 0).every((t) => 年の語.test(t.term));
       termNote =
         ` 検索語のうち${deadTerms
           .slice(0, 2)
           .map((w) => `「${w}」`)
           .join("・")}は` +
         "収録データにも見当たりません。" +
-        (外しても零件 ? "それを外しても残りの語では 0 件のままです。" : "その語を外すと増えます。");
+        (外しても零件
+          ? "それを外しても残りの語では 0 件のままです。"
+          : 年の外だけ
+            ? "年を外しても、その会議の締切は出ません。収録はすべての会議を網羅していないので、その会議は収録外の可能性があります。"
+            : "その語を外すと増えます。");
     } else if (terms.length > 1) {
       /* 語を 1 つ外すと当たる形が分かっているなら、外す語を名指しする（`graph neural
        * networks` は `graph` を外すと 35 行 – 曖昧な「いずれか」で終わらせない）。 */
