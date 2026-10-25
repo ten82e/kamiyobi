@@ -3282,7 +3282,7 @@ const TOOLS = [
         query: {
           type: "string",
           description:
-            "検索語（日本語または英語。例: セキュリティ / 今月 / 海外開催 / SIGCOMM 2027 deadline / CFP SIGCOMM）",
+            "検索語（日本語または英語。例: セキュリティ / 今月 / 海外開催 / SIGCOMM 2027 deadline / CFP SIGCOMM / deadlines next month / graph neural networks）",
         },
         limit: { type: "number", description: "返す行数（既定 20・最大 100）" },
         offset: {
