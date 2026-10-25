@@ -2799,11 +2799,19 @@ function collectionStats(args: Record<string, unknown> = {}, now: number): strin
         ["workshop", "ワークショップ"],
         ["journal", "常時受付（ジャーナル）"],
       ];
-      const 會議 = (收錄.conferences ?? []) as Array<{ tags?: unknown }>;
+      const 會議 = (收錄.conferences ?? []) as Array<{
+        tags?: unknown;
+        title?: unknown;
+        full_name?: unknown;
+      }>;
       const 數 = 集まり
         .map(([鍵, 名]) => {
-          const n = 會議.filter(
-            (c) => (Array.isArray(c.tags) ? c.tags : []).indexOf(鍵) >= 0,
+          /* ワークショップは画面の「収録状況」と同じ判定（タグか会議名）。タグだけだと
+           * 47 件になり、画面の 90 件と食い違う（2026-10-26 実測）。 */
+          const n = 會議.filter((c) =>
+            鍵 === "workshop"
+              ? isWorkshopFieldsMCP(c.tags, c.title, c.full_name)
+              : Array.isArray(c.tags) && c.tags.indexOf(鍵) >= 0,
           ).length;
           return n ? `${名} ${n}` : "";
         })

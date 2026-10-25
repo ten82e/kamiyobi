@@ -1706,6 +1706,21 @@ it("「と」「や」で繋いだ打ち方に、どちらかだけで打つ案�
   expect(欄と, "欄の名前と接続の案内を重ねた").not.toContain("繋いで打つと");
 });
 
+it("collection_stats のワークショップ数は、画面の収録状況と同じ数え方", async () => {
+  /* タグだけだと 47 件、画面（タグか会議名）だと 90 件で食い違っていた。 */
+  const snap = JSON.parse(readFileSync(join(REPO_ROOT, "data", "snapshot.json"), "utf8")) as {
+    conferences?: Array<{ tags?: string[]; title?: string; full_name?: string }>;
+  };
+  const 數 = (snap.conferences ?? []).filter(
+    (c) =>
+      (c.tags ?? []).includes("workshop") ||
+      /workshop/i.test(`${c.title ?? ""} ${c.full_name ?? ""}`),
+  ).length;
+  expect(數, "この検査の前提（ワークショップの会議）が崩れた").toBeGreaterThan(0);
+  const text = await call("collection_stats", {});
+  expect(text, "画面と同じ数え方になっていない").toContain(`ワークショップ ${數}`);
+});
+
 it("収録対象外のプログラミング言語系は、名簿の話を重ねず方針を言う", async () => {
   const text = await call("search_deadlines", { query: "PLDI", scope: "all", limit: 1 });
   expect(text).toContain("プログラミング言語・形式手法系");
