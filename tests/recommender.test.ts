@@ -1041,6 +1041,28 @@ describe("分野の日本語表示名と検索語 (SPEC §7)", () => {
       expect(R.searchMatcher("GNN 2027")(rows[0])).toBe(true);
     });
 
+    it("国の形容詞は開催地の国名で探す（Japanese conferences）", () => {
+      /* `Japanese conferences` は `Japanese` を語として要求すると 0 件、`Japan` なら
+       * 78 行だった（2026-10-26 実測）。開催地の国名へ寄せ、件数欄で言う。 */
+      const confs = [
+        {
+          key: "jp",
+          title: "Conference on Systems",
+          editions: [
+            {
+              year: 2027,
+              place: "Tokyo, Japan",
+              deadlines: [{ kind: "paper", utc: "2026-09-01T23:59:00Z" }],
+            },
+          ],
+        },
+      ];
+      const rows = R.candidateRows(confs);
+      expect(R.searchMatcher("Japanese conference")(rows[0])).toBe(true);
+      expect(R.querySynonymNotes("Japanese conference").join(" ")).toContain("開催地「日本」");
+      expect(R.searchMatcher("German conference")(rows[0])).toBe(false);
+    });
+
     it("特集号は journal special issue でも引ける", () => {
       /* 特集号の行には `special issue` と「特集号」はあるが `journal` が無い。
        * 3 語に割ると 0 件になるので、1 語に直す（2026-10-26 実測）。 */

@@ -2303,6 +2303,26 @@ const Recommender = (() => {
       ["情報処理学会", "学会「IPSJ」", ["情報処理学会", "ipsj.or.jp"]],
       ["電子情報通信学会", "学会「IEICE」", ["電子情報通信学会", "ieice.org"]],
       ["nips", "会議「NeurIPS」", ["neurips"]],
+      /* 国の形容詞で探す人（`Japanese conferences`）を、収録の開催地の国名へ寄せる
+       * （2026-10-26 実測: `Japanese conferences` 0 行 / `Japan conferences` 78 行）。
+       * American は大陸とも国とも読めるので載せない。 */
+      ["japanese", "開催地「日本」", ["japan"]],
+      ["korean", "開催地「韓国」", ["korea"]],
+      ["chinese", "開催地「中国」", ["china"]],
+      ["taiwanese", "開催地「台湾」", ["taiwan"]],
+      ["indian", "開催地「インド」", ["india"]],
+      ["singaporean", "開催地「シンガポール」", ["singapore"]],
+      ["australian", "開催地「オーストラリア」", ["australia"]],
+      ["canadian", "開催地「カナダ」", ["canada"]],
+      ["german", "開催地「ドイツ」", ["germany"]],
+      ["french", "開催地「フランス」", ["france"]],
+      ["italian", "開催地「イタリア」", ["italy"]],
+      ["spanish", "開催地「スペイン」", ["spain"]],
+      ["dutch", "開催地「オランダ」", ["netherlands"]],
+      ["swiss", "開催地「スイス」", ["switzerland"]],
+      ["swedish", "開催地「スウェーデン」", ["sweden"]],
+      ["israeli", "開催地「イスラエル」", ["israel"]],
+      ["brazilian", "開催地「ブラジル」", ["brazil"]],
       /* 評価の形容詞は「上位の等級」の条件として受ける（`top security conferences` は
        * `top` を語として要求すると 0 件だった – 2026-10-26 実測）。等級の語は行の hay に
        * ある `ccf a` などの形に合わせる。 */
