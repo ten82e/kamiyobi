@@ -6914,6 +6914,21 @@ const Recommender = (() => {
         const note = `「${rankAdj}」は上位の等級（CCF A・CORE A* など）で探しています`;
         if (notes.indexOf(note) < 0) notes.push(note);
       }
+      /* 2 語の地域名は日本語の地域まとめに直して探すので、そのことを言う。 */
+      const regionPhrase = /\b(north america|south america|central america|middle east)\b/i.exec(
+        打たれた検索語,
+      );
+      if (regionPhrase) {
+        const label =
+          {
+            "north america": "北米",
+            "south america": "南米",
+            "central america": "中米",
+            "middle east": "中東",
+          }[regionPhrase[1].toLowerCase()] || regionPhrase[1];
+        const note = `「${regionPhrase[0]}」は地域まとめ（${label}）で探しています`;
+        if (notes.indexOf(note) < 0) notes.push(note);
+      }
       /* 「国内」と「国際会議」は逆を指す（前者は国内研究会・国内シンポジウムに絞り、
        * 後者はその外側の会議）。両方打つと 0 件になるので、理由と、日本で開かれる国際会議の
        * 探し方を書く（2026-10-18 実測: `国内の国際会議` は 0 件で、案内は「国際会議」の
@@ -10212,6 +10227,15 @@ const Recommender = (() => {
 
   /* `journal special issue` は 3 語に割ると、特集号の行に `journal` が無いので 0 件に
    * なる（2026-10-26 実測）。特集号の言い方として 1 語に直す。 */
+  /* 2 語の地域名（`North America`）は、1 語の地域まとめに直してから既存の展開に渡す。 */
+  function collapseEnglishRegion(query: string): string {
+    return query
+      .replace(/\bnorth america\b/gi, "北米")
+      .replace(/\bsouth america\b/gi, "南米")
+      .replace(/\bcentral america\b/gi, "中米")
+      .replace(/\bmiddle east\b/gi, "中東");
+  }
+
   function collapseJournalSpecialIssue(query: string): string {
     return query.replace(/\bjournals?[\s-]+special[\s-]+issues?\b/gi, "special issue");
   }
@@ -13274,6 +13298,12 @@ const Recommender = (() => {
     ["欧州", "こうしゅう", EUROPE_JA],
     ["ヨーロッパ圏", "よーろっぱけん", EUROPE_JA],
     ["アジア", "あじあ", ASIA_JA],
+    /* 英語の地域名も、日本語の地域まとめと同じ構成員へ広げる（2026-10-26 実測:
+     * `Europe` 301 行 / `ヨーロッパ` 1,448 行、`Asia` 203 行 / `アジア` 761 行）。 */
+    ["europe", "europe", EUROPE_JA],
+    ["asia", "asia", ASIA_JA],
+    ["africa", "africa", AFRICA_JA],
+    ["oceania", "oceania", OCEANIA_JA],
     ["北米", "ほくべい", NORTH_AMERICA_JA],
     ["北アメリカ", "きたアメリカ", NORTH_AMERICA_JA],
     ["中南米", "ちゅうなんべい", `${CENTRAL_AMERICA_JA},${SOUTH_AMERICA_JA}`],
@@ -13546,6 +13576,7 @@ const Recommender = (() => {
     if (typeof query === "string") query = collapseEnglishRelativeTime(query);
     if (typeof query === "string") query = collapseRankAdjective(query);
     if (typeof query === "string") query = collapseJournalSpecialIssue(query);
+    if (typeof query === "string") query = collapseEnglishRegion(query);
     /* `call for papers` は 3 語に割ると必ず 0 件になる（収録は `cfp` を持つ）。
      * 募集の英字語と同じ 1 語に直す（AI がこの形で聞く）。 */
     if (typeof query === "string")

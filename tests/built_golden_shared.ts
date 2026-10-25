@@ -400,6 +400,8 @@ export const SEARCH_CANON = (() => {
       "collapseRankAdjective",
       // `journal special issue` を特集号の語に直す部品。
       "collapseJournalSpecialIssue",
+      // 英語の 2 語の地域名を日本語の地域まとめへ直す部品。
+      "collapseEnglishRegion",
       "queryTokenGroups",
       "compoundSplitHit",
       "placeOffersOnline",

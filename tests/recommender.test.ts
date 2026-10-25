@@ -1041,6 +1041,41 @@ describe("分野の日本語表示名と検索語 (SPEC §7)", () => {
       expect(R.searchMatcher("GNN 2027")(rows[0])).toBe(true);
     });
 
+    it("英語の地域名も日本語の地域まとめと同じ行に届く", () => {
+      /* `Europe` は 301 行、`ヨーロッパ` は 1,448 行だった（2026-10-26 実測）。
+       * 英語の地域名も日本語の地域まとめと同じ構成員へ広げる。 */
+      const confs = [
+        {
+          key: "it",
+          title: "Conference in Italy",
+          editions: [
+            {
+              year: 2027,
+              place: "Rome, Italy",
+              deadlines: [{ kind: "paper", utc: "2026-09-01T23:59:00Z" }],
+            },
+          ],
+        },
+        {
+          key: "ca",
+          title: "Conference in Canada",
+          editions: [
+            {
+              year: 2027,
+              place: "Toronto, Canada",
+              deadlines: [{ kind: "paper", utc: "2026-09-02T23:59:00Z" }],
+            },
+          ],
+        },
+      ];
+      const rows = R.candidateRows(confs);
+      expect(R.searchMatcher("Europe")(rows[0])).toBe(true);
+      expect(R.querySynonymNotes("Europe").join(" ")).toContain("地域まとめ");
+      expect(R.searchMatcher("North America")(rows[1])).toBe(true);
+      expect(R.querySynonymNotes("North America").join(" ")).toContain("地域まとめ");
+      expect(R.searchMatcher("Asia")(rows[0])).toBe(false);
+    });
+
     it("国の形容詞は開催地の国名で探す（Japanese conferences）", () => {
       /* `Japanese conferences` は `Japanese` を語として要求すると 0 件、`Japan` なら
        * 78 行だった（2026-10-26 実測）。開催地の国名へ寄せ、件数欄で言う。 */
