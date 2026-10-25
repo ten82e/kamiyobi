@@ -13365,6 +13365,10 @@ const Recommender = (() => {
 
   function queryTokenGroups(query: unknown, nowMs?: number): string[][] {
     if (typeof query === "string") query = collapseRankPhrase(query);
+    /* `call for papers` は 3 語に割ると必ず 0 件になる（収録は `cfp` を持つ）。
+     * 募集の英字語と同じ 1 語に直す（AI がこの形で聞く）。 */
+    if (typeof query === "string")
+      query = query.replace(/\b(?:calls?)[\s-]+for[\s-]+papers?\b/gi, "cfp");
     if (typeof query === "string")
       query = query.replace(/([0-9０-９]{4})年の開催回/g, (_, year: string) =>
         editionYearSearchTerm(year),
@@ -14835,6 +14839,11 @@ const Recommender = (() => {
           const officialWords = officialDateSearchWords(dl, t, dateOnly);
 
           const shiftWords = deadlineShiftSearchWords(dl);
+          /* 英字で探す人の語。どの行も締切なので `deadline` は全部に入れ、`cfp` は
+           * 募集のある種別（論文・概要）だけに入れる（採否通知まで CFP とは呼ばない）。 */
+          const deadlineWords = `deadline deadlines due ${
+            dl.kind === "paper" || dl.kind === "abstract" ? "cfp" : ""
+          }`;
           out.push({
             conf,
             ed,
@@ -14851,7 +14860,7 @@ const Recommender = (() => {
             tags: conf.tags || [],
             rankPairs,
             hay: searchNormalize(
-              `${baseHay} ${dl.label || ""} ${dl.kind || ""} ${kindLabelJa(dl.kind)} ${statusBadgeWords(ed, dl).join(" ")} ${roundSearchTerms(dl.round).join(" ")} ${unconfirmedHayJa({ kind: dl.kind || "", ed, rankPairs })} ${rankSearchTerms(rankPairs)} ${catHay} ${tagSearchTerms(confTags)} ${monthTermsJa(dateOnly ? dl.local_date : t)} ${dayTermsJa(dateOnly ? dl.local_date : t)} ${ed.event_date_precision === "not-announced" ? "" : `${monthTermsJa(ed.event_start)} ${monthTermsJa(ed.event_end)}`} ${weekdaySearchTerms(
+              `${baseHay} ${dl.label || ""} ${dl.kind || ""} ${deadlineWords} ${kindLabelJa(dl.kind)} ${statusBadgeWords(ed, dl).join(" ")} ${roundSearchTerms(dl.round).join(" ")} ${unconfirmedHayJa({ kind: dl.kind || "", ed, rankPairs })} ${rankSearchTerms(rankPairs)} ${catHay} ${tagSearchTerms(confTags)} ${monthTermsJa(dateOnly ? dl.local_date : t)} ${dayTermsJa(dateOnly ? dl.local_date : t)} ${ed.event_date_precision === "not-announced" ? "" : `${monthTermsJa(ed.event_start)} ${monthTermsJa(ed.event_end)}`} ${weekdaySearchTerms(
                 dateOnly ? dl.local_date : t,
               )} ${zoneSearchWords(dl, dateOnly)} ${cellWords} ${officialWords} ${shiftWords} ${eventDaySearchWords(
                 {

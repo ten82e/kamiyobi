@@ -3273,13 +3273,14 @@ const TOOLS = [
     title: "投稿締切を検索",
     annotations: READ_ONLY_ANNOTATIONS,
     description:
-      "日本語で投稿締切を検索する。語を省いて kind / kinds / rank / category / categories / domestic / online / within_days だけでも絞れる。既定は今後の abstract / paper / journal で、過去と推定は除きます（include_past・include_estimated で足せます）。既定の kind は MCP の方が広く、常時受付（journal）も含みます。scope は screen（初期一覧。`public/catalog.json`）または all（**収録の元データ** `data/snapshot.json`）。公開している `data.json` は重複をまとめた後なので、all の行数はそれより多くなります。structuredContent に total・rows・next_offset を返す。screen で 0 件のときは scope_comparison に全収録での同条件の件数・絞る前の件数・生成時刻を返す。比較データを読めない場合は検索結果を保持し、scope_comparison_error に理由と再試行の案内を返す。範囲を変えるときもほかの条件を維持する。続きは同じ条件と next_offset を offset に指定する。日付のみの行の utc・jst は null。常時受付は締切日時・精度・回次を null とし、日付のある行の後に並べます。推定期間、投稿トラック、確認状態を別に返す。公式確認（いつ・どこで・何を確かめたか）は verification_ja に画面の行の詳細と同じ日本語で返します（内部の鍵名は verification に残します）。前に出ていた締切も表示する。日付語は別ラウンドや会期にも当たるため、締切だけの期間指定には within_days を使う。会期の欄には、上流が書いた原文（`March 18-21, 2024` のような自由文）を「原表記」として添えます（画面の行の詳細と同じ）。0 件のときは画面と同じ案内と「打ち直すなら」の候補を返す。返す行の形: 日時 | 種別 | 確認状態（ある場合）| 会議名（版の識別子）| ランク | 会期 | 開催地 URL。テキストは `| ` で切り、構造化結果を優先する。**行から画面の深いリンクを組めます**: 構造化の行の `screen_row_key` をそのまま `index.html?row=<その値>` に渡してください（人が開くと、その行の詳細が開きます）。構造化の行には `categories`（分野の鍵）と `categories_ja`（画面の札と同じ日本語）も入る。`ics_uid`（配付カレンダー `deadlines.ics` の予定の UID）は、**カレンダーに予定がある締切**に入ります（初期カタログと公開の `data.json` から引きます）。カレンダーに予定がない行には付きません。",
+      "日本語・英語で投稿締切を検索する（会議名・略称・`deadline`・`CFP` は英字のままでよい）。語を省いて kind / kinds / rank / category / categories / domestic / online / within_days だけでも絞れる。既定は今後の abstract / paper / journal で、過去と推定は除きます（include_past・include_estimated で足せます）。既定の kind は MCP の方が広く、常時受付（journal）も含みます。scope は screen（初期一覧。`public/catalog.json`）または all（**収録の元データ** `data/snapshot.json`）。公開している `data.json` は重複をまとめた後なので、all の行数はそれより多くなります。structuredContent に total・rows・next_offset を返す。screen で 0 件のときは scope_comparison に全収録での同条件の件数・絞る前の件数・生成時刻を返す。比較データを読めない場合は検索結果を保持し、scope_comparison_error に理由と再試行の案内を返す。範囲を変えるときもほかの条件を維持する。続きは同じ条件と next_offset を offset に指定する。日付のみの行の utc・jst は null。常時受付は締切日時・精度・回次を null とし、日付のある行の後に並べます。推定期間、投稿トラック、確認状態を別に返す。公式確認（いつ・どこで・何を確かめたか）は verification_ja に画面の行の詳細と同じ日本語で返します（内部の鍵名は verification に残します）。前に出ていた締切も表示する。日付語は別ラウンドや会期にも当たるため、締切だけの期間指定には within_days を使う。会期の欄には、上流が書いた原文（`March 18-21, 2024` のような自由文）を「原表記」として添えます（画面の行の詳細と同じ）。0 件のときは画面と同じ案内と「打ち直すなら」の候補を返す。返す行の形: 日時 | 種別 | 確認状態（ある場合）| 会議名（版の識別子）| ランク | 会期 | 開催地 URL。テキストは `| ` で切り、構造化結果を優先する。**行から画面の深いリンクを組めます**: 構造化の行の `screen_row_key` をそのまま `index.html?row=<その値>` に渡してください（人が開くと、その行の詳細が開きます）。構造化の行には `categories`（分野の鍵）と `categories_ja`（画面の札と同じ日本語）も入る。`ics_uid`（配付カレンダー `deadlines.ics` の予定の UID）は、**カレンダーに予定がある締切**に入ります（初期カタログと公開の `data.json` から引きます）。カレンダーに予定がない行には付きません。",
     inputSchema: {
       type: "object",
       properties: {
         query: {
           type: "string",
-          description: "検索語（日本語。例: セキュリティ / 今月 / 海外開催）",
+          description:
+            "検索語（日本語または英語。例: セキュリティ / 今月 / 海外開催 / SIGCOMM 2027 deadline / CFP SIGCOMM）",
         },
         limit: { type: "number", description: "返す行数（既定 20・最大 100）" },
         offset: {

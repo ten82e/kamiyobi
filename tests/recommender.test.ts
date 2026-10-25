@@ -998,6 +998,54 @@ describe("分野の日本語表示名と検索語 (SPEC §7)", () => {
       // ホストの語と名前の語が混ざっても、語ごとにどちらかへ当たれば引ける。
       expect(keys("iccvm 2027")).toEqual(["cvm"]);
     });
+
+    it("英字の締切の言い方（deadline・CFP・call for papers）で引ける", () => {
+      /* AI は `SIGCOMM 2027 deadline` のような形で聞く。収録の締切欄は日本語が主で、
+       * 英字はラベルの `submission` だけだったので、`deadline` を要求すると 0 件になった
+       * （2026-10-26 実測: `SIGCOMM deadline` 0 行・`SIGCOMM CFP` 0 行）。 */
+      const confs = [
+        {
+          key: "sigcomm",
+          title: "SIGCOMM",
+          editions: [
+            {
+              year: 2027,
+              link: "https://conferences.sigcomm.org/sigcomm/2027/",
+              place: "Seoul, Korea",
+              deadlines: [
+                { kind: "paper", label: "Paper submission", utc: "2026-09-01T23:59:00Z" },
+                { kind: "notification", label: "Notification", utc: "2026-11-01T23:59:00Z" },
+              ],
+            },
+          ],
+        },
+      ];
+      const rows = R.candidateRows(confs);
+      const NOW = Date.parse("2026-08-09T00:00:00Z");
+      const hits = (q: string): any[] =>
+        rows.filter((r: any) => R.searchMatcher(R.expandRelativeMonths(q, NOW), NOW)(r));
+      for (const q of [
+        "SIGCOMM deadline",
+        "SIGCOMM 2027 deadline",
+        "SIGCOMM CFP",
+        "CFP SIGCOMM",
+        "call for papers SIGCOMM",
+        "submission deadline SIGCOMM",
+      ]) {
+        expect(hits(q).length, `「${q}」が 0 行`).toBeGreaterThan(0);
+        expect(
+          hits(q).every((r) => r.conf.key === "sigcomm"),
+          `「${q}」が別会議に当たった`,
+        ).toBe(true);
+      }
+      // 締切を指す英字は、会議名と一緒なら全行に効く（その会議の締切は全部「締切」）。
+      expect(hits("SIGCOMM deadline").length).toBe(rows.length);
+      // `CFP` は募集のある種別だけ。採否通知の行まで CFP と呼ばない。
+      expect(
+        hits("CFP SIGCOMM").every((r) => r.dl.kind === "paper" || r.dl.kind === "abstract"),
+      ).toBe(true);
+      expect(hits("CFP SIGCOMM").length).toBe(1);
+    });
   });
 
   describe("相対月での検索（expandRelativeMonths）", () => {
