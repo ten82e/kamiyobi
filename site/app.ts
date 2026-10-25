@@ -4112,7 +4112,18 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     const nameTerms = filter.nameOnly ? filter.nameOnly.terms : [];
     const deadTerms = deadAll.filter((t) => nameTerms.indexOf(t) < 0);
     let termNote = "";
-    if (deadTerms.length) {
+    /* 語が 1 つだけの略称（`MIDL`）は、語ごとの内訳を作らないので「名簿に無い」と
+     * 言えていなかった。収録外の会議名を打った人に、その旨をはっきり伝える
+     * （2026-10-26 実測: `MIDL` は「別の語で試す」だけだった）。 */
+    const 略称の一語 =
+      terms.length === 0 &&
+      filter.termCounts.length === 1 &&
+      /^[A-Z][A-Z0-9&+.-]{1,9}$/.test(trimmedQuery.trim());
+    if (略称の一語) {
+      termNote =
+        ` 「${trimmedQuery.trim()}」は収録の名簿に見当たりません。` +
+        "収録はすべての会議を網羅していないので、収録外の会議かもしれません。";
+    } else if (deadTerms.length) {
       const 外しても零件 = filter.termRemainder === 0;
       /* `MIDL 2027` のように会議名＋年だけのときは、年を外しても他の会議の 2027 が
        * 出るだけで、その会議の締切は出ない。 */

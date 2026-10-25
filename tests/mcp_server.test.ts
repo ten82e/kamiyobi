@@ -1706,6 +1706,12 @@ it("「と」「や」で繋いだ打ち方に、どちらかだけで打つ案�
   expect(欄と, "欄の名前と接続の案内を重ねた").not.toContain("繋いで打つと");
 });
 
+it("収録に無い会議名だけのとき、名簿に無いと言う", async () => {
+  const text = await call("search_deadlines", { query: "ZZZCONF", scope: "all", limit: 1 });
+  expect(text).toContain("「ZZZCONF」は収録の名簿に見当たりません");
+  expect(text).toContain("収録外の会議かもしれません");
+});
+
 it("収録に無い会議名＋年のとき、年を外しても出ないと言う", async () => {
   /* `MIDL 2027` のような形で「その語を外すと増えます」と言うと、年を外しただけの
    * 別の会議の行が出るだけで、探している会議の締切は出ない（2026-10-26 実測）。 */

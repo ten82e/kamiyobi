@@ -953,7 +953,19 @@ function 語ごとの案號(query: string, list: Row[], now: number, 全部の�
   const 問いの照合 = Recommender.searchMatcher(寄せた問い, now);
   if (數へる對照.some((r) => 問いの照合(r))) return [];
   const 件數 = Recommender.queryTermCounts(寄せた問い, 數へる對照, now);
-  if (件數.length < 2) return []; // 語が一つの時は他の家（打ち直し・種別の話）が受持ちを持つ。
+  if (件數.length < 2) {
+    /* 語が 1 つの略称（`MIDL`）は「名簿に無い」と言えていなかった。収録外の会議名を
+     * 打った人に、その旨をはっきり伝える（2026-10-26 実測）。 */
+    if (
+      件數.length === 1 &&
+      件數[0].count === 0 &&
+      /^[A-Z][A-Z0-9&+.-]{1,9}$/.test(query.trim())
+    )
+      return [
+        `「${query.trim()}」は収録の名簿に見当たりません。収録はすべての会議を網羅していないので、収録外の会議かもしれません。`,
+      ];
+    return []; // 語が一つの時は他の家（打ち直し・種別の話）が受持ちを持つ。
+  }
   const 死んだ語 = 件數.filter((t) => t.count === 0).map((t) => t.term);
   const 殘り = 件數.filter((t) => t.count > 0);
   if (死んだ語.length) {
