@@ -1873,14 +1873,20 @@ function listUpcoming(
           .map(([scale, value]) => `${scale.toLowerCase()}:${String(value)}`)
       : [];
 
-  const 限り = Recommender.withinDaysLimitMs(days, now);
+  /* 「今日から N 日（JST の暦日で数える）」と名乗っているので、起点・終端とも JST の日の
+   * 始めに落とす。呼び出しのたびのミリ秒で境界の 1 行が出入りすると、同じ日の結果が
+   * 時刻で変わる（2026-10-25 実測: 00:19 は緑・22:4x は赤）。 */
+  const 日の始め = Date.parse(
+    new Date(now + 9 * 3600000).toISOString().slice(0, 10) + "T00:00:00+09:00",
+  );
+  const 限り = Recommender.withinDaysLimitMs(days, 日の始め);
   /* 表示している暦日で比べる（`tShown`。無ければ `t`）。 */
   const 暦日 = (r: Row): number =>
     typeof r.tShown === "number" && Number.isFinite(r.tShown) ? r.tShown : r.t;
   const 種別で殘す = (r: Row): boolean =>
     全部 || 選ぶ.size === 0 || 選ぶ.has(r.kind) || 選ぶ.has(r.dl.kind);
   const 締切の候補 = list.filter(
-    (r) => !Recommender.deadlineRowIsPast(r, now) && 暦日(r) < 限り && 種別で殘す(r),
+    (r) => !Recommender.deadlineRowIsPast(r, 日の始め) && 暦日(r) < 限り && 種別で殘す(r),
   );
   const hit = sortRows(締切の候補.filter((r) => ランクで殘す(r.rankPairs)));
   const 外した締切 = 締切の候補.length - hit.length;
