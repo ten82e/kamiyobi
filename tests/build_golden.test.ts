@@ -1918,6 +1918,20 @@ it("the empty deadline state names the filters that caused it (SPEC §7)", () =>
   expect(hint({ ...clear, domestic: true, cats: 2, rank: "A*" })).toContain(
     "「国内研究会・国内シンポジウムのみ」をオフ",
   );
+  /* 語を 1 つ外すと当たる形は、外す語を名指しで出す（`graph neural networks` の
+   * `graph` は `graphics` に当たるだけで、3 語が揃う行は無い）。 */
+  const dropped = hint({
+    ...clear,
+    query: "graph neural networks",
+    termCounts: [
+      { term: "graph", count: 488 },
+      { term: "neural", count: 66 },
+      { term: "networks", count: 610 },
+    ],
+    shorterHits: [{ word: "neural networks", count: 35, how: "drop", pair: "graph" }],
+  });
+  expect(dropped).toContain("「graph」を外すと 35 件当たります");
+  expect(dropped).toContain("「graph」を外して「neural networks」");
   /* 検索語が表に出さない種別（採否通知など）に当たっている場合。語は てびき と件数欄に
    * 出るのに表は投稿締切だけを出すので、「収録が無い」と誤解させる案内では止めない。 */
   const hiddenKind = hint({ ...clear, query: "採否", hiddenKindWords: ["採否通知"] });

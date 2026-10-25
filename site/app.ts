@@ -4100,13 +4100,19 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         "収録データにも見当たりません。" +
         (外しても零件 ? "それを外しても残りの語では 0 件のままです。" : "その語を外すと増えます。");
     } else if (terms.length > 1) {
+      /* 語を 1 つ外すと当たる形が分かっているなら、外す語を名指しする（`graph neural
+       * networks` は `graph` を外すと 35 行 – 曖昧な「いずれか」で終わらせない）。 */
+      const 外す = (filter.shorterHits || []).find((hit) => hit.how === "drop" && hit.pair);
       termNote =
         " 語をすべて含む行はありません（" +
         terms
           .slice(0, 3)
           .map((t) => `「${t.term}」${t.count}件`)
           .join("・") +
-        "）。いずれかの語を外すと増えます。";
+        "）。" +
+        (外す
+          ? `「${外す.pair}」を外すと ${countJa(外す.count)} 件当たります。`
+          : "いずれかの語を外すと増えます。");
     }
 
     const splitNote =
@@ -4220,6 +4226,10 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       } else if (hit.how === "alone" && word.indexOf(" ") < 0) {
         altTips.push(
           `検索語を「${word}」だけに絞る（いまの絞り込みで ${countJa(hit.count)} 件当たります）`,
+        );
+      } else if (hit.how === "drop" && hit.pair) {
+        altTips.push(
+          `検索語から「${hit.pair}」を外して「${word}」で探す（いまの絞り込みで ${countJa(hit.count)} 件）`,
         );
       } else {
         altTips.push(

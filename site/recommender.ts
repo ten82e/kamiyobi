@@ -8681,6 +8681,19 @@ const Recommender = (() => {
       words.forEach((word, index) => {
         pushShown(shown(index, word), word, "alone");
       });
+    /* (a2) 1 語だけ外して、残りの語で当たる形を出す。`graph neural networks` は
+     * 3 語とも行にあるのに揃う行が無い（`graph` は `graphics` に当たるだけ）– 語を
+     * 1 つに絞るより文脈が残るので、外す語を名指しで先に出す。 */
+    if (words.length >= 3) {
+      const useRaw = rawWords.length === words.length;
+      words.forEach((word, index) => {
+        const rest = words.filter((_, i) => i !== index);
+        const phrase = rest.join(" ");
+        if (!phrase || countOf(phrase) <= 0) return;
+        const display = (useRaw ? rawWords.filter((_, i) => i !== index) : rest).join(" ");
+        pushShown(display, phrase, "drop", useRaw ? rawWords[index] : word);
+      });
+    }
     words.forEach((word, index) => {
       if (countOf(word) > 0) return;
       const chars = Array.from(word);
@@ -8807,7 +8820,7 @@ const Recommender = (() => {
     }
     /* 収録の実在する綴りは、語の切れ端より先に置く（実測 – `embeded` に「『embe』63 件」より
      * 「『embedded』982 件」を先に出す – 切れ端を打てと言っても打てん）。*/
-    const RANK: Record<string, number> = { retype: 0, split: 1, alone: 2, shorten: 3 };
+    const RANK: Record<string, number> = { retype: 0, split: 1, drop: 1, alone: 2, shorten: 3 };
     return found
       .sort((a, b) => {
         const ra = RANK[a.how] === undefined ? 3 : RANK[a.how];

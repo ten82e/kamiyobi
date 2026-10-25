@@ -578,6 +578,8 @@ function retypeTips(query: string, list: Row[], now: number): string[] {
     if (how === "split") out.push(`検索語を「${word}」に分けて打つ（両方を書く行が ${件數} 件）`);
     else if (how === "alone" && word.indexOf(" ") < 0)
       out.push(`検索語を「${word}」だけに絞る（${件數} 件当たります）`);
+    else if (how === "drop" && hit.pair)
+      out.push(`検索語から「${hit.pair}」を外して「${word}」で探す（${件數} 件当たります）`);
     else out.push(`検索語を「${word}」に打ち替える（${件數} 件当たります）`);
   }
   return out;
