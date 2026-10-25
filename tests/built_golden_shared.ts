@@ -417,6 +417,7 @@ export const SEARCH_CANON = (() => {
       "collapseSpecialTrack",
       "collapseQuestionPhrases",
       "collapseEnglishMonths",
+      "collapseSoonWindow",
       "isWorkshopConference",
       "queryTokenGroups",
       "compoundSplitHit",

@@ -6917,10 +6917,10 @@ const Recommender = (() => {
       /* `American` は国（USA）とも大陸（北アメリカ・南アメリカ）とも読める。勝手に
        * どちらかへ寄せず、どちらの語で探すかを言う（2026-10-26 実測: そのままでは 0 行）。 */
       const workshopOnly = /\b(?:workshops?\s+only|only\s+workshops?)\b/i.exec(打たれた検索語);
-      /* `deadline soon` は幅の語ではない（`soon` を外すと全件に化ける）。窓の欄へ渡す。 */
+      /* `soon` はこの表の既定の「これからの 30 日間」として探す（外すと全件に化ける）。 */
       if (/\b(?:soon|approaching|imminent)\b/i.test(打たれた検索語)) {
         const note =
-          "「soon」は幅の語ではありません。画面の「締切まで」で 7 日以内などを選ぶか、MCP の `within_days` を指定してください";
+          "「soon」は 30 日以内として探しています（画面の「締切まで」で変えられます。MCP は `within_days`）";
         if (notes.indexOf(note) < 0) notes.push(note);
       }
 
@@ -10286,6 +10286,14 @@ const Recommender = (() => {
    * `workshop` と打つと、ワークショップを併設する本会議の行も混ざる）。日本語の
    * 「だけ」「のみ」は助詞として落とす既存の約束（40 語の検査）があるので、ここでは
    * 英語の言い方だけを受ける。 */
+  /* `soon` は幅の語。この表の既定の「これからの 30 日間」に合わせる（2026-10-26 実測:
+   * `deadline soon` は 0 行だった）。 */
+  function collapseSoonWindow(query: string): string {
+    return query
+      .replace(/\b(?:deadlines?|due|closing)\s+soon\b/gi, "30日以内")
+      .replace(/\bsoon\b/gi, "30日以内");
+  }
+
   /* `special track` は収録の `special session` と同じ物を指す（2026-10-26 実測:
    * `special session` 3 行 / `special track` 0 行）。 */
   /* 英語の月名。年を付けない `January` は `1月` に直す（その月の締切を年をまたいで探す）。
@@ -13730,6 +13738,7 @@ const Recommender = (() => {
     if (typeof query === "string") query = collapseEnglishRegion(query);
     if (typeof query === "string") query = collapseWorkshopOnly(query);
     if (typeof query === "string") query = collapseSpecialTrack(query);
+    if (typeof query === "string") query = collapseSoonWindow(query);
     if (typeof query === "string") query = collapseQuestionPhrases(query);
     if (typeof query === "string") query = collapseEnglishMonths(query);
     /* `call for papers` は 3 語に割ると必ず 0 件になる（収録は `cfp` を持つ）。

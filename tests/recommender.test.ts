@@ -1065,11 +1065,16 @@ describe("分野の日本語表示名と検索語 (SPEC §7)", () => {
       );
     });
 
-    it("soon は幅の語ではないと案内する", () => {
-      /* `deadline soon` の `soon` を外すと全件に化ける。窓の欄へ渡す。 */
+    it("soon は既定の 30 日以内として探す", () => {
+      /* `deadline soon` の `soon` を外すと全件に化ける。この表の既定の「これからの
+       * 30 日間」に合わせる（2026-10-26 実測: 0 行 → 892 行）。 */
+      const at = Date.parse("2026-08-09T00:00:00Z");
       const notes = R.querySynonymNotes("deadline soon").join(" ");
-      expect(notes).toContain("締切まで");
+      expect(notes).toContain("30 日以内");
       expect(notes).toContain("within_days");
+      const m = R.searchMatcher("deadline soon", at);
+      expect(m("paper deadline 2026年8月19日")).toBe(true);
+      expect(m("paper deadline 2026年10月1日")).toBe(false);
     });
 
     it("場所・日付を聞く英語の語を落とす", () => {
