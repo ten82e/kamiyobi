@@ -10128,8 +10128,36 @@ const Recommender = (() => {
     return `${shifted.getUTCFullYear()}年${shifted.getUTCMonth() + 1}月`;
   }
 
+  /* 英語の相対日付。AI は `deadlines next month`・`within 30 days` の形で聞くが、
+   * 収録の語は日本語の暦日・月なので、そのままでは 0 件になる（2026-10-26 実測）。
+   * 日本語の相対語に直してから、既存の展開（`expandRelativeMonths`・`queryTokenGroups`）に
+   * 渡す – 日付の解き方を二重に持たない。 */
+  const ENGLISH_RELATIVE_TIME_PHRASES: Array<[RegExp, string]> = [
+    [/\b(?:by|before|until)\s+(?:the\s+)?end\s+of\s+next\s+month\b/gi, "来月まで"],
+    [/\bby\s+next\s+month\b/gi, "来月まで"],
+    [/\bthe\s+month\s+after\s+next\b/gi, "再来月"],
+    [/\bnext\s+month\b/gi, "来月"],
+    [/\bthis\s+month\b/gi, "今月"],
+    [/\blast\s+month\b/gi, "先月"],
+    [/\bnext\s+week\b/gi, "来週"],
+    [/\bthis\s+week\b/gi, "今週"],
+    [/\blast\s+week\b/gi, "先週"],
+    [/\bthis\s+year\b/gi, "今年"],
+    [/\bwithin\s+([0-9]{1,3})\s+days?\b/gi, "$1日以内"],
+    [/\bin\s+the\s+next\s+([0-9]{1,3})\s+days?\b/gi, "$1日以内"],
+    [/\bnext\s+([0-9]{1,3})\s+days?\b/gi, "$1日以内"],
+    [/\b([0-9]{1,3})\s+days?\s+from\s+now\b/gi, "$1日後"],
+    [/\bin\s+([0-9]{1,3})\s+days?\b/gi, "$1日後"],
+  ];
+
+  function collapseEnglishRelativeTime(query: string): string {
+    let out = query;
+    for (const [pattern, to] of ENGLISH_RELATIVE_TIME_PHRASES) out = out.replace(pattern, to);
+    return out;
+  }
+
   function expandRelativeMonths(query: unknown, nowMs: number): string {
-    const normalized = searchNormalize(query);
+    const normalized = collapseEnglishRelativeTime(searchNormalize(query));
     if (!normalized) return normalized;
     let changed = false;
     const tokens: string[] = [];
@@ -13434,6 +13462,7 @@ const Recommender = (() => {
   function queryTokenGroups(query: unknown, nowMs?: number): string[][] {
     if (typeof query === "string") query = collapseRankPhrase(query);
     if (typeof query === "string") query = collapseMethodField(query) as string;
+    if (typeof query === "string") query = collapseEnglishRelativeTime(query);
     /* `call for papers` は 3 語に割ると必ず 0 件になる（収録は `cfp` を持つ）。
      * 募集の英字語と同じ 1 語に直す（AI がこの形で聞く）。 */
     if (typeof query === "string")

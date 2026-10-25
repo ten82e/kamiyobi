@@ -1101,6 +1101,23 @@ describe("分野の日本語表示名と検索語 (SPEC §7)", () => {
       expect(R.expandRelativeMonths("先々月", now)).toBe("2026年7月");
     });
 
+    it("英語の相対日付も同じ暦月・暦日に直す", () => {
+      /* AI は `deadlines next month`・`within 30 days` の形で聞く。収録の語は日本語の
+       * 暦日・月なので、そのままでは 0 件になる（2026-10-26 実測）。 */
+      expect(R.expandRelativeMonths("next month", now)).toBe("2026年10月");
+      expect(R.expandRelativeMonths("this month", now)).toBe("2026年9月");
+      expect(R.expandRelativeMonths("last month", now)).toBe("2026年8月");
+      expect(R.expandRelativeMonths("next week", now)).toBe("来週");
+      expect(R.expandRelativeMonths("within 30 days", now)).toBe("30日以内");
+      expect(R.expandRelativeMonths("by next month", now)).toBe("来月まで");
+      expect(R.expandRelativeMonths("deadlines next month", now)).toBe("deadlines 2026年10月");
+      // 語の一部は置き換えない（`next monthly` を `来月ly` にしない）。
+      expect(R.expandRelativeMonths("next monthly", now)).toBe("next monthly");
+      // 直した先は、日本語の相対語と同じ行に当たる。
+      const hay = `研究会 論文提出 締切 ${R.monthTermsJa("2026-10-07")}`;
+      expect(R.hayMatches(hay, R.expandRelativeMonths("next month", now))).toBe(true);
+    });
+
     it("年をまたいでも月だけ進める", () => {
       // 12 月の来月は翌年 1 月。日付を足して月を計算すると 3 月に飛ぶ。
       expect(R.expandRelativeMonths("来月", Date.parse("2026-12-15T00:00:00+09:00"))).toBe(

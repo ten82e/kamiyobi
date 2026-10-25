@@ -120,6 +120,7 @@ export const SEARCH_CANON = (() => {
     ["PLACE_QUERY_ALIASES_JA", /const PLACE_QUERY_ALIASES_JA[\s\S]*?\];/],
     ["TOPIC_QUERY_ALIASES_JA", /const TOPIC_QUERY_ALIASES_JA[\s\S]*?\];/],
     ["METHOD_FIELD_ALIASES", /const METHOD_FIELD_ALIASES[\s\S]*?\];/],
+    ["ENGLISH_RELATIVE_TIME_PHRASES", /const ENGLISH_RELATIVE_TIME_PHRASES[\s\S]*?\];/],
 
     ["寄せ表の和名の鍵cache", /let 寄せ表の和名の鍵cache[^\n]*;/],
 
@@ -251,6 +252,8 @@ export const SEARCH_CANON = (() => {
       "kanaFold",
       "monthTermsJa",
       "expandRelativeMonths",
+      // 英語の相対日付を日本語の相対語へ直す部品（`expandRelativeMonths` が呼ぶ）。
+      "collapseEnglishRelativeTime",
       /* 相対月・月の範囲・季節の展開（第 251〜254 回）。抜いた関数は独立ではないので
        * `ReferenceError` になる。 */
       "relativeMonthTerm",

@@ -1092,6 +1092,7 @@ conferences:
 - 締切の行の検索用の文字列には、英字で探す人の `deadline`・`deadlines`・`due` を入れる（どの行も締切なので全部）。募集のある種別（`paper`・`abstract`）には `cfp` も入れる（採否通知は CFP と呼ばない）。`call for papers` / `call for paper` は検索語の側で `cfp` に直す（3 語に割ると 0 件になる）。2026-10-26 実測: `SIGCOMM deadline` 0 行 → 64 行、`CFP SIGCOMM` 0 行 → 64 行、`SIGCOMM 2027 deadline` 0 行 → 13 行。
 - 英語の冠詞・前置詞（`a`・`an`・`the`・`of`・`for`・`in`・`on`・`at`・`to`・`by`・`with`・`from`・`about`）は、ほかの語があるときに絞り込みから外す（2026-10-26 実測: `workshop on HPC` は `on` を語として要求するため、名前に `on` を持つ行（`Workshop on ...`）だけの 48 行に絞られていた。外すと `workshop HPC` と同じ 69 行）。1 語だけの検索では外さない（`on` 単体の意味を消さない）。
 - 手法の名（`graph neural networks`・`GNN`・`transformer`・`self-supervised learning`・`diffusion models`・`GAN`・`explainable AI`・日本語の対応表記）は、その手法が載る分野の語（`machine learning`）に直して探す。件数欄に「「…」は手法の語なので、分野「機械学習」で探しています」と出す。2026-10-26 実測: `graph neural networks` 0 行 → 683 行（NeurIPS・ICML・ICLR を含む）。表は `site/topic-aliases.ts` の `METHOD_FIELD_ALIASES`。
+- 英語の相対日付（`next month`・`this week`・`within 30 days`・`by next month` など）は、日本語の相対語に直してから既存の暦日・暦月展開に渡す（日付の解き方を二重に持たない）。2026-10-26 実測: `next month` 0 行 → 350 行、`within 30 days` 0 行 → 892 行、`by next month` 0 行 → 587 行、`deadlines next month` 0 行 → 350 行。
 - 分野のチップには、**分野以外の条件を通った行数**を書く（選ぶ前に「何が残りそうか」「その分野が収録に無いか」が分かる。0 の分野も消さずに薄く残す）。選んだときの件数と一致することを実測で確かめる（2026-10-23: `?q=HPC&win=90d` で graphics 0・systems 2・security 1・hpc 8・ai 1 が、それぞれ選んだときの件数と一致）。
 - 0件時は、検索語を残して候補が戻る条件変更だけを件数付きで操作できる。単独の変更で戻らない場合は条件の組み合わせも調べる。全履歴が未読の過去表示は、取得済みデータの件数を下限として示す。
 - 日時は `YYYY-MM-DD(曜) HH:MM JST` を主表示とし、元の時刻とタイムゾーンを併記する。閲覧者のタイムゾーンで表示を変えない。AoE は UTC-12 として換算する。
