@@ -51,6 +51,12 @@ it("★ はこの端末にだけ覚え、会議の鍵で一覧へ渡す", () => 
   expect(template, "紙に ★ を刷っている").toContain(".watch-panel { display: none !important; }");
   expect(template, "件数の変化を読み上げない").toContain('id="watchCount" aria-live="polite"');
 
+  /* 開閉も覚える（閉じたのに毎回開く／開いたのに毎回閉じる、を避ける）。実測 2026-10-25:
+   * 閉じる → saved="0" → 再読み込みで閉じたまま／開く → saved="1" → 開いたまま。 */
+  expect(app, "開閉を保存していない").toContain('"kamiyobi.watchOpen.v1"');
+  expect(app, "開閉を戻していない").toContain("savedWatchOpen()");
+  expect(app, "開閉の変化を拾っていない").toContain('addEventListener("toggle"');
+
   /* URL には載せない（状態は保存だけ）。 */
   const write = jsFunction(app, "writeUrl");
   expect(write, "★ を URL に載せている").not.toContain("watch");

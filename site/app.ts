@@ -1486,6 +1486,26 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   /* ★ を付けた会議（この端末だけ）。共有 URL には載せない – 何を見たいかは人ごとに違い、
    * URL に載せると他人の ★ が自分の一覧に混ざる。値は会議の鍵（`venue=` にそのまま渡せる）。 */
   const WATCH_KEY = "kamiyobi.watchedVenues.v1";
+  /* ★ 一覧の開閉も覚える（閉じたのに毎回開く／開いたのに毎回閉じる、を避ける）。 */
+  const WATCH_OPEN_KEY = "kamiyobi.watchOpen.v1";
+
+  function savedWatchOpen(): boolean | null {
+    try {
+      const raw = window.localStorage.getItem(WATCH_OPEN_KEY);
+      return raw === null ? null : raw === "1";
+    } catch {
+      /* 保存できない環境では覚えない（その回の操作は効く）。 */
+      return null;
+    }
+  }
+
+  function saveWatchOpen(open: boolean): void {
+    try {
+      window.localStorage.setItem(WATCH_OPEN_KEY, open ? "1" : "0");
+    } catch {
+      /* 同上。 */
+    }
+  }
 
   function readWatchedVenues(): string[] {
     try {
@@ -1535,6 +1555,9 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     const keys = readWatchedVenues();
     count.textContent = String(keys.length);
     panel.hidden = keys.length === 0;
+    /* 前回の開閉を戻す（0 件のときは触らない）。 */
+    const 覚え = savedWatchOpen();
+    if (keys.length && 覚え !== null) (panel as HTMLDetailsElement).open = 覚え;
     list.textContent = "";
     /* 次に締切が来る順に並べる（★ は「近い順に見たい」物なので、付けた順では並べない）。
      * 読み込み済みの行に無い会議（期間の外・過ぎた締切だけ）は最後に置く。 */
@@ -2125,6 +2148,9 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   }
   renderSummaryStats();
   renderWatchPanel();
+  /* 開閉を覚える（利用者が畳んだら次も畳んだまま）。 */
+  const 見張り = $("watchPanel");
+  見張り?.addEventListener("toggle", () => saveWatchOpen((見張り as HTMLDetailsElement).open));
 
   // ---- REMAIN / STATUS ----
   function remain(ms: number) {
