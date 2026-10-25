@@ -1041,6 +1041,17 @@ describe("分野の日本語表示名と検索語 (SPEC §7)", () => {
       expect(R.searchMatcher("GNN 2027")(rows[0])).toBe(true);
     });
 
+    it("場所・日付を聞く英語の語を落とす", () => {
+      /* AI は `SIGCOMM 2027 location`・`where is SIGCOMM 2027` の形でも聞く。
+       * 場所・日付を指す語は行の値ではないので、ほかの語があるときは絞り込みに使わない
+       * （2026-10-26 実測: どちらも 0 行）。 */
+      const hay = "sigcomm 2027 seoul deadline";
+      expect(R.hayMatches(hay, "SIGCOMM 2027 location")).toBe(true);
+      expect(R.hayMatches(hay, "SIGCOMM 2027 dates")).toBe(true);
+      expect(R.hayMatches(hay, "where is SIGCOMM 2027")).toBe(true);
+      expect(R.hayMatches(hay, "what are the deadlines for SIGCOMM 2027")).toBe(true);
+    });
+
     it("部分地域の名前も、その地域の国で探す", () => {
       /* `Scandinavia`・`Southeast Asia`・`Latin America` は、そのままでは 0 行
        * （2026-10-26 実測）。収録の国名へ広げる。 */

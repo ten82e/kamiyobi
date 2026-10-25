@@ -10271,6 +10271,11 @@ const Recommender = (() => {
    * 英語の言い方だけを受ける。 */
   /* `special track` は収録の `special session` と同じ物を指す（2026-10-26 実測:
    * `special session` 3 行 / `special track` 0 行）。 */
+  /* `where is SIGCOMM 2027` のような疑問文の頭を落とす（`is`/`are` は残すと語になる）。 */
+  function collapseQuestionPhrases(query: string): string {
+    return query.replace(/\b(?:where|when|what)\s+(?:is|are)\s+/gi, "");
+  }
+
   function collapseSpecialTrack(query: string): string {
     return query.replace(/\bspecial[\s-]+tracks?\b/gi, "special session");
   }
@@ -13651,6 +13656,7 @@ const Recommender = (() => {
     if (typeof query === "string") query = collapseEnglishRegion(query);
     if (typeof query === "string") query = collapseWorkshopOnly(query);
     if (typeof query === "string") query = collapseSpecialTrack(query);
+    if (typeof query === "string") query = collapseQuestionPhrases(query);
     /* `call for papers` は 3 語に割ると必ず 0 件になる（収録は `cfp` を持つ）。
      * 募集の英字語と同じ 1 語に直す（AI がこの形で聞く）。 */
     if (typeof query === "string")
@@ -14178,6 +14184,15 @@ const Recommender = (() => {
     "upcoming",
     "coming",
     "next",
+    // 会議の場所・日付を聞く語。行の値ではないので、ほかの語があるときは落とす。
+    "location",
+    "place",
+    "venue",
+    "date",
+    "dates",
+    "when",
+    "where",
+    "timezone",
   ];
   function withoutFunctionGroups(groups: string[][]): string[][] {
     if (groups.length < 2) return groups;
@@ -14186,15 +14201,16 @@ const Recommender = (() => {
     const 名々 = ["会議", "学会", "大会", "研究会", "ワークショップ", "セッション"].map((word) =>
       kanaFold(word),
     );
-    const 機能語の組か = (group: string[]): boolean => {
-      if (group.length !== 1) return false;
-      const 語 = kanaFold(group[0]);
+    /* 組の**どの候補も**機能語なら落とす（`dates` は複数形の展開で
+     * `["dates","date"]` の 2 語になる – 1 語のときだけ落とすと残ってしまう）。 */
+    const 機能語か = (語: string): boolean => {
       if (語々.indexOf(語) >= 0) return true;
       if (FUNCTION_WORDS_EN.indexOf(語) >= 0) return true;
-
       if (語.length > 16) return false;
       return 語々.some((w) => 語.startsWith(w)) && 名々.some((n) => 語.endsWith(n));
     };
+    const 機能語の組か = (group: string[]): boolean =>
+      group.length > 0 && group.every((term) => 機能語か(kanaFold(term)));
     const kept = groups.filter((group) => !機能語の組か(group));
     return kept.length ? kept : groups;
   }

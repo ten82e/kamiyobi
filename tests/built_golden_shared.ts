@@ -411,6 +411,7 @@ export const SEARCH_CANON = (() => {
       // `workshop only` をワークショップの印に直す部品。
       "collapseWorkshopOnly",
       "collapseSpecialTrack",
+      "collapseQuestionPhrases",
       "isWorkshopConference",
       "queryTokenGroups",
       "compoundSplitHit",
