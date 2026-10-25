@@ -6914,6 +6914,13 @@ const Recommender = (() => {
         const note = `「${rankAdj}」は上位の等級（CCF A・CORE A* など）で探しています`;
         if (notes.indexOf(note) < 0) notes.push(note);
       }
+      /* `American` は国（USA）とも大陸（北アメリカ・南アメリカ）とも読める。勝手に
+       * どちらかへ寄せず、どちらの語で探すかを言う（2026-10-26 実測: そのままでは 0 行）。 */
+      if (/\bamerican\b/i.test(打たれた検索語)) {
+        const note =
+          "「American」は国（USA）とも大陸（北アメリカ・南アメリカ）とも読めます。国なら「USA」、大陸なら「North America」「South America」で探してください";
+        if (notes.indexOf(note) < 0) notes.push(note);
+      }
       /* 2 語の地域名は日本語の地域まとめに直して探すので、そのことを言う。 */
       const regionPhrase = /\b(north america|south america|central america|middle east)\b/i.exec(
         打たれた検索語,

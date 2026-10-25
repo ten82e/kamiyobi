@@ -1076,6 +1076,15 @@ describe("分野の日本語表示名と検索語 (SPEC §7)", () => {
       expect(R.searchMatcher("Asia")(rows[0])).toBe(false);
     });
 
+    it("American は国か大陸かを案内する", () => {
+      /* 国（USA）とも大陸（北アメリカ・南アメリカ）とも読めるので、勝手に寄せない。
+       * 代わりに、どちらの語で探すかを件数欄で言う（2026-10-26 実測: そのまま 0 行）。 */
+      const notes = R.querySynonymNotes("American conferences").join(" ");
+      expect(notes).toContain("USA");
+      expect(notes).toContain("North America");
+      expect(notes).toContain("South America");
+    });
+
     it("国の形容詞は開催地の国名で探す（Japanese conferences）", () => {
       /* `Japanese conferences` は `Japanese` を語として要求すると 0 件、`Japan` なら
        * 78 行だった（2026-10-26 実測）。開催地の国名へ寄せ、件数欄で言う。 */
