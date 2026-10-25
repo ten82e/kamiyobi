@@ -942,7 +942,7 @@ it("入力の形が、道具の説明と一致する（第 854 回）", async ()
       "within_days",
       "scope",
     ],
-    list_upcoming: ["days", "limit", "offset", "kind", "kinds", "rank", "scope"],
+    list_upcoming: ["workshop", "days", "limit", "offset", "kind", "kinds", "rank", "scope"],
     venue_info: ["key", "name", "scope"],
     recommend_venues: ["paper", "rank", "limit", "offset", "retrieval"],
     search_venues: ["query", "limit", "offset", "retrieval"],
@@ -1673,6 +1673,17 @@ it("「と」「や」で繋いだ打ち方に、どちらかだけで打つ案�
   /* 欄の名前に別名がある語は「欄（開催地）の名前で」と書く（画面と同じ語）。 */
   expect(欄と, "欄の名前の案内を出していない").toContain("の名前で、値そのものではありません");
   expect(欄と, "欄の名前と接続の案内を重ねた").not.toContain("繋いで打つと");
+});
+
+it("list_upcoming の workshop は、ワークショップの行・開催回だけに絞る", async () => {
+  const 全 = await call("list_upcoming", { days: 400, scope: "all", limit: 1 });
+  const 絞 = await call("list_upcoming", { days: 400, scope: "all", limit: 1, workshop: true });
+  expect(全, "絞り込みを掛けていないのに注記がある").not.toContain("／ワークショップのみ");
+  expect(絞, "絞り込みの注記がない").toContain("／ワークショップのみ");
+  const 數 = (t: string): number =>
+    Number(/全 ([\d,]+) 件中/.exec(t)?.[1]?.replace(/,/g, "") ?? -1);
+  expect(數(絞), "ワークショップの行・開催回が 0 件").toBeGreaterThan(0);
+  expect(數(絞), "全体より少なくなっていない").toBeLessThan(數(全));
 });
 
 it("list_upcoming と search_deadlines は、同じ条件なら同じ件数を返す（第 874 回）", async () => {

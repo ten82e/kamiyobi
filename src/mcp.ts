@@ -1381,9 +1381,15 @@ export function structuredDeadline(r: Row, now: number): Record<string, unknown>
 }
 
 /* ワークショップの行か（画面の「ワークショップのみ」と同じ規則）。 */
+function isWorkshopFieldsMCP(tags: unknown, title: unknown, fullName: unknown): boolean {
+  if (Array.isArray(tags) && tags.indexOf("workshop") >= 0) return true;
+  return /workshop/i.test(
+    `${typeof title === "string" ? title : ""} ${typeof fullName === "string" ? fullName : ""}`,
+  );
+}
+
 function isWorkshopRowMCP(r: Row): boolean {
-  if ((r.tags ?? []).indexOf("workshop") >= 0) return true;
-  return /workshop/i.test(`${r.conf.title ?? ""} ${r.conf.full_name ?? ""}`);
+  return isWorkshopFieldsMCP(r.tags, r.conf.title, r.conf.full_name);
 }
 
 function searchDeadlines(
@@ -1724,6 +1730,7 @@ interface UpcomingEventRow extends ReturnType<typeof eventMetadata> {
   categories: string[];
   rank: unknown;
   domestic: boolean;
+  workshop: boolean;
 }
 
 export function 開催の行(days: number, now: number): UpcomingEventRow[] {
@@ -1805,6 +1812,7 @@ export function 開催の行(days: number, now: number): UpcomingEventRow[] {
           categories: Array.isArray(会議.categories) ? [...(会議.categories as string[])] : [],
           rank: 会議.rank ?? null,
           domestic: Recommender.isDomesticTag(会議.tags as string[] | undefined),
+          workshop: isWorkshopFieldsMCP(会議.tags, 会議.title, 会議.full_name),
         });
       }
     }
@@ -1819,6 +1827,7 @@ function listUpcoming(
     kinds?: unknown;
     scope?: unknown;
     rank?: unknown;
+    workshop?: unknown;
     limit?: unknown;
     offset?: unknown;
   },
@@ -1880,6 +1889,7 @@ function listUpcoming(
   const 知らないランク = ランク && !Recommender.rankGradeOrderJa().includes(ランク) ? ランク : "";
   const ランクで殘す = (pairs: readonly string[] | null | undefined): boolean =>
     !ランク || Recommender.rankMatches(pairs, ランク, ランクの尺度);
+  const ワークショップだけ = args.workshop === true;
   /* 会期の行のランクは `{ccf: "A", …}` の形。締切の行と同じ `"ccf:A"` の対に直して使う。 */
   const 會期のランクの對 = (rank: unknown): string[] =>
     rank && typeof rank === "object" && !Array.isArray(rank)
@@ -1901,12 +1911,19 @@ function listUpcoming(
   const 種別で殘す = (r: Row): boolean =>
     全部 || 選ぶ.size === 0 || 選ぶ.has(r.kind) || 選ぶ.has(r.dl.kind);
   const 締切の候補 = list.filter(
-    (r) => !Recommender.deadlineRowIsPast(r, 日の始め) && 暦日(r) < 限り && 種別で殘す(r),
+    (r) =>
+      !Recommender.deadlineRowIsPast(r, 日の始め) &&
+      暦日(r) < 限り &&
+      種別で殘す(r) &&
+      (!ワークショップだけ || isWorkshopRowMCP(r)),
   );
   const hit = sortRows(締切の候補.filter((r) => ランクで殘す(r.rankPairs)));
   const 外した締切 = 締切の候補.length - hit.length;
   const 會期の候補 = 開催の行(days, now);
-  const events = 會期の候補.filter((event) => ランクで殘す(會期のランクの對(event.rank)));
+  const events = 會期の候補.filter(
+    (event) =>
+      ランクで殘す(會期のランクの對(event.rank)) && (!ワークショップだけ || event.workshop),
+  );
   const 外した會期 = 會期の候補.length - events.length;
   const date = (value: number): string => new Date(value).toISOString().slice(0, 10);
   const timeline: Array<{
@@ -1918,7 +1935,7 @@ function listUpcoming(
     ...hit.map((row) => ({
       at: 表示の刻み(row),
       row,
-      item: { type: "deadline", ...structuredDeadline(row, now) },
+      item: { type: "deadline", workshop: isWorkshopRowMCP(row), ...structuredDeadline(row, now) },
     })),
     ...events.map((event) => ({
       at: event.開始,
@@ -1942,6 +1959,7 @@ function listUpcoming(
         categories_ja: event.categories.map((key) => Recommender.categoryLabelJa(key)),
         rank: event.rank,
         domestic: event.domestic,
+        workshop: event.workshop,
       },
     })),
   ];
@@ -1980,7 +1998,7 @@ function listUpcoming(
       : `全 ${timeline.length} 件中 ${offset + 1}〜${offset + page.length} 件目` +
         `（このページ: 締切 ${deadlinePage.length} 件・会期 ${eventPage.length} 件）。`;
   return [
-    `今日から ${日數の表現}（JST の暦日で数える）の締切: ${hit.length} 件（${名}・日本時間の早い順）${ランク ? `／ランク ${ランクの尺度 ? `${ランクの尺度.toUpperCase()} ` : ""}${ランク}（締切 ${外した締切} 件・会期 ${外した會期} 件を外しました）` : ""}${知らないランク ? `／「${知らないランク}」は知らない等級なので 0 件になります` : ""}${讀めない引數}${知らんの斷り}${端数の斷り}${上限の斷り}${limitInput.斷り}${端數と上限の斷り(limitInput.使ふ, 100)}${空の種別 ? `／kinds が空なので種別では絞り込んでいません` : ""}${単数種別を無視 ? "／kind は kinds と共に与えられたので見ていません" : ""}`,
+    `今日から ${日數の表現}（JST の暦日で数える）の締切: ${hit.length} 件（${名}・日本時間の早い順）${ランク ? `／ランク ${ランクの尺度 ? `${ランクの尺度.toUpperCase()} ` : ""}${ランク}（締切 ${外した締切} 件・会期 ${外した會期} 件を外しました）` : ""}${ワークショップだけ ? "／ワークショップのみ" : ""}${知らないランク ? `／「${知らないランク}」は知らない等級なので 0 件になります` : ""}${讀めない引數}${知らんの斷り}${端数の斷り}${上限の斷り}${limitInput.斷り}${端數と上限の斷り(limitInput.使ふ, 100)}${空の種別 ? `／kinds が空なので種別では絞り込んでいません` : ""}${単数種別を無視 ? "／kind は kinds と共に与えられたので見ていません" : ""}`,
     ...(scopeErr ? [scopeErr] : []),
     ...(窓が無いの斷り(窓が無い) ? [窓が無いの斷り(窓が無い)] : []),
     pageNotice,
@@ -3370,10 +3388,15 @@ const TOOLS = [
     title: "直近の締切と開催を確認",
     annotations: READ_ONLY_ANNOTATIONS,
     description:
-      "今日から days 日以内の締切と開催日程を返す。両方を合わせて時系列に1ページ最大100件。structuredContent.items の type は deadline または event。total・next_offset を返し、続きは同じ条件で offset に next_offset を指定する。scope と kind/kinds は締切の条件で（scope の出所は search_deadlines と同じ）、会期は収録全体の同期間から選ぶ。既定は種別では絞らない（全部）、推定も含む。kind / kinds は日本語の種別名と配列も受ける。推定期間・トラック・前に出ていた締切も表示する。範囲は JST の暦日で判定する。within_days と境目の切り方は同じ。search_deadlines と件数を比べる場合は種別・推定・scope を揃える（rank も同じ判定）。既定の条件では件数はそのままでは違う。返す行の形: 締切は日時 | 種別 | 確認状態（ある場合）| 会議名（版の識別子）| ランク | 会期 | 開催地 URL。会期の行は別の形で、開催の節に - 開始日〜終了日 | 会議名（key: 識別子・版）| 開催地 URL。会期の行の会議名は年を添えた形、開催地は締切の行と同じ日本語表記です（空でも「未確認」を出します）。**構造化の行は締切と同じ欄**（`full_name`・`categories`・`categories_ja`・`rank`・`domestic`）も持ちます。",
+      "今日から days 日以内の締切と開催日程を返す。両方を合わせて時系列に1ページ最大100件。structuredContent.items の type は deadline または event。total・next_offset を返し、続きは同じ条件で offset に next_offset を指定する。scope と kind/kinds は締切の条件で（scope の出所は search_deadlines と同じ）、会期は収録全体の同期間から選ぶ。既定は種別では絞らない（全部）、推定も含む。kind / kinds は日本語の種別名と配列も受ける。推定期間・トラック・前に出ていた締切も表示する。`workshop: true` でワークショップの行・開催回だけに絞れる。範囲は JST の暦日で判定する。within_days と境目の切り方は同じ。search_deadlines と件数を比べる場合は種別・推定・scope を揃える（rank も同じ判定）。既定の条件では件数はそのままでは違う。返す行の形: 締切は日時 | 種別 | 確認状態（ある場合）| 会議名（版の識別子）| ランク | 会期 | 開催地 URL。会期の行は別の形で、開催の節に - 開始日〜終了日 | 会議名（key: 識別子・版）| 開催地 URL。会期の行の会議名は年を添えた形、開催地は締切の行と同じ日本語表記です（空でも「未確認」を出します）。**構造化の行は締切と同じ欄**（`full_name`・`categories`・`categories_ja`・`rank`・`domestic`）も持ちます。",
     inputSchema: {
       type: "object",
       properties: {
+        workshop: {
+          type: "boolean",
+          description:
+            "ワークショップの行・開催回だけに絞る（画面の「ワークショップのみ」と同じ判定。会議名に workshop を持つ会議と、タグ workshop の会議）",
+        },
         days: { type: "number", description: "何日先まで（既定 30・最大 400）" },
         limit: {
           type: "number",
