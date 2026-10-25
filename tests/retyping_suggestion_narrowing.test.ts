@@ -45,18 +45,19 @@ describe("打ち直しの候補は絞れる物だけ", () => {
     }
   });
 
-  it("1 語だけ外すと当たる形を、外す語を名指しで出す（graph neural networks）", () => {
-    /* 3 語とも品書にあるが、揃う行は無い。`graph` を外した `neural networks` だけが当たる。 */
+  it("1 語だけ外すと当たる形を、外す語を名指しで出す（distributed graph processing）", () => {
+    /* 3 語とも品書にあるが揃う行は無く、`distributed` を外した `graph processing` だけが当たる。
+     * 手法の名（`graph neural networks`）は分野の語に直すので、ここでは主題の語で張る。 */
     const 品 = 組品書([
-      "Neural Networks for Vision 2026-09-01",
-      "Graph Theory Workshop 2026-09-02",
+      "Graph Processing Systems 2026-09-01",
+      "Distributed Systems 2026-09-02",
       "Machine Learning 2026-09-03",
     ]);
-    const 候補 = Recommender.shorterHitWordsJa("graph neural networks", 品, 基準, 4);
+    const 候補 = Recommender.shorterHitWordsJa("distributed graph processing", 品, 基準, 4);
     const 外した = 候補.find((c) => c.how === "drop");
     expect(外した, "1 語外す候補が出ていない").toBeTruthy();
-    expect(外した?.word).toBe("neural networks");
-    expect(外した?.pair, "外す語を名指ししていない").toBe("graph");
+    expect(外した?.word).toBe("graph processing");
+    expect(外した?.pair, "外す語を名指ししていない").toBe("distributed");
     expect(外した?.count).toBe(1);
   });
 

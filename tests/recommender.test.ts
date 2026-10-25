@@ -1000,8 +1000,9 @@ describe("分野の日本語表示名と検索語 (SPEC §7)", () => {
     });
 
     it("英語の前置詞・冠詞は、ほかの語があるときに絞り込みから外す", () => {
-      /* `workshop on HPC` の `on` が `online` に当たり、意味と違う 48 行に絞られていた
-       * （2026-10-26 実測）。日本語の「開催」などと同じ扱いにする。 */
+      /* `workshop on HPC` は `on` を語として要求するため、名前に `on` を持つ行だけの
+       * 48 行に絞られていた（`workshop HPC` は 69 行 – 2026-10-26 実測）。
+       * 日本語の「開催」などと同じ扱いにする。 */
       const hay = "hpc workshop 2027 paper deadline";
       expect(R.hayMatches(hay, "workshop on HPC")).toBe(true);
       expect(R.hayMatches(hay, "deadline for the workshop")).toBe(true);
@@ -1009,6 +1010,35 @@ describe("分野の日本語表示名と検索語 (SPEC §7)", () => {
       // 前置詞だけの検索は今までどおり語として扱う（落とすと全件に化ける）。
       expect(R.hayMatches("workshop on hpc", "on")).toBe(true);
       expect(R.hayMatches("hpc workshop", "on")).toBe(false);
+    });
+
+    it("手法の名は、その手法が載る分野の語で探す（graph neural networks）", () => {
+      /* 収録は会議名・分野・開催地までで、`graph neural networks` のような手法名を持たない
+       * （2026-10-26 実測: 0 行）。そのまま 0 件で止めず、分野「機械学習」の語に直して探し、
+       * 件数欄で分野を名指しする。 */
+      const confs = [
+        {
+          key: "mlconf",
+          title: "MLConf",
+          categories: ["machine-learning"],
+          tags: [],
+          editions: [
+            {
+              year: 2027,
+              deadlines: [{ kind: "paper", utc: "2026-09-01T23:59:00Z" }],
+            },
+          ],
+        },
+      ];
+      const rows = R.candidateRows(confs);
+      const matcher = R.searchMatcher("graph neural networks");
+      expect(rows.length).toBe(1);
+      expect(matcher(rows[0]), "機械学習の行に届いていない").toBe(true);
+      expect(R.querySynonymNotes("graph neural networks").join(" ")).toContain(
+        "分野「機械学習」で探しています",
+      );
+      // 日本語の手法名も同じ。年を添えても効く。
+      expect(R.searchMatcher("GNN 2027")(rows[0])).toBe(true);
     });
 
     it("英字の締切の言い方（deadline・CFP・call for papers）で引ける", () => {

@@ -119,6 +119,7 @@ export const SEARCH_CANON = (() => {
     ["幅の語尾の語Ja", /const 幅の語尾の語Ja = [^;]*;/],
     ["PLACE_QUERY_ALIASES_JA", /const PLACE_QUERY_ALIASES_JA[\s\S]*?\];/],
     ["TOPIC_QUERY_ALIASES_JA", /const TOPIC_QUERY_ALIASES_JA[\s\S]*?\];/],
+    ["METHOD_FIELD_ALIASES", /const METHOD_FIELD_ALIASES[\s\S]*?\];/],
 
     ["寄せ表の和名の鍵cache", /let 寄せ表の和名の鍵cache[^\n]*;/],
 
@@ -387,6 +388,9 @@ export const SEARCH_CANON = (() => {
       "relativeDayGroups",
       "editionYearSearchTerm",
       "eventCertaintySearchText",
+      // 手法の名を分野の語に直す部品（`queryTokenGroups` が呼ぶ）。
+      "methodFieldOf",
+      "collapseMethodField",
       "queryTokenGroups",
       "compoundSplitHit",
       "placeOffersOnline",

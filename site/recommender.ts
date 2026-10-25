@@ -21,7 +21,7 @@ import {
   latinVocabularyJa,
 } from "./latin-retype.ts"; // 欧文の打ち間違いの見当
 import { PLACE_QUERY_ALIASES_JA } from "./place-aliases.ts"; // 繋ぎを `.ts` で書く – site/tsconfig.build.json の書き換えで成果物は `.js` になる
-import { TOPIC_QUERY_ALIASES_JA } from "./topic-aliases.ts"; // 主題の寄せ表
+import { METHOD_FIELD_ALIASES, TOPIC_QUERY_ALIASES_JA } from "./topic-aliases.ts"; // 主題・手法の寄せ表
 
 type Vector = number[];
 type VectorMap = Record<string, Vector>;
@@ -6879,6 +6879,13 @@ const Recommender = (() => {
     {
       const 打たれた検索語 = String(query ?? "");
       const 寄せた検索語 = String(collapseRelativeDayPhrase(打たれた検索語));
+      /* 手法の名は分野の語に直して探す（`graph neural networks` → `machine learning`）。
+       * 黙って別の語で探すと「なぜこの行が出たか」が分からないので、必ず言う。 */
+      const method = methodFieldOf(打たれた検索語);
+      if (method) {
+        const note = `「${method.phrase}」は手法の語なので、分野「${method.label}」で探しています`;
+        if (notes.indexOf(note) < 0) notes.push(note);
+      }
       /* 「国内」と「国際会議」は逆を指す（前者は国内研究会・国内シンポジウムに絞り、
        * 後者はその外側の会議）。両方打つと 0 件になるので、理由と、日本で開かれる国際会議の
        * 探し方を書く（2026-10-18 実測: `国内の国際会議` は 0 件で、案内は「国際会議」の
@@ -13383,8 +13390,50 @@ const Recommender = (() => {
     (甲, 乙) => 乙.length - 甲.length,
   );
 
+  /* 手法の名を、その手法が載る分野の語に直す（`graph neural networks` → `machine learning`）。
+   * 収録は会議名・分野までで手法名を持たないため、そのまま探すと 0 件になる。元の語は
+   * 件数欄の案内（`querySynonymNotes`）に出す（黙って語を変えない）。 */
+  function methodFieldOf(query: unknown): { phrase: string; field: string; label: string } | null {
+    const text = kanaFold(String(query == null ? "" : query).normalize("NFKC"));
+    const words = ` ${text
+      .replace(/[^a-z0-9.+-]+/g, " ")
+      .replace(/\s+/g, " ")
+      .trim()} `;
+    for (const [forms, field, label] of METHOD_FIELD_ALIASES) {
+      for (const form of forms) {
+        const 形 = kanaFold(form);
+        if (/^[a-z0-9 .+-]+$/.test(形)) {
+          if (words.indexOf(` ${形} `) >= 0) return { phrase: form, field, label };
+        } else if (text.indexOf(形) >= 0) {
+          return { phrase: form, field, label };
+        }
+      }
+    }
+    return null;
+  }
+
+  function collapseMethodField(query: unknown): unknown {
+    if (typeof query !== "string") return query;
+    let out = query;
+    for (const [forms, field] of METHOD_FIELD_ALIASES) {
+      for (const form of forms) {
+        if (/^[a-z0-9 .+-]+$/i.test(form)) {
+          const escaped = form.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/\s+/g, "[\\s-]+");
+          out = out.replace(
+            new RegExp(`(^|[^a-z0-9])${escaped}(?![a-z0-9])`, "gi"),
+            (_m: string, head: string) => `${head}${field}`,
+          );
+        } else {
+          out = out.split(form).join(field);
+        }
+      }
+    }
+    return out;
+  }
+
   function queryTokenGroups(query: unknown, nowMs?: number): string[][] {
     if (typeof query === "string") query = collapseRankPhrase(query);
+    if (typeof query === "string") query = collapseMethodField(query) as string;
     /* `call for papers` は 3 語に割ると必ず 0 件になる（収録は `cfp` を持つ）。
      * 募集の英字語と同じ 1 語に直す（AI がこの形で聞く）。 */
     if (typeof query === "string")

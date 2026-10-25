@@ -194,3 +194,38 @@ export const TOPIC_QUERY_ALIASES_JA: string[][] = [
   ["プライバシーの保護", "privacy"],
   ["ものづくり", "manufacturing"],
 ];
+
+/* 手法の名は、収録の会議名にも分野にも書かれていない（収録は会議名・分野・開催地まで）。
+ * そのまま探すと 0 件の行き止まりになるので、その手法が載る分野の語に直して探す
+ * （2026-10-26 実測: `graph neural networks` 0 行・`transformer` 0 行）。
+ * 直したことは件数欄で「分野『機械学習』で探しています」と言う（黙って語を変えない）。
+ * 形は**小文字**で持つ（照合は小文字化して行う）。 */
+export const METHOD_FIELD_ALIASES: Array<[string[], string, string]> = [
+  [
+    [
+      "graph neural networks",
+      "graph neural network",
+      "gnn",
+      "gnns",
+      "グラフニューラルネットワーク",
+      "グラフニューラルネット",
+    ],
+    "machine learning",
+    "機械学習",
+  ],
+  [["transformers", "transformer", "トランスフォーマー"], "machine learning", "機械学習"],
+  [["self-supervised learning", "自己教師あり学習"], "machine learning", "機械学習"],
+  [["diffusion models", "diffusion model", "拡散モデル"], "machine learning", "機械学習"],
+  [
+    [
+      "generative adversarial networks",
+      "generative adversarial network",
+      "gans",
+      "gan",
+      "敵対的生成ネットワーク",
+    ],
+    "machine learning",
+    "機械学習",
+  ],
+  [["explainable ai", "xai", "説明可能ai", "説明可能なai"], "machine learning", "機械学習"],
+];
