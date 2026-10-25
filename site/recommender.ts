@@ -6944,6 +6944,16 @@ const Recommender = (() => {
        * どちらかへ寄せず、どちらの語で探すかを言う（2026-10-26 実測: そのままでは 0 行）。 */
       const workshopOnly = /\b(?:workshops?\s+only|only\s+workshops?)\b/i.exec(打たれた検索語);
       /* `soon` はこの表の既定の「これからの 30 日間」として探す（外すと全件に化ける）。 */
+      /* 週・月の言い方は日数に直す（`in two weeks` は点とも幅とも読めるので、幅として扱う）。 */
+      if (
+        /\b(?:within|in(?:\s+the\s+next)?|next)\s+(?:a|an|one|two|three|four|five|six|seven|eight|nine|ten|\d{1,2})\s+weeks?\b|\b(?:within|in)\s+(?:a|one|the\s+next)\s+month\b/i.test(
+          打たれた検索語,
+        )
+      ) {
+        const note =
+          "週・月の言い方は日数に直して探しています（画面の「締切まで」で変えられます。MCP は `within_days`）";
+        if (notes.indexOf(note) < 0) notes.push(note);
+      }
       const usWord = /\bU\.S\.A?\.?|\bUS\b/.exec(打たれた検索語);
       if (usWord) {
         const note = `「${usWord[0]}」は USA（アメリカ）として探しています`;
@@ -10354,7 +10364,7 @@ const Recommender = (() => {
   function collapseEnglishWeeks(query: string): string {
     return query
       .replace(
-        /\b(?:within|in\s+the\s+next|next)\s+(a|an|one|two|three|four|five|six|seven|eight|nine|ten|\d{1,2})\s+weeks?\b/gi,
+        /\b(?:within|in(?:\s+the\s+next)?|next)\s+(a|an|one|two|three|four|five|six|seven|eight|nine|ten|\d{1,2})\s+weeks?\b/gi,
         (_m: string, word: string) => {
           const n = /^\d+$/.test(word)
             ? Number(word)
@@ -10362,7 +10372,7 @@ const Recommender = (() => {
           return `${n * 7}日以内`;
         },
       )
-      .replace(/\bwithin\s+(?:a|one|the\s+next)\s+month\b/gi, "30日以内");
+      .replace(/\b(?:within|in)\s+(?:a|one|the\s+next)\s+month\b/gi, "30日以内");
   }
 
   /* `special track` は収録の `special session` と同じ物を指す（2026-10-26 実測:

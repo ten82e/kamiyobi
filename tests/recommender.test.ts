@@ -1080,6 +1080,13 @@ describe("分野の日本語表示名と検索語 (SPEC §7)", () => {
       const oneWeek = R.searchMatcher("within a week", at);
       expect(oneWeek("paper deadline 2026年8月15日")).toBe(true);
       expect(oneWeek("paper deadline 2026年8月19日")).toBe(false);
+      const inTwo = R.searchMatcher("deadline in two weeks", at);
+      expect(inTwo("paper deadline 2026年8月19日")).toBe(true);
+      expect(inTwo("paper deadline 2026年8月30日")).toBe(false);
+      const inMonth = R.searchMatcher("deadline in a month", at);
+      expect(inMonth("paper deadline 2026年9月5日")).toBe(true);
+      expect(inMonth("paper deadline 2026年9月20日")).toBe(false);
+      expect(R.querySynonymNotes("deadline in two weeks").join(" ")).toContain("日数");
       expect(R.querySynonymNotes("deadline approaching").join(" ")).toContain("approaching");
       expect(R.querySynonymNotes("deadline approaching").join(" ")).toContain("30 日以内");
     });
@@ -1101,9 +1108,9 @@ describe("分野の日本語表示名と検索語 (SPEC §7)", () => {
        * `US` は 2 行だけだった）。 */
       const at = Date.parse("2026-08-09T00:00:00Z");
       expect(R.queryTokenGroups("US", at)[0]).toContain("アメリカ");
-      expect(
-        R.hayMatches("security conference アメリカ", "security conferences in the US"),
-      ).toBe(true);
+      expect(R.hayMatches("security conference アメリカ", "security conferences in the US")).toBe(
+        true,
+      );
       expect(R.querySynonymNotes("top security conferences in the US").join(" ")).toContain("USA");
       expect(R.queryTokenGroups("show us security", at).flat()).not.toContain("アメリカ");
       expect(R.hayMatches("security conference japan", "which conferences are in Japan")).toBe(
