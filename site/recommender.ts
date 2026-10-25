@@ -10190,6 +10190,12 @@ const Recommender = (() => {
     return "";
   }
 
+  /* `journal special issue` は 3 語に割ると、特集号の行に `journal` が無いので 0 件に
+   * なる（2026-10-26 実測）。特集号の言い方として 1 語に直す。 */
+  function collapseJournalSpecialIssue(query: string): string {
+    return query.replace(/\bjournals?[\s-]+special[\s-]+issues?\b/gi, "special issue");
+  }
+
   function collapseRankAdjective(query: string): string {
     let out = query;
     for (const word of RANK_ADJECTIVE_WORDS) {
@@ -13519,6 +13525,7 @@ const Recommender = (() => {
     if (typeof query === "string") query = collapseMethodField(query) as string;
     if (typeof query === "string") query = collapseEnglishRelativeTime(query);
     if (typeof query === "string") query = collapseRankAdjective(query);
+    if (typeof query === "string") query = collapseJournalSpecialIssue(query);
     /* `call for papers` は 3 語に割ると必ず 0 件になる（収録は `cfp` を持つ）。
      * 募集の英字語と同じ 1 語に直す（AI がこの形で聞く）。 */
     if (typeof query === "string")

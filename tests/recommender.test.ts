@@ -1041,6 +1041,31 @@ describe("分野の日本語表示名と検索語 (SPEC §7)", () => {
       expect(R.searchMatcher("GNN 2027")(rows[0])).toBe(true);
     });
 
+    it("特集号は journal special issue でも引ける", () => {
+      /* 特集号の行には `special issue` と「特集号」はあるが `journal` が無い。
+       * 3 語に割ると 0 件になるので、1 語に直す（2026-10-26 実測）。 */
+      const confs = [
+        {
+          key: "si",
+          title: "Special Issue on Secure Systems",
+          tags: ["special-issue"],
+          editions: [
+            {
+              year: 2027,
+              deadlines: [{ kind: "paper", utc: "2026-09-01T23:59:00Z" }],
+            },
+          ],
+        },
+      ];
+      const rows = R.candidateRows(confs);
+      expect(R.searchMatcher("journal special issue")(rows[0])).toBe(true);
+      expect(R.searchMatcher("journal special issues")(rows[0])).toBe(true);
+      // 特集号でない行は巻き込まない。
+      expect(
+        R.searchMatcher("journal special issue")({ ...rows[0], tags: [], hay: "journal" }),
+      ).toBe(false);
+    });
+
     it("評価の形容詞は上位の等級の条件として受ける（top security）", () => {
       /* `top security conferences` は `top` を語として要求すると 0 件、`topics` に
        * 当てると意味が違う（2026-10-26 実測）。上位の等級（CCF A・CORE A* など）の

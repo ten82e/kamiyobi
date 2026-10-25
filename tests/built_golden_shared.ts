@@ -398,6 +398,8 @@ export const SEARCH_CANON = (() => {
       // 評価の形容詞（`top`）を上位の等級の条件にする部品。
       "rankAdjectiveOf",
       "collapseRankAdjective",
+      // `journal special issue` を特集号の語に直す部品。
+      "collapseJournalSpecialIssue",
       "queryTokenGroups",
       "compoundSplitHit",
       "placeOffersOnline",
