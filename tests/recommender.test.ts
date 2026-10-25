@@ -1096,6 +1096,21 @@ describe("分野の日本語表示名と検索語 (SPEC §7)", () => {
       expect(m("paper deadline 2026年10月1日")).toBe(false);
     });
 
+    it("US は USA として探し、小文字の us は代名詞として落とす", () => {
+      /* 大文字の `US` は国名。小文字の `us` は `show us` の代名詞（2026-10-26 実測:
+       * `US` は 2 行だけだった）。 */
+      const at = Date.parse("2026-08-09T00:00:00Z");
+      expect(R.queryTokenGroups("US", at)[0]).toContain("アメリカ");
+      expect(
+        R.hayMatches("security conference アメリカ", "security conferences in the US"),
+      ).toBe(true);
+      expect(R.querySynonymNotes("top security conferences in the US").join(" ")).toContain("USA");
+      expect(R.queryTokenGroups("show us security", at).flat()).not.toContain("アメリカ");
+      expect(R.hayMatches("security conference japan", "which conferences are in Japan")).toBe(
+        true,
+      );
+    });
+
     it("場所・日付を聞く英語の語を落とす", () => {
       /* AI は `SIGCOMM 2027 location`・`where is SIGCOMM 2027` の形でも聞く。
        * 場所・日付を指す語は行の値ではないので、ほかの語があるときは絞り込みに使わない

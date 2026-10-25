@@ -6944,6 +6944,11 @@ const Recommender = (() => {
        * どちらかへ寄せず、どちらの語で探すかを言う（2026-10-26 実測: そのままでは 0 行）。 */
       const workshopOnly = /\b(?:workshops?\s+only|only\s+workshops?)\b/i.exec(打たれた検索語);
       /* `soon` はこの表の既定の「これからの 30 日間」として探す（外すと全件に化ける）。 */
+      const usWord = /\bU\.S\.A?\.?|\bUS\b/.exec(打たれた検索語);
+      if (usWord) {
+        const note = `「${usWord[0]}」は USA（アメリカ）として探しています`;
+        if (notes.indexOf(note) < 0) notes.push(note);
+      }
       const soonWord = /\b(soon|approaching|imminent)\b/i.exec(打たれた検索語);
       if (soonWord) {
         const note = `「${soonWord[1]}」は 30 日以内として探しています（画面の「締切まで」で変えられます。MCP は \`within_days\`）`;
@@ -10312,6 +10317,15 @@ const Recommender = (() => {
    * `workshop` と打つと、ワークショップを併設する本会議の行も混ざる）。日本語の
    * 「だけ」「のみ」は助詞として落とす既存の約束（40 語の検査）があるので、ここでは
    * 英語の言い方だけを受ける。 */
+  /* `US`・`U.S.`・`United States` は国名（USA）。小文字の `us` は代名詞なので
+   * 機能語として落とす（大文字の `US` だけ国名に直す）。 */
+  function collapseUsCountry(query: string): string {
+    return query
+      .replace(/\bU\.S\.A?\.?/gi, "アメリカ")
+      .replace(/\bUS\b/g, "アメリカ")
+      .replace(/\bUnited\s+States(?:\s+of\s+America)?\b/gi, "アメリカ");
+  }
+
   /* `soon` は幅の語。この表の既定の「これからの 30 日間」に合わせる（2026-10-26 実測:
    * `deadline soon` は 0 行だった）。 */
   function collapseSoonWindow(query: string): string {
@@ -10455,7 +10469,10 @@ const Recommender = (() => {
   }
 
   function expandRelativeMonths(query: unknown, nowMs: number): string {
-    const normalized = collapseEnglishRelativeTime(searchNormalize(query));
+    /* 大文字の `US` は国名。`searchNormalize` が小文字にすると代名詞の `us` と
+     * 区別できなくなるので、正規化の前に直す（2026-10-26 実測: `US` が 2 行）。 */
+    const 國名 = typeof query === "string" ? collapseUsCountry(query) : query;
+    const normalized = collapseEnglishRelativeTime(searchNormalize(國名));
     if (!normalized) return normalized;
     let changed = false;
     const tokens: string[] = [];
@@ -13799,6 +13816,7 @@ const Recommender = (() => {
     if (typeof query === "string") query = collapseSpecialTrack(query);
     if (typeof query === "string") query = collapseSoonWindow(query);
     if (typeof query === "string") query = collapseEnglishWeeks(query);
+    if (typeof query === "string") query = collapseUsCountry(query);
     if (typeof query === "string") query = collapseQuestionPhrases(query);
     if (typeof query === "string") query = collapseEnglishMonths(query);
     /* `call for papers` は 3 語に割ると必ず 0 件になる（収録は `cfp` を持つ）。
@@ -14358,6 +14376,11 @@ const Recommender = (() => {
     "please",
     "me",
     "looking",
+    // 代名詞・be 動詞（`show us`・`which conferences are`）。
+    "us",
+    "are",
+    "were",
+    "was",
   ];
   function withoutFunctionGroups(groups: string[][]): string[][] {
     if (groups.length < 2) return groups;

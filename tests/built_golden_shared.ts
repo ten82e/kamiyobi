@@ -420,6 +420,7 @@ export const SEARCH_CANON = (() => {
       "collapseEnglishMonths",
       "collapseSoonWindow",
       "collapseEnglishWeeks",
+      "collapseUsCountry",
       "isWorkshopConference",
       "queryTokenGroups",
       "compoundSplitHit",
