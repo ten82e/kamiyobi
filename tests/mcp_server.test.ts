@@ -1706,6 +1706,13 @@ it("「と」「や」で繋いだ打ち方に、どちらかだけで打つ案�
   expect(欄と, "欄の名前と接続の案内を重ねた").not.toContain("繋いで打つと");
 });
 
+it("venue_info も、対象外の会議なら方針を言う", async () => {
+  const text = await call("venue_info", { name: "PLDI", scope: "all" });
+  expect(text).toContain("収録に在りません");
+  expect(text).toContain("プログラミング言語・形式手法系");
+  expect(text).toContain("対象外");
+});
+
 it("collection_stats のワークショップ数は、画面の収録状況と同じ数え方", async () => {
   /* タグだけだと 47 件、画面（タグか会議名）だと 90 件で食い違っていた。 */
   const snap = JSON.parse(readFileSync(join(REPO_ROOT, "data", "snapshot.json"), "utf8")) as {

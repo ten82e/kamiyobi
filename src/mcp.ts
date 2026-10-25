@@ -2444,8 +2444,10 @@ function venueInfo(
         ? { retry_arguments: { key: String(略稱で当たる[0].key), scope: "all" } }
         : {}),
     });
+    const 語の案内 = String(Recommender.uiWordNoteJa(打たれた語, false) ?? "").trim();
     return [
       `その会議（${key ? "key" : "name"}: \`${打たれた語}\`）は収録に在りません（収録 ${收錄の會議.length} 会議）。`,
+      ...(語の案内 ? [語の案内] : []),
       ...(略稱で当たる.length > 0
         ? [
             `\`key\` は小文字の識別子です。**略称で引く時は \`name\` に「${大文字の問}」を渡してください**` +
