@@ -8777,6 +8777,13 @@ const Recommender = (() => {
       for (let k = 2; k <= chars.length - 2; k++) {
         const left = chars.slice(0, k).join("");
         const right = chars.slice(k).join("");
+        /* 切れ端が英語の前置詞になる割り方はしない（`registraton` → `registrat on` は
+         * `on` を外す規則で元の語と同じ行数になり、綴りの見当を追い越す）。 */
+        if (
+          FUNCTION_WORDS_EN.indexOf(kanaFold(left)) >= 0 ||
+          FUNCTION_WORDS_EN.indexOf(kanaFold(right)) >= 0
+        )
+          continue;
         if (countOf(left) <= 0) continue;
         /* 割った 2 語を別々に打った人数ではなく、**両方を含む行**の数を数える
          * （`学生 論文` と打ち直した人に見える件数なので、それで無いと噓になる）。 */
@@ -13864,6 +13871,25 @@ const Recommender = (() => {
    * 「日本で開かれる国際会議」「日本で行われる国際会議」は 0 件で、「開かれる国際会議」を
    * 1 語として「収録に見当たりません」と案内していた）。 */
   const FUNCTION_WORDS_JA = ["開催", "実施", "開かれ", "行われ", "催され", "開く", "行う", "催す"];
+  /* 英語の冠詞・前置詞。AI は `workshop on HPC`・`deadline for SIGCOMM` の形で聞く。
+   * これらを語として要求すると、`on` が `online` に当たるなど**意味と違う条件**で絞られる
+   * （2026-10-26 実測: `workshop on HPC` 48 行 / `workshop HPC` 69 行）。2 語以上のときだけ、
+   * 日本語の機能語と同じ扱いで落とす（`on` だけの検索は今までどおり）。 */
+  const FUNCTION_WORDS_EN = [
+    "a",
+    "an",
+    "the",
+    "of",
+    "for",
+    "in",
+    "on",
+    "at",
+    "to",
+    "by",
+    "with",
+    "from",
+    "about",
+  ];
   function withoutFunctionGroups(groups: string[][]): string[][] {
     if (groups.length < 2) return groups;
     const 語々 = FUNCTION_WORDS_JA.map((word) => kanaFold(word));
@@ -13875,6 +13901,7 @@ const Recommender = (() => {
       if (group.length !== 1) return false;
       const 語 = kanaFold(group[0]);
       if (語々.indexOf(語) >= 0) return true;
+      if (FUNCTION_WORDS_EN.indexOf(語) >= 0) return true;
 
       if (語.length > 16) return false;
       return 語々.some((w) => 語.startsWith(w)) && 名々.some((n) => 語.endsWith(n));

@@ -999,6 +999,18 @@ describe("分野の日本語表示名と検索語 (SPEC §7)", () => {
       expect(keys("iccvm 2027")).toEqual(["cvm"]);
     });
 
+    it("英語の前置詞・冠詞は、ほかの語があるときに絞り込みから外す", () => {
+      /* `workshop on HPC` の `on` が `online` に当たり、意味と違う 48 行に絞られていた
+       * （2026-10-26 実測）。日本語の「開催」などと同じ扱いにする。 */
+      const hay = "hpc workshop 2027 paper deadline";
+      expect(R.hayMatches(hay, "workshop on HPC")).toBe(true);
+      expect(R.hayMatches(hay, "deadline for the workshop")).toBe(true);
+      expect(R.hayMatches(hay, "workshop in 2027")).toBe(true);
+      // 前置詞だけの検索は今までどおり語として扱う（落とすと全件に化ける）。
+      expect(R.hayMatches("workshop on hpc", "on")).toBe(true);
+      expect(R.hayMatches("hpc workshop", "on")).toBe(false);
+    });
+
     it("英字の締切の言い方（deadline・CFP・call for papers）で引ける", () => {
       /* AI は `SIGCOMM 2027 deadline` のような形で聞く。収録の締切欄は日本語が主で、
        * 英字はラベルの `submission` だけだったので、`deadline` を要求すると 0 件になった

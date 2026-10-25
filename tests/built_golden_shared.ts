@@ -123,6 +123,7 @@ export const SEARCH_CANON = (() => {
     ["寄せ表の和名の鍵cache", /let 寄せ表の和名の鍵cache[^\n]*;/],
 
     ["FUNCTION_WORDS_JA", /const FUNCTION_WORDS_JA = \[[^\]]*\];/],
+    ["FUNCTION_WORDS_EN", /const FUNCTION_WORDS_EN = \[[^\]]*\];/],
     ["TOPIC_ABBREVIATIONS_EN", /const TOPIC_ABBREVIATIONS_EN[\s\S]*?\];/],
 
     ["時刻の後ろのゾーン語Ja", /const 時刻の後ろのゾーン語Ja = new Set\([\s\S]*?\]\);/],
