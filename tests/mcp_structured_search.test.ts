@@ -103,6 +103,11 @@ it("時刻未確認と推定の情報を保持し、日本時間の確定時刻�
     uncertainty: { earliest_utc: row.dl.earliest_utc, latest_utc: row.dl.latest_utc },
   });
   expect(structuredDeadline({ ...row, est: true }, now).estimate).toEqual(row.ed.estimate);
+  // ワークショップかを機械可読で持つ（判定は画面の「ワークショップのみ」と同じ）。
+  expect(structuredDeadline(row, now).workshop).toBe(false);
+  expect(
+    structuredDeadline({ ...row, conf: { ...row.conf, title: "Workshop on X" } }, now).workshop,
+  ).toBe(true);
   const exact = structuredDeadline(
     {
       ...row,

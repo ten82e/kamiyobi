@@ -45,7 +45,7 @@ const SERVER_INSTRUCTIONS_JA = [
   "- `scope` は `screen`（画面の初期一覧。期間は `catalog.json` の `window` に記載。ファイルがある時だけ）と `all`（**収録の元データ** `data/snapshot.json`）です。省いたときは `search_deadlines`・`explain_word` は `screen`、`list_upcoming`・`venue_info` は `all` です。**公開している `data.json` は重複をまとめた後**なので、`all` の行数はそれより多くなります（AI が件数を画面と比べるときは、この違いを見てください）。0 件のときは `scope_comparison` に収録全体での件数が出ます。",
   "- 会期は締切ではありません。購読カレンダー（`deadlines.ics`）は締切だけを載せ、`list_upcoming` は締切と会期の両方を返します。",
   "- 締切は動きます。投稿の判断の前に、行の公式ページで最新の募集要項を確かめるよう案内してください。",
-  "- 検索語は日本語・英語のどちらでも書けます（例: `SIGCOMM 2027 deadline`・`CFP SIGCOMM`・`deadlines next month`・`graph neural networks`）。英語の冠詞・前置詞は、ほかの語があるときは絞り込みに使いません。手法の名は、その手法が載る分野の語（`graph neural networks` → `machine learning`）に直して探し、件数欄でそのことを言います。0 件のときは、語を 1 つ外す候補も返します。ワークショップだけを見るなら `workshop: true` を渡します。",
+  "- 検索語は日本語・英語のどちらでも書けます（例: `SIGCOMM 2027 deadline`・`CFP SIGCOMM`・`deadlines next month`・`graph neural networks`）。英語の冠詞・前置詞は、ほかの語があるときは絞り込みに使いません。手法の名は、その手法が載る分野の語（`graph neural networks` → `machine learning`）に直して探し、件数欄でそのことを言います。0 件のときは、語を 1 つ外す候補も返します。`search_deadlines` と `list_upcoming` は `workshop: true` でワークショップだけに絞れます（構造化結果の締切行にも `workshop` が入ります）。",
   "",
   "道具: 締切を引く `search_deadlines` / 直近の締切と会期をまとめる `list_upcoming` / 会議を名指して開催回と締切を見る `venue_info` / 語が収録に当たるか調べる `explain_word` / 収録数とデータ源を見る `collection_stats` / 論文の題名と概要から投稿先を探す `search_venues`・`recommend_venues`。",
   "",
@@ -1311,6 +1311,9 @@ export function structuredDeadline(r: Row, now: number): Record<string, unknown>
      * 別物 – 日本で開かれる國際会議は國內ではない。日本人研究者が「國內の研究会」を
      * 聞いた時に AI が見分けを付けられるやうに、機械可読でも持つ。 */
     domestic: Recommender.isDomesticTag(r.tags),
+    /* ワークショップか（畫面の「ワークショップのみ」と同じ判定）。締切の行を AI が
+     * 仕分けできるように、機械可読でも持つ。 */
+    workshop: isWorkshopFieldsMCP(r.tags, r.conf.title, r.conf.full_name),
     rank: r.conf.rank ?? null,
     /* 配付のカレンダーの UID。**同じ締切を、AI がカレンダーの予定として名指せる**ように
      * する（2026-10-17 まで、行からカレンダーの予定へ渡る手掛かりが無かった）。 */
@@ -1935,7 +1938,7 @@ function listUpcoming(
     ...hit.map((row) => ({
       at: 表示の刻み(row),
       row,
-      item: { type: "deadline", workshop: isWorkshopRowMCP(row), ...structuredDeadline(row, now) },
+      item: { type: "deadline", ...structuredDeadline(row, now) },
     })),
     ...events.map((event) => ({
       at: event.開始,
