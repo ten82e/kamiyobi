@@ -6927,6 +6927,15 @@ const Recommender = (() => {
           "投稿先を探すなら、論文の題名・概要を `recommend_venues`（画面の『投稿先を探す』）に渡してください";
         if (notes.indexOf(note) < 0) notes.push(note);
       }
+      /* 「おすすめの会場は」も論文モードへ渡す（締切の語ではない）。 */
+      if (
+        /\b(?:recommend|suggest)\b/i.test(打たれた検索語) &&
+        /\b(?:venues?|conferences?|where)\b/i.test(打たれた検索語)
+      ) {
+        const note =
+          "投稿先の候補は、論文の題名・概要を `recommend_venues`（画面の『投稿先を探す』）に渡してください";
+        if (notes.indexOf(note) < 0) notes.push(note);
+      }
 
       if (workshopOnly) {
         const note = `「${workshopOnly[0]}」はワークショップの行だけに絞っています`;
@@ -10223,6 +10232,7 @@ const Recommender = (() => {
     [/\bthis\s+week\b/gi, "今週"],
     [/\blast\s+week\b/gi, "先週"],
     [/\bthis\s+year\b/gi, "今年"],
+    [/\bnext\s+year\b/gi, "来年"],
     [/\bwithin\s+([0-9]{1,3})\s+days?\b/gi, "$1日以内"],
     [/\bin\s+the\s+next\s+([0-9]{1,3})\s+days?\b/gi, "$1日以内"],
     [/\bnext\s+([0-9]{1,3})\s+days?\b/gi, "$1日以内"],
@@ -14193,6 +14203,27 @@ const Recommender = (() => {
     "when",
     "where",
     "timezone",
+    // 質問・依頼の言い方（`find`・`show`・`list`・`which` など）。
+    "find",
+    "show",
+    "list",
+    "any",
+    "accept",
+    "accepts",
+    "accepted",
+    "colocated",
+    "co-located",
+    "recommend",
+    "suggest",
+    "what",
+    "which",
+    "who",
+    "how",
+    "want",
+    "need",
+    "please",
+    "me",
+    "looking",
   ];
   function withoutFunctionGroups(groups: string[][]): string[][] {
     if (groups.length < 2) return groups;

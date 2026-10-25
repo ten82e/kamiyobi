@@ -1041,6 +1041,19 @@ describe("分野の日本語表示名と検索語 (SPEC §7)", () => {
       expect(R.searchMatcher("GNN 2027")(rows[0])).toBe(true);
     });
 
+    it("英語の依頼文の語を落とす（find・show・any など）", () => {
+      /* AI は `Find systems conferences with deadlines in Europe` のような文でも聞く。
+       * 依頼の語は絞り込みに使わない（2026-10-26 実測: そのままでは 0 行）。 */
+      const hay = "systems conference deadline italy イタリア";
+      expect(R.hayMatches(hay, "Find systems conferences with deadlines in Europe")).toBe(true);
+      expect(R.hayMatches("security conference", "Show security conferences")).toBe(true);
+      expect(R.hayMatches("hpc conference", "Any HPC conference")).toBe(true);
+      expect(R.expandRelativeMonths("next year", Date.parse("2026-08-09T00:00:00Z"))).toBe("来年");
+      expect(R.querySynonymNotes("Recommend venues for a paper").join(" ")).toContain(
+        "recommend_venues",
+      );
+    });
+
     it("場所・日付を聞く英語の語を落とす", () => {
       /* AI は `SIGCOMM 2027 location`・`where is SIGCOMM 2027` の形でも聞く。
        * 場所・日付を指す語は行の値ではないので、ほかの語があるときは絞り込みに使わない
