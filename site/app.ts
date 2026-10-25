@@ -4825,6 +4825,15 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       dj.textContent = Recommender.domesticTagLabelJa(r.tags);
       tags.appendChild(dj);
     }
+    /* ワークショップの札。絞り込みを掛けていなくても、どの行がワークショップか分かる
+     * ようにする（「ワークショップのみ」で絞れます）。 */
+    if (rowIsWorkshop(r)) {
+      const ws = document.createElement("span");
+      ws.className = "tag";
+      ws.textContent = "ワークショップ";
+      ws.title = "会議名またはタグがワークショップの行です（「ワークショップのみ」で絞れます）";
+      tags.appendChild(ws);
+    }
     if (tags.childNodes.length) {
       c2.appendChild(tags);
     }

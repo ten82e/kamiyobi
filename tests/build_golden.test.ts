@@ -4867,6 +4867,7 @@ it("unknown 会期・開催地・ランクを「未確認」として出す（SP
     jsFunction(app, "rowDateOnlyState"),
     jsFunction(app, "rowIsPast"),
     jsFunction(app, "rowIsFuture"),
+    jsFunction(app, "rowIsWorkshop"),
     // 「あと N 日」も正本から（ダミー値で通す検査にしない）。
     jsFunction(app, "remain"),
     "const DAY = 86400000;",
