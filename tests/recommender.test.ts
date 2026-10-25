@@ -1041,6 +1041,39 @@ describe("分野の日本語表示名と検索語 (SPEC §7)", () => {
       expect(R.searchMatcher("GNN 2027")(rows[0])).toBe(true);
     });
 
+    it("部分地域の名前も、その地域の国で探す", () => {
+      /* `Scandinavia`・`Southeast Asia`・`Latin America` は、そのままでは 0 行
+       * （2026-10-26 実測）。収録の国名へ広げる。 */
+      const confs = [
+        ["se", "Stockholm, Sweden"],
+        ["sg", "Singapore"],
+        ["in", "Mumbai, India"],
+        ["br", "Sao Paulo, Brazil"],
+        ["jp", "Tokyo, Japan"],
+        ["ma", "Casablanca, Morocco"],
+      ].map(([key, place]) => ({
+        key,
+        title: `Conference ${key}`,
+        editions: [
+          { year: 2027, place, deadlines: [{ kind: "paper", utc: "2026-09-01T23:59:00Z" }] },
+        ],
+      }));
+      const rows = R.candidateRows(confs);
+      const keys = (q: string): string[] =>
+        rows
+          .filter((r: any) => R.searchMatcher(q)(r))
+          .map((r: any) => r.conf.key)
+          .sort();
+      expect(keys("Scandinavia")).toEqual(["se"]);
+      expect(keys("Nordic")).toEqual(["se"]);
+      expect(keys("Southeast Asia")).toEqual(["sg"]);
+      expect(keys("South Asia")).toEqual(["in"]);
+      expect(keys("Latin America")).toEqual(["br"]);
+      expect(keys("East Asia")).toEqual(["jp"]);
+      expect(keys("MENA")).toEqual(["ma"]);
+      expect(R.querySynonymNotes("Scandinavia").join(" ")).toContain("地域まとめ");
+    });
+
     it("英語の地域名も日本語の地域まとめと同じ行に届く", () => {
       /* `Europe` は 301 行、`ヨーロッパ` は 1,448 行だった（2026-10-26 実測）。
        * 英語の地域名も日本語の地域まとめと同じ構成員へ広げる。 */

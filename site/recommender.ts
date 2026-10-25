@@ -6938,9 +6938,10 @@ const Recommender = (() => {
         if (notes.indexOf(note) < 0) notes.push(note);
       }
       /* 2 語の地域名は日本語の地域まとめに直して探すので、そのことを言う。 */
-      const regionPhrase = /\b(north america|south america|central america|middle east)\b/i.exec(
-        打たれた検索語,
-      );
+      const regionPhrase =
+        /\b(north america|south america|central america|middle east|south[\s-]?east asia|east asia|south asia|latin america|scandinavia|nordics?)\b/i.exec(
+          打たれた検索語,
+        );
       if (regionPhrase) {
         const label =
           {
@@ -6948,6 +6949,14 @@ const Recommender = (() => {
             "south america": "南米",
             "central america": "中米",
             "middle east": "中東",
+            "southeast asia": "東南アジア",
+            "south-east asia": "東南アジア",
+            "east asia": "東アジア",
+            "south asia": "南アジア",
+            "latin america": "ラテンアメリカ",
+            scandinavia: "北欧",
+            nordic: "北欧",
+            nordics: "北欧",
           }[regionPhrase[1].toLowerCase()] || regionPhrase[1];
         const note = `「${regionPhrase[0]}」は地域まとめ（${label}）で探しています`;
         if (notes.indexOf(note) < 0) notes.push(note);
@@ -10277,7 +10286,13 @@ const Recommender = (() => {
       .replace(/\bnorth america\b/gi, "北米")
       .replace(/\bsouth america\b/gi, "南米")
       .replace(/\bcentral america\b/gi, "中米")
-      .replace(/\bmiddle east\b/gi, "中東");
+      .replace(/\bmiddle east\b/gi, "中東")
+      .replace(/\bsouth[\s-]?east asia\b/gi, "東南アジア")
+      .replace(/\beast asia\b/gi, "東アジア")
+      .replace(/\bsouth asia\b/gi, "南アジア")
+      .replace(/\blatin america\b/gi, "ラテンアメリカ")
+      .replace(/\bscandinavia\b/gi, "北欧")
+      .replace(/\bnordics?\b/gi, "北欧");
   }
 
   function collapseJournalSpecialIssue(query: string): string {
@@ -13335,6 +13350,13 @@ const Recommender = (() => {
   const OCEANIA_JA = "オーストラリア,ニュージーランド";
   const MIDDLE_EAST_JA = "イスラエル,アラブ首長国連邦,トルコ";
   const AFRICA_JA = "モロッコ,南アフリカ,ルワンダ,ガーナ,ナイジェリア";
+  /* 部分地域。構成員は収録の開催地に現れる国だけ（実測 2026-10-26）。 */
+  const NORDIC_JA = "スウェーデン,ノルウェー,デンマーク,フィンランド,アイスランド";
+  const SOUTHEAST_ASIA_JA = "シンガポール,タイ,ベトナム,マレーシア,インドネシア";
+  const SOUTH_ASIA_JA = "インド";
+  const EAST_ASIA_JA = "中国,韓国,台湾,香港,日本";
+  const LATIN_AMERICA_JA = `${CENTRAL_AMERICA_JA},${SOUTH_AMERICA_JA}`;
+  const MENA_JA = `${MIDDLE_EAST_JA},モロッコ`;
 
   const OVERSEAS_JA = `${EUROPE_JA},${ASIA_JA},${NORTH_AMERICA_JA},${CENTRAL_AMERICA_JA},${SOUTH_AMERICA_JA},${MIDDLE_EAST_JA},${AFRICA_JA},${OCEANIA_JA}`;
   const CONTINENT_READINGS: string[][] = [
@@ -13346,6 +13368,12 @@ const Recommender = (() => {
      * `Europe` 301 行 / `ヨーロッパ` 1,448 行、`Asia` 203 行 / `アジア` 761 行）。 */
     ["europe", "europe", EUROPE_JA],
     ["asia", "asia", ASIA_JA],
+    ["北欧", "ほくおう", NORDIC_JA],
+    ["東南アジア", "とうなんあじあ", SOUTHEAST_ASIA_JA],
+    ["東アジア", "ひがしあじあ", EAST_ASIA_JA],
+    ["南アジア", "みなみあじあ", SOUTH_ASIA_JA],
+    ["ラテンアメリカ", "らてんあめりか", LATIN_AMERICA_JA],
+    ["mena", "mena", MENA_JA],
     ["africa", "africa", AFRICA_JA],
     ["oceania", "oceania", OCEANIA_JA],
     ["北米", "ほくべい", NORTH_AMERICA_JA],

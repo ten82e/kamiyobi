@@ -182,6 +182,12 @@ export const SEARCH_CANON = (() => {
     ["OCEANIA_JA", /const OCEANIA_JA =[\s\S]*?;/],
     ["MIDDLE_EAST_JA", /const MIDDLE_EAST_JA =[\s\S]*?;/],
     ["AFRICA_JA", /const AFRICA_JA =[\s\S]*?;/],
+    ["NORDIC_JA", /const NORDIC_JA = [^\n]*;/],
+    ["SOUTHEAST_ASIA_JA", /const SOUTHEAST_ASIA_JA = [^\n]*;/],
+    ["SOUTH_ASIA_JA", /const SOUTH_ASIA_JA = [^\n]*;/],
+    ["EAST_ASIA_JA", /const EAST_ASIA_JA = [^\n]*;/],
+    ["LATIN_AMERICA_JA", /const LATIN_AMERICA_JA = [^\n]*;/],
+    ["MENA_JA", /const MENA_JA = [^\n]*;/],
     // 「海外」は地域まとめの構成員から導く（国を並べ直さない – 第 335 回）ので、先に要る。
     ["OVERSEAS_JA", /const OVERSEAS_JA =[\s\S]*?;/],
     ["CONTINENT_READINGS", /const CONTINENT_READINGS[\s\S]*?\];/],
