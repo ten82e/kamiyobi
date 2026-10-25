@@ -5130,6 +5130,7 @@ it("のぞいた行数を件数欄で説明する（SPEC §7）", () => {
     online: 0,
     onlinePlaceUnknown: 0,
     venue: 0,
+    workshop: 0,
     window: 0,
     // 評価でしぼるのは選択欄を動かしたときだけなので、既定では内訳に立たない。
     rank: 0,

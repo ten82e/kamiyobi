@@ -172,6 +172,8 @@ interface UiState {
   domestic: boolean;
   /** 会場表記にオンライン参加の記述がある行だけを出す（対面の判定はしない）。 */
   online: boolean;
+  /** ワークショップの行だけを出す（会議名の workshop・タグ workshop）。 */
+  workshop: boolean;
   past: boolean;
   /** 推薦の候補から、受付状況が「締切済み」と確認できた会議を除く（URL では `open=1`）。 */
   openOnly: boolean;
@@ -835,6 +837,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     est: false,
     domestic: false,
     online: false,
+    workshop: false,
     past: false,
     openOnly: false,
     order: "fit",
@@ -862,6 +865,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       est: boolean;
       domestic: boolean;
       online: boolean;
+      workshop: boolean;
       past: boolean;
     },
     kindLabel: (k: string) => string,
@@ -884,6 +888,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     if (s.est) out.push("推定締切を含める");
     if (s.domestic) out.push("国内研究会・国内シンポジウムのみ");
     if (s.online) out.push("オンライン参加可のみ");
+    if (s.workshop) out.push("ワークショップのみ");
     if (s.past) out.push("過去の締切も表示");
     // 何も絞っていないときは「全件」と書く。空欄だと、絞ったのに漏れたのか読めない。
     const condition = out.length ? out.join(" ／ ") : "絞り込みなし（収録全体の一覧）";
@@ -927,6 +932,12 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       ":" +
       pad(d.getUTCMinutes())
     );
+  }
+
+  /* ワークショップの行か（画面の「ワークショップのみ」と MCP の同じ条件）。 */
+  function rowIsWorkshop(r: AppRow): boolean {
+    if ((r.tags || []).indexOf("workshop") >= 0) return true;
+    return /workshop/i.test(`${r.conf.title || ""} ${r.conf.full_name || ""}`);
   }
 
   function rowDateOnlyState(r: AppRow | DrawerRow, now: number) {
@@ -2564,6 +2575,8 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     // 「オンライン参加可のみ」で落ちた行数と、そのうち開催地自体が未確認の行数。
     online: 0,
     onlinePlaceUnknown: 0,
+    // 「ワークショップのみ」で落ちた行数。
+    workshop: 0,
     // 「締切まで N 日以内」の窓（上限・下限の両方）で落ちた行数。
     window: 0,
     // 「評価でしぼる」で落ちた行数（選択した等級を持たない行）。
@@ -2607,6 +2620,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     domestic: number;
     online: number;
     onlinePlaceUnknown: number;
+    workshop: number;
     window: number;
     rank: number;
     cats: number;
@@ -2944,6 +2958,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     if (current.cats.length) add("cats", "分野の指定を外す", { cats: [] });
     if (current.domestic) add("domestic", "国内のみの条件を外す", { domestic: false });
     if (current.online) add("online", "オンライン参加可の条件を外す", { online: false });
+    if (current.workshop) add("workshop", "ワークショップのみの条件を外す", { workshop: false });
     if (current.kind) add("kind", "概要・論文の投稿締切を表示", { kind: "" });
     if (current.venue) add("venue", "会議の絞り込みを外す", { venue: "" });
     const results = options
@@ -2958,6 +2973,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         cats: [],
         domestic: false,
         online: false,
+        workshop: false,
         kind: "",
         venue: "",
       };
@@ -3153,6 +3169,10 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         if (!inRecommend) hiddenCounts.domestic += 1;
         return false;
       }
+      if (!inRecommend && state.workshop && !rowIsWorkshop(r)) {
+        hiddenCounts.workshop += 1;
+        return false;
+      }
       // 開催形式は会場表記に書かれた記述だけで絞る（書かれていないことから対面を断定しない）。
       if (!inRecommend && state.online && !Recommender.placeOffersOnline(r.ed.place)) {
         // チェックを付けた人にとって「出ない理由」は 2 種類ある。
@@ -3184,6 +3204,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       domestic: 0,
       online: 0,
       onlinePlaceUnknown: 0,
+      workshop: 0,
       window: 0,
       rank: 0,
       cats: 0,
@@ -3848,6 +3869,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     cats: number;
     domestic: boolean;
     online: boolean;
+    workshop: boolean;
     rank: string;
     kind: string;
     est: boolean;
@@ -4304,6 +4326,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     cats: string[];
     domestic: boolean;
     online: boolean;
+    workshop: boolean;
     rank?: string;
     /* 会議の絞り込み（`?venue=`）。掛けないと、1 会場の一覧の下に別の会議の会期が並ぶ
      * （2026-10-24 実測: `?venue=sigmod` で 129 件のまま ACML・APPT などが出ていた）。 */
@@ -4333,6 +4356,12 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         if (searchQuery.trim() && !meetsQuery(m)) return false;
         if (filter.domestic && m.tags.indexOf("domestic-jp") < 0) return false;
         if (filter.online && !Recommender.placeOffersOnline(m.place)) return false;
+        if (
+          filter.workshop &&
+          (m.tags || []).indexOf("workshop") < 0 &&
+          !/workshop/i.test(String(m.name || ""))
+        )
+          return false;
         if (filter.cats.length && !filter.cats.some((c) => m.cats.indexOf(c) >= 0)) return false;
         if (m.eventDatePrecision === "not-announced") return !Number.isFinite(limit);
         const segments = m.eventSegments?.length
@@ -4449,6 +4478,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     cats: number;
     domestic: boolean;
     online: boolean;
+    workshop: boolean;
     rank: string;
     kind: string;
     est: boolean;
@@ -4459,6 +4489,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         filter.cats > 0 ||
         filter.domestic ||
         filter.online ||
+        filter.workshop ||
         (filter.rank && filter.rank !== "all" && filter.rank !== "") ||
         // 種別だけを掛けた状態で 0 件になった人に「外せる条件はありません」と言わない。
         filter.kind ||
@@ -5608,6 +5639,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         state.cats.length ||
         state.domestic ||
         state.online ||
+        state.workshop ||
         state.est ||
         state.past ||
         (state.win && state.win !== "all"),
@@ -5670,6 +5702,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     for (const [key, label] of [
       ["domestic", "国内研究会・国内シンポジウム"],
       ["online", "オンライン参加可"],
+      ["workshop", "ワークショップのみ"],
       ["est", "推定締切を含める"],
       ["past", "過去の締切も表示"],
     ] as const) {
@@ -5759,6 +5792,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
             cats: state.cats,
             domestic: state.domestic,
             online: state.online,
+            workshop: state.workshop,
             rank: state.rank,
             venue: state.venue,
           });
@@ -5802,6 +5836,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
             : `オンライン参加の記載がない ${countJa(hidden.online)} 件`,
         );
       }
+      if (hidden.workshop) parts.push(`ワークショップ以外 ${countJa(hidden.workshop)} 件`);
       if (parts.length) cnt += ` ｜ のぞく: ${parts.join("・")}`;
       /* 論文を入れているときは、その論文に合う行が何行あるかも書く（行ごとの札だけでは、
        * 一覧のどこに何行あるかは分からない）。 */
@@ -5963,6 +5998,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
             cats: state.cats.length,
             domestic: state.domestic,
             online: state.online,
+            workshop: state.workshop,
             rank: state.rank,
             kind: state.kind,
             est: state.est,
@@ -6402,18 +6438,22 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     const estRaw = p.get("est");
     const domesticRaw = p.get("domestic");
     const onlineRaw = p.get("online");
+    const workshopRaw = p.get("workshop");
     const pastRaw = p.get("past");
     const estFlag = urlFlagJa(estRaw);
     const domesticFlag = urlFlagJa(domesticRaw);
     const onlineFlag = urlFlagJa(onlineRaw);
+    const workshopFlag = urlFlagJa(workshopRaw);
     const pastFlag = urlFlagJa(pastRaw);
     if (!estFlag.readable) flagNoticeJa("推定締切を含める", estRaw);
     if (!domesticFlag.readable) flagNoticeJa("国内研究会・国内シンポジウムのみ", domesticRaw);
     if (!onlineFlag.readable) flagNoticeJa("オンライン参加可のみ", onlineRaw);
+    if (!workshopFlag.readable) flagNoticeJa("ワークショップのみ", workshopRaw);
     if (!pastFlag.readable) flagNoticeJa("過去の締切も表示", pastRaw);
     state.est = estFlag.on;
     state.domestic = domesticFlag.on;
     state.online = onlineFlag.on;
+    state.workshop = workshopFlag.on;
     state.past = pastFlag.on;
     /* 推薦の候補から締切が過ぎた会議を除く（任意）。締切一覧の「過去の締切も表示」とは
      * 別の条件 – あちらは過ぎた行を出す側で、こちらは候補から外す側。 */
@@ -6486,6 +6526,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     if (state.est) p.set("est", "1");
     if (state.domestic) p.set("domestic", "1");
     if (state.online) p.set("online", "1");
+    if (state.workshop) p.set("workshop", "1");
     if (state.past) p.set("past", "1");
     if (state.openOnly) p.set("open", "1");
     if (state.order === "deadline") p.set("order", "deadline");
@@ -6527,6 +6568,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     inputElement("est").checked = state.est;
     inputElement("domestic").checked = state.domestic;
     inputElement("online").checked = state.online;
+    inputElement("workshop").checked = state.workshop;
     inputElement("past").checked = state.past;
     inputElement("openOnly").checked = state.openOnly;
     valueElement("recOrder").value = state.order;
@@ -6550,6 +6592,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     state.est = inputElement("est").checked;
     state.domestic = inputElement("domestic").checked;
     state.online = inputElement("online").checked;
+    state.workshop = inputElement("workshop").checked;
     state.past = inputElement("past").checked;
     state.openOnly = inputElement("openOnly").checked;
     state.order = valueElement("recOrder").value === "deadline" ? "deadline" : "fit";
@@ -7192,6 +7235,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     "est",
     "domestic",
     "online",
+    "workshop",
     "past",
     "openOnly",
     "recOrder",
@@ -7229,6 +7273,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       est: false,
       domestic: false,
       online: false,
+      workshop: false,
       past,
       /* 候補が 0 件になった原因そのものなので、まとめて外す側で外す。 */
       openOnly: false,
@@ -7783,6 +7828,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       est: false,
       domestic: false,
       online: false,
+      workshop: false,
       past: false,
       openOnly: false,
       order: "fit",

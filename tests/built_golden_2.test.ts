@@ -603,6 +603,46 @@ it("「オンライン参加可のみ」で出ない理由を 2 通りに分け�
   expect(dd).toContain("オンライン参加が無いのだと誤解しないでください");
 });
 
+it("「ワークショップのみ」で本会議を外して数える（SPEC §7）", () => {
+  /* 会議名に workshop を持つ行と、タグ workshop の行だけを出す。ワークショップを
+   * 併設する本会議（名前に workshop が無い）は外し、外した件数を件数欄に出す。 */
+  const filterSrc = jsFunction(siteRuntime(), "filter");
+  const script = [
+    `const countJa = (${jsFunction(siteRuntime(), "countJa")});`,
+    "const DAY = 86400000;",
+    `const FILTER = ${JSON.stringify(filterSrc)};`,
+    'const now = Date.parse("2026-08-10T00:00:00Z");',
+    "class FakeDate extends Date { static now() { return now; } }",
+    "function row(key, title, tags) {",
+    "  return { kind: 'paper', est: false, cats: ['hpc'], rankPairs: [], tags: tags,",
+    "    t: now + DAY, tLast: now + DAY, ed: { place: '', deadlines: [] },",
+    "    conf: { key: key, title: title, full_name: title } };",
+    "}",
+    "const rows = [",
+    "  row('by-name', 'Workshop on HPC', []),",
+    "  row('by-tag', 'HOTSEC', ['workshop']),",
+    "  row('main', 'Conference on HPC', []),",
+    "];",
+    FILTER_RUNTIME_STUBS,
+    "const run = (workshop) => new Function('Date', 'DAY', 'rows', 'state', 'sortAsc', 'sortKey',",
+    "  'return (' + FILTER + ')')(FakeDate, DAY, rows,",
+    "  { q: '', cats: [], kind: '', rank: '', win: 'all', est: false, workshop: workshop }, true, 'rem');",
+    "const all = run(false)().length;",
+    "const shown = run(true)().map((r) => r.conf.key).sort();",
+    "console.log(JSON.stringify({ all, shown, hidden: hiddenCounts.workshop }));",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", script], { encoding: "utf8", timeout: 60_000 });
+  expect(proc.status, proc.stderr).toBe(0);
+  const out = JSON.parse(proc.stdout) as { all: number; shown: string[]; hidden: number };
+  expect(out.all).toBe(3);
+  expect(out.shown).toEqual(["by-name", "by-tag"]);
+  expect(out.hidden, "外した本会議の件数が出ていない").toBe(1);
+  const app = siteRuntime();
+  expect(app).toContain(`ワークショップ以外 \${countJa(hidden.workshop)} 件`);
+  const html = siteHtmlRuntime();
+  expect(html).toContain('<input type="checkbox" id="workshop">');
+});
+
 it("「締切まで N 日以内」の窓で外れた件数を件数欄に出す（SPEC §7）", () => {
   /* 窓は選択欄の下側にも効くのに、件数欄は過去の締切・種別・推定しか言わなかった。
    * 「7 日以内」を選ぶと実測で対象 477 行のうち 39 行しか出ず、のこり 438 行が黙って

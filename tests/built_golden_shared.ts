@@ -466,6 +466,8 @@ export const SORT_CANON_EVAL = [
 export const FILTER_RUNTIME_STUBS = [
   // 窓の上限時刻は絞り込みと 0 件時の会期案内で共有する実装（書かないと両者が違う窓で動く）。
   jsFunction(siteRuntime(), "windowLimitMs"),
+  // 「ワークショップのみ」の判定（締切の行と会期だけの行で同じ規則）。
+  jsFunction(siteRuntime(), "rowIsWorkshop"),
   // 「締切まで」の上下限は絞り込み本体が共有する実装（窓の解釈を二重化しない）。
   jsFunction(siteRuntime(), "windowFloorMs"),
   // 窓の比較そのもの（行の表示暦日）も共有実装（第 228 回に絞り込みと画面上部の数が 1 本に
