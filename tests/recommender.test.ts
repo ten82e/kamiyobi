@@ -1086,7 +1086,8 @@ describe("分野の日本語表示名と検索語 (SPEC §7)", () => {
       const inMonth = R.searchMatcher("deadline in a month", at);
       expect(inMonth("paper deadline 2026年9月5日")).toBe(true);
       expect(inMonth("paper deadline 2026年9月20日")).toBe(false);
-      expect(R.querySynonymNotes("deadline in two weeks").join(" ")).toContain("日数");
+      expect(R.querySynonymNotes("deadline in two weeks").join(" ")).toContain("14 日以内");
+      expect(R.querySynonymNotes("deadline in a month").join(" ")).toContain("30 日以内");
       expect(R.querySynonymNotes("deadline approaching").join(" ")).toContain("approaching");
       expect(R.querySynonymNotes("deadline approaching").join(" ")).toContain("30 日以内");
     });

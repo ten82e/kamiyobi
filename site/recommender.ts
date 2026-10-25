@@ -6945,13 +6945,19 @@ const Recommender = (() => {
       const workshopOnly = /\b(?:workshops?\s+only|only\s+workshops?)\b/i.exec(打たれた検索語);
       /* `soon` はこの表の既定の「これからの 30 日間」として探す（外すと全件に化ける）。 */
       /* 週・月の言い方は日数に直す（`in two weeks` は点とも幅とも読めるので、幅として扱う）。 */
-      if (
-        /\b(?:within|in(?:\s+the\s+next)?|next)\s+(?:a|an|one|two|three|four|five|six|seven|eight|nine|ten|\d{1,2})\s+weeks?\b|\b(?:within|in)\s+(?:a|one|the\s+next)\s+month\b/i.test(
+      const weekPhrase =
+        /\b(?:within|in(?:\s+the\s+next)?|next)\s+(a|an|one|two|three|four|five|six|seven|eight|nine|ten|\d{1,2})\s+weeks?\b/i.exec(
           打たれた検索語,
-        )
-      ) {
-        const note =
-          "週・月の言い方は日数に直して探しています（画面の「締切まで」で変えられます。MCP は `within_days`）";
+        );
+      const monthPhrase = /\b(?:within|in)\s+(?:a|one|the\s+next)\s+month\b/i.exec(打たれた検索語);
+      if (weekPhrase || monthPhrase) {
+        const 日數 = weekPhrase
+          ? 7 *
+            (/^\d+$/.test(weekPhrase[1])
+              ? Number(weekPhrase[1])
+              : (ENGLISH_WEEK_NUMBERS[weekPhrase[1].toLowerCase()] ?? 1))
+          : 30;
+        const note = `「${(weekPhrase || monthPhrase)![0]}」は ${日數} 日以内として探しています（画面の「締切まで」で変えられます。MCP は \`within_days\`）`;
         if (notes.indexOf(note) < 0) notes.push(note);
       }
       const usWord = /\bU\.S\.A?\.?|\bUS\b/.exec(打たれた検索語);
