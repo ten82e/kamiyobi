@@ -6917,6 +6917,17 @@ const Recommender = (() => {
       /* `American` は国（USA）とも大陸（北アメリカ・南アメリカ）とも読める。勝手に
        * どちらかへ寄せず、どちらの語で探すかを言う（2026-10-26 実測: そのままでは 0 行）。 */
       const workshopOnly = /\b(?:workshops?\s+only|only\s+workshops?)\b/i.exec(打たれた検索語);
+      /* 投稿先を探す問い（`where to submit`）は、締切の語ではないので論文モードへ渡す。 */
+      if (
+        /\bwhere\b[^.]*\bsubmit\b|\bsubmit\b[^.]*\bwhere\b|\bwhich conference\b[^.]*\bsubmit\b/i.test(
+          打たれた検索語,
+        )
+      ) {
+        const note =
+          "投稿先を探すなら、論文の題名・概要を `recommend_venues`（画面の『投稿先を探す』）に渡してください";
+        if (notes.indexOf(note) < 0) notes.push(note);
+      }
+
       if (workshopOnly) {
         const note = `「${workshopOnly[0]}」はワークショップの行だけに絞っています`;
         if (notes.indexOf(note) < 0) notes.push(note);
@@ -10249,6 +10260,12 @@ const Recommender = (() => {
    * `workshop` と打つと、ワークショップを併設する本会議の行も混ざる）。日本語の
    * 「だけ」「のみ」は助詞として落とす既存の約束（40 語の検査）があるので、ここでは
    * 英語の言い方だけを受ける。 */
+  /* `special track` は収録の `special session` と同じ物を指す（2026-10-26 実測:
+   * `special session` 3 行 / `special track` 0 行）。 */
+  function collapseSpecialTrack(query: string): string {
+    return query.replace(/\bspecial[\s-]+tracks?\b/gi, "special session");
+  }
+
   function collapseWorkshopOnly(query: string): string {
     return query
       .replace(/\bworkshops?\s+only\b/gi, "〔WS〕")
@@ -13605,17 +13622,21 @@ const Recommender = (() => {
     if (typeof query === "string") query = collapseJournalSpecialIssue(query);
     if (typeof query === "string") query = collapseEnglishRegion(query);
     if (typeof query === "string") query = collapseWorkshopOnly(query);
+    if (typeof query === "string") query = collapseSpecialTrack(query);
     /* `call for papers` は 3 語に割ると必ず 0 件になる（収録は `cfp` を持つ）。
      * 募集の英字語と同じ 1 語に直す（AI がこの形で聞く）。 */
     if (typeof query === "string")
       query = query.replace(
-        /\bcalls?[\s-]+for[\s-]+(papers?|workshops?|tutorials?)\b/gi,
-        (_m: string, what: string) =>
-          what.toLowerCase().startsWith("paper")
-            ? "cfp"
-            : what.toLowerCase().startsWith("workshop")
-              ? "〔WS〕"
-              : "tutorial",
+        /\bcalls?[\s-]+for[\s-]+(workshop proposals?|tutorial proposals?|special sessions?|papers?|workshops?|tutorials?)\b/gi,
+        (_m: string, what: string) => {
+          const 語 = what.toLowerCase();
+          if (語.startsWith("workshop proposal")) return "workshop proposal";
+          if (語.startsWith("tutorial proposal")) return "tutorial proposal";
+          if (語.startsWith("special session")) return "special session";
+          if (語.startsWith("paper")) return "cfp";
+          if (語.startsWith("workshop")) return "〔WS〕";
+          return "tutorial";
+        },
       );
     if (typeof query === "string")
       query = query.replace(/([0-9０-９]{4})年の開催回/g, (_, year: string) =>
@@ -14125,6 +14146,10 @@ const Recommender = (() => {
     "submit",
     "submitted",
     "submitting",
+    // これから先の締切を指す語。絞り込みの条件ではない。
+    "upcoming",
+    "coming",
+    "next",
   ];
   function withoutFunctionGroups(groups: string[][]): string[][] {
     if (groups.length < 2) return groups;

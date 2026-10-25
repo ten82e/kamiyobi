@@ -404,6 +404,7 @@ export const SEARCH_CANON = (() => {
       "collapseEnglishRegion",
       // `workshop only` をワークショップの印に直す部品。
       "collapseWorkshopOnly",
+      "collapseSpecialTrack",
       "isWorkshopConference",
       "queryTokenGroups",
       "compoundSplitHit",

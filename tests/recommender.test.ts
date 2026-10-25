@@ -1139,6 +1139,19 @@ describe("分野の日本語表示名と検索語 (SPEC §7)", () => {
       expect(R.queryTokenGroups("today", at)).toEqual([["today"]]);
     });
 
+    it("英語の「これから」「特別トラック」「募集の提案」を受ける", () => {
+      /* `upcoming` は締切の語ではないので落とす。`special track` は収録の
+       * `special session`、`call for workshop proposals` は `workshop proposal` に直す
+       * （2026-10-26 実測: それぞれ 3 行・4 行）。 */
+      expect(R.hayMatches("paper deadline", "upcoming deadlines")).toBe(true);
+      expect(R.hayMatches("paper deadline", "next deadline")).toBe(true);
+      expect(R.hayMatches("special session deadline", "special track")).toBe(true);
+      expect(R.hayMatches("workshop proposal deadline", "call for workshop proposals")).toBe(true);
+      expect(R.hayMatches("special session deadline", "call for special sessions")).toBe(true);
+      // 投稿先を探す問いは、締切の語ではなく論文モードへ案内する。
+      expect(R.querySynonymNotes("where to submit").join(" ")).toContain("recommend_venues");
+    });
+
     it("American は国か大陸かを案内する", () => {
       /* 国（USA）とも大陸（北アメリカ・南アメリカ）とも読めるので、勝手に寄せない。
        * 代わりに、どちらの語で探すかを件数欄で言う（2026-10-26 実測: そのまま 0 行）。 */
