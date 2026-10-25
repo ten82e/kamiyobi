@@ -10367,6 +10367,8 @@ const Recommender = (() => {
         const rest = whole.slice(offset + match.length);
         // 年が続くときは原文の月名のまま（点だけ落とす）。
         if (/^\s+\d{4}\b/.test(rest)) return `${head}${name}${dot === "." ? "" : ""}`;
+        // 小文字の `may` は助動詞（`may I submit`）とも読める。月は大文字の `May` だけ。
+        if (name.toLowerCase() === "may" && name.charAt(0) !== "M") return `${head}${name}${dot}`;
         return `${head}${ENGLISH_MONTH_NUMBERS[name.toLowerCase()]}月`;
       },
     );

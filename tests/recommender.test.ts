@@ -1050,6 +1050,11 @@ describe("分野の日本語表示名と検索語 (SPEC §7)", () => {
       expect(R.hayMatches("paper deadline 2026年1月", "deadlines in January")).toBe(true);
       expect(R.queryTokenGroups("January 2027", at)[0]).toContain("january");
       expect(R.hayMatches("jan 2027 deadline", "Jan 2027")).toBe(true);
+      // 小文字の `may` は助動詞（`may I submit`）とも読める。月は大文字の `May` だけ。
+      expect(R.queryTokenGroups("may i submit", at).flat()).not.toContain("5月");
+      expect(R.queryTokenGroups("May", at)[0].some((term: string) => term.endsWith("年5月"))).toBe(
+        true,
+      );
     });
 
     it("英語の依頼文の語を落とす（find・show・any など）", () => {
