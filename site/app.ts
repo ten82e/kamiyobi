@@ -2142,6 +2142,15 @@ function semanticOutput(value: unknown): value is SemanticOutput {
 
   function renderSummaryStats() {
     $("statConfs").textContent = String((DATA.conferences || []).length);
+    /* ワークショップの収録数は、絞り込みの判定と同じ（タグ workshop・名前に workshop）。 */
+    const workshopCount = (DATA.conferences || []).filter(
+      (c) =>
+        (c.tags || []).indexOf("workshop") >= 0 ||
+        /workshop/i.test(`${c.title || ""} ${c.full_name || ""}`),
+    ).length;
+    $("statWorkshopNote").textContent = workshopCount
+      ? `（うちワークショップ ${workshopCount}）`
+      : "";
     const nowMs = Date.now();
     const next30 = summaryRows.filter(
       (r) => rowIsFuture(r, nowMs) && !rowAfter(r, windowLimitMs("30", nowMs)),

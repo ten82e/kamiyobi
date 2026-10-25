@@ -3733,7 +3733,7 @@ it("収録状況の四つ組は、何を数えているかと単位がラベル�
   expect(guide).toContain("domestic-jp");
   // id はそのまま（JS 側の更新先が生きていること）。
   const runtime = siteRuntime();
-  for (const id of ["statConfs", "statUpcoming", "statNiche", "statDomestic"]) {
+  for (const id of ["statConfs", "statUpcoming", "statNiche", "statDomestic", "statWorkshopNote"]) {
     expect(runtime, `収録状況の更新先が消えている: ${id}`).toContain(`"${id}"`);
   }
 });
