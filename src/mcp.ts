@@ -45,7 +45,7 @@ const SERVER_INSTRUCTIONS_JA = [
   "- `scope` は `screen`（画面の初期一覧。期間は `catalog.json` の `window` に記載。ファイルがある時だけ）と `all`（**収録の元データ** `data/snapshot.json`）です。省いたときは `search_deadlines`・`explain_word` は `screen`、`list_upcoming`・`venue_info` は `all` です。**公開している `data.json` は重複をまとめた後**なので、`all` の行数はそれより多くなります（AI が件数を画面と比べるときは、この違いを見てください）。0 件のときは `scope_comparison` に収録全体での件数が出ます。",
   "- 会期は締切ではありません。購読カレンダー（`deadlines.ics`）は締切だけを載せ、`list_upcoming` は締切と会期の両方を返します。",
   "- 締切は動きます。投稿の判断の前に、行の公式ページで最新の募集要項を確かめるよう案内してください。",
-  "- 検索語は日本語・英語のどちらでも書けます（例: `SIGCOMM 2027 deadline`・`CFP SIGCOMM`・`deadlines next month`・`graph neural networks`）。英語の冠詞・前置詞は、ほかの語があるときは絞り込みに使いません。手法の名は、その手法が載る分野の語（`graph neural networks` → `machine learning`）に直して探し、件数欄でそのことを言います。0 件のときは、語を 1 つ外す候補も返します。",
+  "- 検索語は日本語・英語のどちらでも書けます（例: `SIGCOMM 2027 deadline`・`CFP SIGCOMM`・`deadlines next month`・`graph neural networks`）。英語の冠詞・前置詞は、ほかの語があるときは絞り込みに使いません。手法の名は、その手法が載る分野の語（`graph neural networks` → `machine learning`）に直して探し、件数欄でそのことを言います。0 件のときは、語を 1 つ外す候補も返します。ワークショップだけを見るなら `workshop: true` を渡します。",
   "",
   "道具: 締切を引く `search_deadlines` / 直近の締切と会期をまとめる `list_upcoming` / 会議を名指して開催回と締切を見る `venue_info` / 語が収録に当たるか調べる `explain_word` / 収録数とデータ源を見る `collection_stats` / 論文の題名と概要から投稿先を探す `search_venues`・`recommend_venues`。",
   "",
@@ -820,6 +820,7 @@ function 畫面の既定(
     rank?: unknown;
     domestic?: unknown;
     online?: unknown;
+    workshop?: unknown;
     /** 「締切まで N 日」の窓（画面の同じ名前の選擇欄。第 872 回）。 */
     within_days?: unknown;
   },
@@ -840,6 +841,7 @@ function 畫面の既定(
 
   const 國內だけ = args.domestic === true;
   const オンラインだけ = args.online === true;
+  const ワークショップだけ = args.workshop === true;
 
   const 窓の上限 = 窓あり ? Recommender.withinDaysLimitMs(窓の日數, now) : 0;
   const 窓の下限 = 窓あり && 過去も ? Recommender.withinDaysFloorMs(窓の日數, now) : 0;
@@ -860,6 +862,7 @@ function 畫面の既定(
     if (國內だけ && (r.tags ?? []).indexOf("domestic-jp") < 0) return false;
     /* オンラインは会場の表記から画面と同じ関数で見る。 */
     if (オンラインだけ && !Recommender.placeOffersOnline(r.ed.place)) return false;
+    if (ワークショップだけ && !isWorkshopRowMCP(r)) return false;
     if (全部) return true;
     if (種別.length) return 種別.includes(r.kind);
     return 投稿の種別.includes(r.kind);
@@ -1377,6 +1380,12 @@ export function structuredDeadline(r: Row, now: number): Record<string, unknown>
   };
 }
 
+/* ワークショップの行か（画面の「ワークショップのみ」と同じ規則）。 */
+function isWorkshopRowMCP(r: Row): boolean {
+  if ((r.tags ?? []).indexOf("workshop") >= 0) return true;
+  return /workshop/i.test(`${r.conf.title ?? ""} ${r.conf.full_name ?? ""}`);
+}
+
 function searchDeadlines(
   args: {
     query?: unknown;
@@ -1391,6 +1400,7 @@ function searchDeadlines(
     categories?: unknown;
     domestic?: unknown;
     online?: unknown;
+    workshop?: unknown;
     within_days?: unknown;
     scope?: unknown;
   },
@@ -1402,6 +1412,7 @@ function searchDeadlines(
     include_estimated: 真偽の引數("include_estimated", args.include_estimated),
     domestic: 真偽の引數("domestic", args.domestic),
     online: 真偽の引數("online", args.online),
+    workshop: 真偽の引數("workshop", args.workshop),
   };
   /* 絞り込みは**正規化した引数**で見る（下の判定は `=== true` だけ – 一箇所で直す）。
    * **在った引数だけ**書き戻す（省いた物を false にしてしまうと、「絞り込みを指定した」判定が
@@ -1416,6 +1427,7 @@ function searchDeadlines(
       : {}),
     ...(_ARGS.domestic !== undefined ? { domestic: 真偽.domestic.使ふ } : {}),
     ...(_ARGS.online !== undefined ? { online: 真偽.online.使ふ } : {}),
+    ...(_ARGS.workshop !== undefined ? { workshop: 真偽.workshop.使ふ } : {}),
   };
   const offset = args.offset === undefined ? 0 : args.offset;
   if (typeof offset !== "number" || !Number.isSafeInteger(offset) || offset < 0)
@@ -1436,9 +1448,10 @@ function searchDeadlines(
       args.categories !== undefined ||
       args.domestic !== undefined ||
       args.online !== undefined ||
+      args.workshop !== undefined ||
       args.within_days !== undefined);
   if (!query && !絞り込みだけ)
-    return "検索語が空です。会議名・分野・開催地・締切の語をください（語を省くなら kind / kinds / rank / category / categories / domestic / online / within_days のいずれかを指定してください）。";
+    return "検索語が空です。会議名・分野・開催地・締切の語をください（語を省くなら kind / kinds / rank / category / categories / domestic / online / workshop / within_days のいずれかを指定してください）。";
   const 限り = 數の引數("limit", args.limit, 1);
 
   const limit = Math.max(1, Math.floor(Math.min(限り.使ふ ?? 20, 100)));
@@ -1586,7 +1599,7 @@ function searchDeadlines(
         }
       : {}),
   });
-  const 頭 = `${絞り込みだけ ? "語を指定せず、絞り込みだけ" : `検索語「${query}」に当たる締切`}: ${hit.length} 件（${名} ${list.length} 行・指定条件で絞り込み。絞る前は ${素の.length} 行${ランク ? `／ランク ${ランクの尺度Header}${ランク}` : ""}${args.domestic === true ? "／国内のみ" : ""}${args.online === true ? "／オンライン参加可のみ" : ""}${窓あり ? `／締切まで ${窓の日數} 日以内${窓の端数の斷り}` : ""}${讀めない引數}）${limit端數}${queryNotice}${kindNotice ? `／${kindNotice}` : ""}${emptyKindsNotice ? `／${emptyKindsNotice}` : ""}${ignoredKindNotice ? `／${ignoredKindNotice}` : ""}${rankNotice ? `／${rankNotice}${limit端數}` : ""}${categoryNotice ? `／${categoryNotice}` : ""}${ignoredCategoryNotice ? `／${ignoredCategoryNotice}` : ""}${分野の引き.鍵.length ? `／分野 ${分野の引き.鍵.map((k) => Recommender.categoryLabelJa(k)).join("・")}` : ""}${日付の語 ? "\n日付は日本時間（JST）。月や日付の語は、締切の日付と「会期」の日付の両方に当たる（画面のてびきと同じ約束）ので、月で引いた時に見出しの月と違う日が出る行がある。" : ""}${窓が無い ? `\n${窓が無いの斷り(true)}` : ""}${scopeErr ? `\n${scopeErr}` : ""}${解決の文}${記号だけの文 ? `\n${記号だけの文}` : ""}${見えて居る文}`;
+  const 頭 = `${絞り込みだけ ? "語を指定せず、絞り込みだけ" : `検索語「${query}」に当たる締切`}: ${hit.length} 件（${名} ${list.length} 行・指定条件で絞り込み。絞る前は ${素の.length} 行${ランク ? `／ランク ${ランクの尺度Header}${ランク}` : ""}${args.domestic === true ? "／国内のみ" : ""}${args.online === true ? "／オンライン参加可のみ" : ""}${args.workshop === true ? "／ワークショップのみ" : ""}${窓あり ? `／締切まで ${窓の日數} 日以内${窓の端数の斷り}` : ""}${讀めない引數}）${limit端數}${queryNotice}${kindNotice ? `／${kindNotice}` : ""}${emptyKindsNotice ? `／${emptyKindsNotice}` : ""}${ignoredKindNotice ? `／${ignoredKindNotice}` : ""}${rankNotice ? `／${rankNotice}${limit端數}` : ""}${categoryNotice ? `／${categoryNotice}` : ""}${ignoredCategoryNotice ? `／${ignoredCategoryNotice}` : ""}${分野の引き.鍵.length ? `／分野 ${分野の引き.鍵.map((k) => Recommender.categoryLabelJa(k)).join("・")}` : ""}${日付の語 ? "\n日付は日本時間（JST）。月や日付の語は、締切の日付と「会期」の日付の両方に当たる（画面のてびきと同じ約束）ので、月で引いた時に見出しの月と違う日が出る行がある。" : ""}${窓が無い ? `\n${窓が無いの斷り(true)}` : ""}${scopeErr ? `\n${scopeErr}` : ""}${解決の文}${記号だけの文 ? `\n${記号だけの文}` : ""}${見えて居る文}`;
   if (!hit.length) {
     if (窓の外.error)
       return [
@@ -3276,7 +3289,7 @@ const TOOLS = [
     title: "投稿締切を検索",
     annotations: READ_ONLY_ANNOTATIONS,
     description:
-      "日本語・英語で投稿締切を検索する（会議名・略称・`deadline`・`CFP` は英字のままでよい）。語を省いて kind / kinds / rank / category / categories / domestic / online / within_days だけでも絞れる。既定は今後の abstract / paper / journal で、過去と推定は除きます（include_past・include_estimated で足せます）。既定の kind は MCP の方が広く、常時受付（journal）も含みます。scope は screen（初期一覧。`public/catalog.json`）または all（**収録の元データ** `data/snapshot.json`）。公開している `data.json` は重複をまとめた後なので、all の行数はそれより多くなります。structuredContent に total・rows・next_offset を返す。screen で 0 件のときは scope_comparison に全収録での同条件の件数・絞る前の件数・生成時刻を返す。比較データを読めない場合は検索結果を保持し、scope_comparison_error に理由と再試行の案内を返す。範囲を変えるときもほかの条件を維持する。続きは同じ条件と next_offset を offset に指定する。日付のみの行の utc・jst は null。常時受付は締切日時・精度・回次を null とし、日付のある行の後に並べます。推定期間、投稿トラック、確認状態を別に返す。公式確認（いつ・どこで・何を確かめたか）は verification_ja に画面の行の詳細と同じ日本語で返します（内部の鍵名は verification に残します）。前に出ていた締切も表示する。日付語は別ラウンドや会期にも当たるため、締切だけの期間指定には within_days を使う。会期の欄には、上流が書いた原文（`March 18-21, 2024` のような自由文）を「原表記」として添えます（画面の行の詳細と同じ）。0 件のときは画面と同じ案内と「打ち直すなら」の候補を返す。返す行の形: 日時 | 種別 | 確認状態（ある場合）| 会議名（版の識別子）| ランク | 会期 | 開催地 URL。テキストは `| ` で切り、構造化結果を優先する。**行から画面の深いリンクを組めます**: 構造化の行の `screen_row_key` をそのまま `index.html?row=<その値>` に渡してください（人が開くと、その行の詳細が開きます）。構造化の行には `categories`（分野の鍵）と `categories_ja`（画面の札と同じ日本語）も入る。`ics_uid`（配付カレンダー `deadlines.ics` の予定の UID）は、**カレンダーに予定がある締切**に入ります（初期カタログと公開の `data.json` から引きます）。カレンダーに予定がない行には付きません。",
+      "日本語・英語で投稿締切を検索する（会議名・略称・`deadline`・`CFP` は英字のままでよい）。語を省いて kind / kinds / rank / category / categories / domestic / online / workshop / within_days だけでも絞れる。既定は今後の abstract / paper / journal で、過去と推定は除きます（include_past・include_estimated で足せます）。既定の kind は MCP の方が広く、常時受付（journal）も含みます。scope は screen（初期一覧。`public/catalog.json`）または all（**収録の元データ** `data/snapshot.json`）。公開している `data.json` は重複をまとめた後なので、all の行数はそれより多くなります。structuredContent に total・rows・next_offset を返す。screen で 0 件のときは scope_comparison に全収録での同条件の件数・絞る前の件数・生成時刻を返す。比較データを読めない場合は検索結果を保持し、scope_comparison_error に理由と再試行の案内を返す。範囲を変えるときもほかの条件を維持する。続きは同じ条件と next_offset を offset に指定する。日付のみの行の utc・jst は null。常時受付は締切日時・精度・回次を null とし、日付のある行の後に並べます。推定期間、投稿トラック、確認状態を別に返す。公式確認（いつ・どこで・何を確かめたか）は verification_ja に画面の行の詳細と同じ日本語で返します（内部の鍵名は verification に残します）。前に出ていた締切も表示する。日付語は別ラウンドや会期にも当たるため、締切だけの期間指定には within_days を使う。会期の欄には、上流が書いた原文（`March 18-21, 2024` のような自由文）を「原表記」として添えます（画面の行の詳細と同じ）。0 件のときは画面と同じ案内と「打ち直すなら」の候補を返す。返す行の形: 日時 | 種別 | 確認状態（ある場合）| 会議名（版の識別子）| ランク | 会期 | 開催地 URL。テキストは `| ` で切り、構造化結果を優先する。**行から画面の深いリンクを組めます**: 構造化の行の `screen_row_key` をそのまま `index.html?row=<その値>` に渡してください（人が開くと、その行の詳細が開きます）。構造化の行には `categories`（分野の鍵）と `categories_ja`（画面の札と同じ日本語）も入る。`ics_uid`（配付カレンダー `deadlines.ics` の予定の UID）は、**カレンダーに予定がある締切**に入ります（初期カタログと公開の `data.json` から引きます）。カレンダーに予定がない行には付きません。",
     inputSchema: {
       type: "object",
       properties: {
@@ -3332,6 +3345,11 @@ const TOOLS = [
           type: "boolean",
           description:
             "オンライン参加可の行だけに絞る（画面の同じ名前のチェック欄と同じ判定。会場の表記にオンライン・ハイブリッドなどの記述がある行だけ – 記述がない行を対面と決めつけない）",
+        },
+        workshop: {
+          type: "boolean",
+          description:
+            "ワークショップの行だけに絞る（画面の「ワークショップのみ」と同じ判定。会議名に workshop を持つ行と、タグ workshop の行だけ – ワークショップを併設する本会議は出ない）",
         },
         within_days: {
           type: "number",

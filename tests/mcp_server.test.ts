@@ -938,6 +938,7 @@ it("入力の形が、道具の説明と一致する（第 854 回）", async ()
       "categories",
       "domestic",
       "online",
+      "workshop",
       "within_days",
       "scope",
     ],
@@ -1257,6 +1258,12 @@ it("国内・オンラインの絞り込みが、画面のチェック欄と同�
   const オンライン = rows.filter(
     (r) => 既定(r) && Recommender.placeOffersOnline(r.ed.place),
   ).length;
+  const ワークショップ = rows.filter(
+    (r) =>
+      既定(r) &&
+      ((r.tags ?? []).indexOf("workshop") >= 0 ||
+        /workshop/i.test(`${r.conf.title ?? ""} ${r.conf.full_name ?? ""}`)),
+  ).length;
   expect(國內, "この検査の前提（国内の行）が崩れた").toBeGreaterThan(0);
   expect(オンライン, "この検査の前提（オンラインの行）が崩れた").toBeGreaterThan(0);
   const 數 = (t: string): number =>
@@ -1268,6 +1275,11 @@ it("国内・オンラインの絞り込みが、画面のチェック欄と同�
   const 網 = await call("search_deadlines", { online: true, scope: "all", limit: 1 });
   expect(數(網), "オンラインの件数が画面の判定と違う").toBe(オンライン);
   expect(網, "頭に絞り込みを書いていない").toContain("／オンライン参加可のみ");
+  /* ワークショップだけの絞り込み（画面のチェック欄と同じ規則）。 */
+  expect(ワークショップ, "この検査の前提（ワークショップの行）が崩れた").toBeGreaterThan(0);
+  const 會合 = await call("search_deadlines", { workshop: true, scope: "all", limit: 1 });
+  expect(數(會合), "ワークショップの件数が画面の判定と違う").toBe(ワークショップ);
+  expect(會合, "頭に絞り込みを書いていない").toContain("／ワークショップのみ");
   /* 語で引いた時と同じ集合（同じ数に成る）。 */
   const 語 = await call("search_deadlines", { query: "国内", scope: "all", limit: 1 });
   expect(Number(/に当たる締切: ([\d,]+) 件/.exec(語)?.[1]?.replace(/,/g, "") ?? -1)).toBe(國內);
