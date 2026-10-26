@@ -4126,6 +4126,8 @@ function semanticOutput(value: unknown): value is SemanticOutput {
      * （2026-10-26 実測: `MIDL` は「別の語で試す」だけだった）。 */
     const 略称の一語 =
       terms.length === 0 &&
+      nameTerms.length === 0 &&
+      !catalogNote &&
       filter.termCounts.length === 1 &&
       /^[A-Z][A-Z0-9&+.-]{1,9}$/.test(trimmedQuery.trim());
     if (略称の一語 && !uiNote) {

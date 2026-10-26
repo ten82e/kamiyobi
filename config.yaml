@@ -184,6 +184,7 @@ taxonomy:
       - ieee-acm-cgo  # Code Generation and Optimization
       - iiswc         # Workload Characterization
       - isca
+      - ispd          # International Symposium on Physical Design (DS 側)
       - iscas
       - itc           # International Test Conference
       - itc-asia

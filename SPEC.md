@@ -1108,7 +1108,7 @@ conferences:
 - 英語の `call for workshops` / `call for tutorials` は、ワークショップの印・`tutorial` に直す。`deadline today`・`deadlines tomorrow`・`due today`・`due tomorrow` は今日・明日の暦日に直す（`today` 単体は会議名と衝突するので受けない）。`submit` は動詞として落とす。2026-10-26 実測: `call for workshops` 0 → 227 行、`deadline today` 0 → 41 行、`submit by December` 0 → 333 行。
 - 英語の週の幅（`within a week`・`in two weeks`・`next three weeks`・`within 2 weeks` など）は、週を日へ直して `7日以内`・`14日以内`・`21日以内` にする。`within a month`・`in a month` は 30 日以内。`deadline approaching`・`imminent` は `soon` と同じ 30 日以内。2026-10-26 実測: `deadline within a week` 0 → 248 行、`deadline within two weeks` 0 → 402 行、`deadline next three weeks` 0 → 564 行。件数欄には「「in two weeks」は 14 日以内として探しています」のように実際の日数を書く。
 - `soon`（`deadline soon`・`closing soon`・`soon`）は、この表の既定の「これからの 30 日間」に直す。件数欄に 30 日以内として探していることと、画面の「締切まで」/ MCP の `within_days` で変えられることを書く。2026-10-26 実測: `deadline soon` 0 → 892 行。
-- 2026-10-26 に `config.yaml` の `exclude` からプログラミング言語・形式手法系の 16 件（`PLDI`・`POPL`・`OOPSLA`・`FM`・`ICFP` など）を戻した。収録は 712 会議・2,710 版・5,134 締切（固定時計 build）。`exclude` は現在空。
+- 2026-10-26 に `config.yaml` の `exclude` からプログラミング言語・形式手法系の 16 件（`PLDI`・`POPL`・`OOPSLA`・`FM`・`ICFP` など）を戻した。収録は 713 会議・2,717 版・5,147 締切（固定時計 build）。`exclude` は現在空。
 - 略称 1 語だけの 0 件（`MIDL`）は「収録の名簿に見当たりません。収録はすべての会議を網羅していないので、収録外の会議かもしれません」と言う（画面と MCP）。2026-10-26 実測。
 - `MIDL 2027` のように収録に無い会議名＋年だけのときは、「その語を外すと増えます」と言わない（年を外しても別の会議の行が出るだけ）。「年を外しても、その会議の締切は出ません。収録はすべての会議を網羅していないので、その会議は収録外の可能性があります」と案内する。
 - 細目の主題（`federated` など）が 0 件のときは、分野名で打ち直す案内に加えて、`recommend_venues`（画面の「投稿先を探す」）へも渡すように書く。
