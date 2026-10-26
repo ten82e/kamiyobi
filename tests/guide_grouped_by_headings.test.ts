@@ -67,8 +67,9 @@ describe("てびきが見出しで群れている", () => {
     // 2026-10-18 – 推薦の候補に混ざる「締切済み」の数え方を足したので 43 語。
     // 2026-10-18 – 三つの読み込みの再試行（収録の全体・推薦データ・意味検索）の項を足したので 44 語。
     // 2026-10-26 – 「ワークショップのみ」の絞り込みを足したので 45 語。
+    // 2026-10-26 – 「収録の範囲」の項（対象外・名簿に無い会議）を足したので 47 語。
     const total = built.reduce((acc, g) => acc + g.terms.length, 0);
-    expect(total, "てびきの語の数が増減した（てびきの項目を足す時はここも直す）").toBe(45);
+    expect(total, "てびきの語の数が増減した（てびきの項目を足す時はここも直す）").toBe(47);
     for (const g of built) {
       expect(g.terms.length, `「${g.title}」に語が有らない`).toBeGreaterThan(0);
       for (const t of g.terms) {
