@@ -1712,6 +1712,33 @@ it("venue_info でプログラミング言語系の会議も引ける", async ()
   expect(text).not.toContain("収録に在りません");
 });
 
+it("search_venues の候補行は、ワークショップかを持つ", async () => {
+  const res = (await client.ask({
+    jsonrpc: "2.0",
+    id: 2,
+    method: "tools/call",
+    params: {
+      name: "search_venues",
+      arguments: {
+        query: {
+          title: "Workshop on Hot Topics in Operating Systems",
+          abstract: "systems workshop",
+        },
+        limit: 10,
+      },
+    },
+  })) as {
+    result?: { structuredContent?: { rows?: Array<{ title?: string; workshop?: boolean }> } };
+  };
+  const rows = res.result?.structuredContent?.rows ?? [];
+  expect(rows.length, "候補が無い").toBeGreaterThan(0);
+  for (const row of rows) expect(typeof row.workshop, "workshop が boolean でない").toBe("boolean");
+  expect(
+    rows.some((row) => row.workshop === true),
+    "ワークショップの候補が無い",
+  ).toBe(true);
+});
+
 it("collection_stats のワークショップ数は、画面の収録状況と同じ数え方", async () => {
   /* タグだけだと 47 件、画面（タグか会議名）だと 90 件で食い違っていた。 */
   const snap = JSON.parse(readFileSync(join(REPO_ROOT, "data", "snapshot.json"), "utf8")) as {

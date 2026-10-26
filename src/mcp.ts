@@ -3212,6 +3212,9 @@ async function recommendVenues(
        * ここの `rank` は順位なので、名前を分ける（説明文で区別している所）。
        * 文の側には「CCF A・CORE A*」として出ているが、構造化にも同じ事を載せる。 */
       venue_rank: r.row.conf.rank ?? null,
+      /* ワークショップか（画面の「ワークショップのみ」と同じ判定）。推薦候補に
+       * ワークショップが混ざるので、AI が仕分けできるようにする。 */
+      workshop: isWorkshopFieldsMCP(r.row.conf.tags, r.row.conf.title, r.row.conf.full_name),
       availability:
         r.availability.status === "ongoing"
           ? { ...r.availability, timestamp: null }
@@ -3512,7 +3515,7 @@ const TOOLS = [
     title: "研究テーマから投稿先を検索",
     annotations: READ_ONLY_ANNOTATIONS,
     description:
-      "全収録の投稿先プロフィールから、研究テーマ・論文の題名・概要に合う会議や論文誌を検索する。締切不明や締切済みの会議も候補に含む。retrieval: semantic で実モデル、lexical で語彙と公式トピックを用いる。締切日時を探す場合は search_deadlines を使う。構造化結果の candidate_venues は検索した収録会議数、total は一致した候補数。limit と offset でページ送りできる。",
+      "全収録の投稿先プロフィールから、研究テーマ・論文の題名・概要に合う会議や論文誌を検索する。締切不明や締切済みの会議も候補に含む。retrieval: semantic で実モデル、lexical で語彙と公式トピックを用いる。締切日時を探す場合は search_deadlines を使う。構造化結果の candidate_venues は検索した収録会議数、total は一致した候補数。limit と offset でページ送りできる。各行の `workshop` はその会場がワークショップか（画面の「ワークショップのみ」と同じ判定）。",
     inputSchema: {
       type: "object",
       properties: {
@@ -3538,7 +3541,7 @@ const TOOLS = [
     title: "論文に合う投稿先を探す",
     annotations: READ_ONLY_ANNOTATIONS,
     description:
-      "論文情報に合う投稿先を語彙の一致で探す。学習済みの並べ替えモデルがある場合は併用する。rank を指定すると会場のランク（`A*`・`A`・`B`・`C`・`N`、または `CCF A` のように尺度の名を付けた形）で候補を絞ります（画面の推薦モードの「ランク」と同じ判定。知らない等級はその等級では 0 件になり、その旨を返します）。retrieval: semantic を指定すると実モデルを使う。候補の範囲は画面と共通（推薦索引から作るため、同じ論文でも画面と点がわずかに動く事があります）。順位表に入るのは実質的な一致がある候補だけで、証拠がない会議を分野だけの一致で推薦しない。長い入力は最初の 20 行と各行の長さ制限で切り、切った旨を返す。返す行の形: 順位と一致評価、選定理由、締切の確認状況に続いて締切行。1ページ最大30件。structuredContent の rows は 1 行 = 1 候補で、`rank` は**順位**（1 起点。会場のランクではない – 他の道具の `rank`（`ccf`・`core`・`thcpl`）とは別の物です）、`fit` は一致評価とその内訳、`availability` は受付状態、`deadlines` は締切、`verification` は確認情報、`venue_rank` は会場のランク（`ccf`・`core`・`thcpl`。他の道具の `rank` と同じ形）。続きは同じ論文情報と next_offset を offset に指定する。",
+      "論文情報に合う投稿先を語彙の一致で探す。学習済みの並べ替えモデルがある場合は併用する。rank を指定すると会場のランク（`A*`・`A`・`B`・`C`・`N`、または `CCF A` のように尺度の名を付けた形）で候補を絞ります（画面の推薦モードの「ランク」と同じ判定。知らない等級はその等級では 0 件になり、その旨を返します）。retrieval: semantic を指定すると実モデルを使う。候補の範囲は画面と共通（推薦索引から作るため、同じ論文でも画面と点がわずかに動く事があります）。順位表に入るのは実質的な一致がある候補だけで、証拠がない会議を分野だけの一致で推薦しない。長い入力は最初の 20 行と各行の長さ制限で切り、切った旨を返す。返す行の形: 順位と一致評価、選定理由、締切の確認状況に続いて締切行。1ページ最大30件。structuredContent の rows は 1 行 = 1 候補で、`rank` は**順位**（1 起点。会場のランクではない – 他の道具の `rank`（`ccf`・`core`・`thcpl`）とは別の物です）、`fit` は一致評価とその内訳、`availability` は受付状態、`deadlines` は締切、`verification` は確認情報、`venue_rank` は会場のランク（`ccf`・`core`・`thcpl`。他の道具の `rank` と同じ形）、`workshop` はその会場がワークショップか（画面の「ワークショップのみ」と同じ判定）。続きは同じ論文情報と next_offset を offset に指定する。",
     inputSchema: {
       type: "object",
       properties: {
