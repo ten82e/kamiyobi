@@ -1936,7 +1936,10 @@ function listUpcoming(
     全部 || 選ぶ.size === 0 || 選ぶ.has(r.kind) || 選ぶ.has(r.dl.kind);
   const 締切の候補 = list.filter(
     (r) =>
-      !Recommender.deadlineRowIsPast(r, 日の始め) &&
+      /* 過ぎた締切は出さない（`within_days` の検索と同じ「いま」で切る）。
+       * 日の始めで切ると、今日の朝の締切が一覧だけに出て件数が 1 件ずれる
+       * （2026-10-26 実測: `days` 79 / `within_days` 78）。 */
+      !Recommender.deadlineRowIsPast(r, now) &&
       暦日(r) < 限り &&
       種別で殘す(r) &&
       (!ワークショップだけ || isWorkshopRowMCP(r)),

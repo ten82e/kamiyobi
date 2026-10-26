@@ -1207,11 +1207,9 @@ describe("分野の日本語表示名と検索語 (SPEC §7)", () => {
       expect(R.searchMatcher("Asia")(rows[0])).toBe(false);
     });
 
-    it("対象外にしたプログラミング言語系は、その旨を言う", () => {
-      /* `config.yaml` の `exclude` で方針として外している会議。名簿に無いことを
-       * 「収録漏れ」と読ませない（2026-10-26 実測: PLDI は「別の語で試す」だけだった）。 */
-      expect(R.uiWordNoteJa("PLDI")).toContain("プログラミング言語・形式手法系");
-      expect(R.uiWordNoteJa("PLDI")).toContain("対象外");
+    it("プログラミング言語系の会議も収録に在る", () => {
+      /* 2026-10-26 に `config.yaml` の `exclude` から戻した。もう「対象外」とは言わない。 */
+      expect(R.uiWordNoteJa("PLDI")).toBe("");
       expect(R.uiWordNoteJa("MIDL")).toBe("");
     });
 

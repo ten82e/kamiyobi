@@ -150,7 +150,7 @@ taxonomy:
       - internet-conference  # インターネットコンファレンス (Internet Conference, 国内)
 
   # ---- Systems ------------------------------------------------------------
-  # SE 全体(PL 寄りは exclude で落とす) + DS のうち hpc に入れなかった残り。
+  # SE 全体(PL 寄りも 2026-10-26 から収録) + DS のうち hpc に入れなかった残り。
   # アーキテクチャ・OS・ストレージ・クラウド・分散システム・性能評価・EDA/回路。
   # 判断に迷ったものはすべてこちら側に置いた(cf, hipeac, podc など)。
   systems:
@@ -269,27 +269,9 @@ taxonomy:
       - ieice-nolta    # 電子情報通信学会 非線形問題研究会 (NOLTA)
 
 
-# 収録しない会議。SE を丸ごと取り込む代償として、プログラミング言語・形式手法寄りの
-# 会議がまとめて入ってくるのでここで落とす。OS/システム寄り(osdi, sosp, hotos,
-# middleware, ispass, eurosys ほか)と、ソフトウェア工学本体(icse, ase, fse-se,
-# issta, msr ほか)は残す。
-exclude:
-  - aplas    # Asian Symposium on Programming Languages and Systems
-  - atva     # Automated Technology for Verification and Analysis
-  - cp       # Principles and Practice of Constraint Programming
-  - ecoop    # European Conference on Object-Oriented Programming
-  - etaps    # European Joint Conferences on Theory and Practice of Software
-  - fm       # International Symposium on Formal Methods
-  - icfem    # International Conference on Formal Engineering Methods
-  - icfp     # International Conference on Functional Programming
-  - lctes    # Languages, Compilers and Tools for Embedded Systems
-  - oopsla
-  - pldi
-  - popl
-  - rv       # Runtime Verification
-  - sas      # Static Analysis Symposium
-  - tase     # Theoretical Aspects of Software Engineering
-  - vmcai    # Verification, Model Checking, and Abstract Interpretation
+# 収録しない会議は現在なし（2026-10-26 にプログラミング言語・形式手法系の 16 件を
+# 収録範囲へ戻した。ユーザーの「あらゆる会議」を優先）。
+exclude: []
 
 rank_filter:
   ccf: []                # 空リストなら無条件（ワークショップ・C ランクも収録）

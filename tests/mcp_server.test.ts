@@ -1706,11 +1706,10 @@ it("「と」「や」で繋いだ打ち方に、どちらかだけで打つ案�
   expect(欄と, "欄の名前と接続の案内を重ねた").not.toContain("繋いで打つと");
 });
 
-it("venue_info も、対象外の会議なら方針を言う", async () => {
+it("venue_info でプログラミング言語系の会議も引ける", async () => {
   const text = await call("venue_info", { name: "PLDI", scope: "all" });
-  expect(text).toContain("収録に在りません");
-  expect(text).toContain("プログラミング言語・形式手法系");
-  expect(text).toContain("対象外");
+  expect(text).toContain("会議:");
+  expect(text).not.toContain("収録に在りません");
 });
 
 it("collection_stats のワークショップ数は、画面の収録状況と同じ数え方", async () => {
@@ -1728,11 +1727,10 @@ it("collection_stats のワークショップ数は、画面の収録状況と�
   expect(text, "画面と同じ数え方になっていない").toContain(`ワークショップ ${數}`);
 });
 
-it("収録対象外のプログラミング言語系は、名簿の話を重ねず方針を言う", async () => {
+it("search_deadlines でプログラミング言語系の会議も引ける", async () => {
   const text = await call("search_deadlines", { query: "PLDI", scope: "all", limit: 1 });
-  expect(text).toContain("プログラミング言語・形式手法系");
-  expect(text).toContain("対象外");
   expect(text).not.toContain("収録の名簿に見当たりません");
+  expect(text).toMatch(/に当たる締切: [1-9]/);
 });
 
 it("収録に無い会議名だけのとき、名簿に無いと言う", async () => {
@@ -3601,6 +3599,7 @@ it("list_upcoming のランクの絞り込みは、締切の検索と同じ（�
       scope: "all",
       rank: "A*",
       kinds,
+      include_estimated: true,
       limit: 100,
     });
     const 一覧 = await 數("list_upcoming", {
@@ -4805,7 +4804,8 @@ it("list_upcoming の件数は、その窓の事実と合う（第 990 回）", 
   };
   const 行々 = displayCandidates(收錄 as never);
   const 今 = Date.now();
-  /* 締切側は「今日から N 日（JST の暦日で数える）」なので日を跨ぐ所は JST の 0 時で切る。 */
+  /* 窓の終わりは JST の暦日で切る。始まりは「いま」で切る（今日の朝に過ぎた締切は
+   * `list_upcoming` も出さない – 2026-10-26 に `within_days` と揃えた）。 */
   const 今の日 = Date.parse(
     `${new Date(今 + 9 * 3600000).toISOString().slice(0, 10)}T00:00:00+09:00`,
   );
@@ -4818,7 +4818,7 @@ it("list_upcoming の件数は、その窓の事実と合う（第 990 回）", 
     const 表示 = Number(m?.[1].replace(/,/g, ""));
     const 限り = Recommender.withinDaysLimitMs(days, 今の日);
     const 事實 = 行々.filter(
-      (r) => !Recommender.deadlineRowIsPast(r, 今の日) && (r.tShown ?? r.t) < 限り,
+      (r) => !Recommender.deadlineRowIsPast(r, 今) && (r.tShown ?? r.t) < 限り,
     ).length;
     expect(事實, `days=${days} の事實が 0 行（この檢查の前提が崩れた）`).toBeGreaterThan(0);
     expect(表示, `days=${days} の件數が事實と違ふ（表示 ${表示} ／ 事實 ${事實}）`).toBe(事實);

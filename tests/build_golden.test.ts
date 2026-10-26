@@ -1081,11 +1081,11 @@ it("expected fixture conferences are present", () => {
   }
 });
 
-it("out-of-scope upstream conferences are filtered out", () => {
+it("programming-language venues are included after the 2026-10-26 scope change", () => {
   const keys = new Set(data.conferences.map((c: any) => c.key));
   expect(keys.has("prcv")).toBe(true);
   for (const key of ["popl", "oopsla", "aplas"]) {
-    expect(keys.has(key)).toBe(false);
+    expect(keys.has(key)).toBe(true);
   }
 });
 

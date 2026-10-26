@@ -355,6 +355,13 @@ export const PLACE_QUERY_ALIASES_JA: string[][] = [
   ["未来館", "miraikan"],
   // 国名の翻訳から守って公式表記のまま置いた州（`PLACE_NAME_SHIELDS_JA`）。
   ["ニューメキシコ", "new mexico"],
+  // 2026-10-26 に収録範囲へ戻したプログラミング言語系の開催地。
+  ["ベルゲン", "bergen"],
+  ["メキシコシティ", "mexico city"],
+  ["オークランド", "oakland"],
+  ["レンヌ", "rennes"],
+  ["広島", "hiroshima"],
+  ["広島市", "hiroshima"],
 ];
 
 export default PLACE_QUERY_ALIASES_JA;
