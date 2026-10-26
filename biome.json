@@ -5,6 +5,7 @@
       "**",
       "!**/public",
       "!**/.cache",
+      "!**/work",
       "!**/data/snapshot.json",
       "!**/data/**/*.yaml",
       "!**/tests/fixtures/**/*.html"
