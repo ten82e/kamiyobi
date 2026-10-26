@@ -1084,7 +1084,24 @@ it("expected fixture conferences are present", () => {
 it("programming-language venues are included after the 2026-10-26 scope change", () => {
   const keys = new Set(data.conferences.map((c: any) => c.key));
   expect(keys.has("prcv")).toBe(true);
-  for (const key of ["popl", "oopsla", "aplas"]) {
+  for (const key of [
+    "aplas",
+    "atva",
+    "cp",
+    "ecoop",
+    "etaps",
+    "fm",
+    "icfem",
+    "icfp",
+    "lctes",
+    "oopsla",
+    "pldi",
+    "popl",
+    "rv",
+    "sas",
+    "tase",
+    "vmcai",
+  ]) {
     expect(keys.has(key)).toBe(true);
   }
 });
