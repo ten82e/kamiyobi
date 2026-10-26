@@ -1076,7 +1076,7 @@ it("edition and deadline records match the spec", () => {
 
 it("expected fixture conferences are present", () => {
   const keys = new Set(data.conferences.map((c: any) => c.key));
-  for (const key of ["sigcomm", "nsdi", "sc", "ispd"]) {
+  for (const key of ["sigcomm", "nsdi", "sc", "ispd", "ismb"]) {
     expect(keys.has(key)).toBe(true);
   }
 });
