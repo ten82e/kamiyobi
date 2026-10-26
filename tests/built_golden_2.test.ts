@@ -3740,6 +3740,13 @@ it("収録状況の四つ組は、何を数えているかと単位がラベル�
   }
 });
 
+it("推薦モードにもワークショップだけに絞るチェックがある（SPEC §7）", () => {
+  const html = siteHtmlRuntime();
+  expect(html, "推薦モードのチェックが無い").toContain('id="recWorkshop"');
+  const app = siteRuntime();
+  expect(app, "推薦の除外数を数えていない").toContain("recommendExcludedWorkshop");
+});
+
 it("推薦カードにもワークショップの札を付ける（SPEC §7）", () => {
   const app = siteRuntime();
   expect(app, "推薦カードの札が無い").toContain(

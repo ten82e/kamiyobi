@@ -242,6 +242,7 @@ function 描いた文(excluded: number, excludedRank = 0): string[] {
   return runInNewContext(
     `let recommendationList = [], cardsDrawn = 0;
      let recommendExcludedRank = ${excludedRank};
+     let recommendExcludedWorkshop = 0;
      const state = { rank: ${JSON.stringify(excludedRank ? "A*" : "")} };
      const recommendationData = {};
      const rankFilterLabelJa = (grade) => grade;

@@ -1277,6 +1277,7 @@ footer a:hover { text-decoration: underline; }
            MCP の `recommend_venues` と同じ候補を出しておく）。 -->
       <div style="margin-top: 8px; display: flex; gap: 14px; align-items: center; flex-wrap: wrap;">
         <label class="check"><input type="checkbox" id="openOnly"> <span title="推薦の候補のうち、受付状況が「締切済み」と確認できた会議を、カード・CSV・ICSから除きます。次回の開催に向けた参考として見たいときは、このチェックを外してください。受付状況が未確認の候補は除きません。">締切が過ぎた候補を除く</span></label>
+        <label class="check"><input type="checkbox" id="recWorkshop"> <span title="推薦の候補を、ワークショップの会場だけに絞ります（締切一覧の「ワークショップのみ」と同じ判定。HotOS のように名前だけでは分からない会場も含みます）。">ワークショップのみ</span></label>
         <!-- 候補は既定で論文との一致順。締切の段取りを立てる人向けに、締切の近い順も選べる
              （日付の無い候補＝常時受付・締切未確認は後ろ、締切済みは最後）。 -->
         <span style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.78rem; color: var(--muted);">
@@ -1662,7 +1663,7 @@ footer a:hover { text-decoration: underline; }
       </div>
       <div>
         <dt>ワークショップのみ</dt>
-        <dd>会議名に workshop を持つ行と、タグ workshop の行だけを出します。ワークショップを併設する本会議（SIGCOMM など）の締切は出ません。会期だけの一覧にも同じ条件が掛かります。英語の <code>workshop only</code> と同じ絞り込みです。</dd>
+        <dd>会議名に workshop を持つ行と、タグ workshop の行だけを出します。ワークショップを併設する本会議（SIGCOMM など）の締切は出ません。会期だけの一覧にも同じ条件が掛かります。英語の <code>workshop only</code> と同じ絞り込みです。推薦モードにも同じチェックがあり、候補をワークショップの会場だけに絞れます。</dd>
       </div>
       <div>
         <dt>会期情報あり・投稿締切未収録</dt>

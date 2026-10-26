@@ -2911,6 +2911,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   let recommendExcludedClosed = 0;
   /* 推薦モードのランクの絞り込みで外した件数（同上）。 */
   let recommendExcludedRank = 0;
+  let recommendExcludedWorkshop = 0;
   /* 締切の一覧で、論文に合う行に印を付けた数（`filter()` が数え、件数欄と印刷物が読む –
    * 札は行ごとに付くが、一覧のどこに何行あるかは数えないと分からない）。 */
   let recommendFitMatches = 0;
@@ -3080,6 +3081,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     venueLookupMiss = pLines.length && Rec ? Rec.unmatchedVenues(pLines, rows) : [];
     recommendExcludedClosed = 0;
     recommendExcludedRank = 0;
+    recommendExcludedWorkshop = 0;
     recommendFitMatches = 0;
     const venueCats = [...new Set([...(state.cats || []), ...detectedVenueCats, ...autoCats])];
 
@@ -3306,6 +3308,12 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       if (state.rank && Rec) {
         const kept = out.filter((row) => Rec.rankMatches(row.rankPairs, state.rank));
         recommendExcludedRank = out.length - kept.length;
+        out = kept;
+      }
+      /* ワークショップだけに絞る（締切一覧の「ワークショップのみ」と同じ判定・同じ状態）。 */
+      if (state.workshop) {
+        const kept = out.filter(rowIsWorkshop);
+        recommendExcludedWorkshop = out.length - kept.length;
         out = kept;
       }
       /* 並べ替えは最後に一度だけ（外した数は一致順の候補から数える）。 */
@@ -5618,6 +5626,14 @@ function semanticOutput(value: unknown): value is SemanticOutput {
        * 投稿先が無い」と読むと、打ち直しに走って候補の存在に気づけない）。 */
       /* 0 件の理由を、効いている絞り込みの名指しで書く（片方だけなら、その入口を名指す。
        * 両方なら両方を書く – 片方だけを直しても出ないため）。 */
+      if (recommendExcludedWorkshop && !recommendExcludedRank && !recommendExcludedClosed) {
+        line(
+          cards,
+          `「ワークショップのみ」では 0 件でした（外すと ${countJa(recommendExcludedWorkshop)} 件出ます）。`,
+          "recommendation-card",
+        );
+        return;
+      }
       if (recommendExcludedRank && recommendExcludedClosed) {
         line(
           cards,
@@ -6008,6 +6024,11 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       if (rankExcludedNote) {
         cnt += rankExcludedNote;
         cntLive += rankExcludedNote;
+      }
+      if (recommendExcludedWorkshop) {
+        const note = ` ／ ワークショップ以外 ${countJa(recommendExcludedWorkshop)} 件は「ワークショップのみ」で除いています`;
+        cnt += note;
+        cntLive += note;
       }
       const orderNote = recommendationOrderNoteJa(state.order);
       if (orderNote) {
@@ -6626,6 +6647,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     inputElement("workshop").checked = state.workshop;
     inputElement("past").checked = state.past;
     inputElement("openOnly").checked = state.openOnly;
+    inputElement("recWorkshop").checked = state.workshop;
     valueElement("recOrder").value = state.order;
     catsBox.querySelectorAll<HTMLInputElement>("input").forEach((chk) => {
       chk.checked = state.cats.indexOf(chk.value) >= 0;
@@ -6647,9 +6669,12 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     state.est = inputElement("est").checked;
     state.domestic = inputElement("domestic").checked;
     state.online = inputElement("online").checked;
-    state.workshop = inputElement("workshop").checked;
     state.past = inputElement("past").checked;
     state.openOnly = inputElement("openOnly").checked;
+    state.workshop =
+      state.mode === "recommend"
+        ? inputElement("recWorkshop").checked
+        : inputElement("workshop").checked;
     state.order = valueElement("recOrder").value === "deadline" ? "deadline" : "fit";
     state.cats = [];
     catsBox.querySelectorAll<HTMLInputElement>("input").forEach((chk) => {
@@ -7293,6 +7318,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     "workshop",
     "past",
     "openOnly",
+    "recWorkshop",
     "recOrder",
     "recRank",
   ].forEach((id) => {
