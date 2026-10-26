@@ -5475,6 +5475,18 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       if (rank.title) tag.title = rank.title;
       meta.appendChild(tag);
     }
+    /* 推薦候補にもワークショップが混ざる。名前だけでは分からない会議（HotOS など）も
+     * あるので、締切一覧と同じ札を付ける。 */
+    const ワークショップ =
+      (r.tags || []).indexOf("workshop") >= 0 ||
+      /workshop/i.test(`${r.conf.title || ""} ${r.conf.full_name || ""}`);
+    if (ワークショップ) {
+      const ws = document.createElement("span");
+      ws.className = "tag";
+      ws.textContent = "ワークショップ";
+      ws.title = "ワークショップの会議です（締切一覧の「ワークショップのみ」と同じ判定）";
+      meta.appendChild(ws);
+    }
     const availability = document.createElement("span");
     availability.className = "tag";
     availability.textContent = recommendationAvailability(r);
