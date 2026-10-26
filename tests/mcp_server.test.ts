@@ -944,8 +944,8 @@ it("入力の形が、道具の説明と一致する（第 854 回）", async ()
     ],
     list_upcoming: ["workshop", "days", "limit", "offset", "kind", "kinds", "rank", "scope"],
     venue_info: ["key", "name", "scope"],
-    recommend_venues: ["paper", "rank", "limit", "offset", "retrieval"],
-    search_venues: ["query", "limit", "offset", "retrieval"],
+    recommend_venues: ["paper", "rank", "limit", "offset", "retrieval", "workshop"],
+    search_venues: ["query", "limit", "offset", "retrieval", "workshop"],
     explain_word: ["word", "scope"],
     collection_stats: [],
   };
@@ -1737,6 +1737,34 @@ it("search_venues の候補行は、ワークショップかを持つ", async ()
     rows.some((row) => row.workshop === true),
     "ワークショップの候補が無い",
   ).toBe(true);
+});
+
+it("search_venues・recommend_venues の workshop はワークショップだけに絞る", async () => {
+  for (const tool of ["search_venues", "recommend_venues"] as const) {
+    const key = tool === "search_venues" ? "query" : "paper";
+    const res = (await client.ask({
+      jsonrpc: "2.0",
+      id: 2,
+      method: "tools/call",
+      params: {
+        name: tool,
+        arguments: {
+          [key]: {
+            title: "Workshop on Hot Topics in Operating Systems",
+            abstract: "systems workshop",
+          },
+          workshop: true,
+          limit: 10,
+        },
+      },
+    })) as {
+      result?: { structuredContent?: { total?: number; rows?: Array<{ workshop?: boolean }> } };
+    };
+    const sc = res.result?.structuredContent;
+    expect(sc?.total ?? -1, `${tool} の候補が無い`).toBeGreaterThan(0);
+    for (const row of sc?.rows ?? [])
+      expect(row.workshop, `${tool} にワークショップ以外が混ざった`).toBe(true);
+  }
 });
 
 it("collection_stats のワークショップ数は、画面の収録状況と同じ数え方", async () => {
