@@ -275,6 +275,19 @@ export function pinnedLookup(address: string): LookupFunction {
       : callback(null, address, isIP(address));
 }
 
+export function responseFromIncoming(incoming: IncomingMessage): Response {
+  const responseHeaders = new Headers();
+  for (let i = 0; i < incoming.rawHeaders.length; i += 2)
+    responseHeaders.append(incoming.rawHeaders[i]!, incoming.rawHeaders[i + 1]!);
+  const status = incoming.statusCode ?? 0;
+  const noBody = status === 204 || status === 205 || status === 304;
+  if (noBody) incoming.resume();
+  return new Response(
+    noBody ? null : (Readable.toWeb(incoming) as unknown as ReadableStream<Uint8Array>),
+    { status, statusText: incoming.statusMessage, headers: responseHeaders },
+  );
+}
+
 function fetchPinned(url: URL, address: string, init: RequestInit): Promise<Response> {
   const headers = new Headers(init.headers);
   const lookup = pinnedLookup(address);
@@ -289,18 +302,7 @@ function fetchPinned(url: URL, address: string, init: RequestInit): Promise<Resp
       agent: false,
       ...(init.signal ? { signal: init.signal } : {}),
     };
-    const onResponse = (incoming: IncomingMessage): void => {
-      const responseHeaders = new Headers();
-      for (let i = 0; i < incoming.rawHeaders.length; i += 2)
-        responseHeaders.append(incoming.rawHeaders[i]!, incoming.rawHeaders[i + 1]!);
-      resolve(
-        new Response(Readable.toWeb(incoming) as unknown as ReadableStream<Uint8Array>, {
-          status: incoming.statusCode ?? 0,
-          statusText: incoming.statusMessage,
-          headers: responseHeaders,
-        }),
-      );
-    };
+    const onResponse = (incoming: IncomingMessage): void => resolve(responseFromIncoming(incoming));
     const request =
       url.protocol === "https:"
         ? httpsRequest(options, onResponse)
