@@ -78,6 +78,7 @@ interface Reply {
     structuredContent?: {
       total: number;
       excluded_past: number;
+      order: "fit" | "deadline";
       candidate_venues: number;
       ignored_filters: string[];
       offset: number;
@@ -904,3 +905,87 @@ it("explains how to recover when every matching venue is closed", () => {
     rmSync(root, { recursive: true, force: true });
   }
 });
+
+it.each(["recommend_venues", "search_venues"])(
+  "%s sorts all candidates by deadline before paging",
+  (tool) => {
+    const unknown = venue("gpu-unknown", "GPU unknown", "GPU programming");
+    unknown.editions = [];
+    const journal = { ...unknown, key: "gpu-journal", title: "GPU journal", tags: ["journal"] };
+    const dated = venue("gpu-dated", "GPU dated", "GPU programming");
+    dated.editions = [
+      {
+        id: "gpu-dated2026",
+        year: 2026,
+        deadlines: [
+          {
+            kind: "paper",
+            precision: "date-only",
+            local_date: "2026-10-13",
+            earliest_utc: "2026-10-12T10:00:00Z",
+            latest_utc: "2026-10-14T11:59:59Z",
+          },
+        ],
+      },
+    ];
+    const root = sandbox([
+      venue("gpu-far", "GPU far", "GPU programming", ["systems"], "2027-02-01T00:00:00Z"),
+      unknown,
+      venue("gpu-past", "GPU past", "GPU programming", ["systems"], "2026-01-01T00:00:00Z"),
+      venue("gpu-near", "GPU near", "GPU programming", ["systems"], "2026-10-14T00:00:00Z"),
+      journal,
+      dated,
+    ]);
+    try {
+      const args = {
+        [tool === "recommend_venues" ? "paper" : "query"]: "GPU programming",
+        limit: 30,
+      };
+      const [base, fit, sorted, page, filtered, invalid, recovered] = callSequence(
+        root,
+        [
+          args,
+          { ...args, order: "fit" },
+          { ...args, order: "deadline" },
+          { ...args, order: "deadline", limit: 1, offset: 1 },
+          { ...args, order: "deadline", exclude_past: true },
+          { ...args, order: "date" },
+          { ...args, order: "deadline" },
+        ],
+        tool,
+      );
+      const original = base.result?.structuredContent;
+      const output = sorted.result?.structuredContent;
+      expect(fit.result?.structuredContent).toEqual(original);
+      expect(output).toMatchObject({ order: "deadline", total: 6 });
+      expect(output?.rows.slice(0, 3).map((r) => r.venue_key)).toEqual([
+        "gpu-dated",
+        "gpu-near",
+        "gpu-far",
+      ]);
+      expect(output?.rows.slice(3, 5).map((r) => r.venue_key)).toEqual(
+        original?.rows
+          .filter((r) => ["gpu-unknown", "gpu-journal"].includes(r.venue_key))
+          .map((r) => r.venue_key),
+      );
+      expect(output?.rows.at(-1)?.venue_key).toBe("gpu-past");
+      for (const row of output?.rows ?? []) {
+        expect(row.fit).toEqual(original?.rows.find((r) => r.venue_key === row.venue_key)?.fit);
+      }
+      expect(sorted.result?.content[0].text).toContain("締切が近い順");
+      expect(sorted.result?.content[0].text).not.toContain("一致の点の高い順。");
+      expect(page.result?.structuredContent).toMatchObject({
+        total: 6,
+        next_offset: 2,
+        rows: [output?.rows[1]],
+      });
+      expect(filtered.result?.structuredContent).toMatchObject({ total: 5, excluded_past: 1 });
+      expect(filtered.result?.structuredContent?.rows).toEqual(output?.rows.slice(0, 5));
+      expect(invalid.result?.isError).toBe(true);
+      expect(invalid.result?.content[0].text).toContain("order は fit");
+      expect(recovered.result?.structuredContent).toEqual(output);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  },
+);

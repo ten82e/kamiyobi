@@ -5293,20 +5293,16 @@ function semanticOutput(value: unknown): value is SemanticOutput {
    *   1. 日付を持たない候補（常時受付の論文誌・締切未確認）– 論文との一致順のまま
    *   2. 締切が過ぎた候補 – 最後（`open=1` を入れていれば、そもそも残っていない）
    * 群の中は元の並び（論文との一致順）を保つ – `sort` は安定なので 0 を返すだけでよい。
-   * 日付の比較は締切一覧と同じ `compareDeadlineRows`（表示している暦日 `tShown` で見る）。 */
+   * 日付は画面とMCP共通の比較で、表示している暦日 `tShown` を見る。 */
   function orderCandidatesByDeadline(rows: readonly AppRow[]): AppRow[] {
-    const 群 = (row: AppRow): number => {
-      const status = row._availability?.status;
-      if (status === "past") return 2;
-      if (status === "open" || status === "uncertain") return 0;
-      return 1;
-    };
-    return rows.slice().sort((a, b) => {
-      const diff = 群(a) - 群(b);
-      if (diff) return diff;
-      if (群(a) !== 0) return 0;
-      return compareDeadlineRows(a, b, 1);
-    });
+    return rows
+      .slice()
+      .sort((a, b) =>
+        Recommender.compareVenueDeadlineOrder(
+          { row: a, availability: a._availability },
+          { row: b, availability: b._availability },
+        ),
+      );
   }
 
   /* 候補の並びが既定（論文との一致順）でないときは、件数欄で言う（黙って並べ替えない –

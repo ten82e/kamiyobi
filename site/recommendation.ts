@@ -109,6 +109,29 @@ export function venueLexicalScores(
 type Args = Parameters<typeof Core.venueRecommendations>;
 type Result = ReturnType<typeof Core.venueRecommendations>[number];
 
+type DeadlineOrderCandidate = {
+  row: { t?: number; tShown?: number };
+  availability?: { status?: string };
+};
+
+/** Dated candidates first, then undated, then closed; keep relevance order on ties. */
+export function compareVenueDeadlineOrder(
+  a: DeadlineOrderCandidate,
+  b: DeadlineOrderCandidate,
+): number {
+  const group = (candidate: DeadlineOrderCandidate) => {
+    const status = candidate.availability?.status;
+    return status === "past" ? 2 : status === "open" || status === "uncertain" ? 0 : 1;
+  };
+  const diff = group(a) - group(b);
+  if (diff || group(a) !== 0) return diff;
+  const time = ({ row }: DeadlineOrderCandidate) =>
+    Number.isFinite(row.tShown) ? row.tShown! : Number.isFinite(row.t) ? row.t! : Infinity;
+  const at = time(a);
+  const bt = time(b);
+  return at === bt ? 0 : at < bt ? -1 : 1;
+}
+
 /** Encode the complete text and its topic-setting title/opening sentence separately. */
 export function semanticQueryPlan(lines: Args[1]): Array<{ text: string; weight: number }> {
   const query = Core.queryText(lines);
@@ -218,4 +241,10 @@ export function venueRecommendations(...args: Args): Result[] {
     .slice(0, topN);
 }
 
-export default { ...Core, venueRecommendations, semanticQueryPlan, semanticQueryVector };
+export default {
+  ...Core,
+  venueRecommendations,
+  semanticQueryPlan,
+  semanticQueryVector,
+  compareVenueDeadlineOrder,
+};
