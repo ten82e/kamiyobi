@@ -27,3 +27,11 @@ it("収録状況の数字の隣に、そこから一覧へ行く道が書いて�
   /* てびきも同じ引き方を書いている（画面と説明で別々の道を指さない）。 */
   expect(template, "てびきが穴場の引き方を書いていない").toContain("検索欄に「穴場」と打つと");
 });
+
+it("収録状況は最初は閉じ、開いた後も閉じる操作を残す", () => {
+  const template = readFileSync(join(import.meta.dirname, "..", "site", "template.html"), "utf8");
+  expect(template).toContain(
+    '<details id="catalogStats" class="catalog-stats"><summary>収録状況を見る</summary>',
+  );
+  expect(template).not.toMatch(/\.catalog-stats\[open\]\s*>\s*summary\s*\{[^}]*display:\s*none/);
+});

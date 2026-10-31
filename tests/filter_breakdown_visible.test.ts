@@ -62,9 +62,55 @@ it("絞り込みを入れたら、件数欄を開いて「のぞいた数」を�
   expect(app, "推薦の紙でカードの但し書きを渡していない").toContain("printLegendJa(true)");
 
   /* 画面の組み立ても、この判定を通して開いている（条件を書き写していない）。 */
-  expect(app, "件数欄の開閉が判定を通していない").toContain(
-    '(state.mode === "deadlines" && (deadlineFiltersOnJa() || recommendFitMatches > 0))',
-  );
+  expect(app, "件数欄の開閉が判定を通していない").toContain("deadlineFiltersOnJa() ||");
   expect(app, "0 件のときに開かない").toContain("shown.length === 0 ||");
   expect(app, "検索語があるときに開かない").toContain("Boolean(state.q.trim()) ||");
+});
+
+it("推薦画面の空入力を、締切の検索結果0件として扱わない", () => {
+  const app = siteRuntime();
+  const start = app.indexOf('$("resultNotes").toggleAttribute(');
+  const end = app.indexOf('$("count").textContent = cnt;', start);
+  expect(start).toBeGreaterThan(-1);
+  expect(end).toBeGreaterThan(start);
+  const run = new Function(
+    "recMode",
+    "shown",
+    "state",
+    "deadlineFiltersOnJa",
+    "recommendFitMatches",
+    "$",
+    app.slice(start, end),
+  );
+  const panels = (
+    recMode: boolean,
+    count: number,
+    query = "",
+    filtered = false,
+    manuallyOpen = false,
+  ) => {
+    const notes = {
+      open: false,
+      toggleAttribute(_name: string, value: boolean) {
+        this.open = value;
+      },
+    };
+    const scope = { open: manuallyOpen };
+    run(
+      recMode,
+      Array(count),
+      { q: query, mode: recMode ? "recommend" : "deadlines" },
+      () => filtered,
+      0,
+      (id: string) => (id === "resultNotes" ? notes : scope),
+    );
+    return { notes: notes.open, scope: scope.open };
+  };
+  expect(panels(true, 0)).toEqual({ notes: false, scope: false });
+  expect(panels(true, 0, "GPU", true)).toEqual({ notes: false, scope: false });
+  expect(panels(true, 1, "", false, true)).toEqual({ notes: false, scope: true });
+  expect(panels(false, 0)).toEqual({ notes: true, scope: true });
+  expect(panels(false, 1, "GPU")).toEqual({ notes: true, scope: false });
+  expect(panels(false, 1, "", true)).toEqual({ notes: true, scope: false });
+  expect(panels(false, 1)).toEqual({ notes: false, scope: false });
 });

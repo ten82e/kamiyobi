@@ -6139,11 +6139,13 @@ function semanticOutput(value: unknown): value is SemanticOutput {
      * 「評価「A*」を持たない行 142 件」は畳まれた中に在って読めなかった）。 */
     $("resultNotes").toggleAttribute(
       "open",
-      shown.length === 0 ||
-        Boolean(state.q.trim()) ||
-        (state.mode === "deadlines" && (deadlineFiltersOnJa() || recommendFitMatches > 0)),
+      !recMode &&
+        (shown.length === 0 ||
+          Boolean(state.q.trim()) ||
+          deadlineFiltersOnJa() ||
+          recommendFitMatches > 0),
     );
-    if (shown.length === 0) ($("dataScope") as HTMLDetailsElement).open = true;
+    if (!recMode && shown.length === 0) ($("dataScope") as HTMLDetailsElement).open = true;
     $("count").textContent = cnt;
     $("count").setAttribute("data-semantic-state", semState);
     $("count").setAttribute("data-semantic-model", semLoadedModel);
@@ -8058,7 +8060,6 @@ function semanticOutput(value: unknown): value is SemanticOutput {
 
   if (window.matchMedia("(max-width: 640px)").matches) {
     ($("advancedFilters") as HTMLDetailsElement).open = false;
-    ($("catalogStats") as HTMLDetailsElement).open = false;
   }
   readUrl();
   // URL から復元した並び順をヘッダーの矢印と aria-sort にも反映する（表の中身だけ

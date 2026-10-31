@@ -859,8 +859,7 @@ tr.detail-row td {
 .mode-guide { color: var(--muted); font-size: 0.85rem; margin: 0 0 12px; line-height: 1.7; }
 .help-jump { margin: 4px 0 0; font-size: 0.85rem; }
 .help-jump a { display: inline-block; padding: 6px 0; color: var(--accent); }
-.catalog-stats > summary { cursor: pointer; padding: 8px 0; color: var(--accent); }
-.catalog-stats[open] > summary { display: none; }
+.catalog-stats > summary { cursor: pointer; min-height: 44px; padding: 10px 0; color: var(--accent); }
 .advanced-filters > summary { cursor: pointer; min-height: 44px; padding: 10px 0; color: var(--accent); font-size: 0.85rem; }
 .search-wrap > label { display: block; color: var(--muted); font-size: 0.78rem; margin-bottom: 4px; }
 .active-filters { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
@@ -902,7 +901,6 @@ body.drawer-open { overflow: hidden; }
 .edition-schedule button[aria-current="true"] { border-color: var(--accent); background: var(--accent-subtle); }
 @media (max-width: 640px) {
   .row-detail, .filter-remove { min-height: 44px; }
-  .catalog-stats > summary, .catalog-stats[open] > summary { display: list-item; padding: 10px 0; color: var(--accent); cursor: pointer; }
   .presets-bar { display: grid; grid-template-columns: 1fr 1fr; }
   .presets-bar > span { grid-column: 1 / -1; }
   .presets-bar .preset-btn { min-height: 44px; white-space: normal; }
@@ -956,6 +954,7 @@ footer a:hover { text-decoration: underline; }
   }
   .wrap { max-width: none; padding: 0; }
   .mode-switch,
+  .catalog-stats,
   #controlsPanel,
   .active-filters,
   .row-detail,
@@ -1170,7 +1169,7 @@ footer a:hover { text-decoration: underline; }
     <!-- 収録状況の四つ組。単位を各ラベルに書く（会議の数と締切の件数を並べておいて
          単位を書かないと、680 と 176 が同じ物だと読めてしまう。2026-09-23 実測で
          「穴場/特化誌」は実数（穴場タグの会議だけ）とラベルが食い違っていた。 -->
-    <details id="catalogStats" class="catalog-stats" open><summary>収録状況を見る</summary>
+    <details id="catalogStats" class="catalog-stats"><summary>収録状況を見る</summary>
     <div class="summary-bar">
       <span class="stats-caption">絞り込み前の収録全体:</span>
       <div class="stat-item"><span>収録している会議:</span> <strong id="statConfs">--</strong><span id="statWorkshopNote" class="stat-unit"></span></div>
