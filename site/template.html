@@ -332,6 +332,8 @@ header {
 .recommendation-card .card-meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
 .recommendation-card .card-section { margin-top: 10px; color: var(--muted); font-size: 0.82rem; }
 .recommendation-card .card-section strong { color: var(--fg); }
+.recommendation-evidence > summary { cursor: pointer; color: var(--fg); }
+.recommendation-evidence[open] > summary { margin-bottom: 8px; }
 .row {
   display: flex;
   flex-wrap: wrap;
@@ -985,6 +987,8 @@ footer a:hover { text-decoration: underline; }
    * 紙では開けないので、中身を刷る – 列の意味が無いと「残り」「状態」が読めない
    * （2026-10-23 実測: 印刷の模擬で `.upcoming-notes` の中身が display: none のまま）。 */
   .upcoming-notes > *:not(summary) { display: block !important; }
+  .recommendation-evidence > *:not(summary) { display: block !important; }
+  .recommendation-evidence::details-content { display: block !important; content-visibility: visible !important; }
   /* ★ はその人の私物で、紙は一覧そのものを読む物なので刷らない。 */
   .watch-panel { display: none !important; }
   /* 但し書きは 1 ページに収める（列の意味がページをまたぐと読めない）。見出しの直後で
@@ -1615,7 +1619,7 @@ footer a:hover { text-decoration: underline; }
           <p><strong>候補</strong>は投稿先として適合を確認する対象で、強い一致も含みます。<strong>重なりうすい</strong>は言葉や意味の一致が弱い候補です。CSVの「一致の点」は並べ替えの目安で、採択される可能性の予測ではありません。</p>
           <p>カードの「選定理由」で一致した要素を確かめ、会議名か「公式サイト」を開いて募集分野を確認してください。</p>
         </dd>
-        <dd>カードの頭にある<strong>一致評価</strong>の札の隣に、残り（「あと N 日」）・<strong>ランク</strong>・受付状況の札が並びます。カードの下の「<strong>この会議の締切を一覧で見る</strong>」で、締切の一覧をその会議の行だけに絞って開けます（締切が過ぎた候補では、過去の締切も出す条件を添えます）。一致評価の札には<strong>点</strong>も添えます（例:「一致評価 候補（56 点）」）。<strong>点は候補の並びを決める値で、札（一致評価）とは別の計算</strong>です。ランクは一覧の「ランク」列と同じ札（<code>CCF A</code> など）で、収録にランクが無い会議は「<strong>ランク未確認</strong>」と出します（一覧の「未確認」と同じ意味です）。その下に、判断材料を4行並べます。<strong>収録データ</strong>は収録した開催年の件数と論文サンプル数です。会議の年齢や査読品質を示す値ではありません。<strong>種別</strong>は論文募集・採択通知などの区別、<strong>締切の確認状況</strong>は日付・時刻・タイムゾーン・種別の確認状態、<strong>取得状態</strong>はデータを取得した状況を示します。その下に、<strong>会期と開催地</strong>（一覧の列と同じ語。値の無い会議は「該当なし」「未確認」）、<strong>分野</strong>（一覧の会議の欄にある札と同じ語。分野の無い会議は「未確認」）、<strong>選定理由</strong>が並びます。保存済みのデータを使用している場合は、公式サイトで最新の締切を確認してください。</dd>
+        <dd>カードの頭にある<strong>一致評価</strong>の札の隣に、残り（「あと N 日」）・<strong>ランク</strong>・受付状況の札が並びます。カードの下の「<strong>この会議の締切を一覧で見る</strong>」で、締切の一覧をその会議の行だけに絞って開けます（締切が過ぎた候補では、過去の締切も出す条件を添えます）。一致評価の札には<strong>点</strong>も添えます（例:「一致評価 候補（56 点）」）。<strong>点は候補の並びを決める値で、札（一致評価）とは別の計算</strong>です。ランクは一覧の「ランク」列と同じ札（<code>CCF A</code> など）で、収録にランクが無い会議は「<strong>ランク未確認</strong>」と出します（一覧の「未確認」と同じ意味です）。その下に締切の<strong>種別</strong>、<strong>会期と開催地</strong>（値の無い会議は「該当なし」「未確認」）、<strong>分野</strong>、<strong>選定理由</strong>を表示します。<strong>締切の確認状況</strong>は、日付・時刻・タイムゾーン・種別の確認状態を常に表示します。この行を押すか、Tabで移動してEnterまたはSpaceを押すと、<strong>収録データ</strong>・<strong>取得状態</strong>を開閉できます。収録データは収録した開催年の件数と論文サンプル数で、会議の年齢や査読品質を示す値ではありません。種別は論文募集・採択通知などの区別、取得状態はデータを取得した状況と締切の競合件数です。印刷では閉じている補足情報も表示します。保存済みのデータを使用している場合は、公式サイトで最新の締切を確認してください。</dd>
       </div>
       <div>
         <dt>当たった要素の名前</dt>

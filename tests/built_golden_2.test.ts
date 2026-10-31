@@ -4352,12 +4352,20 @@ it("推薦のカードの行が、てびきの数と名前と合う（SPEC §7�
     },
     Date.parse("2026-10-13T00:00:00Z"),
   ) as Element;
-  const displayed = rendered.children
+  const evidence = rendered.children.find((child) =>
+    child.className.includes("recommendation-evidence"),
+  );
+  expect(evidence, "補足情報をその場で開けない").toBeDefined();
+  expect(evidence?.attributes.open, "補足情報が最初から開いている").toBeUndefined();
+  const kind = rendered.children.find((child) => child.textContent.startsWith("種別:"));
+  expect(kind?.textContent, "締切の種別を補足情報に隠している").toBe("種別: 常時受付");
+  const displayed = [...evidence!.children, kind!]
     .filter((child) => child.className.includes("recommendation-axes"))
     .map((child) => child.textContent);
   expect(displayed).toHaveLength(4);
-  expect(displayed[3]).toContain("取得状態: 取得履歴なし");
-  expect(displayed[0]).toBe("収録データ: 開催年 2年分 ／ 論文サンプル 1件");
+  expect(displayed[0]).toContain("締切の確認状況: 日付 未確認");
+  expect(displayed[1]).toBe("収録データ: 開催年 2年分 ／ 論文サンプル 1件");
+  expect(displayed[2]).toContain("取得状態: 取得履歴なし");
   expect(displayed.join("\n")).not.toMatch(/会議の続いている年数|新規|成長中|確立/);
   const labels = displayed.map((text) => text.split(/[:：]/)[0]);
   expect(rendered.children.map((child) => child.textContent).join(" ")).not.toContain("研究適合度");
@@ -4365,13 +4373,12 @@ it("推薦のカードの行が、てびきの数と名前と合う（SPEC §7�
   const at = template.indexOf("カードの頭にある<strong>一致評価</strong>");
   expect(at).toBeGreaterThan(0);
   const guide = template.slice(template.lastIndexOf("<dd>", at), template.indexOf("</dd>", at));
-  // てびきが数える行数と、実装の行数が合うこと。
-  const counted = /判断材料を(\d+)行/.exec(guide);
-  expect(counted, "てびきがカードの行数を数えていない").not.toBeNull();
-  expect(Number(counted![1]), "てびきの行数と実装の行数が割れている").toBe(labels.length);
   for (const label of labels) {
     expect(guide, `てびきがカードの行「${label}」を挙げていない`).toContain(label);
   }
+  expect(guide).toContain("開閉");
+  expect(guide).toContain("常に表示");
+  expect(guide).toContain("印刷では閉じている補足情報も表示");
   // 一致評価はカードの頭に出る語として説明する（行として数えない）。
   expect(guide).toContain("一致評価");
 });

@@ -5500,19 +5500,20 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     const axes = axesForRecommendation(r, now);
     const venueEvidence = axes.venue_evidence;
     const deadlineTrust = axes.deadline_trust;
-    line(card, venueEvidenceLineJa(venueEvidence), "card-section recommendation-axes");
+    const evidence = document.createElement("details");
+    evidence.className = "card-section recommendation-evidence";
+    const evidenceSummary = document.createElement("summary");
+    evidenceSummary.className = "recommendation-axes";
+    evidenceSummary.textContent = `締切の確認状況: 日付 ${trustLabel[deadlineTrust.date]} ／ 時刻 ${trustLabel[deadlineTrust.time]} ／ タイムゾーン ${trustLabel[deadlineTrust.timezone]} ／ 種別 ${trustLabel[deadlineTrust.kind]}`;
+    evidence.appendChild(evidenceSummary);
+    line(evidence, venueEvidenceLineJa(venueEvidence), "card-section recommendation-axes");
     line(
       card,
       `種別: ${Recommender.kindLabelJa(r.kind) || "未確認"}`,
       "card-section recommendation-axes",
     );
     line(
-      card,
-      `締切の確認状況: 日付 ${trustLabel[deadlineTrust.date]} ／ 時刻 ${trustLabel[deadlineTrust.time]} ／ タイムゾーン ${trustLabel[deadlineTrust.timezone]} ／ 種別 ${trustLabel[deadlineTrust.kind]}`,
-      "card-section recommendation-axes",
-    );
-    line(
-      card,
+      evidence,
       `取得状態: ${freshnessLabel[deadlineTrust.sourceFreshness]} ／ 締切の競合: ${deadlineTrust.conflicts}件`,
       "card-section recommendation-axes",
     );
@@ -5563,6 +5564,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         : "選定理由: 目立つ一致はないが候補に入った",
       "card-section",
     );
+    card.appendChild(evidence);
     if (r.conf.link && safeExternalUrl(r.conf.link)) {
       const official = document.createElement("a");
       official.href = safeExternalUrl(r.conf.link);
