@@ -2636,7 +2636,7 @@ it("推薦の札の意味を、画面てびきと同じ言い回しで添える�
   expect(text, "札の意味を言つていない").toContain("言葉や意味の一致が弱い");
   expect(text).not.toContain("いちばん近い会議との差が小さい");
   /* 数値（点）の読み方も黙らない（並べるための目安で採択の予測ではない – 画面のてびきの約束）。 */
-  expect(text, "数値の読み方を言つていない").toContain("採択の予測ではありません");
+  expect(text, "数値の読み方を言つていない").toContain("順位や採択の見込みを表す値ではありません");
 });
 
 it("推薦の行に、画面と同じ選定理由が付く（第 897 回）", async () => {
@@ -2644,7 +2644,7 @@ it("推薦の行に、画面と同じ選定理由が付く（第 897 回）", as
    * 画面のカードは「選定理由: 分野の一致 / 会議名一致」と言う（`site/app.ts` の
    * `reasonSignals` – 同じ 5 つ + 過去掲載先。重みは書かない – 画面が「スコアと合はない」
    * 実測で削つた）。黙つて落とすと、AI は根拠を言へず「おすすめです」に成る。 */
-  const 品書 = join(REPO_ROOT, "public", "catalog.json");
+  const 品書 = join(REPO_ROOT, "public", "recommendation-index.json");
   expect(
     existsSync(品書),
     "検証に必要な生成物がありません。オフラインビルドを実行してください",
@@ -2658,10 +2658,7 @@ it("推薦の行に、画面と同じ選定理由が付く（第 897 回）", as
   /* 画面が表示する札と同じ理由をこちらで組む。 */
   const now = Date.now();
   const rows = displayCandidates(catalog as never);
-  const pool = (rows as unknown as Parameters<typeof Recommender.deadlineRowIsPast>[0][])
-    .filter((r) => !Recommender.deadlineRowIsPast(r as never, now))
-    .concat(Recommender.journalRows(catalog.conferences ?? [], now) as unknown as never[])
-    .concat(Recommender.pastRepresentatives(rows as never, now) as unknown as never[]);
+  const pool = Recommender.candidatePool(rows as never, catalog.conferences ?? [], now);
   Recommender.setNameIdf(Recommender.buildNameIdf(catalog.conferences ?? []));
   Recommender.setReranker(catalog.reranker ?? null);
   const 正 = Recommender.venueRecommendations(
@@ -3308,7 +3305,7 @@ it("recommend_venues は、効かない絞り込みの引数を名指す（第 9
     expect(答, `\`${鍵}\` を渡しても名指して居ん`).toContain("無視した絞り込み");
     expect(答.split("\n")[0] ?? "", `\`${鍵}\` の名前が出て居ん`).toContain(鍵);
     /* 絞り込まないことを文字でも示す（順位で選ぶ）。 */
-    expect(答, "順位で選ぶ謀を言つていない").toContain("順位と点で選びます");
+    expect(答, "選び方を説明していない").toContain("論文との一致で選びます");
   }
   /* `rank` は 2026-10-18 から推薦の引数（画面の推薦モードと同じ欄）。無視しない。 */
   const ランク付き = await call("recommend_venues", { paper: 題, limit: 2, rank: "A" });
@@ -6830,13 +6827,13 @@ it("「国際会議」は国内研究会・国内シンポジウム以外の会�
   expect(本文).toContain("「国際会議」は国内研究会・国内シンポジウム以外の会議で探しています");
 });
 
-it("推薦の並びが点の順である事と、意味検索への切り替え方を言う", async () => {
+it("推薦の並びと参考点の違い、意味検索への切り替え方を言う", async () => {
   const 答 = await call("recommend_venues", {
     paper: "GPUクラスタにおける深層学習ジョブのスケジューリング",
     limit: 5,
   });
-  // 並びは一致の点の順、同じ点どうしは語の重なりの順 – 言わないと AI が並びの壊れと読む。
-  expect(答).toContain("同じ点どうしは語の重なりの強い順");
+  expect(答).toContain("論文と募集分野の一致順");
+  expect(答).toContain("参考点は一致評価の参考値で、順位や採択の見込みを表す値ではありません");
   // 語の一致だけで答えた時は、意味検索を使う引数を名指す（道具の説明と同じ名前）。
   expect(答).toContain('retrieval: "semantic" を指定してください');
 });

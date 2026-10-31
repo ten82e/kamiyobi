@@ -47,7 +47,7 @@ export function venueLexicalScores(
 ): Map<string, number> {
   const queryText = Core.queryText(lines);
   const query = terms(queryText);
-  const nameQuery = new Set(queryText.toLowerCase().match(/[a-z][a-z0-9-]{2,}/g) ?? []);
+  const explicitKeys = new Set(queryText.toLowerCase().match(/[a-z][a-z0-9-]{2,}/g) ?? []);
   const queryPhrases = phrases(queryText);
   const documents = new Map<
     string,
@@ -60,8 +60,14 @@ export function venueLexicalScores(
     const key = typeof conf.key === "string" ? conf.key : "";
     if (!key || documents.has(key)) continue;
     const topicText = [text(conf.scope), text(conf.official_scope), text(conf.keywords)].join(" ");
+    const keyTerms = terms(key);
     documents.set(key, {
-      names: new Set(terms([text(conf.title), text(conf.full_name), key].join(" "))),
+      // Identifier fragments are not venue mentions; full-name words still share query normalization.
+      names: new Set(
+        terms([text(conf.title), text(conf.full_name), key].join(" ")).filter(
+          (word) => keyTerms.length !== 1 || word !== keyTerms[0] || explicitKeys.has(key),
+        ),
+      ),
       topics: new Set(terms(topicText)),
       phrases: phrases(topicText),
     });
@@ -99,8 +105,7 @@ export function venueLexicalScores(
         : 1;
       return [
         key,
-        overlap(new Set([...doc.names].filter((word) => nameQuery.has(word))), 1) +
-          (overlap(doc.topics, 2) + phraseScore) / topicNormalization,
+        overlap(doc.names, 1) + (overlap(doc.topics, 2) + phraseScore) / topicNormalization,
       ];
     }),
   );
@@ -193,8 +198,6 @@ export function venueRecommendations(...args: Args): Result[] {
     const escaped = key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     if (new RegExp(`(?:^|[^a-z0-9-])${escaped}(?=$|[^a-z0-9-])`, "i").test(text)) named.add(key);
   }
-  /* 語の重なりの点は、一致評価が同じ候補どうしの並びにだけ使う（点の順は画面の札と
-   * 揃える – 2026-10-18）。 */
   const retrieval = venueLexicalScores(rows, lines);
   const expanded = lines.map((line) => ({
     ...line,
@@ -207,7 +210,7 @@ export function venueRecommendations(...args: Args): Result[] {
     now,
     {
       ...options,
-      topN: named.size ? Math.max(rows.length, topN) : topN,
+      topN: Math.max(rows.length, topN),
     },
   );
   return results
@@ -231,11 +234,6 @@ export function venueRecommendations(...args: Args): Result[] {
     .sort(
       (a, b) =>
         Number(named.has(b.venueKey.toLowerCase())) - Number(named.has(a.venueKey.toLowerCase())) ||
-        /* 並びは**画面に出している一致評価（`fit.score`）の強い順**にする。語の重なりの
-         * 点数（`retrieval`）で並べ替えると、点の低い候補（例: 16 点）が点の高い候補
-         * （例: 80 点）より上に来て、カードの札（「候補」「重なりうすい」）と順が食い違う
-         * （2026-10-18 実測: TSN の例で RTSS 80 点が 9 番目、COLT 16 点が 1 番目）。 */
-        (b.fit?.score ?? 0) - (a.fit?.score ?? 0) ||
         (retrieval.get(b.venueKey) ?? 0) - (retrieval.get(a.venueKey) ?? 0),
     )
     .slice(0, topN);

@@ -5057,6 +5057,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     } else {
       comp = `言葉の一致スコア ${r._vocabScore}点`;
     }
+    comp += "（点と検索別の順位は一致評価の参考情報で、候補の表示順位とは異なります）";
     html +=
       '<div class="detail-comp">' +
       comp +
@@ -5457,11 +5458,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     meta.className = "card-meta";
     const fit = document.createElement("span");
     fit.className = "tag match";
-    /* 点も添える（並びは点の順なので、点が無いと「重なりうすい」が先頭に来る理由が読めない。
-     * MCP の行と CSV は前から点を出している）。点が無い候補（評価保留）は点を書かない。 */
-    fit.textContent = `一致評価 ${r._fitLabel || "評価保留"}${
-      typeof r._matchScore === "number" ? `（${r._matchScore} 点）` : ""
-    }`;
+    fit.textContent = `一致評価 ${r._fitLabel || "評価保留"}`;
     meta.appendChild(fit);
     /* 残りは一覧の「残り」列と同じ語で、一致評価の札の隣に出す（一覧も残りが左端）。
      * 日付を読んで今日から数えるのは利用者の仕事にしない。 */
@@ -5506,6 +5503,12 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     evidenceSummary.className = "recommendation-axes";
     evidenceSummary.textContent = `締切の確認状況: 日付 ${trustLabel[deadlineTrust.date]} ／ 時刻 ${trustLabel[deadlineTrust.time]} ／ タイムゾーン ${trustLabel[deadlineTrust.timezone]} ／ 種別 ${trustLabel[deadlineTrust.kind]}`;
     evidence.appendChild(evidenceSummary);
+    if (typeof r._matchScore === "number")
+      line(
+        evidence,
+        `一致評価の参考点: ${r._matchScore} 点（順位や採択の見込みを表す値ではありません）`,
+        "card-section",
+      );
     line(evidence, venueEvidenceLineJa(venueEvidence), "card-section recommendation-axes");
     line(
       card,
@@ -6175,9 +6178,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       exportBtn.title = 候補を書き出す
         ? "「投稿先を探す」が挙げた候補を、表計算で読める形（BOM 付き CSV）にしたファイルです。" +
           "先頭の 4 列が一致評価・一致の点・言葉の一致・意味の近さで、残りの列は締切の一覧と同じ物です。" +
-          /* 並び順を「締切が近い順」にすると、点の大きい順には並ばない（点は一致の順位を
-           * 決める値のままで、並べ替えでは変わらない）。「大きいほど上」と言い切らない。 */
-          "「一致の点」は候補の一致の順位を決める値（「論文との一致順」では大きいほど上）、" +
+          "「一致の点」は一致評価の参考値で、順位や採択の見込みを表す値ではありません。" +
           "「一致評価」の札は別の計算（当たった証拠の強さ）で、" +
           "同じ行でも点が高いのに札が「候補」のことがあります。" +
           "意味検索が使えない環境では「意味の近さ」は空になります（0 とは書きません）。" +
@@ -7732,12 +7733,12 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       // 「状態」が空欄の行は注記が無いという意味（2026-08-09 実測: 既定の印刷対象 478 行の
       // うち 189 行が空欄で、その 189 行はランク・会期・開催地の列にも空欄が無かった）。
       "「状態」が空欄の行は、この行に注記がない行です",
-      /* 「投稿先を探す」の紙には候補のカードが刷られる。カードの語（一致評価・点・受付状況・
-       * 次回締切）は締切の一覧の但し書きに無く、点は 2026-10-18 から札に添えている。カードを
+      /* 「投稿先を探す」の紙には補足情報も刷られる。カードの語（一致評価・参考点・受付状況・
+       * 次回締切）は締切の一覧の但し書きに無いので、カードを
        * 刷る時だけ説明を足す（出ない語を説明しない、が約束）。 */
       ...(カードも刷るか
         ? [
-            "「一致評価」の札は、入力した論文とその会議の一致の証拠の形の区分です（採択の見込みではありません）。札のあとの「N 点」は候補の並びを決める点で、札とは別の計算です",
+            "「一致評価」の札は、入力した論文とその会議の一致の証拠の形の区分です（採択の見込みではありません）。「参考点」は一致評価の参考値で、順位や採択の見込みを表す値ではありません",
             "「受付状況」は締切の状態（締切済み・受付中など）で、「次回締切」は次に来る募集の締切です。日時は日本時間（JST）です",
           ]
         : []),
@@ -7745,7 +7746,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
        * **出る時だけ**説明を足す（この用紙の表記は「必ず刷られる語」だけ、が約束）。 */
       ...(recommendFitMatches
         ? [
-            "「一致評価」の札は、入力した論文とその会議の一致の強さの区分です（受付の状態ではなく、点数を足した物でもありません）。札のあとの「N 点」は候補の並びを決める点で、札とは別の計算です",
+            "「一致評価」の札は、入力した論文とその会議の一致の強さの区分です（受付の状態ではなく、点数を足した物でもありません）。「一致の点」は一致評価の参考値で、順位や採択の見込みを表す値ではありません",
           ]
         : []),
       Recommender.aoeMeaningJa(),

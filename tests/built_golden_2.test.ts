@@ -4349,13 +4349,22 @@ it("推薦のカードの行が、てびきの数と名前と合う（SPEC §7�
       ed: {},
       kind: "journal",
       _availability: { status: "ongoing" },
+      _matchScore: 56,
+      _fitLabel: "候補",
     },
     Date.parse("2026-10-13T00:00:00Z"),
   ) as Element;
+  const badge = rendered.children
+    .flatMap((child) => child.children)
+    .find((child) => child.className === "tag match");
+  expect(badge?.textContent).toBe("一致評価 候補");
   const evidence = rendered.children.find((child) =>
     child.className.includes("recommendation-evidence"),
   );
   expect(evidence, "補足情報をその場で開けない").toBeDefined();
+  expect(
+    evidence?.children.some((child) => child.textContent.startsWith("一致評価の参考点: 56 点")),
+  ).toBe(true);
   expect(evidence?.attributes.open, "補足情報が最初から開いている").toBeUndefined();
   const kind = rendered.children.find((child) => child.textContent.startsWith("種別:"));
   expect(kind?.textContent, "締切の種別を補足情報に隠している").toBe("種別: 常時受付");

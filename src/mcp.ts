@@ -48,6 +48,7 @@ const SERVER_INSTRUCTIONS_JA = [
   "- 検索語は日本語・英語のどちらでも書けます（例: `SIGCOMM 2027 deadline`・`CFP SIGCOMM`・`deadlines next month`・`graph neural networks`）。英語の冠詞・前置詞は、ほかの語があるときは絞り込みに使いません。手法の名は、その手法が載る分野の語（`graph neural networks` → `machine learning`）に直して探し、件数欄でそのことを言います。0 件のときは、語を 1 つ外す候補も返します。`search_deadlines` と `list_upcoming` は `workshop: true` でワークショップだけに絞れます（構造化結果の締切行にも `workshop` が入ります）。",
   "",
   "- 投稿先の `search_venues`・`recommend_venues` は既定で締切済みも参考候補に含めます。`exclude_past: true` で締切済みだけを除けます。締切未確認・常時受付は残るため、残った全候補が受付中とは断定しないでください。除外件数は `excluded_past` です。`order: deadline` で締切が近い順に並べ替えられます（日付の無い候補は後ろ、締切済みは最後）。",
+  "- 投稿先は返された行の順で案内してください。`fit.score` は一致評価の参考点で、語彙検索の順位とは別です。参考点だけで候補を並べ替えないでください。",
   "道具: 締切を引く `search_deadlines` / 直近の締切と会期をまとめる `list_upcoming` / 会議を名指して開催回と締切を見る `venue_info` / 語が収録に当たるか調べる `explain_word` / 収録数とデータ源を見る `collection_stats` / 論文の題名と概要から投稿先を探す `search_venues`・`recommend_venues`。",
   "",
   "構造化結果（`structuredContent`）を優先し、続きは返ってきた `next_offset` を `offset` に渡してください。",
@@ -3036,7 +3037,7 @@ async function recommendVenues(
     "online",
   ].filter((k) => args[k] !== undefined && args[k] !== null && String(args[k]).trim() !== "");
   const 無視の斷り = 無視した.length
-    ? `（無視した絞り込み ${無視した.join("・")} はこの道具では効きません – 順位と点で選びます）`
+    ? `（無視した絞り込み ${無視した.join("・")} はこの道具では効きません – 論文との一致で選びます）`
     : "";
   /* 長い論文は**最初の 20 行だけ**を見る（上の截り – 切つたことを言う）。 */
   const 限り = 數の引數("limit", args.limit, 1);
@@ -3284,18 +3285,16 @@ async function recommendVenues(
     頭,
     ...(知らんランクの文 ? [知らんランクの文] : []),
 
-    "「候補」は投稿先として適合を確認する対象で、強い一致も含みます。「重なりうすい」は言葉や意味の一致が弱い候補です。数値は並べ替えの目安で、採択の予測ではありません。",
+    "「候補」は投稿先として適合を確認する対象で、強い一致も含みます。「重なりうすい」は言葉や意味の一致が弱い候補です。参考点は一致評価の参考値で、順位や採択の見込みを表す値ではありません。",
     ...(semantic
       ? []
       : [
           '意味の近さで探すには retrieval: "semantic" を指定してください（英語・日本語の実モデルを使います。最初の 1 回はモデルの読み込みで十数秒かかり、2 回目からは速くなります）。',
         ]),
-    /* 同じ一致評価の中は点の順に並ぶとは限らない（2026-10-17 実測: 2 位 32 点・3 位 48 点）。
-     * 言わないと AI が並びの壊れと読む。語の一致だけで答えた時は、意味検索への切り替え方も書く。 */
-    `（${args.order === "deadline" ? "締切が近い順。日付の無い候補は後ろ、締切済みは最後。同じ日時は元の検索順" : search && semantic ? "意味検索の類似度が高い順" : "一致の点の高い順。同じ点どうしは語の重なりの強い順"}${offset > 0 ? `。${offset + 1} 件目から ${見本.length} 件表示・残り ${Math.max(0, 候補.length - offset - 見本.length)} 件` : 候補.length > limit ? `。${limit} 件まで表示・残り ${候補.length - limit} 件` : ""}）`,
+    `（${args.order === "deadline" ? "締切が近い順。日付の無い候補は後ろ、締切済みは最後。同じ日時は元の検索順" : search && semantic ? "意味検索の類似度が高い順" : "論文と募集分野の一致順"}${offset > 0 ? `。${offset + 1} 件目から ${見本.length} 件表示・残り ${Math.max(0, 候補.length - offset - 見本.length)} 件` : 候補.length > limit ? `。${limit} 件まで表示・残り ${候補.length - limit} 件` : ""}）`,
     "",
     ...見本.map((r, i) => {
-      const 評價 = `${String(r.fit.label ?? "評価保留")}（${Number(r.fit.score) || 0} 点）`;
+      const 評價 = `${String(r.fit.label ?? "評価保留")}（参考点 ${Number(r.fit.score) || 0}）`;
       /* **選定理由** – 画面のカードと同じ言ひ回し・同じ要素（`site/app.ts` の `reasonSignals`
        * と同じ 5 つ + 過去掲載先）。実測 2026-10-28: AI が「何でこの会報か」を根拠付きで
        * 言へなかつた（点と札だけ）。画面が持つ物を黙つて落とすと、推薦の強さが分からん。 */
@@ -3592,7 +3591,7 @@ const TOOLS = [
     title: "論文に合う投稿先を探す",
     annotations: READ_ONLY_ANNOTATIONS,
     description:
-      "論文情報に合う投稿先を語彙の一致で探す。学習済みの並べ替えモデルがある場合は併用する。rank を指定すると会場のランク（`A*`・`A`・`B`・`C`・`N`、または `CCF A` のように尺度の名を付けた形）で候補を絞ります（画面の推薦モードの「ランク」と同じ判定。知らない等級はその等級では 0 件になり、その旨を返します）。retrieval: semantic を指定すると実モデルを使う。候補の範囲は画面と共通（推薦索引から作るため、同じ論文でも画面と点がわずかに動く事があります）。順位表に入るのは実質的な一致がある候補だけで、証拠がない会議を分野だけの一致で推薦しない。長い入力は最初の 20 行と各行の長さ制限で切り、切った旨を返す。返す行の形: 順位と一致評価、選定理由、締切の確認状況に続いて締切行。1ページ最大30件。structuredContent の rows は 1 行 = 1 候補で、`rank` は**順位**（1 起点。会場のランクではない – 他の道具の `rank`（`ccf`・`core`・`thcpl`）とは別の物です）、`fit` は一致評価とその内訳、`availability` は受付状態、`deadlines` は締切、`verification` は確認情報、`venue_rank` は会場のランク（`ccf`・`core`・`thcpl`。他の道具の `rank` と同じ形）、`workshop` はその会場がワークショップか（画面の「ワークショップのみ」と同じ判定）。`workshop: true` でワークショップの会場だけに絞れる。`exclude_past: true` で締切済みの候補を除く（締切未確認・常時受付は残す）。除外件数は excluded_past に返す。`order: deadline` で締切が近い順に並べる（日付の無い候補は後ろ、締切済みは最後）。続きは同じ論文情報と next_offset を offset に指定する。",
+      "論文情報に合う投稿先を語彙の一致で探す。学習済みの並べ替えモデルがある場合は併用する。rank を指定すると会場のランク（`A*`・`A`・`B`・`C`・`N`、または `CCF A` のように尺度の名を付けた形）で候補を絞ります（画面の推薦モードの「ランク」と同じ判定。知らない等級はその等級では 0 件になり、その旨を返します）。retrieval: semantic を指定すると実モデルを使う。候補の範囲は画面と共通（推薦索引から作るため、同じ論文でも画面と点がわずかに動く事があります）。順位表に入るのは実質的な一致がある候補だけで、証拠がない会議を分野だけの一致で推薦しない。長い入力は最初の 20 行と各行の長さ制限で切り、切った旨を返す。返す行の形: 順位と一致評価、選定理由、締切の確認状況に続いて締切行。1ページ最大30件。structuredContent の rows は 1 行 = 1 候補で、`rank` は**順位**（1 起点。会場のランクではない – 他の道具の `rank`（`ccf`・`core`・`thcpl`）とは別の物です）、`fit` は一致評価とその内訳（score は参考点で、順位とは別）、`availability` は受付状態、`deadlines` は締切、`verification` は確認情報、`venue_rank` は会場のランク（`ccf`・`core`・`thcpl`。他の道具の `rank` と同じ形）、`workshop` はその会場がワークショップか（画面の「ワークショップのみ」と同じ判定）。`workshop: true` でワークショップの会場だけに絞れる。`exclude_past: true` で締切済みの候補を除く（締切未確認・常時受付は残す）。除外件数は excluded_past に返す。`order: deadline` で締切が近い順に並べる（日付の無い候補は後ろ、締切済みは最後）。続きは同じ論文情報と next_offset を offset に指定する。",
     inputSchema: {
       type: "object",
       properties: {
