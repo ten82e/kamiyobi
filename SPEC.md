@@ -1424,3 +1424,7 @@ paperVecs 適用条件は「1 分野に収まる + 語彙非衝突」の 2 条�
 
 - update-data writerは既存生成branchの親履歴を保持して通常pushする。既存branchに生成データ以外の編集がある場合は停止し、同時にremoteが進んだ場合もnon-fast-forwardとして拒否する。force pushで履歴を置き換えない。
 - update-dataのPR本文はGitHubの文字数上限内に収め、長い診断は要約する。完全なcategory/deadline差分はgenerated-update artifactに保存し、その実行へのリンクを本文に含める。本文生成の確認はremote push前に行い、データ検証・health gateを省略しない。
+
+### AIからの投稿先検索で締切済み候補を除く
+
+`search_venues` と `recommend_venues` は `exclude_past`（boolean、既定false）を受ける。trueの場合は画面の「締切が過ぎた候補を除く」と同じく、受付状態が `past` の候補だけを除く。締切未確認・日付の不確実性が残る候補・常時受付は残し、受付中と断定しない。ランク・ワークショップの条件を適用した候補からページ送り前に除き、`total`・順位・`next_offset` は除外後の集合に対応する。`excluded_past` に除外件数を返す。除外により0件になった場合は条件を外す案内を出し、論文の入力不足とは説明しない。

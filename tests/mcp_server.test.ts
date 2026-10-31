@@ -944,8 +944,8 @@ it("入力の形が、道具の説明と一致する（第 854 回）", async ()
     ],
     list_upcoming: ["workshop", "days", "limit", "offset", "kind", "kinds", "rank", "scope"],
     venue_info: ["key", "name", "scope"],
-    recommend_venues: ["paper", "rank", "limit", "offset", "retrieval", "workshop"],
-    search_venues: ["query", "limit", "offset", "retrieval", "workshop"],
+    recommend_venues: ["paper", "rank", "limit", "offset", "retrieval", "workshop", "exclude_past"],
+    search_venues: ["query", "limit", "offset", "retrieval", "workshop", "exclude_past"],
     explain_word: ["word", "scope"],
     collection_stats: [],
   };
@@ -5178,7 +5178,13 @@ it("索引が觸れている打ち方は、全部效く（第 1006 回）", asyn
   }
   /* 打ち方が效く時は「語は当たります」か件数が出る（0 件でも意味が違ふ）。 */
   const 先月 = await call("search_deadlines", { query: "先月", limit: 1 });
-  expect(先月, "過去の月（先月）は 0 件でも打ち方が效いている").toContain("に当たる締切: 0 件");
+  // 月初は時刻未確認の前月末の締切が残るため、件数を0に固定しない。
+  expect(先月, "先月が締切の検索として解釈されていない").toMatch(/に当たる締切: \d+ 件/);
+  const previousMonth = new Date(Date.now() + 9 * 3600000);
+  previousMonth.setUTCMonth(previousMonth.getUTCMonth() - 1, 1);
+  expect(先月).toContain(
+    `判定: ${previousMonth.getUTCFullYear()}年${previousMonth.getUTCMonth() + 1}月 =`,
+  );
 });
 
 it("返す行の形を說明に書いて、実物もその通りに分けられる（第 1008 回）", async () => {

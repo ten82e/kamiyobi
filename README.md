@@ -75,6 +75,8 @@ stdio の読み取り専用サーバです。外部への送信は行わない�
 | `search_venues` | 全収録会議から研究テーマ・題名・概要で投稿先を検索 |
 | `recommend_venues` | 論文情報に合う投稿先の候補 |
 
+`search_venues` と `recommend_venues` は `exclude_past: true` で「締切が過ぎた候補を除く」を指定できます。締切未確認・常時受付は残るため、残った候補すべてが受付中とは限りません。除外件数は `structuredContent.excluded_past` に返します。既定では次回の参考になる締切済みの候補も含みます。
+
 `search_venues` と `recommend_venues` は `retrieval: "semantic"` で英日実モデルを使えます。`node src/prepare-models.ts` でモデルだけを `.cache/embedding-models` に準備できます。`--offline` を付けると外部接続せずに読込・推論を確認します。未準備ならエラーを返します。指定しない場合は従来の語彙検索です。
 
 `search_deadlines` は画面と同じ検索処理を使います。`scope: "screen"` は初期一覧（`catalog.json`）、`scope: "all"` は**収録の元データ**（`data/snapshot.json`）です。初期一覧のファイルがない場合は全体へ切り替え、その旨を返します。**件数を画面と比べるときは注意してください**: 公開している `data.json` は重複をまとめた後なので、`all` の行数はそれより多くなります（画面の「収録の全体を読み込む」が読むのは `data.json` の方です）。
