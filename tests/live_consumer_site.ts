@@ -10,6 +10,7 @@ import {
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { FULL_VENUE_KEYS } from "./full_venue_pool.ts";
 
 /** Build from raw sources and explicit empty paper profiles, with only pretrained weights reused. */
 export function prepareLiveConsumerSite(embeddings = true) {
@@ -19,6 +20,10 @@ export function prepareLiveConsumerSite(embeddings = true) {
     cpSync(join(repo, name), join(root, name), { recursive: true });
   mkdirSync(join(root, "tests/fixtures"), { recursive: true });
   cpSync(join(repo, "tests/full_venue_pool.ts"), join(root, "tests/full_venue_pool.ts"));
+  cpSync(
+    join(repo, "tests/fixtures/full-pool-venues.json"),
+    join(root, "tests/fixtures/full-pool-venues.json"),
+  );
   cpSync(
     join(repo, "tests/fixtures/full-pool-sources"),
     join(root, "tests/fixtures/full-pool-sources"),
@@ -65,7 +70,8 @@ fs.rmSync(pool.raw,{recursive:true,force:true});
     if (existsSync(join(root, name))) throw new Error(`generated input: ${name}`);
   const data = JSON.parse(readFileSync(join(root, "public/data.json"), "utf8"));
   if (
-    data.conferences.length !== 696 ||
+    JSON.stringify(data.conferences.map((conf: { key: string }) => conf.key).sort()) !==
+      JSON.stringify(FULL_VENUE_KEYS) ||
     data.conferences.some((conf: { papers: unknown[] }) => conf.papers.length)
   )
     throw new Error("consumer fixture lost venues or imported paper profiles");

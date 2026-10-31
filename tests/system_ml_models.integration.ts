@@ -13,7 +13,7 @@ import {
   embedSet,
   embedTopics,
 } from "../src/embedding-runtime.ts";
-import { freshFullVenuePool } from "./full_venue_pool.ts";
+import { FULL_VENUE_COUNT, freshFullVenuePool } from "./full_venue_pool.ts";
 
 const titles = [
   "GPUクラスタにおける深層学習ジョブのスケジューリング",
@@ -28,7 +28,7 @@ beforeAll(async () => {
   const pool = freshFullVenuePool();
   raw = pool.raw;
   const conferences = pool.conferences.map((c) => ({ ...c, papers: [] }));
-  expect(conferences).toHaveLength(696);
+  expect(conferences).toHaveLength(FULL_VENUE_COUNT);
   const now = Date.UTC(2026, 9, 20);
   const rows = R.candidatePool(R.candidateRows({ conferences }), conferences, now);
   R.setNameIdf(R.buildNameIdf(conferences));

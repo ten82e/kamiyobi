@@ -16,6 +16,25 @@ import { parseTree as parseAi } from "../src/sources/aideadlines.ts";
 import { parseTree as parseCcf } from "../src/sources/ccfddl.ts";
 import { parseFile } from "../src/sources/local.ts";
 
+const venueManifest = JSON.parse(
+  readFileSync(new URL("./fixtures/full-pool-venues.json", import.meta.url), "utf8"),
+) as { baseline_venues: string[]; additional_venues: string[] };
+// Preserve the original evaluation universe; coverage additions are explicit competitors.
+if (
+  venueManifest.baseline_venues.length !== 696 ||
+  createHash("sha256")
+    .update(`${venueManifest.baseline_venues.join("\n")}\n`)
+    .digest("hex") !== "969a9422d791d39b33b5c91fea477c390adf18c6c1f4f9ee043e5e46afdffe58"
+)
+  throw new Error("baseline evaluation venues changed");
+export const FULL_VENUE_KEYS = [
+  ...venueManifest.baseline_venues,
+  ...venueManifest.additional_venues,
+].sort();
+if (new Set(FULL_VENUE_KEYS).size !== FULL_VENUE_KEYS.length)
+  throw new Error("duplicate evaluation venue");
+export const FULL_VENUE_COUNT = FULL_VENUE_KEYS.length;
+
 // Raw YAML captured from ccfddl/ccf-deadlines and huggingface/ai-deadlines on
 // 2026-10-11. Parse it with production source readers, then merge canonical local inputs.
 // No normalized snapshot, catalog, recommendation index or vector file is read.
@@ -64,5 +83,10 @@ export function freshFullVenuePool() {
     (load(readFileSync(join(root, "data/manual.yaml"), "utf8")) as Record<string, unknown>)
       .venue_scopes,
   );
+  const actualKeys = enriched.map((conf) => conf.key).sort();
+  if (JSON.stringify(actualKeys) !== JSON.stringify(FULL_VENUE_KEYS))
+    throw new Error(
+      `full venue universe changed: missing ${FULL_VENUE_KEYS.filter((key) => !actualKeys.includes(key)).join(", ")}; added ${actualKeys.filter((key) => !FULL_VENUE_KEYS.includes(key)).join(", ")}`,
+    );
   return { conferences: enriched, categoryNames, raw };
 }

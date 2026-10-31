@@ -11,6 +11,7 @@ import {
 import { afterAll, beforeAll, expect, it } from "vitest";
 import R from "../site/recommendation.ts";
 import { consolidateReviewedSubmissions } from "../site/submission-identity.ts";
+import { FULL_VENUE_COUNT } from "./full_venue_pool.ts";
 import { prepareLiveConsumerSite } from "./live_consumer_site.ts";
 
 const repo = join(import.meta.dirname, "..");
@@ -61,7 +62,7 @@ beforeAll(async () => {
   root = prepareLiveConsumerSite();
   const data = JSON.parse(readFileSync(join(root, "public/data.json"), "utf8"));
   const bundle = JSON.parse(readFileSync(join(root, "public/embeddings.json"), "utf8"));
-  expect(bundle.manifest.keys).toHaveLength(696);
+  expect(bundle.manifest.keys).toHaveLength(FULL_VENUE_COUNT);
   const rows = R.candidatePool(
     consolidateReviewedSubmissions(
       R.candidateRows(data),
@@ -76,7 +77,7 @@ beforeAll(async () => {
       ...(r.submission?.sourceRecords ?? []).map((s) => s.venueKey),
     ]),
   );
-  expect(represented.size).toBe(696);
+  expect(represented.size).toBe(FULL_VENUE_COUNT);
   const profiles = data.conferences
     .map((conf: Record<string, unknown>) =>
       JSON.stringify({
@@ -121,7 +122,7 @@ beforeAll(async () => {
     for (const [j, surface] of ["search_venues", "recommend_venues"].entries()) {
       const result = replies.find((r) => r.id === index * 2 + j + 1)?.result;
       expect(result?.isError).not.toBe(true);
-      expect(result?.structuredContent?.candidate_venues).toBe(696);
+      expect(result?.structuredContent?.candidate_venues).toBe(FULL_VENUE_COUNT);
       expect(result?.structuredContent?.uses_embeddings).toBe(false);
       results.push({
         id: c.paper.id,

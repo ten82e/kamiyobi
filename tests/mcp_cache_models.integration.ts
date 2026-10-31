@@ -5,6 +5,7 @@ import { afterAll, beforeAll, expect, it } from "vitest";
 import R from "../site/recommendation.ts";
 import * as runtime from "../src/embedding-runtime.ts";
 import { semanticVenueScores } from "../src/mcp-semantic.ts";
+import { FULL_VENUE_COUNT } from "./full_venue_pool.ts";
 import { prepareLiveConsumerSite } from "./live_consumer_site.ts";
 
 const repo = join(import.meta.dirname, "..");
@@ -27,7 +28,7 @@ beforeAll(async () => {
   mkdirSync(join(root, ".cache"));
   symlinkSync(join(repo, ".cache/embedding-models"), join(root, ".cache/embedding-models"));
   index = JSON.parse(readFileSync(join(root, "public/recommendation-index.json"), "utf8"));
-  expect(index.conferences).toHaveLength(696);
+  expect(index.conferences).toHaveLength(FULL_VENUE_COUNT);
 }, 600000);
 afterAll(() => {
   env.cacheDir = previousCache;
@@ -46,10 +47,10 @@ it("real models preserve topic scores across deadline updates and reflect change
   }));
   const afterDates = await semanticVenueScores(root, dates, index.categories, en);
   expect(afterDates.scores).toEqual(before.scores);
-  expect(Object.keys(afterDates.scores)).toHaveLength(696);
+  expect(Object.keys(afterDates.scores)).toHaveLength(FULL_VENUE_COUNT);
   const japanese = await semanticVenueScores(root, dates, index.categories, ja);
   expect(japanese.model).toBe(runtime.EMBEDDING_MULTI_MODEL);
-  expect(Object.keys(japanese.scores)).toHaveLength(696);
+  expect(Object.keys(japanese.scores)).toHaveLength(FULL_VENUE_COUNT);
   // Only the owned in-memory test copy receives this deliberately different topic.
   const changed = dates.map((c) =>
     c.key === "fast"

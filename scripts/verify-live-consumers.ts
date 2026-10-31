@@ -23,6 +23,10 @@ for (const name of readdirSync(join(repo, "tests/fixtures")))
   if (/^live-consumer-.*\.json$/.test(name))
     cpSync(join(repo, "tests/fixtures", name), join(root, "tests/fixtures", name));
 cpSync(
+  join(repo, "tests/fixtures/full-pool-venues.json"),
+  join(root, "tests/fixtures/full-pool-venues.json"),
+);
+cpSync(
   join(repo, "tests/fixtures/full-pool-sources"),
   join(root, "tests/fixtures/full-pool-sources"),
   { recursive: true },

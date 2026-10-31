@@ -30,6 +30,10 @@ cpSync(
   join(root, "tests/fixtures/mcp-semantic-domains-confirmation.json"),
 );
 cpSync(
+  join(repo, "tests/fixtures/full-pool-venues.json"),
+  join(root, "tests/fixtures/full-pool-venues.json"),
+);
+cpSync(
   join(repo, "tests/fixtures/full-pool-sources"),
   join(root, "tests/fixtures/full-pool-sources"),
   { recursive: true },
