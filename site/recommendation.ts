@@ -40,6 +40,20 @@ function text(value: unknown): string {
   return Array.isArray(value) ? value.join(" ") : typeof value === "string" ? value : "";
 }
 
+export function venueResearchTopics(value: unknown): string[] {
+  if (!value || typeof value !== "object") return [];
+  const conf = value as Record<string, unknown>;
+  return [
+    ...new Set(
+      [conf.official_scope, conf.scope]
+        .flatMap((scope) => (Array.isArray(scope) ? scope : [scope]))
+        .filter((topic): topic is string => typeof topic === "string")
+        .map((topic) => topic.replace(/\s+/g, " ").trim())
+        .filter(Boolean),
+    ),
+  ];
+}
+
 /** Use documented venue topics and corpus rarity for the word-only retrieval path. */
 export function venueLexicalScores(
   rows: Parameters<typeof Core.venueRecommendations>[0],
@@ -241,6 +255,7 @@ export function venueRecommendations(...args: Args): Result[] {
 
 export default {
   ...Core,
+  venueResearchTopics,
   venueRecommendations,
   semanticQueryPlan,
   semanticQueryVector,

@@ -334,6 +334,9 @@ header {
 .recommendation-card .card-section strong { color: var(--fg); }
 .recommendation-evidence > summary { cursor: pointer; color: var(--fg); }
 .recommendation-evidence[open] > summary { margin-bottom: 8px; }
+.recommendation-topics > summary { cursor: pointer; color: var(--fg); }
+.recommendation-topics ul { padding-left: 20px; }
+.recommendation-topics li + li { margin-top: 4px; }
 .row {
   display: flex;
   flex-wrap: wrap;
@@ -988,6 +991,8 @@ footer a:hover { text-decoration: underline; }
   .upcoming-notes > *:not(summary) { display: block !important; }
   .recommendation-evidence > *:not(summary) { display: block !important; }
   .recommendation-evidence::details-content { display: block !important; content-visibility: visible !important; }
+  .recommendation-topics > *:not(summary) { display: block !important; }
+  .recommendation-topics::details-content { display: block !important; content-visibility: visible !important; }
   /* ★ はその人の私物で、紙は一覧そのものを読む物なので刷らない。 */
   .watch-panel { display: none !important; }
   /* 但し書きは 1 ページに収める（列の意味がページをまたぐと読めない）。見出しの直後で
@@ -1617,6 +1622,7 @@ footer a:hover { text-decoration: underline; }
           <p>投稿先は、言葉の一致や意味の近さを使って並べます。意味検索が使えるときは、2つの検索の順位を合わせます。</p>
           <p><strong>候補</strong>は投稿先として適合を確認する対象で、強い一致も含みます。<strong>重なりうすい</strong>は言葉や意味の一致が弱い候補です。CSVの「一致の点」は一致評価の参考値で、順位や採択の見込みを表す値ではありません。</p>
           <p>カードの「選定理由」で一致した要素を確かめ、会議名か「公式サイト」を開いて募集分野を確認してください。</p>
+          <p>説明が収録されている候補では、「募集分野の説明（収録情報）」を開くと具体的な研究テーマを読めます。過去の募集情報を含むため、最新の募集要項も確認してください。キーボードで開閉でき、印刷では閉じた説明も表示します。</p>
         </dd>
         <dd>カードの頭にある<strong>一致評価</strong>の札の隣に、残り（「あと N 日」）・<strong>ランク</strong>・受付状況の札が並びます。カードの下の「<strong>この会議の締切を一覧で見る</strong>」で、締切の一覧をその会議の行だけに絞って開けます（締切が過ぎた候補では、過去の締切も出す条件を添えます）。一致評価の参考点は「締切の確認状況」を開くと確認できます。<strong>参考点は順位や採択の見込みを表す値ではありません</strong>。ランクは一覧の「ランク」列と同じ札（<code>CCF A</code> など）で、収録にランクが無い会議は「<strong>ランク未確認</strong>」と出します（一覧の「未確認」と同じ意味です）。その下に締切の<strong>種別</strong>、<strong>会期と開催地</strong>（値の無い会議は「該当なし」「未確認」）、<strong>分野</strong>、<strong>選定理由</strong>を表示します。<strong>締切の確認状況</strong>は、日付・時刻・タイムゾーン・種別の確認状態を常に表示します。この行を押すか、Tabで移動してEnterまたはSpaceを押すと、<strong>収録データ</strong>・<strong>取得状態</strong>を開閉できます。収録データは収録した開催年の件数と論文サンプル数で、会議の年齢や査読品質を示す値ではありません。種別は論文募集・採択通知などの区別、取得状態はデータを取得した状況と締切の競合件数です。印刷では閉じている補足情報も表示します。保存済みのデータを使用している場合は、公式サイトで最新の締切を確認してください。</dd>
       </div>

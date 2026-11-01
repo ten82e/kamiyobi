@@ -2,6 +2,7 @@ import { existsSync, readFileSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { expect, it } from "vitest";
+import { venueResearchTopics } from "../site/recommendation.ts";
 import {
   isRecommendationAxes,
   recommendationAxes,
@@ -4295,7 +4296,7 @@ it("推薦のカードの行が、てびきの数と名前と合う（SPEC §7�
     `return (${card});`,
   )(
     document,
-    Recommender,
+    { ...Recommender, venueResearchTopics },
     line,
     axesFor,
     venueEvidenceLineJa,
@@ -4321,6 +4322,8 @@ it("推薦のカードの行が、てびきの数と名前と合う（SPEC §7�
       conf: {
         key: "journal",
         title: "Journal",
+        official_scope: ["Memory, storage and systems", "<img src=x>"],
+        scope: ["Memory, storage and systems"],
         categories: [],
         tags: [],
         editions: [{ year: 1980 }, { year: 2026 }],
@@ -4358,6 +4361,19 @@ it("推薦のカードの行が、てびきの数と名前と合う（SPEC §7�
     .flatMap((child) => child.children)
     .find((child) => child.className === "tag match");
   expect(badge?.textContent).toBe("一致評価 候補");
+  const topics = rendered.children.find((child) =>
+    child.className.includes("recommendation-topics"),
+  );
+  expect(topics?.children[0].textContent).toBe("募集分野の説明（収録情報）");
+  expect(topics?.attributes.open).toBeUndefined();
+  expect(topics?.children.at(-1)?.children.map((child) => child.textContent)).toEqual([
+    "Memory, storage and systems",
+    "<img src=x>",
+  ]);
+  expect(template).toContain(
+    ".recommendation-topics > *:not(summary) { display: block !important; }",
+  );
+  expect(template).toContain(".recommendation-topics::details-content");
   const evidence = rendered.children.find((child) =>
     child.className.includes("recommendation-evidence"),
   );

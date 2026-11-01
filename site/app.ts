@@ -5536,6 +5536,28 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     const 分野の札 = (r.cats || []).map((key) => catLabel(key)).filter((label) => label !== "");
     line(card, `分野: ${分野の札.length ? 分野の札.join("・") : UNCONFIRMED_JA}`, "card-section");
 
+    const topics = Recommender.venueResearchTopics(r.conf);
+    if (topics.length) {
+      const details = document.createElement("details");
+      details.className = "card-section recommendation-topics";
+      const summary = document.createElement("summary");
+      summary.textContent = "募集分野の説明（収録情報）";
+      details.appendChild(summary);
+      line(
+        details,
+        "過去の募集情報を含みます。最新の募集要項は公式サイトで確認してください。",
+        "card-section",
+      );
+      const list = document.createElement("ul");
+      for (const topic of topics) {
+        const item = document.createElement("li");
+        item.textContent = topic;
+        list.appendChild(item);
+      }
+      details.appendChild(list);
+      card.appendChild(details);
+    }
+
     const agg = r._match?.agg ?? {
       domain: 0,
       venueName: 0,

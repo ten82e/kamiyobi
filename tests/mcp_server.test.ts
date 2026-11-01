@@ -1188,6 +1188,71 @@ it("venue_info が、分野とランクを返す（第 858 回）", async () => 
   expect(text, "ランクの語を書き寫している").not.toMatch(/ランク: (ccf|core|thcpl):/);
 });
 
+it("venue_info returns the same collected topic descriptions as the browser", async () => {
+  const catalog = JSON.parse(readFileSync(join(REPO_ROOT, "public/catalog.json"), "utf8"));
+  const conf = catalog.conferences.find((conf: { key: string }) => conf.key === "sigmod");
+  const expected = Recommender.venueResearchTopics(conf);
+  expect(expected.length).toBeGreaterThan(1);
+  const reply = (await client.ask({
+    jsonrpc: "2.0",
+    id: 2,
+    method: "tools/call",
+    params: { name: "venue_info", arguments: { key: "sigmod" } },
+  })) as {
+    result: {
+      structuredContent: { research_topics: string[]; research_topics_generated_at: unknown };
+      content: Array<{ text: string }>;
+    };
+  };
+  expect(reply.result.structuredContent.research_topics).toEqual(expected);
+  expect(reply.result.structuredContent.research_topics_generated_at).toBe(catalog.generated_at);
+  expect(reply.result.content[0].text).toContain("募集分野の説明（収録情報・過去の募集を含む）:");
+  expect(reply.result.content[0].text.indexOf("次の投稿締切:")).toBeLessThan(
+    reply.result.content[0].text.indexOf("募集分野の説明"),
+  );
+  for (const topic of expected) expect(reply.result.content[0].text).toContain(`- ${topic}`);
+});
+
+it("venue_info distinguishes uncollected topics from unavailable topic data", () => {
+  const root = mcpSandbox();
+  try {
+    const request = {
+      jsonrpc: "2.0",
+      id: 2,
+      method: "tools/call",
+      params: { name: "venue_info", arguments: { key: "sigmod" } },
+    };
+    const ask = () => {
+      const reply = spawnSync(process.execPath, [join(root, "src/mcp.ts")], {
+        input: `${JSON.stringify(request)}\n`,
+        encoding: "utf8",
+        timeout: 30_000,
+      });
+      expect(reply.status, reply.stderr).toBe(0);
+      return JSON.parse(reply.stdout.trim()).result;
+    };
+    const unavailable = ask();
+    expect(unavailable.isError).not.toBe(true);
+    expect(unavailable.structuredContent.research_topics).toBeNull();
+    expect(unavailable.structuredContent.research_topics_generated_at).toBeNull();
+    expect(unavailable.structuredContent.deadline_total).toBeGreaterThan(0);
+    expect(unavailable.content[0].text).toContain(
+      "募集分野の説明: 収録情報を読み込めませんでした。",
+    );
+
+    const catalog = JSON.parse(readFileSync(join(REPO_ROOT, "public/catalog.json"), "utf8"));
+    const conf = catalog.conferences.find((conf: { key: string }) => conf.key === "sigmod");
+    delete conf.scope;
+    delete conf.official_scope;
+    writeFileSync(join(root, "public/catalog.json"), JSON.stringify(catalog));
+    const uncollected = ask();
+    expect(uncollected.structuredContent.research_topics).toEqual([]);
+    expect(uncollected.content[0].text).toContain("募集分野の説明: 未収録");
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
 it("venue_info はワークショップの会議に workshop を付ける", async () => {
   /* AI が「この会議はワークショップか」を構造化結果から仕分けられるようにする。
    * 判定は画面の「ワークショップのみ」と同じ（会議名の workshop・タグ workshop）。 */
