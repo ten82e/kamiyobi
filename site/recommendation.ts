@@ -54,6 +54,27 @@ export function venueResearchTopics(value: unknown): string[] {
   ];
 }
 
+export function venueResearchSources(value: unknown): string[] {
+  if (!value || typeof value !== "object") return [];
+  const sources = (value as Record<string, unknown>).official_scope_sources;
+  if (!Array.isArray(sources)) return [];
+  return [
+    ...new Set(
+      sources
+        .filter((source): source is string => {
+          if (typeof source !== "string") return false;
+          try {
+            const url = new URL(source);
+            return url.protocol === "https:" && !url.username && !url.password;
+          } catch {
+            return false;
+          }
+        })
+        .map((source) => source.trim()),
+    ),
+  ];
+}
+
 /** Use documented venue topics and corpus rarity for the word-only retrieval path. */
 export function venueLexicalScores(
   rows: Parameters<typeof Core.venueRecommendations>[0],
@@ -256,6 +277,7 @@ export function venueRecommendations(...args: Args): Result[] {
 export default {
   ...Core,
   venueResearchTopics,
+  venueResearchSources,
   venueRecommendations,
   semanticQueryPlan,
   semanticQueryVector,

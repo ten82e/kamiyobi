@@ -278,6 +278,7 @@ it("merges rank, dblp, link, full_name, and acronym when the same local key span
       "  - key: testconf",
       "    title: TestConf",
       "    rank: { ccf: B }",
+      "    official_scope_sources: [https://testconf.org/2026/cfp]",
       "    editions:",
       "      - year: 2026",
       "        id: testconf26",
@@ -294,6 +295,7 @@ it("merges rank, dblp, link, full_name, and acronym when the same local key span
       "  - key: testconf",
       "    title: TestConf",
       "    full_name: Full Test Conference",
+      "    official_scope_sources: [https://testconf.org/2027/cfp]",
       "    acronym: TC",
       "    link: https://testconf.org",
       "    dblp: conf/testconf",
@@ -310,6 +312,10 @@ it("merges rank, dblp, link, full_name, and acronym when the same local key span
   expect(loaded).toHaveLength(1);
   const conf = loaded[0]!;
   expect(conf.full_name).toBe("Full Test Conference");
+  expect(conf.official_scope_sources).toEqual([
+    "https://testconf.org/2026/cfp",
+    "https://testconf.org/2027/cfp",
+  ]);
   expect(conf.acronym).toBe("TC");
   expect(conf.link).toBe("https://testconf.org");
   expect(conf.dblp).toBe("conf/testconf");

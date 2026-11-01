@@ -1200,11 +1200,20 @@ it("venue_info returns the same collected topic descriptions as the browser", as
     params: { name: "venue_info", arguments: { key: "sigmod" } },
   })) as {
     result: {
-      structuredContent: { research_topics: string[]; research_topics_generated_at: unknown };
+      structuredContent: {
+        research_topics: string[];
+        research_topics_generated_at: unknown;
+        research_topic_sources: string[];
+      };
       content: Array<{ text: string }>;
     };
   };
   expect(reply.result.structuredContent.research_topics).toEqual(expected);
+  const sources = Recommender.venueResearchSources(conf);
+  expect(sources.length).toBeGreaterThan(0);
+  expect(reply.result.structuredContent.research_topic_sources).toEqual(sources);
+  for (const source of sources)
+    expect(reply.result.content[0].text).toContain(`募集分野の出典（過去回を含む）: ${source}`);
   expect(reply.result.structuredContent.research_topics_generated_at).toBe(catalog.generated_at);
   expect(reply.result.content[0].text).toContain("募集分野の説明（収録情報・過去の募集を含む）:");
   expect(reply.result.content[0].text.indexOf("次の投稿締切:")).toBeLessThan(
@@ -1234,6 +1243,7 @@ it("venue_info distinguishes uncollected topics from unavailable topic data", ()
     const unavailable = ask();
     expect(unavailable.isError).not.toBe(true);
     expect(unavailable.structuredContent.research_topics).toBeNull();
+    expect(unavailable.structuredContent.research_topic_sources).toBeNull();
     expect(unavailable.structuredContent.research_topics_generated_at).toBeNull();
     expect(unavailable.structuredContent.deadline_total).toBeGreaterThan(0);
     expect(unavailable.content[0].text).toContain(
@@ -1244,9 +1254,11 @@ it("venue_info distinguishes uncollected topics from unavailable topic data", ()
     const conf = catalog.conferences.find((conf: { key: string }) => conf.key === "sigmod");
     delete conf.scope;
     delete conf.official_scope;
+    delete conf.official_scope_sources;
     writeFileSync(join(root, "public/catalog.json"), JSON.stringify(catalog));
     const uncollected = ask();
     expect(uncollected.structuredContent.research_topics).toEqual([]);
+    expect(uncollected.structuredContent.research_topic_sources).toEqual([]);
     expect(uncollected.content[0].text).toContain("募集分野の説明: 未収録");
   } finally {
     rmSync(root, { recursive: true, force: true });

@@ -5541,13 +5541,33 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       const details = document.createElement("details");
       details.className = "card-section recommendation-topics";
       const summary = document.createElement("summary");
-      summary.textContent = "募集分野の説明（収録情報）";
+      summary.textContent = "募集分野の説明と出典";
       details.appendChild(summary);
       line(
         details,
         "過去の募集情報を含みます。最新の募集要項は公式サイトで確認してください。",
         "card-section",
       );
+      const sources = Recommender.venueResearchSources(r.conf);
+      if (sources.length) {
+        line(details, "募集分野の出典:", "card-section");
+        const references = document.createElement("ul");
+        for (const source of sources) {
+          const item = document.createElement("li");
+          const link = document.createElement("a");
+          link.href = source;
+          link.target = "_blank";
+          link.rel = "noopener noreferrer";
+          link.title = "募集分野の出典（新しいタブで開く）";
+          link.textContent = source;
+          item.appendChild(link);
+          references.appendChild(item);
+        }
+        details.appendChild(references);
+      } else {
+        line(details, "募集分野の出典: 未収録", "card-section");
+      }
+      line(details, "収録した募集分野:", "card-section");
       const list = document.createElement("ul");
       for (const topic of topics) {
         const item = document.createElement("li");

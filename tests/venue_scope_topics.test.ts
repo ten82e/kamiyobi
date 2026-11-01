@@ -4,7 +4,8 @@ import { join } from "node:path";
 import { expect, it } from "vitest";
 import R from "../site/recommender.ts";
 import { topicProfileTexts } from "../src/embedding-profiles.ts";
-import { applyVenueScopes } from "../src/merge.ts";
+import { applyVenueScopes, mergeSources } from "../src/merge.ts";
+import { conferencesFromJson } from "../src/model.ts";
 import { makeConference, REPO_ROOT } from "./helpers.ts";
 import { jsFunction } from "./runtime_extract.ts";
 
@@ -15,11 +16,24 @@ it("adds independently sourced topics without altering candidate identity or dea
   ];
   const input = JSON.parse(JSON.stringify(original));
   const result = applyVenueScopes(input, {
-    wide: { source_url: "https://official.example/cfp", topics: ["storage", "networking"] },
+    wide: {
+      source_url: "https://official.example/cfp",
+      additional_source_urls: ["https://official.example/previous", "https://official.example/cfp"],
+      topics: ["storage", "networking"],
+    },
     absent: { source_url: "https://official.example/other", topics: ["statistics"] },
   });
   expect(result.map((c) => c.key)).toEqual(["wide", "other"]);
   expect(result[0].official_scope).toEqual(["storage", "networking"]);
+  expect(result[0].official_scope_sources).toEqual([
+    "https://official.example/cfp",
+    "https://official.example/previous",
+  ]);
+  expect(
+    applyVenueScopes(result, {
+      wide: { source_url: "https://official.example/cfp", topics: ["storage", "networking"] },
+    })[0].official_scope_sources,
+  ).toEqual(result[0].official_scope_sources);
   expect(result[0].editions).toEqual(original[0].editions);
   expect(input).toEqual(original);
   expect(result[1]).toEqual(original[1]);
@@ -29,8 +43,53 @@ it("rejects incomplete CFP topic evidence rather than silently claiming it is of
     [],
     { wide: { topics: ["storage"] } },
     { wide: { source_url: "https://official.example", topics: [""] } },
+    { wide: { source_url: "https://", topics: ["storage"] } },
+    { wide: { source_url: "https://user:password@official.example", topics: ["storage"] } },
+    {
+      wide: {
+        source_url: "https://official.example",
+        additional_source_urls: "https://extra.example",
+        topics: ["storage"],
+      },
+    },
+    {
+      wide: {
+        source_url: "https://official.example",
+        additional_source_urls: ["javascript:alert(1)"],
+        topics: ["storage"],
+      },
+    },
   ])
     expect(() => applyVenueScopes([], raw)).toThrow();
+});
+it("retains scope descriptions and references when JSON sources are restored and merged", () => {
+  const first = conferencesFromJson({
+    conferences: [
+      {
+        key: "wide",
+        title: "Wide",
+        full_name: "Wide",
+        link: "https://official.example",
+        identity: { venueId: "wide" },
+        editions: [],
+        scope: ["storage"],
+        official_scope: ["networking"],
+        official_scope_sources: ["https://official.example/cfp"],
+      },
+    ],
+  });
+  const second = first.map((conf) => ({
+    ...conf,
+    official_scope_sources: ["https://official.example/previous"],
+  }));
+  const merged = mergeSources([first, second], {});
+  expect(merged).toHaveLength(1);
+  expect(merged[0].scope).toEqual(["storage"]);
+  expect(merged[0].official_scope).toEqual(["networking"]);
+  expect(merged[0].official_scope_sources).toEqual([
+    "https://official.example/cfp",
+    "https://official.example/previous",
+  ]);
 });
 it("embeds separate CFP topics and never reads paper fields", () => {
   const actual = topicProfileTexts([

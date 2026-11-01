@@ -481,6 +481,19 @@ describe("recommendation bundle contract", () => {
     };
     expect(embeddingProfileHash(dataA)).not.toBe(embeddingProfileHash(dataB));
   });
+
+  it("keeps the vector identity unchanged when only scope references are added", () => {
+    const conference = {
+      key: "systems",
+      title: "Systems",
+      official_scope: ["Distributed storage"],
+    };
+    const data = { conferences: [conference] };
+    const referenced = {
+      conferences: [{ ...conference, official_scope_sources: ["https://official.example/cfp"] }],
+    };
+    expect(embeddingProfileHash(referenced, {})).toBe(embeddingProfileHash(data, {}));
+  });
 });
 
 describe("embeddings CLI main", () => {

@@ -44,7 +44,7 @@ const SERVER_INSTRUCTIONS_JA = [
   "- `search_deadlines` の既定は今後の abstract / paper / journal で、過去と推定は除きます（`include_past`・`include_estimated` で足せます）。**kind の既定は画面の初期一覧より広く、常時受付（`journal`）も含みます** – 画面は概要と論文だけを出し、常時受付は「種別」で選んだ時に出します。件数を画面と比べるときは、この分だけ違います（`kinds` に `abstract` と `paper` を渡せば画面と同じ範囲になります）。`list_upcoming` の既定は種別で絞らず、推定も含みます。両者の件数を比べるなら、種別・推定・`scope` を揃えてください。",
   "- `scope` は `screen`（画面の初期一覧。期間は `catalog.json` の `window` に記載。ファイルがある時だけ）と `all`（**収録の元データ** `data/snapshot.json`）です。省いたときは `search_deadlines`・`explain_word` は `screen`、`list_upcoming`・`venue_info` は `all` です。**公開している `data.json` は重複をまとめた後**なので、`all` の行数はそれより多くなります（AI が件数を画面と比べるときは、この違いを見てください）。0 件のときは `scope_comparison` に収録全体での件数が出ます。",
   "- 会期は締切ではありません。購読カレンダー（`deadlines.ics`）は締切だけを載せ、`list_upcoming` は締切と会期の両方を返します。",
-  "- 投稿先の適合を判断するときは `venue_info` の `research_topics` で具体的な募集分野も確認してください。空配列は未収録、null はデータを読めない状態で、分野が不適合という意味ではありません。",
+  "- 投稿先の適合を判断するときは `venue_info` の `research_topics` で具体的な募集分野も確認してください。出典は `research_topic_sources` に返します。過去の募集ページも含むため、次回の募集や締切の確認済み根拠として扱わないでください。空配列は未収録、null はデータを読めない状態で、分野が不適合という意味ではありません。",
   "- 締切は動きます。投稿の判断の前に、行の公式ページで最新の募集要項を確かめるよう案内してください。",
   "- 検索語は日本語・英語のどちらでも書けます（例: `SIGCOMM 2027 deadline`・`CFP SIGCOMM`・`deadlines next month`・`graph neural networks`）。英語の冠詞・前置詞は、ほかの語があるときは絞り込みに使いません。手法の名は、その手法が載る分野の語（`graph neural networks` → `machine learning`）に直して探し、件数欄でそのことを言います。0 件のときは、語を 1 つ外す候補も返します。`search_deadlines` と `list_upcoming` は `workshop: true` でワークショップだけに絞れます（構造化結果の締切行にも `workshop` が入ります）。",
   "",
@@ -2091,7 +2091,8 @@ function venueClassification(conf: NonNullable<SnapshotFile["conferences"]>[numb
     (candidate) => candidate.key === conf.key,
   );
   const topics = Recommender.venueResearchTopics(profile ?? conf);
-  const unavailable = !published && topics.length === 0;
+  const sources = Recommender.venueResearchSources(profile ?? conf);
+  const unavailable = !published && topics.length === 0 && sources.length === 0;
   return {
     categories: conf.categories ?? [],
     rank: conf.rank ?? null,
@@ -2099,6 +2100,7 @@ function venueClassification(conf: NonNullable<SnapshotFile["conferences"]>[numb
     domestic: Recommender.isDomesticTag(conf.tags),
     workshop: isWorkshopFieldsMCP(conf.tags, conf.title, conf.full_name),
     research_topics: unavailable ? null : topics,
+    research_topic_sources: unavailable ? null : sources,
     research_topics_generated_at: unavailable
       ? null
       : profile
@@ -2127,6 +2129,11 @@ function venueClassificationLines(
             ...metadata.research_topics.map((topic) => `- ${topic}`),
           ]
         : ["募集分野の説明: 未収録"]),
+    ...(metadata.research_topic_sources?.length
+      ? metadata.research_topic_sources.map((source) => `募集分野の出典（過去回を含む）: ${source}`)
+      : metadata.research_topics?.length
+        ? ["募集分野の出典: 未収録"]
+        : []),
     ...(metadata.domestic ? ["区分: 国内"] : []),
     ...(metadata.workshop ? ["区分: ワークショップ"] : []),
   ];
@@ -3542,7 +3549,7 @@ const TOOLS = [
     title: "会議の詳細を確認",
     annotations: READ_ONLY_ANNOTATIONS,
     description:
-      "会議の開催回、締切、会期、ランク、主題、正式名、募集分野の説明を返す。research_topics は画面と同じ収録済みの募集分野の配列（未収録は空配列、データを読めない場合は null）。research_topics_generated_at はそのデータの生成時刻で、募集要項の確認日時ではありません。過去の募集を含むため、最新の募集要項は公式サイトで確認する。structuredContent の editions に推定を除く全開催回の会期・確かさ・公式URL、rows に締切を返す。key は小文字の識別子、name は略称・正式名・名前の一部。開催回の識別子は lookup_status: edition_key と retry_arguments で関連会議へ案内する。見つからない識別子は lookup_status: not_found と略称の候補を返す。曖昧な名前や古いkeyは lookup_status: ambiguous と candidates を返す。候補の venue_key を key に指定して再照会する。表示範囲外の締切は lookup_status: out_of_scope と再照会用の retry_arguments で案内する。scope の既定は all で（出所は search_deadlines と同じ）、過ぎた分も全部出る。今後の物から並べ、推定以外の次の投稿締切を next_submission、推定の見込みを next_estimated_submission で分けて返す。主題は分野より詳しい札で、収録にある会議だけに出します（画面の行の詳細の「主題」と同じ）。返す行の形: 会議の要約に続いて、日時 | 種別 | 確認状態（ある場合）| 会議名（版の識別子）| ランク | 会期 | 開催地 URL。**構造化の rows は `search_deadlines` と同じ欄**を持ちます（`categories`・`categories_ja`・`ics_uid` を含む。`ics_uid` は品書に載っている締切だけ）。",
+      "会議の開催回、締切、会期、ランク、主題、正式名、募集分野の説明を返す。research_topics は画面と同じ収録済みの募集分野の配列（未収録は空配列、データを読めない場合は null）。research_topic_sources は募集分野の出典URLの配列（未収録は空配列、データを読めない場合は null）。research_topics_generated_at は説明と出典のデータの生成時刻で、募集要項の確認日時ではありません。過去の募集を含むため、最新の募集要項は公式サイトで確認する。structuredContent の editions に推定を除く全開催回の会期・確かさ・公式URL、rows に締切を返す。key は小文字の識別子、name は略称・正式名・名前の一部。開催回の識別子は lookup_status: edition_key と retry_arguments で関連会議へ案内する。見つからない識別子は lookup_status: not_found と略称の候補を返す。曖昧な名前や古いkeyは lookup_status: ambiguous と candidates を返す。候補の venue_key を key に指定して再照会する。表示範囲外の締切は lookup_status: out_of_scope と再照会用の retry_arguments で案内する。scope の既定は all で（出所は search_deadlines と同じ）、過ぎた分も全部出る。今後の物から並べ、推定以外の次の投稿締切を next_submission、推定の見込みを next_estimated_submission で分けて返す。主題は分野より詳しい札で、収録にある会議だけに出します（画面の行の詳細の「主題」と同じ）。返す行の形: 会議の要約に続いて、日時 | 種別 | 確認状態（ある場合）| 会議名（版の識別子）| ランク | 会期 | 開催地 URL。**構造化の rows は `search_deadlines` と同じ欄**を持ちます（`categories`・`categories_ja`・`ics_uid` を含む。`ics_uid` は品書に載っている締切だけ）。",
     inputSchema: {
       type: "object",
       properties: {

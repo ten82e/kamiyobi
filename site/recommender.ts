@@ -113,6 +113,7 @@ interface ConferenceRecord {
   acronym?: string;
   scope?: string | string[];
   official_scope?: string | string[];
+  official_scope_sources?: string[];
   paper_abstracts?: string[];
   keywords?: string[];
   rank?: Record<string, string>;
@@ -462,6 +463,9 @@ function normalizeConference(value: unknown): ConferenceRecord | null {
     acronym: typeof value.acronym === "string" ? value.acronym : undefined,
     scope: normalizedStrings(value.scope),
     official_scope: normalizedStrings(value.official_scope),
+    ...(value.official_scope_sources !== undefined
+      ? { official_scope_sources: normalizedStrings(value.official_scope_sources) }
+      : {}),
     paper_abstracts: normalizedStrings(value.paper_abstracts),
     keywords: normalizedStrings(value.keywords),
     rank,

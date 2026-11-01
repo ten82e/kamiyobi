@@ -612,6 +612,7 @@ export interface Conference {
   acronym?: string;
   scope?: string[];
   official_scope?: string[];
+  official_scope_sources?: string[];
   paper_abstracts?: string[];
   keywords?: string[];
   link: string;
@@ -2379,6 +2380,13 @@ export function conferencesFromJson(
       key: String(conf.key ?? ""),
       title: String(conf.title ?? ""),
       full_name: String(conf.full_name ?? ""),
+      ...(conf.scope !== undefined ? { scope: toStringArray(conf.scope) } : {}),
+      ...(conf.official_scope !== undefined
+        ? { official_scope: toStringArray(conf.official_scope) }
+        : {}),
+      ...(conf.official_scope_sources !== undefined
+        ? { official_scope_sources: toStringArray(conf.official_scope_sources) }
+        : {}),
       link,
       rank: Object.fromEntries(
         Object.entries((conf.rank as Record<string, unknown> | undefined) ?? {})

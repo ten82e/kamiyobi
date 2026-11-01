@@ -681,6 +681,8 @@ function mergeBucket(
   out.categories = unique(confs.flatMap((c) => c.categories));
   out.scope = unique(confs.flatMap((c) => c.scope ?? []));
   out.official_scope = unique(confs.flatMap((c) => c.official_scope ?? []));
+  const scopeSources = unique(confs.flatMap((c) => c.official_scope_sources ?? []));
+  if (scopeSources.length) out.official_scope_sources = scopeSources;
   out.paper_abstracts = unique(confs.flatMap((c) => c.paper_abstracts ?? []));
   out.keywords = unique(confs.flatMap((c) => c.keywords ?? []));
   out.sources = unique(confs.flatMap((c) => c.sources));
@@ -1336,26 +1338,46 @@ export function applyVenueScopes(confs: Conference[], raw: unknown): Conference[
   if (raw === undefined || raw === null) return confs;
   if (typeof raw !== "object" || Array.isArray(raw))
     throw new Error("venue_scopes must be a mapping");
-  const entries = new Map<string, string[]>();
+  const entries = new Map<string, { topics: string[]; sources: string[] }>();
+  const validSource = (value: unknown): value is string => {
+    if (typeof value !== "string") return false;
+    try {
+      const url = new URL(value);
+      return url.protocol === "https:" && !url.username && !url.password;
+    } catch {
+      return false;
+    }
+  };
   for (const [key, value] of Object.entries(raw)) {
     if (!value || typeof value !== "object" || Array.isArray(value))
       throw new Error(`invalid venue scope: ${key}`);
     const entry = value as Record<string, unknown>;
+    const additional =
+      entry.additional_source_urls === undefined ? [] : entry.additional_source_urls;
     if (
-      typeof entry.source_url !== "string" ||
-      !/^https:\/\//.test(entry.source_url) ||
+      !validSource(entry.source_url) ||
+      !Array.isArray(additional) ||
+      !additional.every(validSource) ||
       !Array.isArray(entry.topics) ||
       !entry.topics.length ||
       entry.topics.some((t) => typeof t !== "string" || !t.trim())
     )
-      throw new Error(`venue scope needs official source_url and nonempty topics: ${key}`);
-    entries.set(key, entry.topics as string[]);
+      throw new Error(`venue scope needs valid HTTPS source URLs and nonempty topics: ${key}`);
+    entries.set(key, {
+      topics: entry.topics as string[],
+      sources: [...new Set([entry.source_url, ...additional].map((url) => url.trim()))],
+    });
   }
   return confs.map((conf) =>
     entries.has(conf.key)
       ? {
           ...conf,
-          official_scope: [...new Set([...(conf.official_scope ?? []), ...entries.get(conf.key)!])],
+          official_scope: [
+            ...new Set([...(conf.official_scope ?? []), ...entries.get(conf.key)!.topics]),
+          ],
+          official_scope_sources: [
+            ...new Set([...(conf.official_scope_sources ?? []), ...entries.get(conf.key)!.sources]),
+          ],
         }
       : conf,
   );

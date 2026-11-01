@@ -2,7 +2,7 @@ import { existsSync, readFileSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { expect, it } from "vitest";
-import { venueResearchTopics } from "../site/recommendation.ts";
+import { venueResearchSources, venueResearchTopics } from "../site/recommendation.ts";
 import {
   isRecommendationAxes,
   recommendationAxes,
@@ -4243,6 +4243,9 @@ it("推薦のカードの行が、てびきの数と名前と合う（SPEC §7�
     textContent: string;
     children: Element[];
     attributes: Record<string, string>;
+    href?: string;
+    target?: string;
+    rel?: string;
     setAttribute(name: string, value: string): void;
     appendChild(child: Element): void;
   };
@@ -4296,7 +4299,7 @@ it("推薦のカードの行が、てびきの数と名前と合う（SPEC §7�
     `return (${card});`,
   )(
     document,
-    { ...Recommender, venueResearchTopics },
+    { ...Recommender, venueResearchTopics, venueResearchSources },
     line,
     axesFor,
     venueEvidenceLineJa,
@@ -4323,6 +4326,7 @@ it("推薦のカードの行が、てびきの数と名前と合う（SPEC §7�
         key: "journal",
         title: "Journal",
         official_scope: ["Memory, storage and systems", "<img src=x>"],
+        official_scope_sources: ["https://official.example/2024/cfp", "javascript:alert(1)"],
         scope: ["Memory, storage and systems"],
         categories: [],
         tags: [],
@@ -4364,16 +4368,29 @@ it("推薦のカードの行が、てびきの数と名前と合う（SPEC §7�
   const topics = rendered.children.find((child) =>
     child.className.includes("recommendation-topics"),
   );
-  expect(topics?.children[0].textContent).toBe("募集分野の説明（収録情報）");
+  expect(topics?.children[0].textContent).toBe("募集分野の説明と出典");
   expect(topics?.attributes.open).toBeUndefined();
   expect(topics?.children.at(-1)?.children.map((child) => child.textContent)).toEqual([
     "Memory, storage and systems",
     "<img src=x>",
   ]);
+  const references = topics?.children
+    .flatMap((child) => child.children)
+    .flatMap((child) => child.children)
+    .filter((child) => child.href);
+  expect(references).toHaveLength(1);
+  expect(references?.[0]).toMatchObject({
+    href: "https://official.example/2024/cfp",
+    target: "_blank",
+    rel: "noopener noreferrer",
+  });
   expect(template).toContain(
     ".recommendation-topics > *:not(summary) { display: block !important; }",
   );
   expect(template).toContain(".recommendation-topics::details-content");
+  expect(template).toContain(
+    '#recommendationCards .recommendation-topics a[href^="http"]::after { content: none; }',
+  );
   const evidence = rendered.children.find((child) =>
     child.className.includes("recommendation-evidence"),
   );

@@ -1136,6 +1136,9 @@ export function toJson(
       acronym: conf.acronym || conf.title,
       ...(conf.scope?.length ? { scope: [...conf.scope] } : {}),
       ...(conf.official_scope?.length ? { official_scope: [...conf.official_scope] } : {}),
+      ...(conf.official_scope_sources?.length
+        ? { official_scope_sources: [...conf.official_scope_sources] }
+        : {}),
       ...(conf.paper_abstracts?.length ? { paper_abstracts: [...conf.paper_abstracts] } : {}),
       ...(conf.keywords?.length ? { keywords: [...conf.keywords] } : {}),
       categories: [...conf.categories],
@@ -1376,6 +1379,9 @@ function compactConference(
     ...(conf.acronym ? { acronym: conf.acronym } : {}),
     ...(conf.scope ? { scope: conf.scope } : {}),
     ...(conf.official_scope ? { official_scope: conf.official_scope } : {}),
+    ...(Array.isArray(conf.official_scope_sources) && conf.official_scope_sources.length
+      ? { official_scope_sources: conf.official_scope_sources }
+      : {}),
     ...(conf.paper_abstracts ? { paper_abstracts: conf.paper_abstracts } : {}),
     ...(conf.keywords ? { keywords: conf.keywords } : {}),
     categories: conf.categories,
@@ -4469,6 +4475,7 @@ export function toLlmsTxt(
     "  - full_name: string：正式名称。",
     "  - acronym: string：検索用の会議略称。存在時のみ。",
     "  - scope / official_scope: array of string：検索用の対象分野。存在時のみ。",
+    "  - official_scope_sources: array of string：収録した募集分野の出典URL。過去の募集ページを含み、最新の締切の根拠とは限らない。存在時のみ。",
     "  - paper_abstracts / keywords: array of string：検索用の代表概要・キーワード。存在時のみ。",
     "  - categories: array of string：上記 categories のキー。",
     "  - rank: object：{'ccf': 'A', 'core': 'A*', 'thcpl': 'B'} の形。欠けうる（'thcpl' を持つ会議は実測 2026-10-16 で 696 のうち 344）。",
