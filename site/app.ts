@@ -5852,6 +5852,10 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     renderActiveFilters();
     $("timeGuide").hidden = state.mode !== "deadlines";
     const recMode = state.mode === "recommend";
+    $("results").setAttribute(
+      "aria-busy",
+      String(recMode && !recommendationData && !recommendationError),
+    );
     if (recMode && !recommendationData && !recommendationError) loadRecommendationData();
     shown = recMode && !recommendationData ? [] : filter();
     // チップの件数は分野以外の条件で絞った後の数。推薦モードではチップを見せないので更新しない。
@@ -5879,17 +5883,24 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     // 掲載先に入れた語が行に見当たらないときは、候補の数だけ出して黙っていない。
     // 例を使った人は「掲載先が消えた」と読む。文は recommender の正本。
     const venueMissNotice = Recommender.venueLookupNoticeJa(venueLookupMiss);
-    let cnt = paperMode
-      ? `あなたの論文に合う投稿先 ${countJa(shown.length)} 件${
-          shown.length > RECOMMENDATION_PAGE
-            ? `（まず上位 ${countJa(RECOMMENDATION_PAGE)} 件を表示）`
-            : ""
-        }${venueMissNotice ? ` ｜ ${venueMissNotice}` : ""}${
-          截つた行 > 0 ? ` ｜ ${countJa(截つた行)} 行を省いて調べました（最初の 20 行だけ）` : ""
-        }`
-      : recMode
-        ? "投稿先を探すには論文情報を入力してください"
-        : `${countJa(shown.length)} 件 / 全 ${countJa(rows.length)} 件`;
+    let cnt =
+      recMode && !recommendationData
+        ? recommendationError
+          ? "推薦データを読み込めませんでした。"
+          : "推薦データを読み込み中…"
+        : paperMode
+          ? `あなたの論文に合う投稿先 ${countJa(shown.length)} 件${
+              shown.length > RECOMMENDATION_PAGE
+                ? `（まず上位 ${countJa(RECOMMENDATION_PAGE)} 件を表示）`
+                : ""
+            }${venueMissNotice ? ` ｜ ${venueMissNotice}` : ""}${
+              截つた行 > 0
+                ? ` ｜ ${countJa(截つた行)} 行を省いて調べました（最初の 20 行だけ）`
+                : ""
+            }`
+          : recMode
+            ? "投稿先を探すには論文情報を入力してください"
+            : `${countJa(shown.length)} 件 / 全 ${countJa(rows.length)} 件`;
     // 読み上げ用の一行。`#count` は「のぞく」の内訳まで載せる長い欄なので、そこを
     // そのまま aria-live にすると 1 打鍵ごとに数十語が流れる。
     // 件数と、解決結果・取得状態の短い通知だけをこちらに出す。
@@ -6019,7 +6030,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       cnt += ` ｜ ${HISTORY_ERROR_SHORT_JA}`;
       cntLive += ` ｜ ${HISTORY_ERROR_SHORT_JA}`;
     }
-    if (paperMode) {
+    if (paperMode && recommendationData) {
       const _lines = Recommender.parsePaperLines(paperText);
       const _auto = _lines.length ? Recommender.autoDetectCats(_lines) : [];
       if (_auto.length && !state.cats.length) {
