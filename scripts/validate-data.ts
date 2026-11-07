@@ -1174,6 +1174,16 @@ export function validateProduction(root = ROOT): DataValidation {
 }
 
 export function main(argv = process.argv.slice(2)): number {
+  /* `--write-findings` は實装が無い（update-data.yml に書かれて居た誤解の源 – 2026-11-08 に
+   * 仕事側の呼び方は「診断の報告を書く」へ改名した）。發見の正本は人のレビューで更新する:
+   * 自動で「未レビュー」の發見を書き出すと、次の検査が全部失敗する（readFindings が
+   * unreviewed を拒む – それ自体が正しい fail-closed）。默って無視せず、此処で案内する。 */
+  if (argv.includes("--write-findings")) {
+    process.stderr.write(
+      "validate:data: --write-findings is not implemented. findings (data/validator-findings.json) are updated by human review: copy the shape of an existing accepted entry (VF-0001), fill code/subject/count and reviewed_by/reviewed_at/review_reason/evidence_ref/expires_at.\n",
+    );
+    return 2;
+  }
   const json = argv.includes("--json");
   const file = argv.find((value) => !value.startsWith("-"));
   try {
