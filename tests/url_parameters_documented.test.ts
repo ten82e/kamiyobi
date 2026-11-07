@@ -10,7 +10,10 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { expect, it } from "vitest";
-import { REPO_ROOT } from "./helpers.ts";
+import { publicClockGuard, REPO_ROOT } from "./helpers.ts";
+
+/* public/ は検証用の固定時計で建てる（別の時計の物を読むと窓がずれて分からない失敗に成る）。 */
+publicClockGuard();
 
 it("畫面が URL に載せる引数が、索引に書いてある", () => {
   const app = readFileSync(join(REPO_ROOT, "site", "app.ts"), "utf8");

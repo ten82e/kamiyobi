@@ -2,7 +2,10 @@ import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { builtSite } from "./built_site.ts";
-import { REPO_ROOT } from "./helpers.ts";
+import { publicClockGuard, REPO_ROOT } from "./helpers.ts";
+
+/* public/ は検証用の固定時計で建てる（別の時計の物を読むと窓がずれて分からない失敗に成る）。 */
+publicClockGuard();
 
 interface DataLike {
   conferences?: Array<Record<string, unknown>>;

@@ -3,7 +3,10 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { deadlineSpan, toLlmsTxt } from "../src/build.ts";
 import { data, site } from "./built_golden_shared.ts";
-import { REPO_ROOT } from "./helpers.ts";
+import { publicClockGuard, REPO_ROOT } from "./helpers.ts";
+
+/* public/ は検証用の固定時計で建てる（別の時計の物を読むと窓がずれて分からない失敗に成る）。 */
+publicClockGuard();
 
 function llms(): string {
   return readFileSync(join(site, "llms.txt"), "utf8");

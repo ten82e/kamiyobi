@@ -44,7 +44,10 @@ import {
   venuePapersHash,
 } from "../src/embeddings.ts";
 import { computeSemanticContentId, recommendationGatePolicyId } from "../src/semantic-content.ts";
-import { REPO_ROOT, tempWork } from "./helpers.ts";
+import { publicClockGuard, REPO_ROOT, tempWork } from "./helpers.ts";
+
+/* public/ は検証用の固定時計で建てる（別の時計の物を読むと窓がずれて分からない失敗に成る）。 */
+publicClockGuard();
 
 const R = recommender as any;
 let emittedApp: string | null = null;
