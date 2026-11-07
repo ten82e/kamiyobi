@@ -166,6 +166,68 @@ function 当たる語を作る(): string {
   return 当たる;
 }
 
+/* 固定時計で**今後の行が一つも無い**会議を収録から選ぶ（前提を作る）。
+ * 実測 2026-11-08: AFT に上流由来の推定行が付いて「過去だけの会議」で無くなつた –
+ * 会議の名前を打ち込む前提は収録の更新で直ぐ崩れるので、収録から選ぶ。 */
+function 過去だけの会議(): string {
+  const snap = JSON.parse(readFileSync(join(REPO_ROOT, "data", "snapshot.json"), "utf8")) as never;
+  const now = NOW.getTime();
+  const 数 = new Map<string, { total: number; future: number }>();
+  for (const r of searchCandidates(snap, now)) {
+    const key = String(r.conf?.key ?? "");
+    if (!key) continue;
+    const e = 数.get(key) ?? { total: 0, future: 0 };
+    e.total++;
+    if (!Recommender.deadlineRowIsPast(r, now)) e.future++;
+    数.set(key, e);
+  }
+  const 候補 = [...数.entries()]
+    .filter(([, e]) => e.total >= 3 && e.future === 0)
+    .map(([key]) => key)
+    .sort();
+  expect(候補.length, "この検査の前提（今後の締切の無い会議）が崩れた").toBeGreaterThan(0);
+  return 候補[0]!;
+}
+
+/* 固定時計で**推定の行（幅を持つ物）**を収録から選ぶ（前提を作る）。
+ * 実測 2026-11-08: ACML に上流の確定行と会期が揃つて acml27-est が無くなつた。 */
+function 推定のある会議(): { key: string; 幅: string } {
+  const snap = JSON.parse(readFileSync(join(REPO_ROOT, "data", "snapshot.json"), "utf8")) as never;
+  const now = NOW.getTime();
+  const 行 = searchCandidates(snap, now)
+    .filter((r) => r.est && r.kind === "paper")
+    .map((r) => ({
+      key: String(r.conf?.key ?? ""),
+      幅: String(Recommender.estimateWindowJa(r.ed) ?? ""),
+    }))
+    .filter((r) => /^[a-z][a-z0-9]*$/.test(r.key) && r.幅.includes("推定期間"))
+    .sort((a, b) => a.key.localeCompare(b.key) || a.幅.localeCompare(b.幅));
+  expect(行.length, "この検査の前提（推定の行）が崩れた").toBeGreaterThan(0);
+  return 行[0]!;
+}
+
+/* 収録（snapshot）にも品書由来の募集分野も**持たない**会議を選ぶ（前提を作る）。
+ * 実測 2026-11-08: 収録の行が公式 scope を持つ樣に成つたので、SIGMOD は「読めない」
+ * ではなく「分野がある」に變はつた。 */
+function 分野の無い会議(): string {
+  const snap = JSON.parse(readFileSync(join(REPO_ROOT, "data", "snapshot.json"), "utf8")) as {
+    conferences?: Array<Record<string, unknown>>;
+  };
+  const 候補 = (snap.conferences ?? [])
+    .filter((c) => {
+      const editions = (c.editions as Array<{ deadlines?: unknown[] }> | undefined) ?? [];
+      const 締切あり = editions.some((e) => (e.deadlines ?? []).length > 0);
+      const 話題 = [c.official_scope, c.scope]
+        .flatMap((s) => (Array.isArray(s) ? s : [s]))
+        .filter((t) => typeof t === "string" && t.trim());
+      const 出典 = Array.isArray(c.official_scope_sources) && c.official_scope_sources.length > 0;
+      return 締切あり && 話題.length === 0 && !出典;
+    })
+    .map((c) => String(c.key))
+    .sort();
+  expect(候補.length, "この検査の前提（分野の無い会議）が崩れた").toBeGreaterThan(0);
+  return 候補[0]!;
+}
 async function upcomingText(args: Record<string, unknown>): Promise<string> {
   const texts: string[] = [];
   let offset = 0;
@@ -541,11 +603,12 @@ it("会議の一覽は、今後の物から並ぶ（第 752 回）", async () =>
 
 it("今後の締切がない会議では、その事を先に言う（第 754 回）", async () => {
   /* 過ぎた行だけを並べると、読む人（と AI）が「次はこれ」と取り違へる。 */
-  const 過去だけ = await call("venue_info", { key: "aft", scope: "all" });
+  /* 会議は収録から選び、固定時計の側で呼ぶ（実測 2026-11-08: AFT に推定行が付いた）。 */
+  const 過去だけ = await callAt("venue_info", { key: 過去だけの会議(), scope: "all" });
   expect(過去だけ, "今後の締切がない事を言つていない").toContain("今後の締切は収録にありません");
   expect(過去だけ, "過ぎた物だと斷つていない").toMatch(過去の札);
   /* 今後がある会議には付けない（雜音を増やさない）。 */
-  const 今後あり = await call("venue_info", { key: "sigkdd", scope: "all" });
+  const 今後あり = await callAt("venue_info", { key: "sigkdd", scope: "all" });
   expect(今後あり, "要らない斷りを付けた").not.toContain("今後の締切は収録にありません");
 });
 
@@ -1281,7 +1344,9 @@ it("venue_info distinguishes uncollected topics from unavailable topic data", ()
       jsonrpc: "2.0",
       id: 2,
       method: "tools/call",
-      params: { name: "venue_info", arguments: { key: "sigmod" } },
+      /* 収録（snapshot）にも分野の無い会議 – 収録が公式 scope を持つ樣に成つたので、
+       * 「読めない」の前提は分野の無い会議でしか作れない（2026-11-08 実測）。 */
+      params: { name: "venue_info", arguments: { key: 分野の無い会議() } },
     };
     const ask = () => {
       const reply = spawnSync(process.execPath, [join(root, "src/mcp.ts")], {
@@ -5432,8 +5497,8 @@ it("venue_info も、どの窓を見たか頭に書く（第 1012 回）", async
     "name は key と共に与えられたので見ていません",
   );
   expect(兩方, "窓の言と両方載つていない").toContain("（収録の全体・");
-  /* 今後の締切が無い会议の斷りも先頭に残る。 */
-  const 過去 = await call("venue_info", { key: "aft" });
+  /* 今後の締切が無い会议の斷りも先頭に残る（会議は収録から選ぶ – 2026-11-08 実測）。 */
+  const 過去 = await callAt("venue_info", { key: 過去だけの会議() });
   expect(過去, "今後の締切がない事を先に言つていない").toContain("今後の締切は収録にありません");
 });
 
@@ -5683,8 +5748,10 @@ it("「収録に見当たらない」は収録の全体で数える（第 1033 �
 });
 
 it("推定の行は幅を出し、事実のやうに見せない（第 1034 回）", async () => {
-  const acml = await call("search_deadlines", {
-    query: "acml",
+  /* 会議は収録から選ぶ（実測 2026-11-08: ACML に確定行が揃つて推定行が無くなつた）。 */
+  const 場 = 推定のある会議();
+  const acml = await callAt("search_deadlines", {
+    query: 場.key,
     scope: "all",
     limit: 10,
     include_estimated: true,
@@ -5692,10 +5759,9 @@ it("推定の行は幅を出し、事実のやうに見せない（第 1034 回�
   });
   const 行 = acml.split("\n").filter((l) => l.includes("推定期間"));
   expect(行.length, "推定期間の行が出ていない").toBeGreaterThan(0);
-  /* 幅がそのまま出る（`estimate` の中身と一致）。 */
-  expect(行[0], "幅が出ていない").toContain("推定期間 2027-03-28〜2027-10-10");
-  /* 点推定点も「元の宣言」で添へる（どつちが事実でどつちが推定か読める）。 */
-  expect(行[0], "点推定点が書かれていない").toContain("元の宣言");
+  /* 幅がそのまま出る（正本 `estimateWindowJa` の中身と一致 – べた書きは収録の更新で
+   * 直ぐ古くなるので、収録から選んだ行の幅をそのまま期待値にする）。 */
+  expect(行[0], "幅が出ていない").toContain(場.幅);
   /* 「残り」は点推定点の分だと言う（幅の終はりまでの残りと誤読しない為）。 */
   expect(行[0], "残りの数え方を書いていない").toContain("（残り日数は点推定の日までの数）");
   // 語の重なった旧い言い方（「点推定点」）は出さない。
@@ -6148,8 +6214,10 @@ it("推定の幅は一つの正本から両方が出る（第 1053 回）", asyn
   expect(R.estimateWindowJa({})).toBe("");
 
   /* MCP の行がその正本を通している（実物）。 */
-  const mcp = await call("search_deadlines", {
-    query: "acml",
+  /* 会議は収録から選ぶ（実測 2026-11-08: ACML の推定行が無くなつた）。 */
+  const 場 = 推定のある会議();
+  const mcp = await callAt("search_deadlines", {
+    query: 場.key,
     scope: "all",
     limit: 5,
     kinds: [],
