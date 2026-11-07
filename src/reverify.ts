@@ -1182,6 +1182,13 @@ function labelSignature(value: string): string {
       .replace(/\b(?:mon|tues|wednes|thurs|fri|satur|sun)day\b/gi, " ")
       .replace(/\b(?:am|pm)\b/gi, " ")
       .replace(/\bus\b/gi, " ")
+      /* 日本語の締切語を英字の署名語へ寄せる。行の label が英語（"Submission"）でも、
+       * 公式ページが日本語（「投稿締切」）の源がある（IPSJ 特集号など）。署名が一致せず
+       * slotCompatible が正しい候補を全て拒み、頁は無変更・値も一致しているのに毎回
+       * manual-required に成って居た（実測 2026-11-08: 27-M/R/P の 3 行）。
+       * 日本語同士の照合（頁も行も日本語）は置換しても署名が同じに成るので影響ない。 */
+      .replace(/投稿締切/g, " submission deadline ")
+      .replace(/[〆締]切/g, " deadline ")
       .replace(/\b(?:deadline|due|submission date|date)\b/g, " ")
       .replace(/\b(?:round|cycle|phase|stage)\s*#?\s*\d+\b/g, " ")
       .replace(/[^\p{L}\p{N}]+/gu, " ")

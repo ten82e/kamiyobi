@@ -255,6 +255,40 @@ it("verifies both rounds of a multi-round venue from one official page", async (
   expect(result.ledger.resolutions).toHaveLength(0);
 });
 
+it("confirms a Japanese official page against an English row label", async () => {
+  // 行の label が英語（"Submission"）でも公式ページが日本語（「投稿締切」）の源がある
+  // （IPSJ 特集号）。署名が一致せず正しい候補が全て拒まれ、頁は無変更・値も一致のまま
+  // 毎回 manual-required に成って居た（実測 2026-11-08: 27-M/R/P の 3 行）。
+  const dir = tempWork("kamiyobi-reverify-ja-");
+  const dataPath = dataFile(dir, [
+    {
+      kind: "paper",
+      label: "Submission",
+      round: 1,
+      track: "",
+      precision: "date-only",
+      local_date: "2026-11-27",
+      verification: {
+        official_url: "https://example.test/cfp",
+        source_class: "official-cfp",
+        next_check_at: "2026-08-30T00:00:00.000Z",
+        status: "pending",
+      },
+    },
+  ]);
+  const ledgerPath = join(dir, "verification-ledger.json");
+  const result = await reverifyData({
+    dataPath,
+    ledgerPath,
+    now: new Date("2026-08-31T00:00:00.000Z"),
+    due: true,
+    bodyRoot: join(dir, "evidence", "blobs"),
+    fetchImpl: async () =>
+      new Response("<html><body>（3）投稿締切　2026年11月27日（金）</body></html>\n"),
+  });
+  expect(result.statuses).toEqual({ verified: 1 });
+});
+
 it("confirms an exact deadline against a date-only official statement", async () => {
   // 原典に時刻表記が無い締切 (通知・camera-ready 等) は、保存 exact 値の公式 TZ での
   // 暦日一致で確認する (#701)。時刻の推測はしない。
