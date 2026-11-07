@@ -17,7 +17,7 @@ import Recommender from "../site/recommendation.ts";
 import { consolidateReviewedSubmissions } from "../site/submission-identity.ts";
 import { structuredDeadline, 開催の行 } from "../src/mcp.ts";
 import { FILTER_RUNTIME_STUBS, site } from "./built_golden_shared.ts";
-import { REPO_ROOT, tempWork } from "./helpers.ts";
+import { NOW, NOW_ARG, REPO_ROOT, tempWork } from "./helpers.ts";
 /* 生成した台本は標準入力で渡す（Linux は argv の 1 値を 128KiB に限る – 第 917・944 回の
  * 検査は 230KB を超え、CI でだけ起動に失敗していた）。`node -e` 以外はそのまま通る。 */
 import { spawnScript as spawnSync } from "./node_script.ts";
@@ -65,8 +65,8 @@ function mcpSandbox(): string {
 }
 
 /** MCP の客户の眞似をして、行ごとの JSON-RPC をやり取りする。 */
-function mcpClient() {
-  const child = spawn(process.execPath, [join(REPO_ROOT, "src", "mcp.ts")], {
+function mcpClient(extraArgs: string[] = []) {
+  const child = spawn(process.execPath, [join(REPO_ROOT, "src", "mcp.ts"), ...extraArgs], {
     cwd: REPO_ROOT,
     stdio: ["pipe", "pipe", "pipe"],
   });
@@ -104,8 +104,15 @@ function mcpClient() {
 }
 
 const client = mcpClient();
+/* 時計が絡む検査（第 762・763・865・970 回）は固定時計の側で呼ぶ。実測 2026-11-05:
+ * 収録（data/snapshot.json）は日次で更新されるが、検査は commit された収録で走るので、
+ * 実時計が進むと「今後の行」が減って前提が崩れる（オンラインの行が 0 になり第 865・970 回が
+ * 落ちた）。public/ を建てるのと同じ時計（helpers の NOW_ARG）を MCP の --now で渡し、
+ * 前提と道具の両側を同じ時計で揃える。 */
+const fixedClient = mcpClient(["--now", NOW_ARG]);
 afterAll(() => {
   client.child.kill();
+  fixedClient.child.kill();
 });
 
 /** 道具を呼んで、返つた文字を取る。 */
@@ -117,6 +124,46 @@ async function call(name: string, args: Record<string, unknown>): Promise<string
     params: { name, arguments: args },
   })) as { result?: { content?: Array<{ text?: string }> } };
   return String(res.result?.content?.[0]?.text ?? "");
+}
+
+/** 固定時計の側で道具を呼んで、返つた文字を取る。 */
+async function callAt(name: string, args: Record<string, unknown>): Promise<string> {
+  const res = (await fixedClient.ask({
+    jsonrpc: "2.0",
+    id: 3,
+    method: "tools/call",
+    params: { name, arguments: args },
+  })) as { result?: { content?: Array<{ text?: string }> } };
+  return String(res.result?.content?.[0]?.text ?? "");
+}
+
+/* 第 762・763 回: 0 件と「打ち直すなら」を両立たせる語 = 収録の行に当たる語と、
+ * 絶対に当たらない語（zzqxxw）の組。当たる語は**収録から**作る – 実測 2026-11-05:
+ * 「参加費が高い」は収録に一度も載った事の無い語で、提案の出る検査が data に依って
+ * 落ちていた。固定時計（NOW_ARG）で「今後の行」から語を取るので、収録が更新されても
+ * 前提は保たれる。 */
+function 当たる語を作る(): string {
+  const snap = JSON.parse(readFileSync(join(REPO_ROOT, "data", "snapshot.json"), "utf8")) as never;
+  const now = NOW.getTime();
+  const rows = searchCandidates(snap, now);
+  const 今後 = rows.filter(
+    (r) =>
+      !Recommender.deadlineRowIsPast(r, now) &&
+      !r.est &&
+      ["abstract", "paper", "journal"].includes(r.kind) &&
+      Number.isFinite(r.t),
+  );
+  expect(今後.length, "この検査の前提（固定時計で今後の行）が崩れた").toBeGreaterThan(0);
+  const 行 = 今後.slice().sort((a, b) => a.t - b.t)[0];
+  const 当たる =
+    (String(行.conf?.title ?? "") + " " + String(行.conf?.full_name ?? ""))
+      .match(/[\p{L}\p{N}]{2,}/gu)
+      ?.find(
+        (w) =>
+          Recommender.searchMatcher(Recommender.expandRelativeMonths(w, now), now)(行) === true,
+      ) ?? "";
+  expect(当たる, "この検査の前提（行に当たる語が読めない）").not.toBe("");
+  return 当たる;
 }
 
 async function upcomingText(args: Record<string, unknown>): Promise<string> {
@@ -503,35 +550,40 @@ it("今後の締切がない会議では、その事を先に言う（第 754 �
 });
 
 it("0 件の時に、画面と同じ「打ち直すなら」を渡す（第 762 回）", async () => {
-  const text = await call("search_deadlines", {
+  const 当たる = 当たる語を作る();
+  const text = await callAt("search_deadlines", {
     query: "デモができる会議",
     scope: "all",
     limit: 1,
   });
   expect(text, "行き止まりへ送る提案を出した").not.toContain("打ち直すなら");
 
-  const 有益 = await call("search_deadlines", { query: "参加費が高い", scope: "all", limit: 1 });
+  const 有益 = await callAt("search_deadlines", {
+    query: `${当たる} zzqxxw`,
+    scope: "all",
+    limit: 1,
+  });
   expect(有益, "打ち直す手を渡していない").toContain("打ち直すなら");
   const word = /検索語を「([^」]+)」/.exec(有益)?.[1] ?? "";
   const 件數 = Number(/（(?:両方を書く行が )?([\d,]+) 件/.exec(有益)?.[1]?.replace(/,/g, "") ?? -1);
   expect(word, "提案の語が読めない").not.toBe("");
   expect(件數, "提案の件数が読めない").toBeGreaterThan(0);
   /* **提案の件数と、その語で引いた結果が一致する。** */
-  const 次 = await call("search_deadlines", { query: word, scope: "all", limit: 1 });
+  const 次 = await callAt("search_deadlines", { query: word, scope: "all", limit: 1 });
   const 出た = Number(/に当たる締切: ([\d,]+) 件/.exec(次)?.[1]?.replace(/,/g, "") ?? -1);
   expect(出た, `提案の件數と結果が違ふ: ${word}`).toBe(件數);
 });
 
 it("explain_word でも、同じ「打ち直すなら」を渡す（第 763 回）", async () => {
-  const text = await call("explain_word", { word: "参加費が高い", scope: "all" });
+  const text = await callAt("explain_word", { word: `${当たる語を作る()} zzqxxw`, scope: "all" });
   expect(text, "0 行である事を言つていない").toContain("0 行");
   expect(text, "打ち直す手を渡していない").toContain("打ち直すなら");
   const word = /検索語を「([^」]+)」/.exec(text)?.[1] ?? "";
   expect(word, "提案の語が読めない").not.toBe("");
-  const 次 = await call("search_deadlines", { query: word, scope: "all", limit: 1 });
+  const 次 = await callAt("search_deadlines", { query: word, scope: "all", limit: 1 });
   expect(次, `提案が空振り: ${word}`).toMatch(/に当たる締切: [1-9]\d* 件/);
   /* 行が出る語には付けない。 */
-  const 有 = await call("explain_word", { word: "ポスター", scope: "all" });
+  const 有 = await callAt("explain_word", { word: "ポスター", scope: "all" });
   expect(有, "行が出る語に提案を付けた").not.toContain("打ち直すなら");
 });
 
@@ -1310,11 +1362,15 @@ it("行に会期が付く（画面の「会期」列と同じ入口・第 859 �
   expect(題, "会期を出していない").toContain(`会期 ${會期[0]}`);
   /* **どの行にも会期の欄がある**（決まって居ない行も「未確認」と書く – 黙ると
    * 「無い」と読まれる）。 */
-  const 一覽 = await call("list_upcoming", { days: 90, scope: "all" });
+  /* 時鐘が絡む窓は固定時計の側で呼ぶ（実測 2026-11-08: 実時計では CLOSER が窓に入り、
+   * 会期未発表の行が顔を出した。窓の中身は時計で変はるので、収録と同じ時計で揃へる）。 */
+  const 一覽 = await callAt("list_upcoming", { days: 90, scope: "all" });
   const 行 = 一覽.split("\n").filter((l) => /^\d{4}-\d{2}-\d{2}/.test(l));
   expect(行.length, "この検査の前提（日付の行がある）が崩れた").toBeGreaterThan(3);
   for (const l of 行) {
-    expect(l, `会期の欄が無い行が在る: ${l.slice(0, 60)}`).toMatch(/\| 会期 [^|]+ \|/);
+    /* 会期が決まつて居ない行は「会期未発表（原表記: …）」と欄の名を重ねない（ランクの
+     * 「ランク未確認」と同じ形 – 実測 2026-11-08）。欄が在る事だけを見る。 */
+    expect(l, `会期の欄が無い行が在る: ${l.slice(0, 60)}`).toMatch(/\| 会期[^|]+ \|/);
   }
   /* 値は画面と同じ助っ人（`eventCellJa`）から取つた物で突き合はせる – 上の `toContain` が
    * それ（書き寫すと、会期の言ひ方がずれる）。 */
@@ -1362,11 +1418,13 @@ it("国内・オンラインの絞り込みが、画面のチェック欄と同�
    * **同じ判定**を引数にした。語（「国内」「オンライン参加可」）でも同じ集合に成る事は
    * 実測しているが、AI が魔法の語を知らないと使へない – 引数なら画面のボタンと同じ物が
    * その侭使へる。 */
+  /* 時計は固定（NOW_ARG – MCP 側も --now で同じ時計）。実測 2026-11-05: 実時計では
+   * 収録の「今後の行」が減り、オンラインの前提が 0 になって検査が落ちた。 */
+  const now = NOW.getTime();
   const rows = searchCandidates(
     JSON.parse(readFileSync(join(REPO_ROOT, "data", "snapshot.json"), "utf8")) as never,
-    Date.now(),
+    now,
   );
-  const now = Date.now();
   const 既定 = (r: (typeof rows)[number]): boolean =>
     !Recommender.deadlineRowIsPast(r, now) &&
     !r.est &&
@@ -1386,22 +1444,22 @@ it("国内・オンラインの絞り込みが、画面のチェック欄と同�
   const 數 = (t: string): number =>
     Number(/絞り込みだけ: ([\d,]+) 件/.exec(t)?.[1]?.replace(/,/g, "") ?? -1);
   /* 語を省いても、絞り込みだけで引ける（「国内の締切を全部」の樣な聞き方）。 */
-  const 國 = await call("search_deadlines", { domestic: true, scope: "all", limit: 1 });
+  const 國 = await callAt("search_deadlines", { domestic: true, scope: "all", limit: 1 });
   expect(數(國), "国内の件数が画面の判定と違う").toBe(國內);
   expect(國, "頭に絞り込みを書いていない").toContain("／国内のみ");
-  const 網 = await call("search_deadlines", { online: true, scope: "all", limit: 1 });
+  const 網 = await callAt("search_deadlines", { online: true, scope: "all", limit: 1 });
   expect(數(網), "オンラインの件数が画面の判定と違う").toBe(オンライン);
   expect(網, "頭に絞り込みを書いていない").toContain("／オンライン参加可のみ");
   /* ワークショップだけの絞り込み（画面のチェック欄と同じ規則）。 */
   expect(ワークショップ, "この検査の前提（ワークショップの行）が崩れた").toBeGreaterThan(0);
-  const 會合 = await call("search_deadlines", { workshop: true, scope: "all", limit: 1 });
+  const 會合 = await callAt("search_deadlines", { workshop: true, scope: "all", limit: 1 });
   expect(數(會合), "ワークショップの件数が画面の判定と違う").toBe(ワークショップ);
   expect(會合, "頭に絞り込みを書いていない").toContain("／ワークショップのみ");
   /* 語で引いた時と同じ集合（同じ数に成る）。 */
-  const 語 = await call("search_deadlines", { query: "国内", scope: "all", limit: 1 });
+  const 語 = await callAt("search_deadlines", { query: "国内", scope: "all", limit: 1 });
   expect(Number(/に当たる締切: ([\d,]+) 件/.exec(語)?.[1]?.replace(/,/g, "") ?? -1)).toBe(國內);
   /* 両方のチェックは重ねられる（画面と同じ – 国内のオンライン參加可）。 */
-  const 兩方 = await call("search_deadlines", {
+  const 兩方 = await callAt("search_deadlines", {
     domestic: true,
     online: true,
     scope: "all",
@@ -4772,7 +4830,7 @@ describe("行は表示の早さで並ぶ（第 970 回）", () => {
   const 問 = ["セキュリティ", "今月", "締切", "3月", "ICDE", "国内", "オンライン", "来月"];
   it("表示の日が昇順に並ぶ", async () => {
     for (const q of 問) {
-      const 答 = await call("search_deadlines", { query: q, limit: 400 });
+      const 答 = await callAt("search_deadlines", { query: q, limit: 400 });
       const 行 = 答.split("\n").filter((l) => /^20\d\d-/.test(l));
       const 日 = 行.map((l) => l.slice(0, 10));
       const 崩れ = 日
@@ -4784,7 +4842,7 @@ describe("行は表示の早さで並ぶ（第 970 回）", () => {
   });
   /* `list_upcoming` も同じ並び（`sortRows` は共用 – 第 970 回の直しで全部変はる）。 */
   it("list_upcoming も表示の日が昇順に並ぶ", async () => {
-    const 答 = await call("list_upcoming", { days: 60, limit: 400 });
+    const 答 = await callAt("list_upcoming", { days: 60, limit: 400 });
     const 行 = 答.split("\n").filter((l) => /^20\d\d-/.test(l));
     const 日 = 行.map((l) => l.slice(0, 10));
     const 崩れ = 日

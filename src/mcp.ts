@@ -3892,6 +3892,7 @@ async function main(): Promise<void> {
       `${[
         "kamiyobi の MCP サーバ（読み取り専用・stdio）。",
         "  AI から: MCP クライアントからこのファイルを起動します（`node src/mcp.ts`）。",
+        "  固定の時計: --now ISO 8601（stdio 起動・検査用の口。省略すれば実時計）。例: node src/mcp.ts --now 2026-08-09T00:00:00Z",
         "  手元で確認: ツール名と引数を指定すると、1 回分の結果を表示します。",
         `  ツール: ${TOOLS.map((t) => t.name).join(" / ")}`,
         "  論文の入力: --input ファイル名でUTF-8テキスト・JSONを読む。--input - は標準入力。",
@@ -4118,10 +4119,23 @@ function isDirectExecution(): boolean {
 
 /* 直接起動された時だけ stdio を開く（import した検査では開かない）。 */
 if (isDirectExecution()) {
-  if (process.argv.length > 2)
+  const 引數 = process.argv.slice(2);
+  if (引數[0] === "--now") {
+    /* 固定の時計（検査・再生用の口）。指定しなければ実時計のまま。 */
+    const 時刻 = Date.parse(引數[1] ?? "");
+    if (引數.length !== 2 || !Number.isFinite(時刻)) {
+      process.stderr.write(
+        "--now は固定の時計を指定します（stdio 起動・検査用）。ISO 8601 の時刻を1つ指定してください。例: node src/mcp.ts --now 2026-08-09T00:00:00Z\n",
+      );
+      process.exit(1);
+    }
+    runStdio(時刻);
+  } else if (引數.length > 0) {
     void main().catch((error) => {
       process.stderr.write(`${error.message}\n`);
       process.exitCode = 1;
     });
-  else runStdio();
+  } else {
+    runStdio();
+  }
 }
