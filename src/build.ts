@@ -1311,7 +1311,13 @@ function jsonDeadlineDay(deadline: JsonRecord): string {
  * 畫面は SHA-1 を持たないので自分では同じ UID を組めない。**正典にも載せる**のは、
  * 畫面が「収録の全体を読み込む」で `data.json` を読んだ後に書き出しても同じ UID に
  * なるようにするため（2026-10-17 實測: 品書にだけ載せて居た頃は、全履歴を讀み込んだ後の
- * 書き出し 221 件が 1 つも購読側と一致しなかった）。 */
+ * 書き出し 221 件が 1 つも購読側と一致しなかった）。
+ *
+ * **入力が持つ UID は此処で置き換へる。** 採番の正本はこの build の配付カレンダーで、
+ * 「その時計で今後の締切」の順に付く。履歴（前回公開の data.json）が持つ古い採番を残す
+ * と、同じ締切に購読の ICS と畫面の書き出しで別の UID が付く（2026-11-08 實測: snapshot
+ * 由来の `…-4` と新採番の `…-7` が並んだ）。源が古い採番を持たないのが常なので、普段の
+ * build では此の置き換へは動かない。 */
 export function attachIcsUidsToConferences(
   conferences: unknown,
   icsUids?: Map<string, string> | null,
@@ -1322,7 +1328,6 @@ export function attachIcsUidsToConferences(
       for (const list of [edition.deadlines, edition.schedule_deadlines]) {
         if (!Array.isArray(list)) continue;
         for (const deadline of list as Array<Record<string, unknown>>) {
-          if (deadline.ics_uid) continue;
           const uid = icsUids.get(
             icsDeadlineUidKey(
               String(edition.id ?? ""),
