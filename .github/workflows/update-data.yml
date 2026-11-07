@@ -87,8 +87,10 @@ jobs:
       - name: Validate generated production data
         id: validate
         run: npm run validate:data -- public/data.json --json
-      - name: Persist canonical data-quality findings
-        run: node scripts/validate-data.ts --write-findings --json > /tmp/kamiyobi-update/validator-findings.json
+      - name: Capture validator report for diagnostics
+        # findings の正本（data/validator-findings.json）は人のレビューで更新する。この出力は
+        # 診断用の報告であり、正本ではない（`--write-findings` という口は実装されていない）。
+        run: node scripts/validate-data.ts --json > /tmp/kamiyobi-update/validator-report.json
       - name: Health gate
         id: health
         # 失敗時でも違反報告を書いて、後続の always() 診断 step が原因を残せるようにする。
