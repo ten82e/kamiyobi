@@ -7,6 +7,10 @@
  * `tests/place_spelling_variants.test.ts`、`tests/place_query_alias.test.ts`）。
  */
 export const PLACE_QUERY_ALIASES_JA: string[][] = [
+  // Published-data refresh 2026-11-08: cities that reached five recorded rows.
+  ["ブエノスアイレス", "buenos aires"],
+  ["グルノーブル", "grenoble"],
+  ["貴陽", "guiyang"],
   // Published-data refresh 2026-10-04: cities with at least five recorded rows.
   ["デトロイト", "detroit"],
   ["ケンブリッジ", "cambridge"],
