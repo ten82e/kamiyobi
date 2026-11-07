@@ -1972,6 +1972,14 @@ describe("snapshot fallback", () => {
         readFileSync(join(root, "data", "snapshot.json"), "utf8"),
       ) as Record<string, unknown>;
       expect("generated_at" in snapshot).toBe(false);
+      // `ics_uid` も snapshot から落ちる（採番は build の時計で変わる – SPEC §3.5）。
+      const snapshotUids = (snapshot.conferences as Array<Record<string, unknown>>).flatMap(
+        (c) =>
+          ((c.editions ?? []) as Array<{ deadlines?: Array<Record<string, unknown>> }>).flatMap(
+            (e) => (e.deadlines ?? []).filter((d) => "ics_uid" in d),
+          ),
+      );
+      expect(snapshotUids, "snapshot に採番済みの UID が残った").toEqual([]);
       // data.json（§4.2）側は従来どおり generated_at を持つ。
       const data = JSON.parse(readFileSync(join(outdir, "data.json"), "utf8")) as Record<
         string,

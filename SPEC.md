@@ -429,7 +429,9 @@ export async function fetchTarball(
 4. snapshot も空なら異常終了する（黙って空の公開データを公開しない）。
 
 snapshot は全データ源が `fresh` の online build に限り、build の最後に `data.json` から
-`generated_at` を除いて書き込む。各取得源の revision、入力 hash、取得時刻、件数を
+`generated_at` と `ics_uid` を除いて書き込む。`ics_uid` の採番は build の時計で今後の
+締切に対する順序なので、退避データに焼き込むと次の build の採番とずれる。
+配付カレンダーの UID の正本は公開される側（`data.json`・`catalog.json`）である。各取得源の revision、入力 hash、取得時刻、件数を
 `snapshot_metadata` に保存し、offline build はこの観測時刻から鮮度を判定する。
 cache-fallback・snapshot-fallback・failed・offline のいずれかを含む build は snapshot を更新しない。
 
