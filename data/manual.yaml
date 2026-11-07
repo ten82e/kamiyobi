@@ -7336,9 +7336,12 @@ venue_scopes:
     additional_source_urls:
       - https://2024.sigmod.org/calls_papers_sigmod_research.shtml
   vldb:
-    source_url: https://www.vldb.org/2025/
+    source_url: https://www.vldb.org/2027/
+    additional_source_urls:
+      - https://vldb.org/2026/
+      - https://vldb.org/pvldb/CFP-VldbJournal2026.html
     topics:
-      - Data management, databases, query processing, data mining, information retrieval, analytics, distributed databases and large scale data.
+      - Data management system technology and information management infrastructures.
       - Data mining and analytics
       - Data privacy and security
       - Database engines
@@ -7347,14 +7350,12 @@ venue_scopes:
       - Graph and network data
       - Information integration and data quality
       - Languages
-      - Machine learning, AI and databases
+      - Machine learning, AI, and databases
       - Novel database architectures
       - Provenance and workflows
       - Specialized and domain-specific data management
       - Text and semi-structured data
       - User interfaces
-    additional_source_urls:
-      - https://www.vldb.org/2024/?call-for-research-track
   acl:
     source_url: https://2024.aclweb.org/calls/main_conference_papers/
     topics:
@@ -7405,3 +7406,197 @@ venue_scopes:
     source_url: https://conferences.sigcomm.org/sigcomm/2024/cfp/
     topics:
       - Computer communication networks, internet architecture and protocols, data center networking, congestion control, network measurement, programmable switches and network management.
+  ccgrid:
+    source_url: https://hpcclab.org/ccgrid27-call-for-papers/
+    topics:
+      - Cluster, cloud and edge platforms with heterogeneous or disaggregated hardware.
+      - Distributed operating software, containers and event-driven services.
+      - Storage, replication, transactions and data management across machines.
+      - Infrastructure for distributed learning, inference and model deployment.
+      - Runtime support and resource management for LLM applications and AI agents.
+      - Measuring and optimizing latency, throughput, cost and workload performance.
+      - Security, privacy, reliability and recovery in distributed infrastructure.
+      - Reducing energy use and environmental impact of computing systems.
+  cluster:
+    source_url: https://clustercomp.org/2026/
+    topics:
+      - Algorithms, applications and software libraries using cluster systems.
+      - Cluster hardware, communication networks and system management.
+      - Programming environments and operating software for clusters.
+      - Storage, data handling and visualization on cluster platforms.
+  euro-par:
+    source_url: https://2026.euro-par.org/calls/papers
+    topics:
+      - Theory and practical applications of parallel and distributed computation.
+      - Architectures spanning small parallel machines, supercomputers and cloud systems.
+      - Languages, compilers and interfaces for parallel programming.
+      - Development tools and supporting infrastructure for distributed computation.
+      - Evaluating and improving application performance.
+      - Scheduling, resource management and workflows across cloud and edge platforms.
+      - Scalable AI methods and data analytics.
+  hpc-asia:
+    source_url: https://hpcasia2027.org/2027/pages_submission/call_for_papers.vm
+    topics:
+      - Scientific applications, numerical linear algebra and scalable graph algorithms.
+      - Parallel algorithms for heterogeneous accelerators, AI and quantum computing.
+      - Processor and accelerator design, interconnects and memory hierarchies.
+      - Reliable and energy-efficient computing architectures.
+      - Parallel languages, compilers, runtime software and performance portability.
+      - Scheduling, system management, debugging and reproducible execution.
+      - Parallel storage, file systems and optimization of high-performance I/O.
+      - Data analytics, visualization and provenance in HPC applications.
+  hpcc:
+    source_url: https://hpcn.exeter.ac.uk/hpcc2025/call4paper.php
+    additional_source_urls:
+      - https://ieee-hyper-intelligence.org/2026/hpcc/
+    topics:
+      - High-performance computing theory and architectures; system software and middleware.
+      - System software support for scientific workflows; storage and I/O systems; resource management.
+      - Instruction-level and thread-level parallelism; performance modeling and evaluation; massively multicore systems.
+      - Future novel computing platforms; green high-performance computing; neural network optimization techniques.
+      - High-performance computing for bioinformatics, big data, artificial intelligence and block chains.
+      - Database applications and data mining.
+      - Parallel and distributed system architectures and algorithms; parallel and distributed systems and applications.
+      - Data center architectures; resource virtualization; cloud computing; web services and internet computing.
+      - Computational models and algorithms; image recognition and processing; embedded systems.
+      - Pervasive and ubiquitous computing and intelligence; distributed graphics and VR/AR/MR systems.
+      - Distributed artificial intelligence and soft or natural computing; federated learning.
+      - Power-efficient and green computing systems; parallel and distributed computing for big data and artificial intelligence.
+      - Network and interconnect architectures; computer networks; internet architectures and protocols; telecommunications.
+      - Trust, security and privacy; energy-aware computing and networking; machine learning and deep learning.
+      - Software defined networking; network functions virtualization; performance evaluation and measurement.
+      - "Computing power network and network for AI computing: network-compute convergence, resource allocation and collaboration."
+      - Lossless network design; RDMA technology; IPv6 and SRv6-based hyperscale AI data centers; deterministic networking.
+  hpdc:
+    source_url: https://hpdc.sci.utah.edu/2026/calls-cfp.html
+    topics:
+      - High-end parallel and distributed platforms from HPC clusters to clouds and edge systems.
+      - Heterogeneous accelerators, memory subsystems and scalable storage.
+      - Operating software, middleware, languages and runtime environments.
+      - Scientific workflows and distributed infrastructure for AI workloads.
+      - Managing computing resources and evaluating system performance.
+      - Dependable operation, fault recovery and availability of large-scale deployments.
+      - Energy use and sustainable operation of computing infrastructure.
+      - Software engineering and emerging quantum or neuromorphic platforms for parallel computing.
+  ica3pp:
+    source_url: https://hpcn.exeter.ac.uk/ica3pp2026/
+    topics:
+      - Heterogeneous parallel hardware, accelerators and emerging computing architectures.
+      - Concurrent programming abstractions, middleware and parallel storage software.
+      - Distributed algorithms, scientific applications and workload scheduling.
+      - Reliability, self-recovery and security of distributed computation.
+      - Interconnects, mobile networks and orchestration from edge devices to clouds.
+      - Distributed processing and management of large datasets.
+      - IoT, digital twins and cyber-physical-social computing.
+      - Modeling, testing and measuring performance of parallel systems.
+  icpads:
+    source_url: https://www.cloud-conf.net/icpads2026/cfp-research-paper.html
+    topics:
+      - Parallel and distributed platforms spanning data centers, clouds and edge devices.
+      - Wireless sensing, mobile computing and connected cyber-physical systems.
+      - Serverless services and environmentally sustainable computing infrastructure.
+      - AI infrastructure, distributed training and efficient inference services.
+      - Resource scheduling and network management assisted by AI agents.
+      - Collaborative edge intelligence and privacy-preserving federated learning.
+      - Security and trust in distributed systems and blockchain applications.
+      - Algorithms and applications combining distributed computation with machine learning.
+  icpp:
+    source_url: https://icpp2026.github.io/call-for-papers/
+    topics:
+      - Numerical and combinatorial algorithms for parallel or distributed execution.
+      - Scalable scientific applications, data analysis and applied machine learning.
+      - Parallel processors, accelerators, interconnects and memory or storage technologies.
+      - Methods combining HPC, cloud and edge computation across application disciplines.
+      - Modeling and measuring the performance and scalability of computing systems.
+      - Parallel programming languages, compilers, operating software and runtime libraries.
+      - Quantum simulation and tools combining quantum and parallel computation.
+  ics:
+    source_url: https://ics-conference.org/index.html
+    topics:
+      - "Architecture: power-aware, parallel I/O, grid-based, web-based, continuous monitoring, self-healing, fault-tolerant, embedded."
+      - "Productivity: benchmarks, performance evaluation studies, specialized languages, program development tools."
+      - "Systems: compilers, operating systems, schedulers, runtime optimization."
+      - "Applications: numeric and non-numeric, scientific, biological, industrial, massive sensory processing."
+      - Theoretical underpinnings, analysis and experimental evaluation of systems.
+  ipdps:
+    source_url: https://www.ipdps.org/ipdps2027/2027-call-for-papers.html
+    topics:
+      - Algorithms for numerical, graph and data-intensive tasks on parallel or distributed systems.
+      - Scientific and engineering applications with scalable implementations.
+      - Accelerators, interconnects, memory technologies and dependable HPC architectures.
+      - Parallel learning, federated AI and optimized training or inference infrastructure.
+      - Measurement, simulation and analysis of performance, energy use and resilience.
+      - Parallel programming models, compilation, middleware and runtime support.
+      - Storage, resource scheduling, virtualization and system software for heterogeneous machines.
+  ispa:
+    source_url: https://ieee-ai-for-science.org/2026/ispa/cfp.php
+    topics:
+      - Cloud computing and data center technology; multi-cloud environments, cloud federation, interoperability.
+      - Distributed and parallel algorithms and applications; distributed file and storage systems, I/O systems.
+      - Systems and architectures for artificial intelligence; energy management and green computing.
+      - Programming models, code generation and optimization, compilers, middleware and tools.
+      - Scheduling and resource management; reliability, fault tolerance and dependability.
+      - Generative AI, agents and world models; LLMs powered by parallel and distributed computing.
+      - High-performance scientific and engineering computing; grid and cluster, pervasive and ubiquitous computing.
+      - Databases, data mining and data management; big data and business analytics.
+      - Security in parallel AI systems and federated learning; blockchain security and privacy.
+  pact:
+    source_url: https://pact2026.github.io/submit/
+    topics:
+      - Parallel processor design and heterogeneous systems with AI accelerators.
+      - Memory-centric computing and interconnects for large-scale AI infrastructure.
+      - Compilation, code generation and optimization for parallel or machine-learning workloads.
+      - Runtime scheduling, synchronization and distributed model execution.
+      - Data pipelines, parallel I/O and coordination of memory with storage.
+      - Recovery mechanisms and reliability of parallel hardware and software.
+      - Concurrent programming models and correctness of parallel applications.
+      - Practical tools and experimental studies at the hardware-software boundary.
+  pdcat:
+    source_url: https://www.pd-cat.org/2026/PDCAT2026-CFP.pdf
+    additional_source_urls:
+      - https://www.pd-cat.org/2026/
+    topics:
+      - Interconnection networks; parallel, distributed and heterogeneous architectures; reliability and fault tolerance.
+      - Computer, optical, wireless and mobile networks; communication and telecommunication; Internet of Things.
+      - Cloud and grid computing systems; ubiquitous computing systems; reconfigurable architecture.
+      - Task mapping and job scheduling; formal methods and programming languages; operating systems and system software.
+      - Parallelizing compilers and optimization; simulation, modeling and visualization; web services and distributed applications.
+      - Artificial intelligence algorithms; intelligent computing and neural networks; parallel and distributed algorithms.
+      - Database systems and data mining; big data computing and analytics; distributed data and knowledge-based systems.
+      - High-performance scientific computing; bioinformatics and computational biology; image processing and computer vision.
+      - Quantum computing and algorithms; agent-based technologies; internet computing and applications.
+      - Artificial intelligence security; privacy-preserving computation; database, cloud and federated learning security.
+      - Blockchain-based and decentralized services across edge and cloud environments.
+  ppopp:
+    source_url: https://ppopp27.sigplan.org/
+    topics:
+      - Theoretical and practical approaches to parallel programming and performance engineering.
+      - Languages, compilers, runtime environments and software tools for concurrent systems.
+      - Programming productivity across multicore, heterogeneous and distributed machines.
+      - Parallel applications on GPUs, FPGAs, ASICs and other accelerators.
+      - Programming large-scale scientific, enterprise and AI workloads.
+      - Parallel execution in data centers, clouds and quantum-computing platforms.
+  sc-asia:
+    source_url: https://www.sc-asia.org/sca2027-call-for-papers/
+    topics:
+      - Scalable scientific applications, numerical methods and parallel algorithms.
+      - Processor, accelerator and network architectures with dependable and energy-efficient designs.
+      - Quantum, neuromorphic and other emerging computing technologies.
+      - Machine learning, AI-driven analysis and their integration with HPC.
+      - Programming models, compilation, resource management and performance portability.
+      - Parallel file systems, high-performance storage and data visualization.
+  spaa:
+    source_url: https://spaa.acm.org/spaa-2027-call-for-papers/
+    topics:
+      - Algorithms, data structures and complexity of parallel or distributed computation.
+      - Scheduling algorithms and models of concurrent execution.
+      - Connections between parallel algorithms, programming systems and architecture.
+      - Languages, compilation and runtime tools for parallel applications.
+      - Parallel hardware from supercomputers to AI accelerators and quantum platforms.
+      - Transactional memory and algorithms that reduce memory or I/O costs.
+      - Large-scale data processing and parallel methods for machine learning.
+      - Routing and information dissemination in distributed networks.
+  xsig:
+    source_url: https://xsig.ipsj.or.jp/2025/
+    topics:
+      - 計算システム、計算基盤、プログラミングを対象とする、研究会の分野を横断した研究。
