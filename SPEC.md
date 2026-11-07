@@ -1474,6 +1474,7 @@ MCPの `venue_info` は同じ処理で作った `research_topics` を返す。�
 `venue_scopes` の `source_url` と `additional_source_urls` を重複なく `official_scope_sources` に保持し、JSON復元・データ源の統合・公開JSON・画面用カタログ・推薦索引へ引き継ぐ。JSON復元では関連する `scope` と `official_scope` も保持する。設定の出典は資格情報を含まない絶対HTTPS URLとし、不正な値は拒否する。画面とAIの読み取り時も不正なリンクは使わない。
 
 カードの募集分野の説明内には出典URLを表示し、新しいタブで参照できるようにする。URLから開催年や締切を推測せず、過去の募集を含むことを明記する。出典がない説明には「募集分野の出典: 未収録」と表示する。MCP `venue_info` の `research_topic_sources` でも同じURLを返し、未収録は空配列、説明と出典のどちらも読み込めない状態はnullとする。出典リンクは説明の根拠として扱い、個別の締切の確認状態を引き上げない。出典URLの追加だけでは埋め込み入力とベクトルの識別情報を変えない。
+**`topics`（`official_scope`）の追加は埋め込みプロファイルの本文を変える**ので、`full_pool_models.integration.ts` のゲート評価を必ず再実行する。実測 2026-11-08: 並列計算系 17 会議へ topics を一括追加すると、加えた会議のベクトルが変わり、融合順位の梯子で無関係の評価Caseの上位5件が崩れた（full-pool 8/9 失敗 → topics 撤去で 9/9 回復）。topics の語彙を推薦の語彙一致（scoreLine）専用にする設計は、この評価を通ってからにする。
 
 ### 意味検索の追加比較（2026-11-01）
 
