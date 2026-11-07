@@ -16,7 +16,11 @@ import {
   site,
   siteHtmlRuntime,
 } from "./built_golden_shared.ts";
-import { REPO_ROOT, runCli, tempWork } from "./helpers.ts";
+import { publicClockGuard, REPO_ROOT, runCli, tempWork } from "./helpers.ts";
+
+/* public/ は検証用の固定時計で建てる（別の時計の物を読むと窓がずれて分からない失敗に成る）。 */
+publicClockGuard();
+
 import { spawnScript as spawnSync } from "./node_script.ts";
 import { jsFunction, liveNoteSource, siteRuntime, vmSafeSource } from "./runtime_extract.ts";
 

@@ -3,7 +3,16 @@
  */
 
 import { spawnSync } from "node:child_process";
-import { cpSync, mkdirSync, mkdtempSync, readdirSync, rmSync, statSync } from "node:fs";
+import {
+  cpSync,
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  statSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
@@ -21,6 +30,23 @@ export const FIXTURES = join(import.meta.dirname, "fixtures");
 // Deterministic "now" used by every build in the test suite.
 export const NOW = new Date("2026-08-09T00:00:00Z");
 export const NOW_ARG = "2026-08-09T00:00:00Z";
+
+/**
+ * public/ を直接読む検査のための時計の番人。public/ は検証用の固定時計（NOW_ARG）で
+ * 建てる約束。別の時計（実時計の online ビルドの後など）で建てた物を読むと、窓がずれて
+ * 「行数が読めない」ような分からない失敗になるので、**直せる形の**失敗に替える
+ * （2026-11-08 実測: online build の後にもう一度検査したら 12 ファイルが前提の崩れで落ちた）。
+ */
+export function publicClockGuard(): void {
+  const path = join(REPO_ROOT, "public", "data.json");
+  if (!existsSync(path)) return; // 無い時は従来どおり（build を忘れた旨の別の失敗になる）。
+  const data = JSON.parse(readFileSync(path, "utf8")) as { generated_at?: string };
+  const at = data.generated_at ? Date.parse(data.generated_at) : Number.NaN;
+  if (Number.isFinite(at) && at !== NOW.getTime())
+    throw new Error(
+      `public/ が固定時計で建てていない（generated_at: ${data.generated_at}）。検証に使う public/ は固定時計で作り直す: node src/cli.ts build --out public --offline --no-embeddings --cache .cache --now ${NOW_ARG}`,
+    );
+}
 
 // public/ contents required by SPEC.md section 4. embeddings.json は golden テストが
 // --no-embeddings で走るためここには含めない。

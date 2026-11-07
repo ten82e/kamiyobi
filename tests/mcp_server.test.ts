@@ -17,7 +17,11 @@ import Recommender from "../site/recommendation.ts";
 import { consolidateReviewedSubmissions } from "../site/submission-identity.ts";
 import { structuredDeadline, 開催の行 } from "../src/mcp.ts";
 import { FILTER_RUNTIME_STUBS, site } from "./built_golden_shared.ts";
-import { NOW, NOW_ARG, REPO_ROOT, tempWork } from "./helpers.ts";
+import { NOW, NOW_ARG, publicClockGuard, REPO_ROOT, tempWork } from "./helpers.ts";
+
+/* public/ は検証用の固定時計で建てる（別の時計の物を読むと窓がずれて分からない失敗に成る）。 */
+publicClockGuard();
+
 /* 生成した台本は標準入力で渡す（Linux は argv の 1 値を 128KiB に限る – 第 917・944 回の
  * 検査は 230KB を超え、CI でだけ起動に失敗していた）。`node -e` 以外はそのまま通る。 */
 import { spawnScript as spawnSync } from "./node_script.ts";

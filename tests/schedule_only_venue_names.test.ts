@@ -2,7 +2,10 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { expect, it } from "vitest";
 import Recommender from "../site/recommender.ts";
-import { REPO_ROOT } from "./helpers.ts";
+import { publicClockGuard, REPO_ROOT } from "./helpers.ts";
+
+/* public/ は検証用の固定時計で建てる（別の時計の物を読むと窓がずれて分からない失敗に成る）。 */
+publicClockGuard();
 
 /* 「投稿締切が未収録の開催回」の一覧は、会議の名前・会期・開催地で引く。URL のホストを混ぜると、
  * 同じ親サイトの下に別の会議が並ぶ所で、その会議の名前が別の会議に当たる（2026-10-23 実測:
