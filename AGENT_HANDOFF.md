@@ -120,3 +120,36 @@ python3 scripts/agent-handoff/browser-main-integration.py
 最新generated-update artifactをダウンロードし、元のECIR失敗を再現、本体の確認済みoverride/identityを適用するとsource診断を保持してHealth gate違反0となった。再現helperはrecheck-hosted-updater.mjs。fetch/discovery/reverify/公開全体の再実行とは区別する。既存hosted/canary 16テスト・型・lint・今日のoffline build・data/healthが成功。歴史1,673開催回と保護差分を保持。商品ソースへの追加修正は不要と判断した。
 
 停止していたlocalhost8771の本体previewと、専用profileのheadless Chrome9240を再開。研究者の主要16操作と旧URLの2ブラウザスイートが成功。Mac GUIは操作せず、追加agy/dshレビューも行っていない。詳細はverification/resume-latest.json。残作業は、明確な承認後の公開反映と公開・次回scheduleの確認。承認待ち状態を解除するための再試行は行わない。
+
+## 2026-11-08 の状態（goal「サービスのクオリティと魅力を果てしなく高めて」ラウンド 1-8 のまとめ）
+
+本体ブランチは `main`。`origin/main` より 80 コミット以上先行しており、**push は未承認**
+（毎回の報告で指示を仰いでいる。push が承認されると日次 `update-data` が再開し、
+2026-10-04 で止まっていた公開データが更新に向かう）。
+
+この期間に直した主なもの:
+
+- **update-data が 2026-10-05 から毎晩失敗**していた原因は、上流変更で新しく出た警告
+  `chiir`（分野語彙の不一致）が未レビューの発見として `validate:data` のゲートで弾かれて
+  いた事。`data/validator-findings.json` に VF-0127 としてレビュー記録し、ゲートを通した。
+  `--write-findings` は未実装の口だった（ワークフローから改名・スクリプトは案内付きで拒否）。
+- 収録データの更新（online build・discover・reverify を手順どおり実行）と、
+  ARC 2027（25 Oct → 延長最終 27 Nov）・EvoMUSART 2027（1 Nov → 延長 16 Nov）の
+  公式ページによる締切訂正（`data/overrides.yaml`、証拠は `data/evidence/blobs` の CAS）。
+- カレンダー UID の一貫性を 3 層で直した: MCP は公開側を採番の正本に、snapshot は
+  時計依存の `ics_uid` を載せない、build は入力の古い採番を配付カレンダーの採番で置き換える。
+- 条件付き取得の 304 応答で reverify 全体が落ちる欠陥（`src/capture.ts` の
+  `new Response` に 204/205/304 は本文を渡せない）を修復。
+- `public/` を直接読む検査に `publicClockGuard()`（別時計のビルドを作り直しコマンド付きで
+  落とす）を全 12 検査ファイルに設置。MCP stdio に CLI と同じ `--now` を通した。
+- ブロックされた update-data の実行サマリーに新しい警告と発見の記録方法を出すようにした。
+
+近い順の未決 resolution（値が頁から見えなくなった型）を公式ページで実地確認した結果:
+ARC・EvoMUSART は訂正済み。WSDM 2027（11-17 AoE）・DASFAA 2027（11-25 AoE）・
+IPSJ 特集号 3 件（11-27・12-01・12-04）は**収録どおりで正しい**（manual-required は
+parser の再抽出限界で、保守的な状態として正しい）。securecomm・ecir・network-flows・
+eudat は頁に値が無く根拠を得られないため触らない（次回の自動再確認に任せる）。
+
+残っている未解決の品質事項: 意味検索の 10 件（SPEC §意味検索の比較に記録済み、
+モデルや閾値を締めない方針）、上記の未決 resolution、push の承認待ち。
+検証の手順と注意は `AGENTS.md` の検証の節（`publicClockGuard` を含む）。
