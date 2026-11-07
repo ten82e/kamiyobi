@@ -7600,3 +7600,18 @@ venue_scopes:
     source_url: https://xsig.ipsj.or.jp/2025/
     topics:
       - 計算システム、計算基盤、プログラミングを対象とする、研究会の分野を横断した研究。
+  arc:
+    source_url: https://amor.cms.hu-berlin.de/~hubnermi/index.html
+    topics:
+      - "Reconfigurable computing architectures: fine-grained and mixed-grained fabrics, multi-processor and embedded multi-core systems, resilient reconfiguration, system architectures and integration."
+      - "Design methods and tools: high-level compilation, simulation, estimation techniques, design space exploration, programming languages and paradigms, run-time systems, compilation and synthesis."
+      - "Applications on reconfigurable platforms: high-performance systems, embedded computing, robotics, digital signal processing, safety and mission critical systems."
+      - "Critical issues: teaching reconfigurable computing, surveys and future trends, benchmarks."
+
+  evomusart-2027:
+    source_url: https://easychair.org/cfp/evomusart2027
+    additional_source_urls:
+      - https://www.evostar.org/2027/evomusart/
+    topics:
+      - "AI techniques applied to music, sound, art and design: artificial intelligence, computational creativity, generative AI and computer music."
+      - "Nature-inspired and machine-learning methods for creative domains: artificial neural networks, evolutionary computation, swarm intelligence, cellular automata, artificial life and foundation models."
