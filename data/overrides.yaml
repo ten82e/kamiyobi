@@ -159,21 +159,44 @@ conferences:
     editions:
       evomusart-202727:
         year: 2027
+        # 公式 CFP が両締切を「November 16, 2026」へ延長（2026-11-08 実測。
+        # Abstract registration も同じ日。旧 11-01 は頁の「Extended submission deadline」
+        # の前値）。2026-11-08 取得の本文を証拠に訂正する。
         deadlines:
-          - kind: paper
-            label: Submission deadline
-            date: '2026-11-01'
+          - kind: abstract
+            label: Abstract registration deadline
+            date: '2026-11-16'
             round: 1
             evidence:
               - source_name: evomusart official CFP
                 source_url: https://easychair.org/cfp/evomusart2027
                 sourceClass: official-cfp
-                observed_at: '2026-10-03T05:12:25Z'
-                retrievedAt: '2026-10-03T05:12:25Z'
-                verifiedAt: '2026-10-03T05:12:25Z'
-                contentHash: 2710171d2ee3d422ec6bb0842872cac5add2e18259de3da70b4e6d7d00b190aa
-                evidenceRef: data/evidence/blobs/2710171d2ee3d422ec6bb0842872cac5add2e18259de3da70b4e6d7d00b190aa.body
-                rawExcerpt: Submission deadline November 1, 2026
+                observed_at: '2026-11-07T21:24:34Z'
+                retrievedAt: '2026-11-07T21:24:34Z'
+                verifiedAt: '2026-11-07T21:24:34Z'
+                contentHash: e9ce771eb54eda062c8f28fc20492fe17a2cc680f1079b1cec3a0d84aaef8e95
+                evidenceRef: data/evidence/blobs/e9ce771eb54eda062c8f28fc20492fe17a2cc680f1079b1cec3a0d84aaef8e95.body
+                rawExcerpt: 'Abstract registration deadline November 16, 2026; extended submission deadline 16 November 2026'
+                verifiedFields:
+                  - date
+                  - kind
+                  - round
+                confidence: official
+            precision: date-only
+          - kind: paper
+            label: Submission deadline
+            date: '2026-11-16'
+            round: 1
+            evidence:
+              - source_name: evomusart official CFP
+                source_url: https://easychair.org/cfp/evomusart2027
+                sourceClass: official-cfp
+                observed_at: '2026-11-07T21:24:34Z'
+                retrievedAt: '2026-11-07T21:24:34Z'
+                verifiedAt: '2026-11-07T21:24:34Z'
+                contentHash: e9ce771eb54eda062c8f28fc20492fe17a2cc680f1079b1cec3a0d84aaef8e95
+                evidenceRef: data/evidence/blobs/e9ce771eb54eda062c8f28fc20492fe17a2cc680f1079b1cec3a0d84aaef8e95.body
+                rawExcerpt: 'Submission deadline November 16, 2026; extended submission deadline 16 November 2026'
                 verifiedFields:
                   - date
                   - kind
@@ -182,11 +205,29 @@ conferences:
             precision: date-only
         mode: merge-slots
         remove:
+          # upstream (ccfddl) は延長後の 2026-11-17T11:59:59Z（=16 Nov AoE）に更新済み。
+          # 旧値の残り（11-01 の抽象・論文スロット）も Wert ごと外す。
           - kind: paper
             label: Paper submission
             round: 1
             values:
+              - '2026-11-17T11:59:59.000Z'
               - '2026-11-02T11:59:00.000Z'
+              - '2026-11-01'
+          - kind: paper
+            label: Submission deadline
+            round: 1
+            values:
+              - '2026-11-01'
+          - kind: abstract
+            label: Abstract registration deadline
+            round: 1
+            values:
+              - '2026-11-01'
+          - kind: abstract
+            label: Abstract registration
+            round: 1
+            values:
               - '2026-11-01'
 
   wsdm:

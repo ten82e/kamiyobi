@@ -167,7 +167,8 @@ describe("captured hosted updater failure", () => {
         ?.at_utc,
     ).toBe("2026-11-26T11:59:00.000Z");
     const evo = report.deadline_refs!.find((ref) => ref.deadline_id.startsWith("evomusart-2027|"))!;
-    expect(evo.local_date).toBe("2026-11-01");
+    // 公式 CFP が両締切を 11-16 へ延長（2026-11-08 実測。overrides.yaml の訂正）。指定時刻は無し。
+    expect(evo.local_date).toBe("2026-11-16");
     expect(evo.at_utc).toBeUndefined();
     const changed = structuredClone(previous);
     changed.deadline_refs!.find(

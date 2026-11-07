@@ -114,7 +114,6 @@
       "bytes": 9789,
       "content_type": "application/octet-stream",
       "references": [
-        "data/overrides.yaml",
         "data/snapshot.json"
       ]
     },
@@ -445,6 +444,13 @@
       "references": [
         "data/evidence/reviews/recovered-captures-20261004.json",
         "data/snapshot.json"
+      ]
+    },
+    "e9ce771eb54eda062c8f28fc20492fe17a2cc680f1079b1cec3a0d84aaef8e95": {
+      "bytes": 9800,
+      "content_type": "application/octet-stream",
+      "references": [
+        "data/overrides.yaml"
       ]
     },
     "efb31692c1c015580f9a41fac2a74666c580e3e7d2701f1d9021934e49ae7714": {
