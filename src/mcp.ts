@@ -1340,23 +1340,23 @@ export function structuredDeadline(r: Row, now: number): Record<string, unknown>
     workshop: isWorkshopFieldsMCP(r.tags, r.conf.title, r.conf.full_name),
     rank: r.conf.rank ?? null,
     /* 配付のカレンダーの UID。**同じ締切を、AI がカレンダーの予定として名指せる**ように
-     * する（2026-10-17 まで、行からカレンダーの予定へ渡る手掛かりが無かった）。 */
+     * する（2026-10-17 まで、行からカレンダーの予定へ渡る手掛かりが無かった）。
+     * 正本は**公開の側**（品書・公開 data.json – 配付カレンダーと同じ採番）。収録の
+     * snapshot が持つ UID は、その snapshot を建てた時の時計で採番された物なので、
+     * 公開されているカレンダーの採番とずれる（実測 2026-11-08: VLDB 2027 の同じ締切に
+     * snapshot は `…-4`、公開の側は `…-7`）。公開の側に条目が無い時（手元で public/ を
+     * 建てて居ない時）だけ、snapshot の値を残す。 */
     ...(() => {
+      const 公開の鍵 = `${r.conf.key}\u0000${icsDeadlineUidKey(
+        r.ed.id,
+        r.kind,
+        r.dl.round,
+        String(r.dl.label ?? ""),
+        icsUidDayOf((r.dl as { utc?: unknown }).utc, (r.dl as { local_date?: unknown }).local_date),
+      )}`;
+      const 公開のUID = 品書のUID().get(公開の鍵);
       const uid =
-        typeof r.dl.ics_uid === "string" && r.dl.ics_uid
-          ? r.dl.ics_uid
-          : 品書のUID().get(
-              `${r.conf.key}\u0000${icsDeadlineUidKey(
-                r.ed.id,
-                r.kind,
-                r.dl.round,
-                String(r.dl.label ?? ""),
-                icsUidDayOf(
-                  (r.dl as { utc?: unknown }).utc,
-                  (r.dl as { local_date?: unknown }).local_date,
-                ),
-              )}`,
-            );
+        公開のUID ?? (typeof r.dl.ics_uid === "string" && r.dl.ics_uid ? r.dl.ics_uid : "");
       return uid ? { ics_uid: uid } : {};
     })(),
     /* 畫面の `index.html?row=` にそのまま渡せる値（人が開くと、その行の詳細が開く）。
