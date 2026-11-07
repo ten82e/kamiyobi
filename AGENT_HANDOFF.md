@@ -1,6 +1,54 @@
 # kamiyobi agent handoff
 
-## 現在地
+## 現在地（2026-11-08・goal ラウンド 1-15 継続中）
+
+本体ブランチは `main`。`origin/main` より 80 コミット以上先行しており、**push は未承認**
+（毎回の報告で指示を仰いでいる。push が承認されると日次 `update-data` が再開し、
+2026-10-04 で止まっていた公開データが更新に向かう）。
+
+この期間に直した主なもの:
+
+- **update-data が 2026-10-05 から毎晩失敗**していた原因は、上流変更で新しく出た警告
+  `chiir`（分野語彙の不一致）が未レビューの発見として `validate:data` のゲートで弾かれて
+  いた事。`data/validator-findings.json` に VF-0127 としてレビュー記録し、ゲートを通した。
+  `--write-findings` は未実装の口だった（ワークフローから改名・スクリプトは案内付きで拒否）。
+- 収録データの更新（online build・discover・reverify を手順どおり実行）と、
+  ARC 2027（25 Oct → 延長最終 27 Nov）・EvoMUSART 2027（1 Nov → 延長 16 Nov）の
+  公式ページによる締切訂正（`data/overrides.yaml`、証拠は `data/evidence/blobs` の CAS）。
+- カレンダー UID の一貫性を 3 層で直した: MCP は公開側を採番の正本に、snapshot は
+  時計依存の `ics_uid` を載せない、build は入力の古い採番を配付カレンダーの採番で置き換える。
+- 条件付き取得の 304 応答で reverify 全体が落ちる欠陥（`src/capture.ts` の
+  `new Response` に 204/205/304 は本文を渡せない）を修復。
+- `public/` を直接読む検査に `publicClockGuard()`（別時計のビルドを作り直しコマンド付きで
+  落とす）を全 12 検査ファイルに設置。MCP stdio に CLI と同じ `--now` を通した。
+- ブロックされた update-data の実行サマリーに新しい警告と発見の記録方法を出すようにした。
+
+近い順の未決 resolution（値が頁から見えなくなった型）を公式ページで実地確認した結果:
+ARC・EvoMUSART は訂正済み。WSDM 2027（11-17 AoE）・DASFAA 2027（11-25 AoE）・
+IPSJ 特集号 3 件（11-27・12-01・12-04）は**収録どおりで正しい**（manual-required は
+parser の再抽出限界で、保守的な状態として正しい）。securecomm・ecir・network-flows・
+eudat は頁に値が無く根拠を得られないため触らない（次回の自動再確認に任せる）。
+
+残っている未解決の品質事項: 意味検索の 10 件（SPEC §意味検索の比較に記録済み、
+モデルや閾値を締めない方針）と、上記の未決 resolution、push の承認待ち。加えて
+2026-11-08 に判明した設計上の制約: **`venue_scopes` の topics 追加は推薦のゲート評価
+（full-pool）を劣化させる**（並列計算系 17 会議に一括追加したところ、加えた会議の埋め込みが
+変わり梯子で無関係な Case の上位5件が崩れた → 全量撤去して 9/9 回復。SPEC §募集分野に
+注意書き済み）。topics を復活させる場合は語彙一致専用の索引にする設計で、評価を通すこと。
+また recovery の変異相（mcp-recovery-mutations）は pre-round-1 の時点で失敗する既知の
+問題（fault 時に準備の順序Guard で落ち、tests が skipped になる – スクリプトの想定と
+現行の recovery 挙動がずれている）。これはデータや本作業とは無関係の既存課題。
+モデルや閾値を締めない方針）、上記の未決 resolution、push の承認待ち。
+検証の手順と注意は `AGENTS.md` の検証の節（`publicClockGuard` を含む）。
+
+---
+
+以下は 2026-10 月までの引き継ぎ記録（当時はブランチ `fix/site-ja-usability` で作業していた
+別の文脈。ブランチ構成・worktree・PR の記載は**歴史情報**であり、現在の `main` の状態は
+この上の節が正）。参照価値の高い検証手順は `scripts/agent-handoff/` と
+`docs/agent-handoff/verification/` に残る。
+
+## 現在地（2026-10-25 時点・歴史）
 
 本体ブランチは `fix/site-ja-usability`。upstream未設定、このUIブランチは未push。この引き継ぎ段階でbranch/worktree/cloneは新設していない。既存資産は削除していない。実HEADは `git rev-parse HEAD` を確認する。
 
@@ -120,44 +168,3 @@ python3 scripts/agent-handoff/browser-main-integration.py
 最新generated-update artifactをダウンロードし、元のECIR失敗を再現、本体の確認済みoverride/identityを適用するとsource診断を保持してHealth gate違反0となった。再現helperはrecheck-hosted-updater.mjs。fetch/discovery/reverify/公開全体の再実行とは区別する。既存hosted/canary 16テスト・型・lint・今日のoffline build・data/healthが成功。歴史1,673開催回と保護差分を保持。商品ソースへの追加修正は不要と判断した。
 
 停止していたlocalhost8771の本体previewと、専用profileのheadless Chrome9240を再開。研究者の主要16操作と旧URLの2ブラウザスイートが成功。Mac GUIは操作せず、追加agy/dshレビューも行っていない。詳細はverification/resume-latest.json。残作業は、明確な承認後の公開反映と公開・次回scheduleの確認。承認待ち状態を解除するための再試行は行わない。
-
-## 2026-11-08 の状態（goal「サービスのクオリティと魅力を果てしなく高めて」ラウンド 1-8 のまとめ）
-
-本体ブランチは `main`。`origin/main` より 80 コミット以上先行しており、**push は未承認**
-（毎回の報告で指示を仰いでいる。push が承認されると日次 `update-data` が再開し、
-2026-10-04 で止まっていた公開データが更新に向かう）。
-
-この期間に直した主なもの:
-
-- **update-data が 2026-10-05 から毎晩失敗**していた原因は、上流変更で新しく出た警告
-  `chiir`（分野語彙の不一致）が未レビューの発見として `validate:data` のゲートで弾かれて
-  いた事。`data/validator-findings.json` に VF-0127 としてレビュー記録し、ゲートを通した。
-  `--write-findings` は未実装の口だった（ワークフローから改名・スクリプトは案内付きで拒否）。
-- 収録データの更新（online build・discover・reverify を手順どおり実行）と、
-  ARC 2027（25 Oct → 延長最終 27 Nov）・EvoMUSART 2027（1 Nov → 延長 16 Nov）の
-  公式ページによる締切訂正（`data/overrides.yaml`、証拠は `data/evidence/blobs` の CAS）。
-- カレンダー UID の一貫性を 3 層で直した: MCP は公開側を採番の正本に、snapshot は
-  時計依存の `ics_uid` を載せない、build は入力の古い採番を配付カレンダーの採番で置き換える。
-- 条件付き取得の 304 応答で reverify 全体が落ちる欠陥（`src/capture.ts` の
-  `new Response` に 204/205/304 は本文を渡せない）を修復。
-- `public/` を直接読む検査に `publicClockGuard()`（別時計のビルドを作り直しコマンド付きで
-  落とす）を全 12 検査ファイルに設置。MCP stdio に CLI と同じ `--now` を通した。
-- ブロックされた update-data の実行サマリーに新しい警告と発見の記録方法を出すようにした。
-
-近い順の未決 resolution（値が頁から見えなくなった型）を公式ページで実地確認した結果:
-ARC・EvoMUSART は訂正済み。WSDM 2027（11-17 AoE）・DASFAA 2027（11-25 AoE）・
-IPSJ 特集号 3 件（11-27・12-01・12-04）は**収録どおりで正しい**（manual-required は
-parser の再抽出限界で、保守的な状態として正しい）。securecomm・ecir・network-flows・
-eudat は頁に値が無く根拠を得られないため触らない（次回の自動再確認に任せる）。
-
-残っている未解決の品質事項: 意味検索の 10 件（SPEC §意味検索の比較に記録済み、
-モデルや閾値を締めない方針）と、上記の未決 resolution、push の承認待ち。加えて
-2026-11-08 に判明した設計上の制約: **`venue_scopes` の topics 追加は推薦のゲート評価
-（full-pool）を劣化させる**（並列計算系 17 会議に一括追加したところ、加えた会議の埋め込みが
-変わり梯子で無関係な Case の上位5件が崩れた → 全量撤去して 9/9 回復。SPEC §募集分野に
-注意書き済み）。topics を復活させる場合は語彙一致専用の索引にする設計で、評価を通すこと。
-また recovery の変異相（mcp-recovery-mutations）は pre-round-1 の時点で失敗する既知の
-問題（fault 時に準備の順序Guard で落ち、tests が skipped になる – スクリプトの想定と
-現行の recovery 挙動がずれている）。これはデータや本作業とは無関係の既存課題。
-モデルや閾値を締めない方針）、上記の未決 resolution、push の承認待ち。
-検証の手順と注意は `AGENTS.md` の検証の節（`publicClockGuard` を含む）。
