@@ -61,6 +61,7 @@
       "bytes": 5479,
       "content_type": "application/octet-stream",
       "references": [
+        "data/snapshot.json",
         "data/verification-ledger.json"
       ]
     },
@@ -90,6 +91,7 @@
       "content_type": "application/octet-stream",
       "references": [
         "data/reverification-resolutions.json",
+        "data/snapshot.json",
         "data/verification-ledger.json"
       ]
     },
@@ -114,7 +116,7 @@
       "bytes": 9789,
       "content_type": "application/octet-stream",
       "references": [
-        "data/snapshot.json"
+        "data/overrides.yaml"
       ]
     },
     "2981c7fce2be3dd37b2155a3f694777840792198b91bf12ceeca5b2ef30ffac1": {
@@ -203,6 +205,7 @@
       "references": [
         "data/overrides.yaml",
         "data/reverification-resolutions.json",
+        "data/snapshot.json",
         "data/verification-ledger.json"
       ]
     },
@@ -263,13 +266,6 @@
         "data/promotions/2026-08-31-sesame-jcdl-2026/resolutions.json",
         "data/snapshot.json",
         "data/source-snapshots/local.json"
-      ]
-    },
-    "7ed48896bebaa2aa8577ef323538500f2b9bba99db872f8c0469decc303f5c1b": {
-      "bytes": 326007,
-      "content_type": "application/octet-stream",
-      "references": [
-        "data/snapshot.json"
       ]
     },
     "8646e62b7b863709f586c7d12b76ce187fcdf1845049828bc421da61e6c389c7": {
@@ -366,6 +362,7 @@
       "bytes": 325416,
       "content_type": "application/octet-stream",
       "references": [
+        "data/snapshot.json",
         "data/verification-ledger.json"
       ]
     },
@@ -405,6 +402,7 @@
       "content_type": "application/octet-stream",
       "references": [
         "data/reverification-resolutions.json",
+        "data/snapshot.json",
         "data/verification-ledger.json"
       ]
     },
@@ -422,6 +420,7 @@
       "content_type": "application/octet-stream",
       "references": [
         "data/reverification-resolutions.json",
+        "data/snapshot.json",
         "data/verification-ledger.json"
       ]
     },
@@ -450,7 +449,8 @@
       "bytes": 9800,
       "content_type": "application/octet-stream",
       "references": [
-        "data/overrides.yaml"
+        "data/overrides.yaml",
+        "data/snapshot.json"
       ]
     },
     "efb31692c1c015580f9a41fac2a74666c580e3e7d2701f1d9021934e49ae7714": {
@@ -462,7 +462,6 @@
         "data/promotions/2026-08-31-arc-2027/observations.jsonl",
         "data/promotions/2026-08-31-arc-2027/resolutions.json",
         "data/reverification-resolutions.json",
-        "data/snapshot.json",
         "data/source-snapshots/local.json",
         "data/verification-ledger.json"
       ]
@@ -472,6 +471,7 @@
       "content_type": "application/octet-stream",
       "references": [
         "data/reverification-resolutions.json",
+        "data/snapshot.json",
         "data/verification-ledger.json"
       ]
     },
