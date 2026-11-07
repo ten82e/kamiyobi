@@ -89,7 +89,7 @@ describe("其它の形は動かして居ない（第 352 回・第 484 回・第
   });
   it("第 470 回〜第 485 回の実測はこの回で変へて居ない", () => {
     expect(列("来月 末").size).toBe(178);
-    expect(列("週 末").size).toBe(146);
+    expect(列("週 末").size).toBe(145);
     expect(列("来週 初旬").size).toBe(2);
     expect(列("明日以降").size).toBe(423);
     expect(列("来 上旬").size).toBe(68);

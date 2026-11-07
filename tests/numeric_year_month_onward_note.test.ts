@@ -55,7 +55,7 @@ describe("数字の年＋暦月＋それより後には但し書が付く（第 
     expect(列("来週中旬").size).toBe(43);
     expect(列("年末上旬").size).toBe(40);
     expect(列("来月 末日").size).toBe(178);
-    expect(列("週 末").size).toBe(146);
+    expect(列("週 末").size).toBe(145);
     expect(列("ml から").size).toBe(0);
     expect(列("締切時刻").size).toBe(181);
     expect(列("半 年後").size).toBe(2);

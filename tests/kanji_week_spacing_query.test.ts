@@ -40,7 +40,7 @@ describe("漢数字の週を離つて打つ形が詰め形と同じ行に出る�
     expect(列("一 週間後").size).toBe(13);
     expect(列("三 週間以内").size).toBe(90);
     expect(列("十 週間後").size).toBe(4);
-    expect(列("十一 週間後").size).toBe(2);
+    expect(列("十一 週間後").size).toBe(1);
     expect(列("一 週間後 の 締切").size).toBe(13);
     /* 二 週間前はその方が過去の日にち（14 日前）なのでこの品書に行が在らん – 0 件の対称。*/
     expect(列("二 週間前").size).toBe(0);
@@ -74,7 +74,7 @@ describe("他の単位に空格を広げない決まり（第 459 回・第 466 
   it("第 470 回〜第 480 回の実測はこの回で変へて居ない", () => {
     expect(列("締切時刻").size).toBe(181);
     expect(列("来月 終わり").size).toBe(178);
-    expect(列("週 末").size).toBe(146);
+    expect(列("週 末").size).toBe(145);
     expect(列("ml から").size).toBe(0);
     expect(列("明日以降").size).toBe(423);
     expect(列("来 上旬").size).toBe(68);

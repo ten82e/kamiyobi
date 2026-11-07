@@ -98,7 +98,7 @@ describe("その方の決まりで既に扱はれている語は割らない（�
     expect(列("締切").size).toBe(375);
   });
   it("第 470 回〜第 478 回の実測はこの回で変へて居ない", () => {
-    expect(列("週 末").size).toBe(146);
+    expect(列("週 末").size).toBe(145);
     expect(列("明日以降").size).toBe(423);
     expect(列("来月 終わり").size).toBe(178);
     expect(列("1 年後から").size).toBe(1);

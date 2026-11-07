@@ -101,7 +101,7 @@ describe("寄せない形の守り（第 355 回・第 453 回・第 463 回）"
   it("詰め形其身は動かして居ない（他の頁で張る実測の値は其侭）", () => {
     expect(列("明日以降").size).toBe(423);
     expect(列("来月 上旬 まで").size).toBe(180);
-    expect(列("週 末").size).toBe(146);
+    expect(列("週 末").size).toBe(145);
     expect(列("8月から").size).toBe(425);
     expect(案内("17時 以降")).toContain("17時 以降 = 17:00〜23:59");
   });

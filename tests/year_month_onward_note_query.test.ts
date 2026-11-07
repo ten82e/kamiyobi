@@ -93,7 +93,7 @@ describe("その他の形は動かして居ない（第 352 回・第 369 回・
     expect(列("来年末").size).toBe(21);
     expect(列("今年末").size).toBe(84);
     expect(列("来月 末").size).toBe(178);
-    expect(列("週 末").size).toBe(146);
+    expect(列("週 末").size).toBe(145);
     expect(列("明日以降").size).toBe(423);
     expect(列("来 上旬").size).toBe(68);
     expect(列("来月終わり").size).toBe(178);

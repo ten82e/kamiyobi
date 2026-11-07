@@ -36,6 +36,47 @@ aliases:
 drop: []
 
 conferences:
+  # ARC 2027 の論文締切は公式ページが「(extended, final) 27 Nov 2026」と延長した
+  # （旧 25 Oct → 9 Nov → 27 Nov。頁自らが旧値を「was」として出す）。
+  # 収録（promotion batch 2026-08-31-arc-2027）は初回の 25 Oct のままで、
+  # reverify の解決（2026-12-07 観測）も頁の更新に追ひ抜かれた。今日の取得本文を
+  # 証拠に公式の確定値へ訂正する（SPEC §3.6: 公開データを自動上書きしない）。2026-11-08。
+  arc:
+    editions:
+      arc-2027:
+        year: 2027
+        deadlines:
+          - kind: paper
+            label: Paper submission deadline
+            date: '2026-11-27'
+            round: 1
+            evidence:
+              - source_name: arc official CFP
+                source_url: https://amor.cms.hu-berlin.de/~hubnermi/index.html
+                sourceClass: official-cfp
+                observed_at: '2026-11-07T20:54:10Z'
+                retrievedAt: '2026-11-07T20:54:10Z'
+                verifiedAt: '2026-11-07T20:54:10Z'
+                sourceRevision: '"3f40-65f8a1207fec4"'
+                contentHash: 671cb88b332167c09eded89e326a201a5ac0da4bb480256f70ed5a408da86c97
+                evidenceRef: data/evidence/blobs/671cb88b332167c09eded89e326a201a5ac0da4bb480256f70ed5a408da86c97.body
+                rawExcerpt: '27 Nov 2026 (was: 25 Oct 2026, 9 Nov 2026) Submission deadline (extended, final)'
+                verifiedFields:
+                  - date
+                  - kind
+                  - round
+                confidence: official
+            precision: date-only
+            superseded_deadlines:
+              - value: '2026-10-25'
+                precision: date-only
+                source: https://amor.cms.hu-berlin.de/~hubnermi/index.html
+                evidenceRef: data/evidence/blobs/671cb88b332167c09eded89e326a201a5ac0da4bb480256f70ed5a408da86c97.body
+                status: superseded
+                supersededBy: arc|arc-2027|paper|1|
+                reason: deadline-extended
+                supersededAt: '2026-11-07T20:54:10Z'
+
   iscas:
     editions:
       iscas27:

@@ -88,7 +88,7 @@ describe("同じ語を二つの群に持つ誤りを直し、てびきの群に�
     expect(件("再来週内")).toBe(18);
     expect(件("年末中")).toBe(84);
     expect(件("来月 末日")).toBe(178);
-    expect(件("週 末")).toBe(146);
+    expect(件("週 末")).toBe(145);
     expect(件("締切時刻")).toBe(181);
     expect(件("ml から")).toBe(0);
   });

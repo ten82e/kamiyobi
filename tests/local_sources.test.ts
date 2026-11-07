@@ -126,7 +126,9 @@ describe("local source data integrity", () => {
     // 185 -> 186: EvoMUSART 2027の公式CFPによる概要登録（2026-11-01、時刻未確認）。
     // 186 -> 192: SecureCommの2回・IPSJ特集号3件とJIPの同じ募集を、公式の日付のみで訂正。
     // 192 -> 194: incoming official ECIR notification and EvoMUSART paper corrections.
-    expect(rows.filter((row) => row.precision === "date-only")).toHaveLength(194);
+    // 194 -> 195: ARC 2027 の論文締切延長（25 Oct -> 27 Nov）で旧値が superseded として
+    // 残る（data/overrides.yaml の訂正 – 公式ページは旧値を "was" として併記する）。
+    expect(rows.filter((row) => row.precision === "date-only")).toHaveLength(195);
 
     for (const row of rows) {
       if (row.precision === "date-only") {

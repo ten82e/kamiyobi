@@ -141,7 +141,7 @@ describe("寄せない形の守り（第 453 回・第 470 回）", () => {
   });
   it("その他の群 – 月の並べ・週末日・詰め形を踏んぢゃらない", () => {
     expect(列("8 月 と 9 月").size).toBe(284);
-    expect(列("週末").size).toBe(146);
+    expect(列("週末").size).toBe(145);
     expect(列("9月の下旬").size).toBe(59);
     expect(列("来月の下旬").size).toBe(59);
     expect(列("来月 の 下旬").size).toBe(59);

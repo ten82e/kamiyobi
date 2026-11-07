@@ -95,7 +95,7 @@ describe("行の『ランク』を逆の語順で繋いだ形が正準と同じ�
     expect(集("年末中").size).toBe(84);
     expect(集("年初1月").size).toBe(23);
     expect(集("来月 末日").size).toBe(178);
-    expect(集("週 末").size).toBe(146);
+    expect(集("週 末").size).toBe(145);
     expect(集("締切時刻").size).toBe(181);
     expect(集("ml から").size).toBe(0);
     expect(集("オンラインの締切").size).toBe(20);
