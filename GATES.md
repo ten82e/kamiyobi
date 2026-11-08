@@ -31,6 +31,30 @@ npm run update
 2. `npm run update` — 意味検査 + health gate
 3. 全て緑なら main へ merge。CI が再検査し、`deploy.yml` が Pages を配信する
 
+## G4 — モデル評価（nightly.yml と手動。実モデルを `.cache/embedding-models` に準備してから）
+```sh
+npm run test:full-pool                      # ゲート評価。品質基準（Top-5・正解）は変更しない
+npm run test:full-pool-mutations            # 評価の感応度検査（3 欠陥を検出できる事）
+npm run test:mcp-interrupted-mutations      # interrupted recovery の変異検査
+npm run test:mcp-recovery-mutations         # same-session recovery の変異検査
+npm run test:llms-count-mutations           # llms の件数検査
+npm run test:real-papers                    # 実論文評価
+npm run test:recommendation-mutations       # 推薦の変異検査
+```
+
+2026-11-08 実測: full-pool 9/9・full-pool-mutations 3/3 検出・interrupted 2/2 検出・
+llms-count・mcp-recovery の baseline（49/0）は緑。
+**既知の赤**（品質基準は緩めない）:
+- `test:real-papers` と `test:recommendation-mutations` の baseline は、SPEC
+  §意味検索の追加比較に記録した未解決 2 項目（日本語の題名と概要の MRR 下限、
+  英語の追加確認論文の題名 MRR の改善条件）で落ちる。
+- `test:mcp-recovery-mutations` の変異相は、fault 注入時に準備の順序 Guard
+  （"English model must be available before Japanese preparation"）で tests が
+  skipped に成る。baseline は緑なので fault 検出の公示だけが効いていない既知の問題
+  （2026-10 月までの記録でも同様）。データや本文書の変更とは無関係。
+- `venue_scopes` の topics 追加はゲート評価を劣化させる（SPEC §募集分野の説明を人とAIで
+  確認する の注意書き）。topics を復活させるなら評価を通してから。
+
 ## 注意
 - `publish.json` の `workflow_run_id` はローカル実行では `null`。
 - health gate の baseline は位置引数で明示する。`npm run update` は baseline なしで検証する。
