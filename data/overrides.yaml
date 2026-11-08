@@ -2384,7 +2384,7 @@ conferences:
           - {kind: notification, label: 'Notification', date: '2027-05-17 23:59:59', tz: AoE}
           - {kind: camera_ready, label: 'Final version', date: '2027-05-31 23:59:59', tz: AoE}
 
-  # 根拠: https://mathai.club/ (2026-08-12 取得)
+  # 根拠: https://mathai.club/ (2026-11-08 再取得 — 日程延長)
   #   「Important Dates: All deadlines are 23:59 London time, except where noted
   #   Anywhere on Earth (AoE). Oct 15, 2026 Submission opens (AoE) / Dec 1, 2026
   #   Abstract submission deadline / Dec 15, 2026 Full paper submission deadline /
@@ -2404,11 +2404,9 @@ conferences:
         event_start: '2027-03-15'
         event_end: '2027-03-17'
         deadlines:
-          - {kind: abstract, label: 'Abstract submission deadline', date: '2026-12-01 23:59:59', tz: Europe/London}
-          - {kind: paper, label: 'Full paper submission deadline', date: '2026-12-15 23:59:59', tz: Europe/London}
-          - {kind: notification, label: 'Decision notification', date: '2027-02-27 23:59:59', tz: Europe/London}
-          - {kind: camera_ready, label: 'Camera-ready deadline', date: '2027-03-01 23:59:59', tz: Europe/London}
-
+          - {kind: abstract, label: 'Abstract registration deadline', date: '2026-12-20 23:59:59', tz: Europe/London}
+          - {kind: paper, label: 'Full paper submission deadline', date: '2027-01-15 23:59:59', tz: Europe/London}
+          - {kind: notification, label: 'Decision notification', date: '2027-03-06 23:59:59', tz: Europe/London}
   # --- sibgrapi 2026 main track 現行値（上流 aideadlines が旧値 May 30 のまま） ---
   # 根拠: https://sibgrapi.sbc.org.br/2026/call-for-papers/ 「All deadlines are 23:59 PDT」明示。
   #   Main Track: Submission ~~May 30~~ Jun 17 (Hard deadline) / Reviews Jul 22 /
