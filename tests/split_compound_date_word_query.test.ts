@@ -43,7 +43,7 @@ describe("片段で離つた複合語が繋いだ形と同じ行を出す（第 
     expect(列("今 月末").size).toBe(118);
     expect(列("来 月末").size).toBe(178);
     expect(列("先 月末").size).toBe(11);
-    expect(列("再来 月末").size).toBe(96);
+    expect(列("再来 月末").size).toBe(97);
     expect(列("今 月中").size).toBe(118);
     expect(列("来 月中").size).toBe(178);
     expect(列("今 年度").size).toBe(436);

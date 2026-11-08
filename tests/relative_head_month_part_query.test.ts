@@ -52,7 +52,7 @@ describe("相対の語に月の塊を続ける形がその月の塊として解�
     expect(列("先 中旬").size).toBe(6);
     expect(列("先 半ば").size).toBe(6);
     expect(列("昨 上旬").size).toBe(0);
-    expect(列("再来 中旬").size).toBe(36);
+    expect(列("再来 中旬").size).toBe(37);
     expect(列("翌 上旬").size).toBe(68);
     expect(列("来 初旬").size).toBe(68);
     expect(列("来 半ば").size).toBe(57);

@@ -263,6 +263,45 @@ conferences:
             label: Camera-ready
             round: 1
 
+  mid4cc:
+    editions:
+      mid4cc26:
+        year: 2026
+        # 公式ページの Paper Submission Deadline は「October 12, 2026 (extended firm)」
+        # （2026-11-08 取得の本文が証拠）。収録の comment「Paper Submission (extended)」
+        # による 2026-11-01 AoE は過去の延長値で、公式は Oct 12 に戻して firm と明記。
+        # camera_ready (Nov 15 AoE) は一致しているため訂正しない。
+        deadlines:
+          - kind: paper
+            label: Paper submission (extended firm)
+            date: '2026-10-12 23:59:59'
+            tz: AoE
+            round: 1
+            evidence:
+              - source_name: Mid4CC 2026 official site
+                source_url: https://mid4cc.netsons.org/2026/index.html
+                sourceClass: official-cfp
+                observed_at: '2026-11-08T07:15:00Z'
+                retrievedAt: '2026-11-08T07:15:00Z'
+                verifiedAt: '2026-11-08T07:15:00Z'
+                contentHash: 5fa4c7f357e3384ce0038aa179fd628f67b039eaf166fa5c4f4a0e6f695f8d9f
+                evidenceRef: data/evidence/blobs/5fa4c7f357e3384ce0038aa179fd628f67b039eaf166fa5c4f4a0e6f695f8d9f.body
+                rawExcerpt: 'Paper Submission Deadline: October 12, 2026 (extended firm)'
+                verifiedFields:
+                  - date
+                  - kind
+                  - round
+                  - time
+                  - timezone
+                confidence: official
+            precision: exact
+        mode: merge-slots
+        remove:
+          # curated の旧値 (Nov 1 AoE) と upstream の conflict を外す。
+          - kind: paper
+            label: paper
+            round: 1
+
   wsdm:
     editions:
       wsdm27:
