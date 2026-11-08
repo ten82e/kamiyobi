@@ -49,7 +49,7 @@ conferences:
           - kind: paper
             label: Paper submission deadline
             date: '2026-11-27'
-            round: 1
+            round: 2
             evidence:
               - source_name: arc official CFP
                 source_url: https://amor.cms.hu-berlin.de/~hubnermi/index.html
@@ -2217,6 +2217,24 @@ conferences:
         date_text: April 12-17, 2027
         event_start: '2027-04-12'
         event_end: '2027-04-17'
+        # 公式の「Main submission deadline (ARR)」は Oct 12 (ARR 経由)。収録の 12-24 は
+        # 「NAACL commitment deadline」(Dec 23 AoE) の AoE 換算 — label を公式どおりに訂正。
+        mode: merge-slots
+        deadlines:
+          - kind: paper
+            label: NAACL commitment deadline
+            date: '2026-12-23 23:59:59'
+            tz: AoE
+            round: 1
+        remove:
+          # 同一スロット鍵の行が複数ある為、remove 条目を 2 つ置く (最初の一致のみ除去)
+          - kind: paper
+            label: Paper submission
+          - kind: paper
+            label: Paper submission
+          - kind: paper
+            round: 2
+            label: Paper submission
   # 根拠: COLING 2027 公式 (Macau, May 9-14, 2027)（締切は上流と一致のため変更なし）
 
   coling:

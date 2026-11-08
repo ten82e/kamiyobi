@@ -201,7 +201,7 @@ describe("寄せない形の守り（第 469 回）", () => {
     expect(列("9 月 第2週").size).toBe(30);
     expect(列("9月第2週").size).toBe(30);
     expect(列("第 6 週").size).toBe(0);
-    expect(列("第 2 ラウンド").size).toBe(16);
+    expect(列("第 2 ラウンド").size).toBe(17);
     expect(案内("第 2 週")).toContain("第2週は月の 8 日から 14 日までです");
   });
 });
