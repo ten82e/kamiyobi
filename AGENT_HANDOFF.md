@@ -68,6 +68,9 @@ eudat は頁に値が無く根拠を得られないため触らない（次回�
   （概要 Dec 4 AoE ✓）、PODS 2027（公式ページの 12-20 はチュートリアル提案のみ。論文締切は
   一次ソースが見つからず保留）、WoWMoM/EDBT-ICDT/SECON/HPC-Asia メイン（JS 描画・bot 対策
   で取得不可 — HPC-Asia は提出 9-27 への延長を確認して訂正済み）。
+- **2026-11-09 追加確認(12)**: CHI 2027（提出 9-10・review 11-5・再投稿 12-3・通知 12-17
+  AoE ✓ — browser 取得の Important Dates で確認）、ECIR 2027（通知 2 行は同一日の別表現:
+  date-only 公式 + exact AoE 換算。誤りではない）。
 - **2026-11-09 追加確認(11)**: USENIX Security 2027（Cycle 2 登録 1-19・提出 1-26 AoE ✓）、
   SIGMETRICS 2027（fall 通知 12-9 AoE・winter 提出 1-11 AoE ✓ — data-deadline 属性で確認）、
   ECIR 2027（通知 12-7 ✓）、SPAA 2027（JS 描画で日付部分が取得できず保留）。
