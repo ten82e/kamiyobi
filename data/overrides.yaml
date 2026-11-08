@@ -230,6 +230,39 @@ conferences:
             values:
               - '2026-11-01'
 
+  lascas:
+    editions:
+      lascas-2027:
+        year: 2027
+        # 公式 CFP の Camera-ready が「November 9, 2026」→「November 16, 2026」へ
+        # 変更（2026-11-08 取得の本文が証拠）。収録の 11-09 は旧値。
+        deadlines:
+          - kind: camera_ready
+            label: Camera-ready
+            date: '2026-11-16'
+            round: 1
+            evidence:
+              - source_name: LASCAS 2027 official CFP
+                source_url: https://attend.ieee.org/lascas-2027/call-for-papers/
+                sourceClass: official-cfp
+                observed_at: '2026-11-08T06:47:00Z'
+                retrievedAt: '2026-11-08T06:47:00Z'
+                verifiedAt: '2026-11-08T06:47:00Z'
+                contentHash: 265a83c166a62e3f1853e101980f6e5ca91349e314d34ba13a1fb6b9f0eb136a
+                evidenceRef: data/evidence/blobs/265a83c166a62e3f1853e101980f6e5ca91349e314d34ba13a1fb6b9f0eb136a.body
+                rawExcerpt: 'Camera-ready: November 16, 2026'
+                verifiedFields:
+                  - date
+                  - kind
+                  - round
+                confidence: official
+            precision: date-only
+        mode: merge-slots
+        remove:
+          - kind: camera_ready
+            label: Camera-ready
+            round: 1
+
   wsdm:
     editions:
       wsdm27:

@@ -130,7 +130,7 @@ describe("local source data integrity", () => {
     // 残る（data/overrides.yaml の訂正 – 公式ページは旧値を "was" として併記する）。
     // 195 -> 196: EvoMUSART 2027 の延長（1 Nov -> 16 Nov）で旧値 2 件が superseded に
     // なり、abstract の新値が date-only で加わる。
-    expect(rows.filter((row) => row.precision === "date-only")).toHaveLength(196);
+    expect(rows.filter((row) => row.precision === "date-only")).toHaveLength(197);
 
     for (const row of rows) {
       if (row.precision === "date-only") {
