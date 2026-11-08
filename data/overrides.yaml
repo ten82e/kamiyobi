@@ -340,6 +340,24 @@ conferences:
             label: Winter paper submission
             round: 1
 
+  bis:
+    editions:
+      bis27:
+        year: 2027
+        # 公式ページに tz 表記なし (2026-11-09 取得)。「Submission Deadline: January 10, 2027」。
+        # tz 無表記の既定は AoE。収録の 01-12T11:59:59Z (Jan 11 AoE 解釈) は 1 日遅い。
+        deadlines:
+          - kind: paper
+            label: Paper submission
+            date: '2027-01-10 23:59:59'
+            tz: AoE
+            round: 1
+        mode: merge-slots
+        remove:
+          - kind: paper
+            label: Paper submission
+            round: 1
+
   wsdm:
     editions:
       wsdm27:
