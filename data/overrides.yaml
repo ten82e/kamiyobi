@@ -2327,7 +2327,7 @@ conferences:
           - {kind: abstract, label: 'Abstract and title (full paper and Pictorials)', date: '2027-01-11 23:59:59', tz: AoE}
           - {kind: paper, label: 'Full paper and Pictorials submission', date: '2027-01-18 23:59:59', tz: AoE}
           - {kind: notification, label: 'Full papers, Pictorials, Doctoral Consortium notifications', date: '2027-03-19 23:59:59', tz: AoE}
-          - {kind: camera_ready, label: 'Full papers, Pictorials, Workshops, Interactivities, DC camera ready', date: '2027-04-28 23:59:59', tz: AoE}
+          - {kind: camera_ready, label: 'Full papers, Pictorials, Workshops, Interactivities, DC camera ready', date: '2027-04-16 23:59:59', tz: AoE, evidence: {source_url: https://dis.acm.org/2027/contributing/, sourceClass: official-cfp, observed_at: '2026-11-09T01:15:00Z', contentHash: 4405032a722e1385c04e64061fa0b569260fdd5f737334de6d824b0771f01e0c, evidenceRef: data/evidence/blobs/4405032a722e1385c04e64061fa0b569260fdd5f737334de6d824b0771f01e0c.body, rawExcerpt: 'April 16th, 2027 – Full papers, Pictorials, Workshops, Interactivities, DC camera ready', confidence: official}, precision: exact}
 
   # 根拠: https://icalp.uj.edu.pl/track-b/ (2026-08-12 取得)
   #   「Important dates (for Track B): First round (for Track B only) Submissions
