@@ -1953,11 +1953,20 @@ conferences:
         #   Rebuttal period ends Dec 5 / Final notification Jan 18, 2027 /
         #   Camera-ready Feb 8, 2027。日付のみの項目は AoE 慣例。
         deadlines:
-          - {kind: paper, label: 'Paper submission', date: '2026-09-17 23:59:59', tz: AoE}
-          - {kind: review_release, label: 'Early rejection notifications & start of rebuttal', date: '2026-11-30 23:59:59', tz: AoE}
-          - {kind: rebuttal_end, label: 'Rebuttal period ends', date: '2026-12-05 23:59:59', tz: AoE}
-          - {kind: notification, label: 'Final notification', date: '2027-01-18 23:59:59', tz: AoE}
-          - {kind: camera_ready, label: 'Camera-ready', date: '2027-02-08 23:59:59', tz: AoE}
+          - {kind: paper, label: 'Paper submission', date: '2026-11-30 23:59:59',
+             tz: AoE, evidence: {source_url: https://eurocrypt.iacr.org/2027/, sourceClass: official-cfp, observed_at: '2026-11-08T08:05:00Z', contentHash: 2c3b6f97366c13af5de782b6b6073432984770c9f0f576557732ed84fe0915b5, evidenceRef: data/evidence/blobs/2c3b6f97366c13af5de782b6b6073432984770c9f0f576557732ed84fe0915b5.body, rawExcerpt: 'Submission deadline at 23:59 anywhere on Earth (AoE): Nov 30, 2026', confidence: official}, precision: exact}
+          - {kind: review_release, label: 'Early rejection notifications & start of rebuttal', date: '2026-12-05 23:59:59',
+             tz: AoE, evidence: {source_url: https://eurocrypt.iacr.org/2027/, sourceClass: official-cfp, observed_at: '2026-11-08T08:05:00Z', contentHash: 2c3b6f97366c13af5de782b6b6073432984770c9f0f576557732ed84fe0915b5, evidenceRef: data/evidence/blobs/2c3b6f97366c13af5de782b6b6073432984770c9f0f576557732ed84fe0915b5.body, rawExcerpt: 'Early rejection notifications & start of rebuttal: Dec 5, 2026', confidence: official}, precision: exact}
+          - {kind: notification, label: 'Final notification', date: '2027-02-08 23:59:59',
+             tz: AoE, evidence: {source_url: https://eurocrypt.iacr.org/2027/, sourceClass: official-cfp, observed_at: '2026-11-08T08:05:00Z', contentHash: 2c3b6f97366c13af5de782b6b6073432984770c9f0f576557732ed84fe0915b5, evidenceRef: data/evidence/blobs/2c3b6f97366c13af5de782b6b6073432984770c9f0f576557732ed84fe0915b5.body, rawExcerpt: 'Final notification: Feb 8, 2027', confidence: official}, precision: exact}
+        mode: merge-slots
+        remove:
+          # 別版の日程 (提出 9-17・早期排除 11-30・リバタル終了 12-5・通知 1-18・カメラレディ 2-8) を外す。
+          - {kind: paper, label: 'Paper submission', round: 1}
+          - {kind: review_release, label: 'Early rejection notifications & start of rebuttal', round: 1}
+          - {kind: rebuttal_end, label: 'Rebuttal period ends', round: 1}
+          - {kind: notification, label: 'Final notification', round: 1}
+          - {kind: camera_ready, label: 'Camera-ready', round: 1}
   # 根拠: https://ifca.ai/fc27/ (Accra, 8-12 February 2027) — 従来の Barbados (tentative) を更新（締切は上流と一致のため変更なし）
 
   fc:
