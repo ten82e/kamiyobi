@@ -1176,6 +1176,67 @@ conferences:
   # Keep the old published submission value as superseded evidence, not an active deadline.
   cpal:
     editions:
+      cpal27:
+        year: 2027
+        # 公式ページ (2026-11-08 取得) は「Proceedings paper deadline: December 5, 2026」
+        # と「Recent Spotlight submission deadline: January 18, 2027」の 2 種。
+        # 収録の abstract 2026-11-14 と paper 2026-11-26 は別版の日程。
+        deadlines:
+          - kind: paper
+            label: Proceedings paper submission
+            date: '2026-12-05 23:59:59'
+            tz: AoE
+            round: 1
+            evidence:
+              - source_name: CPAL 2027 official site
+                source_url: https://cpal.cc/
+                sourceClass: official-cfp
+                observed_at: '2026-11-08T08:20:00Z'
+                retrievedAt: '2026-11-08T08:20:00Z'
+                verifiedAt: '2026-11-08T08:20:00Z'
+                contentHash: 9fe1aef0f2fea8ac8f54344c0f4554effb08c545d24d0e77f6c28c25f7f541e6
+                evidenceRef: data/evidence/blobs/9fe1aef0f2fea8ac8f54344c0f4554effb08c545d24d0e77f6c28c25f7f541e6.body
+                rawExcerpt: 'Proceedings paper deadline: December 5, 2026'
+                verifiedFields:
+                  - date
+                  - kind
+                  - round
+                  - time
+                  - timezone
+                confidence: official
+            precision: exact
+          - kind: paper
+            label: Recent Spotlight submission
+            date: '2027-01-18 23:59:59'
+            tz: AoE
+            round: 2
+            evidence:
+              - source_name: CPAL 2027 official site
+                source_url: https://cpal.cc/
+                sourceClass: official-cfp
+                observed_at: '2026-11-08T08:20:00Z'
+                retrievedAt: '2026-11-08T08:20:00Z'
+                verifiedAt: '2026-11-08T08:20:00Z'
+                contentHash: 9fe1aef0f2fea8ac8f54344c0f4554effb08c545d24d0e77f6c28c25f7f541e6
+                evidenceRef: data/evidence/blobs/9fe1aef0f2fea8ac8f54344c0f4554effb08c545d24d0e77f6c28c25f7f541e6.body
+                rawExcerpt: 'Recent Spotlight submission deadline: January 18, 2027'
+                verifiedFields:
+                  - date
+                  - kind
+                  - round
+                  - time
+                  - timezone
+                confidence: official
+            precision: exact
+        mode: merge-slots
+        remove:
+          # 収録に残る別版の日程 (概要 11-14・論文 11-26) と upstream の conflict を外す。
+          - kind: abstract
+            label: Abstract submission
+            round: 1
+          - kind: paper
+            label: Paper submission
+            round: 1
       2025:
         id: cpal25
         link: https://2025.cpal.cc/
