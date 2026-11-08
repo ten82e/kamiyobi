@@ -64,6 +64,10 @@ eudat は頁に値が無く根拠を得られないため触らない（次回�
   （前項）、CODASPY・ICDAR（前項）、WiSec 2027（公式サイト 404・ccfddl に 2027 無し —
   収録の 11-25/3-10 は pattern 上の推定で manual-required が正）。
 - **2026-11-09 追加確認(9)**: BlockSys 2027（Round 1 提出 11-30・Round 2 提出 1-31 AoE ✓）。
+- **2026-11-09 追加確認(10)**: 3DV 2027（Final Notification Dec 2 19:00Z ✓）、RSS 2027
+  （概要 Dec 4 AoE ✓）、PODS 2027（公式ページの 12-20 はチュートリアル提案のみ。論文締切は
+  一次ソースが見つからず保留）、WoWMoM/EDBT-ICDT/SECON/HPC-Asia メイン（JS 描画・bot 対策
+  で取得不可 — HPC-Asia は提出 9-27 への延長を確認して訂正済み）。
 - **2026-11-09 追加確認(5)**: Eurocrypt 2027（訂正済み — 公式が提出 11-30・早期排除 12-5・
   通知 2-8 に更新されていた。収録は別版の日程だった）、FSE 2027（ToSC issue 4 9-1・
   issue 1 12-1 AoE ✓）、ACNS 2027（Cycle 1 提出 9-24・通知 11-26 / Cycle 2 提出 1-21・
