@@ -943,6 +943,9 @@ conferences:
         deadlines:
           - {kind: paper, label: 'Paper submission (Round 1)', date: '2026-11-30 23:59:59', tz: AoE}
           - {kind: paper, label: 'Paper submission (Round 2)', date: '2027-03-01 23:59:59', tz: AoE}
+          - {kind: notification, label: 'Author notification (Round 1)', date: '2027-01-15 23:59:59', tz: AoE}
+          - {kind: notification, label: 'Author notification (Round 2)', date: '2027-04-16 23:59:59', tz: AoE}
+          - {kind: camera_ready, label: 'Camera Ready', date: '2027-04-30 23:59:59', tz: AoE}
 
   # 根拠: https://www.ifip119.org/Conferences/WG11-9-CFP-2027.pdf (2026-08-13 取得・
   #   HTTP 200・pdftotext で本文確認) —「Twenty-Third Annual IFIP WG 11.9
