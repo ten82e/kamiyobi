@@ -71,6 +71,9 @@ eudat は頁に値が無く根拠を得られないため触らない（次回�
 - **2026-11-09 追加確認(12)**: CHI 2027（提出 9-10・review 11-5・再投稿 12-3・通知 12-17
   AoE ✓ — browser 取得の Important Dates で確認）、ECIR 2027（通知 2 行は同一日の別表現:
   date-only 公式 + exact AoE 換算。誤りではない）。
+- **2026-11-09 追加確認(13)**: NSDI 2027（fall 通知 12-8・カメラレディ 3-4 ✓ — 公式
+  Important Dates で確認）、FAST 2027（12-14 は Test of Time Award の締切で、収録の
+  fall 通知 12-08 と無関係 ✓）、ICALP 2027 Track B（一次通知 12-8 AoE ✓）。
 - **2026-11-09 追加確認(11)**: USENIX Security 2027（Cycle 2 登録 1-19・提出 1-26 AoE ✓）、
   SIGMETRICS 2027（fall 通知 12-9 AoE・winter 提出 1-11 AoE ✓ — data-deadline 属性で確認）、
   ECIR 2027（通知 12-7 ✓）、SPAA 2027（JS 描画で日付部分が取得できず保留）。
