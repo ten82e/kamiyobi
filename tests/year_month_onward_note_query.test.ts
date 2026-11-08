@@ -46,9 +46,9 @@ describe("その年 ∧ その月以降で絞れている形は、その幅を�
     expect(列("今年一月から").size).toBe(列("今年1月から").size);
   });
   it("その方の語が本当に絞れている（実測の件数で張る – 案内の幅と行が合う）", () => {
-    expect(列("今年1月から").size).toBe(427);
-    expect(列("今年1月 から").size).toBe(427);
-    expect(列("今年一月から").size).toBe(427);
+    expect(列("今年1月から").size).toBe(428);
+    expect(列("今年1月 から").size).toBe(428);
+    expect(列("今年一月から").size).toBe(428);
     expect(列("今年12月から").size).toBe(84);
     expect(列("今年 12月").size).toBe(84);
     expect(列("来年1月から").size).toBe(114);
@@ -94,7 +94,7 @@ describe("その他の形は動かして居ない（第 352 回・第 369 回・
     expect(列("今年末").size).toBe(84);
     expect(列("来月 末").size).toBe(178);
     expect(列("週 末").size).toBe(145);
-    expect(列("明日以降").size).toBe(423);
+    expect(列("明日以降").size).toBe(424);
     expect(列("来 上旬").size).toBe(68);
     expect(列("来月終わり").size).toBe(178);
     expect(列("ml から").size).toBe(0);
@@ -102,7 +102,7 @@ describe("その他の形は動かして居ない（第 352 回・第 369 回・
     expect(列("半 年後").size).toBe(2);
     expect(列("締切時刻").size).toBe(181);
     expect(列("来月初め").size).toBe(0);
-    expect(列("今年1月 から").size).toBe(427);
+    expect(列("今年1月 から").size).toBe(428);
   });
 });
 

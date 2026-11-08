@@ -80,7 +80,7 @@ describe("連体の「の」で繋がれた文がその群の導きを出す（�
   });
   it("行が出る打ち手には何も被せない", () => {
     expect(件("関西")).toBe(6);
-    expect(件("セキュリティ")).toBe(68);
+    expect(件("セキュリティ")).toBe(69);
     expect(件("国内")).toBe(38);
     expect(件("オンライン参加可")).toBe(20);
     expect(件("ランクA")).toBe(3);
@@ -105,7 +105,7 @@ describe("連体の「の」で繋がれた文がその群の導きを出す（�
     expect((Recommender.columnQueryNoteJa("分野 セキュリティ") || "").trim()).toContain(
       "「分野」は",
     );
-    expect(件("年内")).toBe(425);
+    expect(件("年内")).toBe(426);
     expect(件("年末中")).toBe(84);
     expect(件("来月 末日")).toBe(178);
     expect(件("週 末")).toBe(145);

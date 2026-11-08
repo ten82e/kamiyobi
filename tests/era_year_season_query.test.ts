@@ -63,7 +63,7 @@ describe("元号で書いた年を繋げた形が、離した形と同じ行に�
   it("第 470 回〜第 497 回の実測はこの回で変へて居ない", () => {
     expect(列("2027年上旬").size).toBe(列("2027年 上旬").size);
     expect(列("2027年12月から").size).toBe(21);
-    expect(列("2026年1月から").size).toBe(427);
+    expect(列("2026年1月から").size).toBe(428);
     expect(列("2028年3月").size).toBe(0);
     expect(列("再来年3月").size).toBe(0);
     expect(列("来年上旬").size).toBe(2);

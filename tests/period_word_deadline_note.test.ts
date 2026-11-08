@@ -104,8 +104,8 @@ describe("期の区分の語に語尾を繋げても案内が出る（第 503 �
     expect(案内("祝日")).toContain("祝日");
   });
   it("第 470 回〜第 502 回の実測はこの回で変へて居ない", () => {
-    expect(列("年内").size).toBe(425);
-    expect(列("今年内").size).toBe(427);
+    expect(列("年内").size).toBe(426);
+    expect(列("今年内").size).toBe(428);
     expect(列("再来週内").size).toBe(18);
     expect(列("年末中").size).toBe(84);
     expect(列("年初1月").size).toBe(23);

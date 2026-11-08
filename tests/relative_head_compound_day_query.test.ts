@@ -68,7 +68,7 @@ describe("相対の語と複合日語を離って打つ形が詰め形と揃ふ�
     expect(列("先 週末").size).toBe(5);
     expect(列("昨 週末").size).toBe(5);
     expect(列("翌 週末").size).toBe(34);
-    expect(列("今 年中").size).toBe(427);
+    expect(列("今 年中").size).toBe(428);
     expect(列("来 年中").size).toBe(114);
     expect(列("昨 年中").size).toBe(0);
     expect(列("昨 月").size).toBe(11);
@@ -83,7 +83,7 @@ describe("相対の語と複合日語を離って打つ形が詰め形と揃ふ�
     expect(列("今 週末 まで").size).toBe(1);
     expect(列("今 週末 まで").size).toBe(列("今週末 まで").size);
     expect(案内("今 週末 まで")).toContain("今週末 まで = 2026年8月8日(土)");
-    expect(列("今 年中 締切").size).toBe(370);
+    expect(列("今 年中 締切").size).toBe(371);
     expect(列("ml 来 年中 締切").size).toBe(3);
     expect(列("今 週末に").size).toBe(1);
     expect(案内("今 週末に")).toContain("今週末 = ");
@@ -108,7 +108,7 @@ describe("寄せない形の守り（第 453 回・第 463 回・第 466 回）"
   it("詰め形其身は一行も動かして居ない（総当り 3 405 語で変はつた語 0 語の実測）", () => {
     expect(列("今週末").size).toBe(1);
     expect(列("来週末").size).toBe(34);
-    expect(列("今年中").size).toBe(427);
+    expect(列("今年中").size).toBe(428);
     expect(列("来年中").size).toBe(114);
     expect(列("昨月").size).toBe(11);
     expect(列("昨週").size).toBe(8);

@@ -74,7 +74,7 @@ describe("名乗りは打たれた侭 – 畳まない形の実測（第 459 回
     expect(列("半 年後").size).toBe(2);
     expect(列("週 末").size).toBe(145);
     expect(列("ml から").size).toBe(0);
-    expect(列("明日以降").size).toBe(423);
+    expect(列("明日以降").size).toBe(424);
     expect(列("来 上旬").size).toBe(68);
     expect(列("明日 から 明後日").size).toBe(4);
   });

@@ -102,10 +102,10 @@ describe("寄せない形の守り（第 453 回・第 463 回）", () => {
     expect(列("毎 月上旬まで").size).toBe(0);
     expect(案内("明 月上旬まで")).toBe("");
     /* 第 476 回で `から` もその初日からの幅に解けるやうになり、離つた形も詰め形と同じ行に出る。*/
-    expect(列("来月上旬から").size).toBe(389);
-    expect(列("来月 上旬 から").size).toBe(389);
-    expect(列("来月上旬以降").size).toBe(389);
-    expect(列("来月 上旬 以降").size).toBe(389);
+    expect(列("来月上旬から").size).toBe(390);
+    expect(列("来月 上旬 から").size).toBe(390);
+    expect(列("来月上旬以降").size).toBe(390);
+    expect(列("来月 上旬 以降").size).toBe(390);
 
     expect(案内("来月上旬から")).toBe("");
   });
