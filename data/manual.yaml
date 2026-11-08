@@ -49,7 +49,7 @@ conferences:
     editions:
       - date_text: February 17-19, 2027
         deadlines:
-          - date: '2026-09-13 23:59:00'
+          - date: '2026-09-27 23:59:00'
             kind: paper
             label: Paper Submission Deadline
             tz: AoE

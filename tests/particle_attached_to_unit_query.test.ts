@@ -65,8 +65,8 @@ describe("助字を単位の語に繋げて打つ形（第 470 回）", () => {
   });
   it("行数の実測（固定ハーネスの品書 435 行 – 実ビルド 868 行と同じ形）", () => {
     expect(列("8 月の 締切").size).toBe(114);
-    expect(列("9 月の 下旬").size).toBe(59);
-    expect(列("来 月の 下旬").size).toBe(59);
+    expect(列("9 月の 下旬").size).toBe(60);
+    expect(列("来 月の 下旬").size).toBe(60);
     expect(列("先 月の 下旬").size).toBe(6);
     expect(列("今 月の 中旬").size).toBe(55);
     expect(列("2026 年の 締切").size).toBe(371);
@@ -76,10 +76,10 @@ describe("助字を単位の語に繋げて打つ形（第 470 回）", () => {
     expect(列("9 月の").size).toBe(179);
     expect(列("来 月の").size).toBe(178);
     expect(列("8 月の 第2週").size).toBe(26);
-    expect(列("来 月の第2週").size).toBe(31);
+    expect(列("来 月の第2週").size).toBe(30);
   });
   it("後ろにその他の語を続けてもその月の範囲を書く", () => {
-    expect(列("2026 年 9 月の 下旬").size).toBe(59);
+    expect(列("2026 年 9 月の 下旬").size).toBe(60);
     expect(列("ml 9 月の 下旬").size).toBe(6);
     expect(案内("ml 9 月の 下旬")).toContain("9月 下旬 = 2026年9月21日(月)");
     /* `まで` を離つた形は第 474 回でその月の範囲として解ける（前 12 件 → 277 件 –
@@ -97,7 +97,7 @@ describe("助字を単位の語に繋げて打つ形（第 470 回）", () => {
     expect(列("2026 年の締切").size).toBe(371);
     expect(列("1 月の会議").size).toBe(23);
     expect(列("8 月の締切").size).toBe(114);
-    expect(列("9 月の第2週").size).toBe(31);
+    expect(列("9 月の第2週").size).toBe(30);
     expect(案内("9 月の第2週")).toContain("9月 第2週 = 2026年9月8日(火)〜2026年9月14日(月)");
     expect(案内("17 時の締切")).toContain("17時 = 17:00〜17:59");
   });
@@ -142,9 +142,9 @@ describe("寄せない形の守り（第 453 回・第 470 回）", () => {
   it("その他の群 – 月の並べ・週末日・詰め形を踏んぢゃらない", () => {
     expect(列("8 月 と 9 月").size).toBe(284);
     expect(列("週末").size).toBe(145);
-    expect(列("9月の下旬").size).toBe(59);
-    expect(列("来月の下旬").size).toBe(59);
-    expect(列("来月 の 下旬").size).toBe(59);
+    expect(列("9月の下旬").size).toBe(60);
+    expect(列("来月の下旬").size).toBe(60);
+    expect(列("来月 の 下旬").size).toBe(60);
     expect(案内("昨 月の下旬")).toContain("2026年7月21日(火)〜2026年7月31日(金)");
     expect(列("17時の締切").size).toBe(0);
     expect(案内("17 時の 締切")).toContain("17時 = 17:00〜17:59");

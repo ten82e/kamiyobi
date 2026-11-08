@@ -119,11 +119,11 @@ describe("寄せない形の守り（第 453 回・第 463 回・第 466 回）"
     expect(列("論文 中").size).toBe(20);
     expect(列("8 月 末").size).toBe(118);
     expect(列("8 月 中").size).toBe(118);
-    expect(列("9 月 下旬").size).toBe(59);
+    expect(列("9 月 下旬").size).toBe(60);
     expect(案内("8 月 末")).not.toContain("今年度");
   });
   it("第 470 回の実測はこの回で変へて居ない", () => {
-    expect(列("来 月の 下旬").size).toBe(59);
+    expect(列("来 月の 下旬").size).toBe(60);
     expect(列("8 月の 締切").size).toBe(114);
     expect(案内("来 月の 下旬")).toContain("来月 下旬 = 2026年9月21日(月)");
   });

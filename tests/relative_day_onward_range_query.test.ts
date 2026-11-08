@@ -95,7 +95,7 @@ describe("載せない形と其它の機械の守り（第 328 回・第 373 回
       expect([離, 列(離).size]).toEqual([離, 列(繋).size]);
     }
     expect(列("明日 から 明後日").size).toBe(4);
-    expect(列("9 月 上旬 から 中旬").size).toBe(120);
+    expect(列("9 月 上旬 から 中旬").size).toBe(119);
   });
   it("月の語・年・時刻の語はその方の機械が既に絞る – この回は触つて居ない", () => {
     expect(列("8月以降").size).toBe(426);
