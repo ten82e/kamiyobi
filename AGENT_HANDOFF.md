@@ -88,6 +88,10 @@ eudat は頁に値が無く根拠を得られないため触らない（次回�
   FSE 2027・ACNS 2027・ICLR 2027（前項）。ESANN 2027（提出 18.11.2026 — 日付のみで
   時刻表記なし。収録の 23:59:59 UTC は推定時刻だが日付としては誤り無し。date-only への
   引き下げは次回の再確認候補）。
+- **2026-11-09 追加確認(15)**: EUSIPCO 2027（提出 Feb 6 AoE ✓ — calls ページで確認）、
+  ICME 2027（収録 12-31 は上流 ccfddl どおり ✓ — 公式サイトの important-dates は 5 月の
+  会議関連日付のみ）、BIS 2027（訂正済み — tz 無表記で AoE 慣例適用）、DIS 2027
+  （camera-ready 訂正済み）。
 - **2026-11-09 追加確認(7)**: CODASPY 2027（概要 11-16・論文 11-23 AoE ✓）、ICDAR 2027
   （IJDAR Journal Track 論文 11-15 AoE ✓ / Conference Track 概要 2-26・論文 3-5 AoE ✓）。
   いずれも訂正不要。
