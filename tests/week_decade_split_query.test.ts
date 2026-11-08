@@ -87,7 +87,7 @@ describe("案内が残る形はその侭（第 416 回・第 431 回・第 483 �
     expect(列("来年12月から").size).toBe(列("来年 12月から").size);
     expect(列("来月初め").size).toBe(0);
     expect(列("来月末").size).toBe(178);
-    expect(列("週 末").size).toBe(145);
+    expect(列("週 末").size).toBe(146);
     expect(列("来週 末").size).toBe(34);
     expect(列("明日以降").size).toBe(424);
     expect(列("来 上旬").size).toBe(68);

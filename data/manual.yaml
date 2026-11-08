@@ -3600,7 +3600,7 @@ conferences:
             kind: notification
             label: Cycle 1 notification
             tz: AoE
-          - date: '2026-10-27 23:59:00'
+          - date: '2026-11-06 23:59:00'
             kind: paper
             label: Cycle 2 submission deadline
             tz: AoE

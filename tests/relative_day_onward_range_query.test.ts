@@ -125,7 +125,7 @@ describe("載せない形と其它の機械の守り（第 328 回・第 373 回
     expect(案内("2月30日以降")).toContain("それより後の締切のことだと思いますが");
   });
   it("第 470 回〜第 474 回の実測はこの回で変へて居ない", () => {
-    expect(列("週 末").size).toBe(145);
+    expect(列("週 末").size).toBe(146);
     expect(列("来月 上旬 まで").size).toBe(180);
     expect(列("来 上旬").size).toBe(68);
     expect(列("来 週末").size).toBe(34);

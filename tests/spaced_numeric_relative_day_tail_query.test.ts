@@ -95,7 +95,7 @@ describe("寄せない形の守り（第 459 回・第 466 回）", () => {
     expect(列("論文から").size).toBe(0);
   });
   it("第 470 回〜第 476 回の実測はこの回で変へて居ない", () => {
-    expect(列("週 末").size).toBe(145);
+    expect(列("週 末").size).toBe(146);
     expect(列("来月 上旬 まで").size).toBe(180);
     expect(列("明日から").size).toBe(424);
     expect(列("来 週末").size).toBe(34);

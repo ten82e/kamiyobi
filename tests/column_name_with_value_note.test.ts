@@ -108,7 +108,7 @@ describe("欄の名前を値と並べても打ち直し方が出る（第 507 �
     expect(列("年末中").size).toBe(84);
     expect(列("年初1月").size).toBe(23);
     expect(列("来月 末日").size).toBe(178);
-    expect(列("週 末").size).toBe(145);
+    expect(列("週 末").size).toBe(146);
     expect(列("締切時刻").size).toBe(181);
     expect(列("ml から").size).toBe(0);
     expect(列("オンラインの締切").size).toBe(20);
