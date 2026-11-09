@@ -61,8 +61,7 @@
       "bytes": 5479,
       "content_type": "application/octet-stream",
       "references": [
-        "data/snapshot.json",
-        "data/verification-ledger.json"
+        "data/snapshot.json"
       ]
     },
     "102104d3e465873bd04dc7eebc0b8b8915b67389b231a6c2bf84c524886132f1": {
@@ -207,6 +206,13 @@
         "data/verification-ledger.json"
       ]
     },
+    "5b9b8eb89128a93b0d8fe681ba879c4e6892c9ad10e2187344df2422a1aef9e8": {
+      "bytes": 22988,
+      "content_type": "application/octet-stream",
+      "references": [
+        "data/verification-ledger.json"
+      ]
+    },
     "5f77a214d1a00f47dc38b70a6353936b9cdaa48ae320bf0da72bdc1b389d8759": {
       "bytes": 12953,
       "content_type": "application/octet-stream",
@@ -224,7 +230,8 @@
       "bytes": 33082,
       "content_type": "application/octet-stream",
       "references": [
-        "data/overrides.yaml"
+        "data/overrides.yaml",
+        "data/verification-ledger.json"
       ]
     },
     "671cb88b332167c09eded89e326a201a5ac0da4bb480256f70ed5a408da86c97": {
@@ -366,7 +373,15 @@
       "bytes": 22621,
       "content_type": "application/octet-stream",
       "references": [
-        "data/overrides.yaml"
+        "data/overrides.yaml",
+        "data/verification-ledger.json"
+      ]
+    },
+    "ab29fe4cd6540a9ae411516e00e3a63045eda4cdae6d006e5858815010e29c03": {
+      "bytes": 5479,
+      "content_type": "application/octet-stream",
+      "references": [
+        "data/verification-ledger.json"
       ]
     },
     "b49b9b1572db96b04c83c1f57208366d0c5d6e573809a54c271e1a0b0031eee3": {
@@ -405,7 +420,16 @@
       "bytes": 6991,
       "content_type": "application/octet-stream",
       "references": [
-        "data/overrides.yaml"
+        "data/overrides.yaml",
+        "data/reverification-resolutions.json",
+        "data/verification-ledger.json"
+      ]
+    },
+    "c679cb4f857777aa74d8a21d2032f74dc390dee1129385f269dbdcd59d7006c3": {
+      "bytes": 9801,
+      "content_type": "application/octet-stream",
+      "references": [
+        "data/verification-ledger.json"
       ]
     },
     "c7d9a6de6f77a7ff281702ac593e813fd86aee5f4a66c6a9f40c6478852a4ac3": {
