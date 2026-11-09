@@ -1633,9 +1633,9 @@ conferences:
     editions:
       - date_text: March 15-18, 2027
         deadlines:
-          - date: '2026-10-30 23:59:00'
+          - date: '2026-11-13 23:59:00'
             kind: paper
-            label: Paper Submission
+            label: Paper Submission (Extended)
             tz: UTC
           - date: '2026-12-13 23:59:00'
             kind: notification

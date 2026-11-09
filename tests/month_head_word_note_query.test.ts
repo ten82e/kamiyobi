@@ -66,7 +66,7 @@ describe("月の語にその初めの言い方を繋いだ形が 0 件の訳を�
     expect(列("来月末").size).toBe(178);
     expect(列("今月末").size).toBe(118);
     expect(列("12月末").size).toBe(84);
-    expect(列("再来月末").size).toBe(96);
+    expect(列("再来月末").size).toBe(95);
     /* 実測（実ビルド 868 行では 夫々 245・192・178・194・262・40・192・82 件）。*/
     expect(列("週 末").size).toBe(146);
     expect(列("来週 末").size).toBe(34);

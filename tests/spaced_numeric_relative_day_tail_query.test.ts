@@ -76,7 +76,7 @@ describe("寄せない形の守り（第 459 回・第 466 回）", () => {
     expect(案内("3 か月後 まで")).toContain("3 か月後 まで = 2026年8月9日(日)〜");
     expect(案内("1 年後 まで")).toContain("1 年後 まで = 2026年8月9日(日)〜");
     expect(案内("1 か月後")).toContain("1 か月後 = 2026年9月9日(水)");
-    expect(列("3 か月後 まで").size).toBe(365);
+    expect(列("3 か月後 まで").size).toBe(364);
     expect(列("1 年後 まで").size).toBe(436);
     expect(列("1 年後 から").size).toBe(列("1 年後から").size);
   });
