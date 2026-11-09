@@ -634,6 +634,45 @@ conferences:
     title: WQS 2026
 
   - categories:
+      - networking
+    editions:
+      - date_text: July 7-9, 2027
+        deadlines:
+          - date: '2027-01-15 23:59:59'
+            evidence:
+              - contentHash: 4d142e429de97dac368ef2dca60132baabcf1d8e6d8d67c8a7c2bce02989272c
+                rawExcerpt: 'Abstract registration deadline January 15, 2027 / Submission deadline January 15, 2027'
+                retrievedAt: '2026-11-10T04:50:00Z'
+                sourceClass: official-cfp
+                sourceUrl: https://easychair.org/cfp/bmsb-2027
+                verifiedAt: '2026-11-10T04:50:00Z'
+                verifiedFields:
+                  - date
+                  - time
+                  - timezone
+            kind: paper
+            label: Paper submission deadline
+            precision: exact
+            promotion_ref:
+              batch: 2026-11-10-bmsb-2027
+              resolution: resolution-bmsb-2027
+            round: 1
+            track: ''
+            tz: AoE
+        event_end: '2027-07-09'
+        event_start: '2027-07-07'
+        id: bmsb-2027
+        link: https://www.bmsb2027.com/
+        place: Sydney, Australia
+        year: 2027
+    full_name: IEEE International Symposium on Broadband Multimedia Systems and Broadcasting 2027
+    key: bmsb
+    link: https://www.bmsb2027.com/
+    tags:
+      - niche
+    title: IEEE BMSB 2027
+
+  - categories:
       - security
     editions:
       - date_text: May 25-28, 2027

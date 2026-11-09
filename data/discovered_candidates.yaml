@@ -10676,7 +10676,7 @@ candidates:
     id: candidate-b975fdb46712257a71574d24
     source: easychair
     source_item_id: bmsb-2027
-    status: discovered
+    status: accepted
     discovered_at: '2026-10-04T12:39:08.732Z'
     first_seen_at: '2026-10-04T12:39:08.732Z'
     last_seen_at: '2026-11-07T18:30:51.935Z'
