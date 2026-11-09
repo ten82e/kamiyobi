@@ -1077,6 +1077,16 @@ conferences:
 - 実論文ベンチ（dev / heldout 全件）は `node src/bench-recommender.ts` で実行する。
 - 手元確認は `public/` を使う。main の現行 SHA は `deploy.yml` が Pages へ配信する。
 
+### 上流の誤りの訂正手順（`data/overrides.yaml`）
+
+- 訂正は `merge-slots` モードで行う。`deadlineSlotKey` は `kind + round + trackKey(label)` で、generic な label（"Paper submission" 等）は空文字に正規化される。
+- `remove` は同一 slotKey の最初の 1 行しか消さない。上流に同 slotKey の行が複数あるとき（例: 第 1・第 2 ラウンドの提出行）は、`round` を変えた remove 条目を複数置く。
+- `retainPublishedHistory` が snapshot 由来の旧値を復元することがある。対象の行が `data/snapshot.json` にもあるときは、snapshot 側も手で直す（SPEC 3.5 の手動編集を適用）。
+- 公式の tz 表記が無い日付は AoE 慣例（UTC-12）で解釈し、時刻が確認できた値には `date` に時刻を含め `tz: AoE` + `precision: exact` を置く。date-only 条目の `date` に 時刻を混ぜない（validator が warning を出す）。
+- 訂正の証拠は evidence 条目（source_name / source_url / contentHash / evidenceRef）で残す。 取得に失敗した page の blob は `evidence verify` の orphan body blob として検出されるので、 未参照の blob は削除して 0 issues を保つ。
+- 大規模な訂正の後は計測ピン（local_sources の date-only 計数、mcp_ongoing の matched_before_filters、built_golden_2 の llms.txt 行数）が動く。値が安定した後に実測値へ揃える（反復パスで受信値をその場で上書きすると振れる）。
+
+
 ---
 
 ## 7. 静的サイト（`site/template.html`）
