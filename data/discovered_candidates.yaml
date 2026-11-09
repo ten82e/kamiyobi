@@ -1541,7 +1541,7 @@ candidates:
     id: candidate-2b1ffe2619bb68c867314908
     source: easychair
     source_item_id: 9th-accml
-    status: promoted
+    status: accepted
     discovered_at: '2026-10-04T12:39:08.732Z'
     first_seen_at: '2026-10-04T12:39:08.732Z'
     last_seen_at: '2026-11-07T18:30:51.935Z'
@@ -2404,7 +2404,7 @@ candidates:
     id: candidate-024ee78d53dab2879a2f935e
     source: easychair
     source_item_id: aciids-2027
-    status: promoted
+    status: accepted
     discovered_at: '2026-10-04T12:39:08.732Z'
     first_seen_at: '2026-10-04T12:39:08.732Z'
     last_seen_at: '2026-11-07T18:30:51.935Z'
@@ -6535,7 +6535,7 @@ candidates:
     id: candidate-18cf3957a6b3e904cf55be7c
     source: easychair
     source_item_id: aila2027
-    status: promoted
+    status: accepted
     discovered_at: '2026-08-20T20:45:37.898Z'
     first_seen_at: '2026-08-20T20:45:37.898Z'
     last_seen_at: '2026-08-22T20:39:59.383Z'
@@ -9665,7 +9665,7 @@ candidates:
     id: candidate-17a0dc073c7c1746d92c1747
     source: easychair
     source_item_id: aviose-27
-    status: promoted
+    status: accepted
     discovered_at: '2026-10-04T12:39:08.732Z'
     first_seen_at: '2026-10-04T12:39:08.732Z'
     last_seen_at: '2026-11-07T18:30:51.935Z'
@@ -16135,7 +16135,7 @@ candidates:
     id: candidate-779ed55496b4c10dabb84144
     source: easychair
     source_item_id: cyber-science-2027
-    status: promoted
+    status: accepted
     discovered_at: '2026-08-20T20:45:37.898Z'
     first_seen_at: '2026-08-20T20:45:37.898Z'
     last_seen_at: '2026-11-07T18:30:51.935Z'
@@ -18242,7 +18242,7 @@ candidates:
     id: candidate-00bad333727403fff386fa49
     source: easychair
     source_item_id: eai-securecomm-2027
-    status: promoted
+    status: accepted
     discovered_at: '2026-10-04T12:39:08.732Z'
     first_seen_at: '2026-10-04T12:39:08.732Z'
     last_seen_at: '2026-11-07T18:30:51.935Z'
@@ -24278,7 +24278,7 @@ candidates:
     id: candidate-fc0e09b58a0f75f5385d2952
     source: easychair
     source_item_id: icabcd2027
-    status: promoted
+    status: accepted
     discovered_at: '2026-10-04T12:39:08.732Z'
     first_seen_at: '2026-10-04T12:39:08.732Z'
     last_seen_at: '2026-11-07T18:30:51.935Z'
@@ -24787,7 +24787,7 @@ candidates:
     id: candidate-d0880d3b1a00e9e3eb659a5c
     source: easychair
     source_item_id: icaibd-2027
-    status: promoted
+    status: accepted
     discovered_at: '2026-08-20T20:45:37.898Z'
     first_seen_at: '2026-08-20T20:45:37.898Z'
     last_seen_at: '2026-08-22T20:39:59.383Z'
@@ -26043,7 +26043,7 @@ candidates:
     id: candidate-8add8897b3887b22e1a567e5
     source: easychair
     source_item_id: icbda2027
-    status: promoted
+    status: accepted
     discovered_at: '2026-08-20T20:45:37.898Z'
     first_seen_at: '2026-08-20T20:45:37.898Z'
     last_seen_at: '2026-08-22T20:39:59.383Z'
@@ -26797,7 +26797,7 @@ candidates:
     id: candidate-245b14bacc88018c6d977e34
     source: easychair
     source_item_id: icccbda-2027
-    status: promoted
+    status: accepted
     discovered_at: '2026-08-20T20:45:37.898Z'
     first_seen_at: '2026-08-20T20:45:37.898Z'
     last_seen_at: '2026-08-22T20:39:59.383Z'
@@ -38365,7 +38365,7 @@ candidates:
     id: candidate-3dc36cf3e5ea4afc6740ad0b
     source: easychair
     source_item_id: iem-icdc-2027
-    status: promoted
+    status: accepted
     discovered_at: '2026-10-04T12:39:08.732Z'
     first_seen_at: '2026-10-04T12:39:08.732Z'
     last_seen_at: '2026-11-07T18:30:51.935Z'
@@ -47766,7 +47766,7 @@ candidates:
     id: candidate-cb8977d63bddcbf068c2dc86
     source: easychair
     source_item_id: ng-res-2027
-    status: promoted
+    status: accepted
     discovered_at: '2026-11-07T18:28:57.417Z'
     first_seen_at: '2026-11-07T18:28:57.417Z'
     last_seen_at: '2026-11-07T18:30:51.935Z'
@@ -48686,7 +48686,7 @@ candidates:
     id: candidate-e8c28a1c15622056253914c8
     source: easychair
     source_item_id: opensoc4he-2027
-    status: promoted
+    status: accepted
     discovered_at: '2026-09-05T22:05:16.108Z'
     first_seen_at: '2026-09-05T22:05:16.108Z'
     last_seen_at: '2026-11-07T18:30:51.935Z'
@@ -49026,7 +49026,7 @@ candidates:
     id: candidate-19c0341620c085eab6f0f27f
     source: easychair
     source_item_id: parma-ditam-2027
-    status: promoted
+    status: accepted
     discovered_at: '2026-11-07T18:28:57.417Z'
     first_seen_at: '2026-11-07T18:28:57.417Z'
     last_seen_at: '2026-11-07T18:30:51.935Z'
@@ -49059,7 +49059,7 @@ candidates:
     id: candidate-662377ae5e0540c06f4cdf68
     source: wikicfp
     source_item_id: '202528'
-    status: promoted
+    status: accepted
     discovered_at: '2026-08-20T20:45:37.898Z'
     first_seen_at: '2026-08-20T20:45:37.898Z'
     last_seen_at: '2026-10-04T23:19:49.754Z'
@@ -49858,7 +49858,7 @@ candidates:
     id: candidate-a496d3c7d50591a1177510d2
     source: easychair
     source_item_id: pqcrypto-2027
-    status: promoted
+    status: accepted
     discovered_at: '2026-10-04T12:39:08.732Z'
     first_seen_at: '2026-10-04T12:39:08.732Z'
     last_seen_at: '2026-11-07T18:30:51.935Z'
@@ -58861,7 +58861,7 @@ candidates:
     id: candidate-778a5c66fac5abc30243671c
     source: easychair
     source_item_id: websci-27
-    status: promoted
+    status: accepted
     discovered_at: '2026-08-30T13:30:12.117Z'
     first_seen_at: '2026-08-30T13:30:12.117Z'
     last_seen_at: '2026-09-06T22:11:00.021Z'
@@ -58884,7 +58884,7 @@ candidates:
     id: candidate-9df5c1ce95caac5826a77d61
     source: dbworld
     source_item_id: websci-27
-    status: promoted
+    status: accepted
     discovered_at: '2026-10-04T12:39:08.732Z'
     first_seen_at: '2026-10-04T12:39:08.732Z'
     last_seen_at: '2026-11-07T18:30:51.935Z'

@@ -5181,45 +5181,6 @@ conferences:
   - categories:
       - ai
     editions:
-      - date_text: Apr 8, 2027
-        deadlines:
-          - date: '2026-11-15'
-            kind: abstract
-            label: Abstract registration
-            precision: date-only
-          - date: '2026-11-30'
-            kind: paper
-            label: Submission deadline
-            precision: date-only
-        id: aila202727
-        link: https://easychair.org/cfp/AILA2027
-        place: Belfast, UK
-        year: 2027
-    full_name: The sixth International Conference on Artificial Intelligence Logic and Applications
-    key: aila2027
-    link: https://easychair.org/cfp/AILA2027
-    title: AILA2027
-  - categories:
-      - ai
-      - db
-    editions:
-      - date_text: May 28, 2027
-        deadlines:
-          - date: '2026-11-30'
-            kind: paper
-            label: Submission deadline
-            precision: date-only
-        id: icaibd-202727
-        link: https://easychair.org/cfp/ICAIBD2027
-        place: Chengdu, China
-        year: 2027
-    full_name: 2027 The 10th International Conference on Artificial Intelligence and Big Data
-    key: icaibd-2027
-    link: https://easychair.org/cfp/ICAIBD2027
-    title: ICAIBD 2027
-  - categories:
-      - ai
-    editions:
       - date_text: Jan 7, 2027
         deadlines:
           - date: '2026-11-15'
@@ -5239,24 +5200,6 @@ conferences:
     link: https://easychair.org/cfp/JVAC2027
     title: JVAC2027
   - categories:
-      - systems
-      - db
-    editions:
-      - date_text: Apr 23, 2027
-        deadlines:
-          - date: '2026-12-05'
-            kind: paper
-            label: Submission deadline
-            precision: date-only
-        id: icccbda-202727
-        link: https://easychair.org/cfp/ICCCBDA2027
-        place: Chengdu, China
-        year: 2027
-    full_name: 2027 the 12th International Conference on Cloud Computing and Big Data Analytics
-    key: icccbda-2027
-    link: https://easychair.org/cfp/ICCCBDA2027
-    title: ICCCBDA 2027
-  - categories:
       - ai
     editions:
       - date_text: Apr 23, 2027
@@ -5273,38 +5216,6 @@ conferences:
     key: eecr-2027
     link: https://easychair.org/cfp/EECR2027
     title: EECR 2027
-  - categories:
-      - db
-    editions:
-      - call_identity:
-          callId: icbda-2027
-          editionId: icbda202727
-          parentEventId: null
-          seriesId: icbda
-        date_text: April 26-29, 2027
-        deadlines:
-          - date: '2026-12-10'
-            kind: abstract
-            label: Abstract submission deadline
-            precision: date-only
-          - date: '2026-12-10'
-            kind: paper
-            label: Full-paper submission deadline
-            precision: date-only
-        event_end: '2027-04-29'
-        event_start: '2027-04-26'
-        id: icbda202727
-        legacy_ids:
-          - icbda-202727
-        link: https://icbda.org/
-        place: Bangkok, Thailand
-        year: 2027
-    full_name: 2027 the 12th International Conference on Big Data Analytics
-    key: icbda2027
-    legacy_keys:
-      - icbda-2027
-    link: https://icbda.org/
-    title: ICBDA 2027
   - categories:
       - ai
       - theory
