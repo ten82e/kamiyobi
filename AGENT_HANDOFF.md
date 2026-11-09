@@ -38,6 +38,9 @@
 - **upcoming.md の最終検証** (2026-11-09): 直近 180 日の表 628 行の JST 換算が正しく、
   公式表記（AoE / UTC / JST）と日本時間の併記・CCF/CORE/THCPL 評価・会期と場所の表示が
   全て正しく出ている ✓。
+- **data.json / index.html / llms.txt の整合** (2026-11-09): data.json の未来締切 989 行
+  （llms.txt の窓内 904 件は 180 日先で切った画面の初期一覧）、index.html の「締切」言及
+  109 箇所、llms.txt「載る締切は 904 件」— 全て整合 ✓。
 - `public/` を直接読む検査に `publicClockGuard()`（別時計のビルドを作り直しコマンド付きで
   落とす）を全 12 検査ファイルに設置。MCP stdio に CLI と同じ `--now` を通した。
 - ブロックされた update-data の実行サマリーに新しい警告と発見の記録方法を出すようにした。
