@@ -1,6 +1,13 @@
 {
   "schema_version": 1,
   "blobs": {
+    "04023a85e7f50aefa19833aa3bac8eea34d251085d6dc5b2cf699739a3031a99": {
+      "bytes": 651894,
+      "content_type": "application/octet-stream",
+      "references": [
+        "data/overrides.yaml"
+      ]
+    },
     "043992d3db6a968ed2d1a507412846e35f66d15b27d46f4b096c526e497f4738": {
       "bytes": 6246,
       "content_type": "application/octet-stream",
@@ -57,13 +64,6 @@
         "data/source-snapshots/local.json"
       ]
     },
-    "0dde5dfd5244bb6b38ead2c63873e42b1cf8cee3986f548e987b6c5bb9916de1": {
-      "bytes": 5479,
-      "content_type": "application/octet-stream",
-      "references": [
-        "data/snapshot.json"
-      ]
-    },
     "102104d3e465873bd04dc7eebc0b8b8915b67389b231a6c2bf84c524886132f1": {
       "bytes": 126890,
       "content_type": "application/octet-stream",
@@ -107,7 +107,6 @@
       "content_type": "application/octet-stream",
       "references": [
         "data/reverification-resolutions.json",
-        "data/snapshot.json",
         "data/verification-ledger.json"
       ]
     },
@@ -115,14 +114,16 @@
       "bytes": 132878,
       "content_type": "application/octet-stream",
       "references": [
-        "data/overrides.yaml"
+        "data/overrides.yaml",
+        "data/snapshot.json"
       ]
     },
     "2710171d2ee3d422ec6bb0842872cac5add2e18259de3da70b4e6d7d00b190aa": {
       "bytes": 9789,
       "content_type": "application/octet-stream",
       "references": [
-        "data/overrides.yaml"
+        "data/overrides.yaml",
+        "data/snapshot.json"
       ]
     },
     "2981c7fce2be3dd37b2155a3f694777840792198b91bf12ceeca5b2ef30ffac1": {
@@ -206,10 +207,18 @@
         "data/verification-ledger.json"
       ]
     },
+    "53f80427fd3e7935279eb3387d15be2da7dba3d2db1979c7de1c1065965e9fa0": {
+      "bytes": 11784,
+      "content_type": "application/octet-stream",
+      "references": [
+        "data/overrides.yaml"
+      ]
+    },
     "5b9b8eb89128a93b0d8fe681ba879c4e6892c9ad10e2187344df2422a1aef9e8": {
       "bytes": 22988,
       "content_type": "application/octet-stream",
       "references": [
+        "data/snapshot.json",
         "data/verification-ledger.json"
       ]
     },
@@ -231,6 +240,7 @@
       "content_type": "application/octet-stream",
       "references": [
         "data/overrides.yaml",
+        "data/snapshot.json",
         "data/verification-ledger.json"
       ]
     },
@@ -374,6 +384,7 @@
       "content_type": "application/octet-stream",
       "references": [
         "data/overrides.yaml",
+        "data/snapshot.json",
         "data/verification-ledger.json"
       ]
     },
@@ -381,6 +392,7 @@
       "bytes": 5479,
       "content_type": "application/octet-stream",
       "references": [
+        "data/snapshot.json",
         "data/verification-ledger.json"
       ]
     },
@@ -400,13 +412,6 @@
         "data/promotions/2026-08-31-genai4sg-cikm-2026/manifest.json"
       ]
     },
-    "b95f7e84da5a57d058767466da8a40d298849459bd0bfb354450c91adfe2ce65": {
-      "bytes": 300426,
-      "content_type": "application/octet-stream",
-      "references": [
-        "data/snapshot.json"
-      ]
-    },
     "bb8d466c52a2ddf244b646923d4c9677a1d951f715ca9a7eee07ed441be1a852": {
       "bytes": 325416,
       "content_type": "application/octet-stream",
@@ -421,6 +426,7 @@
       "references": [
         "data/overrides.yaml",
         "data/reverification-resolutions.json",
+        "data/snapshot.json",
         "data/verification-ledger.json"
       ]
     },
@@ -428,6 +434,7 @@
       "bytes": 9801,
       "content_type": "application/octet-stream",
       "references": [
+        "data/snapshot.json",
         "data/verification-ledger.json"
       ]
     },
@@ -508,6 +515,13 @@
       "references": [
         "data/evidence/reviews/recovered-captures-20261004.json",
         "data/snapshot.json"
+      ]
+    },
+    "e4339fa4e3aa6e6000db9d85d410efdf734d8d2b2b3dba3be1f4d24598d10d03": {
+      "bytes": 99091,
+      "content_type": "application/octet-stream",
+      "references": [
+        "data/overrides.yaml"
       ]
     },
     "e9ce771eb54eda062c8f28fc20492fe17a2cc680f1079b1cec3a0d84aaef8e95": {

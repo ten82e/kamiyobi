@@ -194,7 +194,7 @@ export function deadlineEvidence(
   value: unknown,
   fallback?: DeadlineEvidenceFallback,
 ): DeadlineEvidence[] {
-  const items = Array.isArray(value) ? value : [];
+  const items = Array.isArray(value) ? value : value && typeof value === "object" ? [value] : [];
   const out = items
     .filter((item): item is Record<string, unknown> => Boolean(item && typeof item === "object"))
     .map((item) => {
