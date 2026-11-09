@@ -632,6 +632,45 @@ conferences:
     tags:
       - niche
     title: WQS 2026
+
+  - categories:
+      - ai
+    editions:
+      - date_text: April 8-10, 2027
+        deadlines:
+          - date: '2026-11-15 23:59:59'
+            evidence:
+              - contentHash: 7f8d835f3b0f5d2a0bcfc426bb39ef25662749a21289bebd0be0c0a90ee5ed4f
+                rawExcerpt: 'Abstract registration: November 15, 2026 (AoE) -- extended! / Paper submission deadline: November 15, 2026 (AoE) -- extended!'
+                retrievedAt: '2026-11-10T01:55:00Z'
+                sourceClass: official-cfp
+                sourceUrl: http://ailasym.com/AILA2027/AILA2027.html
+                verifiedAt: '2026-11-10T01:55:00Z'
+                verifiedFields:
+                  - date
+                  - time
+                  - timezone
+            kind: paper
+            label: Paper submission deadline (extended)
+            precision: exact
+            promotion_ref:
+              batch: 2026-11-10-aila2027
+              resolution: resolution-aila2027
+            round: 1
+            track: ''
+            tz: AoE
+        event_end: '2027-04-10'
+        event_start: '2027-04-08'
+        id: aila2027
+        link: http://ailasym.com/AILA2027/AILA2027.html
+        place: Belfast, UK
+        year: 2027
+    full_name: The sixth International Conference on Artificial Intelligence Logic and Applications
+    key: aila
+    link: http://ailasym.com/AILA2027/AILA2027.html
+    tags:
+      - niche
+    title: AILA 2027
   - categories:
       - db
     editions:

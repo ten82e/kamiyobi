@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1, shrink-to-fit=no" name="viewport">
+    <meta content="AILA 2027 organising committee" name="author">
+    <meta content="AILA 2027,AILA'27,6th AILA,Conference,Computer Science,Software Engineering,Formal Methods"
+        name="keywords">
+
+    <title>AILA 2027</title>
+
+    <link href="vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+
+    <link href="vendor/font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+    <link
+        href='https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800'
+        rel='stylesheet' type='text/css'>
+    <link
+        href='https://fonts.googleapis.com/css?family=Merriweather:400,300,300italic,400italic,700,700italic,900,900italic'
+        rel='stylesheet' type='text/css'>
+
+    <link href="vendor/magnific-popup/magnific-popup.css" rel="stylesheet">
+
+    <link href="css/creative.css" rel="stylesheet">
+    <script src="js/timeline.min.js"></script>
+	<script type="text/javascript">  
+		document.write("<link rel='stylesheet' type='text/css' href='/css/layout.css?v="+new Date().getTime()+"'>");   
+	</script>
+    <link href="css/timeline.min.css" rel="stylesheet" />
+    <style>
+        .price_table{
+            border:2px solid #000;
+            width:100%;
+        }
+    </style>
+</head>
+
+<body id="page-top">
+
+    <nav class="navbar navbar-expand-lg navbar-light fixed-top" id="mainNav">
+        <div class="container">
+            <button aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation"
+                class="navbar-toggler navbar-toggler-right" data-target="#navbarResponsive" data-toggle="collapse"
+                type="button">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarResponsive">
+                <ul class="navbar-nav ml-auto">
+                    <li class="nav-item">
+                        <a class="nav-link js-scroll-trigger" href="#pre">AILA2027</a>
+                    </li>
+					<li class="nav-item">
+						<a class="nav-link" href="Call-for-Tutorial-Proposals.pdf" target="_blank" rel="noopener">Tutorial Proposals</a>
+					</li>
+					<li class="nav-item">
+						<a class="nav-link" href="Call-for-Special-Session-Proposals.pdf" target="_blank" rel="noopener">Special Session Proposals</a>
+					</li>
+					<li class="nav-item">
+						<a class="nav-link js-scroll-trigger" href="#scope">Scope and Topic</a>
+					</li>
+					<li class="nav-item">
+						<a class="nav-link js-scroll-trigger" href="#register">Registration</a>
+					</li>
+					<li class="nav-item">
+						<a class="nav-link js-scroll-trigger" href="#program">Program</a>
+					</li>
+					<li class="nav-item">
+						<a class="nav-link js-scroll-trigger" href="#committee">Committees</a>
+					</li>
+					<li class="nav-item">
+						<a class="nav-link js-scroll-trigger" href="#sponsors">Sponsors</a>
+					</li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <header class="masthead text-center text-white d-flex">
+        <div class="container my-auto">
+            <div class="row">
+                <div class="col-lg-10 mx-auto">
+                    <br><br>
+                    <h1 class="text-uppercase">
+                        <strong>The 6<sup>th</sup> International Conference on Artificial Intelligence Logic and Applications</strong>
+							<br/>
+							<strong>(AILA2027)</strong>
+                    </h1>
+                    <br>
+                    <p><strong>April 8-10, 2027</strong></p>
+                    <br><br>
+                </div>
+            </div>
+        </div>
+    </header>
+	
+	<section id="pre">
+        <div class="container">
+            <div class="row">
+				<div class="col-lg-12 text-left">
+		
+					<br/>
+					<p class="mb-2" style="text-indent: 2em;">
+					The AILA 2027 conference will take place from 
+					<b>8th to 10th of April 2027 </b>
+					in <b>Belfast, UK</b>. The event is locally organized by
+					<b>Queen’s University Belfast (
+					<a href="http://www.qub.ac.uk">www.qub.ac.uk</a> )
+                        and Ulster University ( <a href="http://www.ulster.ac.uk">www.ulster.ac.uk</a>
+					), UK</b> .
+					</p>
+					<p class="mb-2" style="text-indent: 2em;">
+					AILA is a well-established series of conferences. For more information, 
+					visit the official conference series website: 
+					<a href="http://ailasym.com/index.html">ailasym.com/index.html</a>
+					.
+					</p>
+				</div>
+            </div>
+        </div>
+    </section>
+
+
+	<section class="bg-primary">
+	    <div class="container text-center">
+			<br/>
+	        <h2 class="text-white mb-4">Aims and Mission</h2>
+			<p class="mb-2 text-white text-left" style="text-indent: 2em;">
+			AILA aims to advance the foundations, methods and applications of logic in artificial intelligence. It promotes the integration of logic with contemporary AI as a pathway towards more reliable, interpretable, accountable and trustworthy intelligent systems, particularly at a time when AI is increasingly expected to reason, explain, verify and act responsibly in complex real-world environments.
+			</p>
+			<br/>
+			<p class="mb-2 text-white text-left" style="text-indent: 2em;">
+            AILA provides an international forum for researchers and practitioners to exchange frontier ideas, present rigorous research, share practical insights, and build collaborations on the theory and practice of logic for artificial intelligence. The conference welcomes contributions on fundamental logical theories, formalisms and methods; the use of logic in AI, including logical approaches to machine learning, large language models, knowledge graphs, neuro-symbolic AI, automated reasoning, knowledge representation, verification, explanation, decision-making, safety, accountability and trust; and logic-based applications in areas such as decision support, fraud detection, cybernetics, precision medicine, trustworthy AI, and other intelligent systems.    
+			</p>
+			<br/>
+			<br/>
+	    </div>
+	</section>
+
+<section id="dates">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-12 text-center">
+                    
+                    <h2 class="section-heading text-center">Important Dates</h2>
+                    <p></p>
+
+                    <p class="mb-2"><span style='color:black'>Abstract registration:
+                        </span><span style='color:red' >November 15, 2026 (AoE) -- extended!</span>
+                    </p>
+                    <p class="mb-2"><span style='color:black'>Paper submission deadline:
+                        </span><span style='color:red' >November 15, 2026 (AoE) -- extended!</span>
+                    </p>
+                    <p class="mb-2"><span style='color:black'>Author notification:
+                        January 10, 2027 (AoE)</span>
+                    </p>
+                    <p class="mb-2"><span style='color:black'>Camera-ready submission deadline:
+                        January 25, 2027 (AoE)</span>
+                    </p>
+                    <p class="mb-2"><span style='color:black'>Conference:
+                        April 8 - 10, 2027 (UK)</span>
+                    </p>
+                </div>
+                <br/>
+            </div>
+        </div>
+    </section>
+	
+<section id="program">
+		<div class="container">
+			<div class="col-lg-12 text-center">
+				<h2 class="section-heading">Program</h2>
+                <br/>
+                <p><strong>To Be Determined</strong></p>
+			</div>
+		</div>
+    </section>
+	
+	<section class="bg-primary" id="scope">
+	    <div class="container text-center">
+	        <h2 class="text-white mb-4">Scope and Topics</h2>
+		</div>
+
+		
+	    <div class="container">
+	        <p></p>
+            
+	        <p class="mb-4 text-white"><strong>Contributions should emphasise the role of logic, formal methods, or logical reasoning in AI. Papers whose primary focus is on AI techniques or applications without a substantial logic component are outside the scope of the conference.</strong></p>
+            <p class="mb-2 text-white">AILA welcomes original contributions on the theory, methods and applications of logic in artificial intelligence. Topics of interest include, but are not limited to:</p>
+            
+        </div>
+	
+	    <div class="text-white container">
+	        <div class="row">
+	            <div class="col-lg-5 mx-auto text-white">
+	                <ul>
+						<li>Belief, deontic, epistemic, default, description, modal and dynamic logics</li>
+						<li>Non-monotonic, non-classical, probabilistic and fuzzy logics</li>
+						<li>Separation logic, spatial logic and temporal logic</li>
+						<li>Automated reasoning, logical reasoning in large language models, monotonic reasoning and circular reasoning</li>
+						<li>Approximate reasoning, fuzzy reasoning, granular computing and soft computing</li>
+	                </ul>
+	            </div>
+	            <div class="col-lg-5 mx-auto text-white">
+	                <ul>
+						<li>Logic programming and logic-based approaches to decision-making, image processing and data intelligence</li>
+						<li>Knowledge graphs, knowledge representation, reasoning and related themes</li>
+						<li>Neuro-symbolic AI, explainable AI, trustworthy AI and logic-informed AI systems</li>
+						<li>Logic-based modelling, verification, safety, accountability and governance of AI systems</li>
+						<li>Applications of logic-based AI in areas such as decision support, fraud detection, cybernetics, precision medicine and intelligent systems</li>
+	                </ul>	
+	            </div>
+	        </div>
+	    </div>
+	</section>
+
+<section id="tutorials">
+    <div class="container">
+        <div class="col-lg-12 text-center">
+            <h2 class="section-heading">Keynote Speeches</h2>
+            <br/>
+            <h4 class="section-heading">Keynote Speakers (confirmed)</h4>
+            <br/>
+            <div class="row" style="padding-left: 150px;padding-right:150px">
+                <div class="col-lg-4 mx-auto text-center">
+                    <figure>
+                        <img src="img/ant.jpg" width="180">
+                        <figcaption> Anthony COHN <br/><center> Leeds University, </center><center>UK</center>
+                        (<a href="https://www.turing.ac.uk/people/researchers/anthony-cohn" target="_blank" style="word-break: break-all;">https://www.turing.ac.uk/people/researchers/anthony-cohn</a>)<br />
+                        </figcaption>
+                    </figure>
+                </div>
+                <div class="col-lg-4 mx-auto text-center">
+                    <figure>
+                        <img src="img/lfr.jpg" width="175">
+                        <figcaption> Fenrong LIU <br/><center> Tsinghua University, </center><center>China</center>
+                        (<a href="http://www.fenrong.net/" target="_blank" style="word-break: break-all;">http://www.fenrong.net/</a>)<br />
+                        </figcaption>
+                    </figure>
+                </div>
+                <div class="col-lg-4 mx-auto text-center">
+                    <figure>
+                        <img src="img/zgq.jpg" width="155">
+                        <figcaption> Guoqiang ZHANG <br/><center> University of Texas Houston, </center><center>USA</center>
+                        (<a href="https://sbmi.uth.edu/faculty-and-staff/gq-zhang.htm" target="_blank" style="word-break: break-all;">https://sbmi.uth.edu/faculty-and-staff/gq-zhang.htm</a>)<br />
+                        </figcaption>
+                    </figure>
+                </div>
+                <div class="col-lg-4 mx-auto text-center mt-4">
+                    <figure>
+                        <img src="img/man.png" width="155">
+                        <figcaption> Manfred DROSTE <br/><center> University of Leipzig, </center><center>Germany</center>
+                        (<a href="https://www.informatik.uni-leipzig.de/~droste/" target="_blank" style="word-break: break-all;">https://www.informatik.uni-leipzig.de/~droste/</a>)<br />
+                        </figcaption>
+                    </figure>
+                </div>
+                <div class="col-lg-4 mx-auto text-center mt-4">
+                    <figure>
+                        <img src="img/ren.jpg" width="170">
+                        <figcaption> Renata WASSERMANN <br/><center> University of Sao Paulo, </center><center>Brazil</center>
+                        (<a href="https://www.ime.usp.br/~renata/" target="_blank" style="word-break: break-all;">https://www.ime.usp.br/~renata/</a>)<br />
+                        </figcaption>
+                    </figure>
+                </div>
+                <div class="col-lg-4 mx-auto text-center mt-4">
+                    <figure>
+                        <img src="img/zzh.jpg" width="180">
+                        <figcaption> Zhi-Hua ZHOU <br/><center> Nanjing University, </center><center>China</center>
+                        (<a href="https://cs.nju.edu.cn/zhouzh/index.htm" target="_blank" style="word-break: break-all;">https://cs.nju.edu.cn/zhouzh/index.htm</a>)<br />
+                        </figcaption>
+                    </figure>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section id="register">
+    <div class="container">
+        <div class="row">
+            <h2 class="section-heading mb-2 text-center w-100">Registration</h2>
+			
+			<div class="col-lg-12 mx-auto text-center" >
+				<br/>
+				<p class="mb-2">To Be Determined</p>
+                <p>Please visit the conference website for updates on registration and local arrangements.</p>
+			</div>
+        </div>
+    </div>
+</section>
+
+<section class="bg-primary" id="submission">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-12 mx-auto" >
+                    <div style='margin-left:80px'>
+                    <h2 class="section-heading text-white text-center">Submission and Publication</h2>
+        
+                    <p class="text-white mb-2">
+                    <br/>
+                    Submitted papers must be written clearly in English and should not exceed 15 pages (excluding references and appendices) in the one-column LNCS format. Authors should prepare their manuscripts in accordance with the Springer guidelines for conference proceedings, available here:
+                    <a href="https://link.springer.com/series/558/information-for-authors-and-editors" style="color: #2df7bd;">https://link.springer.com/series/558/information-for-authors-and-editors</a>.
+                    <br/><br/>
+                    The EasyChair submission page is available at:
+                    <a href="https://easychair.org/conferences/?conf=aila2027" style="color: #2df7bd;">https://easychair.org/conferences/?conf=aila2027</a>. 
+                    <br/><br/>
+                    As with previous editions of AILA, it is anticipated that accepted papers will be published by Springer in the Communications in Computer and Information Science series and indexed by EI Compendex. Selected papers presented at the conference may be invited for submission, in extended form, to special issues of international journals such as Information Sciences and Applied Sciences.
+                    </p>
+                    
+                    <br/>
+                    <h4 class="text-white mb-3 text-center"><strong>Submission Policy</strong></h4>
+                    <p class="text-white mb-2">
+                    <strong>Use of AI-assisted tools.</strong> Any use of AI should comply with applicable publication and ethical standards, including the ACM policy on authorship and the conference's publication policies (<a href="https://www.acm.org/publications/policies/new-acm-policy-on-authorship" style="color: #2df7bd;">https://www.acm.org/publications/policies/new-acm-policy-on-authorship</a>). In particular:
+                    <br/><br/>
+                    "When using Artificial Intelligence to conduct research, including the design and methodology of the research project, creation and selection of data sources, designing experiments, generation and collection of data, coding, implementing models, running simulations, data analysis, testing, validating results, deploying software, archiving data and code for reproducibility, or any other aspects of the research lifecycle that are directly relevant to the conclusions of the research underlying the Work, the specific use(s) of AI tools must be described in detail in the methods section of the Work. This includes the creation of artifacts that are directly relevant to the conclusions of the research, such as code, datasets, and charts or figures that rely on the AI tools."
+                    <br/><br/>
+                    <strong>Desk rejection policy.</strong> To ensure an efficient review process, submissions may be desk rejected without external review if they are clearly outside the scope of the conference, including papers that are not substantially related to logic, or if they fail to comply with the submission requirements, such as the prescribed formatting template or other mandatory submission guidelines. Submissions should also comply with Springer requirements on originality and similarity checking; in particular, the Crossref Similarity Check score using iThenticate should be below 30%.
+                    <br/><br/>
+                    </p>
+
+                    <br/>
+                    <h4 class="text-white mb-3 text-center"><strong>Sponsor for Students</strong></h4>
+                    <p class="text-white mb-2">
+                    The <a href="https://aslonline.org" style="color: #2df7bd;">Association for Symbolic Logic (ASL)</a> provides student travel grants for graduate students in logic to attend ASL-sponsored and annual meetings.
+                    </p>
+                    <p class="text-white mb-2"><strong>Key Details and Requirements</strong></p>
+                    <ul class="text-white mb-2">
+                        <li><strong>Eligibility:</strong> You must be an <a href="https://aslonline.org" style="color: #2df7bd;">ASL student member</a> to apply.</li>
+                        <li><strong>Application Timeline:</strong> Applications are typically due at least <strong>three months</strong> prior to the start of the meeting.</li>
+                        <li><strong>Required Materials:</strong>
+                            <ul>
+                                <li>A brief letter of application (including name, home institution, thesis supervisor, description of your logic studies, reason for attending, and estimated travel expenses).</li>
+                                <li>A short recommendation letter sent directly by your thesis supervisor.</li>
+                            </ul>
+                        </li>
+                        <li><strong>Where to Submit:</strong> Email your application materials to the ASL Business Office at <code style="color: #ffffff;">asl@uconn.edu</code> with an appropriate subject line (e.g., "ASL travel application -- AILA 2027").</li>
+                    </ul>
+                    
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+<section id="committee">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-12 text-center">
+					
+                    <h4 class="section-heading"><strong>Steering Committee Chairs</strong></h4>
+                    <div class="row" style="padding-left: 150px;padding-right:150px">
+                        <div class="col-lg-6 mx-auto text-center">
+                            <figure>
+                                <img src="img/zgq.jpg" width="180">
+                                <figcaption> Guoqiang ZHANG <br/><center> University of Texas Houston, </center><center>USA</center><br />
+                                </figcaption>
+                            </figure>
+                        </div>
+                        <div class="col-lg-6 mx-auto text-center">
+                            <figure>
+                                <img src="img/cyx.jpg" width="180">
+                                <figcaption> Yixiang CHEN <br/><center> East China Normal University, </center><center>China</center><br />
+                                </figcaption>
+                            </figure>
+                        </div>
+                    </div>
+                    
+                    <hr class="my-4">
+                    <h4 class="section-heading"><strong>Steering Committee Members</strong></h4>
+					<div class="row" style="padding-left: 150px;padding-right:150px">
+					    <div class="col-lg-5 mx-auto text-right">
+							<p>
+								<b>Luis Soares BARBOSA</b><br />
+								<b>Marcello BONSANGUE</b><br />
+								<b>Meng SUN</b><br />
+								<b>Minghui XIONG</b><br />
+								<b>Ruqian LU</b><br />
+								<b>Sanjiang LI</b><br />
+								<b>Songmao ZHANG</b><br />
+								<b>Weiru LIU</b><br />
+								<b>Weixin XIE</b><br />
+							</p>
+					    </div>
+					    <div class="col-lg-7 mx-auto text-left">
+							<p>
+								Minho University, Portugal<br />
+								Leiden University, The Netherlands<br />
+								Peking University, China<br />
+								Zhejiang University, China<br />
+								Chinese Academy of Sciences, China<br />
+								University of Technology Sydney, Australia<br />
+								Chinese Academy of Sciences, China<br />
+								University of Bristol, UK<br />
+								Shenzhen University, China<br />
+							</p>
+					    </div>
+					</div>
+					
+					<hr class="my-4">
+                    <h4 class="section-heading"><strong>Honorary Chairs</strong></h4>
+                    <div class="row" style="padding-left: 150px;padding-right:150px">
+                        <div class="col-lg-6 mx-auto text-center">
+                            <figure>
+                                <img src="img/lrq.jpg" width="180">
+                                <figcaption> Ruqian LU <br/><center> Chinese Academy of Sciences, </center><center>China</center><br />
+                                </figcaption>
+                            </figure>
+                        </div>
+						<div class="col-lg-6 mx-auto text-center">
+                            <figure>
+                                <img src="img/xxx.png" width="150">
+                                <figcaption> Weixin XIE <br/><center> Shenzhen University, </center><center>China</center><br />
+                                </figcaption>
+                            </figure>
+                        </div>
+                    </div>
+
+					<hr class="my-4">
+                    <h4 class="section-heading"><strong>Conference Chairs</strong></h4>
+                    <div class="row" style="padding-left: 150px;padding-right:150px">
+                        <div class="col-lg-4 mx-auto text-center">
+                            <figure>
+                                <img src="img/wh.jpg" width="180">
+                                <figcaption> Hui WANG <br/><center> Queen’s University Belfast, </center><center>UK</center><br />
+                                </figcaption>
+                            </figure>
+                        </div>
+                        <div class="col-lg-4 mx-auto text-center">
+                            <figure>
+                                <img src="img/mar.jpg" width="180">
+                                <figcaption> Marcello BONSANGUE <br/><center> Leiden University, </center><center>The Netherlands</center><br />
+                                </figcaption>
+                            </figure>
+                        </div>
+                        <div class="col-lg-4 mx-auto text-center">
+                            <figure>
+                                <img src="img/zsm.jpg" width="240">
+                                <figcaption> Songmao ZHANG <br/><center> Chinese Academy of Sciences, </center><center>China</center><br />
+                                </figcaption>
+                            </figure>
+                        </div>						
+                    </div>
+
+                    <hr class="my-4">
+                    <h4 class="section-heading"><strong>PC Co-Chairs</strong></h4>
+                    <div class="row" style="padding-left: 150px;padding-right:150px">
+                        <div class="col-lg-4 mx-auto text-center">
+                            <figure>
+                                <img src="img/ela.png" width="180">
+                                <figcaption> Elaine PIMENTEL <br/><center> University College London, </center><center>UK</center><br />
+                                </figcaption>
+                            </figure>
+                        </div>
+						<div class="col-lg-4 mx-auto text-center">
+                            <figure>
+                                <img src="img/lj.png" width="190">
+                                <figcaption> Jun LIU <br/><center> Ulster University, </center><center>UK</center><br />
+                                </figcaption>
+                            </figure>
+                        </div>					
+                        <div class="col-lg-4 mx-auto text-center">
+                            <figure>
+                                <img src="img/zm.jpg" width="160">
+                                <figcaption> Min ZHANG <br/><center> East China Normal University, </center><center>China</center><br />
+                                </figcaption>
+                            </figure>
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+                    <h4 class="section-heading"><strong>Organization Co-Chairs</strong></h4>
+                    <div class="row" style="padding-left: 150px;padding-right:150px">
+                        <div class="col-lg-4 mx-auto text-center">
+                            <figure>
+                                <img src="img/ben.png" width="180">
+                                <figcaption> Ben REDDEN <br/><center> Queen’s University Belfast, </center><center>UK</center><br />
+                                </figcaption>
+                            </figure>
+                        </div>
+                        <div class="col-lg-4 mx-auto text-center">
+                            <figure>
+                                <img src="img/dav.png" width="180">
+                                <figcaption> David GLASS <br/><center> Ulster University, </center><center>UK</center><br />
+                                </figcaption>
+                            </figure>
+                        </div>
+                        <div class="col-lg-4 mx-auto text-center">
+                            <figure>
+                                <img src="img/zl.png" width="180">
+                                <figcaption> Li ZOU <br/><center> Shandong Jianzhu University, </center><center>China</center><br />
+                                </figcaption>
+                            </figure>
+                        </div>
+                    </div>
+                    
+                    <hr class="my-4">
+                    <h4 class="section-heading"><strong>Organization Members</strong></h4>
+                    <div class="row" style="padding-left: 150px;padding-right:150px">
+					    <div class="col-lg-5 mx-auto text-right">
+							<p>
+								<b>Glen HAWE</b><br />
+								<b>Joe HIGGINS</b><br />
+								<b>Joseph BUTLER</b><br />
+								<b>Muhammad SHAFI</b><br />
+								<b>Yifei WANG</b><br />
+							</p>
+					    </div>
+					    <div class="col-lg-7 mx-auto text-left">
+							<p>
+								Ulster University, UK<br />
+								Queen’s University Belfast, UK<br />
+								Queen’s University Belfast, UK<br />
+								Ulster University, UK<br />
+								East China Normal University, China<br />
+							</p>
+					    </div>
+					</div>
+
+                    <hr class="my-4">
+                    <h4 class="section-heading"><strong>Publicity Co-Chairs</strong></h4>
+                    <div class="row" style="padding-left: 150px;padding-right:150px">
+                        <div class="col-lg-6 mx-auto text-center">
+                            <figure>
+                                <img src="img/sxm.png" width="240">
+                                <figcaption> Xinming SHI <br/><center> Queen’s University Belfast, </center><center>UK</center><br />
+                                </figcaption>
+                            </figure>
+                        </div>
+					    <div class="col-lg-6 mx-auto text-center">
+					        <figure>
+                                <img src="img/zyg.jpg" width="140">
+					            <figcaption> Yonggang ZHANG <br/><center> Jilin University, </center><center>China</center><br />
+                                </figcaption>
+					        </figure>
+					    </div>
+					</div>
+
+                    <hr class="my-4">
+					<h4 class="section-heading"><strong>AILA 2027 PC Members</strong></h4>
+					<div class="row" style="padding-left: 0px;padding-right: 0px">
+						<div class="mx-auto text-left">					
+							<table class="table table-borderless">
+								<thead>
+									<tr>
+										<th>Name</th>
+										<th>Affiliation</th>
+									</tr>
+								</thead>
+								<tbody>
+									<tr><td>Thomas Ågotnes</td><td>University of Bergen, NO</td></tr>
+									<tr><td>Jie An</td><td>Chinese Academy of Sciences, China</td></tr>
+									<tr><td>Christoph Benzmüller</td><td>Otto-Friedrich-Universität Bamberg, DE</td></tr>
+									<tr><td>Shuwei Chen</td><td>Southwest Jiaotong University, China</td></tr>
+									<tr><td>Valeria de Paiva</td><td>Topos Institute, USA</td></tr>
+									<tr><td>Huimin Dong</td><td>TU Wien, AT</td></tr>
+									<tr><td>Marcelo Finger</td><td>University of São Paulo, BR</td></tr>
+									<tr><td>Xiaoxuan Fu</td><td>China University of Political Science and Law, China</td></tr>
+									<tr><td>Alexandre V. Gheorghiu</td><td>University College London, UK</td></tr>
+									<tr><td>Edward Hermann Haeusler</td><td>PUC-Rio, BR</td></tr>
+									<tr><td>Oliver Kullmann</td><td>Swansea University, UK</td></tr>
+									<tr><td>Quang Loc Le</td><td>University College London, UK</td></tr>
+									<tr><td>Bruno Lopes</td><td>Universidade Federal Fluminense, BR</td></tr>
+									<tr><td>Alexandre Madeira</td><td>University of Aveiro, PT</td></tr>
+									<tr><td>Andrei Popescu</td><td>University of Sheffield, UK</td></tr>
+									<tr><td>Geoff Sutcliffe</td><td>University of Miami, USA</td></tr>
+									<tr><td>Gijs Wijnholds</td><td>Leiden University, NL</td></tr>
+									<tr><td>Hongying Zhang</td><td>Xi’an Jiaotong University, China</td></tr>
+									<tr><td>Junsheng Qiao</td><td>Northwest Normal University, China</td></tr>
+									<tr><td>Manuel Ojeda-Aciego</td><td>University of Malaga, ES</td></tr>
+									<tr><td>Meng Sun</td><td>Peking University, China</td></tr>
+									<tr><td>Shuling Wang</td><td>Chinese Academy of Sciences, China</td></tr>
+									<tr><td>Tianwen Xu</td><td>Nanjing University, China</td></tr>
+									<tr><td>Vilém Novák</td><td>University of Ostrava, EU</td></tr>
+									<tr><td>Viorica Sofronie-Stokkermans</td><td>University of Koblenz, DE</td></tr>
+									<tr><td>Yisong Wang</td><td>Guizhou University, China</td></tr>
+									<tr><td>Yoni Zohar</td><td>Bar-Ilan University, IL</td></tr>
+									<tr><td>Yong Su</td><td>Suzhou University of Science and Technology, China</td></tr>
+									<tr><td>Yuanrui Zhang</td><td>Nanjing University of Aeronautics and Astronautics, China</td></tr>
+									<tr><td>Zhizheng Zhang</td><td>Southeast University, China</td></tr>
+									<tr><td>Zhu Wang</td><td>Law School of Sichuan University, China</td></tr>
+								</tbody>
+							</table>
+						</div>
+					</div>
+					<hr class="my-4">
+
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+   <section class="bg-dark text-white" id="contact">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-8 mx-auto text-center">
+                    <h2 class="section-heading">Contact Information</h2>
+                    <p>Any inquiry about the conferrence can be sent to Ben REDDEN (bredden01@qub.ac.uk). </p>
+					<br/>
+					<br/>
+					<p>Web maintainer: Yifei WANG, East China Normal University.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="bg-dark" id="sponsors">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-8 mx-auto text-center">
+                    <h2 class="section-heading text-white">Sponsors</h2>
+                    <p></p>
+					<div style="margin-bottom: 28px;">
+						<img style="display: inline-block; vertical-align: middle; margin: 12px 18px;" alt="East China Normal University"
+							src="img/logos/ecnu.png" width="120px">
+						<a href="https://aslonline.org"><img style="display: inline-block; vertical-align: middle; margin: 12px 18px;" alt="Association for Symbolic Logic"
+							src="img/logos/ASL Logo_JPEG.jpg" width="220px"></a>
+						<img style="display: inline-block; vertical-align: middle; margin: 12px 18px;" alt="ACM SIGLOG"
+							src="img/logos/SIGLOG-logo.jpeg" width="220px">
+					</div>
+					<div>
+						<a href="https://link.springer.com/conference/aila"><img style="display: inline-block; vertical-align: middle; margin: 12px 22px;" alt="CCIS"
+                    src="img/logos/ccis.jpg" width="100px"></a>
+						<a href="https://www.springer.com/"><img style="display: inline-block; vertical-align: middle; margin: 12px 22px;" alt="Springer"
+                        src="img/logos/springer.jpg" width="240px"></a>
+					</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script src="vendor/jquery/jquery.min.js"></script>
+    <script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+
+    <script src="vendor/jquery-easing/jquery.easing.min.js"></script>
+    <script src="vendor/scrollreveal/scrollreveal.min.js"></script>
+    <script src="vendor/magnific-popup/jquery.magnific-popup.min.js"></script>
+
+    <script src="js/creative.min.js"></script>
+    <script src="vendor/axios/axios.min.js"></script>
+    <script src="js/registration.js"></script>
+
+    <script type="text/javascript">timeline(document.querySelectorAll('.timeline'));</script>
+</body>
+
+</html>

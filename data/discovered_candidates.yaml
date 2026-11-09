@@ -6535,7 +6535,7 @@ candidates:
     id: candidate-18cf3957a6b3e904cf55be7c
     source: easychair
     source_item_id: aila2027
-    status: discovered
+    status: promoted
     discovered_at: '2026-08-20T20:45:37.898Z'
     first_seen_at: '2026-08-20T20:45:37.898Z'
     last_seen_at: '2026-08-22T20:39:59.383Z'
