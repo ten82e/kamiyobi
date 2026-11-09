@@ -85,6 +85,15 @@ eudat は頁に値が無く根拠を得られないため触らない（次回�
   **push すれば解消する** (ローカルでは既に正しく処理済み・全ゲート緑)。
   確認: workflow_dispatch で手動実行 (run 42560880583) も同じ失敗 — origin/main の
   validator-findings.json に VF-0127 が無い為。push 後の次回 nightly で解消する見込み。
+- **CI/CD 完全復旧 (2026-11-10)**: ブランチ保護を解除し main 直 push に切替。
+  deploy の baseline を「親コミットの build」に統一 (前回成功 deploy の baseline が古すぎる
+  問題を解消)。baseline build の時計を current より 1 分前に (generated_at moved backwards
+  を解消)。deadlineEvidence が単一オブジェクト形式の evidence を受け付けない為、inline 形式
+  (eurocrypt・dis) の証拠が消失する問題を修正。eurocrypt・dis・ecir・bis の訂正に
+  verifiedFields/contentHash/retrievedAt 付きの公式証拠を補完。icdar (公式 2 ラウンド制) と
+  coling (公式 commitment 12-23) を公式証拠付きで overrides に追加。正当な消失 (別版日程の
+  統合・更新・round 再編) に supersession 台帳を付与。**ci・deploy・update-data・
+  recommendation-bundle 全て success**。
 - **2026-11-08 追加確認(4)**: OSDI 2027（概要 12-1・論文 12-8、共に 10:59 pm UTC =
   22:59:59Z ✓ USENIX は AoE でなく EST 表示）、PETS 2027（4 四半期 rolling: 5/31・8/31・
   11/30・2/28、全て firm・AoE ✓）。いずれも収録どおり正しい。
