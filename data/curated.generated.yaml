@@ -634,6 +634,46 @@ conferences:
     title: WQS 2026
 
   - categories:
+      - ai
+      - db
+    editions:
+      - date_text: May 28-30, 2027
+        deadlines:
+          - date: '2026-11-30 23:59:59'
+            evidence:
+              - contentHash: 11947bfce8baaec5477bfd0f3e6870842dd16650056d18e54555c91e45d54a20
+                rawExcerpt: 'Submission deadline November 30, 2026'
+                retrievedAt: '2026-11-10T03:15:00Z'
+                sourceClass: official-cfp
+                sourceUrl: https://easychair.org/cfp/ICAIBD2027
+                verifiedAt: '2026-11-10T03:15:00Z'
+                verifiedFields:
+                  - date
+                  - time
+                  - timezone
+            kind: paper
+            label: Paper submission deadline
+            precision: exact
+            promotion_ref:
+              batch: 2026-11-10-icaibd-2027
+              resolution: resolution-icaibd-2027
+            round: 1
+            track: ''
+            tz: AoE
+        event_end: '2027-05-30'
+        event_start: '2027-05-28'
+        id: icaibd-2027
+        link: https://www.icaibd.org/
+        place: Chengdu, China
+        year: 2027
+    full_name: The 10th International Conference on Artificial Intelligence and Big Data
+    key: icaibd
+    link: https://www.icaibd.org/
+    tags:
+      - niche
+    title: ICAIBD 2027
+
+  - categories:
       - systems
       - db
     editions:
