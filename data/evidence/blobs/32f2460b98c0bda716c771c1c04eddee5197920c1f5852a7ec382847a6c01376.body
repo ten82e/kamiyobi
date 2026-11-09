@@ -1,0 +1,129 @@
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="/include/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <script src="include/js/jquery.js" crossorigin="anonymous"></script>
+    <script src="include/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+
+    <title>Homepage &mdash; NG-RES Workshop</title>
+  </head>
+  <body style="overflow-y: scroll;">
+<div class="container">
+
+	<div>
+	  <br>
+		<h1>NG-RES</h1>
+		<h3>Workshop on Next Generation Real-Time Embedded Systems</h3>
+		<p>Co-located with HiPEAC 2027 (Glasgow), January 20, 2027</p>
+		<hr />
+	</div>
+
+	<nav class="navbar navbar-default navbar-expand-lg navbar-dark" style="background-color: teal;">
+		<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarColor02" aria-controls="navbarColor02" aria-expanded="false" aria-label="Toggle navigation">
+		  <span class="navbar-toggler-icon"></span>
+		</button>
+		<div class="collapse navbar-collapse" id="navbarColor02">
+		  <ul class="navbar-nav mr-auto">
+		    <li class="nav-item active">
+		      <a class="nav-link" href="index.php">Home</a>
+		    </li>
+		    <li class="nav-item">
+		      <a class="nav-link" href="cfp.php">Call for Papers</a>
+		    </li>
+		    <li class="nav-item">
+		      <a class="nav-link" href="organizers.php">Organizers</a>
+		    </li>
+		    <!--
+		    <li class="nav-item">
+		      <a class="nav-link" href="speakers.php">Invited Talk</a>
+		    </li>
+		    -->
+		    <!--
+		    <li class="nav-item">
+		      <a class="nav-link" href="program.php">Program</a>
+		    </li>
+		    <li class="nav-item">
+		      <a class="nav-link" href="gallery.php">Photo Gallery</a>
+		    </li>
+		    -->
+		    <li class="nav-item">
+		      <a class="nav-link" href="venue.php">Registration and Venue</a>
+		    </li>
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                  Past editions
+                </a>
+                <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                  <a class="dropdown-item" href="/past-editions/2026/index.php">2026</a>
+                  <a class="dropdown-item" href="/past-editions/2025/index.php">2025</a>
+                  <a class="dropdown-item" href="/past-editions/2024/index.php">2024</a>
+                  <a class="dropdown-item" href="/past-editions/2023/index.php">2023</a>
+                  <a class="dropdown-item" href="/past-editions/2022/index.php">2022</a>
+                  <a class="dropdown-item" href="/past-editions/2021/index.php">2021</a>
+                  <a class="dropdown-item" href="/past-editions/2020/index.php">2020</a>
+                </div>
+            </li>
+        <!--
+        <li class="nav-item active">
+            <a class="btn btn-danger" href="/" role="button">Go back to the current edition</a>
+		    </li>
+		    -->
+		  </ul>
+		</div>
+	  </nav>
+
+
+<div class="pt-4 my-md-5 pt-md-2">
+<h3>8th edition of the NG-RES workshop</h3>
+<h5>January 20, 2027 @ HiPEAC conference</h5>
+<p style="text-align:justify">
+The NG-RES workshop focuses on real-time embedded systems, with particular emphasis on the
+distributed and parallel aspects.
+The workshop is a venue for both the networking and multicore real-time communities aiming
+at cross-fertilization and multi-disciplinary approaches to the design of embedded systems.
+</p>
+
+<!--<p>
+Call for papers and submission information to be announced.
+</p>-->
+
+<a class="btn btn-primary" href="cfp.php" role="button" style="background-color:teal">Read the Call for Paper »</a>
+<br><br>
+<a class="btn btn-primary" href="https://easychair.org/conferences/?conf=ngres2027" role="button" style="background-color:#c25">Submission Website »</a>
+</p>
+
+<p style="text-align:justify">
+<h5>Important Dates</h5>
+<ul><li>Paper submission: November 15th, 2026 (23:59 AoE)</li><li>Acceptance notification: December 17th, 2026</li><li>Camera ready: December 31st, 2026</li></ul></p>
+
+<a href="https://heaplab.deib.polimi.it"><img src="include/images/HeapLab_Orizzontale.svg" height="96px"/></a>
+<a href="https://www.cister-labs.pt"><img src="include/images/cister.jpg" height="120px"/></a>
+<a href="https://www.hal4sdv.eu"><img src="include/images/hal4sdv.png" height="96px" style="margin: 8px;"/></a>
+<a href="https://www.hh.se/english.html"><img src="include/images/halmstad.svg" height="96px" style="margin: 16px;"/></a>
+<a href="https://www.hipeac.net/2027/glasgow/#/"><img src="include/images/hipeac.svg" height="96px" style="margin: 16px;"/></a>
+<a href="https://www.dagstuhl.de"><img src="include/images/dagstuhl_publishing.jpeg" height="96px" style="margin: 16px;"/></a>
+
+<!--
+<p style="text-align:justify">
+<h5>Sponsored By</h5>
+<br />
+<a href="http://www.emsig.net/"><img src="include/images/emsig.png" width="200" alt="emsig" /></a>
+</p>
+-->
+
+</div>
+
+
+<footer class="pt-4 my-md-5 pt-md-2 border-top">
+    <div style="text-align:right; color:#999; margin-right:10px;">Powered by <a href="https://getbootstrap.com/">Bootstrap</a></div>
+</footer>
+
+</div>
+
+</html>
+

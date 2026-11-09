@@ -47766,7 +47766,7 @@ candidates:
     id: candidate-cb8977d63bddcbf068c2dc86
     source: easychair
     source_item_id: ng-res-2027
-    status: discovered
+    status: promoted
     discovered_at: '2026-11-07T18:28:57.417Z'
     first_seen_at: '2026-11-07T18:28:57.417Z'
     last_seen_at: '2026-11-07T18:30:51.935Z'
