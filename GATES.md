@@ -49,6 +49,8 @@ npm run test:recommendation-mutations       # 推薦の変異検査
 復元後 25/0。**2/2 検出** ✓。
 2026-11-09 実測 (llms-count-mutations): baseline 19/0 → 3 変異系 (missing-dates 7/12・
 fixed-coverage 0/19・thousands-grouping 18/1) で合計 18/18 検出 → 復元後 19/0 ✓。
+2026-11-09 実測 (bench): passed true ✓ (real-bench dev=80・heldout=80・negative=41、
+feature baseline の検証も confirmed)。
 llms-count・mcp-recovery の baseline（49/0）は緑。
 **既知の赤**（品質基準は緩めない）:
 - `test:real-papers` と `test:recommendation-mutations` の baseline は、SPEC
