@@ -636,6 +636,45 @@ conferences:
   - categories:
       - networking
     editions:
+      - date_text: April 28-30, 2027
+        deadlines:
+          - date: '2026-11-28 23:59:59'
+            evidence:
+              - contentHash: cc537f0dd6fa306692340946503122c636400f4936a81aafe9deb53794f81289
+                rawExcerpt: 'Submission deadline November 28, 2026'
+                retrievedAt: '2026-11-10T05:05:00Z'
+                sourceClass: official-cfp
+                sourceUrl: https://easychair.org/cfp/latinIoT2027
+                verifiedAt: '2026-11-10T05:05:00Z'
+                verifiedFields:
+                  - date
+                  - time
+                  - timezone
+            kind: paper
+            label: Paper submission deadline
+            precision: exact
+            promotion_ref:
+              batch: 2026-11-10-latiniot-2027
+              resolution: resolution-latiniot-2027
+            round: 1
+            track: ''
+            tz: AoE
+        event_end: '2027-04-30'
+        event_start: '2027-04-28'
+        id: latiniot-2027
+        link: https://easychair.org/cfp/latinIoT2027
+        place: Santiago, Chile
+        year: 2027
+    full_name: IEEE Latin American Conference on Internet of Things
+    key: latiniot
+    link: https://easychair.org/cfp/latinIoT2027
+    tags:
+      - niche
+    title: IEEE LatinIoT 2027
+
+  - categories:
+      - networking
+    editions:
       - date_text: July 7-9, 2027
         deadlines:
           - date: '2027-01-15 23:59:59'
