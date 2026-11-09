@@ -101,6 +101,9 @@ eudat は頁に値が無く根拠を得られないため触らない（次回�
   （提出 Apr 14 ✓）、SecureComm 2027（Cycle 2 提出 Apr 15 ✓ — Cycle 1 の 2-1 提出・3-15
   通知の追加は改善候補）、KR 2027（概要 Apr 23・論文 Apr 28 AoE ✓ — ccfddl の dates.html
   由来コメントで確認）。
+- **2026-11-09 追加確認(19)**: CGI 2027（提出 Apr 21 11:59:59 UTC ✓ — 上流で UTC 明示）、
+  ICTIR 2027（上流に 2027 無し → 保留）、WASA 2027（上流に 2027 無し・公式は 2026 版 → 保留）、
+  DisCoTec/FORTE（前項）。
 - **2026-11-09 追加確認(7)**: CODASPY 2027（概要 11-16・論文 11-23 AoE ✓）、ICDAR 2027
   （IJDAR Journal Track 論文 11-15 AoE ✓ / Conference Track 概要 2-26・論文 3-5 AoE ✓）。
   いずれも訂正不要。
