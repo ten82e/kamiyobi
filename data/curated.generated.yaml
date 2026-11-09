@@ -632,5 +632,44 @@ conferences:
     tags:
       - niche
     title: WQS 2026
+  - categories:
+      - db
+    editions:
+      - date_text: April 5-7, 2027
+        deadlines:
+          - date: '2026-11-14 23:59:59'
+            evidence:
+              - contentHash: 70ccb809caef5bc8a9d798f16322e364e601e63425a2f8da976af03b3898e0b6
+                rawExcerpt: 'Hard deadline · 14 November 2026, 23:59 AoE'
+                retrievedAt: '2026-11-10T01:30:00Z'
+                sourceClass: official-cfp
+                sourceUrl: http://aciids.pwr.edu.pl/2027
+                verifiedAt: '2026-11-10T01:30:00Z'
+                verifiedFields:
+                  - date
+                  - time
+                  - timezone
+            kind: paper
+            label: Paper submission (hard deadline)
+            precision: exact
+            promotion_ref:
+              batch: 2026-11-10-aciids-2027
+              resolution: resolution-aciids-2027
+            round: 1
+            track: ''
+            tz: AoE
+        event_end: '2027-04-07'
+        event_start: '2027-04-05'
+        id: aciids-2027
+        link: http://aciids.pwr.edu.pl/2027
+        place: Bali, Indonesia
+        year: 2027
+    full_name: 19th Asian Conference on Intelligent Information and Database Systems
+    key: aciids
+    link: http://aciids.pwr.edu.pl/2027
+    tags:
+      - niche
+    title: ACIIDS 2027
 generated_from: data/promotions/*/resolutions.json
 schema_version: 1
+

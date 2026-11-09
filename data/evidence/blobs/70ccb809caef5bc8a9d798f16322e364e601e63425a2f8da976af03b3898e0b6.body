@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<base href="./">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ACIIDS 2027 – Asian Conference on Intelligent Information and Database Systems</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;500;600;700&amp;family=Libre+Franklin:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{margin:0;background:#F4F7FA;color:#112031;font-family:'Libre Franklin',system-ui,sans-serif;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;}
+  a{color:inherit;text-decoration:none;}
+  a:focus-visible{outline:2px solid #0E7C86;outline-offset:3px;border-radius:4px;}
+  ::selection{background:#0E7C86;color:#fff;}
+  @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto;}*,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;}}
+  @keyframes scF{from{transform:translateY(12px);}to{transform:translateY(0);}}
+  .mb{display:none;}
+  @media(max-width:560px){.dk{display:none!important;}.mb{display:block!important;}body{background:#F4F7FA!important;}}
+</style>
+</helmet>
+<a href="#main-content" style="position:fixed;left:16px;top:-120px;z-index:9999;padding:12px 22px;background:#0E7C86;color:#fff;font-weight:700;font-size:14px;border-radius:8px;text-decoration:none;transition:top 0.15s;" style-focus="top:16px;">Skip to main content</a>
+
+<!-- ===================== DESKTOP ===================== -->
+<div class="dk" style="min-height:100vh;display:flex;flex-direction:column;">
+<dc-import name="site-header" active="home" hint-size="100%,72px"></dc-import>
+<main id="main-content" tabindex="-1" style="flex:1;">
+
+  <!-- HERO -->
+  <section aria-labelledby="hero-title" style="position:relative;background:#07203B;overflow:hidden;color:#fff;">
+    <img src="assets/bali/twilight-temple.jpg" alt="" aria-hidden="true" fetchpriority="high" decoding="async" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 32%;">
+    <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(7,32,59,0.62) 0%,rgba(7,32,59,0.30) 32%,rgba(7,32,59,0.66) 78%,rgba(7,32,59,0.90) 100%);"></div>
+    <div style="position:absolute;inset:0;background:linear-gradient(90deg,rgba(7,32,59,0.78) 0%,rgba(7,32,59,0.30) 48%,transparent 78%);"></div>
+    <div style="position:relative;max-width:1180px;margin:0 auto;padding:clamp(96px,15vw,184px) clamp(20px,4vw,32px) clamp(72px,10vw,128px);">
+      <div style="max-width:780px;">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+          <div style="display:inline-flex;align-items:center;gap:8px;padding:6px 13px;border:1px solid rgba(255,255,255,0.3);background:rgba(7,32,59,0.25);border-radius:100px;font-size:12px;font-weight:600;letter-spacing:0.4px;color:#BFE8EC;text-transform:uppercase;">
+            <span style="width:6px;height:6px;border-radius:50%;background:#37C2CC;"></span>19th Edition</div>
+          <div style="display:inline-flex;align-items:center;gap:9px;padding:7px 9px 7px 14px;border:1.5px solid rgba(55,194,204,0.85);background:rgba(55,194,204,0.22);border-radius:100px;font-size:12.5px;font-weight:700;letter-spacing:0.4px;color:#EAFBFC;text-transform:uppercase;box-shadow:0 6px 22px rgba(55,194,204,0.32),inset 0 0 0 1px rgba(255,255,255,0.06);">
+            <span style="font-family:'Spectral',serif;font-size:13px;font-weight:700;color:#37C2CC;">CORE</span>Rank&nbsp;B
+            <span style="display:inline-flex;align-items:center;padding:3px 10px;border-radius:100px;background:#37C2CC;color:#06202F;font-size:11px;font-weight:800;letter-spacing:0.3px;">SINCE 2021</span>
+          </div>
+        </div>
+        <h1 id="hero-title" style="margin:24px 0 0;font-family:'Spectral',serif;font-weight:600;font-size:clamp(34px,5.4vw,62px);line-height:1.05;letter-spacing:-0.6px;text-shadow:0 2px 30px rgba(0,0,0,0.35);">Asian Conference on Intelligent Information and Database Systems</h1>
+        <p style="margin:22px 0 0;font-size:clamp(15px,1.6vw,18px);line-height:1.6;color:#E2EAF1;max-width:560px;text-shadow:0 1px 16px rgba(0,0,0,0.3);">A premier international forum for researchers, practitioners, and leading experts to share advances in artificial intelligence, data science, and intelligent computing.</p>
+        <div style="margin:28px 0 0;display:flex;align-items:center;gap:24px;flex-wrap:wrap;">
+          <div style="display:flex;align-items:center;gap:10px;font-size:15px;font-weight:500;color:#F0F4F8;"><span aria-hidden="true" style="color:#37C2CC;font-size:18px;">◆</span>Bali, Indonesia</div>
+          <div style="width:1px;height:18px;background:rgba(255,255,255,0.28);"></div>
+          <div style="display:flex;align-items:center;gap:10px;font-size:15px;font-weight:500;color:#F0F4F8;"><span aria-hidden="true" style="color:#37C2CC;font-size:18px;">◆</span>5–7 April 2027</div>
+        </div>
+        <div style="margin:34px 0 0;display:flex;gap:14px;flex-wrap:wrap;">
+          <a href="submit.html" style="padding:13px 24px;border-radius:8px;background:#0E7C86;color:#fff;font-weight:600;font-size:15px;box-shadow:0 8px 24px rgba(14,124,134,0.4);" style-hover="background:#13929d;">Submit a paper →</a>
+          <a href="keynotes.html#call" style="padding:13px 24px;border-radius:8px;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.32);backdrop-filter:blur(6px);color:#fff;font-weight:600;font-size:15px;" style-hover="background:rgba(255,255,255,0.2);">Call for keynote speakers</a>
+        </div>
+      </div>
+    </div>
+    <!-- COUNTDOWN BAR -->
+    <div style="position:relative;border-top:1px solid rgba(255,255,255,0.1);background:rgba(0,0,0,0.18);">
+      <div style="max-width:1180px;margin:0 auto;padding:20px clamp(20px,4vw,32px);display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap:wrap;">
+        <div>
+          <div style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.6px;color:#9FE3E8;">Paper submission closes in</div>
+          <div style="margin-top:3px;font-size:14px;color:#C5D2DE;">Hard deadline · {{ deadlineLabel }}</div>
+        </div>
+        <div aria-hidden="true" style="display:flex;gap:12px;">
+          <div style="text-align:center;min-width:64px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:10px;padding:10px 8px;">
+            <div style="font-family:'Spectral',serif;font-size:28px;font-weight:600;line-height:1;">{{ cd.days }}</div>
+            <div style="margin-top:5px;font-size:10px;text-transform:uppercase;letter-spacing:0.6px;color:#9FB1C0;">Days</div>
+          </div>
+          <div style="text-align:center;min-width:64px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:10px;padding:10px 8px;">
+            <div style="font-family:'Spectral',serif;font-size:28px;font-weight:600;line-height:1;">{{ cd.hours }}</div>
+            <div style="margin-top:5px;font-size:10px;text-transform:uppercase;letter-spacing:0.6px;color:#9FB1C0;">Hours</div>
+          </div>
+          <div style="text-align:center;min-width:64px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:10px;padding:10px 8px;">
+            <div style="font-family:'Spectral',serif;font-size:28px;font-weight:600;line-height:1;">{{ cd.mins }}</div>
+            <div style="margin-top:5px;font-size:10px;text-transform:uppercase;letter-spacing:0.6px;color:#9FB1C0;">Minutes</div>
+          </div>
+          <div style="text-align:center;min-width:64px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:10px;padding:10px 8px;">
+            <div style="font-family:'Spectral',serif;font-size:28px;font-weight:600;line-height:1;color:#37C2CC;">{{ cd.secs }}</div>
+            <div style="margin-top:5px;font-size:10px;text-transform:uppercase;letter-spacing:0.6px;color:#9FB1C0;">Seconds</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ABOUT -->
+  <section style="background:#fff;border-bottom:1px solid #E1E8EF;">
+    <div style="max-width:1180px;margin:0 auto;padding:clamp(48px,7vw,72px) clamp(20px,4vw,32px);display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:clamp(36px,5vw,64px);">
+      <div>
+        <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#0E7C86;">About the conference</div>
+        <h2 style="margin:14px 0 0;font-family:'Spectral',serif;font-weight:600;font-size:32px;line-height:1.15;letter-spacing:-0.4px;color:#0B2C50;">A long-standing tradition of international IT research</h2>
+        <p style="margin:18px 0 0;font-size:15.5px;line-height:1.7;color:#42566A;">ACIIDS 2027 is jointly organized by the Department of Applied Informatics at Wrocław University of Science and Technology, the IEEE Computer Society Indonesia Chapter, the Doctor of Computer Science program at BINUS University, and the International Institute of Applied Informatics.</p>
+        <p style="margin:14px 0 0;font-size:15.5px;line-height:1.7;color:#42566A;">The conference is held in cooperation with the IEEE SMC Technical Committee on Computational Collective Intelligence, ERCIS, and a robust network of global academic institutions.</p>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;align-content:start;">
+        <div style="background:#0B2C50;border-radius:12px;padding:22px;">
+          <div style="font-family:'Spectral',serif;font-size:34px;font-weight:600;color:#fff;">CORE&nbsp;B</div>
+          <div style="margin-top:6px;font-size:13px;color:#B9CAD8;line-height:1.5;">CORE-ranked conference since 2021</div>
+        </div>
+        <div style="background:#F4F7FA;border:1px solid #E1E8EF;border-radius:12px;padding:22px;">
+          <div style="font-family:'Spectral',serif;font-size:34px;font-weight:600;color:#0B2C50;">19th</div>
+          <div style="margin-top:6px;font-size:13px;color:#5C6B7A;line-height:1.5;">edition of the conference series</div>
+        </div>
+        <div style="background:#F4F7FA;border:1px solid #E1E8EF;border-radius:12px;padding:22px;">
+          <div style="font-family:'Spectral',serif;font-size:34px;font-weight:600;color:#0B2C50;">3+</div>
+          <div style="margin-top:6px;font-size:13px;color:#5C6B7A;line-height:1.5;">reviews per paper</div>
+        </div>
+        <div style="background:#F4F7FA;border:1px solid #E1E8EF;border-radius:12px;padding:22px;">
+          <div style="font-family:'Spectral',serif;font-size:34px;font-weight:600;color:#0B2C50;">150+</div>
+          <div style="margin-top:6px;font-size:13px;color:#5C6B7A;line-height:1.5;">senior PC members</div>
+        </div>
+        <div style="background:#F4F7FA;border:1px solid #E1E8EF;border-radius:12px;padding:22px;">
+          <div style="font-family:'Spectral',serif;font-size:34px;font-weight:600;color:#0B2C50;">40+</div>
+          <div style="margin-top:6px;font-size:13px;color:#5C6B7A;line-height:1.5;">authors' countries represented</div>
+        </div>
+        <a href="about.html" style="background:#0E7C86;border-radius:12px;padding:22px;display:flex;flex-direction:column;justify-content:space-between;min-height:100px;" style-hover="background:#0B6B74;">
+          <div style="font-size:13px;font-weight:600;color:#BFE8EC;line-height:1.4;">More statistics &amp; history</div>
+          <div style="margin-top:10px;display:flex;align-items:center;justify-content:space-between;gap:8px;">
+            
+            <span style="font-family:'Spectral',serif;font-size:18px;font-weight:600;color:#fff;">About</span><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
+          </div>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- KEY DATES -->
+  <section style="background:linear-gradient(180deg,#EAF2F3,#F4F7FA);border-bottom:1px solid #E1E8EF;">
+    <div style="max-width:1180px;margin:0 auto;padding:64px clamp(20px,4vw,32px);">
+      <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:24px;flex-wrap:wrap;">
+        <div>
+          <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#0E7C86;">Mark your calendar</div>
+          <h2 style="margin:12px 0 0;font-family:'Spectral',serif;font-weight:600;font-size:30px;letter-spacing:-0.4px;color:#0B2C50;">Important dates</h2>
+        </div>
+        <a href="dates.html" style="font-size:14px;font-weight:600;color:#0E7C86;" style-hover="color:#0B5d66;">All dates &amp; deadlines →</a>
+      </div>
+      <div style="margin-top:32px;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,210px),1fr));gap:16px;">
+        <div style="background:#fff;border:1px solid #E1E8EF;border-top:3px solid #C24545;border-radius:12px;padding:22px;opacity:0.7;">
+          <div style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:#C24545;">Special sessions</div>
+          <div style="margin-top:10px;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;"><span style="font-family:'Spectral',serif;font-size:21px;font-weight:600;color:#0B2C50;text-decoration:line-through;color:#999;">Aug 16, 2026</span></div>
+          <div style="margin-top:6px;font-size:13px;color:#C24545;font-weight:600;">Deadline passed</div>
+        </div>
+        <div style="background:#0B2C50;border-radius:12px;padding:22px;color:#fff;box-shadow:0 14px 30px rgba(11,44,80,0.22);">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;"><div style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:#9FE3E8;">Paper submission</div><span style="font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;background:#37C2CC;color:#0B2C50;border-radius:999px;padding:3px 9px;">Hard deadline</span></div>
+          <div style="margin-top:10px;font-family:'Spectral',serif;font-size:21px;font-weight:600;color:#FF6B6B;">Nov 14, 2026</div>
+          <div style="margin-top:6px;font-size:13px;color:#B9CAD8;">Full &amp; poster papers · <span style="text-decoration:line-through;">Oct 31</span></div>
+        </div>
+        <div style="background:#fff;border:1px solid #E1E8EF;border-radius:12px;padding:22px;">
+          <div style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:#5C6B7A;">Notification</div>
+          <div style="margin-top:10px;font-family:'Spectral',serif;font-size:21px;font-weight:600;color:#0B2C50;">Jan 2027</div>
+          <div style="margin-top:6px;font-size:13px;color:#5C6B7A;">Acceptance &amp; camera-ready</div>
+        </div>
+        <div style="background:#fff;border:1px solid #E1E8EF;border-radius:12px;padding:22px;">
+          <div style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:#5C6B7A;">Conference</div>
+          <div style="margin-top:10px;font-family:'Spectral',serif;font-size:21px;font-weight:600;color:#0B2C50;">Apr 5–7, 2027</div>
+          <div style="margin-top:6px;font-size:13px;color:#5C6B7A;">Bali, Indonesia</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PROCEEDINGS & INDEXING -->
+  <section style="background:#fff;border-bottom:1px solid #E1E8EF;">
+    <div style="max-width:1180px;margin:0 auto;padding:72px clamp(20px,4vw,32px);">
+      <div style="text-align:center;max-width:680px;margin:0 auto;">
+        <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#0E7C86;">Publication &amp; indexing</div>
+        <h2 style="margin:14px 0 0;font-family:'Spectral',serif;font-weight:600;font-size:32px;letter-spacing:-0.4px;color:#0B2C50;">Published by Springer, indexed worldwide</h2>
+        <p style="margin:16px 0 0;font-size:15.5px;line-height:1.7;color:#42566A;">All accepted submissions are published by Springer across two prestigious series (LNAI, CCIS) and submitted for indexing in major scientific databases.</p>
+      </div>
+      <div style="margin-top:40px;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:18px;">
+        <div style="border:1px solid #E1E8EF;border-radius:14px;padding:28px;background:#FAFCFD;">
+          <div style="display:inline-flex;padding:4px 11px;border-radius:6px;background:#0B2C50;color:#fff;font-size:12px;font-weight:700;letter-spacing:0.5px;">FULL PAPERS</div>
+          <h3 style="margin:16px 0 0;font-family:'Spectral',serif;font-size:21px;font-weight:600;color:#0B2C50;line-height:1.3;">Lecture Notes in Artificial Intelligence</h3>
+          <p style="margin:8px 0 0;font-size:14px;color:#5C6B7A;">LNCS / LNAI series · 12–15 pages</p>
+        </div>
+        <div style="border:1px solid #E1E8EF;border-radius:14px;padding:28px;background:#FAFCFD;">
+          <div style="display:inline-flex;padding:4px 11px;border-radius:6px;background:#0E7C86;color:#fff;font-size:12px;font-weight:700;letter-spacing:0.5px;">POSTER PAPERS</div>
+          <h3 style="margin:16px 0 0;font-family:'Spectral',serif;font-size:21px;font-weight:600;color:#0B2C50;line-height:1.3;">Communications in Computer and Information Science</h3>
+          <p style="margin:8px 0 0;font-size:14px;color:#5C6B7A;">CCIS series</p>
+        </div>
+      </div>
+      <div style="margin-top:24px;display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap;">
+        <span style="font-size:13px;font-weight:600;color:#5C6B7A;">Submitted for indexing in</span>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <span style="padding:8px 18px;border:1px solid #E1E8EF;border-radius:8px;font-family:'Spectral',serif;font-weight:600;font-size:15px;color:#0B2C50;">Scopus</span>
+          <span style="padding:8px 18px;border:1px solid #E1E8EF;border-radius:8px;font-family:'Spectral',serif;font-weight:600;font-size:15px;color:#0B2C50;">Web of Science</span>
+          <span style="padding:8px 18px;border:1px solid #E1E8EF;border-radius:8px;font-family:'Spectral',serif;font-weight:600;font-size:15px;color:#0B2C50;">DBLP</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SCOPE TEASER — 5 topic cards via sc-for -->
+  <section style="background:#F4F7FA;border-bottom:1px solid #E1E8EF;">
+    <div style="max-width:1180px;margin:0 auto;padding:72px clamp(20px,4vw,32px);">
+      <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:24px;flex-wrap:wrap;">
+        <div style="max-width:560px;">
+          <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#0E7C86;">Topics of interest</div>
+          <h2 style="margin:12px 0 0;font-family:'Spectral',serif;font-weight:600;font-size:30px;letter-spacing:-0.4px;color:#0B2C50;">Five thematic research areas</h2>
+        </div>
+        <a href="scope.html" style="font-size:14px;font-weight:600;color:#0E7C86;" style-hover="color:#0B5d66;">Full scope &amp; topics →</a>
+      </div>
+      <div style="margin-top:32px;display:grid;grid-template-columns:repeat(3,1fr);gap:18px;">
+        <sc-for list="{{ topics }}" as="topic" hint-placeholder-count="5">
+          <div style="background:#fff;border:1px solid #E1E8EF;border-radius:14px;padding:28px;" style-hover="border-color:#0E7C86;box-shadow:0 10px 30px rgba(11,44,80,0.08);">
+            <div style="font-family:'Spectral',serif;font-size:15px;font-weight:600;color:#0E7C86;">{{ topic.n }}</div>
+            <h3 style="margin:10px 0 0;font-family:'Spectral',serif;font-size:20px;font-weight:600;color:#0B2C50;">{{ topic.title }}</h3>
+            <p style="margin:12px 0 0;font-size:14px;line-height:1.6;color:#5C6B7A;">{{ topic.desc }}</p>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </section>
+
+  <!-- SUBMIT CTA — 3 step cards via sc-for -->
+  <section style="position:relative;background:#0B2C50;overflow:hidden;color:#fff;">
+    <div style="position:absolute;inset:0;background:radial-gradient(700px 400px at 85% 120%,rgba(14,124,134,0.5),transparent 60%);"></div>
+    <div style="position:relative;max-width:1180px;margin:0 auto;padding:clamp(48px,6vw,64px) clamp(20px,4vw,32px);display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:clamp(36px,5vw,56px);align-items:center;">
+      <div>
+        <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#9FE3E8;">For authors</div>
+        <h2 style="margin:14px 0 0;font-family:'Spectral',serif;font-weight:600;font-size:32px;letter-spacing:-0.4px;line-height:1.15;">Ready to submit your research?</h2>
+        <p style="margin:16px 0 0;font-size:15.5px;line-height:1.7;color:#C5D2DE;max-width:480px;">We welcome high-quality, original submissions. All manuscripts are submitted electronically through EasyChair and undergo rigorous peer review by at least three independent committee members.</p>
+        <div style="margin:28px 0 0;display:flex;gap:14px;flex-wrap:wrap;">
+          <a href="https://easychair.org/conferences/?conf=aciids2027" target="_blank" rel="noopener" style="padding:13px 24px;border-radius:8px;background:#0E7C86;color:#fff;font-weight:600;font-size:15px;" style-hover="background:#13929d;">Submit via EasyChair →</a>
+          <a href="submit.html" style="padding:13px 24px;border-radius:8px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.22);color:#fff;font-weight:600;font-size:15px;" style-hover="background:rgba(255,255,255,0.16);">Submission guidelines →</a>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <sc-for list="{{ steps }}" as="step" hint-placeholder-count="3">
+          <div style="display:flex;gap:14px;align-items:flex-start;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);border-radius:12px;padding:18px 20px;">
+            <div style="font-family:'Spectral',serif;font-size:18px;font-weight:600;color:#37C2CC;">{{ step.n }}</div>
+            <div>
+              <div style="font-weight:600;font-size:15px;">{{ step.title }}</div>
+              <div style="margin-top:3px;font-size:13.5px;color:#B9CAD8;">{{ step.desc }}</div>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </section>
+
+  <!-- PARTNERS — all logo groups via sc-for -->
+  <section style="background:#fff;border-bottom:1px solid #E1E8EF;">
+    <div style="max-width:1180px;margin:0 auto;padding:64px clamp(20px,4vw,32px);">
+      <div style="text-align:center;">
+        <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#0E7C86;">Organizers &amp; partners</div>
+        <h2 style="margin:12px 0 0;font-family:'Spectral',serif;font-weight:600;font-size:28px;letter-spacing:-0.4px;color:#0B2C50;">Brought together by leading institutions</h2>
+      </div>
+
+      <div style="margin-top:40px;display:flex;align-items:center;gap:18px;">
+        <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:#5C6B7A;white-space:nowrap;">Organized by</span>
+        <span style="height:1px;background:#E8EDF1;flex:1;"></span>
+      </div>
+      <div style="margin-top:18px;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:16px;">
+        <sc-for list="{{ orgLogos }}" as="logo" hint-placeholder-count="4">
+          <div style="height:100px;border:1px solid #E1E8EF;border-radius:12px;background:#fff;display:flex;align-items:center;justify-content:center;padding:20px 28px;" style-hover="border-color:#0E7C86;box-shadow:0 8px 24px rgba(11,44,80,0.07);">
+            <img loading="lazy" decoding="async" src="{{ logo.src }}" alt="{{ logo.alt }}" style="max-height:54px;max-width:100%;object-fit:contain;">
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="margin-top:34px;display:flex;align-items:center;gap:18px;">
+        <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:#5C6B7A;white-space:nowrap;">Published by</span>
+        <span style="height:1px;background:#E8EDF1;flex:1;"></span>
+      </div>
+      <div style="margin-top:18px;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:16px;">
+        <sc-for list="{{ pubLogos }}" as="logo" hint-placeholder-count="2">
+          <div style="height:100px;border:1px solid #E1E8EF;border-radius:12px;background:#fff;display:flex;align-items:center;justify-content:center;padding:20px 28px;" style-hover="border-color:#0E7C86;box-shadow:0 8px 24px rgba(11,44,80,0.07);">
+            <img loading="lazy" decoding="async" src="{{ logo.src }}" alt="{{ logo.alt }}" style="max-height:54px;max-width:100%;object-fit:contain;">
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="margin-top:34px;display:flex;align-items:center;gap:18px;">
+        <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:#5C6B7A;white-space:nowrap;">Supported by</span>
+        <span style="height:1px;background:#E8EDF1;flex:1;"></span>
+      </div>
+      <div style="margin-top:18px;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:16px;">
+        <sc-for list="{{ supLogos }}" as="logo" hint-placeholder-count="2">
+          <div style="height:100px;border:1px solid #E1E8EF;border-radius:12px;background:#fff;display:flex;align-items:center;justify-content:center;padding:20px 28px;" style-hover="border-color:#0E7C86;box-shadow:0 8px 24px rgba(11,44,80,0.07);">
+            <img loading="lazy" decoding="async" src="{{ logo.src }}" alt="{{ logo.alt }}" style="max-height:54px;max-width:100%;object-fit:contain;">
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="margin-top:34px;display:flex;align-items:center;gap:18px;">
+        <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:#5C6B7A;white-space:nowrap;">In cooperation with</span>
+        <span style="height:1px;background:#E8EDF1;flex:1;"></span>
+      </div>
+      <div style="margin-top:18px;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr));gap:16px;">
+        <sc-for list="{{ coopLogos }}" as="logo" hint-placeholder-count="11">
+          <div style="height:100px;border:1px solid #E1E8EF;border-radius:12px;background:#fff;display:flex;align-items:center;justify-content:center;padding:20px 28px;" style-hover="border-color:#0E7C86;box-shadow:0 8px 24px rgba(11,44,80,0.07);">
+            <img loading="lazy" decoding="async" src="{{ logo.src }}" alt="{{ logo.alt }}" style="max-height:54px;max-width:100%;object-fit:contain;">
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </section>
+</main>
+<dc-import name="footer" hint-size="100%,420px"></dc-import>
+</div>
+
+<!-- ===================== MOBILE ===================== -->
+<div class="mb" style="background:#F4F7FA;color:#112031;">
+  <dc-import name="mobile-header" active="home" hint-size="100%,56px"></dc-import>
+  <div data-screen-label="Home (mobile)" style="animation:scF .34s ease;">
+
+    <!-- HERO -->
+    <section style="position:relative;background:#07203B;overflow:hidden;color:#fff;">
+      <img src="assets/bali/twilight-temple.jpg" alt="" aria-hidden="true" fetchpriority="high" decoding="async" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 32%;">
+      <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(7,32,59,0.5) 0%,rgba(7,32,59,0.34) 38%,rgba(7,32,59,0.82) 82%,rgba(7,32,59,0.96) 100%);"></div>
+      <div style="position:relative;padding:30px 20px 26px;">
+        <div style="display:flex;gap:7px;flex-wrap:wrap;">
+          <span style="display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border:1px solid rgba(255,255,255,0.3);border-radius:100px;font-size:10.5px;font-weight:600;letter-spacing:0.4px;color:#BFE8EC;text-transform:uppercase;"><span style="width:5px;height:5px;border-radius:50%;background:#37C2CC;"></span>19th Edition</span>
+          <span style="display:inline-flex;align-items:center;gap:6px;padding:5px 6px 5px 11px;border:1.5px solid rgba(55,194,204,0.85);background:rgba(55,194,204,0.22);border-radius:100px;font-size:10.5px;font-weight:700;letter-spacing:0.4px;color:#EAFBFC;text-transform:uppercase;box-shadow:0 5px 16px rgba(55,194,204,0.3);">CORE Rank B<span style="padding:2px 7px;border-radius:100px;background:#37C2CC;color:#06202F;font-size:9.5px;font-weight:800;">SINCE 2021</span></span>
+        </div>
+        <h1 style="margin:16px 0 0;font-family:'Spectral',serif;font-weight:600;font-size:29px;line-height:1.1;letter-spacing:-0.4px;">Asian Conference on Intelligent Information &amp; Database Systems</h1>
+        <p style="margin:13px 0 0;font-size:14px;line-height:1.6;color:#DDE6EE;">A premier international forum for advances in artificial intelligence, data science, and intelligent computing.</p>
+        <div style="margin:18px 0 0;display:flex;align-items:center;gap:16px;font-size:13px;font-weight:500;color:#EAF0F5;">
+          <span style="display:flex;align-items:center;gap:7px;"><span aria-hidden="true" style="color:#37C2CC;">◆</span>Bali, Indonesia</span>
+          <span style="display:flex;align-items:center;gap:7px;"><span aria-hidden="true" style="color:#37C2CC;">◆</span>5–7 Apr 2027</span>
+        </div>
+        <div style="margin:20px 0 0;display:flex;flex-direction:column;gap:10px;">
+          <a href="submit.html" style="text-align:center;padding:14px;border-radius:11px;background:#0E7C86;color:#fff;font-weight:600;font-size:15px;box-shadow:0 10px 26px rgba(14,124,134,0.4);">Submit a paper →</a>
+          <a href="sessions/call-for-sessions.html" style="text-align:center;padding:14px;border:1px solid rgba(255,255,255,0.34);border-radius:11px;background:rgba(255,255,255,0.1);backdrop-filter:blur(6px);color:#fff;font-weight:600;font-size:15px;">Call for special sessions</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- COUNTDOWN CARD -->
+    <section style="padding:18px;">
+      <div style="background:#0B2C50;border-radius:18px;padding:20px;box-shadow:0 14px 30px rgba(11,44,80,0.18);">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:#9FE3E8;">Paper submission closes in</div>
+          <div style="font-size:11px;color:#9FB1C0;">Hard deadline · {{ deadlineShort }}</div>
+        </div>
+        <div aria-hidden="true" style="margin-top:14px;display:grid;grid-template-columns:repeat(4,1fr);gap:9px;">
+          <div style="text-align:center;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:11px;padding:11px 4px;"><div style="font-family:'Spectral',serif;font-size:26px;font-weight:600;line-height:1;color:#fff;">{{ cd.days }}</div><div style="margin-top:5px;font-size:9.5px;text-transform:uppercase;letter-spacing:0.6px;color:#9FB1C0;">Days</div></div>
+          <div style="text-align:center;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:11px;padding:11px 4px;"><div style="font-family:'Spectral',serif;font-size:26px;font-weight:600;line-height:1;color:#fff;">{{ cd.hours }}</div><div style="margin-top:5px;font-size:9.5px;text-transform:uppercase;letter-spacing:0.6px;color:#9FB1C0;">Hrs</div></div>
+          <div style="text-align:center;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:11px;padding:11px 4px;"><div style="font-family:'Spectral',serif;font-size:26px;font-weight:600;line-height:1;color:#fff;">{{ cd.mins }}</div><div style="margin-top:5px;font-size:9.5px;text-transform:uppercase;letter-spacing:0.6px;color:#9FB1C0;">Min</div></div>
+          <div style="text-align:center;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:11px;padding:11px 4px;"><div style="font-family:'Spectral',serif;font-size:26px;font-weight:600;line-height:1;color:#37C2CC;">{{ cd.secs }}</div><div style="margin-top:5px;font-size:9.5px;text-transform:uppercase;letter-spacing:0.6px;color:#9FB1C0;">Sec</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- QUICK ACTIONS -->
+    <section style="padding:6px 18px 4px;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:11px;">
+        <a href="dates.html" style="text-align:left;background:#fff;border:1px solid #E6ECF1;border-radius:15px;padding:16px;">
+          <span style="display:inline-flex;width:38px;height:38px;border-radius:11px;background:#EAF2F3;align-items:center;justify-content:center;"><svg width="20" height="20" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="#0E7C86" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="16" rx="2"></rect><path d="M8 3v4M16 3v4M4 10h16"></path></svg></span>
+          <div style="margin-top:11px;font-size:14.5px;font-weight:600;color:#0B2C50;">Important dates</div>
+          <div style="margin-top:2px;font-size:12px;color:#5C6B7A;">Deadlines &amp; milestones</div>
+        </a>
+        <a href="submit.html" style="text-align:left;background:#fff;border:1px solid #E6ECF1;border-radius:15px;padding:16px;">
+          <span style="display:inline-flex;width:38px;height:38px;border-radius:11px;background:#EAF2F3;align-items:center;justify-content:center;"><svg width="20" height="20" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="#0E7C86" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V5"></path><path d="M8 9l4-4 4 4"></path><path d="M5 19h14"></path></svg></span>
+          <div style="margin-top:11px;font-size:14.5px;font-weight:600;color:#0B2C50;">Submit a paper</div>
+          <div style="margin-top:2px;font-size:12px;color:#5C6B7A;">Guidelines &amp; EasyChair</div>
+        </a>
+        <a href="keynotes.html" style="text-align:left;background:#fff;border:1px solid #E6ECF1;border-radius:15px;padding:16px;">
+          <span style="display:inline-flex;width:38px;height:38px;border-radius:11px;background:#EAF2F3;align-items:center;justify-content:center;"><svg width="20" height="20" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="#0E7C86" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"></rect><path d="M6 11a6 6 0 0 0 12 0"></path><path d="M12 17v4"></path></svg></span>
+          <div style="margin-top:11px;font-size:14.5px;font-weight:600;color:#0B2C50;">Keynotes</div>
+          <div style="margin-top:2px;font-size:12px;color:#5C6B7A;">Talks &amp; call for speakers</div>
+        </a>
+        <a href="sessions/sessions.html" style="text-align:left;background:#fff;border:1px solid #E6ECF1;border-radius:15px;padding:16px;">
+          <span style="display:inline-flex;width:38px;height:38px;border-radius:11px;background:#EAF2F3;align-items:center;justify-content:center;"><svg width="20" height="20" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="#0E7C86" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="4.5" cy="6" r="1.4"></circle><circle cx="4.5" cy="12" r="1.4"></circle><circle cx="4.5" cy="18" r="1.4"></circle><path d="M9 6h11M9 12h11M9 18h11"></path></svg></span>
+          <div style="margin-top:11px;font-size:14.5px;font-weight:600;color:#0B2C50;">Special sessions</div>
+          <div style="margin-top:2px;font-size:12px;color:#5C6B7A;">Curated thematic tracks</div>
+        </a>
+        <a href="venue.html" style="grid-column:1/-1;text-align:left;background:#fff;border:1px solid #E6ECF1;border-radius:15px;padding:15px 16px;display:flex;align-items:center;gap:14px;">
+          <span style="flex-shrink:0;display:inline-flex;width:40px;height:40px;border-radius:11px;background:#EAF2F3;align-items:center;justify-content:center;"><svg width="21" height="21" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="#0E7C86" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-6 7-11a7 7 0 0 0-14 0c0 5 7 11 7 11z"></path><circle cx="12" cy="10" r="2.5"></circle></svg></span>
+          <span style="flex:1;"><span style="display:block;font-size:14.5px;font-weight:600;color:#0B2C50;">Venue &amp; travel</span><span style="display:block;margin-top:2px;font-size:12px;color:#5C6B7A;">Bali, Indonesia · getting there &amp; stay</span></span>
+          <span style="color:#9AA8B5;font-size:18px;">›</span>
+        </a>
+      </div>
+    </section>
+
+    <!-- ABOUT + STATS -->
+    <section style="padding:22px 18px 6px;">
+      <div style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#0E7C86;">About the conference</div>
+      <h2 style="margin:8px 0 0;font-family:'Spectral',serif;font-weight:600;font-size:22px;letter-spacing:-0.3px;color:#0B2C50;line-height:1.2;">A long-standing tradition of international IT research</h2>
+      <p style="margin:11px 0 0;font-size:14px;line-height:1.65;color:#42566A;">Jointly organized by Wrocław University of Science and Technology, the IEEE Computer Society Indonesia Chapter, BINUS University, and the International Institute of Applied Informatics.</p>
+      <div style="margin-top:16px;display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">
+        <div style="background:#0B2C50;border-radius:13px;padding:15px 12px;"><div style="font-family:'Spectral',serif;font-size:24px;font-weight:600;color:#fff;">B</div><div style="margin-top:4px;font-size:11px;color:#B9CAD8;line-height:1.4;">CORE rank</div></div>
+        <div style="background:#fff;border:1px solid #E6ECF1;border-radius:13px;padding:15px 12px;"><div style="font-family:'Spectral',serif;font-size:24px;font-weight:600;color:#0B2C50;">19th</div><div style="margin-top:4px;font-size:11px;color:#5C6B7A;line-height:1.4;">edition</div></div>
+        <div style="background:#fff;border:1px solid #E6ECF1;border-radius:13px;padding:15px 12px;"><div style="font-family:'Spectral',serif;font-size:24px;font-weight:600;color:#0B2C50;">40+</div><div style="margin-top:4px;font-size:11px;color:#5C6B7A;line-height:1.4;">countries</div></div>
+        <a href="about.html" style="grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:12px;background:#EAF2F3;border:1px solid #C2DDE0;border-radius:13px;padding:14px 16px;color:#0B2C50;">
+          <div>
+            <div style="font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#0E7C86;">About the conference</div>
+            <div style="margin-top:2px;font-size:13.5px;font-weight:600;">See more statistics &amp; history →</div>
+          </div>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0E7C86" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
+        </a>
+      </div>
+    </section>
+
+    <!-- KEY DEADLINES -->
+    <section style="padding:22px 18px 6px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <h2 style="margin:0;font-family:'Spectral',serif;font-weight:600;font-size:20px;color:#0B2C50;">Key deadlines</h2>
+        <a href="dates.html" style="font-size:13px;font-weight:600;color:#0E7C86;">All dates →</a>
+      </div>
+      <div style="margin-top:13px;display:flex;flex-direction:column;gap:10px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:14px;background:#fff;border:1px solid #E6ECF1;border-left:3px solid #C24545;border-radius:12px;padding:14px 16px;opacity:0.7;"><div><div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:#C24545;">Special sessions</div><div style="margin-top:3px;font-size:13px;color:#5C6B7A;">Proposal deadline</div></div><div style="text-align:right;flex-shrink:0;"><div style="font-family:'Spectral',serif;font-size:16px;font-weight:600;text-decoration:line-through;color:#999;">Aug 16</div><div style="font-size:11px;color:#5C6B7A;">2026</div></div></div>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:14px;background:#0B2C50;border-radius:12px;padding:14px 16px;color:#fff;"><div><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;"><div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:#9FE3E8;">Paper submission</div><span style="font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;background:#37C2CC;color:#0B2C50;border-radius:999px;padding:2px 7px;">Hard deadline</span></div><div style="margin-top:3px;font-size:13px;color:#B9CAD8;">Full &amp; poster papers · <span style="text-decoration:line-through;">Oct 31</span></div></div><div style="text-align:right;flex-shrink:0;"><div style="font-family:'Spectral',serif;font-size:16px;font-weight:600;color:#FF6B6B;">Nov 14</div><div style="font-size:11px;color:#B9CAD8;">2026</div></div></div>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:14px;background:#fff;border:1px solid #E6ECF1;border-radius:12px;padding:14px 16px;"><div><div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:#5C6B7A;">Conference</div><div style="margin-top:3px;font-size:13px;color:#5C6B7A;">Bali, Indonesia</div></div><div style="text-align:right;flex-shrink:0;"><div style="font-family:'Spectral',serif;font-size:16px;font-weight:600;color:#0B2C50;">Apr 5–7</div><div style="font-size:11px;color:#5C6B7A;">2027</div></div></div>
+      </div>
+    </section>
+
+    <!-- TOPICS — sc-for -->
+    <section style="padding:22px 18px 6px;">
+      <div style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#0E7C86;">Topics of interest</div>
+      <h2 style="margin:8px 0 0;font-family:'Spectral',serif;font-weight:600;font-size:20px;color:#0B2C50;">Five thematic research areas</h2>
+      <div style="margin-top:13px;display:flex;flex-direction:column;gap:10px;">
+        <sc-for list="{{ topics }}" as="topic" hint-placeholder-count="5">
+          <div style="background:#fff;border:1px solid #E6ECF1;border-radius:13px;padding:16px;">
+            <div style="font-family:'Spectral',serif;font-size:13px;font-weight:600;color:#0E7C86;">{{ topic.n }}</div>
+            <div style="margin-top:5px;font-family:'Spectral',serif;font-size:16px;font-weight:600;color:#0B2C50;">{{ topic.title }}</div>
+            <div style="margin-top:6px;font-size:13px;line-height:1.55;color:#5C6B7A;">{{ topic.desc }}</div>
+          </div>
+        </sc-for>
+      </div>
+      <a href="scope.html" style="margin-top:12px;display:block;text-align:center;padding:13px;border-radius:11px;background:#fff;border:1px solid #E6ECF1;color:#0E7C86;font-weight:600;font-size:13.5px;">Full scope &amp; topics →</a>
+    </section>
+
+    <!-- PUBLICATION -->
+    <section style="padding:22px 18px 6px;">
+      <div style="background:linear-gradient(180deg,#EAF2F3,#fff);border:1px solid #E6ECF1;border-radius:16px;padding:20px;">
+        <div style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#0E7C86;">Publication &amp; indexing</div>
+        <h2 style="margin:8px 0 0;font-family:'Spectral',serif;font-weight:600;font-size:19px;color:#0B2C50;line-height:1.25;">Published by Springer, indexed worldwide</h2>
+        <p style="margin:9px 0 0;font-size:13px;line-height:1.6;color:#42566A;">All accepted papers appear in Springer's LNAI &amp; CCIS series and are submitted for indexing.</p>
+        <div style="margin-top:13px;display:flex;flex-wrap:wrap;gap:8px;">
+          <span style="padding:7px 13px;background:#fff;border:1px solid #E1E8EF;border-radius:8px;font-family:'Spectral',serif;font-weight:600;font-size:13px;color:#0B2C50;">Scopus</span>
+          <span style="padding:7px 13px;background:#fff;border:1px solid #E1E8EF;border-radius:8px;font-family:'Spectral',serif;font-weight:600;font-size:13px;color:#0B2C50;">Web of Science</span>
+          <span style="padding:7px 13px;background:#fff;border:1px solid #E1E8EF;border-radius:8px;font-family:'Spectral',serif;font-weight:600;font-size:13px;color:#0B2C50;">DBLP</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- PARTNERS — sc-for (main logos only) -->
+    <section style="padding:22px 18px 26px;">
+      <div style="text-align:center;font-size:11px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;color:#5C6B7A;">Organizers &amp; partners</div>
+      <div style="margin-top:14px;display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <sc-for list="{{ mainLogos }}" as="logo" hint-placeholder-count="6">
+          <div style="height:74px;border:1px solid #E6ECF1;border-radius:12px;background:#fff;display:flex;align-items:center;justify-content:center;padding:14px;">
+            <img loading="lazy" decoding="async" src="{{ logo.src }}" alt="{{ logo.alt }}" style="max-height:40px;max-width:100%;object-fit:contain;">
+          </div>
+        </sc-for>
+      </div>
+    </section>
+
+  </div>
+  <dc-import name="mobile-footer" hint-size="100%,520px"></dc-import>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:&quot;100%&quot;,&quot;height&quot;:&quot;100vh&quot;},&quot;viewMode&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;desktop&quot;,&quot;mobile&quot;],&quot;default&quot;:&quot;desktop&quot;,&quot;tsType&quot;:&quot;string&quot;}}">
+class Component extends DCLogic {
+  state = { cd: this.compute() };
+
+  compute() {
+    const target = new Date('2026-11-14T23:59:59');
+    const now = new Date();
+    let diff = Math.max(0, target - now);
+    const days  = Math.floor(diff / 86400000); diff -= days  * 86400000;
+    const hours = Math.floor(diff / 3600000);  diff -= hours * 3600000;
+    const mins  = Math.floor(diff / 60000);    diff -= mins  * 60000;
+    const secs  = Math.floor(diff / 1000);
+    const p = n => String(n).padStart(2, '0');
+    return { days: p(days), hours: p(hours), mins: p(mins), secs: p(secs) };
+  }
+
+  componentDidMount()    { this._t = setInterval(() => this.setState({ cd: this.compute() }), 1000); }
+  componentWillUnmount() { clearInterval(this._t); }
+
+  renderVals() {
+
+    const topics = [
+      { n:'01', title:'Artificial Intelligence & Machine Learning',         desc:'Generative AI, foundation models, LLMs, deep learning, reinforcement and graph-based learning.' },
+      { n:'02', title:'Trustworthy & Responsible AI',                       desc:'Explainable AI, ethics and fairness, bias mitigation, privacy-preserving and secure systems.' },
+      { n:'03', title:'Intelligent Database Systems',                        desc:'Big data analytics, knowledge graphs, distributed data integration, governance and security.' },
+      { n:'04', title:'Advanced Applications in Industry & Science',         desc:'Healthcare, smart manufacturing, cyber-physical systems, IoT, robotics, supply chains.' },
+      { n:'05', title:'Human-Computer Interaction & Intelligent Interfaces', desc:'NLP and speech, multimodal and affective computing, recommenders, immersive VR/AR/XR.' },
+    ];
+    const steps = [
+      { n:'01', title:'English, LNCS/LNAI format',    desc:'12–15 pages, submitted as PDF for initial review.' },
+      { n:'02', title:'Original, unpublished work',    desc:'Zero-tolerance plagiarism policy; simultaneous submission prohibited.' },
+      { n:'03', title:'Submit via EasyChair',          desc:'One author must register and present for publication.' },
+    ];
+    const orgLogos = [
+      { src:'assets/logos/wust.png',              alt:'Wrocław University of Science and Technology' },
+      { src:'assets/logos/binus.png',             alt:'BINUS University' },
+      { src:'assets/logos/ieee-cs-indonesia.png', alt:'IEEE Computer Society Indonesia Chapter' },
+      { src:'assets/logos/iiai.gif',              alt:'IIAI — International Institute of Applied Informatics' },
+    ];
+    const pubLogos = [
+      { src:'assets/logos/springer.png', alt:'Springer' },
+      { src:'assets/logos/lnai.png',     alt:'Lecture Notes in Artificial Intelligence' },
+    ];
+    const supLogos = [
+      { src:'assets/logos/ieee-smc.jpg', alt:'IEEE Systems, Man, and Cybernetics Society' },
+      { src:'assets/logos/ercis.jpg',    alt:'ERCIS' },
+    ];
+    const coopLogos = [
+      { src:'assets/logos/leiden.png',      alt:'Leiden University' },
+      { src:'assets/logos/newcastle.png',   alt:'University of Newcastle' },
+      { src:'assets/logos/yeungnam.png',    alt:'Yeungnam University' },
+      { src:'assets/logos/nkust.png',       alt:'National Kaohsiung University of Science and Technology' },
+      { src:'assets/logos/nuk.png',         alt:'National University of Kaohsiung' },
+      { src:'assets/logos/ouc.png',         alt:'Open University of Cyprus' },
+      { src:'assets/logos/utm.png',         alt:'Universiti Teknologi Malaysia' },
+      { src:'assets/logos/vnu.png',         alt:'Vietnam National University' },
+      { src:'assets/logos/iu-vnu-hcm.png', alt:'Ho Chi Minh City International University' },
+      { src:'assets/logos/ntt.png',         alt:'Nguyen Tat Thanh University' },
+      { src:'assets/logos/aurak.png',       alt:'American University of Ras Al Khaimah' },
+    ];
+    return {
+      cd: this.state.cd,
+      deadlineLabel: '14 November 2026, 23:59 AoE',
+      deadlineShort: '14 Nov 2026',
+      topics,
+      steps,
+      orgLogos,
+      pubLogos,
+      supLogos,
+      coopLogos,
+      mainLogos: [...orgLogos, ...pubLogos],
+    };
+  }
+}
+</script>
+</body>
+</html>
