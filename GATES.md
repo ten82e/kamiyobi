@@ -63,6 +63,15 @@ llms-count・mcp-recovery の baseline（49/0）は緑。
 - `venue_scopes` の topics 追加はゲート評価を劣化させる（SPEC §募集分野の説明を人とAIで
   確認する の注意書き）。topics を復活させるなら評価を通してから。
 
+## G5 — 証拠台帳の整合（`node src/cli.ts evidence verify`）
+
+- `evidence verify` が 0 issues である事（孤立 blob・`body_ref` と `content_hash` の不一致・
+  外部参照・機微ヘッダの混入を検出する）。
+- `reverify` を走らせた後は、取得した blob が台帳に反映されている事を確認する
+  （未参照の blob は `orphan body blob` として検出される）。
+- 2026-11-09 実測: reverify サイクル後に CPAL の `body_ref` 不整合と孤立 blob 3 件を検出 →
+  修正後 0 issues を確認。
+
 ## 注意
 - `publish.json` の `workflow_run_id` はローカル実行では `null`。
 - health gate の baseline は位置引数で明示する。`npm run update` は baseline なしで検証する。
