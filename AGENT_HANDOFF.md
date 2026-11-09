@@ -145,6 +145,9 @@ eudat は頁に値が無く根拠を得られないため触らない（次回�
   行が残っており、retention が実測に干渉している。次回の対応: fixture
   (autoupdate-deadline-transitions.json / autoupdate-committed-ecir.json) の JIP 行を
   新しい実態に合わせて更新してからピンを再調整する。
+  → **解消済み (ラウンド 78)**: 反復パス 6 回 + ビルド再実行 + fixture 更新で全て緑に復帰。
+  振れていたのは「その場で受信値を上書きする」方式の副作用 — 値が安定した後に
+  直接置換で締めるのが正しい手順。
 - **2026-11-09 追加確認(7)**: CODASPY 2027（概要 11-16・論文 11-23 AoE ✓）、ICDAR 2027
   （IJDAR Journal Track 論文 11-15 AoE ✓ / Conference Track 概要 2-26・論文 3-5 AoE ✓）。
   いずれも訂正不要。
