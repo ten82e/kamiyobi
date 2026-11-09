@@ -35,6 +35,9 @@
   (意味検索「graph neural networks」で 233 件・fit.score 付き) も確認。
 - **ICS カレンダーの最終検証** (2026-11-09): 989 VEVENT = 989 DTSTART = 989 SUMMARY、
   重複 UID 0 件、UID 形式は kamiyobi-<edition_id>-<hash>@kamiyobi で一貫 ✓。
+- **upcoming.md の最終検証** (2026-11-09): 直近 180 日の表 628 行の JST 換算が正しく、
+  公式表記（AoE / UTC / JST）と日本時間の併記・CCF/CORE/THCPL 評価・会期と場所の表示が
+  全て正しく出ている ✓。
 - `public/` を直接読む検査に `publicClockGuard()`（別時計のビルドを作り直しコマンド付きで
   落とす）を全 12 検査ファイルに設置。MCP stdio に CLI と同じ `--now` を通した。
 - ブロックされた update-data の実行サマリーに新しい警告と発見の記録方法を出すようにした。
