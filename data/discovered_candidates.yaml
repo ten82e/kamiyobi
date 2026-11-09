@@ -3862,7 +3862,7 @@ candidates:
     id: candidate-8270ac3e52a3baef73100a02
     source: easychair
     source_item_id: acm-umap-2027
-    status: discovered
+    status: accepted
     discovered_at: '2026-11-07T18:28:57.417Z'
     first_seen_at: '2026-11-07T18:28:57.417Z'
     last_seen_at: '2026-11-07T18:30:51.935Z'
