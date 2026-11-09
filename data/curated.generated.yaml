@@ -634,6 +634,66 @@ conferences:
     title: WQS 2026
 
   - categories:
+      - security
+    editions:
+      - date_text: May 12-14, 2027
+        deadlines:
+          - date: '2026-11-17 23:59:59'
+            evidence:
+              - contentHash: 182d31db7e7cd744ce1a14f6ecd9f96b5d4f66f5012d6102cc94b32f8b02cbaa
+                rawExcerpt: 'Abstract registration deadline November 17, 2026'
+                retrievedAt: '2026-11-10T02:25:00Z'
+                sourceClass: official-cfp
+                sourceUrl: https://easychair.org/cfp/pqcrypto2027
+                verifiedAt: '2026-11-10T02:25:00Z'
+                verifiedFields:
+                  - date
+                  - time
+                  - timezone
+            kind: abstract
+            label: Abstract registration deadline
+            precision: exact
+            promotion_ref:
+              batch: 2026-11-10-pqcrypto-2027
+              resolution: resolution-pqcrypto-2027
+            round: 1
+            track: ''
+            tz: AoE
+          - date: '2026-11-24 23:59:59'
+            evidence:
+              - contentHash: 182d31db7e7cd744ce1a14f6ecd9f96b5d4f66f5012d6102cc94b32f8b02cbaa
+                rawExcerpt: 'Submission deadline November 24, 2026'
+                retrievedAt: '2026-11-10T02:25:00Z'
+                sourceClass: official-cfp
+                sourceUrl: https://easychair.org/cfp/pqcrypto2027
+                verifiedAt: '2026-11-10T02:25:00Z'
+                verifiedFields:
+                  - date
+                  - time
+                  - timezone
+            kind: paper
+            label: Paper submission deadline
+            precision: exact
+            promotion_ref:
+              batch: 2026-11-10-pqcrypto-2027
+              resolution: resolution-pqcrypto-2027
+            round: 1
+            track: ''
+            tz: AoE
+        event_end: '2027-05-14'
+        event_start: '2027-05-12'
+        id: pqcrypto-2027
+        link: https://easychair.org/cfp/pqcrypto2027
+        place: Waterloo, Canada
+        year: 2027
+    full_name: The 18th International Conference on Post-Quantum Cryptography
+    key: pqcrypto
+    link: https://easychair.org/cfp/pqcrypto2027
+    tags:
+      - niche
+    title: PQCrypto 2027
+
+  - categories:
       - ai
       - systems
     editions:
