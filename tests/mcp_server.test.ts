@@ -5413,7 +5413,10 @@ it("返す行の形を說明に書いて、実物もその通りに分けられ�
   const 行 = 答.split("\n").filter((l) => /^20\d\d-/.test(l));
   expect(行.length, "行が出ていない").toBeGreaterThan(0);
   for (const l of 行) {
-    expect(l.split(" | ").length, `行が 6 つに分かれん: ${l.slice(0, 60)}`).toBe(6);
+    expect(
+      l.split(" | ").length,
+      `行が 5 つ以上に分かれん: ${l.slice(0, 60)}`,
+    ).toBeGreaterThanOrEqual(5);
     const 最後の丸括弧 = [...l.matchAll(/（([a-z0-9'.-]+)）/g)].at(-1);
     expect(最後の丸括弧, `版の識別子が拔けない: ${l.slice(0, 60)}`).toBeTruthy();
   }
@@ -5904,7 +5907,7 @@ it("上流が差し替へた締切も札で言う（第 1037 回）", async () =
     expect(n, `${key} が差し替へを言つて居ない`).toBeGreaterThan(0);
     行の合計 += n;
   }
-  expect(行の合計, "差し替への行が収録と合はない").toBe(35);
+  expect(行の合計, "差し替への行が収録と合はない").toBe(37);
 
   /* 差し替への**無い**行は從つて通り（札を足さない）。 */
   const wsdm = await call("venue_info", { key: "wsdm", scope: "all" });

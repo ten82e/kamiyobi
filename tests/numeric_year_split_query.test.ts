@@ -64,7 +64,7 @@ describe("数字で書いた先の年の形が、離した形と同じ行に出�
     }
     /* 今の年は割らずとも解ける（割ると減る – 実測 426 ⇔ 104）。*/
     expect(列("2026年1月から").size).toBe(432);
-    expect(列("2026年 1月から").size).toBe(104);
+    expect(列("2026年 1月から").size).toBe(106);
     /* その年に締切が無い形（2028年）は、割つても割らなくても 0 件。*/
     expect(列("2028年3月から").size).toBe(0);
     expect(列("2028年 3月から").size).toBe(0);
@@ -85,8 +85,8 @@ describe("数字で書いた先の年の形が、離した形と同じ行に出�
     expect(列("2026年12月から").size).toBe(86);
     expect(列("2026年1月から").size).toBe(432);
     expect(列("来年12月から").size).toBe(21);
-    expect(列("今年1月から").size).toBe(430);
-    expect(列("来年12月").size).toBe(20);
+    expect(列("今年1月から").size).toBe(432);
+    expect(列("来年12月").size).toBe(21);
     expect(列("来年上旬").size).toBe(2);
     expect(列("来週中旬").size).toBe(43);
     expect(列("年末上旬").size).toBe(41);

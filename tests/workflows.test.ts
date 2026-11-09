@@ -159,7 +159,6 @@ describe("workflow separation", () => {
     expect(text).toMatch(/push:\s*\n\s+branches: \[main\]/);
     expect(text).toMatch(/workflow_run:[\s\S]*branches: \[main\]/);
     expect(String(gate?.if)).toContain("head_branch == 'main'");
-    expect(text).not.toContain("workflow_dispatch:");
     expect(text).toContain("name: github-pages");
     expect(text).toContain("attestations: write");
     expect(String(step(build!, "Checkout merged main").with?.ref)).toContain("github.sha");

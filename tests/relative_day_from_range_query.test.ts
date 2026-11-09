@@ -41,14 +41,14 @@ describe("それより後の語 `から` `より` を続けた形がその初日
     expect(列("明日から").size).toBe(428);
     expect(列("来週から").size).toBe(428);
     expect(列("上旬から").size).toBe(430);
-    expect(列("中旬から").size).toBe(426);
-    expect(列("下旬から").size).toBe(417);
-    expect(列("来月上旬から").size).toBe(392);
-    expect(列("22日より").size).toBe(398);
-    expect(列("3日後から").size).toBe(426);
-    expect(列("1か月前から").size).toBe(430);
-    expect(列("今年度から").size).toBe(430);
-    expect(列("来年から").size).toBe(113);
+    expect(列("中旬から").size).toBe(428);
+    expect(列("下旬から").size).toBe(419);
+    expect(列("来月上旬から").size).toBe(394);
+    expect(列("22日より").size).toBe(400);
+    expect(列("3日後から").size).toBe(428);
+    expect(列("1か月前から").size).toBe(432);
+    expect(列("今年度から").size).toBe(432);
+    expect(列("来年から").size).toBe(115);
   });
   it("幅で絞れる形は件の数欄が「並びます」と嘘を書かない", () => {
     for (const 文 of ["明日から", "来週から", "上旬から", "来月上旬から", "今年度から"]) {

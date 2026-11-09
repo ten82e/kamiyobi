@@ -61,7 +61,7 @@ describe("数字で書いた年にその年の幅の案内が出る（第 496 �
     expect(列("2026年1月から").size).toBe(432);
     expect(列("2027年12月から").size).toBe(21);
     expect(列("来年12月から").size).toBe(21);
-    expect(列("今年1月から").size).toBe(430);
+    expect(列("今年1月から").size).toBe(432);
   });
   it("第 470 回〜第 495 回の実測はこの回で変へて居ない", () => {
     expect(列("来年上旬").size).toBe(2);

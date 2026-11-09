@@ -39,16 +39,16 @@ describe("それより後の語を日の語に続けた形がその初日から�
     expect(列("来週以降").size).toBe(428);
     expect(列("今週以降").size).toBe(428);
     expect(列("先週以降").size).toBe(430);
-    expect(列("下旬以降").size).toBe(417);
-    expect(列("中旬以降").size).toBe(426);
-    expect(列("来月上旬以降").size).toBe(392);
-    expect(列("週末以降").size).toBe(426);
-    expect(列("来週末以降").size).toBe(424);
-    expect(列("来年度以降").size).toBe(49);
-    expect(列("来年以降").size).toBe(113);
-    expect(列("22日以降").size).toBe(398);
-    expect(列("年度末以降").size).toBe(49);
-    expect(列("来月末以降").size).toBe(298);
+    expect(列("下旬以降").size).toBe(419);
+    expect(列("中旬以降").size).toBe(428);
+    expect(列("来月上旬以降").size).toBe(394);
+    expect(列("週末以降").size).toBe(428);
+    expect(列("来週末以降").size).toBe(426);
+    expect(列("来年度以降").size).toBe(51);
+    expect(列("来年以降").size).toBe(115);
+    expect(列("22日以降").size).toBe(400);
+    expect(列("年度末以降").size).toBe(51);
+    expect(列("来月末以降").size).toBe(300);
   });
   it("幅で絞れる形は件の数欄が「並びます」と嘘を書かない（暦日を打つ形と同じ決まり – 第 413 回）", () => {
     for (const 文 of [
@@ -78,9 +78,9 @@ describe("載せない形と其它の機械の守り（第 328 回・第 373 回
       ["明日から", 428],
       ["来週から", 428],
       ["来週 より", 428],
-      ["来月上旬から", 392],
-      ["3日後から", 426],
-      ["22日より", 398],
+      ["来月上旬から", 394],
+      ["3日後から", 428],
+      ["22日より", 400],
     ] as Array<[string, number]>) {
       expect([文, 列(文).size]).toEqual([文, 件]);
       expect(案内(文), `「${文}」に案内が残つた`).toBe("");

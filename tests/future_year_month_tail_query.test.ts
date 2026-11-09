@@ -106,7 +106,7 @@ describe("割らないと決めた形（第 466 回・第 485 回）", () => {
     expect(列("半 年後").size).toBe(2);
     expect(列("一 週間後").size).toBe(13);
     expect(列("今年1月から").size).toBe(432);
-    expect(列("2026年1月から").size).toBe(430);
+    expect(列("2026年1月から").size).toBe(432);
   });
 });
 

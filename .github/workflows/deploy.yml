@@ -101,7 +101,8 @@ jobs:
           git worktree add --detach /tmp/kamiyobi-parent HEAD^
           cd /tmp/kamiyobi-parent
           npm ci
-          node src/cli.ts build --out /tmp/kamiyobi-parent-public --offline --no-embeddings --cache /tmp/kamiyobi-parent-cache --now "$(date -u -d '1 minute ago' +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u -v-1M +%Y-%m-%dT%H:%M:%SZ)"
+          BASELINE_NOW=$(date -u -d '1 minute ago' +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u -v-1M +%Y-%m-%dT%H:%M:%SZ)
+          node src/cli.ts build --out /tmp/kamiyobi-parent-public --offline --no-embeddings --cache /tmp/kamiyobi-parent-cache --now "$BASELINE_NOW"
           cp /tmp/kamiyobi-parent-public/health.json /tmp/kamiyobi-health-baseline/health.json
           cd "$GITHUB_WORKSPACE"
           gate_status=0

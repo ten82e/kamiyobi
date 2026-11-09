@@ -54579,7 +54579,7 @@
          "source": "https://cpal.cc/",
          "evidenceRef": "data/evidence/blobs/8882e74d3a87ccfd3c7b29b013dc3bf4e3bc12a9690fce22364beb67d266361d.body",
          "status": "superseded",
-         "supersededBy": "cpal|cpal25|paper|1|proceedings",
+         "supersededBy": "cpal|cpal25|paper|1|proceedings-paper-submission",
          "reason": "manual-resolution",
          "supersededAt": "2026-10-04T14:49:57.000Z"
         },
@@ -54589,7 +54589,7 @@
          "source": "https://2025.cpal.cc/",
          "evidenceRef": "data/evidence/blobs/8882e74d3a87ccfd3c7b29b013dc3bf4e3bc12a9690fce22364beb67d266361d.body",
          "status": "superseded",
-         "supersededBy": "cpal|cpal25|paper|1|proceedings",
+         "supersededBy": "cpal|cpal25|paper|1|proceedings-paper-submission",
          "reason": "manual-resolution",
          "supersededAt": "2026-10-04T14:49:57.000Z"
         }
@@ -55165,7 +55165,7 @@
          "precision": "exact",
          "reason": "Abstract submission slot of the earlier two-step schedule; superseded when the official CFP merged the abstract into the single paper submission (12-6).",
          "supersededAt": "2026-11-09T00:00:00Z",
-         "supersededBy": "official CFP"
+         "supersededBy": "cpal|cpal27|paper|1|proceedings-paper-submission"
         }
        ]
       },
@@ -86379,16 +86379,18 @@
         {
          "value": "2027-02-09T11:59:59.000Z",
          "precision": "exact",
-         "reason": "Camera-ready of the earlier separate-cycle schedule; superseded when the venue merged the two cycles (submission 11-30, notification 2-8).",
-         "supersededAt": "2026-11-08T08:05:00Z",
-         "supersededBy": "official CFP"
+         "source": "official CFP",
+         "reason": "manual-resolution",
+         "supersededBy": "eurocrypt|eurocrypt27|paper|1|",
+         "supersededAt": "2026-11-08T08:05:00Z"
         },
         {
          "value": "2026-12-06T11:59:59.000Z",
          "precision": "exact",
-         "reason": "Rebuttal end of the earlier separate-cycle schedule; superseded when the venue merged the two cycles.",
-         "supersededAt": "2026-11-08T08:05:00Z",
-         "supersededBy": "official CFP"
+         "source": "official CFP",
+         "reason": "manual-resolution",
+         "supersededBy": "eurocrypt|eurocrypt27|paper|1|",
+         "supersededAt": "2026-11-08T08:05:00Z"
         }
        ]
       },
@@ -124631,9 +124633,10 @@
         {
          "value": "2027-02-01T11:59:59.000Z",
          "precision": "exact",
-         "reason": "Abstract deadline of the earlier single-cycle schedule; superseded by the official two-cycle schedule (abstract 2-26, main paper 3-5, IJDAR journal track 11-15).",
-         "supersededAt": "2026-11-09T02:10:00Z",
-         "supersededBy": "official CFP"
+         "source": "official CFP",
+         "reason": "manual-resolution",
+         "supersededBy": "icdar|icdar2027|paper|1|",
+         "supersededAt": "2026-11-09T02:10:00Z"
         }
        ]
       },
@@ -190843,16 +190846,18 @@
         {
          "value": "2026-12-01T23:59:59.000Z",
          "precision": "exact",
-         "reason": "Earlier announced abstract deadline; superseded by the updated official CFP (abstract 12-20, paper 1-15).",
-         "supersededAt": "2026-11-08T08:05:00Z",
-         "supersededBy": "official CFP"
+         "source": "official CFP",
+         "reason": "manual-resolution",
+         "supersededBy": "mathai|override-2027|abstract|1|",
+         "supersededAt": "2026-11-08T08:05:00Z"
         },
         {
          "value": "2027-03-01T23:59:59.000Z",
          "precision": "exact",
-         "reason": "Earlier announced camera-ready deadline; no longer listed in the updated official CFP.",
-         "supersededAt": "2026-11-08T08:05:00Z",
-         "supersededBy": "official CFP"
+         "source": "official CFP",
+         "reason": "manual-resolution",
+         "supersededBy": "mathai|override-2027|abstract|1|",
+         "supersededAt": "2026-11-08T08:05:00Z"
         }
        ]
       },
@@ -203142,16 +203147,7 @@
        "precision": "exact",
        "utc": "2026-12-24T11:59:59Z",
        "aoe": "2026-12-23 23:59:59 AoE",
-       "tz_raw": "AoE",
-       "superseded_deadlines": [
-        {
-         "value": "2026-12-24T11:59:59.000Z",
-         "precision": "exact",
-         "reason": "Second submission deadline slot; superseded by the NAACL commitment deadline (12-23) after ARR meta-reviews.",
-         "supersededAt": "2026-11-08T08:20:00Z",
-         "supersededBy": "official CFP"
-        }
-       ]
+       "tz_raw": "AoE"
       }
      ]
     }
@@ -213756,16 +213752,7 @@
        "precision": "exact",
        "utc": "2026-11-03T11:59:59Z",
        "aoe": "2026-11-02 23:59:59 AoE",
-       "tz_raw": "AoE",
-       "superseded_deadlines": [
-        {
-         "value": "2026-11-03T11:59:59.000Z",
-         "precision": "exact",
-         "reason": "Generic abstract submission slot of the earlier one-round grouping; superseded when the upstream split the track into explicit rounds (abstract 2).",
-         "supersededAt": "2026-11-09T00:00:00Z",
-         "supersededBy": "upstream regrouping"
-        }
-       ]
+       "tz_raw": "AoE"
       },
       {
        "kind": "paper",
@@ -213806,16 +213793,7 @@
        "precision": "exact",
        "utc": "2026-11-10T11:59:59Z",
        "aoe": "2026-11-09 23:59:59 AoE",
-       "tz_raw": "AoE",
-       "superseded_deadlines": [
-        {
-         "value": "2026-11-10T11:59:59.000Z",
-         "precision": "exact",
-         "reason": "Generic paper submission slot of the earlier one-round grouping; superseded when the upstream split the track into explicit rounds (paper 2).",
-         "supersededAt": "2026-11-09T00:00:00Z",
-         "supersededBy": "upstream regrouping"
-        }
-       ]
+       "tz_raw": "AoE"
       }
      ]
     }
