@@ -112,6 +112,9 @@ eudat は頁に値が無く根拠を得られないため触らない（次回�
   EUSIPCO 2027（前項）、ICME 2027（前項）。Interspeech/ICASSP/KSEM は取得不能。 なお browser (8 秒待機) でも
   0-45 日窓の残りは取得不可を再確認: NOMS (Cloudflare 保護で 126 文字)、CVPR
   (CFP 未公開 — 連絡先リストのみ)。browser 再試行の価値は無しと判定。
+- **2026-11-09 追加確認(23)**: JIP COMPSAC 2027 特集号（投稿締切 12-1 ✓ — 27-R CFP で
+  確認）、EUSIPCO 2027・ICME 2027・GMP 2027・MobileHCI 2027・ICIN 2027（前項）。
+  JIP の他特集号 (UCS XIV 12-4・AI-Driven 11-27) は収録候補として改善可能。
 - **2026-11-09 追加確認(17)**: S&P 2027（第二締切の review release Feb 11 AoE ✓ —
   cfpapers.html を browser 取得。第一締切も 6 月の日程と一致）、CHI 2027（前項）、
   DisCoTec 2027/FORTE（投稿締切未掲載 → 保留）。
