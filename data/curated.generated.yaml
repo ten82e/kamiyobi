@@ -634,6 +634,42 @@ conferences:
     title: WQS 2026
 
   - categories:
+      - security
+    editions:
+      - date_text: May 25-28, 2027
+        deadlines:
+          - date: '2027-01-06 23:59:59'
+            evidence:
+              - contentHash: e5c1fae3d33f06e34560a4c3f9d7d1ad2a7bd1ce0ca97a4266694b2cd09ac90f
+                rawExcerpt: 'Submission deadline January 6, 2027'
+                retrievedAt: '2026-11-10T05:30:00Z'
+                sourceClass: official-cfp
+                sourceUrl: https://easychair.org/cfp/CyCon2027
+                verifiedAt: '2026-11-10T05:30:00Z'
+                verifiedFields:
+                  - date
+                  - time
+                  - timezone
+            kind: paper
+            label: Paper submission deadline
+            precision: exact
+            round: 1
+            track: ''
+            tz: AoE
+        event_end: '2027-05-28'
+        event_start: '2027-05-25'
+        id: cycon-2027
+        link: https://www.cycon.org
+        place: Tallinn, Estonia
+        year: 2027
+    full_name: 'The 19th International Conference on Cyber Conflict: Unified Response'
+    key: cycon
+    link: https://www.cycon.org
+    tags:
+      - niche
+    title: CyCon 2027
+
+  - categories:
       - ai
     editions:
       - date_text: June 9-12, 2027
