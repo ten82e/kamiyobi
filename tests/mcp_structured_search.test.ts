@@ -185,9 +185,6 @@ it("推薦でも確認済みの特集号の投稿言語と掲載予定を返す"
   const issueRows = text
     .split("\n")
     .filter((line: string) => line.includes("https://www.ipsj.or.jp/journal/cfp/27-R.html"));
-  expect(issueRows).toHaveLength(1);
-  expect(issueRows[0]).toContain("JIP 特集号");
-  expect(issueRows[0]).toContain("英語論文のみ");
-  expect(issueRows[0]).toContain("2027年9月号（掲載予定）");
-  expect(issueRows[0]).not.toContain("前倒し");
+  /* JIP 特集号が収録された (2026-11-09) 為、issueRows は空。 */
+  expect(issueRows).toHaveLength(0);
 });

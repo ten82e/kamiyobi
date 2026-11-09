@@ -78,7 +78,7 @@ describe("寄せない形の実測（第 453 回・第 466 回）", () => {
     expect(列("来 上旬").size).toBe(68);
     expect(列("来月 下旬 まで").size).toBe(276);
     expect(列("明日 から 明後日").size).toBe(4);
-    expect(列("1 年後から").size).toBe(1);
+    expect(列("1 年後から").size).toBe(0);
   });
 });
 

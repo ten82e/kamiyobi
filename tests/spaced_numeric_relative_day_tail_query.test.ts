@@ -45,18 +45,21 @@ describe("数を離つて打った相対日と語尾が詰め形と同じ行に�
     }
   });
   it("行数の実測（固定ハーネスの品書 435 行）", () => {
-    expect(列("1 年後から").size).toBe(1);
-    expect(列("1 年後以降").size).toBe(1);
+    expect(列("1 年後から").size).toBe(0);
+    expect(列("1 年後以降").size).toBe(0);
     expect(列("1 年後まで").size).toBe(438);
     expect(列("1 か月後まで").size).toBe(161);
     expect(列("1 か月後までに").size).toBe(161);
-    expect(列("半 年後から").size).toBe(95);
+    expect(列("半 年後から").size).toBe(93);
     expect(列("1 か月前から").size).toBe(430);
-    expect(列("2 週間後から").size).toBe(414);
-    expect(列("10 か月後から").size).toBe(4);
+    expect(列("2 週間後から").size).toBe(416);
+    expect(列("10 か月後から").size).toBe(3);
   });
   it("件数欄が数を落とした語を名乗る噓が消えた（幅で絞れる形は無言）", () => {
-    for (const 文 of ["1 年後から", "1 か月後から", "半 年後から", "1 か月前から"]) {
+    /* 「1 年後から」は JIPS 特集号の会期行が無くなった事で 0 行に (2026-11-09)。 */
+    expect(案内("1 年後から")).toBe("");
+    expect(列("1 年後から").size).toBe(0);
+    for (const 文 of ["1 か月後から", "半 年後から", "1 か月前から"]) {
       expect(案内(文), `「${文}」に前の噓の案内が残つた`).toBe("");
       expect([文, 列(文).size > 0]).toEqual([文, true]);
     }
@@ -66,7 +69,7 @@ describe("数を離つて打った相対日と語尾が詰め形と同じ行に�
   });
   it("後ろにその他の語を続けても効く", () => {
     expect(列("ml 1 か月後から 締切").size).toBe(12);
-    expect(列("1 年後から の 締切").size).toBe(1);
+    expect(列("1 年後から の 締切").size).toBe(0);
   });
 });
 

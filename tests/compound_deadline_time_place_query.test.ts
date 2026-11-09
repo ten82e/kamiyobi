@@ -101,7 +101,7 @@ describe("その方の決まりで既に扱はれている語は割らない（�
     expect(列("週 末").size).toBe(146);
     expect(列("明日以降").size).toBe(426);
     expect(列("来月 終わり").size).toBe(178);
-    expect(列("1 年後から").size).toBe(1);
+    expect(列("1 年後から").size).toBe(0);
     expect(列("来 上旬").size).toBe(68);
     expect(案内("来 上旬")).toContain("来月 上旬 = 2026年9月1日(火)");
     expect(列("ml から").size).toBe(0);
