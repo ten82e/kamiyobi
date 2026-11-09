@@ -16135,7 +16135,7 @@ candidates:
     id: candidate-779ed55496b4c10dabb84144
     source: easychair
     source_item_id: cyber-science-2027
-    status: discovered
+    status: promoted
     discovered_at: '2026-08-20T20:45:37.898Z'
     first_seen_at: '2026-08-20T20:45:37.898Z'
     last_seen_at: '2026-11-07T18:30:51.935Z'
@@ -18242,7 +18242,7 @@ candidates:
     id: candidate-00bad333727403fff386fa49
     source: easychair
     source_item_id: eai-securecomm-2027
-    status: discovered
+    status: promoted
     discovered_at: '2026-10-04T12:39:08.732Z'
     first_seen_at: '2026-10-04T12:39:08.732Z'
     last_seen_at: '2026-11-07T18:30:51.935Z'
