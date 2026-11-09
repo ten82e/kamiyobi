@@ -56,6 +56,11 @@ eudat は頁に値が無く根拠を得られないため触らない（次回�
   上書きする。また、1 会議の訂正が測定ピン 30〜140 行に波及する（日付窓の集計）ので、
   訂正は「1 会議ごとに検証してコミット」が安全。途中で data を変えるとピン整合ループが
   収束しなくなる。
+- **CI nightly update-data の失敗原因特定 (2026-11-09)**: 「Validate generated production data」
+  ステップの exit 1 は、`new_warnings` の `chiir: CATEGORY_VOCABULARY_DIVERGENCE` が
+  未審査として扱われる為。VF-0127 の受入 (2026-11-08 審査済み) はローカル main に有るが
+  origin/main に未反映 — `git merge-base --is-ancestor 9940a05f origin/main` で確認済み。
+  **push すれば解消する** (ローカルでは既に正しく処理済み・全ゲート緑)。
 - **2026-11-08 追加確認(4)**: OSDI 2027（概要 12-1・論文 12-8、共に 10:59 pm UTC =
   22:59:59Z ✓ USENIX は AoE でなく EST 表示）、PETS 2027（4 四半期 rolling: 5/31・8/31・
   11/30・2/28、全て firm・AoE ✓）。いずれも収録どおり正しい。
