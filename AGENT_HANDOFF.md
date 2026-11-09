@@ -119,6 +119,9 @@ eudat は頁に値が無く根拠を得られないため触らない（次回�
 - **2026-11-09 追加確認(24)**: SACMAT 2027（Cycle 1 提出 11-4・Cycle 2 提出 2-12 AoE ✓ —
   ccfddl 上流で確認。公式ページは bot 対策で取得不可）、ECIR 2027 チュートリアル提案
   （Dec 7 — メインページ timeline が正、収録未収録 → 追加候補）。
+- **2026-11-09 追加確認(25)**: CLOSER 2027（Regular 提出 11-17 AoE ✓ / Position 提出
+  12-21 AoE ✓ — 収録 2 行とも一致）、EACL 2027（論文締切の記載が無い → 保留）、
+  ICACT 2027（4.8KB シェルのみ → 保留）。
 - **2026-11-09 追加確認(17)**: S&P 2027（第二締切の review release Feb 11 AoE ✓ —
   cfpapers.html を browser 取得。第一締切も 6 月の日程と一致）、CHI 2027（前項）、
   DisCoTec 2027/FORTE（投稿締切未掲載 → 保留）。
