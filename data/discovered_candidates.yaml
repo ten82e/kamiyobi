@@ -48686,7 +48686,7 @@ candidates:
     id: candidate-e8c28a1c15622056253914c8
     source: easychair
     source_item_id: opensoc4he-2027
-    status: discovered
+    status: promoted
     discovered_at: '2026-09-05T22:05:16.108Z'
     first_seen_at: '2026-09-05T22:05:16.108Z'
     last_seen_at: '2026-11-07T18:30:51.935Z'

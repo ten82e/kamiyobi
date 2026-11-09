@@ -634,6 +634,46 @@ conferences:
     title: WQS 2026
 
   - categories:
+      - systems
+    editions:
+      - date_text: January 18-19, 2027
+        deadlines:
+          - date: '2026-11-16 23:59:59'
+            evidence:
+              - contentHash: abc40cec790d6baa90b2c7521232b7c0537f0526ec91148149c502cc1f4128e0
+                rawExcerpt: 'Deadline: 16 November 2026 (AoE).'
+                retrievedAt: '2026-11-10T02:40:00Z'
+                sourceClass: official-cfp
+                sourceUrl: https://edge-group-polito.github.io/OpenSoC4HE/
+                verifiedAt: '2026-11-10T02:40:00Z'
+                verifiedFields:
+                  - date
+                  - time
+                  - timezone
+            kind: paper
+            label: Submission deadline
+            precision: exact
+            promotion_ref:
+              batch: 2026-11-10-opensoc4he-2027
+              resolution: resolution-opensoc4he-2027
+            round: 1
+            track: ''
+            tz: AoE
+        event_end: '2027-01-19'
+        event_start: '2027-01-18'
+        id: opensoc4he-2027
+        link: https://edge-group-polito.github.io/OpenSoC4HE/
+        place: Glasgow, UK
+        year: 2027
+    full_name: 1st Workshop on Open System on Chips for Higher Education in Computer Architecture (HiPEAC 2027)
+    key: opensoc4he
+    link: https://edge-group-polito.github.io/OpenSoC4HE/
+    tags:
+      - niche
+      - workshop
+    title: OpenSoC4HE 2027
+
+  - categories:
       - security
     editions:
       - date_text: May 12-14, 2027
