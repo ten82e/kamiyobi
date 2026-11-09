@@ -108,6 +108,13 @@
         "data/curated.generated.yaml"
       ]
     },
+    "1db79ec6dd42cf5e0e1e800ea750a52411722bc9793e29a1f3895ef8d0218958": {
+      "bytes": 6333,
+      "content_type": "application/octet-stream",
+      "references": [
+        "data/curated.generated.yaml"
+      ]
+    },
     "24a85164b842fa0b7b5f98c75e1fa9dfa8851372f73571cbe2de94dc9141dd2d": {
       "bytes": 13714,
       "content_type": "application/octet-stream",
