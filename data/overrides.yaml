@@ -352,6 +352,21 @@ conferences:
             date: '2027-01-10 23:59:59'
             tz: AoE
             round: 1
+            evidence:
+              - source_name: BIS 2027 official site
+                source_url: https://bisconf.org/2027/
+                sourceClass: official-cfp
+                observed_at: '2026-11-10T01:00:00Z'
+                retrievedAt: '2026-11-10T01:00:00Z'
+                verifiedAt: '2026-11-10T01:00:00Z'
+                contentHash: 5b99861c256615acb6ca97f42d6e2764b77b85d55dded610f50d4b7083d3c0b5
+                evidenceRef: data/evidence/blobs/5b99861c256615acb6ca97f42d6e2764b77b85d55dded610f50d4b7083d3c0b5.body
+                rawExcerpt: 'Submission Deadline: January 10, 2027'
+                verifiedFields:
+                  - date
+                  - time
+                  - timezone
+                confidence: official
         mode: merge-slots
         remove:
           - kind: paper
