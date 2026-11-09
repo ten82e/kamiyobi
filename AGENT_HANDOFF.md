@@ -140,6 +140,11 @@ eudat は頁に値が無く根拠を得られないため触らない（次回�
   「会期を貼っても出会えない」失敗が出た。JIPS 特集号は掲載号であり会期を持たない為、
   date_text を外すのが正 (IPSJ 特集号の慣例)。ただし外すと「1 年後から」等の窓計数ピン
   (29 件) が変化する — JIPS 特集号の行を前提にしていたピンは削除後の実測に合わせる必要。
+  現状 (2026-11-09 ラウンド 74 時点): 29 失敗が残存。反復パスを 5 回回したが収束せず
+  (ピンが 428→426→428 と振れる)。原因の仮説: fixture (published history) に JIPS 特集号の
+  行が残っており、retention が実測に干渉している。次回の対応: fixture
+  (autoupdate-deadline-transitions.json / autoupdate-committed-ecir.json) の JIP 行を
+  新しい実態に合わせて更新してからピンを再調整する。
 - **2026-11-09 追加確認(7)**: CODASPY 2027（概要 11-16・論文 11-23 AoE ✓）、ICDAR 2027
   （IJDAR Journal Track 論文 11-15 AoE ✓ / Conference Track 概要 2-26・論文 3-5 AoE ✓）。
   いずれも訂正不要。
