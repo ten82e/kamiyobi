@@ -982,6 +982,11 @@ conferences:
             values:
               - '2026-09-25T23:59:59.000Z'
               - '2026-09-22T11:59:59.000Z'
+          - kind: camera_ready
+            label: Tutorial camera-ready deadline
+            round: 1
+            values:
+              - '2027-01-11T11:59:59.000Z'
 
   acisp:
     editions:
