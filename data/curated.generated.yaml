@@ -634,6 +634,46 @@ conferences:
     title: WQS 2026
 
   - categories:
+      - systems
+      - db
+    editions:
+      - date_text: April 23-25, 2027
+        deadlines:
+          - date: '2026-12-05 23:59:59'
+            evidence:
+              - contentHash: 6c3b89113a8878b1df1182a642a8bfc79bc24464e30cd592b51d2470a93fa99a
+                rawExcerpt: 'Submission deadline December 5, 2026'
+                retrievedAt: '2026-11-10T03:00:00Z'
+                sourceClass: official-cfp
+                sourceUrl: https://easychair.org/cfp/ICCCBDA2027
+                verifiedAt: '2026-11-10T03:00:00Z'
+                verifiedFields:
+                  - date
+                  - time
+                  - timezone
+            kind: paper
+            label: Paper submission deadline
+            precision: exact
+            promotion_ref:
+              batch: 2026-11-10-icccbda-2027
+              resolution: resolution-icccbda-2027
+            round: 1
+            track: ''
+            tz: AoE
+        event_end: '2027-04-25'
+        event_start: '2027-04-23'
+        id: icccbda-2027
+        link: https://www.icccbda.com/
+        place: Chengdu, China
+        year: 2027
+    full_name: The 12th International Conference on Cloud Computing and Big Data Analytics
+    key: icccbda
+    link: https://www.icccbda.com/
+    tags:
+      - niche
+    title: ICCCBDA 2027
+
+  - categories:
       - db
     editions:
       - date_text: April 26-29, 2027

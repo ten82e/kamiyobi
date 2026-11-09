@@ -26797,7 +26797,7 @@ candidates:
     id: candidate-245b14bacc88018c6d977e34
     source: easychair
     source_item_id: icccbda-2027
-    status: discovered
+    status: promoted
     discovered_at: '2026-08-20T20:45:37.898Z'
     first_seen_at: '2026-08-20T20:45:37.898Z'
     last_seen_at: '2026-08-22T20:39:59.383Z'
