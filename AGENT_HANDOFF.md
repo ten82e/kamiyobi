@@ -97,6 +97,10 @@ eudat は頁に値が無く根拠を得られないため触らない（次回�
 - **2026-11-09 追加確認(17)**: S&P 2027（第二締切の review release Feb 11 AoE ✓ —
   cfpapers.html を browser 取得。第一締切も 6 月の日程と一致）、CHI 2027（前項）、
   DisCoTec 2027/FORTE（投稿締切未掲載 → 保留）。
+- **2026-11-09 追加確認(18)**: OOPSLA 2027（Round 2 提出 Apr 7 AoE ✓）、ECAI 2027
+  （提出 Apr 14 ✓）、SecureComm 2027（Cycle 2 提出 Apr 15 ✓ — Cycle 1 の 2-1 提出・3-15
+  通知の追加は改善候補）、KR 2027（概要 Apr 23・論文 Apr 28 AoE ✓ — ccfddl の dates.html
+  由来コメントで確認）。
 - **2026-11-09 追加確認(7)**: CODASPY 2027（概要 11-16・論文 11-23 AoE ✓）、ICDAR 2027
   （IJDAR Journal Track 論文 11-15 AoE ✓ / Conference Track 概要 2-26・論文 3-5 AoE ✓）。
   いずれも訂正不要。
