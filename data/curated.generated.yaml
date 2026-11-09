@@ -635,6 +635,47 @@ conferences:
 
   - categories:
       - ai
+      - systems
+    editions:
+      - date_text: January 19, 2027
+        deadlines:
+          - date: '2026-11-13 23:59:59'
+            evidence:
+              - contentHash: 65830f6a656d7fa9d2c49539befbbe05769395d3a7b0cbfe01349d207b6688a9
+                rawExcerpt: 'Submission deadline: November 13, 2026 (end of day)'
+                retrievedAt: '2026-11-10T02:10:00Z'
+                sourceClass: official-cfp
+                sourceUrl: https://accml.dcs.gla.ac.uk/workshop-2027-hipeac.html
+                verifiedAt: '2026-11-10T02:10:00Z'
+                verifiedFields:
+                  - date
+                  - time
+                  - timezone
+            kind: paper
+            label: Paper submission deadline
+            precision: exact
+            tz: AoE
+            promotion_ref:
+              batch: 2026-11-10-accml-2027
+              resolution: resolution-accml-2027
+            round: 1
+            track: ''
+        event_start: '2027-01-19'
+        event_end: '2027-01-19'
+        id: accml-2027
+        link: https://accml.dcs.gla.ac.uk/workshop-2027-hipeac.html
+        place: Glasgow, UK
+        year: 2027
+    full_name: 9th Workshop on Accelerated Machine Learning (co-located with HiPEAC 2027)
+    key: accml
+    link: https://accml.dcs.gla.ac.uk/workshop-2027-hipeac.html
+    tags:
+      - niche
+      - workshop
+    title: AccML 2027
+
+  - categories:
+      - ai
     editions:
       - date_text: April 8-10, 2027
         deadlines:
