@@ -634,6 +634,45 @@ conferences:
     title: WQS 2026
 
   - categories:
+      - systems
+    editions:
+      - date_text: March 17-19, 2027
+        deadlines:
+          - date: '2026-12-10 23:59:59'
+            evidence:
+              - contentHash: 41887070e43becbbfe6876bd1988bfd86b46d00b58dd4eebf13462549af7414e
+                rawExcerpt: 'Submission deadline December 10, 2026'
+                retrievedAt: '2026-11-10T03:50:00Z'
+                sourceClass: official-cfp
+                sourceUrl: https://easychair.org/cfp/iem-icdc2027
+                verifiedAt: '2026-11-10T03:50:00Z'
+                verifiedFields:
+                  - date
+                  - time
+                  - timezone
+            kind: paper
+            label: Paper submission deadline
+            precision: exact
+            promotion_ref:
+              batch: 2026-11-10-iemicdc-2027
+              resolution: resolution-iemicdc-2027
+            round: 1
+            track: ''
+            tz: AoE
+        event_end: '2027-03-19'
+        event_start: '2027-03-17'
+        id: iemicdc-2027
+        link: https://www.iemicdc.org/
+        place: Kolkata, India
+        year: 2027
+    full_name: The 5th International Conference on Computational Intelligence, Data Science and Cloud Computing
+    key: iemicdc
+    link: https://www.iemicdc.org/
+    tags:
+      - niche
+    title: IEM-ICDC 2027
+
+  - categories:
       - security
     editions:
       - date_text: June 16-18, 2027

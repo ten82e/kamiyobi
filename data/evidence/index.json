@@ -186,6 +186,13 @@
         "data/promotions/2026-08-31-sovereignai-2026/manifest.json"
       ]
     },
+    "41887070e43becbbfe6876bd1988bfd86b46d00b58dd4eebf13462549af7414e": {
+      "bytes": 4768,
+      "content_type": "application/octet-stream",
+      "references": [
+        "data/curated.generated.yaml"
+      ]
+    },
     "43381fd60c61406273ab27147a03907754bef439526e88735ad98122c6eab452": {
       "bytes": 116752,
       "content_type": "application/octet-stream",

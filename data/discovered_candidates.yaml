@@ -38365,7 +38365,7 @@ candidates:
     id: candidate-3dc36cf3e5ea4afc6740ad0b
     source: easychair
     source_item_id: iem-icdc-2027
-    status: discovered
+    status: promoted
     discovered_at: '2026-10-04T12:39:08.732Z'
     first_seen_at: '2026-10-04T12:39:08.732Z'
     last_seen_at: '2026-11-07T18:30:51.935Z'
