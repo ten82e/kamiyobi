@@ -108,7 +108,9 @@ eudat は頁に値が無く根拠を得られないため触らない（次回�
   会議関連日付のみ）、BIS 2027（訂正済み — tz 無表記で AoE 慣例適用）、DIS 2027
   （camera-ready 訂正済み）。
 - **2026-11-09 追加確認(16)**: MobileHCI 2027（概要 Feb 10・論文 Feb 17 AoE ✓）、
-  EUSIPCO 2027（前項）、ICME 2027（前項）。Interspeech/ICASSP/KSEM は取得不能。
+  EUSIPCO 2027（前項）、ICME 2027（前項）。Interspeech/ICASSP/KSEM は取得不能。 なお browser (8 秒待機) でも
+  0-45 日窓の残りは取得不可を再確認: NOMS (Cloudflare 保護で 126 文字)、CVPR
+  (CFP 未公開 — 連絡先リストのみ)。browser 再試行の価値は無しと判定。
 - **2026-11-09 追加確認(17)**: S&P 2027（第二締切の review release Feb 11 AoE ✓ —
   cfpapers.html を browser 取得。第一締切も 6 月の日程と一致）、CHI 2027（前項）、
   DisCoTec 2027/FORTE（投稿締切未掲載 → 保留）。
