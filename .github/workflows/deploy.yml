@@ -1,6 +1,7 @@
 name: deploy
 
 on:
+  workflow_dispatch:
   push:
     branches: [main]
   workflow_run:
@@ -92,23 +93,17 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          # 前回成功 deploy の baseline が古すぎる事がある (運用停止の後)。親コミットの
+          # build を baseline にする (差分は 1 コミット分のみ。訂正の evidence 検査は
+          # update-data の日次 baseline が担保する)。
+          rm -rf /tmp/kamiyobi-health-baseline
           mkdir -p /tmp/kamiyobi-health-baseline
-          current_sha=$(git rev-parse HEAD)
-          run_id=$(gh run list --workflow deploy.yml --branch main --status success --limit 5 --json databaseId,headSha | jq -r --arg sha "$current_sha" 'map(select(.headSha != $sha))[0].databaseId // empty')
-          if [ -n "$run_id" ]; then
-            if ! gh run download "$run_id" --name deploy-health-baseline --dir /tmp/kamiyobi-health-baseline; then
-              echo "previous deploy health artifact unavailable; building parent baseline"
-            fi
-          fi
-          if [ ! -s /tmp/kamiyobi-health-baseline/health.json ]; then
-            git worktree add --detach /tmp/kamiyobi-parent HEAD^
-            cd /tmp/kamiyobi-parent
-            npm ci
-            node src/cli.ts build --out /tmp/kamiyobi-parent-public --offline --no-embeddings --cache /tmp/kamiyobi-parent-cache --now "$BUILD_NOW"
-            cp /tmp/kamiyobi-parent-public/health.json /tmp/kamiyobi-health-baseline/health.json
-            cd "$GITHUB_WORKSPACE"
-          fi
-          # bash -e の下でも失敗時に後続の診断保存へ到達できるよう if で捕捉する。
+          git worktree add --detach /tmp/kamiyobi-parent HEAD^
+          cd /tmp/kamiyobi-parent
+          npm ci
+          node src/cli.ts build --out /tmp/kamiyobi-parent-public --offline --no-embeddings --cache /tmp/kamiyobi-parent-cache --now "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          cp /tmp/kamiyobi-parent-public/health.json /tmp/kamiyobi-health-baseline/health.json
+          cd "$GITHUB_WORKSPACE"
           gate_status=0
           if ! node scripts/health-gate.ts public/health.json --require-baseline \
             /tmp/kamiyobi-health-baseline/health.json /tmp/next-last-known-good-health.json; then

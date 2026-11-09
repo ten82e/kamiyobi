@@ -948,6 +948,8 @@ conferences:
                 sourceClass: official-cfp
                 observed_at: '2026-11-09T01:25:00Z'
                 verifiedAt: '2026-11-09T01:25:00Z'
+                contentHash: 04023a85e7f50aefa19833aa3bac8eea34d251085d6dc5b2cf699739a3031a99
+                evidenceRef: data/evidence/blobs/04023a85e7f50aefa19833aa3bac8eea34d251085d6dc5b2cf699739a3031a99.body
                 rawExcerpt: 'Tutorial proposals 7 Dec 2026'
                 verifiedFields:
                   - date
@@ -967,6 +969,8 @@ conferences:
                 sourceClass: official-cfp
                 observed_at: '2026-11-09T01:10:00Z'
                 verifiedAt: '2026-11-09T01:10:00Z'
+                contentHash: 04023a85e7f50aefa19833aa3bac8eea34d251085d6dc5b2cf699739a3031a99
+                evidenceRef: data/evidence/blobs/04023a85e7f50aefa19833aa3bac8eea34d251085d6dc5b2cf699739a3031a99.body
                 rawExcerpt: 'Tutorial Camera Ready Deadline 7 Jan 2027'
                 verifiedFields:
                   - date
@@ -2072,11 +2076,12 @@ conferences:
         #   Camera-ready Feb 8, 2027。日付のみの項目は AoE 慣例。
         deadlines:
           - {kind: paper, label: 'Paper submission', date: '2026-11-30 23:59:59',
-             tz: AoE, evidence: {source_url: https://eurocrypt.iacr.org/2027/, sourceClass: official-cfp, observed_at: '2026-11-08T08:05:00Z', contentHash: 2c3b6f97366c13af5de782b6b6073432984770c9f0f576557732ed84fe0915b5, evidenceRef: data/evidence/blobs/2c3b6f97366c13af5de782b6b6073432984770c9f0f576557732ed84fe0915b5.body, rawExcerpt: 'Submission deadline at 23:59 anywhere on Earth (AoE): Nov 30, 2026', verifiedFields: [date, time, timezone], confidence: official}, precision: exact}
+             tz: AoE, evidence: {source_url: https://eurocrypt.iacr.org/2027/, sourceClass: official-cfp, observed_at: '2026-11-08T08:05:00Z', contentHash: 2c3b6f97366c13af5de782b6b6073432984770c9f0f576557732ed84fe0915b5, evidenceRef: data/evidence/blobs/2c3b6f97366c13af5de782b6b6073432984770c9f0f576557732ed84fe0915b5.body, rawExcerpt: 'Submission deadline at 23:59 anywhere on Earth (AoE): Nov 30, 2026', verifiedFields: [date, time, timezone], retrievedAt: '2026-11-08T08:05:00Z', verifiedAt: '2026-11-08T08:05:00Z', confidence: official}, precision: exact,
+             superseded_deadlines: [{value: '2027-02-09T11:59:59.000Z', precision: exact, source: 'ECC 2027 official CFP', reason: 'manual-resolution', supersededBy: 'eurocrypt|eurocrypt27|paper|1|', supersededAt: '2026-11-08T08:05:00Z'}, {value: '2026-12-06T11:59:59.000Z', precision: exact, source: 'ECC 2027 official CFP', reason: 'manual-resolution', supersededBy: 'eurocrypt|eurocrypt27|paper|1|', supersededAt: '2026-11-08T08:05:00Z'}]}
           - {kind: review_release, label: 'Early rejection notifications & start of rebuttal', date: '2026-12-05 23:59:59',
-             tz: AoE, evidence: {source_url: https://eurocrypt.iacr.org/2027/, sourceClass: official-cfp, observed_at: '2026-11-08T08:05:00Z', contentHash: 2c3b6f97366c13af5de782b6b6073432984770c9f0f576557732ed84fe0915b5, evidenceRef: data/evidence/blobs/2c3b6f97366c13af5de782b6b6073432984770c9f0f576557732ed84fe0915b5.body, rawExcerpt: 'Early rejection notifications & start of rebuttal: Dec 5, 2026', verifiedFields: [date, time, timezone], confidence: official}, precision: exact}
+             tz: AoE, evidence: {source_url: https://eurocrypt.iacr.org/2027/, sourceClass: official-cfp, observed_at: '2026-11-08T08:05:00Z', contentHash: 2c3b6f97366c13af5de782b6b6073432984770c9f0f576557732ed84fe0915b5, evidenceRef: data/evidence/blobs/2c3b6f97366c13af5de782b6b6073432984770c9f0f576557732ed84fe0915b5.body, rawExcerpt: 'Early rejection notifications & start of rebuttal: Dec 5, 2026', verifiedFields: [date, time, timezone], retrievedAt: '2026-11-08T08:05:00Z', verifiedAt: '2026-11-08T08:05:00Z', confidence: official}, precision: exact}
           - {kind: notification, label: 'Final notification', date: '2027-02-08 23:59:59',
-             tz: AoE, evidence: {source_url: https://eurocrypt.iacr.org/2027/, sourceClass: official-cfp, observed_at: '2026-11-08T08:05:00Z', contentHash: 2c3b6f97366c13af5de782b6b6073432984770c9f0f576557732ed84fe0915b5, evidenceRef: data/evidence/blobs/2c3b6f97366c13af5de782b6b6073432984770c9f0f576557732ed84fe0915b5.body, rawExcerpt: 'Final notification: Feb 8, 2027', verifiedFields: [date, time, timezone], confidence: official}, precision: exact}
+             tz: AoE, evidence: {source_url: https://eurocrypt.iacr.org/2027/, sourceClass: official-cfp, observed_at: '2026-11-08T08:05:00Z', contentHash: 2c3b6f97366c13af5de782b6b6073432984770c9f0f576557732ed84fe0915b5, evidenceRef: data/evidence/blobs/2c3b6f97366c13af5de782b6b6073432984770c9f0f576557732ed84fe0915b5.body, rawExcerpt: 'Final notification: Feb 8, 2027', verifiedFields: [date, time, timezone], retrievedAt: '2026-11-08T08:05:00Z', verifiedAt: '2026-11-08T08:05:00Z', confidence: official}, precision: exact}
         mode: merge-slots
         remove:
           # 別版の日程 (提出 9-17・早期排除 11-30・リバタル終了 12-5・通知 1-18・カメラレディ 2-8) を外す。
@@ -2292,11 +2297,24 @@ conferences:
   # 根拠: COLING 2027 公式 (Macau, May 9-14, 2027)（締切は上流と一致のため変更なし）
 
   coling:
+    link: https://2027.coling-iccl.org/
     editions:
       2027:
-        date_text: May 9-14, 2027
+        link: https://2027.coling-iccl.org/
+        place: Macau SAR, China / Online
+        date_text: May 9-14 (in-person) and 6-7 (virtual), 2027
         event_start: '2027-05-09'
         event_end: '2027-05-14'
+        mode: merge-slots
+        deadlines:
+          - {kind: paper, label: 'Paper submission', round: 1, date: '2026-10-12 23:59:59', tz: AoE, precision: exact, evidence: {source_url: https://2027.coling-iccl.org/, sourceClass: official-cfp, observed_at: '2026-11-09T02:30:00Z', retrievedAt: '2026-11-09T02:30:00Z', verifiedAt: '2026-11-09T02:30:00Z', contentHash: 53f80427fd3e7935279eb3387d15be2da7dba3d2db1979c7de1c1065965e9fa0, evidenceRef: data/evidence/blobs/53f80427fd3e7935279eb3387d15be2da7dba3d2db1979c7de1c1065965e9fa0.body, rawExcerpt: 'ARR submission deadline Monday October 12, 2026', verifiedFields: [date, time, timezone], confidence: official}}
+          - {kind: paper, label: 'Commitment deadline', round: 2, date: '2026-12-23 23:59:59', tz: AoE, precision: exact, evidence: {source_url: https://2027.coling-iccl.org/, sourceClass: official-cfp, observed_at: '2026-11-09T02:30:00Z', retrievedAt: '2026-11-09T02:30:00Z', verifiedAt: '2026-11-09T02:30:00Z', contentHash: 53f80427fd3e7935279eb3387d15be2da7dba3d2db1979c7de1c1065965e9fa0, evidenceRef: data/evidence/blobs/53f80427fd3e7935279eb3387d15be2da7dba3d2db1979c7de1c1065965e9fa0.body, rawExcerpt: 'Commitment after meta-reviews Wednesday December 23, 2026', verifiedFields: [date, time, timezone], confidence: official}}
+        remove:
+          - kind: paper
+            label: Paper submission
+            round: 2
+            values:
+              - '2026-12-24T11:59:59.000Z'
 
   # --- icdcn 2027 当日確認（8/13 AoE 前倒し） ---
   # 根拠: https://cs3-lab.github.io/icdcn/ (2026-08-12 取得)
@@ -2368,6 +2386,21 @@ conferences:
   #   上流は 2027 推定 (abstract 1/9・paper 1/16) で 6-7 日乖離 → 実 edition で置換。
   #   conf リンクも ease-2026 から 2027 に更新。
 
+  icdar:
+    link: https://icdar2027.org/
+    editions:
+      '2027':
+        link: https://icdar2027.org/
+        place: Kuala Lumpur, Malaysia
+        date_text: August 18-22, 2027
+        event_start: '2027-08-18'
+        event_end: '2027-08-22'
+        mode: merge-slots
+        deadlines:
+          - {kind: abstract, label: 'Abstracts Deadline', round: 1, date: '2027-02-26 23:59:59', tz: AoE, precision: exact, evidence: {source_url: https://icdar2027.org/important-dates, sourceClass: official-cfp, observed_at: '2026-11-09T02:10:00Z', retrievedAt: '2026-11-09T02:10:00Z', verifiedAt: '2026-11-09T02:10:00Z', contentHash: e4339fa4e3aa6e6000db9d85d410efdf734d8d2b2b3dba3be1f4d24598d10d03, evidenceRef: data/evidence/blobs/e4339fa4e3aa6e6000db9d85d410efdf734d8d2b2b3dba3be1f4d24598d10d03.body, rawExcerpt: 'Abstracts Deadline: February 26, 2027', verifiedFields: [date, time, timezone], confidence: official}}
+          - {kind: paper, label: 'Full Paper Deadline', round: 1, date: '2026-11-15 23:59:59', tz: AoE, precision: exact, evidence: {source_url: https://icdar2027.org/important-dates, sourceClass: official-cfp, observed_at: '2026-11-09T02:10:00Z', retrievedAt: '2026-11-09T02:10:00Z', verifiedAt: '2026-11-09T02:10:00Z', contentHash: e4339fa4e3aa6e6000db9d85d410efdf734d8d2b2b3dba3be1f4d24598d10d03, evidenceRef: data/evidence/blobs/e4339fa4e3aa6e6000db9d85d410efdf734d8d2b2b3dba3be1f4d24598d10d03.body, rawExcerpt: 'IJDAR Journal Track Full Paper Deadline: 15 November 2026', verifiedFields: [date, time, timezone], confidence: official}}
+          - {kind: paper, label: 'Full Paper Deadline', round: 2, date: '2027-03-05 23:59:59', tz: AoE, precision: exact, evidence: {source_url: https://icdar2027.org/important-dates, sourceClass: official-cfp, observed_at: '2026-11-09T02:10:00Z', retrievedAt: '2026-11-09T02:10:00Z', verifiedAt: '2026-11-09T02:10:00Z', contentHash: e4339fa4e3aa6e6000db9d85d410efdf734d8d2b2b3dba3be1f4d24598d10d03, evidenceRef: data/evidence/blobs/e4339fa4e3aa6e6000db9d85d410efdf734d8d2b2b3dba3be1f4d24598d10d03.body, rawExcerpt: 'Full Paper Deadline: March 5, 2027', verifiedFields: [date, time, timezone], confidence: official}}
+        remove: []
   dis:
     link: https://dis.acm.org/2027/
     editions:
@@ -2381,7 +2414,7 @@ conferences:
           - {kind: abstract, label: 'Abstract and title (full paper and Pictorials)', date: '2027-01-11 23:59:59', tz: AoE}
           - {kind: paper, label: 'Full paper and Pictorials submission', date: '2027-01-18 23:59:59', tz: AoE}
           - {kind: notification, label: 'Full papers, Pictorials, Doctoral Consortium notifications', date: '2027-03-19 23:59:59', tz: AoE}
-          - {kind: camera_ready, label: 'Full papers, Pictorials, Workshops, Interactivities, DC camera ready', date: '2027-04-16 23:59:59', tz: AoE, evidence: {source_url: https://dis.acm.org/2027/contributing/, sourceClass: official-cfp, observed_at: '2026-11-09T01:15:00Z', contentHash: 4405032a722e1385c04e64061fa0b569260fdd5f737334de6d824b0771f01e0c, evidenceRef: data/evidence/blobs/4405032a722e1385c04e64061fa0b569260fdd5f737334de6d824b0771f01e0c.body, rawExcerpt: 'April 16th, 2027 – Full papers, Pictorials, Workshops, Interactivities, DC camera ready', verifiedFields: [date, time, timezone], confidence: official}, precision: exact}
+          - {kind: camera_ready, label: 'Full papers, Pictorials, Workshops, Interactivities, DC camera ready', date: '2027-04-16 23:59:59', tz: AoE, evidence: {source_url: https://dis.acm.org/2027/contributing/, sourceClass: official-cfp, observed_at: '2026-11-09T01:15:00Z', contentHash: 4405032a722e1385c04e64061fa0b569260fdd5f737334de6d824b0771f01e0c, evidenceRef: data/evidence/blobs/4405032a722e1385c04e64061fa0b569260fdd5f737334de6d824b0771f01e0c.body, rawExcerpt: 'April 16th, 2027 – Full papers, Pictorials, Workshops, Interactivities, DC camera ready', verifiedFields: [date, time, timezone], retrievedAt: '2026-11-09T01:15:00Z', verifiedAt: '2026-11-09T01:15:00Z', confidence: official}, precision: exact}
 
   # 根拠: https://icalp.uj.edu.pl/track-b/ (2026-08-12 取得)
   #   「Important dates (for Track B): First round (for Track B only) Submissions

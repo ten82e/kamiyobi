@@ -1,0 +1,419 @@
+<!doctype html>
+<!--
+  Minimal Mistakes Jekyll Theme 4.24.0 by Michael Rose
+  Copyright 2013-2020 Michael Rose - mademistakes.com | @mmistakes
+  Free for personal and commercial use under the MIT license
+  https://github.com/mmistakes/minimal-mistakes/blob/master/LICENSE
+-->
+<html lang="en" class="no-js">
+  <head>
+    <meta charset="utf-8">
+
+<!-- begin _includes/seo.html --><title>The 32nd International Conference on Computational Linguistics - COLING 2027</title>
+<meta name="description" content="The 32nd International Conference on Computational Linguistics (COLING 2027) will take place in Macau, China, from May 9 to 14, 2027.">
+
+
+
+<meta property="og:type" content="website">
+<meta property="og:locale" content="en_US">
+<meta property="og:site_name" content="COLING 2027">
+<meta property="og:title" content="The 32nd International Conference on Computational Linguistics">
+<meta property="og:url" content="https://2027.coling-iccl.org/">
+
+
+  <meta property="og:description" content="The 32nd International Conference on Computational Linguistics (COLING 2027) will take place in Macau, China, from May 9 to 14, 2027.">
+
+
+
+  <meta property="og:image" content="https://2027.coling-iccl.org/assets/images/macau/coling2027-banner-v2.jpg">
+
+
+
+
+
+
+
+
+
+
+<link rel="canonical" href="https://2027.coling-iccl.org/">
+
+
+
+
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    
+      "@type": "Organization",
+      "url": "https://2027.coling-iccl.org/",
+      "logo": "https://2027.coling-iccl.org/assets/images/macau/coling2027-banner-v2.jpg"
+    
+  }
+</script>
+
+
+  <meta name="google-site-verification" content="r9DGHJdZr6d5b8qVfVbcT9lRqB3F9IQw3C96U_E6tpc" />
+
+
+
+
+
+
+<!-- end _includes/seo.html -->
+
+
+
+
+<!-- https://t.co/dKP3o1e -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script>
+  document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/g, '') + ' js ';
+</script>
+
+<!-- For all browsers -->
+<link rel="stylesheet" href="/assets/css/main.css">
+<link rel="preload" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5/css/all.min.css"></noscript>
+
+
+
+    <!-- start custom head snippets -->
+
+<!-- insert favicons. use https://realfavicongenerator.net/ -->
+<link rel="icon" type="image/png" href="/assets/favicon/favicon-96x96.png" sizes="96x96" />
+<link rel="icon" type="image/svg+xml" href="/assets/favicon/favicon.svg" />
+<link rel="shortcut icon" href="/assets/favicon/favicon.ico" />
+<link rel="apple-touch-icon" sizes="180x180" href="/assets/favicon/apple-touch-icon.png" />
+<meta name="apple-mobile-web-app-title" content="COLING 2027" />
+<link rel="manifest" href="/assets/favicon/site.webmanifest" />
+
+
+<!-- Help search engines identify the conference as a scheduled event (homepage only). -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Event",
+  "name": "The 32nd International Conference on Computational Linguistics (COLING 2027)",
+  "alternateName": "COLING 2027",
+  "description": "The 32nd International Conference on Computational Linguistics (COLING 2027), held in Macau, China, from May 9 to 14, 2027.",
+  "url": "https://2027.coling-iccl.org/",
+  "image": "https://2027.coling-iccl.org/assets/images/macau/coling2027-banner-v2.jpg",
+  "startDate": "2027-05-09",
+  "endDate": "2027-05-14",
+  "eventStatus": "https://schema.org/EventScheduled",
+  "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
+  "location": {
+    "@type": "Place",
+    "name": "Macau, China",
+    "address": {
+      "@type": "PostalAddress",
+      "addressLocality": "Macau",
+      "addressCountry": "MO"
+    }
+  },
+  "organizer": {
+    "@type": "Organization",
+    "name": "COLING 2027",
+    "url": "https://2027.coling-iccl.org/"
+  }
+}
+</script>
+
+
+<!-- end custom head snippets -->
+
+  </head>
+
+  <body class="layout--splash">
+    <nav class="skip-links">
+  <ul>
+    <li><a href="#site-nav" class="screen-reader-shortcut">Skip to primary navigation</a></li>
+    <li><a href="#main" class="screen-reader-shortcut">Skip to content</a></li>
+    <li><a href="#footer" class="screen-reader-shortcut">Skip to footer</a></li>
+  </ul>
+</nav>
+
+    <!--[if lt IE 9]>
+<div class="notice--danger align-center" style="margin: 0;">You are using an <strong>outdated</strong> browser. Please <a href="https://browsehappy.com/">upgrade your browser</a> to improve your experience.</div>
+<![endif]-->
+
+    
+
+<div class="masthead">
+  <div class="masthead__inner-wrap">
+    <div class="masthead__menu">
+      <nav id="site-nav" class="greedy-nav">
+        
+          <a href="/">
+            <span class="site-logo">
+              <img src="/assets/images/logo/coling2027-logo.png" alt="          ">
+              <span class="site-title">           
+              </span>
+            </span>
+          </a>
+        
+        <ul class="visible-links"><li class="masthead__menu-item">
+              
+                <a class="greedy-nav__droppable" href="#">Calls <i class="fa fa-caret-down"></i></a>
+                <ul class="greedy-nav__subnav hidden"><li class="masthead__menu-subitem">
+                    <a href="/calls/main_conference_papers/">Main Conference Papers</a>
+                  </li><li class="masthead__menu-subitem">
+                    <a href="/calls/industry_track/">Industry Track Papers</a>
+                  </li><li class="masthead__menu-subitem">
+                    <a href="/calls/system_demonstrations/">System Demonstrations</a>
+                  </li><li class="masthead__menu-subitem">
+                    <a href="/calls/tutorials/">Tutorials</a>
+                  </li><li class="masthead__menu-subitem">
+                    <a href="/calls/workshop_proposals/">Workshop Proposals</a>
+                  </li></ul>
+              
+            </li><li class="masthead__menu-item">
+              
+                <a class="greedy-nav__droppable" href="#">Committee <i class="fa fa-caret-down"></i></a>
+                <ul class="greedy-nav__subnav hidden"><li class="masthead__menu-subitem">
+                    <a href="/committees/organization/">Organizing Committee</a>
+                  </li></ul>
+              
+            </li><li class="masthead__menu-item">
+              
+                <a href="/sponsors/">Sponsors</a>
+              
+            </li><li class="masthead__menu-item">
+              
+                <a href="/participants-info/">Participants Info</a>
+              
+            </li><li class="masthead__menu-item">
+              
+                <a href="/about/">About COLING</a>
+              
+            </li><li class="masthead__menu-item">
+              
+                <a href="/faq/">FAQ</a>
+              
+            </li></ul>
+        
+        <button class="greedy-nav__toggle hidden" type="button">
+          <span class="visually-hidden">Toggle menu</span>
+          <div class="navicon"></div>
+        </button>
+        <ul class="hidden-links hidden"></ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+
+    <div class="initial-content">
+      
+  
+
+
+
+
+
+
+
+<div class="page__hero--overlay"
+  style=" background-image: url('/assets/images/macau/coling2027-banner-v2.jpg');"
+>
+  
+    <div class="wrapper">
+      <h1 id="page-title" class="page__title" itemprop="headline">
+        
+          The 32nd International Conference on Computational Linguistics
+
+        
+      </h1>
+      
+        <p class="page__lead">Macau, China
+</p>
+        
+          <p class="page__lead">May 9 – 14, 2027<br />
+</p>
+        
+      
+      
+
+
+      
+      
+    </div>
+  
+  
+    <span class="page__hero-caption" aria-hidden="true">
+</span>
+  
+</div>
+
+
+
+<div id="main" role="main">
+  <article class="splash" itemscope itemtype="https://schema.org/CreativeWork">
+    <meta itemprop="headline" content="The 32nd International Conference on Computational Linguistics">
+    <meta itemprop="description" content="Macau, China">
+    
+    
+
+    <section class="page__content" itemprop="text">
+      <h2 id="welcome">Welcome!</h2>
+
+<p>The 32nd International Conference on Computational Linguistics (COLING 2027) will take place in <strong>Macau, China</strong> from <strong>May 9th to 14th, 2027</strong>.</p>
+
+<h2 id="news">News</h2>
+
+<!--**Website is under construction. Stay tuned for updates!**
+{: .text-center .notice--info}-->
+
+<style>
+.news-table { font-size: .9em; table-layout: fixed; }
+.news-table tr td:nth-child(1) { font-weight: bold; width: 12em; white-space: nowrap; }
+.news-table a { color: #d40000; font-weight: bold; }
+</style>
+
+<table class="news-table">
+  <tbody>
+    <tr>
+      <td>October 30, 2026</td>
+      <td><a href="/calls/system_demonstrations/">Call for System Demonstrations</a> is posted.</td>
+    </tr>
+  </tbody>
+</table>
+
+<table class="news-table">
+  <tbody>
+    <tr>
+      <td>October 9, 2026</td>
+      <td><strong>Submissions closing soon!</strong> Deadline is October 12, 11:59pm AOE. Portal: <a href="https://openreview.net/group?id=aclweb.org/ACL/ARR/2026/October">OpenReview</a></td>
+    </tr>
+  </tbody>
+</table>
+
+<table class="news-table">
+  <tbody>
+    <tr>
+      <td>September 17, 2026</td>
+      <td><a href="/calls/industry_track/">Call for Industry Track Papers</a> is posted.</td>
+    </tr>
+  </tbody>
+</table>
+
+<table class="news-table">
+  <tbody>
+    <tr>
+      <td>September 10, 2026</td>
+      <td><a href="/calls/tutorials/">Call for Tutorial Proposals</a> is posted.</td>
+    </tr>
+  </tbody>
+</table>
+
+<table class="news-table">
+  <tbody>
+    <tr>
+      <td>July 29, 2026</td>
+      <td><a href="/calls/main_conference_papers/">Call for Main Conference Papers</a> is posted.</td>
+    </tr>
+  </tbody>
+</table>
+
+<table class="news-table">
+  <tbody>
+    <tr>
+      <td>July 28, 2026</td>
+      <td><a href="/calls/workshop_proposals/">Call for Workshop Proposals</a> is posted.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="important-dates">Important Dates</h2>
+
+<table class="dates-table">
+  <tbody>
+    <tr>
+      <td>ARR submission deadline</td>
+      <td>Monday</td>
+      <td>October 12, 2026</td>
+    </tr>
+    <tr>
+      <td>Commitment after meta-reviews</td>
+      <td>Wednesday</td>
+      <td>December 23, 2026</td>
+    </tr>
+    <tr>
+      <td>Notification of acceptance</td>
+      <td>Wednesday</td>
+      <td>February 10, 2027</td>
+    </tr>
+    <tr>
+      <td>Virtual Conference</td>
+      <td>Thursday - Friday</td>
+      <td>May 6-7, 2027</td>
+    </tr>
+    <tr>
+      <td>Main Conference</td>
+      <td>Sunday - Friday</td>
+      <td>May 9–14, 2027</td>
+    </tr>
+  </tbody>
+</table>
+
+<style>
+.dates-table { font-size: .9em; }
+.dates-table tr td:nth-child(1) { width: 55%; }
+.dates-table tr td:nth-child(2) { width: 25%; }
+.dates-table del { color: #888; }
+</style>
+
+<p><b>All deadlines are 11.59 pm <a target="_blank" href="https://www.timeanddate.com/time/zone/timezone/utc-12">UTC -12h</a> (anywhere on earth).</b></p>
+
+    </section>
+  </article>
+</div>
+
+    </div>
+
+    
+
+    <div id="footer" class="page__footer">
+      <footer>
+        <!-- start custom footer snippets -->
+
+<!-- end custom footer snippets -->
+        <div class="page__footer-follow">
+  <ul class="social-icons">
+    
+      <li><strong>Follow:</strong></li>
+    
+
+    
+      
+        
+      
+    
+
+    
+  </ul>
+</div>
+
+<div class="page__footer-copyright">&copy; 2026 COLING. Powered by <a href="https://jekyllrb.com" rel="nofollow">Jekyll</a> &amp; <a href="https://mademistakes.com/work/minimal-mistakes-jekyll-theme/" rel="nofollow">Minimal Mistakes</a>.</div>
+
+      </footer>
+    </div>
+
+    
+  <script src="/assets/js/main.min.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+  </body>
+</html>
