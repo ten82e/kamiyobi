@@ -45,6 +45,8 @@ npm run test:recommendation-mutations       # 推薦の変異検査
 2026-11-08 実測: full-pool 9/9・full-pool-mutations 3/3 検出・interrupted 2/2 検出・
 2026-11-09 実測: full-pool 9/9・full-pool-mutations 3/3 検出（baseline 19/0 →
 各変異で 9-15/10-5〜4 の低下を確認）・全ゲート緑を再確認。
+2026-11-09 実測 (mcp-interrupted-mutations): baseline 25/0 → 2 変異で 0/25 に低下 →
+復元後 25/0。**2/2 検出** ✓。
 llms-count・mcp-recovery の baseline（49/0）は緑。
 **既知の赤**（品質基準は緩めない）:
 - `test:real-papers` と `test:recommendation-mutations` の baseline は、SPEC
