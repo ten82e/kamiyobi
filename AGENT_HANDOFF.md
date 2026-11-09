@@ -61,6 +61,8 @@ eudat は頁に値が無く根拠を得られないため触らない（次回�
   未審査として扱われる為。VF-0127 の受入 (2026-11-08 審査済み) はローカル main に有るが
   origin/main に未反映 — `git merge-base --is-ancestor 9940a05f origin/main` で確認済み。
   **push すれば解消する** (ローカルでは既に正しく処理済み・全ゲート緑)。
+  確認: workflow_dispatch で手動実行 (run 42560880583) も同じ失敗 — origin/main の
+  validator-findings.json に VF-0127 が無い為。push 後の次回 nightly で解消する見込み。
 - **2026-11-08 追加確認(4)**: OSDI 2027（概要 12-1・論文 12-8、共に 10:59 pm UTC =
   22:59:59Z ✓ USENIX は AoE でなく EST 表示）、PETS 2027（4 四半期 rolling: 5/31・8/31・
   11/30・2/28、全て firm・AoE ✓）。いずれも収録どおり正しい。
