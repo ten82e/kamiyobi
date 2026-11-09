@@ -636,6 +636,45 @@ conferences:
   - categories:
       - systems
     editions:
+      - date_text: July 7-9, 2027
+        deadlines:
+          - date: '2027-02-26 23:59:59'
+            evidence:
+              - contentHash: d654fae08ca0415ef7d0b7d34c50fc123f16a415e89d04a0b6e37c0c4e5282dd
+                rawExcerpt: 'Paper Submission: February 26, 2027'
+                retrievedAt: '2026-11-10T04:45:00Z'
+                sourceClass: official-cfp
+                sourceUrl: https://cyprusconferences.org/ispdc2027/
+                verifiedAt: '2026-11-10T04:45:00Z'
+                verifiedFields:
+                  - date
+                  - time
+                  - timezone
+            kind: paper
+            label: Paper submission deadline
+            precision: exact
+            promotion_ref:
+              batch: 2026-11-10-ispdc-2027
+              resolution: resolution-ispdc-2027
+            round: 1
+            track: ''
+            tz: AoE
+        event_end: '2027-07-09'
+        event_start: '2027-07-07'
+        id: ispdc-2027
+        link: https://cyprusconferences.org/ispdc2027/
+        place: Limassol, Cyprus
+        year: 2027
+    full_name: The 26th International Symposium on Parallel and Distributed Computing
+    key: ispdc
+    link: https://cyprusconferences.org/ispdc2027/
+    tags:
+      - niche
+    title: ISPDC 2027
+
+  - categories:
+      - systems
+    editions:
       - date_text: February 22-26, 2027
         deadlines:
           - date: '2027-01-13 23:59:59'
