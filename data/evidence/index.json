@@ -656,6 +656,13 @@
         "data/snapshot.json",
         "data/verification-ledger.json"
       ]
+    },
+    "fd2ce0ad239cdad2045ddd642b21d9d39752a71b12ecb4a3864501ebb5adaf5b": {
+      "bytes": 43998,
+      "content_type": "application/octet-stream",
+      "references": [
+        "data/curated.generated.yaml"
+      ]
     }
   }
 }

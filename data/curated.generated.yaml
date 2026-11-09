@@ -634,6 +634,45 @@ conferences:
     title: WQS 2026
 
   - categories:
+      - networking
+    editions:
+      - date_text: May 25-28, 2027
+        deadlines:
+          - date: '2026-12-15 23:59:59'
+            evidence:
+              - contentHash: fd2ce0ad239cdad2045ddd642b21d9d39752a71b12ecb4a3864501ebb5adaf5b
+                rawExcerpt: 'December 15, 2026 Paper submission'
+                retrievedAt: '2026-11-10T03:20:00Z'
+                sourceClass: official-cfp
+                sourceUrl: https://easychair.org/cfp/WebSci27
+                verifiedAt: '2026-11-10T03:20:00Z'
+                verifiedFields:
+                  - date
+                  - time
+                  - timezone
+            kind: paper
+            label: Paper submission deadline
+            precision: exact
+            promotion_ref:
+              batch: 2026-11-10-websci-2027
+              resolution: resolution-websci-2027
+            round: 1
+            track: ''
+            tz: AoE
+        event_end: '2027-05-28'
+        event_start: '2027-05-25'
+        id: websci-2027
+        link: https://websci27.webscience.org/
+        place: Singapore, Singapore
+        year: 2027
+    full_name: The 19th ACM Web Science Conference 2027
+    key: websci
+    link: https://websci27.webscience.org/
+    tags:
+      - niche
+    title: WebSci 2027
+
+  - categories:
       - systems
     editions:
       - date_text: March 17-19, 2027

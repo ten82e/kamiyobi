@@ -58861,7 +58861,7 @@ candidates:
     id: candidate-778a5c66fac5abc30243671c
     source: easychair
     source_item_id: websci-27
-    status: discovered
+    status: promoted
     discovered_at: '2026-08-30T13:30:12.117Z'
     first_seen_at: '2026-08-30T13:30:12.117Z'
     last_seen_at: '2026-09-06T22:11:00.021Z'
@@ -58884,7 +58884,7 @@ candidates:
     id: candidate-9df5c1ce95caac5826a77d61
     source: dbworld
     source_item_id: websci-27
-    status: discovered
+    status: promoted
     discovered_at: '2026-10-04T12:39:08.732Z'
     first_seen_at: '2026-10-04T12:39:08.732Z'
     last_seen_at: '2026-11-07T18:30:51.935Z'
