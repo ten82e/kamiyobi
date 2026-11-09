@@ -868,6 +868,9 @@ conferences:
             values:
               - '2026-09-25T23:59:59.000Z'
               - '2026-09-22T11:59:59.000Z'
+          - kind: camera_ready
+            label: Tutorial camera-ready deadline
+            round: 1
         deadlines:
           - kind: abstract
             label: Abstract submission
@@ -949,6 +952,27 @@ conferences:
                   - date
                   - kind
                 confidence: official
+          - kind: camera_ready
+            label: Tutorial camera-ready deadline
+            date: '2027-01-07 23:59:59'
+            tz: AoE
+            round: 1
+            evidence:
+              - source_name: ECIR 2027 official site
+                source_url: https://www.ecir2027.co.uk/
+                sourceClass: official-cfp
+                observed_at: '2026-11-09T01:10:00Z'
+                retrievedAt: '2026-11-09T01:10:00Z'
+                verifiedAt: '2026-11-09T01:10:00Z'
+                rawExcerpt: 'Tutorial Camera Ready Deadline 7 Jan 2027'
+                verifiedFields:
+                  - date
+                  - kind
+                  - round
+                  - time
+                  - timezone
+                confidence: official
+            precision: exact
         mode: merge-slots
 
 
