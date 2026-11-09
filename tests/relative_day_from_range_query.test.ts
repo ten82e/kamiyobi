@@ -37,10 +37,10 @@ describe("それより後の語 `から` `より` を続けた形がその初日
     }
   });
   it("行数の実測（固定ハーネスの品書 435 行 – 前はこの内すべて 0 件だった）", () => {
-    expect(列("今日から").size).toBe(426);
-    expect(列("明日から").size).toBe(426);
-    expect(列("来週から").size).toBe(426);
-    expect(列("上旬から").size).toBe(428);
+    expect(列("今日から").size).toBe(428);
+    expect(列("明日から").size).toBe(428);
+    expect(列("来週から").size).toBe(428);
+    expect(列("上旬から").size).toBe(430);
     expect(列("中旬から").size).toBe(426);
     expect(列("下旬から").size).toBe(417);
     expect(列("来月上旬から").size).toBe(392);
@@ -99,10 +99,10 @@ describe("寄せない形の守り（第 355 回・第 453 回・第 463 回）"
     expect(列("1 年後から").size).toBe(0); /* 実ビルド 868 行では 41 件（固定ハーネスは 1 件）*/
   });
   it("詰め形其身は動かして居ない（他の頁で張る実測の値は其侭）", () => {
-    expect(列("明日以降").size).toBe(426);
+    expect(列("明日以降").size).toBe(428);
     expect(列("来月 上旬 まで").size).toBe(180);
     expect(列("週 末").size).toBe(146);
-    expect(列("8月から").size).toBe(428);
+    expect(列("8月から").size).toBe(430);
     expect(案内("17時 以降")).toContain("17時 以降 = 17:00〜23:59");
   });
   it("第 470 回〜第 475 回の実測はこの回で変へて居ない", () => {

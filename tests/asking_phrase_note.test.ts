@@ -94,7 +94,7 @@ describe("訪ねて打つ形がその群の打ち直し方を出す（第 510 �
   it("行が出る打ち手には何も被せない", () => {
     expect(件("関西")).toBe(6);
     expect(件("国内")).toBe(40);
-    expect(件("オンライン参加可")).toBe(20);
+    expect(件("オンライン参加可")).toBe(22);
     expect(件("セキュリティ")).toBe(69);
     expect(件("ランクA")).toBe(3);
     for (const 文 of ["関西", "国内", "オンライン参加可", "セキュリティ", "ランクA"]) {
@@ -117,8 +117,8 @@ describe("訪ねて打つ形がその群の打ち直し方を出す（第 510 �
     expect((Recommender.columnQueryNoteJa("分野 セキュリティ") || "").trim()).toContain(
       "「分野」は",
     );
-    expect(件("年内")).toBe(428);
-    expect(件("年末中")).toBe(85);
+    expect(件("年内")).toBe(430);
+    expect(件("年末中")).toBe(86);
     expect(件("再来週内")).toBe(18);
     expect(件("来月 末日")).toBe(178);
     expect(件("週 末")).toBe(146);

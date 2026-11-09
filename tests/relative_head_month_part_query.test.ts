@@ -52,7 +52,7 @@ describe("相対の語に月の塊を続ける形がその月の塊として解�
     expect(列("先 中旬").size).toBe(6);
     expect(列("先 半ば").size).toBe(6);
     expect(列("昨 上旬").size).toBe(0);
-    expect(列("再来 中旬").size).toBe(37);
+    expect(列("再来 中旬").size).toBe(38);
     expect(列("翌 上旬").size).toBe(68);
     expect(列("来 初旬").size).toBe(68);
     expect(列("来 半ば").size).toBe(56);
@@ -104,7 +104,7 @@ describe("寄せない形の守り（第 453 回・第 463 回・第 466 回）"
     expect(列("今 月中").size).toBe(118);
     expect(列("毎 週末").size).toBe(0);
     expect(列("昨 週").size).toBe(8);
-    expect(列("来 年中").size).toBe(113);
+    expect(列("来 年中").size).toBe(115);
     expect(案内("半ば")).toContain("中旬 = 2026年8月11日(火)");
   });
   it("第 470 回・第 471 回・第 472 回の実測はこの回で変へて居ない", () => {

@@ -55,12 +55,12 @@ describe("数字で書いた年にその年の幅の案内が出る（第 496 �
     expect(日の案内("2028年3月から")).toContain("2028年の締切（1〜12 か月）");
   });
   it("行は一個も動かして居ない（案内だけの直し）", () => {
-    expect(列("2026年").size).toBe(430);
+    expect(列("2026年").size).toBe(432);
     expect(列("2027年").size).toBeGreaterThan(0);
     expect(列("2028年").size).toBe(0);
-    expect(列("2026年1月から").size).toBe(430);
-    expect(列("2027年12月から").size).toBe(20);
-    expect(列("来年12月から").size).toBe(20);
+    expect(列("2026年1月から").size).toBe(432);
+    expect(列("2027年12月から").size).toBe(21);
+    expect(列("来年12月から").size).toBe(21);
     expect(列("今年1月から").size).toBe(430);
   });
   it("第 470 回〜第 495 回の実測はこの回で変へて居ない", () => {

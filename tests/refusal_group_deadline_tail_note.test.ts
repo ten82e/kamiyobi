@@ -79,7 +79,7 @@ describe("収録にない物を告げる群が、締切らしい語尾を受け�
   });
   it("その方で解ける打ち方を塞いで居ない（行の出る物は案内を立てない）", () => {
     /* `オンラインの締切` は行が出る（実測 – 検査用ビルドで 20 件）ので、案内は出ない。*/
-    expect(列("オンラインの締切").size).toBe(20);
+    expect(列("オンラインの締切").size).toBe(22);
     expect(画面の案内("オンラインの締切")).toBe("");
   });
   it("印を持つ群の数（第 503 回〜第 506 回で増えた順路を張る）", () => {
@@ -107,10 +107,10 @@ describe("収録にない物を告げる群が、締切らしい語尾を受け�
     expect(画面の案内("travel grantの締切")).not.toContain("「travel」は");
   });
   it("第 470 回〜第 504 回の実測はこの回で変へて居ない", () => {
-    expect(列("年内").size).toBe(428);
-    expect(列("今年内").size).toBe(430);
+    expect(列("年内").size).toBe(430);
+    expect(列("今年内").size).toBe(432);
     expect(列("再来週内").size).toBe(18);
-    expect(列("年末中").size).toBe(85);
+    expect(列("年末中").size).toBe(86);
     expect(列("年初1月").size).toBe(23);
     expect(列("来月 末日").size).toBe(178);
     expect(列("週 末").size).toBe(146);

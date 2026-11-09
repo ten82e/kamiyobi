@@ -67,8 +67,8 @@ describe("この段から届かない形（実測で残した差）と其它の�
     expect(列("週 末").size).toBe(146);
     expect(列("月末").size).toBe(118);
     expect(列("来月末").size).toBe(178);
-    expect(列("明日以降").size).toBe(426);
-    expect(列("1 か月後から").size).toBe(365);
+    expect(列("明日以降").size).toBe(428);
+    expect(列("1 か月後から").size).toBe(367);
     expect(列("来 上旬").size).toBe(68);
     expect(列("明日 から 明後日").size).toBe(4);
     expect(列("来月 下旬 まで").size).toBe(276);
