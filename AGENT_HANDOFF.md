@@ -1,8 +1,8 @@
 # kamiyobi agent handoff
 
-## 現在地（2026-11-08・goal ラウンド 1-15 継続中）
+## 現在地（2026-11-09・goal ラウンド 66 継続中）
 
-本体ブランチは `main`。`origin/main` より 80 コミット以上先行しており、**push は未承認**
+本体ブランチは `main`。`origin/main` より **136 コミット**先行しており、**push は未承認**
 （毎回の報告で指示を仰いでいる。push が承認されると日次 `update-data` が再開し、
 2026-10-04 で止まっていた公開データが更新に向かう）。
 
@@ -19,6 +19,14 @@
   時計依存の `ics_uid` を載せない、build は入力の古い採番を配付カレンダーの採番で置き換える。
 - 条件付き取得の 304 応答で reverify 全体が落ちる欠陥（`src/capture.ts` の
   `new Response` に 204/205/304 は本文を渡せない）を修復。
+- **2026-11-09 の実地確認 sweep**: 61 会議を公式ページで実地確認し、締切訂正 11 件
+  （ARC・EvoMUSART・LASCAS・CVM・GeoIndustry・Mid4CC・Cascade・Eurocrypt・BIS・DIS・
+  HPC-Asia）と MobileHCI の新規収録を反映。0〜365 日の全窓の棚卸し完了
+  （0-45 日 179 行中 43 会議・45-90 日 89 行中 14 会議・90-180 日 135 行中 8 会議）。
+- **G4 ゲートの全実測**（2026-11-09）: full-pool 9/9・full-pool-mutations 3/3 検出・
+  mcp-interrupted-mutations 2/2 検出・llms-count-mutations 18/18 検出・bench passed。
+- **CI nightly 失敗の原因特定と実証**: workflow_dispatch 手動実行で「VF-0127 が
+  origin/main に未反映」が原因であることを実証（push で解消）。
 - `public/` を直接読む検査に `publicClockGuard()`（別時計のビルドを作り直しコマンド付きで
   落とす）を全 12 検査ファイルに設置。MCP stdio に CLI と同じ `--now` を通した。
 - ブロックされた update-data の実行サマリーに新しい警告と発見の記録方法を出すようにした。
