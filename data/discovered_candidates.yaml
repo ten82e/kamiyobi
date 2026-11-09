@@ -49026,7 +49026,7 @@ candidates:
     id: candidate-19c0341620c085eab6f0f27f
     source: easychair
     source_item_id: parma-ditam-2027
-    status: discovered
+    status: promoted
     discovered_at: '2026-11-07T18:28:57.417Z'
     first_seen_at: '2026-11-07T18:28:57.417Z'
     last_seen_at: '2026-11-07T18:30:51.935Z'
@@ -49059,7 +49059,7 @@ candidates:
     id: candidate-662377ae5e0540c06f4cdf68
     source: wikicfp
     source_item_id: '202528'
-    status: discovered
+    status: promoted
     discovered_at: '2026-08-20T20:45:37.898Z'
     first_seen_at: '2026-08-20T20:45:37.898Z'
     last_seen_at: '2026-10-04T23:19:49.754Z'

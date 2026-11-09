@@ -636,6 +636,46 @@ conferences:
   - categories:
       - systems
     editions:
+      - date_text: January 18, 2027
+        deadlines:
+          - date: '2026-11-16 23:59:59'
+            evidence:
+              - contentHash: 0fab5fedf01fe1e1d97e90c000b49b240bdbf1bbf9e1ccb0d75dbc6285e1e16c
+                rawExcerpt: '16/11/2026 - 23:59 (UTC): Paper Submission Deadline'
+                retrievedAt: '2026-11-10T04:15:00Z'
+                sourceClass: official-cfp
+                sourceUrl: https://parma-ditam-workshop.github.io/
+                verifiedAt: '2026-11-10T04:15:00Z'
+                verifiedFields:
+                  - date
+                  - time
+                  - timezone
+            kind: paper
+            label: Paper submission deadline
+            precision: exact
+            promotion_ref:
+              batch: 2026-11-10-parmaditam-2027
+              resolution: resolution-parmaditam-2027
+            round: 1
+            track: ''
+            tz: UTC
+        event_end: '2027-01-18'
+        event_start: '2027-01-18'
+        id: parmaditam-2027
+        link: https://parma-ditam-workshop.github.io/
+        place: Glasgow, UK
+        year: 2027
+    full_name: 18th Workshop on Parallel Programming and Run-Time Management Techniques for Many-core Architectures (HiPEAC 2027)
+    key: parmaditam
+    link: https://parma-ditam-workshop.github.io/
+    tags:
+      - niche
+      - workshop
+    title: PARMA-DITAM 2027
+
+  - categories:
+      - systems
+    editions:
       - date_text: January 18-20, 2027
         deadlines:
           - date: '2026-11-15 23:59:59'

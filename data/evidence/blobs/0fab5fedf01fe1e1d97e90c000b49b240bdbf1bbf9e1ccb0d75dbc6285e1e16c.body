@@ -1,0 +1,291 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<!--<base href="./">-->
+
+<div>&nbsp;</div></div></div><div style="position:relative">
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+	<title>PARMA-DITAM 2027 Workshop</title>
+	<meta http-equiv="Content-Language" content="English">
+	<link rel="stylesheet" type="text/css" href="./style.css" media="screen">
+</head>
+
+	<body>
+
+		<div id="wrap">
+			<div id="header">
+				<table>
+					<tr>
+						<td><figure>
+							<img src="logo-hipeac.png" alt="HiPEAC logo" width="152" height="114" />
+						</figure></td>
+						<td><h1><a href="./#"> <font size="7"> PARMA-DITAM 2027 Workshop</font></a></h1>
+							<h2> <font size="2pt">
+18th Workshop on Parallel Programming and Run-Time Management Techniques for Many-core Architectures<br/>
+16th Workshop on Design Tools and Architectures for Multicore Embedded Computing Platforms </font>
+							</h2></td>
+					</tr>
+				</table>
+			</div>
+
+			<div id="content">
+
+				<div id="navigation">
+					<ul>
+						<li><a href="./index.html">Home</a></li>
+            <li><a href="./parma_ditam_2027_CfP.pdf">Call For Papers</a></li>
+						<li><a href="https://easychair.org/conferences/?conf=parmaditam2027">Paper Submission</a></li>
+						<li>Workshop Program  <b>TBA</b></li>
+						<li>Workshop Program (PDF) <b>TBA</b></li>
+						<!-- <li><a href="./proceedings.html">Workshop Proceedings</a></li> -->
+					</ul>
+					<h2>Archives</h2>
+					<ul>
+						<li><a href="https://parma-ditam-workshop.github.io/2026/index.html">PARMA-DITAM 2026</a></li>
+					    <li><a href="https://parma-ditam-workshop.github.io/2025/index.html">PARMA-DITAM 2025</a></li>
+            			<li><a href="https://parma-ditam-workshop.github.io/2024/index.html">PARMA-DITAM 2024</a></li>
+					    <li><a href="https://parma-ditam-workshop.github.io/2023/index.html">PARMA-DITAM 2023</a></li>
+					    <li><a href="https://parma-ditam-workshop.github.io/2022/index.html">PARMA-DITAM 2022</a></li>
+					    <li><a href="https://parma-ditam-workshop.github.io/2021/index.html">PARMA-DITAM 2021</a></li>
+						<li><a href="https://parma-ditam-workshop.github.io/2020/index.html">PARMA-DITAM 2020</a></li>
+						<li><a href="https://web.archive.org/web/20190117051458/http://conferences.microlab.ntua.gr/ditam-parma2019/">PARMA-DITAM 2019</a></li>
+						<li><a href="https://web.archive.org/web/20180207152240/http://conferences.microlab.ntua.gr/ditam-parma2018/">PARMA-DITAM 2018</a></li>
+						<li><a href="https://web.archive.org/web/20161209045040/http://conferences.microlab.ntua.gr/ditam-parma2017/">PARMA-DITAM 2017</a></li>
+						<li><a href="https://web.archive.org/web/20160115171102/http://conferences.microlab.ntua.gr/ditam-parma2016/">PARMA-DITAM 2016</a></li>
+						<li><a href="https://web.archive.org/web/20151229093445/http://conferences.microlab.ntua.gr/ditam-parma2015/">PARMA-DITAM 2015</a></li>
+						<li><a href="https://web.archive.org/web/20140113065048/http://conferences.microlab.ntua.gr/ditam-parma2014/">PARMA-DITAM 2014</a></li>
+						<li><a href="https://web.archive.org/web/20190321175013/http://conferences.microlab.ntua.gr/parma2013/">PARMA 2013</a></li>
+						<li><a href="http://paginas.fe.up.pt/%7Especs/events/ditam2013/">DITAM 2013</a></li>
+						<li><a href="https://web.archive.org/web/20190321175013/http://conferences.microlab.ntua.gr/parma2012/">PARMA 2012</a></li>
+						<li><a href="http://paginas.fe.up.pt/~specs/events/ditam2012/">DITAM 2012</a></li>
+						<li><a href="https://web.archive.org/web/20190321175013/http://conferences.microlab.ntua.gr/parma2011/">PARMA 2011</a></li>
+						<li><a href="https://web.archive.org/web/20160117182137/http://conferenze.dei.polimi.it/2parma/">PARMA 2010</a></li>
+					</ul>
+
+                    <!-- <h2>Sponsors</h2>
+                    <a href="http://www.nvidia.com"><img src="NVLogo_2D.png" alt="NVIDIA logo" width="117" height="87"/></a> -->
+				</div>
+
+				<div id="wrapper">
+
+					<div class="tpc">
+						<h2>General Chair:</h2>
+            <ul>
+                <li><a href="mailto:lev.denisov@polimi.it">Lev Denisov, POLIMI</a></li>
+            </ul>
+
+            <h2>Program Co-Chair:</h2>
+            <ul>
+                <li><a href="mailto:paola.busia@unica.it">Paola Busia, UNICA</a></li>
+            </ul>
+
+            <h2>Program Co-Chair:</h2>
+            <ul>
+                <li><a href="mailto:shounak.chakraborty@durham.ac.uk">Shounak Chakraborty, Durham University</a></li>
+            </ul>
+
+            <h2>Publicity Chair:</h2>
+            <ul>
+                <li><a href="mailto:tobias.scheipel@tugraz.at">Tobias Scheipel, Graz University of Technology</a></li>
+            </ul>
+
+            <h2>Publication Chair:</h2>
+            <ul>
+                <li><a href="mailto:daniele.cattaneo@polimi.it">Daniele Cattaneo, POLIMI</a></li>
+            </ul>
+
+            <h2>Submission and Web Chair:</h2>
+            <ul>
+                <li><a href="mailto:serena.curzel@polimi.it">Serena Curzel, POLIMI</a></li>
+            </ul>
+
+
+            <h2>Steering Committee:</h2>
+            <ul>
+            	<li><a href="mailto:jbispo@fe.up.pt">João Bispo, UPORTO/INESCTEC</a></li>
+                <li><a href="mailto:agosta@acm.org">Giovanni Agosta, POLIMI, IT</a></li>
+                <li><a href="mailto:jmpc@acm.org">Jo&atilde;o M.P. Cardoso, UPorto, PT</a></li>
+                <li><a href="mailto:stefano.cherubin@ntnu.no">Stefano Cherubin, NTNU, NO</a></li>
+                <li><a href="mailto:william.fornaciari@polimi.it">William Fornanciari, POLIMI, IT</a></li>
+                <li><a href="mailto:huebner@b-tu.de">Michael H&uuml;bner, B-TU, DE</a></li>
+                <li><a href="mailto:cristina.silvano@polimi.it">Cristina Silvano, POLIMI, IT</a></li>
+                <li><a href="mailto:dsoudris@microlab.ntua.gr">Dimitrios Soudris, NTUA, GR</a></li>
+            </ul>
+            <h2>Program Committee</h2>
+            <ul id="programcommittee">
+<!--<li><b>Adrià Armejach, </b>, Universitat Politècnica de Catalunya, ES</li>-->
+<li><b>David Black-Schaffer</b>, Uppsala Universitet, SE</li>
+<li><b>Lorenzo Casalino</b>, INRIA, FR</li>
+<li><b>Alessandro Cilardo</b>, University of Naples Federico II, IT</li>
+<li><b>Luis Costero</b>, Universidad Complutense de Madrid, ES</li>
+<li><b>Damien Couroussé</b>, CEA, FR</li>
+<li><b>Hans Jakob Damsgaard</b>, Tampere University, FI</li>
+<li><b>Kim Gruettner</b>, German Aerospace Center, DE</li>
+<li><b>Frank K. Gürkaynak</b>, ETH Zürich, CH</li>
+<!--<li><b>Carles Hernandez</b>, Universitat Politècnica de València, ES</li>
+<li><b>Alexandra Jimborean</b>, Universidad de Murcia, ES</li>
+<li><b>Sebasitan Sumin Kim</b>, Universidad de Murcia, ES</li>
+<li><b>Konstantina Koliogeorgi</b>, National Technical University of Athens, GR</li>-->
+<li><b>Michal Kulczewski</b>, Poznań Supercomputing and Networking Center, PL</li>
+<!--<li><b>Gianluca Leone</b>, University of Cagliari, IT</li>-->
+<li><b>Francesco Leporati</b>, University of Pavia, IT</li>
+<li><b>Manolis Marazakis</b>, Foundation for Research and Technology - Hellas, GR</li>
+<!--<li><b>Dimosthenis Masouros</b>, National Technical University of Athens, GR</li>-->
+<li><b>Konstantina Mitropoulou</b>, AMD</li>
+<!--<li><b>Miquel Moretó</b>, Barcelona Supercomputing Center, ES</li>-->
+<li><b>Panagiotis Mousouliotis</b>, Aristotle University of Thessaloniki, GR</li>
+<li><b>Luigi Pomante</b>, University of L'Aquila, IT</li>
+<li><b>Mario Porrmann</b>, Osnabrueck University, DE</li>
+<li><b>Marco Procaccini</b>, University of Siena, IT</li>
+<li><b>Alfonso Rodriguez</b>, Universidad Politécnica de Madrid, ES</li>
+<li><b>Joseph Rogers</b>, Norwegian University of Science and Technology, NO</li>
+<li><b>Ruben Salvador</b>, CentraleSupélec - IETR, FR</li>
+<li><b>Leonel Sousa</b>, Universidade de Lisboa, PT</li>
+<li><b>Sander Stuijk</b>, Eindhoven University of Technology, NL</li>
+<li><b>Massimo Torquati</b>, University of Pisa, IT</li>
+<li><b>Hans Vandierendonck</b>, Queen's University Belfast, UK</li>
+<li><b>Marina Zapater</b>, Ecole Polytechnique Federale de Lausanne, CH</li>
+            </ul>
+					</div>
+
+					<div id="main-content">
+<!--<h3>Glasgow, Scotland, <font color="#f00">NEW DATE: 18/01/2027</font></h3>-->
+<h3>Glasgow, Scotland, 18/01/2027</h3>
+<!--<h3>Glasgow, Scotland, 2027</h3>-->
+<h3>Co-located with <a href="https://www.hipeac.net/2027/glasgow/#/">HiPEAC </a></h3>
+<br/>
+
+
+<!--<h1>Website under construction</h1>-->
+
+
+<!--
+<p class="center">
+The PARMA Workshop is jointly supported by the<br/>
+2PARMA  project<br/>
+funded by the FP7-ICT Programme<br/>
+under the Objective Computing Systems<br/>
+<a href="http://www.2parma.eu/">http://www.2parma.eu/</a>
+</p>
+-->
+
+<!--
+<p>Best paper award is sponsored by <a href="http://www.nvidia.com">NVIDIA</a>.</p>
+<br/>
+-->
+
+<h2>Scope of the Workshop</a></h2>
+<p>
+​​Recent advances in AI have increased pressure on classical computing architectures,
+prompting researchers and engineers to explore more efficient ways to perform
+computations. From HPC systems to mobile and embedded platforms, there is a growing
+need to design both hardware and software with attention to energy efficiency,
+privacy, security, data locality, and raw performance.
+</p>
+<p>
+The upcoming edition of the PARMA-DITAM workshop will focus on technologies and
+methodologies that address evolving computational demands while taking into account
+environmental, societal, and political constraints.
+</p>
+<br/>
+<p>This year’s main topics include:</p>
+<ul>
+  <li><b>T1</b>: Specialized digital and analog accelerators, including in-memory and near-memory processing</li>
+  <li><b>T2</b>: Energy optimization in hardware and software, including approximate computing techniques</li>
+  <li><b>T3</b>: Heterogeneous, parallel, distributed, and edge computing systems</li>
+  <li><b>T4</b>: Compilers, tools, and frameworks supporting the use, development, and performance analysis of novel computing architectures</li>
+  <li><b>T5</b>: Open-source and sovereign hardware design, including RISC-V</li>
+  <li><b>T6</b>: Case studies, applications, and real-world demonstrations related to T1–T5</li>
+</ul>
+
+<br/>
+
+<h2>Important Dates:</h2>
+<ul style="text-align:left">
+<li>16/11/2026 - 23:59 (UTC): Paper Submission Deadline</li><li>14/12/2026: Acceptance Notification</li><li>07/01/2027 - 23:59 (UTC): Camera ready version of accepted papers for workshop proceedings</li>
+</ul>
+<br/>
+
+<p><h2>Information for Authors:</h2></p>
+<p><font color="#FF0000">Paper submission:</font>
+  Papers should be submitted electronically through EasyChair in PDF format.
+  The review process will be <b>double-blind</b>.
+  Only <b>full papers</b> are accepted.
+</p>
+<p>
+<b><center><a style="font-size:13pt;" href="https://easychair.org/conferences/?conf=parmaditam2027">Submission Website</a></center></b>
+</p>
+<p>
+  All submissions are required to respect the following guidelines:
+  <ul id="bullet-list" style="padding: 4pt 0 4pt 0;">
+    <li><b>Length:</b> Up to <b>10 pages single column</b>, excluding title page and references.</li>
+    <li><b>Template:</b>
+    Please use the <a href="https://submission.dagstuhl.de/documentation/authors#oasics">OASIcs template</a>
+    when preparing your manuscript.
+  </ul>
+  Accepted papers will be provided a DOI, and published online
+  in the <b>Dagstuhl OASIcs OpenAccess Series in Informatics</b>. 
+  
+
+  <!--We are currently in the process of securing the proceeding
+  publication. Publisher will be announced soon. -->
+<!--  Therefore, camera ready submission template is still subject to change.
+  Accepted papers will be provided a DOI, and published online
+  in a digital library indexed by Scopus.
+-->
+</p>
+<br/>
+<p><font color="#FF0000">Camera Ready preparation instructions:</font>
+  The camera ready version of the accepted papers
+  should be submitted up to
+  <b>07/01/2027</b>
+  and be prepared according to the guidelines summarized
+  in the following link:
+  <a href="./Submission_Guidelines.html">Camera Ready Submission Guidelines</a>.
+</p>
+<br/>
+<!--
+<p><font color="#FF0000">Poster submission:</font>
+  We invite posters for each of the five workshop topics.
+  Poster submissions should include a 150-200 word abstract
+  and the form of the poster itself in an A4 size format.
+  A workshop digest based upon the one-page abstract and one-page
+  poster will be distributed to all participants of the workshop.
+  Note that the accepted posters will NOT be included in the PARMA-DITAM
+  2020 proceedings.
+  Posters will be published online at the PARMA-DITAM 2020 web site.
+</p>
+<br/>
+-->
+<!--
+<p><font color="#FF0000">Paper presentation:</font>
+  At least one author per accepted paper should present their work during the workshop.
+  We invite authors of accepted papers to prepare presentations with slides.
+  Each paper presentation is scheduled to last at most 15 minutes.
+</p>
+<p>
+  Time slot includes:
+  <b>10 min oral presentation</b> +
+  3 min Q&amp;A
+  + 2 min technical setup &amp; speaker introduction by Session chair.
+</p>
+<p>
+  Presenters should provide a short (no more than 3 lines) biography introduction
+  to be handed to the Session chair at the beginning of the Session.
+</p>
+-->
+<br/>
+
+					</div>
+
+				</div>
+
+				<div style="clear: both;"> </div>
+
+			</div>
+
+		</div>
+
+</body>
