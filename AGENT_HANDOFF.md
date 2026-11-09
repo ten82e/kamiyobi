@@ -101,6 +101,16 @@ eudat は頁に値が無く根拠を得られないため触らない（次回�
   (「promoted」は無効な status で parseStatus が discovered にフォールバックする為)。
   extra.yaml・manual.yaml に discovery 由来の重複条目 (aila2027・icaibd-2027・icbda2027・
   icccbda-2027) が残っていた為 duplicate venue edition が出た — 削除して解消。
+- **promotion の追加 (2026-11-10 続き)**: WebSci 2027 (networking・12-15 提出・Singapore)、
+  NG-RES 2027 (systems・HiPEAC・11-15 AoE・Glasgow)、PARMA-DITAM 2027 (systems・HiPEAC・
+  11-16 23:59 UTC・Glasgow)、AvioSE 2027 (systems・延長 1-13 AoE・Dortmund)、ISPDC 2027
+  (systems・2-26 AoE・Cyprus)、MECO 2027 (systems・3-31 AoE・Montenegro)、
+  CyCon 2027 (security・NATO CCDCOE・1-6 AoE・Tallinn)、IEEE BMSB 2027 (networking・
+  1-15 AoE・Sydney)、IEEE LatinIoT 2027 (networking・11-28 AoE・Santiago)、
+  ACM UMAP 2027 (ai・ACM・1-22 abstract/1-29 paper AoE・Chicago)、ICBDA 2027 (db・
+  12-10 AoE・Bangkok)、ICCCBDA 2027 (systems,db・12-5 AoE・Chengdu)、ICAIBD 2027
+  (ai,db・11-30 AoE・Chengdu)、icABCD 2027 (ai,db・11-30 AoE・Mauritius) を
+  curated.generated.yaml に promotion 正典として追加 (全て公式証拠 blob 付き)。
 - **2026-11-08 追加確認(4)**: OSDI 2027（概要 12-1・論文 12-8、共に 10:59 pm UTC =
   22:59:59Z ✓ USENIX は AoE でなく EST 表示）、PETS 2027（4 四半期 rolling: 5/31・8/31・
   11/30・2/28、全て firm・AoE ✓）。いずれも収録どおり正しい。
