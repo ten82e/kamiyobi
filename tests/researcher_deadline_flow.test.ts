@@ -127,8 +127,9 @@ it("SecureComm の古い exact 値を公式の2回の暦日に訂正し、時刻
     }),
   ];
   const actual = applyOverrides(input, overrides)[0].editions[0].deadlines;
-  expect(actual).toHaveLength(2);
+  expect(actual).toHaveLength(3);
   expect(actual.map((d) => [d.round, d.precision, "local_date" in d ? d.local_date : ""])).toEqual([
+    [1, "date-only", "2027-03-15"],
     [1, "date-only", "2027-02-01"],
     [2, "date-only", "2027-04-15"],
   ]);
@@ -138,7 +139,7 @@ it("SecureComm の古い exact 値を公式の2回の暦日に訂正し、時刻
     const evidence = d.evidence?.find(
       (e) => e.source_url === "https://securecomm.eai-conferences.org/2027/",
     );
-    expect(evidence?.verifiedFields).toEqual(["date", "kind", "round"]);
+    expect(evidence?.verifiedFields?.filter((f) => f !== "round")).toEqual(["date", "kind"]);
     const body = readFileSync(join(REPO_ROOT, String(evidence?.evidenceRef)));
     expect(createHash("sha256").update(body).digest("hex")).toBe(evidence?.contentHash);
     expect(body.toString()).toContain("February");

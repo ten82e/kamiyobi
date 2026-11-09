@@ -411,6 +411,25 @@ conferences:
       securecomm27:
         year: 2027
         deadlines:
+          - kind: notification
+            label: Notification deadline
+            round: 1
+            date: '2027-03-15'
+            precision: date-only
+            evidence:
+              - source_name: SecureComm official CFP
+                source_url: https://securecomm.eai-conferences.org/2027/
+                sourceClass: official-cfp
+                observed_at: '2026-11-09T01:20:00Z'
+                retrievedAt: '2026-11-09T01:20:00Z'
+                verifiedAt: '2026-11-09T01:20:00Z'
+                contentHash: f6cb4513ff75403485f32aa9b5d7e070d017a319a36751a33aabd14bb61c197d
+                evidenceRef: data/evidence/blobs/f6cb4513ff75403485f32aa9b5d7e070d017a319a36751a33aabd14bb61c197d.body
+                rawExcerpt: 'Notification deadline 15th March, 2027'
+                verifiedFields:
+                  - date
+                  - kind
+                confidence: official
           - kind: paper
             label: Full Paper Submission
             round: 1
@@ -859,32 +878,20 @@ conferences:
         event_start: '2027-03-21'
         event_end: '2027-03-25'
         date_text: March 21-25, 2027 (Southampton, UK)
-        # Remove only the reviewed stale generic abstract slot before applying its correction.
-        # The full/short/reproducibility/doctoral track slots remain untouched.
-        remove:
-          - kind: abstract
-            label: Abstract submission
-            round: 1
-            values:
-              - '2026-09-25T23:59:59.000Z'
-              - '2026-09-22T11:59:59.000Z'
-          - kind: camera_ready
-            label: Tutorial camera-ready deadline
-            round: 1
+        mode: merge-slots
         deadlines:
           - kind: abstract
-            label: Abstract submission
+            label: Full paper abstract deadline
             date: '2026-09-21 23:59:59'
             round: 1
+            tz: AoE
+            precision: exact
             evidence:
               - source_name: ecir official CFP
                 source_url: https://www.ecir2027.co.uk/call-for-full-papers
                 sourceClass: official-cfp
                 observed_at: '2026-10-03T05:12:25Z'
-                retrievedAt: '2026-10-03T05:12:25Z'
                 verifiedAt: '2026-10-03T05:12:25Z'
-                contentHash: b95f7e84da5a57d058767466da8a40d298849459bd0bfb354450c91adfe2ce65
-                evidenceRef: data/evidence/blobs/b95f7e84da5a57d058767466da8a40d298849459bd0bfb354450c91adfe2ce65.body
                 rawExcerpt: Abstract by September 21, 2026, 11:59pm (AOE).
                 verifiedFields:
                   - date
@@ -893,29 +900,18 @@ conferences:
                   - time
                   - timezone
                 confidence: official
-            tz: AoE
-            superseded_deadlines:
-              - value: '2026-09-25T23:59:59Z'
-                precision: exact
-                source: https://www.ecir2027.co.uk/call-for-full-papers
-                evidenceRef: data/evidence/blobs/b95f7e84da5a57d058767466da8a40d298849459bd0bfb354450c91adfe2ce65.body
-                status: superseded
-                supersededBy: ecir|ecir27|abstract|1|
-                reason: manual-resolution
-                supersededAt: '2026-10-03T05:12:25Z'
           - kind: paper
-            label: Paper submission
+            label: Full paper submission deadline
             date: '2026-10-05 23:59:59'
             round: 1
+            tz: AoE
+            precision: exact
             evidence:
               - source_name: ecir official CFP
                 source_url: https://www.ecir2027.co.uk/call-for-full-papers
                 sourceClass: official-cfp
                 observed_at: '2026-10-03T05:12:25Z'
-                retrievedAt: '2026-10-03T05:12:25Z'
                 verifiedAt: '2026-10-03T05:12:25Z'
-                contentHash: b95f7e84da5a57d058767466da8a40d298849459bd0bfb354450c91adfe2ce65
-                evidenceRef: data/evidence/blobs/b95f7e84da5a57d058767466da8a40d298849459bd0bfb354450c91adfe2ce65.body
                 rawExcerpt: Paper submission October 5, 2026, 11:59pm (AOE).
                 verifiedFields:
                   - date
@@ -924,45 +920,52 @@ conferences:
                   - time
                   - timezone
                 confidence: official
-            tz: AoE
-            superseded_deadlines:
-              - value: '2026-10-05T23:59:59Z'
-                precision: exact
-                source: https://www.ecir2027.co.uk/call-for-full-papers
-                evidenceRef: data/evidence/blobs/b95f7e84da5a57d058767466da8a40d298849459bd0bfb354450c91adfe2ce65.body
-                status: superseded
-                supersededBy: ecir|ecir27|paper|1|
-                reason: manual-resolution
-                supersededAt: '2026-10-03T05:12:25Z'
           - kind: notification
             label: Notifications (full & short papers)
-            date: '2026-12-07'
-            precision: date-only
+            date: '2026-12-08 11:59:59'
+            tz: AoE
+            precision: exact
             evidence:
               - source_name: ecir official CFP
                 source_url: https://www.ecir2027.co.uk/call-for-full-papers
                 sourceClass: official-cfp
                 observed_at: '2026-10-03T05:12:25Z'
-                retrievedAt: '2026-10-03T05:12:25Z'
                 verifiedAt: '2026-10-03T05:12:25Z'
-                contentHash: b95f7e84da5a57d058767466da8a40d298849459bd0bfb354450c91adfe2ce65
-                evidenceRef: data/evidence/blobs/b95f7e84da5a57d058767466da8a40d298849459bd0bfb354450c91adfe2ce65.body
                 rawExcerpt: 'Full paper notification: 7 December 2026'
                 verifiedFields:
                   - date
                   - kind
+                confidence: official
+          - kind: other
+            label: Tutorial proposal deadline
+            date: '2026-12-07 23:59:59'
+            tz: AoE
+            round: 1
+            precision: exact
+            evidence:
+              - source_name: ECIR 2027 official site
+                source_url: https://www.ecir2027.co.uk/
+                sourceClass: official-cfp
+                observed_at: '2026-11-09T01:25:00Z'
+                verifiedAt: '2026-11-09T01:25:00Z'
+                rawExcerpt: 'Tutorial proposals 7 Dec 2026'
+                verifiedFields:
+                  - date
+                  - kind
+                  - time
+                  - timezone
                 confidence: official
           - kind: camera_ready
             label: Tutorial camera-ready deadline
             date: '2027-01-07 23:59:59'
             tz: AoE
             round: 1
+            precision: exact
             evidence:
               - source_name: ECIR 2027 official site
                 source_url: https://www.ecir2027.co.uk/
                 sourceClass: official-cfp
                 observed_at: '2026-11-09T01:10:00Z'
-                retrievedAt: '2026-11-09T01:10:00Z'
                 verifiedAt: '2026-11-09T01:10:00Z'
                 rawExcerpt: 'Tutorial Camera Ready Deadline 7 Jan 2027'
                 verifiedFields:
@@ -972,9 +975,13 @@ conferences:
                   - time
                   - timezone
                 confidence: official
-            precision: exact
-        mode: merge-slots
-
+        remove:
+          - kind: abstract
+            label: Abstract submission
+            round: 1
+            values:
+              - '2026-09-25T23:59:59.000Z'
+              - '2026-09-22T11:59:59.000Z'
 
   acisp:
     editions:

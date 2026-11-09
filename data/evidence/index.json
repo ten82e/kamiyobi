@@ -404,7 +404,6 @@
       "bytes": 300426,
       "content_type": "application/octet-stream",
       "references": [
-        "data/overrides.yaml",
         "data/snapshot.json"
       ]
     },
