@@ -10,7 +10,11 @@ import {
   toIcsText,
 } from "../src/build.ts";
 import { site } from "./built_golden_shared.ts";
-import { REPO_ROOT } from "./helpers.ts";
+import { publicClockGuard, REPO_ROOT } from "./helpers.ts";
+
+/* public/ は検証用の固定時計で建てる（別の時計の物を読むと窓がずれて分からない失敗に成る）。 */
+publicClockGuard();
+
 import { jsFunction, siteRuntime, vmSafeSource } from "./runtime_extract.ts";
 
 /* ------------------------------------------------------------------  Helpers */

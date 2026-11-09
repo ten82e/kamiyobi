@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { stripTypeScriptTypes } from "node:module";
 import { runInNewContext } from "node:vm";
 import { expect, it } from "vitest";
+import Recommender from "../site/recommendation.ts";
 
 const source = readFileSync(new URL("../site/app.ts", import.meta.url), "utf8");
 
@@ -242,6 +243,7 @@ function 描いた文(excluded: number, excludedRank = 0): string[] {
   return runInNewContext(
     `let recommendationList = [], cardsDrawn = 0;
      let recommendExcludedRank = ${excludedRank};
+     let recommendExcludedWorkshop = 0;
      const state = { rank: ${JSON.stringify(excludedRank ? "A*" : "")} };
      const recommendationData = {};
      const rankFilterLabelJa = (grade) => grade;
@@ -325,6 +327,7 @@ const 並べる関数 = 切り出す(
 );
 const 締切比較の関数 = 切り出す("  function compareDeadlineRows(", "  /** 会期順の比較。");
 const 並べた結果 = runInNewContext(`${締切比較の関数}\n${並べる関数}\norderCandidatesByDeadline;`, {
+  Recommender,
   conferenceNameCell: (r: { name?: string }) => r.name ?? "",
   kindSortIndex: () => 0,
 }) as (rows: ReadonlyArray<Record<string, unknown>>) => Array<Record<string, unknown>>;
@@ -345,11 +348,11 @@ it("締切が近い順は、日付のある候補を近い順に、日付の無�
 });
 
 it("同じ日付・同じ群の中では、論文との一致順のままにする（安定）", () => {
-  const 甲 = 候補("open", 2000, "A");
+  const 甲 = 候補("open", 2000, "Z");
   const 乙 = 候補("open", 2000, "B");
-  const 丙 = 候補("open", 2000, "C");
+  const 丙 = 候補("open", 2000, "A");
   const 並び = 並べた結果([甲, 乙, 丙]);
-  expect(並び.map((r) => r.name)).toEqual(["A", "B", "C"]);
+  expect(並び.map((r) => r.name)).toEqual(["Z", "B", "A"]);
   const 群 = [候補("ongoing", 5, "J1"), 候補(null, 6, "U1"), 候補("past", 7, "P1")];
   expect(並べた結果(群).map((r) => r.name)).toEqual(["J1", "U1", "P1"]);
   expect(並べた結果([])).toEqual([]);

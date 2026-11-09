@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, symlinkSync } from "node:fs";
 import { join } from "node:path";
 import { afterAll, beforeAll, expect, it } from "vitest";
+import { FULL_VENUE_COUNT } from "./full_venue_pool.ts";
 import { prepareLiveConsumerSite } from "./live_consumer_site.ts";
 
 const repo = join(import.meta.dirname, "..");
@@ -166,7 +167,7 @@ beforeAll(async () => {
   }
   root = prepareLiveConsumerSite(false);
   const index = JSON.parse(readFileSync(join(root, "public/recommendation-index.json"), "utf8"));
-  expect(index.conferences).toHaveLength(696);
+  expect(index.conferences).toHaveLength(FULL_VENUE_COUNT);
   expect(index.conferences.every((c: { papers: unknown[] }) => !c.papers.length)).toBe(true);
   const profiles = JSON.stringify(index.conferences).toLowerCase();
   for (const p of papers) {
@@ -250,7 +251,7 @@ for (const [i, { paper, tool }] of recoveryCases.entries())
     const recovered = replies.find((reply) => reply.id === 10000 + i * 10 + 3)?.result;
     expect(recovered?.isError).not.toBe(true);
     expect(recovered?.structuredContent).toMatchObject({
-      candidate_venues: 696,
+      candidate_venues: FULL_VENUE_COUNT,
       uses_embeddings: true,
     });
     expect({ ...recovered?.structuredContent, evaluated_at: null }).toEqual({
@@ -268,7 +269,7 @@ for (const [i, c] of cases.entries())
     const reply = replies.find((r) => r.id === i * 2 + 1)?.result;
     expect(reply?.isError).not.toBe(true);
     const result = reply?.structuredContent;
-    expect(result?.candidate_venues).toBe(696);
+    expect(result?.candidate_venues).toBe(FULL_VENUE_COUNT);
     expect(result?.uses_embeddings).toBe(true);
     const keys = result.rows.slice(0, 5).map((r: { venue_key: string }) => r.venue_key);
     expect(
@@ -291,7 +292,7 @@ for (const [i, c] of cases.entries())
     const structured = replies.find((r) => r.id === i * 2 + 2)?.result;
     expect(encoded?.isError).not.toBe(true);
     expect(structured?.isError).not.toBe(true);
-    expect(structured?.structuredContent?.candidate_venues).toBe(696);
+    expect(structured?.structuredContent?.candidate_venues).toBe(FULL_VENUE_COUNT);
     expect(structured?.structuredContent?.uses_embeddings).toBe(true);
     expect({ ...structured?.structuredContent, evaluated_at: null }).toEqual({
       ...encoded?.structuredContent,
@@ -306,7 +307,7 @@ for (const [i, tool] of batchTools.entries())
     expect(encoded?.isError).not.toBe(true);
     expect(structured?.isError).not.toBe(true);
     expect(structured?.structuredContent).toMatchObject({
-      candidate_venues: 696,
+      candidate_venues: FULL_VENUE_COUNT,
       uses_embeddings: true,
       input: { received: 2, used: 2, truncated: false },
       embedding_model: {

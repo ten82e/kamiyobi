@@ -20,7 +20,7 @@ import {
   embedSet,
   embedTopics,
 } from "../src/embedding-runtime.ts";
-import { freshFullVenuePool } from "./full_venue_pool.ts";
+import { FULL_VENUE_COUNT, freshFullVenuePool } from "./full_venue_pool.ts";
 
 const root = join(import.meta.dirname, "..");
 const corpora = [
@@ -96,8 +96,8 @@ beforeAll(async () => {
   for (const paper of holdout.papers) expect(developmentSources.has(paper.source)).toBe(false);
   const pool = freshFullVenuePool();
   raw = pool.raw;
-  expect(pool.conferences).toHaveLength(696);
-  expect(new Set(pool.conferences.map((c) => c.key)).size).toBe(696);
+  expect(pool.conferences).toHaveLength(FULL_VENUE_COUNT);
+  expect(new Set(pool.conferences.map((c) => c.key)).size).toBe(FULL_VENUE_COUNT);
   // CFP text is independent of all evaluated papers; retain every other venue as a competitor.
   const identityNames = (text: string) =>
     text
@@ -148,7 +148,7 @@ beforeAll(async () => {
     const revision = language === "en" ? EMBEDDING_REVISION : EMBEDDING_MULTI_REVISION;
     const profiles = profileTexts(conferences, pool.categoryNames, language === "ja", {});
     keys = profiles.keys;
-    expect(keys).toHaveLength(696);
+    expect(keys).toHaveLength(FULL_VENUE_COUNT);
     const normalizedPapers = papers.map((paper) => ({
       id: paper.id,
       title: paper.title.normalize("NFKC").toLowerCase(),

@@ -89,6 +89,7 @@ interface SiteRow {
   tags: string[];
   rankPairs: string[];
   hay: string;
+  hostHay?: string;
   dupLabel?: string;
   _boosted?: boolean;
   _match?: { agg?: Record<string, number>; venueHit?: boolean };
@@ -254,8 +255,10 @@ interface SiteRecommenderApi {
   queryTokenGroups(query: unknown): string[][];
   queryTokens(query: unknown): string[];
   hayMatches(hay: unknown, query: unknown): boolean;
-  /** 検索語ごとの照合関数を 1 回だけ作る（一覧の絞り込みは行ごとに作り直さない）。 */
-  searchMatcher(query: unknown, nowMs?: number): (hay: unknown) => boolean;
+  /** 検索語ごとの照合関数を 1 回だけ作る（一覧の絞り込みは行ごとに作り直さない）。
+   * 行（`{hay, hostHay}`）を受けると、名前は今の規則・URL のホストは語全体一致で見る。
+   * 文字列だけを渡したときは名前の側だけを見る。 */
+  searchMatcher(query: unknown, nowMs?: number): (target: unknown) => boolean;
   scheduleOnlyEditions(data: unknown): Array<{
     key: string;
     name: string;
@@ -266,6 +269,7 @@ interface SiteRecommenderApi {
     cats: string[];
     tags: string[];
     hay: string;
+    hostHay?: string;
   }>;
   tagLabelJa(tag: unknown): string;
   topicTagsJa(tags: readonly string[] | null | undefined): string[];

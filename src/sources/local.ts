@@ -372,6 +372,9 @@ export function parseFile(path: string | null | undefined): Conference[] {
       acronym: String(raw.acronym ?? (title || key)),
       scope: toStringArray(raw.scope),
       official_scope: toStringArray(raw.official_scope),
+      ...(raw.official_scope_sources !== undefined
+        ? { official_scope_sources: toStringArray(raw.official_scope_sources) }
+        : {}),
       paper_abstracts: toStringArray(raw.paper_abstracts),
       keywords: toStringArray(raw.keywords),
       link,
@@ -468,6 +471,18 @@ export class LocalSource {
             ),
           ),
         ],
+        ...(existing.official_scope_sources?.length || conference.official_scope_sources?.length
+          ? {
+              official_scope_sources: [
+                ...new Set(
+                  [
+                    ...(existing.official_scope_sources ?? []),
+                    ...(conference.official_scope_sources ?? []),
+                  ].filter(Boolean),
+                ),
+              ],
+            }
+          : {}),
         keywords: [
           ...new Set(
             [...(existing.keywords ?? []), ...(conference.keywords ?? [])].filter(Boolean),

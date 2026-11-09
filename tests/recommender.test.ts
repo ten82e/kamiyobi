@@ -44,7 +44,10 @@ import {
   venuePapersHash,
 } from "../src/embeddings.ts";
 import { computeSemanticContentId, recommendationGatePolicyId } from "../src/semantic-content.ts";
-import { REPO_ROOT, tempWork } from "./helpers.ts";
+import { publicClockGuard, REPO_ROOT, tempWork } from "./helpers.ts";
+
+/* public/ は検証用の固定時計で建てる（別の時計の物を読むと窓がずれて分からない失敗に成る）。 */
+publicClockGuard();
 
 const R = recommender as any;
 let emittedApp: string | null = null;
@@ -949,6 +952,487 @@ describe("分野の日本語表示名と検索語 (SPEC §7)", () => {
       expect(R.hayMatches(row.hay, "日本 symposium")).toBe(true);
       expect(R.hayMatches(row.hay, "ネットワーク 存在しない語")).toBe(false);
     });
+
+    it("URL のホストは語全体でだけ当てる（ICCV を iccvm.org に当てない）", () => {
+      /* `ICCV` は `iccvm.org` の左端に在るだけなので、名前の側の規則（左端だけ閉じる）で
+       * 当てると別の会議（CVM）が出ていた。ホストは語全体一致に限る（SPEC §7）。 */
+      const confs = [
+        {
+          key: "cvm",
+          title: "Computational Visual Media Conference",
+          full_name: "Computational Visual Media Conference (CVM)",
+          categories: ["graphics"],
+          tags: [],
+          editions: [
+            {
+              year: 2027,
+              link: "http://iccvm.org/2027/",
+              place: "Qingdao, China",
+              deadlines: [{ kind: "paper", utc: "2026-09-01T23:59:00Z" }],
+            },
+          ],
+        },
+        {
+          key: "iccv",
+          title: "International Conference on Computer Vision",
+          full_name: "IEEE/CVF International Conference on Computer Vision (ICCV)",
+          categories: ["ai"],
+          tags: [],
+          editions: [
+            {
+              year: 2027,
+              link: "https://iccv2027.thecvf.com/",
+              place: "Honolulu, USA",
+              deadlines: [{ kind: "paper", utc: "2026-10-01T23:59:00Z" }],
+            },
+          ],
+        },
+      ];
+      const rows = R.candidateRows(confs);
+      const keys = (q: string): string[] => {
+        const m = R.searchMatcher(q);
+        return rows.filter((r: any) => m(r)).map((r: any) => r.conf.key);
+      };
+      expect(keys("ICCV")).toEqual(["iccv"]);
+      // ホストの語そのもの（URL を貼った人・ドメインで探す人）は今までどおり引ける。
+      expect(keys("iccvm")).toEqual(["cvm"]);
+      // 名前の側は今までどおり左端だけで開く（`computational` は `computational` に当たる）。
+      expect(keys("computational")).toEqual(["cvm"]);
+      // ホストの語と名前の語が混ざっても、語ごとにどちらかへ当たれば引ける。
+      expect(keys("iccvm 2027")).toEqual(["cvm"]);
+    });
+
+    it("英語の前置詞・冠詞は、ほかの語があるときに絞り込みから外す", () => {
+      /* `workshop on HPC` は `on` を語として要求するため、名前に `on` を持つ行だけの
+       * 48 行に絞られていた（`workshop HPC` は 69 行 – 2026-10-26 実測）。
+       * 日本語の「開催」などと同じ扱いにする。 */
+      const hay = "hpc workshop 2027 paper deadline";
+      expect(R.hayMatches(hay, "workshop on HPC")).toBe(true);
+      expect(R.hayMatches(hay, "deadline for the workshop")).toBe(true);
+      expect(R.hayMatches(hay, "workshop in 2027")).toBe(true);
+      // 前置詞だけの検索は今までどおり語として扱う（落とすと全件に化ける）。
+      expect(R.hayMatches("workshop on hpc", "on")).toBe(true);
+      expect(R.hayMatches("hpc workshop", "on")).toBe(false);
+    });
+
+    it("手法の名は、その手法が載る分野の語で探す（graph neural networks）", () => {
+      /* 収録は会議名・分野・開催地までで、`graph neural networks` のような手法名を持たない
+       * （2026-10-26 実測: 0 行）。そのまま 0 件で止めず、分野「機械学習」の語に直して探し、
+       * 件数欄で分野を名指しする。 */
+      const confs = [
+        {
+          key: "mlconf",
+          title: "MLConf",
+          categories: ["machine-learning"],
+          tags: [],
+          editions: [
+            {
+              year: 2027,
+              deadlines: [{ kind: "paper", utc: "2026-09-01T23:59:00Z" }],
+            },
+          ],
+        },
+      ];
+      const rows = R.candidateRows(confs);
+      const matcher = R.searchMatcher("graph neural networks");
+      expect(rows.length).toBe(1);
+      expect(matcher(rows[0]), "機械学習の行に届いていない").toBe(true);
+      expect(R.querySynonymNotes("graph neural networks").join(" ")).toContain(
+        "分野「機械学習」で探しています",
+      );
+      // 日本語の手法名も同じ。年を添えても効く。
+      expect(R.searchMatcher("GNN 2027")(rows[0])).toBe(true);
+    });
+
+    it("英語の月名は、年が無ければ暦月として探す", () => {
+      /* `January` は原文の月名にしか当たらず 116 行だった（2026-10-26 実測）。
+       * 年を付けないときは `1月` として、その月の締切を年をまたいで探す。
+       * 年を付けた `January 2027` は原文の月名のまま（公式の原表記を落とさない）。 */
+      const at = Date.parse("2026-08-09T00:00:00Z");
+      expect(R.hayMatches("paper deadline 2026年1月 1月", "January")).toBe(true);
+      expect(R.hayMatches("paper deadline 2026年1月", "deadlines in January")).toBe(true);
+      expect(R.queryTokenGroups("January 2027", at)[0]).toContain("january");
+      expect(R.hayMatches("jan 2027 deadline", "Jan 2027")).toBe(true);
+      // 小文字の `may` は助動詞（`may I submit`）とも読める。月は大文字の `May` だけ。
+      expect(R.queryTokenGroups("may i submit", at).flat()).not.toContain("5月");
+      expect(R.queryTokenGroups("May", at)[0].some((term: string) => term.endsWith("年5月"))).toBe(
+        true,
+      );
+    });
+
+    it("英語の依頼文の語を落とす（find・show・any など）", () => {
+      /* AI は `Find systems conferences with deadlines in Europe` のような文でも聞く。
+       * 依頼の語は絞り込みに使わない（2026-10-26 実測: そのままでは 0 行）。 */
+      const hay = "systems conference deadline italy イタリア";
+      expect(R.hayMatches(hay, "Find systems conferences with deadlines in Europe")).toBe(true);
+      expect(R.hayMatches("security conference", "Show security conferences")).toBe(true);
+      expect(R.hayMatches("hpc conference", "Any HPC conference")).toBe(true);
+      expect(R.expandRelativeMonths("next year", Date.parse("2026-08-09T00:00:00Z"))).toBe("来年");
+      expect(R.querySynonymNotes("Recommend venues for a paper").join(" ")).toContain(
+        "recommend_venues",
+      );
+    });
+
+    it("英語の週の幅は日へ直して探す", () => {
+      /* `within two weeks` は 2 日ではなく 14 日（2026-10-26 実測: 0 行）。
+       * `a week` は 7 日。`deadline approaching` は `soon` と同じ 30 日以内。 */
+      const at = Date.parse("2026-08-09T00:00:00Z");
+      const twoWeeks = R.searchMatcher("deadline within two weeks", at);
+      expect(twoWeeks("paper deadline 2026年8月19日")).toBe(true);
+      expect(twoWeeks("paper deadline 2026年8月30日")).toBe(false);
+      const oneWeek = R.searchMatcher("within a week", at);
+      expect(oneWeek("paper deadline 2026年8月15日")).toBe(true);
+      expect(oneWeek("paper deadline 2026年8月19日")).toBe(false);
+      const inTwo = R.searchMatcher("deadline in two weeks", at);
+      expect(inTwo("paper deadline 2026年8月19日")).toBe(true);
+      expect(inTwo("paper deadline 2026年8月30日")).toBe(false);
+      const inMonth = R.searchMatcher("deadline in a month", at);
+      expect(inMonth("paper deadline 2026年9月5日")).toBe(true);
+      expect(inMonth("paper deadline 2026年9月20日")).toBe(false);
+      expect(R.querySynonymNotes("deadline in two weeks").join(" ")).toContain("14 日以内");
+      expect(R.querySynonymNotes("deadline in a month").join(" ")).toContain("30 日以内");
+      expect(R.querySynonymNotes("deadline approaching").join(" ")).toContain("approaching");
+      expect(R.querySynonymNotes("deadline approaching").join(" ")).toContain("30 日以内");
+    });
+
+    it("soon は既定の 30 日以内として探す", () => {
+      /* `deadline soon` の `soon` を外すと全件に化ける。この表の既定の「これからの
+       * 30 日間」に合わせる（2026-10-26 実測: 0 行 → 892 行）。 */
+      const at = Date.parse("2026-08-09T00:00:00Z");
+      const notes = R.querySynonymNotes("deadline soon").join(" ");
+      expect(notes).toContain("30 日以内");
+      expect(notes).toContain("within_days");
+      const m = R.searchMatcher("deadline soon", at);
+      expect(m("paper deadline 2026年8月19日")).toBe(true);
+      expect(m("paper deadline 2026年10月1日")).toBe(false);
+    });
+
+    it("US は USA として探し、小文字の us は代名詞として落とす", () => {
+      /* 大文字の `US` は国名。小文字の `us` は `show us` の代名詞（2026-10-26 実測:
+       * `US` は 2 行だけだった）。 */
+      const at = Date.parse("2026-08-09T00:00:00Z");
+      expect(R.queryTokenGroups("US", at)[0]).toContain("アメリカ");
+      expect(R.hayMatches("security conference アメリカ", "security conferences in the US")).toBe(
+        true,
+      );
+      expect(R.querySynonymNotes("top security conferences in the US").join(" ")).toContain("USA");
+      expect(R.queryTokenGroups("show us security", at).flat()).not.toContain("アメリカ");
+      expect(R.hayMatches("security conference japan", "which conferences are in Japan")).toBe(
+        true,
+      );
+    });
+
+    it("場所・日付を聞く英語の語を落とす", () => {
+      /* AI は `SIGCOMM 2027 location`・`where is SIGCOMM 2027` の形でも聞く。
+       * 場所・日付を指す語は行の値ではないので、ほかの語があるときは絞り込みに使わない
+       * （2026-10-26 実測: どちらも 0 行）。 */
+      const hay = "sigcomm 2027 seoul deadline";
+      expect(R.hayMatches(hay, "SIGCOMM 2027 location")).toBe(true);
+      expect(R.hayMatches(hay, "SIGCOMM 2027 dates")).toBe(true);
+      expect(R.hayMatches(hay, "where is SIGCOMM 2027")).toBe(true);
+      expect(R.hayMatches(hay, "what are the deadlines for SIGCOMM 2027")).toBe(true);
+    });
+
+    it("部分地域の名前も、その地域の国で探す", () => {
+      /* `Scandinavia`・`Southeast Asia`・`Latin America` は、そのままでは 0 行
+       * （2026-10-26 実測）。収録の国名へ広げる。 */
+      const confs = [
+        ["se", "Stockholm, Sweden"],
+        ["sg", "Singapore"],
+        ["in", "Mumbai, India"],
+        ["br", "Sao Paulo, Brazil"],
+        ["jp", "Tokyo, Japan"],
+        ["ma", "Casablanca, Morocco"],
+        ["be", "Brussels, Belgium"],
+        ["nl", "Amsterdam, Netherlands"],
+        ["es", "Madrid, Spain"],
+        ["pt", "Lisbon, Portugal"],
+        ["ee", "Tallinn, Estonia"],
+        ["lt", "Vilnius, Lithuania"],
+      ].map(([key, place]) => ({
+        key,
+        title: `Conference ${key}`,
+        editions: [
+          { year: 2027, place, deadlines: [{ kind: "paper", utc: "2026-09-01T23:59:00Z" }] },
+        ],
+      }));
+      const rows = R.candidateRows(confs);
+      const keys = (q: string): string[] =>
+        rows
+          .filter((r: any) => R.searchMatcher(q)(r))
+          .map((r: any) => r.conf.key)
+          .sort();
+      expect(keys("Scandinavia")).toEqual(["se"]);
+      expect(keys("Nordic")).toEqual(["se"]);
+      expect(keys("Southeast Asia")).toEqual(["sg"]);
+      expect(keys("South Asia")).toEqual(["in"]);
+      expect(keys("Latin America")).toEqual(["br"]);
+      expect(keys("East Asia")).toEqual(["jp"]);
+      expect(keys("MENA")).toEqual(["ma"]);
+      expect(keys("Benelux")).toEqual(["be", "nl"]);
+      expect(keys("Iberia")).toEqual(["es", "pt"]);
+      expect(keys("Baltics")).toEqual(["ee", "lt"]);
+      expect(R.querySynonymNotes("Scandinavia").join(" ")).toContain("地域まとめ");
+    });
+
+    it("英語の地域名も日本語の地域まとめと同じ行に届く", () => {
+      /* `Europe` は 301 行、`ヨーロッパ` は 1,448 行だった（2026-10-26 実測）。
+       * 英語の地域名も日本語の地域まとめと同じ構成員へ広げる。 */
+      const confs = [
+        {
+          key: "it",
+          title: "Conference in Italy",
+          editions: [
+            {
+              year: 2027,
+              place: "Rome, Italy",
+              deadlines: [{ kind: "paper", utc: "2026-09-01T23:59:00Z" }],
+            },
+          ],
+        },
+        {
+          key: "ca",
+          title: "Conference in Canada",
+          editions: [
+            {
+              year: 2027,
+              place: "Toronto, Canada",
+              deadlines: [{ kind: "paper", utc: "2026-09-02T23:59:00Z" }],
+            },
+          ],
+        },
+      ];
+      const rows = R.candidateRows(confs);
+      expect(R.searchMatcher("Europe")(rows[0])).toBe(true);
+      expect(R.querySynonymNotes("Europe").join(" ")).toContain("地域まとめ");
+      expect(R.searchMatcher("North America")(rows[1])).toBe(true);
+      expect(R.querySynonymNotes("North America").join(" ")).toContain("地域まとめ");
+      expect(R.searchMatcher("Asia")(rows[0])).toBe(false);
+    });
+
+    it("プログラミング言語系の会議も収録に在る", () => {
+      /* 2026-10-26 に `config.yaml` の `exclude` から戻した。もう「対象外」とは言わない。 */
+      expect(R.uiWordNoteJa("PLDI")).toBe("");
+      expect(R.uiWordNoteJa("MIDL")).toBe("");
+    });
+
+    it("workshop only はワークショップの行だけに絞る", () => {
+      /* 普通に `workshop` と打つと、ワークショップを併設する本会議の行も混ざる
+       * （2026-10-26 実測: 238 行のうち 11 行は本会議）。`workshop only` で絞れる。 */
+      const confs = [
+        {
+          key: "ws",
+          title: "Workshop on HPC",
+          editions: [
+            {
+              year: 2027,
+              deadlines: [{ kind: "paper", utc: "2026-09-01T23:59:00Z" }],
+            },
+          ],
+        },
+        {
+          key: "main",
+          title: "Conference on HPC",
+          editions: [
+            {
+              year: 2027,
+              deadlines: [{ kind: "paper", utc: "2026-09-02T23:59:00Z" }],
+            },
+          ],
+        },
+        {
+          key: "tagged",
+          title: "HOTSEC",
+          tags: ["workshop"],
+          editions: [
+            {
+              year: 2027,
+              deadlines: [{ kind: "paper", utc: "2026-09-03T23:59:00Z" }],
+            },
+          ],
+        },
+      ];
+      const rows = R.candidateRows(confs);
+      const keys = (q: string): string[] =>
+        rows
+          .filter((r: any) => R.searchMatcher(q)(r))
+          .map((r: any) => r.conf.key)
+          .sort();
+      // タグの行（名前に workshop が無い）と、名前に workshop を持つ行。
+      expect(keys("workshop only")).toEqual(["tagged", "ws"]);
+      expect(R.querySynonymNotes("workshop only").join(" ")).toContain("絞っています");
+      // 普通の `workshop` は今までどおり（タグの行と、名前に workshop を持つ行）。
+      expect(keys("workshop")).toEqual(["tagged", "ws"]);
+    });
+
+    it("英語の募集の言い方と、締切の今日・明日を受ける", () => {
+      /* AI は `call for workshops`・`deadline today`・`submit by December` の形でも聞く。
+       * 3 語に割ると 0 件になるものは 1 語に直し、`today` 単体は会議名と衝突するので
+       * `deadline`/`due` と組んだ形だけ受ける（2026-10-26 実測）。 */
+      const at = Date.parse("2026-08-09T00:00:00Z");
+      expect(R.expandRelativeMonths("deadline today", at)).toBe("deadline 今日");
+      expect(R.hayMatches("paper deadline 今日 2026年8月9日", "deadline today")).toBe(true);
+      expect(
+        R.hayMatches("paper deadline december 2026 2026年12月 12月", "submit by December"),
+      ).toBe(true);
+      expect(R.hayMatches("〔ws〕 workshop on hpc", "call for workshops")).toBe(true);
+      expect(R.hayMatches("tutorial session", "call for tutorials")).toBe(true);
+      // `today` 単体は今までどおり語として扱う（会議名を日付に化けさせない）。
+      expect(R.queryTokenGroups("today", at)).toEqual([["today"]]);
+    });
+
+    it("英語の「これから」「特別トラック」「募集の提案」を受ける", () => {
+      /* `upcoming` は締切の語ではないので落とす。`special track` は収録の
+       * `special session`、`call for workshop proposals` は `workshop proposal` に直す
+       * （2026-10-26 実測: それぞれ 3 行・4 行）。 */
+      expect(R.hayMatches("paper deadline", "upcoming deadlines")).toBe(true);
+      expect(R.hayMatches("paper deadline", "next deadline")).toBe(true);
+      expect(R.hayMatches("special session deadline", "special track")).toBe(true);
+      expect(R.hayMatches("workshop proposal deadline", "call for workshop proposals")).toBe(true);
+      expect(R.hayMatches("special session deadline", "call for special sessions")).toBe(true);
+      // 投稿先を探す問いは、締切の語ではなく論文モードへ案内する。
+      expect(R.querySynonymNotes("where to submit").join(" ")).toContain("recommend_venues");
+    });
+
+    it("American は国か大陸かを案内する", () => {
+      /* 国（USA）とも大陸（北アメリカ・南アメリカ）とも読めるので、勝手に寄せない。
+       * 代わりに、どちらの語で探すかを件数欄で言う（2026-10-26 実測: そのまま 0 行）。 */
+      const notes = R.querySynonymNotes("American conferences").join(" ");
+      expect(notes).toContain("USA");
+      expect(notes).toContain("North America");
+      expect(notes).toContain("South America");
+    });
+
+    it("国の形容詞は開催地の国名で探す（Japanese conferences）", () => {
+      /* `Japanese conferences` は `Japanese` を語として要求すると 0 件、`Japan` なら
+       * 78 行だった（2026-10-26 実測）。開催地の国名へ寄せ、件数欄で言う。 */
+      const confs = [
+        {
+          key: "jp",
+          title: "Conference on Systems",
+          editions: [
+            {
+              year: 2027,
+              place: "Tokyo, Japan",
+              deadlines: [{ kind: "paper", utc: "2026-09-01T23:59:00Z" }],
+            },
+          ],
+        },
+      ];
+      const rows = R.candidateRows(confs);
+      expect(R.searchMatcher("Japanese conference")(rows[0])).toBe(true);
+      expect(R.querySynonymNotes("Japanese conference").join(" ")).toContain("開催地「日本」");
+      expect(R.searchMatcher("German conference")(rows[0])).toBe(false);
+    });
+
+    it("特集号は journal special issue でも引ける", () => {
+      /* 特集号の行には `special issue` と「特集号」はあるが `journal` が無い。
+       * 3 語に割ると 0 件になるので、1 語に直す（2026-10-26 実測）。 */
+      const confs = [
+        {
+          key: "si",
+          title: "Special Issue on Secure Systems",
+          tags: ["special-issue"],
+          editions: [
+            {
+              year: 2027,
+              deadlines: [{ kind: "paper", utc: "2026-09-01T23:59:00Z" }],
+            },
+          ],
+        },
+      ];
+      const rows = R.candidateRows(confs);
+      expect(R.searchMatcher("journal special issue")(rows[0])).toBe(true);
+      expect(R.searchMatcher("journal special issues")(rows[0])).toBe(true);
+      // 特集号でない行は巻き込まない。
+      expect(
+        R.searchMatcher("journal special issue")({ ...rows[0], tags: [], hay: "journal" }),
+      ).toBe(false);
+    });
+
+    it("評価の形容詞は上位の等級の条件として受ける（top security）", () => {
+      /* `top security conferences` は `top` を語として要求すると 0 件、`topics` に
+       * 当てると意味が違う（2026-10-26 実測）。上位の等級（CCF A・CORE A* など）の
+       * 条件として受け、件数欄でそのことを言う。 */
+      const confs = [
+        {
+          key: "topsec",
+          title: "Top Security Symposium",
+          rank: { ccf: "A" },
+          editions: [
+            {
+              year: 2027,
+              deadlines: [{ kind: "paper", utc: "2026-09-01T23:59:00Z" }],
+            },
+          ],
+        },
+        {
+          key: "midsec",
+          title: "Mid Security Symposium",
+          rank: { ccf: "B" },
+          editions: [
+            {
+              year: 2027,
+              deadlines: [{ kind: "paper", utc: "2026-09-02T23:59:00Z" }],
+            },
+          ],
+        },
+      ];
+      const rows = R.candidateRows(confs);
+      const m = R.searchMatcher("top security");
+      expect(rows.filter((r: any) => m(r)).map((r: any) => r.conf.key)).toEqual(["topsec"]);
+      expect(R.querySynonymNotes("top security").join(" ")).toContain("上位の等級");
+      // 名前に `topics` を持つ行を巻き込まない。
+      expect(R.hayMatches("hot topics in security", "topics")).toBe(true);
+    });
+
+    it("英字の締切の言い方（deadline・CFP・call for papers）で引ける", () => {
+      /* AI は `SIGCOMM 2027 deadline` のような形で聞く。収録の締切欄は日本語が主で、
+       * 英字はラベルの `submission` だけだったので、`deadline` を要求すると 0 件になった
+       * （2026-10-26 実測: `SIGCOMM deadline` 0 行・`SIGCOMM CFP` 0 行）。 */
+      const confs = [
+        {
+          key: "sigcomm",
+          title: "SIGCOMM",
+          editions: [
+            {
+              year: 2027,
+              link: "https://conferences.sigcomm.org/sigcomm/2027/",
+              place: "Seoul, Korea",
+              deadlines: [
+                { kind: "paper", label: "Paper submission", utc: "2026-09-01T23:59:00Z" },
+                { kind: "notification", label: "Notification", utc: "2026-11-01T23:59:00Z" },
+              ],
+            },
+          ],
+        },
+      ];
+      const rows = R.candidateRows(confs);
+      const NOW = Date.parse("2026-08-09T00:00:00Z");
+      const hits = (q: string): any[] =>
+        rows.filter((r: any) => R.searchMatcher(R.expandRelativeMonths(q, NOW), NOW)(r));
+      for (const q of [
+        "SIGCOMM deadline",
+        "SIGCOMM 2027 deadline",
+        "SIGCOMM CFP",
+        "CFP SIGCOMM",
+        "call for papers SIGCOMM",
+        "submission deadline SIGCOMM",
+      ]) {
+        expect(hits(q).length, `「${q}」が 0 行`).toBeGreaterThan(0);
+        expect(
+          hits(q).every((r) => r.conf.key === "sigcomm"),
+          `「${q}」が別会議に当たった`,
+        ).toBe(true);
+      }
+      // 締切を指す英字は、会議名と一緒なら全行に効く（その会議の締切は全部「締切」）。
+      expect(hits("SIGCOMM deadline").length).toBe(rows.length);
+      // `CFP` は募集のある種別だけ。採否通知の行まで CFP と呼ばない。
+      expect(
+        hits("CFP SIGCOMM").every((r) => r.dl.kind === "paper" || r.dl.kind === "abstract"),
+      ).toBe(true);
+      expect(hits("CFP SIGCOMM").length).toBe(1);
+    });
   });
 
   describe("相対月での検索（expandRelativeMonths）", () => {
@@ -960,6 +1444,23 @@ describe("分野の日本語表示名と検索語 (SPEC §7)", () => {
       expect(R.expandRelativeMonths("再来月", now)).toBe("2026年11月");
       expect(R.expandRelativeMonths("先月", now)).toBe("2026年8月");
       expect(R.expandRelativeMonths("先々月", now)).toBe("2026年7月");
+    });
+
+    it("英語の相対日付も同じ暦月・暦日に直す", () => {
+      /* AI は `deadlines next month`・`within 30 days` の形で聞く。収録の語は日本語の
+       * 暦日・月なので、そのままでは 0 件になる（2026-10-26 実測）。 */
+      expect(R.expandRelativeMonths("next month", now)).toBe("2026年10月");
+      expect(R.expandRelativeMonths("this month", now)).toBe("2026年9月");
+      expect(R.expandRelativeMonths("last month", now)).toBe("2026年8月");
+      expect(R.expandRelativeMonths("next week", now)).toBe("来週");
+      expect(R.expandRelativeMonths("within 30 days", now)).toBe("30日以内");
+      expect(R.expandRelativeMonths("by next month", now)).toBe("来月まで");
+      expect(R.expandRelativeMonths("deadlines next month", now)).toBe("deadlines 2026年10月");
+      // 語の一部は置き換えない（`next monthly` を `来月ly` にしない）。
+      expect(R.expandRelativeMonths("next monthly", now)).toBe("next monthly");
+      // 直した先は、日本語の相対語と同じ行に当たる。
+      const hay = `研究会 論文提出 締切 ${R.monthTermsJa("2026-10-07")}`;
+      expect(R.hayMatches(hay, R.expandRelativeMonths("next month", now))).toBe(true);
     });
 
     it("年をまたいでも月だけ進める", () => {

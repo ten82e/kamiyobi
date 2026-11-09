@@ -2,6 +2,7 @@ import { existsSync, readFileSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { expect, it } from "vitest";
+import { venueResearchSources, venueResearchTopics } from "../site/recommendation.ts";
 import {
   isRecommendationAxes,
   recommendationAxes,
@@ -15,7 +16,11 @@ import {
   site,
   siteHtmlRuntime,
 } from "./built_golden_shared.ts";
-import { REPO_ROOT, runCli, tempWork } from "./helpers.ts";
+import { publicClockGuard, REPO_ROOT, runCli, tempWork } from "./helpers.ts";
+
+/* public/ は検証用の固定時計で建てる（別の時計の物を読むと窓がずれて分からない失敗に成る）。 */
+publicClockGuard();
+
 import { spawnScript as spawnSync } from "./node_script.ts";
 import { jsFunction, liveNoteSource, siteRuntime, vmSafeSource } from "./runtime_extract.ts";
 
@@ -601,6 +606,46 @@ it("「オンライン参加可のみ」で出ない理由を 2 通りに分け�
     html.indexOf("<dt>会期情報あり・投稿締切未収録</dt>"),
   );
   expect(dd).toContain("オンライン参加が無いのだと誤解しないでください");
+});
+
+it("「ワークショップのみ」で本会議を外して数える（SPEC §7）", () => {
+  /* 会議名に workshop を持つ行と、タグ workshop の行だけを出す。ワークショップを
+   * 併設する本会議（名前に workshop が無い）は外し、外した件数を件数欄に出す。 */
+  const filterSrc = jsFunction(siteRuntime(), "filter");
+  const script = [
+    `const countJa = (${jsFunction(siteRuntime(), "countJa")});`,
+    "const DAY = 86400000;",
+    `const FILTER = ${JSON.stringify(filterSrc)};`,
+    'const now = Date.parse("2026-08-10T00:00:00Z");',
+    "class FakeDate extends Date { static now() { return now; } }",
+    "function row(key, title, tags) {",
+    "  return { kind: 'paper', est: false, cats: ['hpc'], rankPairs: [], tags: tags,",
+    "    t: now + DAY, tLast: now + DAY, ed: { place: '', deadlines: [] },",
+    "    conf: { key: key, title: title, full_name: title } };",
+    "}",
+    "const rows = [",
+    "  row('by-name', 'Workshop on HPC', []),",
+    "  row('by-tag', 'HOTSEC', ['workshop']),",
+    "  row('main', 'Conference on HPC', []),",
+    "];",
+    FILTER_RUNTIME_STUBS,
+    "const run = (workshop) => new Function('Date', 'DAY', 'rows', 'state', 'sortAsc', 'sortKey',",
+    "  'return (' + FILTER + ')')(FakeDate, DAY, rows,",
+    "  { q: '', cats: [], kind: '', rank: '', win: 'all', est: false, workshop: workshop }, true, 'rem');",
+    "const all = run(false)().length;",
+    "const shown = run(true)().map((r) => r.conf.key).sort();",
+    "console.log(JSON.stringify({ all, shown, hidden: hiddenCounts.workshop }));",
+  ].join("\n");
+  const proc = spawnSync("node", ["-e", script], { encoding: "utf8", timeout: 60_000 });
+  expect(proc.status, proc.stderr).toBe(0);
+  const out = JSON.parse(proc.stdout) as { all: number; shown: string[]; hidden: number };
+  expect(out.all).toBe(3);
+  expect(out.shown).toEqual(["by-name", "by-tag"]);
+  expect(out.hidden, "外した本会議の件数が出ていない").toBe(1);
+  const app = siteRuntime();
+  expect(app).toContain(`ワークショップ以外 \${countJa(hidden.workshop)} 件`);
+  const html = siteHtmlRuntime();
+  expect(html).toContain('<input type="checkbox" id="workshop">');
 });
 
 it("「締切まで N 日以内」の窓で外れた件数を件数欄に出す（SPEC §7）", () => {
@@ -3686,6 +3731,8 @@ it("収録状況の四つ組は、何を数えているかと単位がラベル�
   const help = template.slice(template.indexOf('id="helpPanel"'));
   const guide = help.slice(0, help.indexOf("</details>"));
   expect(guide).toContain("画面上部の四つの数");
+  expect(guide, "うちワークショップの数え方を書いていない").toContain("うちワークショップ");
+  expect(guide, "ワークショップのみと同じ判定だと書いていない").toContain("ワークショップのみ");
   expect(guide, "四つ組が絞り込みで動かないことをてびきが書いていない").toContain(
     "絞り込み前の収録全体",
   );
@@ -3693,9 +3740,30 @@ it("収録状況の四つ組は、何を数えているかと単位がラベル�
   expect(guide).toContain("domestic-jp");
   // id はそのまま（JS 側の更新先が生きていること）。
   const runtime = siteRuntime();
-  for (const id of ["statConfs", "statUpcoming", "statNiche", "statDomestic"]) {
+  for (const id of ["statConfs", "statUpcoming", "statNiche", "statDomestic", "statWorkshopNote"]) {
     expect(runtime, `収録状況の更新先が消えている: ${id}`).toContain(`"${id}"`);
   }
+});
+
+it("推薦モードにもワークショップだけに絞るチェックがある（SPEC §7）", () => {
+  const html = siteHtmlRuntime();
+  expect(html, "推薦モードのチェックが無い").toContain('id="recWorkshop"');
+  const app = siteRuntime();
+  expect(app, "推薦の除外数を数えていない").toContain("recommendExcludedWorkshop");
+});
+
+it("推薦カードにもワークショップの札を付ける（SPEC §7）", () => {
+  const app = siteRuntime();
+  expect(app, "推薦カードの札が無い").toContain(
+    "ワークショップの会議です（締切一覧の「ワークショップのみ」と同じ判定）",
+  );
+});
+
+it("ワークショップの行には、絞り込み前でも札を付ける（SPEC §7）", () => {
+  /* 絞り込みを掛けていなくても、どの行がワークショップか分かるようにする。 */
+  const app = siteRuntime();
+  expect(app, "ワークショップの判定を使っていない").toContain("rowIsWorkshop(r)");
+  expect(app, "札の語が無い").toContain('textContent = "ワークショップ"');
 });
 
 it("早め絞り込みのボタンは、同じ条件を出す欄と同じ語で書かれている（SPEC §7）", () => {
@@ -4179,6 +4247,9 @@ it("推薦のカードの行が、てびきの数と名前と合う（SPEC §7�
     textContent: string;
     children: Element[];
     attributes: Record<string, string>;
+    href?: string;
+    target?: string;
+    rel?: string;
     setAttribute(name: string, value: string): void;
     appendChild(child: Element): void;
   };
@@ -4232,7 +4303,7 @@ it("推薦のカードの行が、てびきの数と名前と合う（SPEC §7�
     `return (${card});`,
   )(
     document,
-    Recommender,
+    { ...Recommender, venueResearchTopics, venueResearchSources },
     line,
     axesFor,
     venueEvidenceLineJa,
@@ -4258,6 +4329,9 @@ it("推薦のカードの行が、てびきの数と名前と合う（SPEC §7�
       conf: {
         key: "journal",
         title: "Journal",
+        official_scope: ["Memory, storage and systems", "<img src=x>"],
+        official_scope_sources: ["https://official.example/2024/cfp", "javascript:alert(1)"],
+        scope: ["Memory, storage and systems"],
         categories: [],
         tags: [],
         editions: [{ year: 1980 }, { year: 2026 }],
@@ -4286,15 +4360,58 @@ it("推薦のカードの行が、てびきの数と名前と合う（SPEC §7�
       ed: {},
       kind: "journal",
       _availability: { status: "ongoing" },
+      _matchScore: 56,
+      _fitLabel: "候補",
     },
     Date.parse("2026-10-13T00:00:00Z"),
   ) as Element;
-  const displayed = rendered.children
+  const badge = rendered.children
+    .flatMap((child) => child.children)
+    .find((child) => child.className === "tag match");
+  expect(badge?.textContent).toBe("一致評価 候補");
+  const topics = rendered.children.find((child) =>
+    child.className.includes("recommendation-topics"),
+  );
+  expect(topics?.children[0].textContent).toBe("募集分野の説明と出典");
+  expect(topics?.attributes.open).toBeUndefined();
+  expect(topics?.children.at(-1)?.children.map((child) => child.textContent)).toEqual([
+    "Memory, storage and systems",
+    "<img src=x>",
+  ]);
+  const references = topics?.children
+    .flatMap((child) => child.children)
+    .flatMap((child) => child.children)
+    .filter((child) => child.href);
+  expect(references).toHaveLength(1);
+  expect(references?.[0]).toMatchObject({
+    href: "https://official.example/2024/cfp",
+    target: "_blank",
+    rel: "noopener noreferrer",
+  });
+  expect(template).toContain(
+    ".recommendation-topics > *:not(summary) { display: block !important; }",
+  );
+  expect(template).toContain(".recommendation-topics::details-content");
+  expect(template).toContain(
+    '#recommendationCards .recommendation-topics a[href^="http"]::after { content: none; }',
+  );
+  const evidence = rendered.children.find((child) =>
+    child.className.includes("recommendation-evidence"),
+  );
+  expect(evidence, "補足情報をその場で開けない").toBeDefined();
+  expect(
+    evidence?.children.some((child) => child.textContent.startsWith("一致評価の参考点: 56 点")),
+  ).toBe(true);
+  expect(evidence?.attributes.open, "補足情報が最初から開いている").toBeUndefined();
+  const kind = rendered.children.find((child) => child.textContent.startsWith("種別:"));
+  expect(kind?.textContent, "締切の種別を補足情報に隠している").toBe("種別: 常時受付");
+  const displayed = [...evidence!.children, kind!]
     .filter((child) => child.className.includes("recommendation-axes"))
     .map((child) => child.textContent);
   expect(displayed).toHaveLength(4);
-  expect(displayed[3]).toContain("取得状態: 取得履歴なし");
-  expect(displayed[0]).toBe("収録データ: 開催年 2年分 ／ 論文サンプル 1件");
+  expect(displayed[0]).toContain("締切の確認状況: 日付 未確認");
+  expect(displayed[1]).toBe("収録データ: 開催年 2年分 ／ 論文サンプル 1件");
+  expect(displayed[2]).toContain("取得状態: 取得履歴なし");
   expect(displayed.join("\n")).not.toMatch(/会議の続いている年数|新規|成長中|確立/);
   const labels = displayed.map((text) => text.split(/[:：]/)[0]);
   expect(rendered.children.map((child) => child.textContent).join(" ")).not.toContain("研究適合度");
@@ -4302,13 +4419,12 @@ it("推薦のカードの行が、てびきの数と名前と合う（SPEC §7�
   const at = template.indexOf("カードの頭にある<strong>一致評価</strong>");
   expect(at).toBeGreaterThan(0);
   const guide = template.slice(template.lastIndexOf("<dd>", at), template.indexOf("</dd>", at));
-  // てびきが数える行数と、実装の行数が合うこと。
-  const counted = /判断材料を(\d+)行/.exec(guide);
-  expect(counted, "てびきがカードの行数を数えていない").not.toBeNull();
-  expect(Number(counted![1]), "てびきの行数と実装の行数が割れている").toBe(labels.length);
   for (const label of labels) {
     expect(guide, `てびきがカードの行「${label}」を挙げていない`).toContain(label);
   }
+  expect(guide).toContain("開閉");
+  expect(guide).toContain("常に表示");
+  expect(guide).toContain("印刷では閉じている補足情報も表示");
   // 一致評価はカードの頭に出る語として説明する（行として数えない）。
   expect(guide).toContain("一致評価");
 });

@@ -1,8 +1,9 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { icsViewDescriptionJa, icsViewText } from "../site/ics.ts";
+import { icsDeadlineUidKey, icsViewDescriptionJa, icsViewText } from "../site/ics.ts";
 import Recommender from "../site/recommender.ts";
+import { attachIcsUidsToConferences } from "../src/build.ts";
 import { builtSite } from "./built_site.ts";
 import { REPO_ROOT } from "./helpers.ts";
 
@@ -204,4 +205,65 @@ it("配付の ICS と畫面の書き出しが、ランクも本文に書く（�
   expect(app, "畫面がランクを材料へ渡していない").toContain("rank: (r.rankPairs || [])");
   const icsTs = readFileSync(join(REPO_ROOT, "site", "ics.ts"), "utf8");
   expect(icsTs, "書き出しがランクの行を組んでいない").toContain("ランク: ${String(item.rank)");
+});
+
+it("正典への載せ替へは、その build の配付カレンダーの採番で行ふ（入力の古い採番を残さない）", () => {
+  /* 採番は「その時計で今後の締切」の順に付く。履歴（前回公開の data.json）が持つ古い
+   * 採番を残すと、同じ締切に購読の ICS と畫面の書き出しで別の UID が付く
+   * （2026-11-08 實測: snapshot 由来の `…-4` と新採番の `…-7` が並んだ）。 */
+  const conferences = [
+    {
+      key: "vldb",
+      editions: [
+        {
+          id: "vldb27",
+          deadlines: [
+            {
+              kind: "abstract",
+              round: 12,
+              label: "Abstract submission",
+              utc: "2027-02-26T00:00:00Z",
+              ics_uid: "kamiyobi-vldb27-29b52d20-4@kamiyobi",
+            },
+          ],
+        },
+      ],
+    },
+  ];
+  const 採番 = new Map([
+    [
+      icsDeadlineUidKey("vldb27", "abstract", 12, "Abstract submission", "20270226"),
+      "kamiyobi-vldb27-29b52d20-7@kamiyobi",
+    ],
+  ]);
+  attachIcsUidsToConferences(conferences, 採番);
+  const 載った = (conferences[0].editions[0].deadlines[0] as { ics_uid?: string }).ics_uid;
+  expect(載った, "配付カレンダーの採番で置き替わらなかつた").toBe(
+    "kamiyobi-vldb27-29b52d20-7@kamiyobi",
+  );
+  /* カレンダーが知らぬ締切は温存する（書き換へ先が無い – 勝手に剥がさない）。 */
+  const 知らぬ = [
+    {
+      key: "vldb",
+      editions: [
+        {
+          id: "vldb27",
+          deadlines: [
+            {
+              kind: "abstract",
+              round: 12,
+              label: "Abstract submission",
+              utc: "2027-02-26T00:00:00Z",
+              ics_uid: "kamiyobi-vldb27-29b52d20-4@kamiyobi",
+            },
+          ],
+        },
+      ],
+    },
+  ];
+  attachIcsUidsToConferences(知らぬ, new Map());
+  expect(
+    (知らぬ[0].editions[0].deadlines[0] as { ics_uid?: string }).ics_uid,
+    "カレンダーに無い締切の UID を剥がした",
+  ).toBe("kamiyobi-vldb27-29b52d20-4@kamiyobi");
 });

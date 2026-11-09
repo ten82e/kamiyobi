@@ -15,7 +15,7 @@ function 品書(): Row[] {
 const rows = 品書();
 function 當る行(文: string): Row[] {
   const m = Recommender.searchMatcher(Recommender.expandRelativeMonths(文, AT), AT);
-  return rows.filter((r) => m(String(r.hay)) === true);
+  return rows.filter((r) => m(r) === true);
 }
 function 當(文: string): number {
   return 當る行(文).length;

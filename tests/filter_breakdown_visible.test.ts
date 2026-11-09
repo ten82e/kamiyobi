@@ -58,13 +58,61 @@ it("絞り込みを入れたら、件数欄を開いて「のぞいた数」を�
    * 但し書きに無いので、カードを刷る時だけ足す（2026-10-22 実測: 推薦の紙に「（80 点）」が
    * 出るのに、凡例は点も受付状況も説明していなかった）。 */
   expect(app, "カードを刷る時の但し書きが無い").toContain("カードも刷るか");
-  expect(app, "点の説明が無い").toContain("候補の並びを決める点で、札とは別の計算");
+  expect(app, "点の説明が無い").toContain(
+    "一致評価の参考値で、順位や採択の見込みを表す値ではありません",
+  );
   expect(app, "推薦の紙でカードの但し書きを渡していない").toContain("printLegendJa(true)");
 
   /* 画面の組み立ても、この判定を通して開いている（条件を書き写していない）。 */
-  expect(app, "件数欄の開閉が判定を通していない").toContain(
-    '(state.mode === "deadlines" && (deadlineFiltersOnJa() || recommendFitMatches > 0))',
-  );
+  expect(app, "件数欄の開閉が判定を通していない").toContain("deadlineFiltersOnJa() ||");
   expect(app, "0 件のときに開かない").toContain("shown.length === 0 ||");
   expect(app, "検索語があるときに開かない").toContain("Boolean(state.q.trim()) ||");
+});
+
+it("推薦画面の空入力を、締切の検索結果0件として扱わない", () => {
+  const app = siteRuntime();
+  const start = app.indexOf('$("resultNotes").toggleAttribute(');
+  const end = app.indexOf('$("count").textContent = cnt;', start);
+  expect(start).toBeGreaterThan(-1);
+  expect(end).toBeGreaterThan(start);
+  const run = new Function(
+    "recMode",
+    "shown",
+    "state",
+    "deadlineFiltersOnJa",
+    "recommendFitMatches",
+    "$",
+    app.slice(start, end),
+  );
+  const panels = (
+    recMode: boolean,
+    count: number,
+    query = "",
+    filtered = false,
+    manuallyOpen = false,
+  ) => {
+    const notes = {
+      open: false,
+      toggleAttribute(_name: string, value: boolean) {
+        this.open = value;
+      },
+    };
+    const scope = { open: manuallyOpen };
+    run(
+      recMode,
+      Array(count),
+      { q: query, mode: recMode ? "recommend" : "deadlines" },
+      () => filtered,
+      0,
+      (id: string) => (id === "resultNotes" ? notes : scope),
+    );
+    return { notes: notes.open, scope: scope.open };
+  };
+  expect(panels(true, 0)).toEqual({ notes: false, scope: false });
+  expect(panels(true, 0, "GPU", true)).toEqual({ notes: false, scope: false });
+  expect(panels(true, 1, "", false, true)).toEqual({ notes: false, scope: true });
+  expect(panels(false, 0)).toEqual({ notes: true, scope: true });
+  expect(panels(false, 1, "GPU")).toEqual({ notes: true, scope: false });
+  expect(panels(false, 1, "", true)).toEqual({ notes: true, scope: false });
+  expect(panels(false, 1)).toEqual({ notes: false, scope: false });
 });

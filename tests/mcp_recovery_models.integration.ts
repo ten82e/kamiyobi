@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { beforeAll, expect, it } from "vitest";
 import * as runtime from "../src/embedding-runtime.ts";
+import { FULL_VENUE_COUNT } from "./full_venue_pool.ts";
 import { runModelRecovery } from "./mcp_recovery_case.ts";
 
 const repo = join(import.meta.dirname, "..");
@@ -55,7 +56,7 @@ for (const [i, c] of cases.entries())
     const reply = replies[i];
     expect(reply?.isError).not.toBe(true);
     const result = reply?.structuredContent;
-    expect(result?.candidate_venues).toBe(696);
+    expect(result?.candidate_venues).toBe(FULL_VENUE_COUNT);
     expect(result?.uses_embeddings).toBe(true);
     expect(result?.embedding_model).toEqual(
       c.paper.language === "ja"

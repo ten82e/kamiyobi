@@ -605,7 +605,7 @@
                 "source_class": "aggregator"
               },
               "precision": "exact",
-              "utc": "2027-01-11T11:59:59Z",
+              "utc": "2027-01-08T11:59:59Z",
               "aoe": "2027-01-10 23:59:59 AoE",
               "tz_raw": "AoE"
             },
@@ -643,6 +643,24 @@
               "utc": "2027-02-09T11:59:59Z",
               "aoe": "2027-02-08 23:59:59 AoE",
               "tz_raw": "AoE"
+            },
+            {
+              "kind": "other",
+              "label": "Tutorial proposal deadline",
+              "round": 1,
+              "track": "",
+              "comment": null,
+              "status": "confirmed",
+              "selection_rule": "source_priority_then_nearest_within_configured_window",
+              "evidence": [],
+              "conflicts": [],
+              "precision": "exact",
+              "local_date": null,
+              "utc": "2026-12-08T11:59:59Z",
+              "aoe": null,
+              "jst": null,
+              "ics_uid": null,
+              "at_utc": "2026-12-08T11:59:59.000Z"
             }
           ]
         }

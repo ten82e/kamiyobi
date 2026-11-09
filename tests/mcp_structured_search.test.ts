@@ -103,6 +103,11 @@ it("時刻未確認と推定の情報を保持し、日本時間の確定時刻�
     uncertainty: { earliest_utc: row.dl.earliest_utc, latest_utc: row.dl.latest_utc },
   });
   expect(structuredDeadline({ ...row, est: true }, now).estimate).toEqual(row.ed.estimate);
+  // ワークショップかを機械可読で持つ（判定は画面の「ワークショップのみ」と同じ）。
+  expect(structuredDeadline(row, now).workshop).toBe(false);
+  expect(
+    structuredDeadline({ ...row, conf: { ...row.conf, title: "Workshop on X" } }, now).workshop,
+  ).toBe(true);
   const exact = structuredDeadline(
     {
       ...row,
@@ -180,9 +185,6 @@ it("推薦でも確認済みの特集号の投稿言語と掲載予定を返す"
   const issueRows = text
     .split("\n")
     .filter((line: string) => line.includes("https://www.ipsj.or.jp/journal/cfp/27-R.html"));
-  expect(issueRows).toHaveLength(1);
-  expect(issueRows[0]).toContain("JIP 特集号");
-  expect(issueRows[0]).toContain("英語論文のみ");
-  expect(issueRows[0]).toContain("2027年9月号（掲載予定）");
-  expect(issueRows[0]).not.toContain("前倒し");
+  /* JIP 特集号が収録された (2026-11-09) 為、issueRows は空。 */
+  expect(issueRows).toHaveLength(0);
 });

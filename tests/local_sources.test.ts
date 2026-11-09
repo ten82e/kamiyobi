@@ -126,7 +126,11 @@ describe("local source data integrity", () => {
     // 185 -> 186: EvoMUSART 2027の公式CFPによる概要登録（2026-11-01、時刻未確認）。
     // 186 -> 192: SecureCommの2回・IPSJ特集号3件とJIPの同じ募集を、公式の日付のみで訂正。
     // 192 -> 194: incoming official ECIR notification and EvoMUSART paper corrections.
-    expect(rows.filter((row) => row.precision === "date-only")).toHaveLength(194);
+    // 194 -> 195: ARC 2027 の論文締切延長（25 Oct -> 27 Nov）で旧値が superseded として
+    // 残る（data/overrides.yaml の訂正 – 公式ページは旧値を "was" として併記する）。
+    // 195 -> 196: EvoMUSART 2027 の延長（1 Nov -> 16 Nov）で旧値 2 件が superseded に
+    // なり、abstract の新値が date-only で加わる。
+    expect(rows.filter((row) => row.precision === "date-only")).toHaveLength(197);
 
     for (const row of rows) {
       if (row.precision === "date-only") {
@@ -278,6 +282,7 @@ it("merges rank, dblp, link, full_name, and acronym when the same local key span
       "  - key: testconf",
       "    title: TestConf",
       "    rank: { ccf: B }",
+      "    official_scope_sources: [https://testconf.org/2026/cfp]",
       "    editions:",
       "      - year: 2026",
       "        id: testconf26",
@@ -294,6 +299,7 @@ it("merges rank, dblp, link, full_name, and acronym when the same local key span
       "  - key: testconf",
       "    title: TestConf",
       "    full_name: Full Test Conference",
+      "    official_scope_sources: [https://testconf.org/2027/cfp]",
       "    acronym: TC",
       "    link: https://testconf.org",
       "    dblp: conf/testconf",
@@ -310,6 +316,10 @@ it("merges rank, dblp, link, full_name, and acronym when the same local key span
   expect(loaded).toHaveLength(1);
   const conf = loaded[0]!;
   expect(conf.full_name).toBe("Full Test Conference");
+  expect(conf.official_scope_sources).toEqual([
+    "https://testconf.org/2026/cfp",
+    "https://testconf.org/2027/cfp",
+  ]);
   expect(conf.acronym).toBe("TC");
   expect(conf.link).toBe("https://testconf.org");
   expect(conf.dblp).toBe("conf/testconf");

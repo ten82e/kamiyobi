@@ -86,9 +86,19 @@ jobs:
         run: node src/cli.ts build --out public --no-embeddings --now "$BUILD_NOW" --history-baseline /tmp/kamiyobi-update/published/data.json --history-report /tmp/kamiyobi-update/current/history-retention.json
       - name: Validate generated production data
         id: validate
-        run: npm run validate:data -- public/data.json --json
-      - name: Persist canonical data-quality findings
-        run: node scripts/validate-data.ts --write-findings --json > /tmp/kamiyobi-update/validator-findings.json
+        # 失敗時に要約で読める樣に、判定の JSON を診断文件へも残す（PIPESTATUS で判定を
+        # 潰さない – tee は常に 0 を返す）。
+        run: |
+          mkdir -p /tmp/kamiyobi-update
+          set +e
+          npm run validate:data -- public/data.json --json | tee /tmp/kamiyobi-update/validation.json
+          rc=${PIPESTATUS[0]}
+          set -e
+          exit $rc
+      - name: Capture validator report for diagnostics
+        # findings の正本（data/validator-findings.json）は人のレビューで更新する。この出力は
+        # 診断用の報告であり、正本ではない（`--write-findings` という口は実装されていない）。
+        run: node scripts/validate-data.ts --json > /tmp/kamiyobi-update/validator-report.json
       - name: Health gate
         id: health
         # 失敗時でも違反報告を書いて、後続の always() 診断 step が原因を残せるようにする。
@@ -164,9 +174,14 @@ jobs:
                 const r = JSON.parse(fs.readFileSync("/tmp/kamiyobi-update/health-violations.json", "utf8"));
                 for (const reason of r.reasons) console.log("- " + reason);
               } catch { console.log("- (violation report unavailable)"); }
+              try {
+                const v = JSON.parse(fs.readFileSync("/tmp/kamiyobi-update/validation.json", "utf8"));
+                for (const w of v.new_warnings ?? []) console.log("- new warning: [" + w.code + "] " + w.subject + " (" + (w.count ?? 1) + "): " + w.message);
+              } catch { console.log("- (validation report unavailable)"); }
             '
             echo '```'
-            echo "Diagnosis artifacts are in the generated-update artifact (baseline/, current/, health-violations.json)."
+            echo "新しい警告が出ているときは、`data/validator-findings.json` に発見としてレビューして記録する（code・subject・count と、reviewed_by・reviewed_at・review_reason・evidence_ref・expires_at。既存条目 VF-0001 の形を写す）。記録すると次の実行からゲートが通る。"
+            echo "Diagnosis artifacts are in the generated-update artifact (baseline/, current/, health-violations.json, validation.json)."
           } >> "$GITHUB_STEP_SUMMARY"
       - name: Upload generated update
         if: always()

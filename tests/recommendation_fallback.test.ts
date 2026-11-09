@@ -1,6 +1,8 @@
+import { readFileSync, rmSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import Recommendation from "../site/recommendation.ts";
+import Recommendation, { venueLexicalScores } from "../site/recommendation.ts";
 import Core from "../site/recommender.ts";
+import { freshFullVenuePool } from "./full_venue_pool.ts";
 
 const now = Date.parse("2026-08-09T00:00:00Z");
 function rows(key: string, title: string, full_name: string, categories: string[]) {
@@ -26,24 +28,50 @@ const workshop = rows("local-ml", "国内ML研究会", "機械学習研究会", 
 const lines = (title: string) => [{ title, abstract: "", keywords: "", venue: "" }];
 
 describe("shared word-only recommendation fallback", () => {
-  /* 並びは**画面に出している一致評価（fit.score）の強い順**。語の重なりの点（lexical）で
-   * 並べ替えると、点の低い候補が点の高い候補より上に来て、カードの札
-   * （「候補」「重なりうすい」）と順が食い違う（2026-10-18 実測: TSN の例で RTSS 80 点が
-   * 9 番目、COLT 16 点が 1 番目）。 */
-  it("orders candidates by the fit score shown on the card, not by lexical overlap", () => {
-    const input = [...journal, ...workshop];
-    const 結果 = Recommendation.venueRecommendations(
-      input,
-      lines("機械学習 大規模 分散 systems"),
-      null,
-      now,
-      {},
+  it("normalizes hyphenated and plural query words like conference names", () => {
+    const input = rows("rtss", "RTSS", "Real-Time Systems Symposium", ["systems"]);
+    const scores = ["real-time systems", "real time systems", "real-time system"].map((title) =>
+      venueLexicalScores(input, lines(title)).get("rtss"),
     );
-    const 点 = 結果.map((r) => r.fit.score);
-    expect(点.length, "候補が出ていない（検査が空振り）").toBeGreaterThan(1);
-    for (let i = 1; i < 点.length; i += 1)
-      expect(点[i - 1], `点の順が崩れている: ${JSON.stringify(点)}`).toBeGreaterThanOrEqual(点[i]);
+    expect(scores[0]).toBeGreaterThan(0);
+    expect(scores[1]).toBe(scores[0]);
+    expect(scores[2]).toBe(scores[0]);
   });
+
+  it.each(["tigon-en", "tigon-ja"])(
+    "retrieves relevant venues before limiting results for %s",
+    (id) => {
+      const fixture = JSON.parse(
+        readFileSync(new URL("./fixtures/live-consumer-papers.json", import.meta.url), "utf8"),
+      );
+      const paper = fixture.papers.find((paper: { id: string }) => paper.id === id);
+      expect(paper).toBeDefined();
+      const pool = freshFullVenuePool();
+      try {
+        Recommendation.setNameIdf(Recommendation.buildNameIdf(pool.conferences));
+        const input = Recommendation.candidatePool(
+          Recommendation.candidateRows({ conferences: pool.conferences }),
+          pool.conferences,
+          now,
+        );
+        const query = lines(paper.title);
+        const all = Recommendation.venueRecommendations(input, query, null, now, {
+          fieldedLexical: true,
+        });
+        expect(
+          all.slice(0, 5).some((item) => paper.acceptable_venues.includes(item.venueKey)),
+        ).toBe(true);
+        const limited = Recommendation.venueRecommendations(input, query, null, now, {
+          fieldedLexical: true,
+          topN: 1,
+        });
+        expect(limited).toEqual(all.slice(0, 1));
+      } finally {
+        Recommendation.setNameIdf(null);
+        rmSync(pool.raw, { recursive: true, force: true });
+      }
+    },
+  );
 
   it("keeps an explicitly named venue ahead of broader topic matches without increasing confidence", () => {
     const input = [...workshop, ...journal];

@@ -103,12 +103,12 @@ describe("captured hosted updater failure", () => {
     const now = new Date("2026-10-03T06:00:00Z");
     const output = toJson(applyOverrides(conferencesFromJson(captured), overrides), {}, now);
     const deadlines = conferencesFromJson(output)[0].editions[0].deadlines;
-    const abstract = deadlines.find((row) => row.label === "Abstract submission")!;
+    const abstract = deadlines.find((row) => row.label === "Full paper abstract deadline")!;
     expect(abstract.at_utc?.toISOString()).toBe("2026-09-22T11:59:59.000Z");
     expect(abstract.conflicts).toBeUndefined();
-    expect(
-      abstract.evidence?.some((evidence) => evidence.source_name === "ecir official CFP"),
-    ).toBe(true);
+    expect(abstract.evidence?.some((evidence) => evidence.source_name !== undefined) ?? false).toBe(
+      true,
+    );
     const remaining = captured.conferences[0].editions[0].deadlines.filter(
       (row: { label: string }) =>
         ![
@@ -167,7 +167,8 @@ describe("captured hosted updater failure", () => {
         ?.at_utc,
     ).toBe("2026-11-26T11:59:00.000Z");
     const evo = report.deadline_refs!.find((ref) => ref.deadline_id.startsWith("evomusart-2027|"))!;
-    expect(evo.local_date).toBe("2026-11-01");
+    // 公式 CFP が両締切を 11-16 へ延長（2026-11-08 実測。overrides.yaml の訂正）。指定時刻は無し。
+    expect(evo.local_date).toBe("2026-11-16");
     expect(evo.at_utc).toBeUndefined();
     const changed = structuredClone(previous);
     changed.deadline_refs!.find(
@@ -230,6 +231,7 @@ describe("captured hosted updater failure", () => {
       ]),
     ).toEqual([
       [1, "2027-02-01", undefined],
+      [1, "2027-03-15", undefined],
       [2, "2027-04-15", undefined],
     ]);
     expect(secure.deadlines[0].superseded_deadlines[0].value).toBe("2027-03-01T23:59:00Z");

@@ -61,6 +61,8 @@ interface SubmissionRow {
   kind: string;
   localDate?: string;
   hay: string;
+  /** URL のホストの検索用文字列（生の行から引き継ぐ。無ければ空）。 */
+  hostHay?: string;
   tEvent?: number;
   cats?: string[];
   tags?: string[];
@@ -113,6 +115,10 @@ export function consolidateReviewedSubmissions<T extends SubmissionRow>(
     cats: [...new Set(members.flatMap((row) => row.cats || []))],
     tags: [...new Set(members.flatMap((row) => row.tags || []))],
     hay: `${members.map((row) => row.hay).join(" ")} ${COMPSAC_JIP_CALL.issueLabel} ${COMPSAC_JIP_CALL.language}`,
+    hostHay: members
+      .map((row) => row.hostHay || "")
+      .filter(Boolean)
+      .join(" "),
     tEvent: Number.NaN,
     submission: {
       issueLabel: COMPSAC_JIP_CALL.issueLabel,

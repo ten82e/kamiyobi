@@ -428,13 +428,13 @@ import {load} from "js-yaml";
 import {freshFullVenuePool} from ${JSON.stringify(join(repo, "tests/full_venue_pool.ts"))};
 import {setRoot,buildAll} from "./src/build.ts";
 const pool=freshFullVenuePool();
-if(pool.conferences.length!==696)throw new Error("full venue pool changed");
+if(pool.conferences.length!==714)throw new Error("full venue pool changed");
 setRoot(import.meta.dirname);
 globalThis.fetch=async()=>{throw new Error("network forbidden")};
 const config=load(fs.readFileSync(${JSON.stringify(join(repo, "config.yaml"))},"utf8"));
 await buildAll(pool.conferences,config,"public",new Date("2026-10-16T00:00:00Z"),{noEmbeddings:true,localEmbeddingsOnly:true,venuePapers:{},reranker:null});
 const published=JSON.parse(fs.readFileSync("public/data.json","utf8"));
-if(published.conferences.find(c=>c.key==="jip").editions.flatMap(e=>e.deadlines).length!==1)throw new Error("dated journal submission lost");
+if(published.conferences.find(c=>c.key==="jip").editions.flatMap(e=>e.deadlines).length!==3)throw new Error("dated journal submission count changed");
 fs.writeFileSync("data/snapshot.json",JSON.stringify({...published,snapshot_metadata:{generated_at:published.generated_at}}));
 fs.rmSync(pool.raw,{recursive:true,force:true});
 `,
@@ -492,22 +492,22 @@ fs.rmSync(pool.raw,{recursive:true,force:true});
       }
       const broad = (await c.call("search_deadlines", { query: "journal", scope, limit: 100 }))
         .structuredContent;
-      expect(broad.total, scope).toBe(23);
-      expect(keys(broad).sort(), scope).toEqual([...expected, "jip"].sort());
+      expect(broad.total, scope).toBe(25);
+      expect(keys(broad).sort(), scope).toEqual([...expected, "jip", "jip", "jip"].sort());
       expect(
         broad.rows.find((row) => row.venue_key === "jip"),
         scope,
       ).toMatchObject({
         kind: "paper",
-        precision: "date-only",
-        local_date: "2026-12-01",
-        utc: null,
-        jst: null,
+        precision: "exact",
+        local_date: null,
+        utc: "2026-11-27T14:59:00Z",
+        jst: "2026-11-27(金) 23:59 JST",
       });
     }
     for (const [query, kind, venueKey, count, raw] of [
-      ["ネットワーク", "registration", "percom", 1, 442],
-      ["分散システム", "registration", "percom", 1, 1512],
+      ["ネットワーク", "registration", "percom", 1, 444],
+      ["分散システム", "registration", "percom", 1, 1683],
       ["3DV", "paper", "3dv", 6, 12],
       ["3DV", "abstract", "3dv", 3, 12],
       ["AAAI", "abstract", "aaai", 11, 53],

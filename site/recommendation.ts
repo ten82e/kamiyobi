@@ -40,6 +40,41 @@ function text(value: unknown): string {
   return Array.isArray(value) ? value.join(" ") : typeof value === "string" ? value : "";
 }
 
+export function venueResearchTopics(value: unknown): string[] {
+  if (!value || typeof value !== "object") return [];
+  const conf = value as Record<string, unknown>;
+  return [
+    ...new Set(
+      [conf.official_scope, conf.scope]
+        .flatMap((scope) => (Array.isArray(scope) ? scope : [scope]))
+        .filter((topic): topic is string => typeof topic === "string")
+        .map((topic) => topic.replace(/\s+/g, " ").trim())
+        .filter(Boolean),
+    ),
+  ];
+}
+
+export function venueResearchSources(value: unknown): string[] {
+  if (!value || typeof value !== "object") return [];
+  const sources = (value as Record<string, unknown>).official_scope_sources;
+  if (!Array.isArray(sources)) return [];
+  return [
+    ...new Set(
+      sources
+        .filter((source): source is string => {
+          if (typeof source !== "string") return false;
+          try {
+            const url = new URL(source);
+            return url.protocol === "https:" && !url.username && !url.password;
+          } catch {
+            return false;
+          }
+        })
+        .map((source) => source.trim()),
+    ),
+  ];
+}
+
 /** Use documented venue topics and corpus rarity for the word-only retrieval path. */
 export function venueLexicalScores(
   rows: Parameters<typeof Core.venueRecommendations>[0],
@@ -47,7 +82,7 @@ export function venueLexicalScores(
 ): Map<string, number> {
   const queryText = Core.queryText(lines);
   const query = terms(queryText);
-  const nameQuery = new Set(queryText.toLowerCase().match(/[a-z][a-z0-9-]{2,}/g) ?? []);
+  const explicitKeys = new Set(queryText.toLowerCase().match(/[a-z][a-z0-9-]{2,}/g) ?? []);
   const queryPhrases = phrases(queryText);
   const documents = new Map<
     string,
@@ -60,8 +95,14 @@ export function venueLexicalScores(
     const key = typeof conf.key === "string" ? conf.key : "";
     if (!key || documents.has(key)) continue;
     const topicText = [text(conf.scope), text(conf.official_scope), text(conf.keywords)].join(" ");
+    const keyTerms = terms(key);
     documents.set(key, {
-      names: new Set(terms([text(conf.title), text(conf.full_name), key].join(" "))),
+      // Identifier fragments are not venue mentions; full-name words still share query normalization.
+      names: new Set(
+        terms([text(conf.title), text(conf.full_name), key].join(" ")).filter(
+          (word) => keyTerms.length !== 1 || word !== keyTerms[0] || explicitKeys.has(key),
+        ),
+      ),
       topics: new Set(terms(topicText)),
       phrases: phrases(topicText),
     });
@@ -99,8 +140,7 @@ export function venueLexicalScores(
         : 1;
       return [
         key,
-        overlap(new Set([...doc.names].filter((word) => nameQuery.has(word))), 1) +
-          (overlap(doc.topics, 2) + phraseScore) / topicNormalization,
+        overlap(doc.names, 1) + (overlap(doc.topics, 2) + phraseScore) / topicNormalization,
       ];
     }),
   );
@@ -108,6 +148,29 @@ export function venueLexicalScores(
 
 type Args = Parameters<typeof Core.venueRecommendations>;
 type Result = ReturnType<typeof Core.venueRecommendations>[number];
+
+type DeadlineOrderCandidate = {
+  row: { t?: number; tShown?: number };
+  availability?: { status?: string };
+};
+
+/** Dated candidates first, then undated, then closed; keep relevance order on ties. */
+export function compareVenueDeadlineOrder(
+  a: DeadlineOrderCandidate,
+  b: DeadlineOrderCandidate,
+): number {
+  const group = (candidate: DeadlineOrderCandidate) => {
+    const status = candidate.availability?.status;
+    return status === "past" ? 2 : status === "open" || status === "uncertain" ? 0 : 1;
+  };
+  const diff = group(a) - group(b);
+  if (diff || group(a) !== 0) return diff;
+  const time = ({ row }: DeadlineOrderCandidate) =>
+    Number.isFinite(row.tShown) ? row.tShown! : Number.isFinite(row.t) ? row.t! : Infinity;
+  const at = time(a);
+  const bt = time(b);
+  return at === bt ? 0 : at < bt ? -1 : 1;
+}
 
 /** Encode the complete text and its topic-setting title/opening sentence separately. */
 export function semanticQueryPlan(lines: Args[1]): Array<{ text: string; weight: number }> {
@@ -170,8 +233,6 @@ export function venueRecommendations(...args: Args): Result[] {
     const escaped = key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     if (new RegExp(`(?:^|[^a-z0-9-])${escaped}(?=$|[^a-z0-9-])`, "i").test(text)) named.add(key);
   }
-  /* 語の重なりの点は、一致評価が同じ候補どうしの並びにだけ使う（点の順は画面の札と
-   * 揃える – 2026-10-18）。 */
   const retrieval = venueLexicalScores(rows, lines);
   const expanded = lines.map((line) => ({
     ...line,
@@ -184,7 +245,7 @@ export function venueRecommendations(...args: Args): Result[] {
     now,
     {
       ...options,
-      topN: named.size ? Math.max(rows.length, topN) : topN,
+      topN: Math.max(rows.length, topN),
     },
   );
   return results
@@ -208,14 +269,17 @@ export function venueRecommendations(...args: Args): Result[] {
     .sort(
       (a, b) =>
         Number(named.has(b.venueKey.toLowerCase())) - Number(named.has(a.venueKey.toLowerCase())) ||
-        /* 並びは**画面に出している一致評価（`fit.score`）の強い順**にする。語の重なりの
-         * 点数（`retrieval`）で並べ替えると、点の低い候補（例: 16 点）が点の高い候補
-         * （例: 80 点）より上に来て、カードの札（「候補」「重なりうすい」）と順が食い違う
-         * （2026-10-18 実測: TSN の例で RTSS 80 点が 9 番目、COLT 16 点が 1 番目）。 */
-        (b.fit?.score ?? 0) - (a.fit?.score ?? 0) ||
         (retrieval.get(b.venueKey) ?? 0) - (retrieval.get(a.venueKey) ?? 0),
     )
     .slice(0, topN);
 }
 
-export default { ...Core, venueRecommendations, semanticQueryPlan, semanticQueryVector };
+export default {
+  ...Core,
+  venueResearchTopics,
+  venueResearchSources,
+  venueRecommendations,
+  semanticQueryPlan,
+  semanticQueryVector,
+  compareVenueDeadlineOrder,
+};

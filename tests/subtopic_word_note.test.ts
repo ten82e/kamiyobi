@@ -56,6 +56,9 @@ describe("細目の主題と募集対象の斷り", () => {
         ).toBe(true);
       });
     });
+    /* 分野名で打ち直すだけでは、主題から探す人の行き先が無い。論文モードへも渡す。 */
+    expect(Recommender.uiWordNoteJa("federated")).toContain("投稿先を探す");
+    expect(Recommender.uiWordNoteJa("federated")).toContain("recommend_venues");
   });
 
   it("寄せはして居らん（0 件の侭 – 正直な 0 件）", () => {

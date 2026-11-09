@@ -7,6 +7,10 @@
  * `tests/place_spelling_variants.test.ts`、`tests/place_query_alias.test.ts`）。
  */
 export const PLACE_QUERY_ALIASES_JA: string[][] = [
+  // Published-data refresh 2026-11-08: cities that reached five recorded rows.
+  ["ブエノスアイレス", "buenos aires"],
+  ["グルノーブル", "grenoble"],
+  ["貴陽", "guiyang"],
   // Published-data refresh 2026-10-04: cities with at least five recorded rows.
   ["デトロイト", "detroit"],
   ["ケンブリッジ", "cambridge"],
@@ -355,6 +359,14 @@ export const PLACE_QUERY_ALIASES_JA: string[][] = [
   ["未来館", "miraikan"],
   // 国名の翻訳から守って公式表記のまま置いた州（`PLACE_NAME_SHIELDS_JA`）。
   ["ニューメキシコ", "new mexico"],
+  // 2026-10-26 に収録範囲へ戻したプログラミング言語系の開催地。
+  ["ベルゲン", "bergen"],
+  ["メキシコシティ", "mexico city"],
+  ["オークランド", "oakland"],
+  ["レンヌ", "rennes"],
+  ["広島", "hiroshima"],
+  ["広島市", "hiroshima"],
+  ["マディソン", "madison"],
 ];
 
 export default PLACE_QUERY_ALIASES_JA;

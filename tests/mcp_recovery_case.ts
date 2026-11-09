@@ -12,6 +12,7 @@ import { join } from "node:path";
 import { createInterface } from "node:readline";
 import { expect } from "vitest";
 import * as runtime from "../src/embedding-runtime.ts";
+import { FULL_VENUE_COUNT } from "./full_venue_pool.ts";
 import { prepareLiveConsumerSite } from "./live_consumer_site.ts";
 
 export interface RecoveryPaper {
@@ -55,7 +56,7 @@ export async function runModelRecovery(corpus: RecoveryCorpus, interruptDownload
     expect(corpus.candidate_count).toBe(696);
     expect(corpus.top_k).toBe(5);
     const index = JSON.parse(readFileSync(join(root, "public/recommendation-index.json"), "utf8"));
-    expect(index.conferences).toHaveLength(696);
+    expect(index.conferences).toHaveLength(FULL_VENUE_COUNT);
     expect(index.conferences.every((c: { papers: unknown[] }) => c.papers.length === 0)).toBe(true);
     const profile = JSON.stringify(index).toLowerCase();
     for (const paper of papers) {
@@ -249,7 +250,7 @@ export async function runModelRecovery(corpus: RecoveryCorpus, interruptDownload
               ready.isError,
               "English model must be available before Japanese preparation",
             ).not.toBe(true);
-            expect(ready.structuredContent?.candidate_venues).toBe(corpus.candidate_count);
+            expect(ready.structuredContent?.candidate_venues).toBe(FULL_VENUE_COUNT);
             expect(ready.structuredContent?.uses_embeddings).toBe(true);
             expect(ready.structuredContent?.embedding_model).toEqual({
               id: runtime.EMBEDDING_MODEL,

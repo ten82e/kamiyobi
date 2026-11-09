@@ -1076,16 +1076,33 @@ it("edition and deadline records match the spec", () => {
 
 it("expected fixture conferences are present", () => {
   const keys = new Set(data.conferences.map((c: any) => c.key));
-  for (const key of ["sigcomm", "nsdi", "sc"]) {
+  for (const key of ["sigcomm", "nsdi", "sc", "ispd", "ismb"]) {
     expect(keys.has(key)).toBe(true);
   }
 });
 
-it("out-of-scope upstream conferences are filtered out", () => {
+it("programming-language venues are included after the 2026-10-26 scope change", () => {
   const keys = new Set(data.conferences.map((c: any) => c.key));
   expect(keys.has("prcv")).toBe(true);
-  for (const key of ["popl", "oopsla", "aplas"]) {
-    expect(keys.has(key)).toBe(false);
+  for (const key of [
+    "aplas",
+    "atva",
+    "cp",
+    "ecoop",
+    "etaps",
+    "fm",
+    "icfem",
+    "icfp",
+    "lctes",
+    "oopsla",
+    "pldi",
+    "popl",
+    "rv",
+    "sas",
+    "tase",
+    "vmcai",
+  ]) {
+    expect(keys.has(key)).toBe(true);
   }
 });
 
@@ -1918,6 +1935,20 @@ it("the empty deadline state names the filters that caused it (SPEC §7)", () =>
   expect(hint({ ...clear, domestic: true, cats: 2, rank: "A*" })).toContain(
     "「国内研究会・国内シンポジウムのみ」をオフ",
   );
+  /* 語を 1 つ外すと当たる形は、外す語を名指しで出す（`graph neural networks` の
+   * `graph` は `graphics` に当たるだけで、3 語が揃う行は無い）。 */
+  const dropped = hint({
+    ...clear,
+    query: "graph neural networks",
+    termCounts: [
+      { term: "graph", count: 488 },
+      { term: "neural", count: 66 },
+      { term: "networks", count: 610 },
+    ],
+    shorterHits: [{ word: "neural networks", count: 35, how: "drop", pair: "graph" }],
+  });
+  expect(dropped).toContain("「graph」を外すと 35 件当たります");
+  expect(dropped).toContain("「graph」を外して「neural networks」");
   /* 検索語が表に出さない種別（採否通知など）に当たっている場合。語は てびき と件数欄に
    * 出るのに表は投稿締切だけを出すので、「収録が無い」と誤解させる案内では止めない。 */
   const hiddenKind = hint({ ...clear, query: "採否", hiddenKindWords: ["採否通知"] });
@@ -2545,7 +2576,7 @@ it("relative months in the query are resolved and shown (SPEC §7)", () => {
   // 照合式は recommender 側（`searchMatcher`）に置く。語の分解を行ごとにやり直すと、
   // 行の数だけ遅くなる（3234 行で 1 打鍵あたり約 83 ms 実測）。
   expect(runtime).toContain("Recommender.searchMatcher(searchQuery, now)");
-  expect(runtime).toContain("matchesQuery(r.hay)");
+  expect(runtime).toContain("matchesQuery(r)");
   expect(runtime).not.toContain("Recommender.hayMatches(r.hay, searchQuery)");
   // てびきに相対月の説明がある（仕様が画面から追える状態にする）。
   expect(template).toContain("「今月」「来月」「再来月」「先月」");
@@ -2938,7 +2969,7 @@ it("site UI is readable for Japanese researchers: field names, JST header, help 
   // 照合式は recommender 側（`searchMatcher`）に置く。語の分解を行ごとにやり直すと、
   // 行の数だけ遅くなる（3234 行で 1 打鍵あたり約 83 ms 実測）。
   expect(runtime).toContain("Recommender.searchMatcher(searchQuery, now)");
-  expect(runtime).toContain("matchesQuery(r.hay)");
+  expect(runtime).toContain("matchesQuery(r)");
   expect(runtime).not.toContain("Recommender.hayMatches(r.hay, searchQuery)");
   // 主題タグ（tags）も日本語で詳細に出す（会議名から場を推定させないため）。
   expect(runtime).toContain("Recommender.topicTagsJa(r.conf.tags)");
@@ -4853,6 +4884,7 @@ it("unknown 会期・開催地・ランクを「未確認」として出す（SP
     jsFunction(app, "rowDateOnlyState"),
     jsFunction(app, "rowIsPast"),
     jsFunction(app, "rowIsFuture"),
+    jsFunction(app, "rowIsWorkshop"),
     // 「あと N 日」も正本から（ダミー値で通す検査にしない）。
     jsFunction(app, "remain"),
     "const DAY = 86400000;",
@@ -5116,6 +5148,7 @@ it("のぞいた行数を件数欄で説明する（SPEC §7）", () => {
     online: 0,
     onlinePlaceUnknown: 0,
     venue: 0,
+    workshop: 0,
     window: 0,
     // 評価でしぼるのは選択欄を動かしたときだけなので、既定では内訳に立たない。
     rank: 0,

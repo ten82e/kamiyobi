@@ -57,11 +57,11 @@ describe("年度の語に暦月を直に繋いだ形がその年度 ∧ その�
   it("行数の実測（固定ハーネスの品書 435 行）", () => {
     expect(列("来年度3月").size).toBe(3);
     expect(列("今年度3月").size).toBe(29);
-    expect(列("来年度12月").size).toBe(11);
-    expect(列("来年度3月から").size).toBe(50);
-    expect(列("来年度12月まで").size).toBe(11); // 年度の語に続く「まで」はその年度のその月（今月からの幅にしない）
+    expect(列("来年度12月").size).toBe(10);
+    expect(列("来年度3月から").size).toBe(49);
+    expect(列("来年度12月まで").size).toBe(10); // 年度の語に続く「まで」はその年度のその月（今月からの幅にしない）
     /* その月を含まぬ年度の語はその侭（`来年度` 48 件 ⊇ `来年度3月` 1 件）。*/
-    expect(列("来年度").size).toBe(50);
+    expect(列("来年度").size).toBe(49);
     expect([...列("来年度3月")].every((行) => 列("来年度").has(行))).toBe(true);
   });
 });
@@ -70,11 +70,11 @@ describe("其它の形は動かして居ない（第 352 回・第 484 回・第
   it("年度のかたまりの対と、その方で解ける年は其侭", () => {
     expect(列("来年度末").size).toBe(3);
     expect(列("来年度初め").size).toBe(31);
-    expect(列("来年度中").size).toBe(50);
-    expect(列("今年1月から").size).toBe(427);
+    expect(列("来年度中").size).toBe(49);
+    expect(列("今年1月から").size).toBe(430);
     expect(日の案内("今年1月から")).toContain("2026年1月1日以降のこと（その年の中まで）");
 
-    expect(列("来年12月から").size).toBe(21);
+    expect(列("来年12月から").size).toBe(20);
     expect(列("来年12月から").size).toBe(列("来年 12月から").size);
     /* 案内はその年の幅（先の年は第 493 回に割る目を入れたので、月まで名乗る案内は出ない）。*/
     expect(日の案内("来年12月から")).toContain("来年 = 2027年");
@@ -91,17 +91,17 @@ describe("其它の形は動かして居ない（第 352 回・第 484 回・第
     expect(列("来月 末").size).toBe(178);
     expect(列("週 末").size).toBe(146);
     expect(列("来週 初旬").size).toBe(2);
-    expect(列("明日以降").size).toBe(423);
+    expect(列("明日以降").size).toBe(426);
     expect(列("来 上旬").size).toBe(68);
     expect(列("来月上旬").size).toBe(68);
     expect(列("締切時刻").size).toBe(181);
     expect(列("来月初め").size).toBe(0);
-    expect(列("来年末").size).toBe(21);
+    expect(列("来年末").size).toBe(20);
     expect(列("来年初").size).toBe(23);
     expect(列("半 年後").size).toBe(2);
     expect(列("一 週間後").size).toBe(13);
     expect(列("ml から").size).toBe(0);
-    expect(列("来週から").size).toBe(423);
+    expect(列("来週から").size).toBe(426);
   });
 });
 

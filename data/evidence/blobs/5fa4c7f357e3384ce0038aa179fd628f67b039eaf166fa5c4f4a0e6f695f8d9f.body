@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="en">
+ 
+  <head><meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>Mid4CC2026</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Custom fonts for this template -->
+    <link href="vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
+    <link href="https://fonts.googleapis.com/css?family=Montserrat:400,700" rel="stylesheet" type="text/css">
+    <link href='https://fonts.googleapis.com/css?family=Kaushan+Script' rel='stylesheet' type='text/css'>
+    <link href='https://fonts.googleapis.com/css?family=Droid+Serif:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+    <link href='https://fonts.googleapis.com/css?family=Roboto+Slab:400,100,300,700' rel='stylesheet' type='text/css'>
+    <link href='https://fonts.googleapis.com/css?family=Lato:300,400,500' rel='stylesheet' type='text/css'>
+    <link href='css/custom.css' rel='stylesheet' type='text/css'>
+    <link href='css/mio.css' rel='stylesheet' type='text/css'>
+
+    <!-- Custom styles for this template -->
+    <link href="css/agency.min.css" rel="stylesheet">
+
+    <link rel="stylesheet" href="css/styles.css" />
+    <link rel="stylesheet" href="js/aos.css" />
+    <link rel='icon' href='img/logos/logo.png' type='image/x-icon' sizes="16x16" />
+    <link rel="stylesheet" href="css/cookiealert.css">
+
+  </head>
+
+  <body id="page-top">
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark fixed-top" style="background-color: white" id="mainNav">
+      <div class="container">
+        <a class="navbar-brand js-scroll-trigger" href="#page-top"><img class="img-fluid" src="img/logos/logo2.jpg" alt=""></a>
+        <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse" data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
+          Menu
+          <i class="fas fa-bars"></i>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarResponsive">
+          <ul class="navbar-nav text-uppercase ml-auto">
+            <li class="nav-item">
+              <a class="nav-link js-scroll-trigger" href="index.html">Mid4CC</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link js-scroll-trigger" href="#overview">Overview</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link js-scroll-trigger" href="#dates">Important Dates</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link js-scroll-trigger" href="#portfolio">Paper Submission</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link js-scroll-trigger" href="cfp/mid4cc_cfp.pdf" target="_blank">Download CFP</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link js-scroll-trigger" href="#services">Topics</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link js-scroll-trigger" href="#about">About</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link js-scroll-trigger" href="#team">TPC</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link js-scroll-trigger" href="#contact">Contact us</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Header -->
+    <header class="masthead">
+      <div class="container">
+        <div class="intro-text">
+          <div class="intro-lead-in">Welcome to the 4th International Workshop on Middleware for the Computing Continuum (Mid4CC) 2026</div>
+          <!--<div class="intro-heading text-uppercase">It's Nice To Meet You</div>-->
+          <br>
+ 				<br>
+                <div class="intro-heading">It's Nice To Meet You</div>
+                <br>
+                <br>
+                <h2 class="section-heading">14th – 18th December 2026, Tarragona, Spain.</h2>
+                <br>
+                <!--<a href="#services" class="page-scroll btn btn-xl">Tell Me More</a>-->
+            </div>
+      </div>
+    </header>
+
+
+<!--<section id="program">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-12 text-center aos-init aos-animate" data-aos="fade-up">
+                    <h2 class="section-heading">Workshop Program</h2>
+                    <table border="1" cellspacing="0" cellpadding="6" style="border-collapse: collapse; width: 100%; text-align: left;">
+  <thead style="background-color: #f2f2f2;">
+    <tr>
+      <th>Time</th>
+      <th>Title. Session Chair: Antonino Galletta</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>08:30 – 08:40</td>
+      <td>Welcome</td>
+    </tr>
+    <tr>
+      <td>09:00 – 09:20</td>
+      <td>	Dynamic Multi-Provider Cluster Autoscaling For The Computing Continuum. <br> Speaker: Stefano Galantino, Polytechnic University of Turin</td>
+    </tr>
+    <tr>
+      <td>09:20 – 09:40</td>
+      <td>	Efficient Service Placement and Node Allocation in Fog and Edge Computing. <br> Speaker: Fábio M. Costa, Universidade Federal de Goiás</td>
+    </tr>
+    <tr>
+      <td>09:40 – 10:00</td>
+      <td>Self-Hosted WebAssembly Runtime for Runtime-Neutral Checkpoint/Restore in Edge–Cloud Continuum. <br> Speaker: Yuki Nakata, SAKURA internet Inc. / Future University Hakodate</td>
+    </tr>
+    <tr>
+      <td>10:00 – 10:20</td>
+      <td>Towards Cognitive Microservice Orchestration in the Multi-Cloud Continuum. <br> Speaker: Giuseppe Di Modica, Alma Mater Studiorun, University of Bologna</td>
+    </tr>
+      <td>10:20 – 10:30</td>
+      <td>Closing</td>
+    </tr>
+  </tbody>
+</table>
+                    
+                    
+    
+    
+    
+                </div>
+            </div>
+        </div>
+    </section>-->
+
+
+
+
+    <!-- overview -->
+        <section id="overview">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-12 text-center" data-aos="fade-up">
+                    <h2 class="section-heading">Overview</h2>
+                    <h3 class="section-subheading text-muted text-center">
+                        The Computing Continuum (CC) concept refers to the opportunity for applications to take advantage of a broad computing context that mixes Cloud, Fog/Edge, and IoT resources. The CC offers a spectrum of computing resources that vary in terms of capabilities, form factors, deployment models, etc. In a more extreme vision, at the two far ends the CC also encloses mobile resources (e.g., smartphones, wearables) and high-performance computing (HPC) clusters.
+                        In such a heterogeneous computing environment, resource interoperability and seamless integration must be granted in order to enable users to leverage the right (mix of) computing resources according to requirements and constraints. To unleash the real potential of the CC and make it broadly accessible and usable, software solutions are needed that mediate between the complexity of the computing infrastructures/technologies that build up the continuum on the one hand, and the challenging QoS requirements posed by end users on the other one. This workshop seeks proposals of platforms, software prototypes, tools, libraries, etc. that act and characterize as a middleware for the CC, i.e.,  a software layer that sits atop the CC and offers end users high-level services and functions to implement their applications. We encourage submissions of middleware proposals that explore, among others, key functions like, e.g., resource management, data management, communication and connectivity management, service composition and orchestration, adaptation and context awareness, security and privacy.
+                    </h3>
+                </div>
+            </div>
+        </div>
+    </section>
+
+        <!-- dates Section -->
+    <section id="dates" class="bg-light">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-12 text-center" data-aos="zoom-in">
+                    <h2 class="section-heading">Important dates</h2>
+                        <p class=" text-center ">Paper Submission Deadline: </p> <p class="font-weight-bold">October 12, 2026 (extended firm)</p> 
+                        <p class=" text-center">Notification of Acceptance: </p> <p class="font-weight-bold"> November 01, 2026 </p>
+                        <p class=" text-center">Camera-ready Submisison Deadline: </p> <p class="font-weight-bold"> November 15, 2026 </p>
+                        <p class=" text-center">Early registration deadline:  </p> <p class="font-weight-bold"> TBA </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+    <section id="portfolio">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-12 text-center" data-aos="zoom-in-up">
+                    <h2 class="section-heading">Paper Submission</h2>
+
+                    <h3 class="section-subheading">We invite original research papers that have not been previously published and are not currently under review for publication elsewhere.<br />
+                    Submitted workshop papers should be no longer than 6 pages in the standard <a href="https://www.acm.org/publications/proceedings-template">ACM format</a>. <br> Note that at least one author of each accepted workshop paper must hold a full pre-conference registration.
+                    The review process is single blind.
+                    As in previous years, the Middleware conference organizers will provide companion proceedings including all workshop papers, which will be available in the ACM Digital Library. <br />
+                    For the camera-ready instructions, please visit the camera-ready instructions page:<br> <a href="https://middleware-conf.github.io/2026/camera-ready-instructions/">https://middleware-conf.github.io/2026/camera-ready-instructions/</a>
+                    <br />
+                    A "Best Paper Award" certificate  will be conferred on the author(s) of a paper presented at the workshop, selected by the Chairs based on scientific significance, originality and outstanding technical quality of the paper, as assessed also by the evaluations of the members of the Program Committee.<br />
+                    <br />
+                    Best papers presented at the workshop will be selected and the corresponding authors will be invited to submit an extended version of their papers for possible publications in: 
+                    <ul>
+                    	<li align="left"><a href="https://www.mdpi.com/journal/mathematics/special_issues/Mathematical_Methods_Artificial_Intelligence_Visual_Information_Processing_Networked_Systems" target="_blank" >Mathematical Methods for Artificial Intelligence and Visual Information Processing in Networked Systems </a></li>
+                    <!--<li align="left"><a href="https://www.mdpi.com/journal/futureinternet" target="_blank" >MPDI Future Internet </a></li>
+                    <BR>
+                    <li align="left"><a href="http://www.mdpi.com/journal/sensors" target="_blank">Sensors — Open Access Journal</a></li>
+                    </ul>-->
+                    </h3>
+<!--&nbsp;-->
+                    <p class="text-muted"><a class="btn btn-primary btn-lg" href="https://mid4cc26.hotcrp.com/paper/new" target="_blank">Submission link</a></p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Services Section -->
+    <section id="services" class="bg-light">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-12 text-center">
+                    <h2 class="section-heading">Topics</h2>
+                    <a class="btn btn-primary btn-lg" href="cfp/mid4cc_cfp.pdf" target="_blank">Download CFP</a>
+                    <h3 class="section-subheading text-muted">Workshop topics include, but are not limited to:</h3>
+                </div>
+            </div>            
+            <div class="row text-center">
+                <div class="col-md-3" data-aos="zoom-in">
+                    <p class="text-muted text-left">
+                    </p>
+                </div>
+                <div class="col-md-6" data-aos="zoom-in">
+                    <p class="text-muted text-left">
+                            <ul>
+                                <li class="text-muted text-center">Resource scheduling, monitoring and orchestration</li>
+                                <li class="text-muted text-center">Service provisioning in the continuum</li>
+                                <li class="text-muted text-center">Implementation of data pipes along the continuum</li>
+                                <li class="text-muted text-center">Data governance in the continuum</li>
+                                <li class="text-muted text-center">Scalable storage architectures in the continuum</li>
+                                <li class="text-muted text-center">Service reuse and data caching</li>
+                                <li class="text-muted text-center">End-to-end provisioning of network services in the continuum</li>
+                                <li class="text-muted text-center">Network economics and pricing mechanisms in the continuum</li>
+                                <li class="text-muted text-center">QoS and SLA management across heterogeneous environments</li>
+                                <li class="text-muted text-center">Support for seamless service migration</li>
+                                <li class="text-muted text-center">Support for the implementation of dependable systems and applications</li>
+                                <li class="text-muted text-center">DevOps platforms for the continuum</li>
+                                <li class="text-muted text-center">Benchmarking environments in the continuum</li>
+                                <li class="text-muted text-center">Tools for security, privacy and trust management across multiple domains</li>
+                                <li class="text-muted text-center">Tools for Cloud/HPC integration</li>
+                            </ul>
+                        </p>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+        <!-- About Section -->
+    <section id="about">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-12 text-center">
+                    <h2 class="section-heading">About</h2>
+                   <!--  <h3 class="section-subheading text-muted">Lorem ipsum dolor sit amet consectetur.</h3> -->
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-lg-12">
+                    <ul class="timeline">
+                        <li class="timeline-inverted">
+                            <div class="timeline-image">
+                                <img class="rounded-circle img-fluid" data-aos="flip-left" src="img/about/tarragona.png" alt="">
+                            </div>
+                            <div class="timeline-panel">
+                                <div class="timeline-heading">
+                                    <h4>Dec 14-18, 2026.</h4>
+                                    <h4 class="subheading">Tarragona, Spain.</h4>
+                                </div>
+                                <div class="timeline-body">
+                                    <p class="text-muted">Workshop Middleware 2026, the 27th ACM/IFIP International Middleware Conference. 
+                                     </p>
+                                     <a target="_blank" href="https://middleware-conf.github.io/2026/">Conference link</a>
+                                </div>
+                            </div>
+                        </li>
+                        <li class="timeline-inverted">
+                            <div class="timeline-image">
+                                <img class="rounded-circle img-fluid" data-aos="flip-left" src="img/about/nashville.png" alt="">
+                            </div>
+                            <div class="timeline-panel">
+                                <div class="timeline-heading">
+                                    <h4>Dec 15-19, 2025.</h4>
+                                    <h4 class="subheading">Nashville, TN, USA.</h4>
+                                </div>
+                                <div class="timeline-body">
+                                    <p class="text-muted">Workshop Middleware 2025, the 26th ACM/IFIP International Middleware Conference. 
+                                     </p>
+                                     <a target="_blank" href="https://middleware-conf.github.io/2025/">Conference link</a>
+                                </div>
+                            </div>
+                        </li>
+                        <li class="timeline-inverted">
+                            <div class="timeline-image">
+                                <img class="rounded-circle img-fluid" data-aos="flip-left" src="img/about/hongkong.png" alt="">
+                            </div>
+                            <div class="timeline-panel">
+                                <div class="timeline-heading">
+                                    <h4>Dec 2-6, 2024.</h4>
+                                    <h4 class="subheading">Hong Kong, China.</h4>
+                                </div>
+                                <div class="timeline-body">
+                                    <p class="text-muted">Workshop Middleware 2024, the 25th ACM/IFIP International Middleware Conference. 
+                                     </p>
+                                     <a target="_blank" href="https://middleware-conf.github.io/2024/">Conference link</a>
+                                </div>
+                            </div>
+                        </li>
+                        <li class="timeline-inverted">
+                            <div class="timeline-image">
+                                <img class="rounded-circle img-fluid" data-aos="flip-left" src="img/about/bologna.png" alt="">
+                            </div>
+                            <div class="timeline-panel">
+                                <div class="timeline-heading">
+                                    <h4>Dec 11 - 15, 2023.</h4>
+                                    <h4 class="subheading">Bologna, Italy.</h4>
+                                </div>
+                                <div class="timeline-body">
+                                    <p class="text-muted">Workshop Middleware 2023, the 24th ACM/IFIP International Middleware Conference. 
+                                     </p>
+                                     <a target="_blank" href="https://middleware-conf.github.io/2023/">Conference link</a>
+                                </div>
+                            </div>
+                        </li>
+                        <li class="timeline-inverted">
+                            <div class="timeline-image">
+                                <h4>Be Part
+                                    <br>Of Our
+                                    <br>Story!</h4>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+<!-- Team Section -->
+    <section id="team" class="bg-light">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-12 text-center">
+                    <h2 class="section-heading">Technical Program Committee</h2>
+                    <h3>Chairs <br></h3>
+                </div>
+                <div class="col-sm-4">
+                    <div class="team-member" data-aos="fade-right">
+                        <img src="img/team/paolo.jpg" class="rounded-circle img-fluid" alt="">
+                        <h4>Prof. Paolo Bellavista</h4>
+                        <!--<p class="text-muted">Lead Designer</p>
+                        <ul class="list-inline social-buttons">
+                            <li><a href="#"><i class="fa fa-twitter"></i></a>
+                            </li>
+                            <li><a href="#"><i class="fa fa-facebook"></i></a>
+                            </li>
+                            <li><a href="#"><i class="fa fa-linkedin"></i></a>
+                            </li>
+                        </ul>-->
+                    </div>
+                </div>
+                <div class="col-sm-4">
+                	<!--empty-->
+                </div>
+                <div class="col-sm-4">
+                    <div class="team-member" data-aos="fade-left">
+                    	<img src="img/team/DiModica2.jpg" class="rounded-circle img-fluid" alt="">
+                        <h4>Dr. Giuseppe Di Modica</h4>
+                        <!--<p class="text-muted">Lead Designer</p>
+                        <ul class="list-inline social-buttons">
+                            <li><a href="#"><i class="fa fa-twitter"></i></a>
+                            </li>
+                            <li><a href="#"><i class="fa fa-facebook"></i></a>
+                            </li>
+                            <li><a href="#"><i class="fa fa-linkedin"></i></a>
+                            </li>
+                        </ul>-->
+                    </div>
+                </div>
+
+                <div class="col-sm-6" data-aos="fade-up-right">
+                    <div class="team-member">
+                        <img src="img/team/eirini.jpeg" class="rounded-circle img-fluid" alt="">
+                        <h4>Dr. Eirini Eleni Tsiropoulou</h4>
+                        <!--<p class="text-muted">Lead Developer</p>
+                        <ul class="list-inline social-buttons">
+                            <li><a href="#"><i class="fa fa-twitter"></i></a>
+                            </li>
+                            <li><a href="#"><i class="fa fa-facebook"></i></a>
+                            </li>
+                            <li><a href="#"><i class="fa fa-linkedin"></i></a>
+                            </li>
+                        </ul>-->
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="team-member" data-aos="fade-up-left">
+                        <img src="img/team/heidelberg2.jpeg" class="rounded-circle img-fluid" alt="">
+                        <h4>Dr. Antonino Galletta</h4>
+                        <!--<p class="text-muted">Lead Designer</p>
+                        <ul class="list-inline social-buttons">
+                            <li><a href="#"><i class="fa fa-twitter"></i></a></li>
+                            <li><a href="#"><i class="fa fa-facebook"></i></a></li>
+                            <li><a href="#"><i class="fa fa-linkedin"></i></a></li>
+                        </ul>-->
+                    </div>
+                </div>
+            </div>
+            </div>
+            <div class="row">
+                <div class="col-lg-12 text-center">
+                    <h3 ><br>TPC Members</h3>
+                </div>
+                <div class="col-sm-12 text-center" data-aos="fade-up">
+                    Mónica Aguilar Igartua - Universitat Politècnica de Catalunya<br>
+                    Auday Al-Dulaimy - Mälardalen University & Dalarna University <br>
+Marios Avgeris - Carleton University<br>
+Uwe Breitenbücher - University of Stuttgart<br>
+Alina Buzachis - University of Messina<br>
+Lorenzo Carnevale - University of Messina<br>
+Paulo Ferreira - University of Oslo<br>
+Annamaria Ficara - University of Messina<br>
+Stefano Forti - University of Pisa<br>
+Hokeun Kim - Arizona State University<br>
+Dragi Kimovski - University of Klagenfurt<br>
+Christos Kotselidis - University of Manchester<br>
+Francesco Leotta - Sapienza Università di Roma<br>
+YINHAO LI - Newcastle University<br>
+Ruidong Li - Kanazawa University<br>
+Aris Leivadeas - École de Technologie Supérieure (ÉTS Montreal)<br>
+Hiram H. López - Cleveland State University<br>
+Andrea Marrella - Sapienza Università di Roma<br>
+Angelo Marchese - University of Catania<br>
+Cédric Melançon - École de Technologie Supérieure (ÉTS Montreal)<br>
+Suejb Memeti - Blekinge Institute of Technology<br>
+David Monschein - Karlsruhe University of Applied Sciences<br>
+Joan Navarro - La Salle Campus Barcelona - Universitat Ramon Llull<br>
+Nikolay Nikolov - SINTEF AS<br>
+Symeon Papavassiliou - National Technical University of Athens<br>
+Fernando Perales - JOT INTERNET MEDIA<br>
+José Antonio Peregrina - Karlsruhe University of Applied Science<br>
+Thomas M. Prinz - Friedrich Schiller University Jena<br>
+Domenico Ragusa - University of Pavia<br>
+Fabiana Rossi - University of Rome Tor Vergata, Italy<br>
+Skhiri Sabri - EURANOVA<br>
+Christian Sicari - University of Messina<br>
+Edelberto Franco Silva - Federal University of Juiz de Fora<br>
+Ahmet Soylu - OsloMet - Oslo Metropolitan University<br>
+Eleni Stai - ETH Zurich<br>
+Orazio Tomarchio - University of Catania<br>
+Ester Vidaña-Vila - La Salle Campus Barcelona - Ramon Llull University<br>
+Alex Vieira - Universidade Federal de Juiz de Fora<br>
+Oliver Waldhorst - Karlsruhe University of Applied Sciences<br>
+Christian Zirpins - Karlsruhe University of Applied Sciences<br>
+Nochta Zoltán - Karlsruhe University of Applied Sciences<br>
+
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+    
+   <section class="customer-logos slider">
+      <div class="slide">
+        <div class="team-member">
+          <a href="https://www.ntua.gr/en/" target="_blank">
+            <img class="mx-auto" src="img/logos/Arizona.png" alt="NTUA">
+          </a>
+          <p class="text-muted">Arizona State University</p>
+        </div>
+      </div>
+      <div class="slide">
+        <div class="team-member">
+          <a href="https://international.unime.it//" target="_blank">
+            <img class="mx-auto " src="img/logos/Unime.png" alt="UniMe">
+          </a>
+          <!--<h6>"Concrete compliance support on GDPR, definitely our DPO!"</h6>
+          <p class="text-muted">Anna Valeriani, Head of Privacy @Astral</p>-->
+          <p class="text-muted">University of Messina</p>
+        </div>
+      </div>
+      <div class="slide">
+        <div class="team-member">
+          <a href="https://www.unibo.it/en/homepage" target="_blank">
+            <img class="mx-auto " src="img/logos/unibo.png" alt="unibo">
+          </a>
+          <!--<h6>""</h6>-->
+          <p class="text-muted">University of Bologna</p>
+        </div>
+      </div>
+      <div class="slide">
+        <div class="team-member">
+          <a href="https://fcrlab.unime.it/" target="_blank">
+            <img class="mx-auto" src="img/logos/fcrlab-2.png" alt="FcrLab">
+          </a>
+          <p class="text-muted">Future Computing Research Laboratory</p>
+        </div>
+      </div>
+      <div class="slide">
+        <div class="team-member">
+          <a href="https://www.ieee.org/" target="_blank">
+            <img class="mx-auto" src="img/logos/acm.png" alt="ACM">
+          </a>
+          <p class="text-muted">ACM</p>
+        </div>
+      </div>
+   </section>
+
+  <!-- Contact Section -->
+
+  <section id="contact">
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-12 text-center">
+          <h2 class="section-heading">Contact Us</h2>
+          <h3 class="section-heading text-muted">mid4cc@googlegroups.com</h3>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- Footer -->
+  <footer class="footer">
+      <img class="CNR" src="cfp/instanziato-CNR-header.png"/>
+    <div class="container">
+      <div class="row align-items-center">
+        <div class="col-md-4">
+          <span class="copyright">Copyright &copy; FcrLab 2025</span>
+        </div>
+        <div class="col-md-4">
+          <ul class="list-inline social-buttons">
+            <li class="list-inline-item">
+              <a href="#">
+                <i class="fab fa-twitter"></i>
+              </a>
+            </li>
+            <li class="list-inline-item">
+              <a href="#">
+                <i class="fab fa-facebook-f"></i>
+              </a>
+            </li>
+            <li class="list-inline-item">
+              <a href="#">
+                <i class="fab fa-linkedin-in"></i>
+              </a>
+            </li>
+          </ul>
+        </div>
+        <div class="col-md-4">
+          <ul class="list-inline quicklinks">
+            <li class="list-inline-item">
+              <a href="cookie.html">Privacy Policy</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+    <!--Cookie-Alert -->
+    <div class="alert text-center cookiealert" role="alert">
+      This website uses technical and analytical cookies that respect your privacy. By continuing to browse or closing the banner you accept <a href="cookie.html" target="_blank">Our privacy policy</a>
+      <button type="button" class="btn btn-primary btn-sm acceptcookies" aria-label="Close"> I agree </button>
+    </div>
+
+
+    <script>(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+      })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+      ga('create', 'UA-103576318-1', 'auto');
+      ga('send', 'pageview');
+    </script>
+
+    <script src="js/cookiealert.js"></script>
+
+
+
+    <!-- Bootstrap core JavaScript -->
+    <script src="vendor/jquery/jquery.min.js"></script>
+    <script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Plugin JavaScript -->
+    <script src="vendor/jquery-easing/jquery.easing.min.js"></script>
+
+    <!-- Contact form JavaScript -->
+    <!--<script src="js/jqBootstrapValidation.js"></script>
+    <script src="js/contact_me.js"></script>-->
+
+    <!-- Custom scripts for this template -->
+    <script src="js/agency.min.js"></script>
+
+
+    <script src="js/aos.js"></script>
+    <script>
+      AOS.init({
+        easing: 'ease-in-out-sine'
+      });
+    </script>
+
+    <script src='https://www.google.com/recaptcha/api.js'></script>
+   <!-- <script src="mail/validator.js"></script>-->
+    <script src="mail/contact.js"></script>
+
+    <script type="text/javascript">
+      $(function () {
+        var lastScrollTop = 0;
+        var $navbar = $('.navbar');
+        
+
+        $(window).scroll(function(event){
+          var st = $(this).scrollTop();
+
+          if (st > lastScrollTop) { // scroll down
+            // use this is jQuery full is used
+            $navbar.fadeOut()
+            // use this to use CSS3 animation
+            // $navbar.addClass("fade-out");
+            // $navbar.removeClass("fade-in");
+            // use this if no effect is required
+            // $navbar.hide();
+          } 
+          else { // scroll up
+            // use this is jQuery full is used
+            $navbar.fadeIn()
+            // use this to use CSS3 animation
+            // $navbar.addClass("fade-in");
+            // $navbar.removeClass("fade-out");
+            // use this if no effect is required
+            // $navbar.show();
+          }
+        lastScrollTop = st;
+        });
+      }); 
+    </script>
+    
+    <script src="js/slick.js"></script>
+    <script>
+      $(document).ready(function(){
+        $('.customer-logos').slick({
+          slidesToShow: 4,
+          slidesToScroll: 1,
+          autoplay: true,
+          autoplaySpeed: 1500,
+          arrows: false,
+          dots: false,
+          pauseOnHover: false,
+          responsive: [{
+            breakpoint: 768,
+            settings: {
+              slidesToShow: 2
+            }
+          }, {
+            breakpoint: 520,
+            settings: {
+              slidesToShow: 1
+            }
+          }]
+        });
+      });
+    </script>
+    
+   <!-- Histats.com  (div with counter) --><div id="histats_counter"></div>
+<!-- Histats.com  START  (aync)-->
+<script type="text/javascript">var _Hasync= _Hasync|| [];
+_Hasync.push(['Histats.start', '1,4782526,4,203,118,65,00011000']);
+_Hasync.push(['Histats.fasi', '1']);
+_Hasync.push(['Histats.track_hits', '']);
+(function() {
+var hs = document.createElement('script'); hs.type = 'text/javascript'; hs.async = true;
+hs.src = ('//s10.histats.com/js15_as.js');
+(document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(hs);
+})();</script>
+<noscript><a href="/" target="_blank"><img  src="//sstatic1.histats.com/0.gif?4782526&101" alt="statistiche accessi" border="0"></a></noscript>
+<!-- Histats.com  END  -->
+
+  </body>
+
+</html>

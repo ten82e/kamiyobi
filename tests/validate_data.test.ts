@@ -873,3 +873,20 @@ describe("month envelope validation fixes (#746)", () => {
     });
   });
 });
+
+it("未實装の --write-findings は、默って無視せず案内して落ちる", () => {
+  /* update-data.yml に書かれて居た未實装の口。默って無視されると「發見が自動で保存される」
+   * 誤解が生える（2026-11-08 實測: その誤解の儘レビューが 35 日滞つた）。 */
+  const captured: string[] = [];
+  const prev = process.stderr.write;
+  process.stderr.write = (chunk: unknown): boolean => {
+    captured.push(String(chunk));
+    return true;
+  };
+  try {
+    expect(main(["--write-findings", "--json"])).toBe(2);
+  } finally {
+    process.stderr.write = prev;
+  }
+  expect(captured.join(""), "案内が出ていない").toContain("--write-findings is not implemented");
+});

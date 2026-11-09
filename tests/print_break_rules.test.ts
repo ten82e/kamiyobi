@@ -18,3 +18,14 @@ it("紙では、行・但し書き・カードを 1 ページに収める", () =
   ] as const)
     expect(print, `${名}を割らない規則が無い`).toContain(規則);
 });
+
+it("推薦カードの閉じた補足情報も紙に残す", () => {
+  const template = readFileSync(join(REPO_ROOT, "site", "template.html"), "utf8");
+  const print = template.slice(template.indexOf("@media print {"));
+  expect(print).toContain(
+    ".recommendation-evidence > *:not(summary) { display: block !important; }",
+  );
+  expect(print).toContain(
+    ".recommendation-evidence::details-content { display: block !important; content-visibility: visible !important; }",
+  );
+});

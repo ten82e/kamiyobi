@@ -172,6 +172,8 @@ interface UiState {
   domestic: boolean;
   /** 会場表記にオンライン参加の記述がある行だけを出す（対面の判定はしない）。 */
   online: boolean;
+  /** ワークショップの行だけを出す（会議名の workshop・タグ workshop）。 */
+  workshop: boolean;
   past: boolean;
   /** 推薦の候補から、受付状況が「締切済み」と確認できた会議を除く（URL では `open=1`）。 */
   openOnly: boolean;
@@ -835,6 +837,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     est: false,
     domestic: false,
     online: false,
+    workshop: false,
     past: false,
     openOnly: false,
     order: "fit",
@@ -862,6 +865,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       est: boolean;
       domestic: boolean;
       online: boolean;
+      workshop: boolean;
       past: boolean;
     },
     kindLabel: (k: string) => string,
@@ -884,6 +888,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     if (s.est) out.push("推定締切を含める");
     if (s.domestic) out.push("国内研究会・国内シンポジウムのみ");
     if (s.online) out.push("オンライン参加可のみ");
+    if (s.workshop) out.push("ワークショップのみ");
     if (s.past) out.push("過去の締切も表示");
     // 何も絞っていないときは「全件」と書く。空欄だと、絞ったのに漏れたのか読めない。
     const condition = out.length ? out.join(" ／ ") : "絞り込みなし（収録全体の一覧）";
@@ -927,6 +932,12 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       ":" +
       pad(d.getUTCMinutes())
     );
+  }
+
+  /* ワークショップの行か（画面の「ワークショップのみ」と MCP の同じ条件）。 */
+  function rowIsWorkshop(r: AppRow): boolean {
+    if ((r.tags || []).indexOf("workshop") >= 0) return true;
+    return /workshop/i.test(`${r.conf.title || ""} ${r.conf.full_name || ""}`);
   }
 
   function rowDateOnlyState(r: AppRow | DrawerRow, now: number) {
@@ -2131,6 +2142,15 @@ function semanticOutput(value: unknown): value is SemanticOutput {
 
   function renderSummaryStats() {
     $("statConfs").textContent = String((DATA.conferences || []).length);
+    /* ワークショップの収録数は、絞り込みの判定と同じ（タグ workshop・名前に workshop）。 */
+    const workshopCount = (DATA.conferences || []).filter(
+      (c) =>
+        (c.tags || []).indexOf("workshop") >= 0 ||
+        /workshop/i.test(`${c.title || ""} ${c.full_name || ""}`),
+    ).length;
+    $("statWorkshopNote").textContent = workshopCount
+      ? `（うちワークショップ ${workshopCount}）`
+      : "";
     const nowMs = Date.now();
     const next30 = summaryRows.filter(
       (r) => rowIsFuture(r, nowMs) && !rowAfter(r, windowLimitMs("30", nowMs)),
@@ -2564,6 +2584,8 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     // 「オンライン参加可のみ」で落ちた行数と、そのうち開催地自体が未確認の行数。
     online: 0,
     onlinePlaceUnknown: 0,
+    // 「ワークショップのみ」で落ちた行数。
+    workshop: 0,
     // 「締切まで N 日以内」の窓（上限・下限の両方）で落ちた行数。
     window: 0,
     // 「評価でしぼる」で落ちた行数（選択した等級を持たない行）。
@@ -2607,6 +2629,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     domestic: number;
     online: number;
     onlinePlaceUnknown: number;
+    workshop: number;
     window: number;
     rank: number;
     cats: number;
@@ -2629,11 +2652,11 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     const matches = Recommender.searchMatcher(Recommender.expandRelativeMonths(trimmed, 今), 今);
     let catalog = 0;
     rows.forEach((row) => {
-      if (matches(row.hay)) catalog += 1;
+      if (matches(row)) catalog += 1;
     });
     let journal = 0;
     Recommender.journalRows(activeData.conferences, Date.now()).forEach((row) => {
-      if (matches((row as unknown as AppRow).hay)) journal += 1;
+      if (matches(row)) journal += 1;
     });
     return { catalog, journal };
   }
@@ -2673,6 +2696,8 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     clearable: boolean;
     pastShown: boolean;
     hidden: Record<string, number>;
+    // 名簿（収録の会議）に在る語。締切の行が 0 でも「データに無い」とは言わない。
+    nameOnly?: { terms: string[] } | null;
   }): string {
     // データその物が無いときは、他のどの説明より先にそれを言う（読み上げは短い形で）。
     if (!filter.catalogConferences) return " ｜ 締切のデータが入っていません";
@@ -2739,6 +2764,12 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         const 最 = ` ｜ 「${alt.word}」なら ${countJa(alt.count)} 件当たります`;
         if (最.length <= 60) return 最;
       }
+      /* 名簿には在る語（締切が過ぎた・窓の外）を「収録データにありません」と言わない。
+       * 下の長い案内は `nameOnly.terms` を除いて同じ判斷をしているので、読み上げだけが
+       * 逆のことを言う状態を残さない（2026-10-26 実測: ICCV は過去の締切だけを持つ）。 */
+      const 名簿の語 = filter.nameOnly?.terms ?? [];
+      if (名簿の語.indexOf(dead[0]) >= 0)
+        return ` ｜ 「${dead[0]}」は収録の名簿にありますが、いまの条件では 0 件です${pointer}`;
       return ` ｜ 語「${dead[0]}」は収録データにありません${pointer}`;
     }
     if (filter.hiddenKindWords.length)
@@ -2778,16 +2809,20 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     const now = Date.now();
 
     const seen: Record<string, boolean> = {};
-    const hays: string[] = [];
+    const targets: unknown[] = [];
     (rows as AppRow[])
       .concat(Recommender.journalRows(activeData.conferences, now) as unknown as AppRow[])
       .forEach((row) => {
-        const hay = String(row.hay);
-        if (seen[hay]) return;
-        seen[hay] = true;
-        hays.push(hay);
+        const key = `${String(row.hay)}\u0000${String(row.hostHay ?? "")}`;
+        if (seen[key]) return;
+        seen[key] = true;
+        targets.push(row);
       });
-    return Recommender.queryTermCounts(Recommender.expandRelativeMonths(trimmed, now), hays, now);
+    return Recommender.queryTermCounts(
+      Recommender.expandRelativeMonths(trimmed, now),
+      targets,
+      now,
+    );
   }
 
   function deadTermRemainderCount(query: string): number | null {
@@ -2823,18 +2858,18 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     if (!trimmed) return [];
     const now = Date.now();
     const seen: Record<string, boolean> = {};
-    const hays: string[] = [];
+    const targets: unknown[] = [];
     /* 数へる集合は、呼び出し側が渡した行（打ち直した時に見える行）を優先する。 */
     ((基準の行 ?? (rows as AppRow[])) as AppRow[])
       .concat(Recommender.journalRows(activeData.conferences, now) as unknown as AppRow[])
       .forEach((row) => {
-        const hay = String(row.hay);
-        if (seen[hay]) return;
-        seen[hay] = true;
-        hays.push(hay);
+        const key = `${String(row.hay)}\u0000${String(row.hostHay ?? "")}`;
+        if (seen[key]) return;
+        seen[key] = true;
+        targets.push(row);
       });
 
-    return Recommender.shorterHitWordsJa(trimmed, hays, now).filter((hit) => {
+    return Recommender.shorterHitWordsJa(trimmed, targets, now).filter((hit) => {
       const 語 = String(hit.word || "").trim();
       return !(HIRAGANA_ONLY_JA.test(語) && 語.length <= 3);
     });
@@ -2876,6 +2911,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
   let recommendExcludedClosed = 0;
   /* 推薦モードのランクの絞り込みで外した件数（同上）。 */
   let recommendExcludedRank = 0;
+  let recommendExcludedWorkshop = 0;
   /* 締切の一覧で、論文に合う行に印を付けた数（`filter()` が数え、件数欄と印刷物が読む –
    * 札は行ごとに付くが、一覧のどこに何行あるかは数えないと分からない）。 */
   let recommendFitMatches = 0;
@@ -2932,6 +2968,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     if (current.cats.length) add("cats", "分野の指定を外す", { cats: [] });
     if (current.domestic) add("domestic", "国内のみの条件を外す", { domestic: false });
     if (current.online) add("online", "オンライン参加可の条件を外す", { online: false });
+    if (current.workshop) add("workshop", "ワークショップのみの条件を外す", { workshop: false });
     if (current.kind) add("kind", "概要・論文の投稿締切を表示", { kind: "" });
     if (current.venue) add("venue", "会議の絞り込みを外す", { venue: "" });
     const results = options
@@ -2946,6 +2983,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         cats: [],
         domestic: false,
         online: false,
+        workshop: false,
         kind: "",
         venue: "",
       };
@@ -3043,6 +3081,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     venueLookupMiss = pLines.length && Rec ? Rec.unmatchedVenues(pLines, rows) : [];
     recommendExcludedClosed = 0;
     recommendExcludedRank = 0;
+    recommendExcludedWorkshop = 0;
     recommendFitMatches = 0;
     const venueCats = [...new Set([...(state.cats || []), ...detectedVenueCats, ...autoCats])];
 
@@ -3141,6 +3180,10 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         if (!inRecommend) hiddenCounts.domestic += 1;
         return false;
       }
+      if (!inRecommend && state.workshop && !rowIsWorkshop(r)) {
+        hiddenCounts.workshop += 1;
+        return false;
+      }
       // 開催形式は会場表記に書かれた記述だけで絞る（書かれていないことから対面を断定しない）。
       if (!inRecommend && state.online && !Recommender.placeOffersOnline(r.ed.place)) {
         // チェックを付けた人にとって「出ない理由」は 2 種類ある。
@@ -3154,7 +3197,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       }
       // 検索は正規化した語の AND 判定（全角入力・全角スペース・複数語に対応するため
       // 照合式は recommender の searchMatcher を単一正典にする）。
-      if (!inRecommend && !matchesQuery(r.hay)) {
+      if (!inRecommend && !matchesQuery(r)) {
         // 「他の条件を通った行のうち、検索語だけで何行落ちたか」。0 のときは検索語が
         // 何も絞れていないので、件数欄で打ち直し方を示す（同じ述語を外に書き出して
         // 二重実装しないため、通過条件を見るこの場所で数える）。
@@ -3172,6 +3215,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       domestic: 0,
       online: 0,
       onlinePlaceUnknown: 0,
+      workshop: 0,
       window: 0,
       rank: 0,
       cats: 0,
@@ -3264,6 +3308,12 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       if (state.rank && Rec) {
         const kept = out.filter((row) => Rec.rankMatches(row.rankPairs, state.rank));
         recommendExcludedRank = out.length - kept.length;
+        out = kept;
+      }
+      /* ワークショップだけに絞る（締切一覧の「ワークショップのみ」と同じ判定・同じ状態）。 */
+      if (state.workshop) {
+        const kept = out.filter(rowIsWorkshop);
+        recommendExcludedWorkshop = out.length - kept.length;
         out = kept;
       }
       /* 並べ替えは最後に一度だけ（外した数は一致順の候補から数える）。 */
@@ -3836,6 +3886,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     cats: number;
     domestic: boolean;
     online: boolean;
+    workshop: boolean;
     rank: string;
     kind: string;
     est: boolean;
@@ -4078,23 +4129,54 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     const nameTerms = filter.nameOnly ? filter.nameOnly.terms : [];
     const deadTerms = deadAll.filter((t) => nameTerms.indexOf(t) < 0);
     let termNote = "";
-    if (deadTerms.length) {
+    /* 語が 1 つだけの略称（`MIDL`）は、語ごとの内訳を作らないので「名簿に無い」と
+     * 言えていなかった。収録外の会議名を打った人に、その旨をはっきり伝える
+     * （2026-10-26 実測: `MIDL` は「別の語で試す」だけだった）。 */
+    const 略称の一語 =
+      terms.length === 0 &&
+      nameTerms.length === 0 &&
+      !catalogNote &&
+      filter.termCounts.length === 1 &&
+      /^[A-Z][A-Z0-9&+.-]{1,9}$/.test(trimmedQuery.trim());
+    if (略称の一語 && !uiNote) {
+      termNote =
+        ` 「${trimmedQuery.trim()}」は収録の名簿に見当たりません。` +
+        "収録はすべての会議を網羅していないので、収録外の会議かもしれません。";
+    } else if (deadTerms.length) {
       const 外しても零件 = filter.termRemainder === 0;
+      /* `MIDL 2027` のように会議名＋年だけのときは、年を外しても他の会議の 2027 が
+       * 出るだけで、その会議の締切は出ない。 */
+      const 年の語 = /^(?:\d{4}|\d{4}年)$/;
+      const 年の外だけ =
+        deadTerms.length === 1 &&
+        terms.length === 2 &&
+        terms.filter((t) => t.count > 0).length === 1 &&
+        terms.filter((t) => t.count > 0).every((t) => 年の語.test(t.term));
       termNote =
         ` 検索語のうち${deadTerms
           .slice(0, 2)
           .map((w) => `「${w}」`)
           .join("・")}は` +
         "収録データにも見当たりません。" +
-        (外しても零件 ? "それを外しても残りの語では 0 件のままです。" : "その語を外すと増えます。");
+        (外しても零件
+          ? "それを外しても残りの語では 0 件のままです。"
+          : 年の外だけ
+            ? "年を外しても、その会議の締切は出ません。収録はすべての会議を網羅していないので、その会議は収録外の可能性があります。"
+            : "その語を外すと増えます。");
     } else if (terms.length > 1) {
+      /* 語を 1 つ外すと当たる形が分かっているなら、外す語を名指しする（`graph neural
+       * networks` は `graph` を外すと 35 行 – 曖昧な「いずれか」で終わらせない）。 */
+      const 外す = (filter.shorterHits || []).find((hit) => hit.how === "drop" && hit.pair);
       termNote =
         " 語をすべて含む行はありません（" +
         terms
           .slice(0, 3)
           .map((t) => `「${t.term}」${t.count}件`)
           .join("・") +
-        "）。いずれかの語を外すと増えます。";
+        "）。" +
+        (外す
+          ? `「${外す.pair}」を外すと ${countJa(外す.count)} 件当たります。`
+          : "いずれかの語を外すと増えます。");
     }
 
     const splitNote =
@@ -4209,6 +4291,10 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         altTips.push(
           `検索語を「${word}」だけに絞る（いまの絞り込みで ${countJa(hit.count)} 件当たります）`,
         );
+      } else if (hit.how === "drop" && hit.pair) {
+        altTips.push(
+          `検索語から「${hit.pair}」を外して「${word}」で探す（いまの絞り込みで ${countJa(hit.count)} 件）`,
+        );
       } else {
         altTips.push(
           `検索語を「${word}」に打ち替える（いまの絞り込みで ${countJa(hit.count)} 件当たります）`,
@@ -4282,6 +4368,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     cats: string[];
     domestic: boolean;
     online: boolean;
+    workshop: boolean;
     rank?: string;
     /* 会議の絞り込み（`?venue=`）。掛けないと、1 会場の一覧の下に別の会議の会期が並ぶ
      * （2026-10-24 実測: `?venue=sigmod` で 129 件のまま ACML・APPT などが出ていた）。 */
@@ -4308,9 +4395,15 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         if (knownSubmission) return false;
         if (filter.venue && m.key !== filter.venue) return false;
         if (filter.rank && !Recommender.rankMatches(m.rankPairs, filter.rank)) return false;
-        if (searchQuery.trim() && !meetsQuery(m.hay)) return false;
+        if (searchQuery.trim() && !meetsQuery(m)) return false;
         if (filter.domestic && m.tags.indexOf("domestic-jp") < 0) return false;
         if (filter.online && !Recommender.placeOffersOnline(m.place)) return false;
+        if (
+          filter.workshop &&
+          (m.tags || []).indexOf("workshop") < 0 &&
+          !/workshop/i.test(String(m.name || ""))
+        )
+          return false;
         if (filter.cats.length && !filter.cats.some((c) => m.cats.indexOf(c) >= 0)) return false;
         if (m.eventDatePrecision === "not-announced") return !Number.isFinite(limit);
         const segments = m.eventSegments?.length
@@ -4427,6 +4520,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     cats: number;
     domestic: boolean;
     online: boolean;
+    workshop: boolean;
     rank: string;
     kind: string;
     est: boolean;
@@ -4437,6 +4531,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         filter.cats > 0 ||
         filter.domestic ||
         filter.online ||
+        filter.workshop ||
         (filter.rank && filter.rank !== "all" && filter.rank !== "") ||
         // 種別だけを掛けた状態で 0 件になった人に「外せる条件はありません」と言わない。
         filter.kind ||
@@ -4740,6 +4835,15 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       dj.textContent = Recommender.domesticTagLabelJa(r.tags);
       tags.appendChild(dj);
     }
+    /* ワークショップの札。絞り込みを掛けていなくても、どの行がワークショップか分かる
+     * ようにする（「ワークショップのみ」で絞れます）。 */
+    if (rowIsWorkshop(r)) {
+      const ws = document.createElement("span");
+      ws.className = "tag";
+      ws.textContent = "ワークショップ";
+      ws.title = "会議名またはタグがワークショップの行です（「ワークショップのみ」で絞れます）";
+      tags.appendChild(ws);
+    }
     if (tags.childNodes.length) {
       c2.appendChild(tags);
     }
@@ -4953,6 +5057,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     } else {
       comp = `言葉の一致スコア ${r._vocabScore}点`;
     }
+    comp += "（点と検索別の順位は一致評価の参考情報で、候補の表示順位とは異なります）";
     html +=
       '<div class="detail-comp">' +
       comp +
@@ -5189,20 +5294,16 @@ function semanticOutput(value: unknown): value is SemanticOutput {
    *   1. 日付を持たない候補（常時受付の論文誌・締切未確認）– 論文との一致順のまま
    *   2. 締切が過ぎた候補 – 最後（`open=1` を入れていれば、そもそも残っていない）
    * 群の中は元の並び（論文との一致順）を保つ – `sort` は安定なので 0 を返すだけでよい。
-   * 日付の比較は締切一覧と同じ `compareDeadlineRows`（表示している暦日 `tShown` で見る）。 */
+   * 日付は画面とMCP共通の比較で、表示している暦日 `tShown` を見る。 */
   function orderCandidatesByDeadline(rows: readonly AppRow[]): AppRow[] {
-    const 群 = (row: AppRow): number => {
-      const status = row._availability?.status;
-      if (status === "past") return 2;
-      if (status === "open" || status === "uncertain") return 0;
-      return 1;
-    };
-    return rows.slice().sort((a, b) => {
-      const diff = 群(a) - 群(b);
-      if (diff) return diff;
-      if (群(a) !== 0) return 0;
-      return compareDeadlineRows(a, b, 1);
-    });
+    return rows
+      .slice()
+      .sort((a, b) =>
+        Recommender.compareVenueDeadlineOrder(
+          { row: a, availability: a._availability },
+          { row: b, availability: b._availability },
+        ),
+      );
   }
 
   /* 候補の並びが既定（論文との一致順）でないときは、件数欄で言う（黙って並べ替えない –
@@ -5357,11 +5458,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     meta.className = "card-meta";
     const fit = document.createElement("span");
     fit.className = "tag match";
-    /* 点も添える（並びは点の順なので、点が無いと「重なりうすい」が先頭に来る理由が読めない。
-     * MCP の行と CSV は前から点を出している）。点が無い候補（評価保留）は点を書かない。 */
-    fit.textContent = `一致評価 ${r._fitLabel || "評価保留"}${
-      typeof r._matchScore === "number" ? `（${r._matchScore} 点）` : ""
-    }`;
+    fit.textContent = `一致評価 ${r._fitLabel || "評価保留"}`;
     meta.appendChild(fit);
     /* 残りは一覧の「残り」列と同じ語で、一致評価の札の隣に出す（一覧も残りが左端）。
      * 日付を読んで今日から数えるのは利用者の仕事にしない。 */
@@ -5379,6 +5476,18 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       if (rank.title) tag.title = rank.title;
       meta.appendChild(tag);
     }
+    /* 推薦候補にもワークショップが混ざる。名前だけでは分からない会議（HotOS など）も
+     * あるので、締切一覧と同じ札を付ける。 */
+    const ワークショップ =
+      (r.tags || []).indexOf("workshop") >= 0 ||
+      /workshop/i.test(`${r.conf.title || ""} ${r.conf.full_name || ""}`);
+    if (ワークショップ) {
+      const ws = document.createElement("span");
+      ws.className = "tag";
+      ws.textContent = "ワークショップ";
+      ws.title = "ワークショップの会議です（締切一覧の「ワークショップのみ」と同じ判定）";
+      meta.appendChild(ws);
+    }
     const availability = document.createElement("span");
     availability.className = "tag";
     availability.textContent = recommendationAvailability(r);
@@ -5388,19 +5497,26 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     const axes = axesForRecommendation(r, now);
     const venueEvidence = axes.venue_evidence;
     const deadlineTrust = axes.deadline_trust;
-    line(card, venueEvidenceLineJa(venueEvidence), "card-section recommendation-axes");
+    const evidence = document.createElement("details");
+    evidence.className = "card-section recommendation-evidence";
+    const evidenceSummary = document.createElement("summary");
+    evidenceSummary.className = "recommendation-axes";
+    evidenceSummary.textContent = `締切の確認状況: 日付 ${trustLabel[deadlineTrust.date]} ／ 時刻 ${trustLabel[deadlineTrust.time]} ／ タイムゾーン ${trustLabel[deadlineTrust.timezone]} ／ 種別 ${trustLabel[deadlineTrust.kind]}`;
+    evidence.appendChild(evidenceSummary);
+    if (typeof r._matchScore === "number")
+      line(
+        evidence,
+        `一致評価の参考点: ${r._matchScore} 点（順位や採択の見込みを表す値ではありません）`,
+        "card-section",
+      );
+    line(evidence, venueEvidenceLineJa(venueEvidence), "card-section recommendation-axes");
     line(
       card,
       `種別: ${Recommender.kindLabelJa(r.kind) || "未確認"}`,
       "card-section recommendation-axes",
     );
     line(
-      card,
-      `締切の確認状況: 日付 ${trustLabel[deadlineTrust.date]} ／ 時刻 ${trustLabel[deadlineTrust.time]} ／ タイムゾーン ${trustLabel[deadlineTrust.timezone]} ／ 種別 ${trustLabel[deadlineTrust.kind]}`,
-      "card-section recommendation-axes",
-    );
-    line(
-      card,
+      evidence,
       `取得状態: ${freshnessLabel[deadlineTrust.sourceFreshness]} ／ 締切の競合: ${deadlineTrust.conflicts}件`,
       "card-section recommendation-axes",
     );
@@ -5419,6 +5535,48 @@ function semanticOutput(value: unknown): value is SemanticOutput {
      * これが無いと自分の分野かどうかを確かめるのにカードから離れることになる。 */
     const 分野の札 = (r.cats || []).map((key) => catLabel(key)).filter((label) => label !== "");
     line(card, `分野: ${分野の札.length ? 分野の札.join("・") : UNCONFIRMED_JA}`, "card-section");
+
+    const topics = Recommender.venueResearchTopics(r.conf);
+    if (topics.length) {
+      const details = document.createElement("details");
+      details.className = "card-section recommendation-topics";
+      const summary = document.createElement("summary");
+      summary.textContent = "募集分野の説明と出典";
+      details.appendChild(summary);
+      line(
+        details,
+        "過去の募集情報を含みます。最新の募集要項は公式サイトで確認してください。",
+        "card-section",
+      );
+      const sources = Recommender.venueResearchSources(r.conf);
+      if (sources.length) {
+        line(details, "募集分野の出典:", "card-section");
+        const references = document.createElement("ul");
+        for (const source of sources) {
+          const item = document.createElement("li");
+          const link = document.createElement("a");
+          link.href = source;
+          link.target = "_blank";
+          link.rel = "noopener noreferrer";
+          link.title = "募集分野の出典（新しいタブで開く）";
+          link.textContent = source;
+          item.appendChild(link);
+          references.appendChild(item);
+        }
+        details.appendChild(references);
+      } else {
+        line(details, "募集分野の出典: 未収録", "card-section");
+      }
+      line(details, "収録した募集分野:", "card-section");
+      const list = document.createElement("ul");
+      for (const topic of topics) {
+        const item = document.createElement("li");
+        item.textContent = topic;
+        list.appendChild(item);
+      }
+      details.appendChild(list);
+      card.appendChild(details);
+    }
 
     const agg = r._match?.agg ?? {
       domain: 0,
@@ -5451,6 +5609,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         : "選定理由: 目立つ一致はないが候補に入った",
       "card-section",
     );
+    card.appendChild(evidence);
     if (r.conf.link && safeExternalUrl(r.conf.link)) {
       const official = document.createElement("a");
       official.href = safeExternalUrl(r.conf.link);
@@ -5510,6 +5669,14 @@ function semanticOutput(value: unknown): value is SemanticOutput {
        * 投稿先が無い」と読むと、打ち直しに走って候補の存在に気づけない）。 */
       /* 0 件の理由を、効いている絞り込みの名指しで書く（片方だけなら、その入口を名指す。
        * 両方なら両方を書く – 片方だけを直しても出ないため）。 */
+      if (recommendExcludedWorkshop && !recommendExcludedRank && !recommendExcludedClosed) {
+        line(
+          cards,
+          `「ワークショップのみ」では 0 件でした（外すと ${countJa(recommendExcludedWorkshop)} 件出ます）。`,
+          "recommendation-card",
+        );
+        return;
+      }
       if (recommendExcludedRank && recommendExcludedClosed) {
         line(
           cards,
@@ -5586,6 +5753,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         state.cats.length ||
         state.domestic ||
         state.online ||
+        state.workshop ||
         state.est ||
         state.past ||
         (state.win && state.win !== "all"),
@@ -5648,6 +5816,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     for (const [key, label] of [
       ["domestic", "国内研究会・国内シンポジウム"],
       ["online", "オンライン参加可"],
+      ["workshop", "ワークショップのみ"],
       ["est", "推定締切を含める"],
       ["past", "過去の締切も表示"],
     ] as const) {
@@ -5683,6 +5852,10 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     renderActiveFilters();
     $("timeGuide").hidden = state.mode !== "deadlines";
     const recMode = state.mode === "recommend";
+    $("results").setAttribute(
+      "aria-busy",
+      String(recMode && !recommendationData && !recommendationError),
+    );
     if (recMode && !recommendationData && !recommendationError) loadRecommendationData();
     shown = recMode && !recommendationData ? [] : filter();
     // チップの件数は分野以外の条件で絞った後の数。推薦モードではチップを見せないので更新しない。
@@ -5710,17 +5883,24 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     // 掲載先に入れた語が行に見当たらないときは、候補の数だけ出して黙っていない。
     // 例を使った人は「掲載先が消えた」と読む。文は recommender の正本。
     const venueMissNotice = Recommender.venueLookupNoticeJa(venueLookupMiss);
-    let cnt = paperMode
-      ? `あなたの論文に合う投稿先 ${countJa(shown.length)} 件${
-          shown.length > RECOMMENDATION_PAGE
-            ? `（まず上位 ${countJa(RECOMMENDATION_PAGE)} 件を表示）`
-            : ""
-        }${venueMissNotice ? ` ｜ ${venueMissNotice}` : ""}${
-          截つた行 > 0 ? ` ｜ ${countJa(截つた行)} 行を省いて調べました（最初の 20 行だけ）` : ""
-        }`
-      : recMode
-        ? "投稿先を探すには論文情報を入力してください"
-        : `${countJa(shown.length)} 件 / 全 ${countJa(rows.length)} 件`;
+    let cnt =
+      recMode && !recommendationData
+        ? recommendationError
+          ? "推薦データを読み込めませんでした。"
+          : "推薦データを読み込み中…"
+        : paperMode
+          ? `あなたの論文に合う投稿先 ${countJa(shown.length)} 件${
+              shown.length > RECOMMENDATION_PAGE
+                ? `（まず上位 ${countJa(RECOMMENDATION_PAGE)} 件を表示）`
+                : ""
+            }${venueMissNotice ? ` ｜ ${venueMissNotice}` : ""}${
+              截つた行 > 0
+                ? ` ｜ ${countJa(截つた行)} 行を省いて調べました（最初の 20 行だけ）`
+                : ""
+            }`
+          : recMode
+            ? "投稿先を探すには論文情報を入力してください"
+            : `${countJa(shown.length)} 件 / 全 ${countJa(rows.length)} 件`;
     // 読み上げ用の一行。`#count` は「のぞく」の内訳まで載せる長い欄なので、そこを
     // そのまま aria-live にすると 1 打鍵ごとに数十語が流れる。
     // 件数と、解決結果・取得状態の短い通知だけをこちらに出す。
@@ -5737,6 +5917,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
             cats: state.cats,
             domestic: state.domestic,
             online: state.online,
+            workshop: state.workshop,
             rank: state.rank,
             venue: state.venue,
           });
@@ -5780,6 +5961,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
             : `オンライン参加の記載がない ${countJa(hidden.online)} 件`,
         );
       }
+      if (hidden.workshop) parts.push(`ワークショップ以外 ${countJa(hidden.workshop)} 件`);
       if (parts.length) cnt += ` ｜ のぞく: ${parts.join("・")}`;
       /* 論文を入れているときは、その論文に合う行が何行あるかも書く（行ごとの札だけでは、
        * 一覧のどこに何行あるかは分からない）。 */
@@ -5848,7 +6030,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       cnt += ` ｜ ${HISTORY_ERROR_SHORT_JA}`;
       cntLive += ` ｜ ${HISTORY_ERROR_SHORT_JA}`;
     }
-    if (paperMode) {
+    if (paperMode && recommendationData) {
       const _lines = Recommender.parsePaperLines(paperText);
       const _auto = _lines.length ? Recommender.autoDetectCats(_lines) : [];
       if (_auto.length && !state.cats.length) {
@@ -5897,6 +6079,11 @@ function semanticOutput(value: unknown): value is SemanticOutput {
         cnt += rankExcludedNote;
         cntLive += rankExcludedNote;
       }
+      if (recommendExcludedWorkshop) {
+        const note = ` ／ ワークショップ以外 ${countJa(recommendExcludedWorkshop)} 件は「ワークショップのみ」で除いています`;
+        cnt += note;
+        cntLive += note;
+      }
       const orderNote = recommendationOrderNoteJa(state.order);
       if (orderNote) {
         cnt += orderNote;
@@ -5941,6 +6128,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
             cats: state.cats.length,
             domestic: state.domestic,
             online: state.online,
+            workshop: state.workshop,
             rank: state.rank,
             kind: state.kind,
             est: state.est,
@@ -6007,11 +6195,13 @@ function semanticOutput(value: unknown): value is SemanticOutput {
      * 「評価「A*」を持たない行 142 件」は畳まれた中に在って読めなかった）。 */
     $("resultNotes").toggleAttribute(
       "open",
-      shown.length === 0 ||
-        Boolean(state.q.trim()) ||
-        (state.mode === "deadlines" && (deadlineFiltersOnJa() || recommendFitMatches > 0)),
+      !recMode &&
+        (shown.length === 0 ||
+          Boolean(state.q.trim()) ||
+          deadlineFiltersOnJa() ||
+          recommendFitMatches > 0),
     );
-    if (shown.length === 0) ($("dataScope") as HTMLDetailsElement).open = true;
+    if (!recMode && shown.length === 0) ($("dataScope") as HTMLDetailsElement).open = true;
     $("count").textContent = cnt;
     $("count").setAttribute("data-semantic-state", semState);
     $("count").setAttribute("data-semantic-model", semLoadedModel);
@@ -6041,9 +6231,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       exportBtn.title = 候補を書き出す
         ? "「投稿先を探す」が挙げた候補を、表計算で読める形（BOM 付き CSV）にしたファイルです。" +
           "先頭の 4 列が一致評価・一致の点・言葉の一致・意味の近さで、残りの列は締切の一覧と同じ物です。" +
-          /* 並び順を「締切が近い順」にすると、点の大きい順には並ばない（点は一致の順位を
-           * 決める値のままで、並べ替えでは変わらない）。「大きいほど上」と言い切らない。 */
-          "「一致の点」は候補の一致の順位を決める値（「論文との一致順」では大きいほど上）、" +
+          "「一致の点」は一致評価の参考値で、順位や採択の見込みを表す値ではありません。" +
           "「一致評価」の札は別の計算（当たった証拠の強さ）で、" +
           "同じ行でも点が高いのに札が「候補」のことがあります。" +
           "意味検索が使えない環境では「意味の近さ」は空になります（0 とは書きません）。" +
@@ -6380,18 +6568,22 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     const estRaw = p.get("est");
     const domesticRaw = p.get("domestic");
     const onlineRaw = p.get("online");
+    const workshopRaw = p.get("workshop");
     const pastRaw = p.get("past");
     const estFlag = urlFlagJa(estRaw);
     const domesticFlag = urlFlagJa(domesticRaw);
     const onlineFlag = urlFlagJa(onlineRaw);
+    const workshopFlag = urlFlagJa(workshopRaw);
     const pastFlag = urlFlagJa(pastRaw);
     if (!estFlag.readable) flagNoticeJa("推定締切を含める", estRaw);
     if (!domesticFlag.readable) flagNoticeJa("国内研究会・国内シンポジウムのみ", domesticRaw);
     if (!onlineFlag.readable) flagNoticeJa("オンライン参加可のみ", onlineRaw);
+    if (!workshopFlag.readable) flagNoticeJa("ワークショップのみ", workshopRaw);
     if (!pastFlag.readable) flagNoticeJa("過去の締切も表示", pastRaw);
     state.est = estFlag.on;
     state.domestic = domesticFlag.on;
     state.online = onlineFlag.on;
+    state.workshop = workshopFlag.on;
     state.past = pastFlag.on;
     /* 推薦の候補から締切が過ぎた会議を除く（任意）。締切一覧の「過去の締切も表示」とは
      * 別の条件 – あちらは過ぎた行を出す側で、こちらは候補から外す側。 */
@@ -6464,6 +6656,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     if (state.est) p.set("est", "1");
     if (state.domestic) p.set("domestic", "1");
     if (state.online) p.set("online", "1");
+    if (state.workshop) p.set("workshop", "1");
     if (state.past) p.set("past", "1");
     if (state.openOnly) p.set("open", "1");
     if (state.order === "deadline") p.set("order", "deadline");
@@ -6505,8 +6698,10 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     inputElement("est").checked = state.est;
     inputElement("domestic").checked = state.domestic;
     inputElement("online").checked = state.online;
+    inputElement("workshop").checked = state.workshop;
     inputElement("past").checked = state.past;
     inputElement("openOnly").checked = state.openOnly;
+    inputElement("recWorkshop").checked = state.workshop;
     valueElement("recOrder").value = state.order;
     catsBox.querySelectorAll<HTMLInputElement>("input").forEach((chk) => {
       chk.checked = state.cats.indexOf(chk.value) >= 0;
@@ -6530,6 +6725,10 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     state.online = inputElement("online").checked;
     state.past = inputElement("past").checked;
     state.openOnly = inputElement("openOnly").checked;
+    state.workshop =
+      state.mode === "recommend"
+        ? inputElement("recWorkshop").checked
+        : inputElement("workshop").checked;
     state.order = valueElement("recOrder").value === "deadline" ? "deadline" : "fit";
     state.cats = [];
     catsBox.querySelectorAll<HTMLInputElement>("input").forEach((chk) => {
@@ -7170,8 +7369,10 @@ function semanticOutput(value: unknown): value is SemanticOutput {
     "est",
     "domestic",
     "online",
+    "workshop",
     "past",
     "openOnly",
+    "recWorkshop",
     "recOrder",
     "recRank",
   ].forEach((id) => {
@@ -7207,6 +7408,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       est: false,
       domestic: false,
       online: false,
+      workshop: false,
       past,
       /* 候補が 0 件になった原因そのものなので、まとめて外す側で外す。 */
       openOnly: false,
@@ -7584,12 +7786,12 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       // 「状態」が空欄の行は注記が無いという意味（2026-08-09 実測: 既定の印刷対象 478 行の
       // うち 189 行が空欄で、その 189 行はランク・会期・開催地の列にも空欄が無かった）。
       "「状態」が空欄の行は、この行に注記がない行です",
-      /* 「投稿先を探す」の紙には候補のカードが刷られる。カードの語（一致評価・点・受付状況・
-       * 次回締切）は締切の一覧の但し書きに無く、点は 2026-10-18 から札に添えている。カードを
+      /* 「投稿先を探す」の紙には補足情報も刷られる。カードの語（一致評価・参考点・受付状況・
+       * 次回締切）は締切の一覧の但し書きに無いので、カードを
        * 刷る時だけ説明を足す（出ない語を説明しない、が約束）。 */
       ...(カードも刷るか
         ? [
-            "「一致評価」の札は、入力した論文とその会議の一致の証拠の形の区分です（採択の見込みではありません）。札のあとの「N 点」は候補の並びを決める点で、札とは別の計算です",
+            "「一致評価」の札は、入力した論文とその会議の一致の証拠の形の区分です（採択の見込みではありません）。「参考点」は一致評価の参考値で、順位や採択の見込みを表す値ではありません",
             "「受付状況」は締切の状態（締切済み・受付中など）で、「次回締切」は次に来る募集の締切です。日時は日本時間（JST）です",
           ]
         : []),
@@ -7597,7 +7799,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
        * **出る時だけ**説明を足す（この用紙の表記は「必ず刷られる語」だけ、が約束）。 */
       ...(recommendFitMatches
         ? [
-            "「一致評価」の札は、入力した論文とその会議の一致の強さの区分です（受付の状態ではなく、点数を足した物でもありません）。札のあとの「N 点」は候補の並びを決める点で、札とは別の計算です",
+            "「一致評価」の札は、入力した論文とその会議の一致の強さの区分です（受付の状態ではなく、点数を足した物でもありません）。「一致の点」は一致評価の参考値で、順位や採択の見込みを表す値ではありません",
           ]
         : []),
       Recommender.aoeMeaningJa(),
@@ -7761,6 +7963,7 @@ function semanticOutput(value: unknown): value is SemanticOutput {
       est: false,
       domestic: false,
       online: false,
+      workshop: false,
       past: false,
       openOnly: false,
       order: "fit",
@@ -7911,7 +8114,6 @@ function semanticOutput(value: unknown): value is SemanticOutput {
 
   if (window.matchMedia("(max-width: 640px)").matches) {
     ($("advancedFilters") as HTMLDetailsElement).open = false;
-    ($("catalogStats") as HTMLDetailsElement).open = false;
   }
   readUrl();
   // URL から復元した並び順をヘッダーの矢印と aria-sort にも反映する（表の中身だけ

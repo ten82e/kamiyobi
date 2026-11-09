@@ -1569,6 +1569,20 @@
       "review_reason": "公式日付の構造化表現が得られないため、原文表示を維持し推測で補正しない。",
       "evidence_ref": "data/curated.generated.yaml#wcm-agentic-ai-unmanned/wcm-agentic-ai-unmanned-2027",
       "expires_at": "2027-09-02T00:00:00Z"
+    },
+    {
+      "finding_id": "VF-0127",
+      "code": "CATEGORY_VOCABULARY_DIVERGENCE",
+      "subject": "chiir",
+      "severity": "review",
+      "message": "snapshot: chiir: category vocabulary diverges from title/full_name/scope; possible hci",
+      "count": 1,
+      "status": "accepted",
+      "reviewed_by": "kamiyobi-maintainers",
+      "reviewed_at": "2026-11-08T00:00:00Z",
+      "review_reason": "CHIIR は SIGIR 系の情報検索会議（Human Information Interaction and Retrieval）。収録では sigir・cikm と同じ情報検索系の分類（db）に置いており、会議名の語彙（Human Information Interaction）に因る hci 推定は受け入れない。上流 ccfddl の分類を維持し、分野の付け替えはしない。",
+      "evidence_ref": "data/snapshot.json#chiir",
+      "expires_at": "2027-11-08T00:00:00Z"
     }
   ]
 }

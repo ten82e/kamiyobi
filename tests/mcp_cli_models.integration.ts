@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { env } from "@huggingface/transformers";
 import { afterAll, beforeAll, expect, it } from "vitest";
 import * as runtime from "../src/embedding-runtime.ts";
+import { FULL_VENUE_COUNT } from "./full_venue_pool.ts";
 import { prepareLiveConsumerSite } from "./live_consumer_site.ts";
 
 const repo = join(import.meta.dirname, "..");
@@ -75,7 +76,7 @@ it.each([
     );
     expect(child.status, child.stderr).toBe(0);
     const result = JSON.parse(child.stdout);
-    expect(result.candidate_venues).toBe(696);
+    expect(result.candidate_venues).toBe(FULL_VENUE_COUNT);
     expect(result.uses_embeddings).toBe(true);
     expect(result.embedding_model.id).toBe(model);
     expect(result.input.received).toBe(1);

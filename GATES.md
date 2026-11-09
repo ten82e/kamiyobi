@@ -31,6 +31,47 @@ npm run update
 2. `npm run update` — 意味検査 + health gate
 3. 全て緑なら main へ merge。CI が再検査し、`deploy.yml` が Pages を配信する
 
+## G4 — モデル評価（nightly.yml と手動。実モデルを `.cache/embedding-models` に準備してから）
+```sh
+npm run test:full-pool                      # ゲート評価。品質基準（Top-5・正解）は変更しない
+npm run test:full-pool-mutations            # 評価の感応度検査（3 欠陥を検出できる事）
+npm run test:mcp-interrupted-mutations      # interrupted recovery の変異検査
+npm run test:mcp-recovery-mutations         # same-session recovery の変異検査
+npm run test:llms-count-mutations           # llms の件数検査
+npm run test:real-papers                    # 実論文評価
+npm run test:recommendation-mutations       # 推薦の変異検査
+```
+
+2026-11-08 実測: full-pool 9/9・full-pool-mutations 3/3 検出・interrupted 2/2 検出・
+2026-11-09 実測: full-pool 9/9・full-pool-mutations 3/3 検出（baseline 19/0 →
+各変異で 9-15/10-5〜4 の低下を確認）・全ゲート緑を再確認。
+2026-11-09 実測 (mcp-interrupted-mutations): baseline 25/0 → 2 変異で 0/25 に低下 →
+復元後 25/0。**2/2 検出** ✓。
+2026-11-09 実測 (llms-count-mutations): baseline 19/0 → 3 変異系 (missing-dates 7/12・
+fixed-coverage 0/19・thousands-grouping 18/1) で合計 18/18 検出 → 復元後 19/0 ✓。
+2026-11-09 実測 (bench): passed true ✓ (real-bench dev=80・heldout=80・negative=41、
+feature baseline の検証も confirmed)。
+llms-count・mcp-recovery の baseline（49/0）は緑。
+**既知の赤**（品質基準は緩めない）:
+- `test:real-papers` と `test:recommendation-mutations` の baseline は、SPEC
+  §意味検索の追加比較に記録した未解決 2 項目（日本語の題名と概要の MRR 下限、
+  英語の追加確認論文の題名 MRR の改善条件）で落ちる。
+- `test:mcp-recovery-mutations` の変異相は、fault 注入時に準備の順序 Guard
+  （"English model must be available before Japanese preparation"）で tests が
+  skipped に成る。baseline は緑なので fault 検出の公示だけが効いていない既知の問題
+  （2026-10 月までの記録でも同様）。データや本文書の変更とは無関係。
+- `venue_scopes` の topics 追加はゲート評価を劣化させる（SPEC §募集分野の説明を人とAIで
+  確認する の注意書き）。topics を復活させるなら評価を通してから。
+
+## G5 — 証拠台帳の整合（`node src/cli.ts evidence verify`）
+
+- `evidence verify` が 0 issues である事（孤立 blob・`body_ref` と `content_hash` の不一致・
+  外部参照・機微ヘッダの混入を検出する）。
+- `reverify` を走らせた後は、取得した blob が台帳に反映されている事を確認する
+  （未参照の blob は `orphan body blob` として検出される）。
+- 2026-11-09 実測: reverify サイクル後に CPAL の `body_ref` 不整合と孤立 blob 3 件を検出 →
+  修正後 0 issues を確認。
+
 ## 注意
 - `publish.json` の `workflow_run_id` はローカル実行では `null`。
 - health gate の baseline は位置引数で明示する。`npm run update` は baseline なしで検証する。

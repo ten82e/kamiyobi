@@ -43,11 +43,11 @@ describe("片段で離つた複合語が繋いだ形と同じ行を出す（第 
     expect(列("今 月末").size).toBe(118);
     expect(列("来 月末").size).toBe(178);
     expect(列("先 月末").size).toBe(11);
-    expect(列("再来 月末").size).toBe(97);
+    expect(列("再来 月末").size).toBe(95);
     expect(列("今 月中").size).toBe(118);
     expect(列("来 月中").size).toBe(178);
-    expect(列("今 年度").size).toBe(436);
-    expect(列("来 年度").size).toBe(50);
+    expect(列("今 年度").size).toBe(439);
+    expect(列("来 年度").size).toBe(49);
     expect(列("年 初").size).toBe(23);
     expect(列("2026 年 初").size).toBe(15);
   });
@@ -73,7 +73,7 @@ describe("片段で離つた複合語が繋いだ形と同じ行を出す（第 
     expect(列("ml 週 末").size).toBe(5);
     expect(列("今 月末 の 会議").size).toBe(118);
     expect(列("年 初 の 会議").size).toBe(23);
-    expect(列("来 年度 の 論文").size).toBe(29);
+    expect(列("来 年度 の 論文").size).toBe(28);
   });
 });
 
@@ -83,7 +83,7 @@ describe("寄せない形の守り（第 453 回・第 463 回・第 466 回）"
      * （繋いだ形をその方の機械が解かないので、寄せた側は 0 行に減る）。*/
     expect(列("年 中").size).toBe(27);
     expect(列("年中").size).toBe(0);
-    expect(列("月 内").size).toBe(38);
+    expect(列("月 内").size).toBe(40);
     expect(列("月内").size).toBe(0);
     expect(列("年 半ば").size).toBe(55);
     expect(列("年半ば").size).toBe(0);
@@ -103,7 +103,7 @@ describe("寄せない形の守り（第 453 回・第 463 回・第 466 回）"
     /* 実測 – `来 週末` はその方の語列のままその行が出て案内は無し。
      * 週の幅をその月の幅と取り違えた案内だけは出さない事を張る。*/
     expect(案内("来 週末")).not.toContain("来週 = 2026年8月10日(月)〜8月16日(日)の締切 – 土曜");
-    expect(列("年 末").size).toBe(84);
+    expect(列("年 末").size).toBe(85);
     expect(列("年 初 め").size).toBe(23);
     expect(列("年 初 め").size).toBe(列("年初め").size);
   });
@@ -119,11 +119,11 @@ describe("寄せない形の守り（第 453 回・第 463 回・第 466 回）"
     expect(列("論文 中").size).toBe(20);
     expect(列("8 月 末").size).toBe(118);
     expect(列("8 月 中").size).toBe(118);
-    expect(列("9 月 下旬").size).toBe(59);
+    expect(列("9 月 下旬").size).toBe(60);
     expect(案内("8 月 末")).not.toContain("今年度");
   });
   it("第 470 回の実測はこの回で変へて居ない", () => {
-    expect(列("来 月の 下旬").size).toBe(59);
+    expect(列("来 月の 下旬").size).toBe(60);
     expect(列("8 月の 締切").size).toBe(114);
     expect(案内("来 月の 下旬")).toContain("来月 下旬 = 2026年9月21日(月)");
   });

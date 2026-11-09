@@ -77,8 +77,8 @@ it.each(["search_venues", "recommend_venues"])(
       expect(text).toContain(sentence);
       expect(html).toContain(sentence);
     }
-    expect(text).toContain("採択の予測ではありません");
-    expect(html).toContain("採択される可能性の予測ではありません");
+    expect(text).toContain("順位や採択の見込みを表す値ではありません");
+    expect(html).toContain("順位や採択の見込みを表す値ではありません");
     expect(text).not.toContain("いちばん近い会議との差が小さい");
     expect(html).not.toContain("いちばん近い会議との差が小さい");
     expect(html).toContain("意味検索が使えるときは、2つの検索の順位を合わせます");

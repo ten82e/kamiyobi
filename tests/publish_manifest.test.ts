@@ -17,7 +17,10 @@ import {
   embeddingManifest,
   venuePapersHash,
 } from "../src/embeddings.ts";
-import { NOW, REPO_ROOT, runCli, tempWork } from "./helpers.ts";
+import { NOW, publicClockGuard, REPO_ROOT, runCli, tempWork } from "./helpers.ts";
+
+/* public/ は検証用の固定時計で建てる（別の時計の物を読むと窓がずれて分からない失敗に成る）。 */
+publicClockGuard();
 
 function sha256(text: string): string {
   return createHash("sha256").update(text, "utf8").digest("hex");

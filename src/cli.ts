@@ -1082,6 +1082,20 @@ export async function cmdBuild(args: BuildArgs): Promise<number> {
       unknown
     >;
     delete payload.generated_at;
+    // `ics_uid` も落とす。採番は「その build の時計で今後の締切」の順になるので、
+    // snapshot に焼き込むと退避データが時計依存になり、後の build が附ける採番と
+    // ずれる（実測 2026-11-08: VLDB 2027 の同じ締切に snapshot は `…-4`、次の build の
+    // 公開側は `…-7`。MCP は公開の側を正本に引き直すが、源が持たなければ憎まずに済む）。
+    // snapshot は上流の退避データであって、配付カレンダーの採番を保存する場所ではない
+    // （SPEC §3.5 の generated_at を除く趣旨と同じ）。
+    for (const conference of (payload.conferences ?? []) as Array<Record<string, unknown>>) {
+      for (const edition of (conference.editions ?? []) as Array<Record<string, unknown>>) {
+        for (const list of [edition.deadlines, edition.schedule_deadlines]) {
+          if (!Array.isArray(list)) continue;
+          for (const deadline of list as Array<Record<string, unknown>>) delete deadline.ics_uid;
+        }
+      }
+    }
     payload.snapshot_metadata = {
       schema_version: 1,
       generated_at: now.toISOString(),

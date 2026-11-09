@@ -166,10 +166,10 @@ describe("actual publication to PR958 history regression", () => {
     const saved = baseline().filter((c) => c.key === "cpal");
     const previous = saved[0].editions[0].deadlines[0];
     const result = retainPublishedHistory(current, applyOverrides(saved, overrides), now);
-    expect(result.conferences[0].editions).toHaveLength(1);
-    const edition = result.conferences[0].editions[0];
+    /* overrides.yaml に CPAL 2027 (cpal27) の訂正が加わった為、この fixture の検査は
+     * cpal25 edition に絞つ (cpal27 の存在は data 側の正しい進化)。 */
+    const edition = result.conferences[0].editions.find((x) => x.edition_id === "cpal25")!;
     expect(edition.identity?.editionId).toBe("cpal-2025");
-    expect(edition.edition_id).toBe("cpal25");
     expect(edition.event_start?.toISOString().slice(0, 10)).toBe("2025-03-24");
     expect(edition.event_end?.toISOString().slice(0, 10)).toBe("2025-03-27");
     expect(edition.deadlines.map((d) => [d.track, d.at_utc?.toISOString()])).toEqual([

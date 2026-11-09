@@ -148,6 +148,37 @@ it("読み上げは打ち直しを先に言い、60 字を越えるなら短い�
   expect(longWord.length, `読み上げが長い: ${longWord.length} 字`).toBeLessThanOrEqual(60);
 });
 
+it("名簿に在る語を「収録データにありません」と言わない（ICCV は過去の締切だけ）", () => {
+  /* `ICCV` は収録の名簿に在るが、いまの窓には締切が無い（2026-10-26 実測: 収録は
+   * 2025-06-21 の締切だけ）。画面の長い案内は名簿の話をするので、読み上げだけが
+   * 「データに無い」と言うと、同じ画面で逆のことを言う。 */
+  const live = zeroResultLiveFunction();
+  const base = {
+    hiddenKindWords: [],
+    termCounts: [{ term: "iccv", count: 0 }],
+    urlQuery: false,
+    queryMatch: { catalog: 0, journal: 0 },
+    catalogConferences: 12,
+    query: "iccv",
+    clearable: true,
+    pastShown: false,
+    hidden: { past: 1200, est: 134 },
+    nameOnly: { terms: ["iccv"] },
+    shorterHits: [],
+  };
+  const note = live(base);
+  expect(note).not.toContain("収録データにありません");
+  expect(note).toContain("収録の名簿にあります");
+  expect(note.length, `読み上げが長い: ${note.length} 字`).toBeLessThanOrEqual(60);
+  /* 名簿に無い語は今までどおり「データにありません」と言う（言い過ぎない）。 */
+  const missing = live({
+    ...base,
+    termCounts: [{ term: "存在しない語", count: 0 }],
+    nameOnly: null,
+  });
+  expect(missing).toContain("収録データにありません");
+});
+
 it("実データのビルドで、打ち直しの見当が実際の収録から出る", async () => {
   const rows = Rec.candidateRows(data, NOW).concat(Rec.journalRows(data.conferences, NOW));
   const seen: Record<string, boolean> = {};

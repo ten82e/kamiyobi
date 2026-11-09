@@ -45,17 +45,17 @@ describe("相対の語に月の塊を続ける形がその月の塊として解�
   });
   it("行数の実測（固定ハーネスの品書 435 行）", () => {
     expect(列("来 上旬").size).toBe(68);
-    expect(列("来 中旬").size).toBe(57);
-    expect(列("来 下旬").size).toBe(59);
+    expect(列("来 中旬").size).toBe(56);
+    expect(列("来 下旬").size).toBe(60);
     expect(列("今 下旬").size).toBe(58);
     expect(列("今 中頃").size).toBe(55);
     expect(列("先 中旬").size).toBe(6);
     expect(列("先 半ば").size).toBe(6);
     expect(列("昨 上旬").size).toBe(0);
-    expect(列("再来 中旬").size).toBe(36);
+    expect(列("再来 中旬").size).toBe(37);
     expect(列("翌 上旬").size).toBe(68);
     expect(列("来 初旬").size).toBe(68);
-    expect(列("来 半ば").size).toBe(57);
+    expect(列("来 半ば").size).toBe(56);
   });
   it("件数欄はその月の塊の範囲を書く（前に今の月を書いていた六語）", () => {
     const 来 = 案内("来 上旬");
@@ -93,7 +93,7 @@ describe("寄せない形の守り（第 453 回・第 463 回・第 466 回）"
     expect(列("来月 上旬").size).toBe(68);
     expect(列("来月上旬").size).toBe(68);
     expect(案内("来月上旬")).toContain("来月上旬 = 2026年9月1日(火)〜2026年9月10日(木)");
-    expect(列("来月下旬").size).toBe(59);
+    expect(列("来月下旬").size).toBe(60);
     expect(列("9 月 上旬").size).toBe(68);
     expect(列("来週 上旬").size).toBe(2);
     expect(案内("来週 上旬")).toContain("来週 = 2026年8月10日(月)〜8月16日(日)");
@@ -104,12 +104,12 @@ describe("寄せない形の守り（第 453 回・第 463 回・第 466 回）"
     expect(列("今 月中").size).toBe(118);
     expect(列("毎 週末").size).toBe(0);
     expect(列("昨 週").size).toBe(8);
-    expect(列("来 年中").size).toBe(114);
+    expect(列("来 年中").size).toBe(113);
     expect(案内("半ば")).toContain("中旬 = 2026年8月11日(火)");
   });
   it("第 470 回・第 471 回・第 472 回の実測はこの回で変へて居ない", () => {
     expect(列("8 月の 締切").size).toBe(114);
-    expect(列("来 月の 下旬").size).toBe(59);
+    expect(列("来 月の 下旬").size).toBe(60);
     expect(案内("来 月の 下旬")).toContain("来月 下旬 = 2026年9月21日(月)");
     expect(列("週 末").size).toBe(146);
     expect(列("今 月末").size).toBe(118);

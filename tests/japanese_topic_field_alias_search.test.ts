@@ -15,7 +15,7 @@ function 品書(): Row[] {
 const rows = 品書();
 function 當る行(文: string): Row[] {
   const m = Recommender.searchMatcher(Recommender.expandRelativeMonths(文, AT), AT);
-  return rows.filter((r) => m(String(r.hay)) === true);
+  return rows.filter((r) => m(r) === true);
 }
 function 當(文: string): number {
   return 當る行(文).length;
@@ -48,7 +48,10 @@ const 寄せ: [string, string, number][] = [
   ["ソフトウェア工学", "software engineering", 87],
   ["ソフトウェア・エンジニアリング", "software engineering", 87],
   ["システムソフトウェア", "systems software", 156],
-  ["サイバーセキュリティ", "cyber", 31],
+  // URL のホストを語全体でだけ当てる様にした（2026-10-25）ので 31 → 28。
+  // 落ちた 3 行は ICA3PP（`ieee-cybermatics.org`）と WQS（`data-cybernetics.com`）で、
+  // どちらもサイバーセキュリティの会議ではない（ホストの語の一部に当たっていただけ）。
+  ["サイバーセキュリティ", "cyber", 28],
   ["暗号技術", "cryptography", 43],
   ["アーキテクチャ", "architecture", 75],
   ["ソフトウェアテスト", "software testing", 19],

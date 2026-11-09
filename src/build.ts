@@ -411,7 +411,7 @@ const LLMS_OUTPUT_NOTES_JA: Record<string, string> = {
     "種別は英語のキー `kind` と、画面と同じ日本語の `kind_ja` を併記する（`label` は上流の" +
     "自由文で、つづりが揺れる – 'Paper submission' と 'Paper Submission' が同じ物として並ぶ）。" +
     "日付の列が**締切の日を指すかその他の予定日かを区別する欄は `date_field`**（2026-10-06 の" +
-    "実測で 4,984 行のうち 311 行が締切ではない日 – 締切として数えると間違える。収録が増えれば" +
+    "実測で 5,232 行のうち 314 行が締切ではない日 – 締切として数えると間違える。収録が増えれば" +
     "この数も動く）。",
   /* 出力一覧では `upcoming.md` だけ専用の組み立てが動的な日数（`site.upcoming_days`）で
    * 書くので、この註は使わない（同じ事を 2 箇所に書くと片方だけ古くなる）。 */
@@ -1136,6 +1136,9 @@ export function toJson(
       acronym: conf.acronym || conf.title,
       ...(conf.scope?.length ? { scope: [...conf.scope] } : {}),
       ...(conf.official_scope?.length ? { official_scope: [...conf.official_scope] } : {}),
+      ...(conf.official_scope_sources?.length
+        ? { official_scope_sources: [...conf.official_scope_sources] }
+        : {}),
       ...(conf.paper_abstracts?.length ? { paper_abstracts: [...conf.paper_abstracts] } : {}),
       ...(conf.keywords?.length ? { keywords: [...conf.keywords] } : {}),
       categories: [...conf.categories],
@@ -1308,7 +1311,13 @@ function jsonDeadlineDay(deadline: JsonRecord): string {
  * 畫面は SHA-1 を持たないので自分では同じ UID を組めない。**正典にも載せる**のは、
  * 畫面が「収録の全体を読み込む」で `data.json` を読んだ後に書き出しても同じ UID に
  * なるようにするため（2026-10-17 實測: 品書にだけ載せて居た頃は、全履歴を讀み込んだ後の
- * 書き出し 221 件が 1 つも購読側と一致しなかった）。 */
+ * 書き出し 221 件が 1 つも購読側と一致しなかった）。
+ *
+ * **入力が持つ UID は此処で置き換へる。** 採番の正本はこの build の配付カレンダーで、
+ * 「その時計で今後の締切」の順に付く。履歴（前回公開の data.json）が持つ古い採番を残す
+ * と、同じ締切に購読の ICS と畫面の書き出しで別の UID が付く（2026-11-08 實測: snapshot
+ * 由来の `…-4` と新採番の `…-7` が並んだ）。源が古い採番を持たないのが常なので、普段の
+ * build では此の置き換へは動かない。 */
 export function attachIcsUidsToConferences(
   conferences: unknown,
   icsUids?: Map<string, string> | null,
@@ -1319,7 +1328,6 @@ export function attachIcsUidsToConferences(
       for (const list of [edition.deadlines, edition.schedule_deadlines]) {
         if (!Array.isArray(list)) continue;
         for (const deadline of list as Array<Record<string, unknown>>) {
-          if (deadline.ics_uid) continue;
           const uid = icsUids.get(
             icsDeadlineUidKey(
               String(edition.id ?? ""),
@@ -1376,6 +1384,9 @@ function compactConference(
     ...(conf.acronym ? { acronym: conf.acronym } : {}),
     ...(conf.scope ? { scope: conf.scope } : {}),
     ...(conf.official_scope ? { official_scope: conf.official_scope } : {}),
+    ...(Array.isArray(conf.official_scope_sources) && conf.official_scope_sources.length
+      ? { official_scope_sources: conf.official_scope_sources }
+      : {}),
     ...(conf.paper_abstracts ? { paper_abstracts: conf.paper_abstracts } : {}),
     ...(conf.keywords ? { keywords: conf.keywords } : {}),
     categories: conf.categories,
@@ -4418,8 +4429,9 @@ export function toLlmsTxt(
     "| `search_venues` | 研究テーマ・題名・概要に合う会議と論文誌を全収録から検索。締切不明・締切済みの会議も候補に入ります。 |",
     "| `recommend_venues` | 論文情報に合う投稿先を一致評価付きで並べます。長い論文は最初の20行で調べます。 |",
     "",
-    '全種別は `kinds: ["all"]` で指定できます。`search_deadlines` の引数は `query`・`limit`・`offset`・`include_past`・`include_estimated`・`kind`・`kinds`・`rank`・`category`・`categories`・`domestic`・`online`・`within_days`・`scope` です。`category` は画面の分野のチップと同じ絞り込みで、鍵（`security`）・画面の札（`セキュリティ`）・英字の名（`Security and Privacy`）のどれでも受けます。',
+    '全種別は `kinds: ["all"]` で指定できます。`search_deadlines` の引数は `query`・`limit`・`offset`・`include_past`・`include_estimated`・`kind`・`kinds`・`rank`・`category`・`categories`・`domestic`・`online`・`workshop`・`within_days`・`scope` です。`category` は画面の分野のチップと同じ絞り込みで、鍵（`security`）・画面の札（`セキュリティ`）・英字の名（`Security and Privacy`）のどれでも受けます。 `list_upcoming` も `workshop: true` でワークショップの締切・開催回だけに絞れます。',
     '他のツールでは `days`・`key`・`name`・`word`・`paper`・`query` を使います（論文情報は `recommend_venues` が `paper`、研究テーマ・題名・概要は `search_venues` が `query`。取り違えると「query に…を指定してください」と返ります）。`rank` は `search_deadlines` のほか `recommend_venues` と `list_upcoming` も受けます（`search_venues` は受け取っても無視します）。`search_venues` と `recommend_venues` は既定で語彙の一致を使い、`retrieval: "semantic"` でローカルの実モデルによる意味検索に切り替わります（モデル未準備ならエラーを返します。最初の 1 回はモデルの読み込みで十数秒かかるので、呼び出し側の待ち時間を長めに取ってください。2 回目からは速くなります）。各ツールの inputSchema で受け付ける項目と既定値を確認してください。',
+    "`search_venues` と `recommend_venues` は `exclude_past: true` で締切済みの候補を除けます（画面の「締切が過ぎた候補を除く」と同じ）。締切未確認・常時受付は残るため、全候補が受付中とは限りません。除外件数は `excluded_past`、`total` とページ送りは除外後の件数です。0件になったら `exclude_past: false` で次回向けの参考候補も確認できます。`order: deadline` で画面と同じ締切が近い順に並べ替えられます（日付の無い候補は後ろ、締切済みは最後）。既定の `order: fit` は各ツールの検索順を保ちます。",
     "収録 snapshot と公開物はビルド時の統合・選択で件数が異なる場合があります。収録全体と初期一覧を同じ範囲として比較しないでください。",
     "`scope: screen` は初期一覧、`scope: all` は収録全体です。初期カタログがない場合は全体へ切り替え、その旨を返します。画面と件数を比べる場合は、期間・種別・推定・過去表示を揃えてください。",
     "`list_upcoming` の structuredContent.items は type（deadline / event）で分かれ、**どちらも同じ欄**（`categories`・`categories_ja`・`rank`・`domestic`・`full_name`）を持ちます（締切の側だけ `ics_uid` が付きます）。`search_deadlines` の structuredContent は total・rows・next_offset を持ちます。続きは同じ条件で next_offset を offset に渡します。日付のみの行の utc・jst は null です。推定期間、確認状態、投稿トラックは別の項目です。行に `domestic`（国内の学会か。開催地が日本とは別で、日本で開かれる国際会議は false）と `full_name`（正式名。画面の一覧が会議名の下に出すのと同じ）と `categories`（分野の鍵。`security` など）と `categories_ja`（画面の分野の札と配付カレンダーの `分野:` と同じ日本語）を持たせてあります。`ics_uid`（配付カレンダー `deadlines.ics` の予定の UID。`data.json` の締切と同じ値）は、**カレンダーに予定がある締切**に入ります（初期カタログと公開の `data.json` から引きます。`list_upcoming` の締切の行も同じです。実測 2026-10-17: 今後の締切 939 のうち 938 が持ちます）。行のテキストでは `domestic` を「国内」の札で出します。公式確認（確認した日時・確認元・確認範囲・状態・次回確認予定）は `verification_ja` に、画面の行の詳細が並べるのと同じ日本語で入ります。",
@@ -4428,18 +4440,20 @@ export function toLlmsTxt(
     "## サイト（index.html）の日本語での引き方",
     "",
     "会議名・分野・主題・開催地を検索できます。複数語は空白で区切ります。日時は日本時間（JST）で、時刻未確認の締切は公式の暦日のままです。",
+    "検索語は日本語・英語のどちらでも書けます。英語の会議名・略称・`deadline`・`CFP`・`workshop on HPC`・`deadlines next month`・`within 30 days` も受けます（英語の冠詞・前置詞は、ほかの語があるときは絞り込みに使いません）。手法の名（`graph neural networks`・`GNN`・`transformer` など）は、その手法が載る分野の語（`machine learning`）に直して探し、件数欄でそのことを言います。",
+    "ワークショップは `ワークショップ`（英語なら `workshop`）で探せます。`workshop on HPC` のように親分野と組み合わせられます。本会議を除いてワークショップだけに絞るなら、画面の「ワークショップのみ」（URL は `workshop=1`）か、英語の `workshop only`、MCP の `workshop: true` を使います。 CCF の A・B・C に載る会議は、2026-10-26 時点ですべて収録しています。",
     /* 日本語の分野名を英字表記へ寄せる仕組みを書く（2026-10-17 實測: 收録の英字は
      * 數〜數十行に當たるのに、日本語の分野名は 0 件だつた物が 8 語あつた）。 */
     "日本語の分野名（`オペレーティングシステム`・`コンピュータグラフィックス` など）は、収録の英字表記（`operating systems`・`graphics` など）に寄せて探します。寄せたときは、画面も MCP も「英語で書かれた会議名（… など）も探しています」と言います。",
     "`国際会議`（`国際学会`・`国際カンファレンス` なども同じ）は、国内研究会・国内シンポジウム以外の会議で探します（会議名の International では探さないので、NSDI・SOSP・CHI のように名前に International の無い会議も出ます。論文誌は入りません）。`CCF A`・`CORE A*` のような尺度と等級は 1 つの条件として探します。",
     "相対日付は実行時の日本時間で解釈し、判定した期間を表示します。`今月`・`来月`・`再来月`・`先月` はその時点の暦月で解決します。日付語は別ラウンドや会期にも当たるため、締切の期間だけを絞るには「締切まで」を使います。曖昧な期間や未収録の情報は推測しません。",
-    "「投稿先を探す」の候補CSVは、順位・一致評価・一致の点・言葉の一致・意味の近さを含みます。一致評価は証拠の強さを表す区分で、点とは別です。論文を入れたまま締切の一覧を書き出した場合も、同じ 4 列が先頭に付きます（一致評価の札が付いていない行は空欄）。",
+    "「投稿先を探す」の候補CSVは、一致評価・一致の点・言葉の一致・意味の近さを含みます。一致評価は証拠の強さを表す区分で、点とは別です。「一致の点」は参考値で、順位や採択の見込みを表す値ではありません。論文を入れたまま締切の一覧を書き出した場合も、同じ 4 列が先頭に付きます（一致評価の札が付いていない行は空欄）。",
     "CSV・画面のICS出力は絞り込み後の全行です。購読用 deadlines.ics は収録全体の今後の締切で、絞り込みを引き継ぎません。共有URLには一覧条件を含めますが、論文の本文は含めません。",
     /* URL の引数を名指す（2026-10-17 まで、索引のどこにも書いておらず、AI も人も
      * 絞り込んだ一覧のリンクを自分で組めなかった）。値は画面が受け取る物と同じ。 */
     "画面の URL には、絞り込みを次の名前で載せます: " +
       "`mode`（`deadlines`・`recommend`）・`q`（検索語）・`kind`（種別。`abstract`・`paper`・`journal`）・`cats`（分野の鍵を `,` で。`security` など）・" +
-      "`rank`（`A*`・`A`・`B`・`C`・`N`。締切の一覧では行を、`mode=recommend` では候補の会場を絞ります）・`win`（`7d`・`30d`・`90d`・`180d`）・`est`・`past`・`domestic`・`online`（`1` で入）・" +
+      "`rank`（`A*`・`A`・`B`・`C`・`N`。締切の一覧では行を、`mode=recommend` では候補の会場を絞ります）・`win`（`7d`・`30d`・`90d`・`180d`）・`est`・`past`・`domestic`・`online`・`workshop`（`1` で入）・" +
       "`open`（`1` で「投稿先を探す」の候補から締切が過ぎた会議を除く。締切の一覧では効きません）・" +
       "`order`（`deadline` で「投稿先を探す」の候補を締切の近い順に並べる。既定は論文との一致順。締切の一覧では効きません）・" +
       "`sort`（`rem`・`date`・`event`・`conf`・`rank`）・`dir=desc`・`help=1`・`row`（1 行の詳細を開く）・`venue`（会議の鍵。`sigmod` などで 1 会場の行だけに絞る。`mode=recommend` では候補を絞りません。行の詳細と推薦のカードの「この会議の締切を一覧で見る」が使う。`row` と同時に渡したときは `row`（1 行の詳細）が勝つ）。",
@@ -4466,6 +4480,7 @@ export function toLlmsTxt(
     "  - full_name: string：正式名称。",
     "  - acronym: string：検索用の会議略称。存在時のみ。",
     "  - scope / official_scope: array of string：検索用の対象分野。存在時のみ。",
+    "  - official_scope_sources: array of string：収録した募集分野の出典URL。過去の募集ページを含み、最新の締切の根拠とは限らない。存在時のみ。",
     "  - paper_abstracts / keywords: array of string：検索用の代表概要・キーワード。存在時のみ。",
     "  - categories: array of string：上記 categories のキー。",
     "  - rank: object：{'ccf': 'A', 'core': 'A*', 'thcpl': 'B'} の形。欠けうる（'thcpl' を持つ会議は実測 2026-10-16 で 696 のうち 344）。",

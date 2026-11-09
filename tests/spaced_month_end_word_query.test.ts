@@ -50,7 +50,7 @@ describe("この段から届かない形（実測で残した差）と其它の�
   it("『末日』『後半』は第 491 回で解け、『前半』は公用の決まりがないので 0 件の侭", () => {
     expect(列("来月 末日").size).toBe(178);
     expect(列("来月 末日").size).toBe(列("来月末日").size);
-    expect(列("来月 後半").size).toBe(59);
+    expect(列("来月 後半").size).toBe(60);
     expect(列("来月 後半").size).toBe(列("来月後半").size);
     expect(列("8月 終わり").size).toBe(118);
     /* 前半は何日から何日かの決まりが無いので、離しても詰めても 0 件（案内も出さない）。*/
@@ -67,8 +67,8 @@ describe("この段から届かない形（実測で残した差）と其它の�
     expect(列("週 末").size).toBe(146);
     expect(列("月末").size).toBe(118);
     expect(列("来月末").size).toBe(178);
-    expect(列("明日以降").size).toBe(423);
-    expect(列("1 か月後から").size).toBe(362);
+    expect(列("明日以降").size).toBe(426);
+    expect(列("1 か月後から").size).toBe(365);
     expect(列("来 上旬").size).toBe(68);
     expect(列("明日 から 明後日").size).toBe(4);
     expect(列("来月 下旬 まで").size).toBe(276);

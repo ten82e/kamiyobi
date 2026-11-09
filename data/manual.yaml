@@ -49,7 +49,7 @@ conferences:
     editions:
       - date_text: February 17-19, 2027
         deadlines:
-          - date: '2026-09-13 23:59:00'
+          - date: '2026-09-27 23:59:00'
             kind: paper
             label: Paper Submission Deadline
             tz: AoE
@@ -1437,7 +1437,7 @@ conferences:
       - networking
       - ai
     editions:
-      - date_text: 特集号予定 2027年9月号
+      -
         deadlines:
           - date: '2026-12-01 23:59:00'
             kind: paper
@@ -1445,6 +1445,23 @@ conferences:
             tz: UTC+9
         id: jip-compsac2027-si
         link: https://www.ipsj.or.jp/journal/cfp/27-R.html
+        year: 2027
+      -
+        deadlines:
+          - date: '2026-11-27 23:59:00'
+            kind: paper
+            label: 投稿締切
+            tz: UTC+9
+        id: jip-ai-security2027-si
+        link: https://www.ipsj.or.jp/journal/cfp/27-M.html
+        year: 2027
+      - deadlines:
+          - date: '2026-12-04 23:59:00'
+            kind: paper
+            label: 投稿締切
+            tz: UTC+9
+        id: jip-ucs2027-si
+        link: https://www.ipsj.or.jp/journal/cfp/27-P.html
         year: 2027
     full_name: Journal of Information Processing (情報処理学会)
     key: jip
@@ -1633,9 +1650,9 @@ conferences:
     editions:
       - date_text: March 15-18, 2027
         deadlines:
-          - date: '2026-10-30 23:59:00'
+          - date: '2026-11-13 23:59:00'
             kind: paper
-            label: Paper Submission
+            label: Paper Submission (Extended)
             tz: UTC
           - date: '2026-12-13 23:59:00'
             kind: notification
@@ -3600,7 +3617,7 @@ conferences:
             kind: notification
             label: Cycle 1 notification
             tz: AoE
-          - date: '2026-10-27 23:59:00'
+          - date: '2026-11-06 23:59:00'
             kind: paper
             label: Cycle 2 submission deadline
             tz: AoE

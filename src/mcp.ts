@@ -44,8 +44,12 @@ const SERVER_INSTRUCTIONS_JA = [
   "- `search_deadlines` の既定は今後の abstract / paper / journal で、過去と推定は除きます（`include_past`・`include_estimated` で足せます）。**kind の既定は画面の初期一覧より広く、常時受付（`journal`）も含みます** – 画面は概要と論文だけを出し、常時受付は「種別」で選んだ時に出します。件数を画面と比べるときは、この分だけ違います（`kinds` に `abstract` と `paper` を渡せば画面と同じ範囲になります）。`list_upcoming` の既定は種別で絞らず、推定も含みます。両者の件数を比べるなら、種別・推定・`scope` を揃えてください。",
   "- `scope` は `screen`（画面の初期一覧。期間は `catalog.json` の `window` に記載。ファイルがある時だけ）と `all`（**収録の元データ** `data/snapshot.json`）です。省いたときは `search_deadlines`・`explain_word` は `screen`、`list_upcoming`・`venue_info` は `all` です。**公開している `data.json` は重複をまとめた後**なので、`all` の行数はそれより多くなります（AI が件数を画面と比べるときは、この違いを見てください）。0 件のときは `scope_comparison` に収録全体での件数が出ます。",
   "- 会期は締切ではありません。購読カレンダー（`deadlines.ics`）は締切だけを載せ、`list_upcoming` は締切と会期の両方を返します。",
+  "- 投稿先の適合を判断するときは `venue_info` の `research_topics` で具体的な募集分野も確認してください。出典は `research_topic_sources` に返します。過去の募集ページも含むため、次回の募集や締切の確認済み根拠として扱わないでください。空配列は未収録、null はデータを読めない状態で、分野が不適合という意味ではありません。",
   "- 締切は動きます。投稿の判断の前に、行の公式ページで最新の募集要項を確かめるよう案内してください。",
+  "- 検索語は日本語・英語のどちらでも書けます（例: `SIGCOMM 2027 deadline`・`CFP SIGCOMM`・`deadlines next month`・`graph neural networks`）。英語の冠詞・前置詞は、ほかの語があるときは絞り込みに使いません。手法の名は、その手法が載る分野の語（`graph neural networks` → `machine learning`）に直して探し、件数欄でそのことを言います。0 件のときは、語を 1 つ外す候補も返します。`search_deadlines` と `list_upcoming` は `workshop: true` でワークショップだけに絞れます（構造化結果の締切行にも `workshop` が入ります）。",
   "",
+  "- 投稿先の `search_venues`・`recommend_venues` は既定で締切済みも参考候補に含めます。`exclude_past: true` で締切済みだけを除けます。締切未確認・常時受付は残るため、残った全候補が受付中とは断定しないでください。除外件数は `excluded_past` です。`order: deadline` で締切が近い順に並べ替えられます（日付の無い候補は後ろ、締切済みは最後）。",
+  "- 投稿先は返された行の順で案内してください。`fit.score` は一致評価の参考点で、語彙検索の順位とは別です。参考点だけで候補を並べ替えないでください。",
   "道具: 締切を引く `search_deadlines` / 直近の締切と会期をまとめる `list_upcoming` / 会議を名指して開催回と締切を見る `venue_info` / 語が収録に当たるか調べる `explain_word` / 収録数とデータ源を見る `collection_stats` / 論文の題名と概要から投稿先を探す `search_venues`・`recommend_venues`。",
   "",
   "構造化結果（`structuredContent`）を優先し、続きは返ってきた `next_offset` を `offset` に渡してください。",
@@ -107,6 +111,8 @@ interface Row {
   localDate: string;
   dateOnly: boolean;
   hay: string;
+  /** URL のホストの検索用文字列（名前の `hay` とは別の規則で照合する）。 */
+  hostHay?: string;
 }
 
 let screenCache: Row[] | null = null;
@@ -564,22 +570,20 @@ function line(r: Row, now: number): string {
 }
 
 function retypeTips(query: string, list: Row[], now: number): string[] {
-  const 候補 = Recommender.shorterHitWordsJa(
-    query,
-    list.map((r) => r.hay),
-    now,
-  );
+  const 候補 = Recommender.shorterHitWordsJa(query, list, now);
   const out: string[] = [];
   for (const hit of 候補) {
     const word = String(hit.word ?? "").trim();
     if (!word) continue;
     const 照合 = Recommender.searchMatcher(Recommender.expandRelativeMonths(word, now), now);
-    const 件數 = list.filter((r) => 照合(r.hay) === true).length;
+    const 件數 = list.filter((r) => 照合(r) === true).length;
     if (!件數) continue;
     const how = String(hit.how ?? "");
     if (how === "split") out.push(`検索語を「${word}」に分けて打つ（両方を書く行が ${件數} 件）`);
     else if (how === "alone" && word.indexOf(" ") < 0)
       out.push(`検索語を「${word}」だけに絞る（${件數} 件当たります）`);
+    else if (how === "drop" && hit.pair)
+      out.push(`検索語から「${hit.pair}」を外して「${word}」で探す（${件數} 件当たります）`);
     else out.push(`検索語を「${word}」に打ち替える（${件數} 件当たります）`);
   }
   return out;
@@ -596,13 +600,13 @@ function guidance(query: string, matched: number, list: Row[], now: number): str
   const word = String(Recommender.uiWordNoteJa(query, false) ?? "").trim();
   if (word) out.push(word);
   /* 語を照らすのは 1 描画に 1 度で足りる（同じ語を何度も分解しない）。 */
-  const 照合を組む = (語: string): ((hay: string) => boolean) =>
+  const 照合を組む = (語: string): ((target: unknown) => boolean) =>
     Recommender.searchMatcher(Recommender.expandRelativeMonths(語, now), now);
   /* 欄の名前（`分野` `種別` `会場` など）を打たれた人。値ではないので、語を
    * 短くしても増えない – 値の例を名指して送る。 */
   const column = String(
     Recommender.columnQueryNoteJa(query, (語: string) =>
-      list.some((r) => 照合を組む(語)(r.hay) === true),
+      list.some((r) => 照合を組む(語)(r) === true),
     ) ?? "",
   ).trim();
   if (column) out.push(column);
@@ -610,7 +614,7 @@ function guidance(query: string, matched: number, list: Row[], now: number): str
   const 日數の幅 = Boolean(String(Recommender.dayRangeNoteJa(query) ?? "").trim());
   if (!column && !word && !日數の幅) {
     const 件が当たるか = (文: string): number =>
-      list.filter((r) => 照合を組む(文)(r.hay) === true).length;
+      list.filter((r) => 照合を組む(文)(r) === true).length;
     const conjunction = String(
       Recommender.conjunctionQueryNoteJa(query, 件が当たるか) ?? "",
     ).trim();
@@ -819,6 +823,7 @@ function 畫面の既定(
     rank?: unknown;
     domestic?: unknown;
     online?: unknown;
+    workshop?: unknown;
     /** 「締切まで N 日」の窓（画面の同じ名前の選擇欄。第 872 回）。 */
     within_days?: unknown;
   },
@@ -839,6 +844,7 @@ function 畫面の既定(
 
   const 國內だけ = args.domestic === true;
   const オンラインだけ = args.online === true;
+  const ワークショップだけ = args.workshop === true;
 
   const 窓の上限 = 窓あり ? Recommender.withinDaysLimitMs(窓の日數, now) : 0;
   const 窓の下限 = 窓あり && 過去も ? Recommender.withinDaysFloorMs(窓の日數, now) : 0;
@@ -859,6 +865,7 @@ function 畫面の既定(
     if (國內だけ && (r.tags ?? []).indexOf("domestic-jp") < 0) return false;
     /* オンラインは会場の表記から画面と同じ関数で見る。 */
     if (オンラインだけ && !Recommender.placeOffersOnline(r.ed.place)) return false;
+    if (ワークショップだけ && !isWorkshopRowMCP(r)) return false;
     if (全部) return true;
     if (種別.length) return 種別.includes(r.kind);
     return 投稿の種別.includes(r.kind);
@@ -874,7 +881,7 @@ interface ScopeComparisonError {
 }
 
 function 窓の外の件數(
-  照合: (hay: string) => boolean,
+  照合: (target: unknown) => boolean,
   名: string,
   now: number,
   args: Parameters<typeof 畫面の既定>[2] = {},
@@ -904,7 +911,7 @@ function 窓の外の件數(
     };
   }
   const matches = withJournals(displayRows(allRows()), data.conferences, now).filter(
-    (r) => 照合(r.hay) === true,
+    (r) => 照合(r) === true,
   );
   return {
     raw: matches.length,
@@ -947,18 +954,35 @@ function 語ごとの案號(query: string, list: Row[], now: number, 全部の�
    * 「沖縄で開催」は「絞る前は 4 行」と言いながら「語をすべて含む行はありません」とも
    * 言い、照合では外している機能語「開催」の件数を理由に挙げていた）。 */
   const 問いの照合 = Recommender.searchMatcher(寄せた問い, now);
-  if (數へる對照.some((r) => 問いの照合(r.hay))) return [];
-  const 件數 = Recommender.queryTermCounts(
-    寄せた問い,
-    數へる對照.map((r) => r.hay),
-    now,
-  );
-  if (件數.length < 2) return []; // 語が一つの時は他の家（打ち直し・種別の話）が受持ちを持つ。
+  if (數へる對照.some((r) => 問いの照合(r))) return [];
+  const 件數 = Recommender.queryTermCounts(寄せた問い, 數へる對照, now);
+  if (件數.length < 2) {
+    /* 画面の語の案内（対象外の会議など）が在るなら、名簿の話は重ねない。 */
+    if (Recommender.uiWordNoteJa(query)) return [];
+    /* 語が 1 つの略称（`MIDL`）は「名簿に無い」と言えていなかった。収録外の会議名を
+     * 打った人に、その旨をはっきり伝える（2026-10-26 実測）。 */
+    if (件數.length === 1 && 件數[0].count === 0 && /^[A-Z][A-Z0-9&+.-]{1,9}$/.test(query.trim()))
+      return [
+        `「${query.trim()}」は収録の名簿に見当たりません。収録はすべての会議を網羅していないので、収録外の会議かもしれません。`,
+      ];
+    return []; // 語が一つの時は他の家（打ち直し・種別の話）が受持ちを持つ。
+  }
   const 死んだ語 = 件數.filter((t) => t.count === 0).map((t) => t.term);
   const 殘り = 件數.filter((t) => t.count > 0);
   if (死んだ語.length) {
-    /* 總ての語が死語なら「外すと増えます」とは言はない（外した残りは空に成る）。 */
-    const 外しても = 死んだ語.length === 件數.length ? "" : "その語を外すと増えます。";
+    /* 總ての語が死語なら「外すと増えます」とは言はない（外した残りは空に成る）。
+     * `MIDL 2027` のように会議名＋年だけのときも、年を外しても他の会議の 2027 が
+     * 出るだけで、その会議の締切は出ない（2026-10-26 実測: 「外すと増えます」と
+     * 書いていた）。 */
+    const 年の語 = /^(?:\d{4}|\d{4}年)$/;
+    const 年だけ =
+      死んだ語.length === 1 && 件數.length === 2 && 殘り.length === 1 && 年の語.test(殘り[0].term);
+    const 外しても =
+      死んだ語.length === 件數.length
+        ? ""
+        : 年だけ
+          ? "年を外しても、その会議の締切は出ません。収録はすべての会議を網羅していないので、その会議は収録外の可能性があります。"
+          : "その語を外すと増えます。";
 
     const 殘りの死語 = 死んだ語.length - 2;
     return [
@@ -1311,25 +1335,28 @@ export function structuredDeadline(r: Row, now: number): Record<string, unknown>
      * 別物 – 日本で開かれる國際会議は國內ではない。日本人研究者が「國內の研究会」を
      * 聞いた時に AI が見分けを付けられるやうに、機械可読でも持つ。 */
     domestic: Recommender.isDomesticTag(r.tags),
+    /* ワークショップか（畫面の「ワークショップのみ」と同じ判定）。締切の行を AI が
+     * 仕分けできるように、機械可読でも持つ。 */
+    workshop: isWorkshopFieldsMCP(r.tags, r.conf.title, r.conf.full_name),
     rank: r.conf.rank ?? null,
     /* 配付のカレンダーの UID。**同じ締切を、AI がカレンダーの予定として名指せる**ように
-     * する（2026-10-17 まで、行からカレンダーの予定へ渡る手掛かりが無かった）。 */
+     * する（2026-10-17 まで、行からカレンダーの予定へ渡る手掛かりが無かった）。
+     * 正本は**公開の側**（品書・公開 data.json – 配付カレンダーと同じ採番）。収録の
+     * snapshot が持つ UID は、その snapshot を建てた時の時計で採番された物なので、
+     * 公開されているカレンダーの採番とずれる（実測 2026-11-08: VLDB 2027 の同じ締切に
+     * snapshot は `…-4`、公開の側は `…-7`）。公開の側に条目が無い時（手元で public/ を
+     * 建てて居ない時）だけ、snapshot の値を残す。 */
     ...(() => {
+      const 公開の鍵 = `${r.conf.key}\u0000${icsDeadlineUidKey(
+        r.ed.id,
+        r.kind,
+        r.dl.round,
+        String(r.dl.label ?? ""),
+        icsUidDayOf((r.dl as { utc?: unknown }).utc, (r.dl as { local_date?: unknown }).local_date),
+      )}`;
+      const 公開のUID = 品書のUID().get(公開の鍵);
       const uid =
-        typeof r.dl.ics_uid === "string" && r.dl.ics_uid
-          ? r.dl.ics_uid
-          : 品書のUID().get(
-              `${r.conf.key}\u0000${icsDeadlineUidKey(
-                r.ed.id,
-                r.kind,
-                r.dl.round,
-                String(r.dl.label ?? ""),
-                icsUidDayOf(
-                  (r.dl as { utc?: unknown }).utc,
-                  (r.dl as { local_date?: unknown }).local_date,
-                ),
-              )}`,
-            );
+        公開のUID ?? (typeof r.dl.ics_uid === "string" && r.dl.ics_uid ? r.dl.ics_uid : "");
       return uid ? { ics_uid: uid } : {};
     })(),
     /* 畫面の `index.html?row=` にそのまま渡せる値（人が開くと、その行の詳細が開く）。
@@ -1380,6 +1407,18 @@ export function structuredDeadline(r: Row, now: number): Record<string, unknown>
   };
 }
 
+/* ワークショップの行か（画面の「ワークショップのみ」と同じ規則）。 */
+function isWorkshopFieldsMCP(tags: unknown, title: unknown, fullName: unknown): boolean {
+  if (Array.isArray(tags) && tags.indexOf("workshop") >= 0) return true;
+  return /workshop/i.test(
+    `${typeof title === "string" ? title : ""} ${typeof fullName === "string" ? fullName : ""}`,
+  );
+}
+
+function isWorkshopRowMCP(r: Row): boolean {
+  return isWorkshopFieldsMCP(r.tags, r.conf.title, r.conf.full_name);
+}
+
 function searchDeadlines(
   args: {
     query?: unknown;
@@ -1394,6 +1433,7 @@ function searchDeadlines(
     categories?: unknown;
     domestic?: unknown;
     online?: unknown;
+    workshop?: unknown;
     within_days?: unknown;
     scope?: unknown;
   },
@@ -1405,6 +1445,7 @@ function searchDeadlines(
     include_estimated: 真偽の引數("include_estimated", args.include_estimated),
     domestic: 真偽の引數("domestic", args.domestic),
     online: 真偽の引數("online", args.online),
+    workshop: 真偽の引數("workshop", args.workshop),
   };
   /* 絞り込みは**正規化した引数**で見る（下の判定は `=== true` だけ – 一箇所で直す）。
    * **在った引数だけ**書き戻す（省いた物を false にしてしまうと、「絞り込みを指定した」判定が
@@ -1419,6 +1460,7 @@ function searchDeadlines(
       : {}),
     ...(_ARGS.domestic !== undefined ? { domestic: 真偽.domestic.使ふ } : {}),
     ...(_ARGS.online !== undefined ? { online: 真偽.online.使ふ } : {}),
+    ...(_ARGS.workshop !== undefined ? { workshop: 真偽.workshop.使ふ } : {}),
   };
   const offset = args.offset === undefined ? 0 : args.offset;
   if (typeof offset !== "number" || !Number.isSafeInteger(offset) || offset < 0)
@@ -1439,9 +1481,10 @@ function searchDeadlines(
       args.categories !== undefined ||
       args.domestic !== undefined ||
       args.online !== undefined ||
+      args.workshop !== undefined ||
       args.within_days !== undefined);
   if (!query && !絞り込みだけ)
-    return "検索語が空です。会議名・分野・開催地・締切の語をください（語を省くなら kind / kinds / rank / category / categories / domestic / online / within_days のいずれかを指定してください）。";
+    return "検索語が空です。会議名・分野・開催地・締切の語をください（語を省くなら kind / kinds / rank / category / categories / domestic / online / workshop / within_days のいずれかを指定してください）。";
   const 限り = 數の引數("limit", args.limit, 1);
 
   const limit = Math.max(1, Math.floor(Math.min(限り.使ふ ?? 20, 100)));
@@ -1474,7 +1517,7 @@ function searchDeadlines(
   const 照合 = 絞り込みだけ
     ? () => true
     : Recommender.searchMatcher(Recommender.expandRelativeMonths(query, now), now);
-  const 素の = list.filter((r) => 照合(r.hay) === true);
+  const 素の = list.filter((r) => 照合(r) === true);
 
   const 絞り込みが効く = !Recommender.searchMatcher(query, now)("・ー()");
   const 記号だけの文 =
@@ -1589,7 +1632,7 @@ function searchDeadlines(
         }
       : {}),
   });
-  const 頭 = `${絞り込みだけ ? "語を指定せず、絞り込みだけ" : `検索語「${query}」に当たる締切`}: ${hit.length} 件（${名} ${list.length} 行・指定条件で絞り込み。絞る前は ${素の.length} 行${ランク ? `／ランク ${ランクの尺度Header}${ランク}` : ""}${args.domestic === true ? "／国内のみ" : ""}${args.online === true ? "／オンライン参加可のみ" : ""}${窓あり ? `／締切まで ${窓の日數} 日以内${窓の端数の斷り}` : ""}${讀めない引數}）${limit端數}${queryNotice}${kindNotice ? `／${kindNotice}` : ""}${emptyKindsNotice ? `／${emptyKindsNotice}` : ""}${ignoredKindNotice ? `／${ignoredKindNotice}` : ""}${rankNotice ? `／${rankNotice}${limit端數}` : ""}${categoryNotice ? `／${categoryNotice}` : ""}${ignoredCategoryNotice ? `／${ignoredCategoryNotice}` : ""}${分野の引き.鍵.length ? `／分野 ${分野の引き.鍵.map((k) => Recommender.categoryLabelJa(k)).join("・")}` : ""}${日付の語 ? "\n日付は日本時間（JST）。月や日付の語は、締切の日付と「会期」の日付の両方に当たる（画面のてびきと同じ約束）ので、月で引いた時に見出しの月と違う日が出る行がある。" : ""}${窓が無い ? `\n${窓が無いの斷り(true)}` : ""}${scopeErr ? `\n${scopeErr}` : ""}${解決の文}${記号だけの文 ? `\n${記号だけの文}` : ""}${見えて居る文}`;
+  const 頭 = `${絞り込みだけ ? "語を指定せず、絞り込みだけ" : `検索語「${query}」に当たる締切`}: ${hit.length} 件（${名} ${list.length} 行・指定条件で絞り込み。絞る前は ${素の.length} 行${ランク ? `／ランク ${ランクの尺度Header}${ランク}` : ""}${args.domestic === true ? "／国内のみ" : ""}${args.online === true ? "／オンライン参加可のみ" : ""}${args.workshop === true ? "／ワークショップのみ" : ""}${窓あり ? `／締切まで ${窓の日數} 日以内${窓の端数の斷り}` : ""}${讀めない引數}）${limit端數}${queryNotice}${kindNotice ? `／${kindNotice}` : ""}${emptyKindsNotice ? `／${emptyKindsNotice}` : ""}${ignoredKindNotice ? `／${ignoredKindNotice}` : ""}${rankNotice ? `／${rankNotice}${limit端數}` : ""}${categoryNotice ? `／${categoryNotice}` : ""}${ignoredCategoryNotice ? `／${ignoredCategoryNotice}` : ""}${分野の引き.鍵.length ? `／分野 ${分野の引き.鍵.map((k) => Recommender.categoryLabelJa(k)).join("・")}` : ""}${日付の語 ? "\n日付は日本時間（JST）。月や日付の語は、締切の日付と「会期」の日付の両方に当たる（画面のてびきと同じ約束）ので、月で引いた時に見出しの月と違う日が出る行がある。" : ""}${窓が無い ? `\n${窓が無いの斷り(true)}` : ""}${scopeErr ? `\n${scopeErr}` : ""}${解決の文}${記号だけの文 ? `\n${記号だけの文}` : ""}${見えて居る文}`;
   if (!hit.length) {
     if (窓の外.error)
       return [
@@ -1714,6 +1757,7 @@ interface UpcomingEventRow extends ReturnType<typeof eventMetadata> {
   categories: string[];
   rank: unknown;
   domestic: boolean;
+  workshop: boolean;
 }
 
 export function 開催の行(days: number, now: number): UpcomingEventRow[] {
@@ -1795,6 +1839,7 @@ export function 開催の行(days: number, now: number): UpcomingEventRow[] {
           categories: Array.isArray(会議.categories) ? [...(会議.categories as string[])] : [],
           rank: 会議.rank ?? null,
           domestic: Recommender.isDomesticTag(会議.tags as string[] | undefined),
+          workshop: isWorkshopFieldsMCP(会議.tags, 会議.title, 会議.full_name),
         });
       }
     }
@@ -1809,6 +1854,7 @@ function listUpcoming(
     kinds?: unknown;
     scope?: unknown;
     rank?: unknown;
+    workshop?: unknown;
     limit?: unknown;
     offset?: unknown;
   },
@@ -1870,6 +1916,7 @@ function listUpcoming(
   const 知らないランク = ランク && !Recommender.rankGradeOrderJa().includes(ランク) ? ランク : "";
   const ランクで殘す = (pairs: readonly string[] | null | undefined): boolean =>
     !ランク || Recommender.rankMatches(pairs, ランク, ランクの尺度);
+  const ワークショップだけ = args.workshop === true;
   /* 会期の行のランクは `{ccf: "A", …}` の形。締切の行と同じ `"ccf:A"` の対に直して使う。 */
   const 會期のランクの對 = (rank: unknown): string[] =>
     rank && typeof rank === "object" && !Array.isArray(rank)
@@ -1891,12 +1938,22 @@ function listUpcoming(
   const 種別で殘す = (r: Row): boolean =>
     全部 || 選ぶ.size === 0 || 選ぶ.has(r.kind) || 選ぶ.has(r.dl.kind);
   const 締切の候補 = list.filter(
-    (r) => !Recommender.deadlineRowIsPast(r, 日の始め) && 暦日(r) < 限り && 種別で殘す(r),
+    (r) =>
+      /* 過ぎた締切は出さない（`within_days` の検索と同じ「いま」で切る）。
+       * 日の始めで切ると、今日の朝の締切が一覧だけに出て件数が 1 件ずれる
+       * （2026-10-26 実測: `days` 79 / `within_days` 78）。 */
+      !Recommender.deadlineRowIsPast(r, now) &&
+      暦日(r) < 限り &&
+      種別で殘す(r) &&
+      (!ワークショップだけ || isWorkshopRowMCP(r)),
   );
   const hit = sortRows(締切の候補.filter((r) => ランクで殘す(r.rankPairs)));
   const 外した締切 = 締切の候補.length - hit.length;
   const 會期の候補 = 開催の行(days, now);
-  const events = 會期の候補.filter((event) => ランクで殘す(會期のランクの對(event.rank)));
+  const events = 會期の候補.filter(
+    (event) =>
+      ランクで殘す(會期のランクの對(event.rank)) && (!ワークショップだけ || event.workshop),
+  );
   const 外した會期 = 會期の候補.length - events.length;
   const date = (value: number): string => new Date(value).toISOString().slice(0, 10);
   const timeline: Array<{
@@ -1932,6 +1989,7 @@ function listUpcoming(
         categories_ja: event.categories.map((key) => Recommender.categoryLabelJa(key)),
         rank: event.rank,
         domestic: event.domestic,
+        workshop: event.workshop,
       },
     })),
   ];
@@ -1970,7 +2028,7 @@ function listUpcoming(
       : `全 ${timeline.length} 件中 ${offset + 1}〜${offset + page.length} 件目` +
         `（このページ: 締切 ${deadlinePage.length} 件・会期 ${eventPage.length} 件）。`;
   return [
-    `今日から ${日數の表現}（JST の暦日で数える）の締切: ${hit.length} 件（${名}・日本時間の早い順）${ランク ? `／ランク ${ランクの尺度 ? `${ランクの尺度.toUpperCase()} ` : ""}${ランク}（締切 ${外した締切} 件・会期 ${外した會期} 件を外しました）` : ""}${知らないランク ? `／「${知らないランク}」は知らない等級なので 0 件になります` : ""}${讀めない引數}${知らんの斷り}${端数の斷り}${上限の斷り}${limitInput.斷り}${端數と上限の斷り(limitInput.使ふ, 100)}${空の種別 ? `／kinds が空なので種別では絞り込んでいません` : ""}${単数種別を無視 ? "／kind は kinds と共に与えられたので見ていません" : ""}`,
+    `今日から ${日數の表現}（JST の暦日で数える）の締切: ${hit.length} 件（${名}・日本時間の早い順）${ランク ? `／ランク ${ランクの尺度 ? `${ランクの尺度.toUpperCase()} ` : ""}${ランク}（締切 ${外した締切} 件・会期 ${外した會期} 件を外しました）` : ""}${ワークショップだけ ? "／ワークショップのみ" : ""}${知らないランク ? `／「${知らないランク}」は知らない等級なので 0 件になります` : ""}${讀めない引數}${知らんの斷り}${端数の斷り}${上限の斷り}${limitInput.斷り}${端數と上限の斷り(limitInput.使ふ, 100)}${空の種別 ? `／kinds が空なので種別では絞り込んでいません` : ""}${単数種別を無視 ? "／kind は kinds と共に与えられたので見ていません" : ""}`,
     ...(scopeErr ? [scopeErr] : []),
     ...(窓が無いの斷り(窓が無い) ? [窓が無いの斷り(窓が無い)] : []),
     pageNotice,
@@ -2028,11 +2086,26 @@ function venueLookupText(value: unknown): string {
 }
 
 function venueClassification(conf: NonNullable<SnapshotFile["conferences"]>[number]) {
+  const published = catalog();
+  const profile = (published?.conferences as Array<Record<string, unknown>> | undefined)?.find(
+    (candidate) => candidate.key === conf.key,
+  );
+  const topics = Recommender.venueResearchTopics(profile ?? conf);
+  const sources = Recommender.venueResearchSources(profile ?? conf);
+  const unavailable = !published && topics.length === 0 && sources.length === 0;
   return {
     categories: conf.categories ?? [],
     rank: conf.rank ?? null,
     tags: conf.tags ?? [],
     domestic: Recommender.isDomesticTag(conf.tags),
+    workshop: isWorkshopFieldsMCP(conf.tags, conf.title, conf.full_name),
+    research_topics: unavailable ? null : topics,
+    research_topic_sources: unavailable ? null : sources,
+    research_topics_generated_at: unavailable
+      ? null
+      : profile
+        ? (published?.generated_at ?? null)
+        : (snapshot().snapshot_metadata?.generated_at ?? null),
   };
 }
 
@@ -2048,7 +2121,21 @@ function venueClassificationLines(
     `分野: ${metadata.categories.map((key) => Recommender.categoryLabelJa(key)).join("・") || Recommender.unconfirmedLabelJa()}`,
     `ランク: ${ランクJa({ rankPairs })}`,
     ...(topics.length ? [`主題: ${topics.join("・")}`] : []),
+    ...(metadata.research_topics === null
+      ? ["募集分野の説明: 収録情報を読み込めませんでした。"]
+      : metadata.research_topics.length
+        ? [
+            "募集分野の説明（収録情報・過去の募集を含む）:",
+            ...metadata.research_topics.map((topic) => `- ${topic}`),
+          ]
+        : ["募集分野の説明: 未収録"]),
+    ...(metadata.research_topic_sources?.length
+      ? metadata.research_topic_sources.map((source) => `募集分野の出典（過去回を含む）: ${source}`)
+      : metadata.research_topics?.length
+        ? ["募集分野の出典: 未収録"]
+        : []),
     ...(metadata.domestic ? ["区分: 国内"] : []),
+    ...(metadata.workshop ? ["区分: ワークショップ"] : []),
   ];
 }
 
@@ -2076,7 +2163,14 @@ function venueEditionCounts(conf: Parameters<typeof venueIdentity>[0], nonEstima
   };
 }
 
-function venueSchedules(conf: { key?: unknown; editions?: unknown[] }) {
+function venueSchedules(conf: {
+  key?: unknown;
+  editions?: unknown[];
+  tags?: unknown;
+  title?: unknown;
+  full_name?: unknown;
+}) {
+  const workshop = isWorkshopFieldsMCP(conf.tags, conf.title, conf.full_name);
   return (conf.editions ?? []).flatMap((value) => {
     if (!value || typeof value !== "object") return [];
     const ed = value as Record<string, unknown>;
@@ -2096,6 +2190,7 @@ function venueSchedules(conf: { key?: unknown; editions?: unknown[] }) {
         place: text(ed.place),
         place_ja: placeDisplayJa(ed.place) || "未確認",
         official_url: officialLink(ed.link),
+        workshop,
       },
     ];
   });
@@ -2382,8 +2477,10 @@ function venueInfo(
         ? { retry_arguments: { key: String(略稱で当たる[0].key), scope: "all" } }
         : {}),
     });
+    const 語の案内 = String(Recommender.uiWordNoteJa(打たれた語, false) ?? "").trim();
     return [
       `その会議（${key ? "key" : "name"}: \`${打たれた語}\`）は収録に在りません（収録 ${收錄の會議.length} 会議）。`,
+      ...(語の案内 ? [語の案内] : []),
       ...(略稱で当たる.length > 0
         ? [
             `\`key\` は小文字の識別子です。**略称で引く時は \`name\` に「${大文字の問}」を渡してください**` +
@@ -2535,11 +2632,11 @@ function venueInfo(
       })
       .join(" / ")}`,
 
-    ...venueClassificationLines(venue),
     /* その会議の締切が、どの位確かめられているか（行ごとの札だけでは、全体の偏りが分からん）。 */
     `確認: ${確認の內譯(hit)}`,
     投稿の案內,
     ...(推定の次の投稿 ? [`次の投稿締切（推定）: ${line(推定の次の投稿, now)}`] : []),
+    ...venueClassificationLines(venue),
     ...venueScheduleLines(schedules.filter((ed) => !行を持つ版.has(ed.edition_id || ""))),
     "",
 
@@ -2571,7 +2668,7 @@ function explainWord(args: { word?: unknown; scope?: unknown }, now: number): st
   const { list, 名, 生成, 窓が無い } = pickSearch(args.scope, now);
   const 古さ = 古さの斷り(生成, now);
   const 照合 = Recommender.searchMatcher(Recommender.expandRelativeMonths(word, now), now);
-  const 素の行 = list.filter((r) => 照合(r.hay) === true);
+  const 素の行 = list.filter((r) => 照合(r) === true);
   const 件數 = 素の行.length;
   const 畫面の行 = 畫面の既定(素の行, now, {});
   const 窓の外 = 畫面の行.length
@@ -2737,11 +2834,19 @@ function collectionStats(args: Record<string, unknown> = {}, now: number): strin
         ["workshop", "ワークショップ"],
         ["journal", "常時受付（ジャーナル）"],
       ];
-      const 會議 = (收錄.conferences ?? []) as Array<{ tags?: unknown }>;
+      const 會議 = (收錄.conferences ?? []) as Array<{
+        tags?: unknown;
+        title?: unknown;
+        full_name?: unknown;
+      }>;
       const 數 = 集まり
         .map(([鍵, 名]) => {
-          const n = 會議.filter(
-            (c) => (Array.isArray(c.tags) ? c.tags : []).indexOf(鍵) >= 0,
+          /* ワークショップは画面の「収録状況」と同じ判定（タグか会議名）。タグだけだと
+           * 47 件になり、画面の 90 件と食い違う（2026-10-26 実測）。 */
+          const n = 會議.filter((c) =>
+            鍵 === "workshop"
+              ? isWorkshopFieldsMCP(c.tags, c.title, c.full_name)
+              : Array.isArray(c.tags) && c.tags.indexOf(鍵) >= 0,
           ).length;
           return n ? `${名} ${n}` : "";
         })
@@ -2935,6 +3040,12 @@ async function recommendVenues(
       "論文の題名か概要をください。",
       "画面の入力と同じ形（`題名 | キーワード, キーワード | 投稿先`）が一番よく当たります（1 行だけでも構いません）。",
     ].join("\n");
+  if (args.exclude_past !== undefined && typeof args.exclude_past !== "boolean")
+    throw new Error("exclude_past は true または false で指定してください。");
+  if (args.order !== undefined && args.order !== "fit" && args.order !== "deadline")
+    throw new Error(
+      "order は fit（既定の検索順）または deadline（締切が近い順）で指定してください。",
+    );
   const 索引 = recommendation();
 
   /* 会場のランクで絞れるのは `recommend_venues` だけ（`search_venues` の形には無いので、
@@ -2954,7 +3065,7 @@ async function recommendVenues(
     "online",
   ].filter((k) => args[k] !== undefined && args[k] !== null && String(args[k]).trim() !== "");
   const 無視の斷り = 無視した.length
-    ? `（無視した絞り込み ${無視した.join("・")} はこの道具では効きません – 順位と点で選びます）`
+    ? `（無視した絞り込み ${無視した.join("・")} はこの道具では効きません – 論文との一致で選びます）`
     : "";
   /* 長い論文は**最初の 20 行だけ**を見る（上の截り – 切つたことを言う）。 */
   const 限り = 數の引數("limit", args.limit, 1);
@@ -3034,20 +3145,39 @@ async function recommendVenues(
     : "";
   const 候補から外した數 = (r: { row: { rankPairs?: string[] } }) =>
     Boolean(ランク) && !Recommender.rankMatches(r.row.rankPairs ?? [], ランク, ランクの尺度);
+  const ワークショップだけ = args.workshop === true;
   /* 分野の寄せ（`venueCats`）は、意味検索でも語彙だけでも同じように渡す。画面は常に
    * 渡しているので、渡さないと**同じ論文で画面と MCP の点と順が変わる**（2026-10-18 実測:
    * 日本語の例で画面は OSDI などが先頭、MCP は 51 点の会場が先頭）。 */
-  const 候補 = Recommender.venueRecommendations(pool, 論文ごとの行, semantic?.scores ?? null, now, {
-    fieldedLexical: true,
-    venueCats: Recommender.autoDetectCats(論文ごとの行),
-    ...(semantic ? { semanticSimilarities: semantic.similarities } : {}),
-  })
+  const 一致候補 = Recommender.venueRecommendations(
+    pool,
+    論文ごとの行,
+    semantic?.scores ?? null,
+    now,
+    {
+      fieldedLexical: true,
+      venueCats: Recommender.autoDetectCats(論文ごとの行),
+      ...(semantic ? { semanticSimilarities: semantic.similarities } : {}),
+    },
+  )
     .filter((r) => r.fit.score >= 10)
-    .filter((r) => !候補から外した數(r));
+    .filter((r) => !候補から外した數(r))
+    .filter(
+      (r) =>
+        !ワークショップだけ ||
+        isWorkshopFieldsMCP(r.row.conf.tags, r.row.conf.title, r.row.conf.full_name),
+    );
+  const 候補 =
+    args.exclude_past === true
+      ? 一致候補.filter((r) => r.availability.status !== "past")
+      : 一致候補;
+  const excludedPast = 一致候補.length - 候補.length;
   if (search && semantic)
     候補.sort(
       (a, b) => (semantic.similarities[b.venueKey] ?? 0) - (semantic.similarities[a.venueKey] ?? 0),
     );
+
+  if (args.order === "deadline") 候補.sort(Recommender.compareVenueDeadlineOrder);
 
   const 題々 = 論文ごとの行
     .map((l) =>
@@ -3069,6 +3199,9 @@ async function recommendVenues(
     `${semantic ? "英語・日本語のモデルで全収録会議を評価しました" : "意味検索の埋め込みは読まないので、埋め込みを使える画面とは点が動く事があります"}${限り.斷り}）` +
     /* 過ぎた候補は「次回の開催に向けた参考」として件数を分けて書く（黙っていると AI が
      * 今出せるように勧めてしまふ – 画面の「締切済み」と同じ出し分け）。 */
+    (args.exclude_past === true
+      ? `（締切が過ぎた候補を ${excludedPast} 件除外。締切未確認・常時受付は残しています）`
+      : "") +
     (過ぎた件數 > 0
       ? `（うち ${過ぎた件數} 件は締切が過ぎた会議です – 次回の開催に向けた参考に載せています）`
       : "");
@@ -3097,6 +3230,8 @@ async function recommendVenues(
   };
   receive?.({
     total: 候補.length,
+    excluded_past: excludedPast,
+    order: args.order ?? "fit",
     candidate_venues: new Set(
       pool.flatMap((row) => [
         row.conf.key,
@@ -3137,6 +3272,9 @@ async function recommendVenues(
        * ここの `rank` は順位なので、名前を分ける（説明文で区別している所）。
        * 文の側には「CCF A・CORE A*」として出ているが、構造化にも同じ事を載せる。 */
       venue_rank: r.row.conf.rank ?? null,
+      /* ワークショップか（画面の「ワークショップのみ」と同じ判定）。推薦候補に
+       * ワークショップが混ざるので、AI が仕分けできるようにする。 */
+      workshop: isWorkshopFieldsMCP(r.row.conf.tags, r.row.conf.title, r.row.conf.full_name),
       availability:
         r.availability.status === "ongoing"
           ? { ...r.availability, timestamp: null }
@@ -3155,13 +3293,17 @@ async function recommendVenues(
       "",
       /* ランクで絞った結果 0 件なら、語の打ち直しを勧めない（語は当たっていて、絞り込みで
        * 落ちている）。 */
-      ...(ランク
+      ...(excludedPast > 0
         ? [
-            `ランク ${ランクの尺度 ? `${ランクの尺度.toUpperCase()} ` : ""}${ランク} では候補が 0 件でした。rank を外すか、別の等級（${Recommender.rankGradeOrderJa().join("・")}）で試してください。`,
+            "締切が過ぎた候補を除くと 0 件でした。exclude_past を false にすると、次回の開催に向けた参考候補も確認できます。",
           ]
-        : [
-            "この題名の語と重なる投稿先は見つかりませんでした。題名に加えて、分野の語やキーワード（`tsn, real-time, scheduling` のように）を添えると当たりやすくなります。",
-          ]),
+        : ランク
+          ? [
+              `ランク ${ランクの尺度 ? `${ランクの尺度.toUpperCase()} ` : ""}${ランク} では候補が 0 件でした。rank を外すか、別の等級（${Recommender.rankGradeOrderJa().join("・")}）で試してください。`,
+            ]
+          : [
+              "この題名の語と重なる投稿先は見つかりませんでした。題名に加えて、分野の語やキーワード（`tsn, real-time, scheduling` のように）を添えると当たりやすくなります。",
+            ]),
     ].join("\n");
   if (offset >= 候補.length)
     return `${頭}\nこの位置には結果がありません（offset: ${offset}／全 ${候補.length} 件）。`;
@@ -3171,18 +3313,16 @@ async function recommendVenues(
     頭,
     ...(知らんランクの文 ? [知らんランクの文] : []),
 
-    "「候補」は投稿先として適合を確認する対象で、強い一致も含みます。「重なりうすい」は言葉や意味の一致が弱い候補です。数値は並べ替えの目安で、採択の予測ではありません。",
+    "「候補」は投稿先として適合を確認する対象で、強い一致も含みます。「重なりうすい」は言葉や意味の一致が弱い候補です。参考点は一致評価の参考値で、順位や採択の見込みを表す値ではありません。",
     ...(semantic
       ? []
       : [
           '意味の近さで探すには retrieval: "semantic" を指定してください（英語・日本語の実モデルを使います。最初の 1 回はモデルの読み込みで十数秒かかり、2 回目からは速くなります）。',
         ]),
-    /* 同じ一致評価の中は点の順に並ぶとは限らない（2026-10-17 実測: 2 位 32 点・3 位 48 点）。
-     * 言わないと AI が並びの壊れと読む。語の一致だけで答えた時は、意味検索への切り替え方も書く。 */
-    `（${search && semantic ? "意味検索の類似度が高い順" : "一致の点の高い順。同じ点どうしは語の重なりの強い順"}${offset > 0 ? `。${offset + 1} 件目から ${見本.length} 件表示・残り ${Math.max(0, 候補.length - offset - 見本.length)} 件` : 候補.length > limit ? `。${limit} 件まで表示・残り ${候補.length - limit} 件` : ""}）`,
+    `（${args.order === "deadline" ? "締切が近い順。日付の無い候補は後ろ、締切済みは最後。同じ日時は元の検索順" : search && semantic ? "意味検索の類似度が高い順" : "論文と募集分野の一致順"}${offset > 0 ? `。${offset + 1} 件目から ${見本.length} 件表示・残り ${Math.max(0, 候補.length - offset - 見本.length)} 件` : 候補.length > limit ? `。${limit} 件まで表示・残り ${候補.length - limit} 件` : ""}）`,
     "",
     ...見本.map((r, i) => {
-      const 評價 = `${String(r.fit.label ?? "評価保留")}（${Number(r.fit.score) || 0} 点）`;
+      const 評價 = `${String(r.fit.label ?? "評価保留")}（参考点 ${Number(r.fit.score) || 0}）`;
       /* **選定理由** – 画面のカードと同じ言ひ回し・同じ要素（`site/app.ts` の `reasonSignals`
        * と同じ 5 つ + 過去掲載先）。実測 2026-10-28: AI が「何でこの会報か」を根拠付きで
        * 言へなかつた（点と札だけ）。画面が持つ物を黙つて落とすと、推薦の強さが分からん。 */
@@ -3279,13 +3419,14 @@ const TOOLS = [
     title: "投稿締切を検索",
     annotations: READ_ONLY_ANNOTATIONS,
     description:
-      "日本語で投稿締切を検索する。語を省いて kind / kinds / rank / category / categories / domestic / online / within_days だけでも絞れる。既定は今後の abstract / paper / journal で、過去と推定は除きます（include_past・include_estimated で足せます）。既定の kind は MCP の方が広く、常時受付（journal）も含みます。scope は screen（初期一覧。`public/catalog.json`）または all（**収録の元データ** `data/snapshot.json`）。公開している `data.json` は重複をまとめた後なので、all の行数はそれより多くなります。structuredContent に total・rows・next_offset を返す。screen で 0 件のときは scope_comparison に全収録での同条件の件数・絞る前の件数・生成時刻を返す。比較データを読めない場合は検索結果を保持し、scope_comparison_error に理由と再試行の案内を返す。範囲を変えるときもほかの条件を維持する。続きは同じ条件と next_offset を offset に指定する。日付のみの行の utc・jst は null。常時受付は締切日時・精度・回次を null とし、日付のある行の後に並べます。推定期間、投稿トラック、確認状態を別に返す。公式確認（いつ・どこで・何を確かめたか）は verification_ja に画面の行の詳細と同じ日本語で返します（内部の鍵名は verification に残します）。前に出ていた締切も表示する。日付語は別ラウンドや会期にも当たるため、締切だけの期間指定には within_days を使う。会期の欄には、上流が書いた原文（`March 18-21, 2024` のような自由文）を「原表記」として添えます（画面の行の詳細と同じ）。0 件のときは画面と同じ案内と「打ち直すなら」の候補を返す。返す行の形: 日時 | 種別 | 確認状態（ある場合）| 会議名（版の識別子）| ランク | 会期 | 開催地 URL。テキストは `| ` で切り、構造化結果を優先する。**行から画面の深いリンクを組めます**: 構造化の行の `screen_row_key` をそのまま `index.html?row=<その値>` に渡してください（人が開くと、その行の詳細が開きます）。構造化の行には `categories`（分野の鍵）と `categories_ja`（画面の札と同じ日本語）も入る。`ics_uid`（配付カレンダー `deadlines.ics` の予定の UID）は、**カレンダーに予定がある締切**に入ります（初期カタログと公開の `data.json` から引きます）。カレンダーに予定がない行には付きません。",
+      "日本語・英語で投稿締切を検索する（会議名・略称・`deadline`・`CFP` は英字のままでよい）。語を省いて kind / kinds / rank / category / categories / domestic / online / workshop / within_days だけでも絞れる。既定は今後の abstract / paper / journal で、過去と推定は除きます（include_past・include_estimated で足せます）。既定の kind は MCP の方が広く、常時受付（journal）も含みます。scope は screen（初期一覧。`public/catalog.json`）または all（**収録の元データ** `data/snapshot.json`）。公開している `data.json` は重複をまとめた後なので、all の行数はそれより多くなります。structuredContent に total・rows・next_offset を返す。screen で 0 件のときは scope_comparison に全収録での同条件の件数・絞る前の件数・生成時刻を返す。比較データを読めない場合は検索結果を保持し、scope_comparison_error に理由と再試行の案内を返す。範囲を変えるときもほかの条件を維持する。続きは同じ条件と next_offset を offset に指定する。日付のみの行の utc・jst は null。常時受付は締切日時・精度・回次を null とし、日付のある行の後に並べます。推定期間、投稿トラック、確認状態を別に返す。公式確認（いつ・どこで・何を確かめたか）は verification_ja に画面の行の詳細と同じ日本語で返します（内部の鍵名は verification に残します）。前に出ていた締切も表示する。日付語は別ラウンドや会期にも当たるため、締切だけの期間指定には within_days を使う。会期の欄には、上流が書いた原文（`March 18-21, 2024` のような自由文）を「原表記」として添えます（画面の行の詳細と同じ）。0 件のときは画面と同じ案内と「打ち直すなら」の候補を返す。返す行の形: 日時 | 種別 | 確認状態（ある場合）| 会議名（版の識別子）| ランク | 会期 | 開催地 URL。テキストは `| ` で切り、構造化結果を優先する。**行から画面の深いリンクを組めます**: 構造化の行の `screen_row_key` をそのまま `index.html?row=<その値>` に渡してください（人が開くと、その行の詳細が開きます）。構造化の行には `categories`（分野の鍵）と `categories_ja`（画面の札と同じ日本語）も入る。`ics_uid`（配付カレンダー `deadlines.ics` の予定の UID）は、**カレンダーに予定がある締切**に入ります（初期カタログと公開の `data.json` から引きます）。カレンダーに予定がない行には付きません。",
     inputSchema: {
       type: "object",
       properties: {
         query: {
           type: "string",
-          description: "検索語（日本語。例: セキュリティ / 今月 / 海外開催）",
+          description:
+            "検索語（日本語または英語。例: セキュリティ / 今月 / 海外開催 / SIGCOMM 2027 deadline / CFP SIGCOMM / deadlines next month / graph neural networks）",
         },
         limit: { type: "number", description: "返す行数（既定 20・最大 100）" },
         offset: {
@@ -3335,6 +3476,11 @@ const TOOLS = [
           description:
             "オンライン参加可の行だけに絞る（画面の同じ名前のチェック欄と同じ判定。会場の表記にオンライン・ハイブリッドなどの記述がある行だけ – 記述がない行を対面と決めつけない）",
         },
+        workshop: {
+          type: "boolean",
+          description:
+            "ワークショップの行だけに絞る（画面の「ワークショップのみ」と同じ判定。会議名に workshop を持つ行と、タグ workshop の行だけ – ワークショップを併設する本会議は出ない）",
+        },
         within_days: {
           type: "number",
           description:
@@ -3354,10 +3500,15 @@ const TOOLS = [
     title: "直近の締切と開催を確認",
     annotations: READ_ONLY_ANNOTATIONS,
     description:
-      "今日から days 日以内の締切と開催日程を返す。両方を合わせて時系列に1ページ最大100件。structuredContent.items の type は deadline または event。total・next_offset を返し、続きは同じ条件で offset に next_offset を指定する。scope と kind/kinds は締切の条件で（scope の出所は search_deadlines と同じ）、会期は収録全体の同期間から選ぶ。既定は種別では絞らない（全部）、推定も含む。kind / kinds は日本語の種別名と配列も受ける。推定期間・トラック・前に出ていた締切も表示する。範囲は JST の暦日で判定する。within_days と境目の切り方は同じ。search_deadlines と件数を比べる場合は種別・推定・scope を揃える（rank も同じ判定）。既定の条件では件数はそのままでは違う。返す行の形: 締切は日時 | 種別 | 確認状態（ある場合）| 会議名（版の識別子）| ランク | 会期 | 開催地 URL。会期の行は別の形で、開催の節に - 開始日〜終了日 | 会議名（key: 識別子・版）| 開催地 URL。会期の行の会議名は年を添えた形、開催地は締切の行と同じ日本語表記です（空でも「未確認」を出します）。**構造化の行は締切と同じ欄**（`full_name`・`categories`・`categories_ja`・`rank`・`domestic`）も持ちます。",
+      "今日から days 日以内の締切と開催日程を返す。両方を合わせて時系列に1ページ最大100件。structuredContent.items の type は deadline または event。total・next_offset を返し、続きは同じ条件で offset に next_offset を指定する。scope と kind/kinds は締切の条件で（scope の出所は search_deadlines と同じ）、会期は収録全体の同期間から選ぶ。既定は種別では絞らない（全部）、推定も含む。kind / kinds は日本語の種別名と配列も受ける。推定期間・トラック・前に出ていた締切も表示する。`workshop: true` でワークショップの行・開催回だけに絞れる。範囲は JST の暦日で判定する。within_days と境目の切り方は同じ。search_deadlines と件数を比べる場合は種別・推定・scope を揃える（rank も同じ判定）。既定の条件では件数はそのままでは違う。返す行の形: 締切は日時 | 種別 | 確認状態（ある場合）| 会議名（版の識別子）| ランク | 会期 | 開催地 URL。会期の行は別の形で、開催の節に - 開始日〜終了日 | 会議名（key: 識別子・版）| 開催地 URL。会期の行の会議名は年を添えた形、開催地は締切の行と同じ日本語表記です（空でも「未確認」を出します）。**構造化の行は締切と同じ欄**（`full_name`・`categories`・`categories_ja`・`rank`・`domestic`）も持ちます。",
     inputSchema: {
       type: "object",
       properties: {
+        workshop: {
+          type: "boolean",
+          description:
+            "ワークショップの行・開催回だけに絞る（画面の「ワークショップのみ」と同じ判定。会議名に workshop を持つ会議と、タグ workshop の会議）",
+        },
         days: { type: "number", description: "何日先まで（既定 30・最大 400）" },
         limit: {
           type: "number",
@@ -3398,7 +3549,7 @@ const TOOLS = [
     title: "会議の詳細を確認",
     annotations: READ_ONLY_ANNOTATIONS,
     description:
-      "会議の開催回、締切、会期、ランク、主題、正式名を返す。structuredContent の editions に推定を除く全開催回の会期・確かさ・公式URL、rows に締切を返す。key は小文字の識別子、name は略称・正式名・名前の一部。開催回の識別子は lookup_status: edition_key と retry_arguments で関連会議へ案内する。見つからない識別子は lookup_status: not_found と略称の候補を返す。曖昧な名前や古いkeyは lookup_status: ambiguous と candidates を返す。候補の venue_key を key に指定して再照会する。表示範囲外の締切は lookup_status: out_of_scope と再照会用の retry_arguments で案内する。scope の既定は all で（出所は search_deadlines と同じ）、過ぎた分も全部出る。今後の物から並べ、推定以外の次の投稿締切を next_submission、推定の見込みを next_estimated_submission で分けて返す。主題は分野より詳しい札で、収録にある会議だけに出します（画面の行の詳細の「主題」と同じ）。返す行の形: 会議の要約に続いて、日時 | 種別 | 確認状態（ある場合）| 会議名（版の識別子）| ランク | 会期 | 開催地 URL。**構造化の rows は `search_deadlines` と同じ欄**を持ちます（`categories`・`categories_ja`・`ics_uid` を含む。`ics_uid` は品書に載っている締切だけ）。",
+      "会議の開催回、締切、会期、ランク、主題、正式名、募集分野の説明を返す。research_topics は画面と同じ収録済みの募集分野の配列（未収録は空配列、データを読めない場合は null）。research_topic_sources は募集分野の出典URLの配列（未収録は空配列、データを読めない場合は null）。research_topics_generated_at は説明と出典のデータの生成時刻で、募集要項の確認日時ではありません。過去の募集を含むため、最新の募集要項は公式サイトで確認する。structuredContent の editions に推定を除く全開催回の会期・確かさ・公式URL、rows に締切を返す。key は小文字の識別子、name は略称・正式名・名前の一部。開催回の識別子は lookup_status: edition_key と retry_arguments で関連会議へ案内する。見つからない識別子は lookup_status: not_found と略称の候補を返す。曖昧な名前や古いkeyは lookup_status: ambiguous と candidates を返す。候補の venue_key を key に指定して再照会する。表示範囲外の締切は lookup_status: out_of_scope と再照会用の retry_arguments で案内する。scope の既定は all で（出所は search_deadlines と同じ）、過ぎた分も全部出る。今後の物から並べ、推定以外の次の投稿締切を next_submission、推定の見込みを next_estimated_submission で分けて返す。主題は分野より詳しい札で、収録にある会議だけに出します（画面の行の詳細の「主題」と同じ）。返す行の形: 会議の要約に続いて、日時 | 種別 | 確認状態（ある場合）| 会議名（版の識別子）| ランク | 会期 | 開催地 URL。**構造化の rows は `search_deadlines` と同じ欄**を持ちます（`categories`・`categories_ja`・`ics_uid` を含む。`ics_uid` は品書に載っている締切だけ）。",
     inputSchema: {
       type: "object",
       properties: {
@@ -3426,7 +3577,7 @@ const TOOLS = [
     title: "研究テーマから投稿先を検索",
     annotations: READ_ONLY_ANNOTATIONS,
     description:
-      "全収録の投稿先プロフィールから、研究テーマ・論文の題名・概要に合う会議や論文誌を検索する。締切不明や締切済みの会議も候補に含む。retrieval: semantic で実モデル、lexical で語彙と公式トピックを用いる。締切日時を探す場合は search_deadlines を使う。構造化結果の candidate_venues は検索した収録会議数、total は一致した候補数。limit と offset でページ送りできる。",
+      "全収録の投稿先プロフィールから、研究テーマ・論文の題名・概要に合う会議や論文誌を検索する。締切不明や締切済みの会議も候補に含む。retrieval: semantic で実モデル、lexical で語彙と公式トピックを用いる。締切日時を探す場合は search_deadlines を使う。構造化結果の candidate_venues は検索した収録会議数、total は一致した候補数。limit と offset でページ送りできる。各行の `workshop` はその会場がワークショップか（画面の「ワークショップのみ」と同じ判定）。 `workshop: true` でワークショップの会場だけに絞れる。`exclude_past: true` で締切済みの候補を除く（締切未確認・常時受付は残す）。除外件数は excluded_past に返す。`order: deadline` で締切が近い順に並べる（日付の無い候補は後ろ、締切済みは最後）。",
     inputSchema: {
       type: "object",
       properties: {
@@ -3442,6 +3593,22 @@ const TOOLS = [
             "研究テーマ・題名・概要の文字列、title・abstract・keywords・venue を持つ論文オブジェクト、またはその配列。title か abstract は空でない文字列が必要。JSON文字列も使えます。",
         },
         limit: { type: "number", description: "返す候補の数（既定10・最大30）" },
+        order: {
+          type: "string",
+          enum: ["fit", "deadline"],
+          description:
+            "並び順。fit は既定の検索順、deadline は画面と共通の締切が近い順（日付の無い候補は後ろ、締切済みは最後）。同じ日時・同じ群では元の検索順を保つ。ページ送り前に並べ替えます。",
+        },
+        exclude_past: {
+          type: "boolean",
+          description:
+            "締切が過ぎた候補を除く（既定false）。画面の同名条件と同じ判定。締切未確認・常時受付は残すため、残った全候補が投稿受付中とは限りません。",
+        },
+        workshop: {
+          type: "boolean",
+          description:
+            "ワークショップの会場だけに絞る（画面の「ワークショップのみ」と同じ判定。true の時だけ効きます）",
+        },
         offset: { type: "integer", minimum: 0, description: "取得開始位置（既定0）" },
       },
       required: ["query"],
@@ -3452,7 +3619,7 @@ const TOOLS = [
     title: "論文に合う投稿先を探す",
     annotations: READ_ONLY_ANNOTATIONS,
     description:
-      "論文情報に合う投稿先を語彙の一致で探す。学習済みの並べ替えモデルがある場合は併用する。rank を指定すると会場のランク（`A*`・`A`・`B`・`C`・`N`、または `CCF A` のように尺度の名を付けた形）で候補を絞ります（画面の推薦モードの「ランク」と同じ判定。知らない等級はその等級では 0 件になり、その旨を返します）。retrieval: semantic を指定すると実モデルを使う。候補の範囲は画面と共通（推薦索引から作るため、同じ論文でも画面と点がわずかに動く事があります）。順位表に入るのは実質的な一致がある候補だけで、証拠がない会議を分野だけの一致で推薦しない。長い入力は最初の 20 行と各行の長さ制限で切り、切った旨を返す。返す行の形: 順位と一致評価、選定理由、締切の確認状況に続いて締切行。1ページ最大30件。structuredContent の rows は 1 行 = 1 候補で、`rank` は**順位**（1 起点。会場のランクではない – 他の道具の `rank`（`ccf`・`core`・`thcpl`）とは別の物です）、`fit` は一致評価とその内訳、`availability` は受付状態、`deadlines` は締切、`verification` は確認情報、`venue_rank` は会場のランク（`ccf`・`core`・`thcpl`。他の道具の `rank` と同じ形）。続きは同じ論文情報と next_offset を offset に指定する。",
+      "論文情報に合う投稿先を語彙の一致で探す。学習済みの並べ替えモデルがある場合は併用する。rank を指定すると会場のランク（`A*`・`A`・`B`・`C`・`N`、または `CCF A` のように尺度の名を付けた形）で候補を絞ります（画面の推薦モードの「ランク」と同じ判定。知らない等級はその等級では 0 件になり、その旨を返します）。retrieval: semantic を指定すると実モデルを使う。候補の範囲は画面と共通（推薦索引から作るため、同じ論文でも画面と点がわずかに動く事があります）。順位表に入るのは実質的な一致がある候補だけで、証拠がない会議を分野だけの一致で推薦しない。長い入力は最初の 20 行と各行の長さ制限で切り、切った旨を返す。返す行の形: 順位と一致評価、選定理由、締切の確認状況に続いて締切行。1ページ最大30件。structuredContent の rows は 1 行 = 1 候補で、`rank` は**順位**（1 起点。会場のランクではない – 他の道具の `rank`（`ccf`・`core`・`thcpl`）とは別の物です）、`fit` は一致評価とその内訳（score は参考点で、順位とは別）、`availability` は受付状態、`deadlines` は締切、`verification` は確認情報、`venue_rank` は会場のランク（`ccf`・`core`・`thcpl`。他の道具の `rank` と同じ形）、`workshop` はその会場がワークショップか（画面の「ワークショップのみ」と同じ判定）。`workshop: true` でワークショップの会場だけに絞れる。`exclude_past: true` で締切済みの候補を除く（締切未確認・常時受付は残す）。除外件数は excluded_past に返す。`order: deadline` で締切が近い順に並べる（日付の無い候補は後ろ、締切済みは最後）。続きは同じ論文情報と next_offset を offset に指定する。",
     inputSchema: {
       type: "object",
       properties: {
@@ -3473,6 +3640,22 @@ const TOOLS = [
             "会場のランクで候補を絞る（`A*` / `A` / `B` / `C` / `N`。`CCF A`・`CORE A*` のように尺度の名を付けるとその尺度の等級だけを見る。画面の推薦モードの「ランク」と同じ判定）",
         },
         limit: { type: "number", description: "返す候補の数（既定 10・最大 30）" },
+        order: {
+          type: "string",
+          enum: ["fit", "deadline"],
+          description:
+            "並び順。fit は既定の検索順、deadline は画面と共通の締切が近い順（日付の無い候補は後ろ、締切済みは最後）。同じ日時・同じ群では元の検索順を保つ。ページ送り前に並べ替えます。",
+        },
+        exclude_past: {
+          type: "boolean",
+          description:
+            "締切が過ぎた候補を除く（既定false）。画面の同名条件と同じ判定。締切未確認・常時受付は残すため、残った全候補が投稿受付中とは限りません。",
+        },
+        workshop: {
+          type: "boolean",
+          description:
+            "ワークショップの会場だけに絞る（画面の「ワークショップのみ」と同じ判定。true の時だけ効きます）",
+        },
         offset: {
           type: "integer",
           minimum: 0,
@@ -3709,6 +3892,7 @@ async function main(): Promise<void> {
       `${[
         "kamiyobi の MCP サーバ（読み取り専用・stdio）。",
         "  AI から: MCP クライアントからこのファイルを起動します（`node src/mcp.ts`）。",
+        "  固定の時計: --now ISO 8601（stdio 起動・検査用の口。省略すれば実時計）。例: node src/mcp.ts --now 2026-08-09T00:00:00Z",
         "  手元で確認: ツール名と引数を指定すると、1 回分の結果を表示します。",
         `  ツール: ${TOOLS.map((t) => t.name).join(" / ")}`,
         "  論文の入力: --input ファイル名でUTF-8テキスト・JSONを読む。--input - は標準入力。",
@@ -3935,10 +4119,23 @@ function isDirectExecution(): boolean {
 
 /* 直接起動された時だけ stdio を開く（import した検査では開かない）。 */
 if (isDirectExecution()) {
-  if (process.argv.length > 2)
+  const 引數 = process.argv.slice(2);
+  if (引數[0] === "--now") {
+    /* 固定の時計（検査・再生用の口）。指定しなければ実時計のまま。 */
+    const 時刻 = Date.parse(引數[1] ?? "");
+    if (引數.length !== 2 || !Number.isFinite(時刻)) {
+      process.stderr.write(
+        "--now は固定の時計を指定します（stdio 起動・検査用）。ISO 8601 の時刻を1つ指定してください。例: node src/mcp.ts --now 2026-08-09T00:00:00Z\n",
+      );
+      process.exit(1);
+    }
+    runStdio(時刻);
+  } else if (引數.length > 0) {
     void main().catch((error) => {
       process.stderr.write(`${error.message}\n`);
       process.exitCode = 1;
     });
-  else runStdio();
+  } else {
+    runStdio();
+  }
 }

@@ -134,7 +134,7 @@ describe("打ち替えの候選から假名だけの切れ端を落とす（第 
   it("假名だけ三字以下を候選から落とす目を、その家が持つ", () => {
     expect(中).toMatch(/HIRAGANA_ONLY_JA\.test/);
     expect(中).toMatch(/length <= 3/);
-    expect(中).toMatch(/return Recommender\.shorterHitWordsJa\(trimmed, hays, now\)\.filter/);
+    expect(中).toMatch(/return Recommender\.shorterHitWordsJa\(trimmed, targets, now\)\.filter/);
   });
   it("假名だけの目は app の一處にしか無く、同じ列表を其它の家が寫さぬ", () => {
     expect(src.match(/HIRAGANA_ONLY_JA/g)?.length).toBe(2);
@@ -150,12 +150,11 @@ describe("画面の文が噓を言はんと実測で張る（第 623 回）", ()
   const 品書 = Recommender.candidateRows(
     JSON.parse(readFileSync(join(builtSite(), "catalog.json"), "utf8")),
   );
-  const hays = 品書.map((r: { hay?: string }) => String(r.hay));
   function 當(文: string): number {
     const 展 = Recommender.expandRelativeMonths(文, 基準);
     if (!展) return 品書.length;
     const m = Recommender.searchMatcher(展, 基準);
-    return 品書.filter((r: { hay?: string }) => m(String(r.hay)) === true).length;
+    return 品書.filter((r: { hay?: string }) => m(r) === true).length;
   }
   const 檢べ文 = [
     "査読の手数料はある",
@@ -174,7 +173,7 @@ describe("画面の文が噓を言はんと実測で張る（第 623 回）", ()
     for (const 文 of 檢べ文) {
       const tc = Recommender.queryTermCounts(
         Recommender.expandRelativeMonths(文, 基準),
-        hays,
+        品書,
         基準,
       );
       if (tc.length < 2) continue;

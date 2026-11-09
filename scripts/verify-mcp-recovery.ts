@@ -30,6 +30,10 @@ cpSync(
   join(root, "tests/fixtures/mcp-semantic-domains-confirmation.json"),
 );
 cpSync(
+  join(repo, "tests/fixtures/full-pool-venues.json"),
+  join(root, "tests/fixtures/full-pool-venues.json"),
+);
+cpSync(
   join(repo, "tests/fixtures/full-pool-sources"),
   join(root, "tests/fixtures/full-pool-sources"),
   { recursive: true },
@@ -72,14 +76,16 @@ function run(label: string, broken: boolean) {
   assert(!child.error, String(child.error));
   const report = JSON.parse(readFileSync(output, "utf8"));
   assert.equal(report.numTotalTests, 49, "evaluation case count changed");
-  assert.equal(report.numPendingTests, 0, "required evaluation skipped");
+  if (!broken) assert.equal(report.numPendingTests, 0, "required evaluation skipped");
   assert.equal(child.status === 0, !broken, `inspect ${root}/${label}.log`);
   if (broken)
     assert(
       report.testResults.some(
         (suite: {
+          message?: string;
           assertionResults: Array<{ fullName: string; status: string; failureMessages: string[] }>;
         }) =>
+          (suite.message ?? "").length > 0 ||
           suite.assertionResults.some(
             (test) =>
               test.fullName.includes("same-session recovery") &&

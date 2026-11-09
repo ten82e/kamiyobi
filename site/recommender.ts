@@ -21,7 +21,7 @@ import {
   latinVocabularyJa,
 } from "./latin-retype.ts"; // 欧文の打ち間違いの見当
 import { PLACE_QUERY_ALIASES_JA } from "./place-aliases.ts"; // 繋ぎを `.ts` で書く – site/tsconfig.build.json の書き換えで成果物は `.js` になる
-import { TOPIC_QUERY_ALIASES_JA } from "./topic-aliases.ts"; // 主題の寄せ表
+import { METHOD_FIELD_ALIASES, TOPIC_QUERY_ALIASES_JA } from "./topic-aliases.ts"; // 主題・手法の寄せ表
 
 type Vector = number[];
 type VectorMap = Record<string, Vector>;
@@ -94,6 +94,8 @@ interface ScheduleOnlyEdition {
   cats: string[];
   tags: string[];
   hay: string;
+  /** 会期だけの行は URL のホストを入れない（別の会議の名前で別の会議が出るのを避ける）。 */
+  hostHay?: string;
 }
 
 interface ConferenceRecord {
@@ -111,6 +113,7 @@ interface ConferenceRecord {
   acronym?: string;
   scope?: string | string[];
   official_scope?: string | string[];
+  official_scope_sources?: string[];
   paper_abstracts?: string[];
   keywords?: string[];
   rank?: Record<string, string>;
@@ -149,6 +152,9 @@ interface CandidateRow {
   tags: string[];
   rankPairs: string[];
   hay: string;
+  /** URL のホストから作った検索用の文字列。名前の `hay` とは**別の規則**（語全体一致）で
+   * 照合する – `ICCV` を `iccvm.org` に当てないため（SPEC §7）。 */
+  hostHay?: string;
   dupLabel?: string;
   name?: string;
   year?: number | null;
@@ -457,6 +463,9 @@ function normalizeConference(value: unknown): ConferenceRecord | null {
     acronym: typeof value.acronym === "string" ? value.acronym : undefined,
     scope: normalizedStrings(value.scope),
     official_scope: normalizedStrings(value.official_scope),
+    ...(value.official_scope_sources !== undefined
+      ? { official_scope_sources: normalizedStrings(value.official_scope_sources) }
+      : {}),
     paper_abstracts: normalizedStrings(value.paper_abstracts),
     keywords: normalizedStrings(value.keywords),
     rank,
@@ -2298,6 +2307,29 @@ const Recommender = (() => {
       ["情報処理学会", "学会「IPSJ」", ["情報処理学会", "ipsj.or.jp"]],
       ["電子情報通信学会", "学会「IEICE」", ["電子情報通信学会", "ieice.org"]],
       ["nips", "会議「NeurIPS」", ["neurips"]],
+      /* 国の形容詞で探す人（`Japanese conferences`）を、収録の開催地の国名へ寄せる
+       * （2026-10-26 実測: `Japanese conferences` 0 行 / `Japan conferences` 78 行）。
+       * American は大陸とも国とも読めるので載せない。 */
+      ["japanese", "開催地「日本」", ["japan"]],
+      ["korean", "開催地「韓国」", ["korea"]],
+      ["chinese", "開催地「中国」", ["china"]],
+      ["taiwanese", "開催地「台湾」", ["taiwan"]],
+      ["indian", "開催地「インド」", ["india"]],
+      ["singaporean", "開催地「シンガポール」", ["singapore"]],
+      ["australian", "開催地「オーストラリア」", ["australia"]],
+      ["canadian", "開催地「カナダ」", ["canada"]],
+      ["german", "開催地「ドイツ」", ["germany"]],
+      ["french", "開催地「フランス」", ["france"]],
+      ["italian", "開催地「イタリア」", ["italy"]],
+      ["spanish", "開催地「スペイン」", ["spain"]],
+      ["dutch", "開催地「オランダ」", ["netherlands"]],
+      ["swiss", "開催地「スイス」", ["switzerland"]],
+      ["swedish", "開催地「スウェーデン」", ["sweden"]],
+      ["israeli", "開催地「イスラエル」", ["israel"]],
+      ["brazilian", "開催地「ブラジル」", ["brazil"]],
+      /* 評価の形容詞は「上位の等級」の条件として受ける（`top security conferences` は
+       * `top` を語として要求すると 0 件だった – 2026-10-26 実測）。等級の語は行の hay に
+       * ある `ccf a` などの形に合わせる。 */
       ["日本時間", "行の時刻に書かれた JST という語", ["JST"]],
       ["日本標準時", "行の時刻に書かれた JST という語", ["JST"]],
       ["日本標準時間", "行の時刻に書かれた JST という語", ["JST"]],
@@ -3053,7 +3085,7 @@ const Recommender = (() => {
       /* SPEC 第 337・538 */
       anyTail: true,
       echo: true,
-      note: "はこの表の行に書かれていない細目の主題です。この表は催し物の分野・種別・開催地・参加形式・締切の日を出しています。その語を外して分野名（例: 人工知能・セキュリティ・ネットワーク・高性能計算）で打つと絞れます。",
+      note: "はこの表の行に書かれていない細目の主題です。この表は催し物の分野・種別・開催地・参加形式・締切の日を出しています。その語を外して分野名（例: 人工知能・セキュリティ・ネットワーク・高性能計算）で打つと絞れます。主題から探すなら「投稿先を探す」（AI からは `recommend_venues`）に論文の題名・概要を渡してください。",
       live: "はこの表の行に無い細目の主題です。分野名（人工知能・セキュリティ・ネットワーク・高性能計算）で打つと絞れます。",
     },
     /* SPEC 第 535・534 回（群の理由と実測は SPEC にある – 第 699 回にここを一読に縮めた）。*/
@@ -6874,6 +6906,102 @@ const Recommender = (() => {
     {
       const 打たれた検索語 = String(query ?? "");
       const 寄せた検索語 = String(collapseRelativeDayPhrase(打たれた検索語));
+      /* 手法の名は分野の語に直して探す（`graph neural networks` → `machine learning`）。
+       * 黙って別の語で探すと「なぜこの行が出たか」が分からないので、必ず言う。 */
+      const method = methodFieldOf(打たれた検索語);
+      if (method) {
+        const note = `「${method.phrase}」は手法の語なので、分野「${method.label}」で探しています`;
+        if (notes.indexOf(note) < 0) notes.push(note);
+      }
+      const rankAdj = rankAdjectiveOf(打たれた検索語);
+      if (rankAdj) {
+        const note = `「${rankAdj}」は上位の等級（CCF A・CORE A* など）で探しています`;
+        if (notes.indexOf(note) < 0) notes.push(note);
+      }
+      /* `American` は国（USA）とも大陸（北アメリカ・南アメリカ）とも読める。勝手に
+       * どちらかへ寄せず、どちらの語で探すかを言う（2026-10-26 実測: そのままでは 0 行）。 */
+      const workshopOnly = /\b(?:workshops?\s+only|only\s+workshops?)\b/i.exec(打たれた検索語);
+      /* `soon` はこの表の既定の「これからの 30 日間」として探す（外すと全件に化ける）。 */
+      /* 週・月の言い方は日数に直す（`in two weeks` は点とも幅とも読めるので、幅として扱う）。 */
+      const weekPhrase =
+        /\b(?:within|in(?:\s+the\s+next)?|next)\s+(a|an|one|two|three|four|five|six|seven|eight|nine|ten|\d{1,2})\s+weeks?\b/i.exec(
+          打たれた検索語,
+        );
+      const monthPhrase = /\b(?:within|in)\s+(?:a|one|the\s+next)\s+month\b/i.exec(打たれた検索語);
+      if (weekPhrase || monthPhrase) {
+        const 日數 = weekPhrase
+          ? 7 *
+            (/^\d+$/.test(weekPhrase[1])
+              ? Number(weekPhrase[1])
+              : (ENGLISH_WEEK_NUMBERS[weekPhrase[1].toLowerCase()] ?? 1))
+          : 30;
+        const note = `「${(weekPhrase || monthPhrase)![0]}」は ${日數} 日以内として探しています（画面の「締切まで」で変えられます。MCP は \`within_days\`）`;
+        if (notes.indexOf(note) < 0) notes.push(note);
+      }
+      const usWord = /\bU\.S\.A?\.?|\bUS\b/.exec(打たれた検索語);
+      if (usWord) {
+        const note = `「${usWord[0]}」は USA（アメリカ）として探しています`;
+        if (notes.indexOf(note) < 0) notes.push(note);
+      }
+      const soonWord = /\b(soon|approaching|imminent)\b/i.exec(打たれた検索語);
+      if (soonWord) {
+        const note = `「${soonWord[1]}」は 30 日以内として探しています（画面の「締切まで」で変えられます。MCP は \`within_days\`）`;
+        if (notes.indexOf(note) < 0) notes.push(note);
+      }
+
+      /* 投稿先を探す問い（`where to submit`）は、締切の語ではないので論文モードへ渡す。 */
+      if (
+        /\bwhere\b[^.]*\bsubmit\b|\bsubmit\b[^.]*\bwhere\b|\bwhich conference\b[^.]*\bsubmit\b/i.test(
+          打たれた検索語,
+        )
+      ) {
+        const note =
+          "投稿先を探すなら、論文の題名・概要を `recommend_venues`（画面の『投稿先を探す』）に渡してください";
+        if (notes.indexOf(note) < 0) notes.push(note);
+      }
+      /* 「おすすめの会場は」も論文モードへ渡す（締切の語ではない）。 */
+      if (
+        /\b(?:recommend|suggest)\b/i.test(打たれた検索語) &&
+        /\b(?:venues?|conferences?|where)\b/i.test(打たれた検索語)
+      ) {
+        const note =
+          "投稿先の候補は、論文の題名・概要を `recommend_venues`（画面の『投稿先を探す』）に渡してください";
+        if (notes.indexOf(note) < 0) notes.push(note);
+      }
+
+      if (workshopOnly) {
+        const note = `「${workshopOnly[0]}」はワークショップの行だけに絞っています`;
+        if (notes.indexOf(note) < 0) notes.push(note);
+      }
+      if (/\bamerican\b/i.test(打たれた検索語)) {
+        const note =
+          "「American」は国（USA）とも大陸（北アメリカ・南アメリカ）とも読めます。国なら「USA」、大陸なら「North America」「South America」で探してください";
+        if (notes.indexOf(note) < 0) notes.push(note);
+      }
+      /* 2 語の地域名は日本語の地域まとめに直して探すので、そのことを言う。 */
+      const regionPhrase =
+        /\b(north america|south america|central america|middle east|south[\s-]?east asia|east asia|south asia|latin america|scandinavia|nordics?)\b/i.exec(
+          打たれた検索語,
+        );
+      if (regionPhrase) {
+        const label =
+          {
+            "north america": "北米",
+            "south america": "南米",
+            "central america": "中米",
+            "middle east": "中東",
+            "southeast asia": "東南アジア",
+            "south-east asia": "東南アジア",
+            "east asia": "東アジア",
+            "south asia": "南アジア",
+            "latin america": "ラテンアメリカ",
+            scandinavia: "北欧",
+            nordic: "北欧",
+            nordics: "北欧",
+          }[regionPhrase[1].toLowerCase()] || regionPhrase[1];
+        const note = `「${regionPhrase[0]}」は地域まとめ（${label}）で探しています`;
+        if (notes.indexOf(note) < 0) notes.push(note);
+      }
       /* 「国内」と「国際会議」は逆を指す（前者は国内研究会・国内シンポジウムに絞り、
        * 後者はその外側の会議）。両方打つと 0 件になるので、理由と、日本で開かれる国際会議の
        * 探し方を書く（2026-10-18 実測: `国内の国際会議` は 0 件で、案内は「国際会議」の
@@ -8575,8 +8703,11 @@ const Recommender = (() => {
     const list = Array.isArray(hays) ? hays : [];
     const groups = queryTokenGroups(query, nowMs);
 
-    const folded: string[] = [];
-    for (let i = 0; i < list.length; i++) folded.push(kanaFold(list[i]));
+    const folded: Array<{ hay: string; hostHay: string }> = [];
+    for (let i = 0; i < list.length; i++) {
+      const row = searchTargetParts(list[i]);
+      folded.push({ hay: kanaFold(row.hay), hostHay: kanaFold(row.hostHay) });
+    }
     return groups.map((group) => {
       const alts = (group || []).length ? group : [""];
       const matchers = alts.map((alt) => searchGroups(alt, nowMs));
@@ -8584,7 +8715,7 @@ const Recommender = (() => {
       for (let i = 0; i < folded.length; i++) {
         for (let j = 0; j < matchers.length; j++) {
           // `searchMatcher` と同じく、述語が空の語は全行に当たる。
-          if (!matchers[j].length || matchFoldedGroups(folded[i], matchers[j])) {
+          if (!matchers[j].length || matchRowGroups(folded[i], matchers[j])) {
             count += 1;
             break;
           }
@@ -8637,8 +8768,11 @@ const Recommender = (() => {
      * 3,275 行 / 210 万字で実測: `分散並列処理基盤システム` 1 語の見当に **640 ms**、
      * `高速計算` 157 ms – 1 打鍵で検索欄が固まる。畳んでから数えると 35 ms）。
      * 述語の作り方は `searchMatcher` と同じ `searchGroups` を使うので、数は同じものになる。 */
-    const folded: string[] = [];
-    for (let i = 0; i < list.length; i++) folded.push(kanaFold(list[i]));
+    const folded: Array<{ hay: string; hostHay: string }> = [];
+    for (let i = 0; i < list.length; i++) {
+      const row = searchTargetParts(list[i]);
+      folded.push({ hay: kanaFold(row.hay), hostHay: kanaFold(row.hostHay) });
+    }
     const cache: Record<string, number> = {};
     const countOf = (word: string): number => {
       if (!word) return 0;
@@ -8647,7 +8781,7 @@ const Recommender = (() => {
       let n = 0;
       if (groups.length) {
         for (let i = 0; i < folded.length; i++) {
-          if (matchFoldedGroups(folded[i], groups)) n += 1;
+          if (matchRowGroups(folded[i], groups)) n += 1;
         }
       }
       cache[word] = n;
@@ -8670,6 +8804,19 @@ const Recommender = (() => {
       words.forEach((word, index) => {
         pushShown(shown(index, word), word, "alone");
       });
+    /* (a2) 1 語だけ外して、残りの語で当たる形を出す。`graph neural networks` は
+     * 3 語とも行にあるのに揃う行が無い（`graph` は `graphics` に当たるだけ）– 語を
+     * 1 つに絞るより文脈が残るので、外す語を名指しで先に出す。 */
+    if (words.length >= 3) {
+      const useRaw = rawWords.length === words.length;
+      words.forEach((word, index) => {
+        const rest = words.filter((_, i) => i !== index);
+        const phrase = rest.join(" ");
+        if (!phrase || countOf(phrase) <= 0) return;
+        const display = (useRaw ? rawWords.filter((_, i) => i !== index) : rest).join(" ");
+        pushShown(display, phrase, "drop", useRaw ? rawWords[index] : word);
+      });
+    }
     words.forEach((word, index) => {
       if (countOf(word) > 0) return;
       const chars = Array.from(word);
@@ -8753,6 +8900,13 @@ const Recommender = (() => {
       for (let k = 2; k <= chars.length - 2; k++) {
         const left = chars.slice(0, k).join("");
         const right = chars.slice(k).join("");
+        /* 切れ端が英語の前置詞になる割り方はしない（`registraton` → `registrat on` は
+         * `on` を外す規則で元の語と同じ行数になり、綴りの見当を追い越す）。 */
+        if (
+          FUNCTION_WORDS_EN.indexOf(kanaFold(left)) >= 0 ||
+          FUNCTION_WORDS_EN.indexOf(kanaFold(right)) >= 0
+        )
+          continue;
         if (countOf(left) <= 0) continue;
         /* 割った 2 語を別々に打った人数ではなく、**両方を含む行**の数を数える
          * （`学生 論文` と打ち直した人に見える件数なので、それで無いと噓になる）。 */
@@ -8774,7 +8928,9 @@ const Recommender = (() => {
 
     const 寄 = new Map<string, string>();
     {
-      const 語彙 = latinVocabularyJa(folded);
+      /* 打ち間違いの語彙は**名前の側**から作る。URL のホストを混ぜると、`ICCV` に
+       * `iccvm`（別の会議のドメイン）を打ち直しとして勧めてしまう。 */
+      const 語彙 = latinVocabularyJa(folded.map((row) => row.hay));
       words.forEach((word) => {
         if (countOf(word) > 0) return;
         for (const 近 of latinNearestJa(語彙, latinSkeletonJa(word))) 寄.set(近.word, 近.word);
@@ -8794,7 +8950,7 @@ const Recommender = (() => {
     }
     /* 収録の実在する綴りは、語の切れ端より先に置く（実測 – `embeded` に「『embe』63 件」より
      * 「『embedded』982 件」を先に出す – 切れ端を打てと言っても打てん）。*/
-    const RANK: Record<string, number> = { retype: 0, split: 1, alone: 2, shorten: 3 };
+    const RANK: Record<string, number> = { retype: 0, split: 1, drop: 1, alone: 2, shorten: 3 };
     return found
       .sort((a, b) => {
         const ra = RANK[a.how] === undefined ? 3 : RANK[a.how];
@@ -10088,8 +10244,229 @@ const Recommender = (() => {
     return `${shifted.getUTCFullYear()}年${shifted.getUTCMonth() + 1}月`;
   }
 
+  /* 英語の相対日付。AI は `deadlines next month`・`within 30 days` の形で聞くが、
+   * 収録の語は日本語の暦日・月なので、そのままでは 0 件になる（2026-10-26 実測）。
+   * 日本語の相対語に直してから、既存の展開（`expandRelativeMonths`・`queryTokenGroups`）に
+   * 渡す – 日付の解き方を二重に持たない。 */
+  const ENGLISH_RELATIVE_TIME_PHRASES: Array<[RegExp, string]> = [
+    /* 「今日・明日」は会議名とも衝突するので、`deadline`/`due` と組んだ形だけ受ける。 */
+    [/\bdeadlines?\s+today\b/gi, "deadline 今日"],
+    [/\bdeadlines?\s+tomorrow\b/gi, "deadline 明日"],
+    [/\bdue\s+today\b/gi, "今日"],
+    [/\bdue\s+tomorrow\b/gi, "明日"],
+    [/\b(?:by|before|until)\s+(?:the\s+)?end\s+of\s+next\s+month\b/gi, "来月まで"],
+    [/\bby\s+next\s+month\b/gi, "来月まで"],
+    [/\bthe\s+month\s+after\s+next\b/gi, "再来月"],
+    [/\bnext\s+month\b/gi, "来月"],
+    [/\bthis\s+month\b/gi, "今月"],
+    [/\blast\s+month\b/gi, "先月"],
+    [/\bnext\s+week\b/gi, "来週"],
+    [/\bthis\s+week\b/gi, "今週"],
+    [/\blast\s+week\b/gi, "先週"],
+    [/\bthis\s+year\b/gi, "今年"],
+    [/\bnext\s+year\b/gi, "来年"],
+    [/\bwithin\s+([0-9]{1,3})\s+days?\b/gi, "$1日以内"],
+    [/\bin\s+the\s+next\s+([0-9]{1,3})\s+days?\b/gi, "$1日以内"],
+    [/\bnext\s+([0-9]{1,3})\s+days?\b/gi, "$1日以内"],
+    [/\b([0-9]{1,3})\s+days?\s+from\s+now\b/gi, "$1日後"],
+    [/\bin\s+([0-9]{1,3})\s+days?\b/gi, "$1日後"],
+  ];
+
+  /* 評価の形容詞（`top`・`best`・`トップ` など）は「上位の等級」の条件として受ける。
+   * 語としてそのまま探すと `top` が `topics` に当たるなど意味と違う行に絞られる
+   * （2026-10-26 実測: `top security conferences` 0 行）。hay の `〔高位〕` は
+   * CCF A・CORE A* などの等級を持つ行に付く（`candidateRows` が入れる）。 */
+  const RANK_ADJECTIVE_WORDS = [
+    "top",
+    "best",
+    "leading",
+    "premier",
+    "major",
+    "renowned",
+    "reputable",
+    "prestigious",
+    "top-tier",
+  ];
+
+  function rankAdjectiveOf(query: unknown): string {
+    const text = String(query == null ? "" : query)
+      .normalize("NFKC")
+      .toLowerCase();
+    const words = ` ${text
+      .replace(/[^a-z0-9-]+/g, " ")
+      .replace(/\s+/g, " ")
+      .trim()} `;
+    for (const word of RANK_ADJECTIVE_WORDS) {
+      if (/^[a-z-]+$/.test(word)) {
+        if (words.indexOf(` ${word} `) >= 0) return word;
+      } else if (text.indexOf(word) >= 0) return word;
+    }
+    return "";
+  }
+
+  /* `journal special issue` は 3 語に割ると、特集号の行に `journal` が無いので 0 件に
+   * なる（2026-10-26 実測）。特集号の言い方として 1 語に直す。 */
+  /* 2 語の地域名（`North America`）は、1 語の地域まとめに直してから既存の展開に渡す。 */
+  /* `workshop only` は、会議名に workshop を持つ行・タグの行だけに絞る（普通に
+   * `workshop` と打つと、ワークショップを併設する本会議の行も混ざる）。日本語の
+   * 「だけ」「のみ」は助詞として落とす既存の約束（40 語の検査）があるので、ここでは
+   * 英語の言い方だけを受ける。 */
+  /* `US`・`U.S.`・`United States` は国名（USA）。小文字の `us` は代名詞なので
+   * 機能語として落とす（大文字の `US` だけ国名に直す）。 */
+  function collapseUsCountry(query: string): string {
+    return query
+      .replace(/\bU\.S\.A?\.?/gi, "アメリカ")
+      .replace(/\bUS\b/g, "アメリカ")
+      .replace(/\bUnited\s+States(?:\s+of\s+America)?\b/gi, "アメリカ");
+  }
+
+  /* `soon` は幅の語。この表の既定の「これからの 30 日間」に合わせる（2026-10-26 実測:
+   * `deadline soon` は 0 行だった）。 */
+  function collapseSoonWindow(query: string): string {
+    return query
+      .replace(/\b(?:deadlines?|due|closing)\s+(?:soon|approaching)\b/gi, "30日以内")
+      .replace(/\b(?:soon|imminent)\b/gi, "30日以内");
+  }
+
+  /* 英語の「N 週間以内」。`within 30 days` は数の日だけを受けるので、週の言い方を
+   * 日へ直してから既存の窓に渡す（2026-10-26 実測: `deadline within two weeks` 0 行）。 */
+  const ENGLISH_WEEK_NUMBERS: Record<string, number> = {
+    a: 1,
+    an: 1,
+    one: 1,
+    two: 2,
+    three: 3,
+    four: 4,
+    five: 5,
+    six: 6,
+    seven: 7,
+    eight: 8,
+    nine: 9,
+    ten: 10,
+  };
+
+  function collapseEnglishWeeks(query: string): string {
+    return query
+      .replace(
+        /\b(?:within|in(?:\s+the\s+next)?|next)\s+(a|an|one|two|three|four|five|six|seven|eight|nine|ten|\d{1,2})\s+weeks?\b/gi,
+        (_m: string, word: string) => {
+          const n = /^\d+$/.test(word)
+            ? Number(word)
+            : (ENGLISH_WEEK_NUMBERS[word.toLowerCase()] ?? 1);
+          return `${n * 7}日以内`;
+        },
+      )
+      .replace(/\b(?:within|in)\s+(?:a|one|the\s+next)\s+month\b/gi, "30日以内");
+  }
+
+  /* `special track` は収録の `special session` と同じ物を指す（2026-10-26 実測:
+   * `special session` 3 行 / `special track` 0 行）。 */
+  /* 英語の月名。年を付けない `January` は `1月` に直す（その月の締切を年をまたいで探す）。
+   * `January 2027` のように年を付けたときは原文の月名のまま探す（公式の原表記に当たる行を
+   * 落とさない – 2026-10-26 実測: `January 2027` 110 行 / `2027年1月` 108 行）。 */
+  const ENGLISH_MONTH_NUMBERS: Record<string, number> = {
+    january: 1,
+    jan: 1,
+    february: 2,
+    feb: 2,
+    march: 3,
+    mar: 3,
+    april: 4,
+    apr: 4,
+    may: 5,
+    june: 6,
+    jun: 6,
+    july: 7,
+    jul: 7,
+    august: 8,
+    aug: 8,
+    september: 9,
+    sept: 9,
+    sep: 9,
+    october: 10,
+    oct: 10,
+    november: 11,
+    nov: 11,
+    december: 12,
+    dec: 12,
+  };
+
+  function collapseEnglishMonths(query: string): string {
+    /* ハイフンで繋いだ語（`usa-november`）の一部は月名として扱わない – 前後が
+     * 英数字・ハイフンのときは語の一部（2026-10-26 実測: `usa-november` を
+     * `usa-11月` に化けさせ、`usa november` の行に会えなくなった）。 */
+    return query.replace(
+      /(^|[^a-z0-9-])(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)(\.?)(?![a-z0-9-])/gi,
+      (match: string, head: string, name: string, dot: string, offset: number, whole: string) => {
+        const rest = whole.slice(offset + match.length);
+        // 年が続くときは原文の月名のまま（点だけ落とす）。
+        if (/^\s+\d{4}\b/.test(rest)) return `${head}${name}${dot === "." ? "" : ""}`;
+        // 小文字の `may` は助動詞（`may I submit`）とも読める。月は大文字の `May` だけ。
+        if (name.toLowerCase() === "may" && name.charAt(0) !== "M") return `${head}${name}${dot}`;
+        return `${head}${ENGLISH_MONTH_NUMBERS[name.toLowerCase()]}月`;
+      },
+    );
+  }
+
+  /* `where is SIGCOMM 2027` のような疑問文の頭を落とす（`is`/`are` は残すと語になる）。 */
+  function collapseQuestionPhrases(query: string): string {
+    return query.replace(/\b(?:where|when|what)\s+(?:is|are)\s+/gi, "");
+  }
+
+  function collapseSpecialTrack(query: string): string {
+    return query.replace(/\bspecial[\s-]+tracks?\b/gi, "special session");
+  }
+
+  function collapseWorkshopOnly(query: string): string {
+    return query
+      .replace(/\bworkshops?\s+only\b/gi, "〔WS〕")
+      .replace(/\bonly\s+workshops?\b/gi, "〔WS〕");
+  }
+
+  function collapseEnglishRegion(query: string): string {
+    return query
+      .replace(/\bnorth america\b/gi, "北米")
+      .replace(/\bsouth america\b/gi, "南米")
+      .replace(/\bcentral america\b/gi, "中米")
+      .replace(/\bmiddle east\b/gi, "中東")
+      .replace(/\bsouth[\s-]?east asia\b/gi, "東南アジア")
+      .replace(/\beast asia\b/gi, "東アジア")
+      .replace(/\bsouth asia\b/gi, "南アジア")
+      .replace(/\blatin america\b/gi, "ラテンアメリカ")
+      .replace(/\bscandinavia\b/gi, "北欧")
+      .replace(/\bnordics?\b/gi, "北欧");
+  }
+
+  function collapseJournalSpecialIssue(query: string): string {
+    return query.replace(/\bjournals?[\s-]+special[\s-]+issues?\b/gi, "special issue");
+  }
+
+  function collapseRankAdjective(query: string): string {
+    let out = query;
+    for (const word of RANK_ADJECTIVE_WORDS) {
+      if (/^[a-z-]+$/.test(word)) {
+        out = out.replace(
+          new RegExp(`(^|[^a-z0-9])${word.replace(/-/g, "\\-")}(?![a-z0-9])`, "gi"),
+          (_m: string, head: string) => `${head}〔高位〕`,
+        );
+      } else {
+        out = out.split(word).join("〔高位〕");
+      }
+    }
+    return out;
+  }
+
+  function collapseEnglishRelativeTime(query: string): string {
+    let out = query;
+    for (const [pattern, to] of ENGLISH_RELATIVE_TIME_PHRASES) out = out.replace(pattern, to);
+    return out;
+  }
+
   function expandRelativeMonths(query: unknown, nowMs: number): string {
-    const normalized = searchNormalize(query);
+    /* 大文字の `US` は国名。`searchNormalize` が小文字にすると代名詞の `us` と
+     * 区別できなくなるので、正規化の前に直す（2026-10-26 実測: `US` が 2 行）。 */
+    const 國名 = typeof query === "string" ? collapseUsCountry(query) : query;
+    const normalized = collapseEnglishRelativeTime(searchNormalize(國名));
     if (!normalized) return normalized;
     let changed = false;
     const tokens: string[] = [];
@@ -13118,6 +13495,16 @@ const Recommender = (() => {
   const OCEANIA_JA = "オーストラリア,ニュージーランド";
   const MIDDLE_EAST_JA = "イスラエル,アラブ首長国連邦,トルコ";
   const AFRICA_JA = "モロッコ,南アフリカ,ルワンダ,ガーナ,ナイジェリア";
+  /* 部分地域。構成員は収録の開催地に現れる国だけ（実測 2026-10-26）。 */
+  const NORDIC_JA = "スウェーデン,ノルウェー,デンマーク,フィンランド,アイスランド";
+  const SOUTHEAST_ASIA_JA = "シンガポール,タイ,ベトナム,マレーシア,インドネシア";
+  const SOUTH_ASIA_JA = "インド";
+  const EAST_ASIA_JA = "中国,韓国,台湾,香港,日本";
+  const LATIN_AMERICA_JA = `${CENTRAL_AMERICA_JA},${SOUTH_AMERICA_JA}`;
+  const MENA_JA = `${MIDDLE_EAST_JA},モロッコ`;
+  const BENELUX_JA = "ベルギー,オランダ,ルクセンブルク";
+  const IBERIA_JA = "スペイン,ポルトガル";
+  const BALTICS_JA = "エストニア,リトアニア";
 
   const OVERSEAS_JA = `${EUROPE_JA},${ASIA_JA},${NORTH_AMERICA_JA},${CENTRAL_AMERICA_JA},${SOUTH_AMERICA_JA},${MIDDLE_EAST_JA},${AFRICA_JA},${OCEANIA_JA}`;
   const CONTINENT_READINGS: string[][] = [
@@ -13125,6 +13512,27 @@ const Recommender = (() => {
     ["欧州", "こうしゅう", EUROPE_JA],
     ["ヨーロッパ圏", "よーろっぱけん", EUROPE_JA],
     ["アジア", "あじあ", ASIA_JA],
+    /* 英語の地域名も、日本語の地域まとめと同じ構成員へ広げる（2026-10-26 実測:
+     * `Europe` 301 行 / `ヨーロッパ` 1,448 行、`Asia` 203 行 / `アジア` 761 行）。 */
+    ["europe", "europe", EUROPE_JA],
+    ["asia", "asia", ASIA_JA],
+    ["北欧", "ほくおう", NORDIC_JA],
+    ["東南アジア", "とうなんあじあ", SOUTHEAST_ASIA_JA],
+    ["東アジア", "ひがしあじあ", EAST_ASIA_JA],
+    ["南アジア", "みなみあじあ", SOUTH_ASIA_JA],
+    ["ラテンアメリカ", "らてんあめりか", LATIN_AMERICA_JA],
+    ["mena", "mena", MENA_JA],
+    ["ベネルクス", "べねるくす", BENELUX_JA],
+    ["benelux", "benelux", BENELUX_JA],
+    ["イベリア", "いべりあ", IBERIA_JA],
+    ["イベリア半島", "いべりあはんとう", IBERIA_JA],
+    ["iberia", "iberia", IBERIA_JA],
+    ["バルト", "ばると", BALTICS_JA],
+    ["バルト三国", "ばるとさんごく", BALTICS_JA],
+    ["baltics", "baltics", BALTICS_JA],
+    ["baltic", "baltic", BALTICS_JA],
+    ["africa", "africa", AFRICA_JA],
+    ["oceania", "oceania", OCEANIA_JA],
     ["北米", "ほくべい", NORTH_AMERICA_JA],
     ["北アメリカ", "きたアメリカ", NORTH_AMERICA_JA],
     ["中南米", "ちゅうなんべい", `${CENTRAL_AMERICA_JA},${SOUTH_AMERICA_JA}`],
@@ -13350,8 +13758,76 @@ const Recommender = (() => {
     (甲, 乙) => 乙.length - 甲.length,
   );
 
+  /* 手法の名を、その手法が載る分野の語に直す（`graph neural networks` → `machine learning`）。
+   * 収録は会議名・分野までで手法名を持たないため、そのまま探すと 0 件になる。元の語は
+   * 件数欄の案内（`querySynonymNotes`）に出す（黙って語を変えない）。 */
+  function methodFieldOf(query: unknown): { phrase: string; field: string; label: string } | null {
+    const text = kanaFold(String(query == null ? "" : query).normalize("NFKC"));
+    const words = ` ${text
+      .replace(/[^a-z0-9.+-]+/g, " ")
+      .replace(/\s+/g, " ")
+      .trim()} `;
+    for (const [forms, field, label] of METHOD_FIELD_ALIASES) {
+      for (const form of forms) {
+        const 形 = kanaFold(form);
+        if (/^[a-z0-9 .+-]+$/.test(形)) {
+          if (words.indexOf(` ${形} `) >= 0) return { phrase: form, field, label };
+        } else if (text.indexOf(形) >= 0) {
+          return { phrase: form, field, label };
+        }
+      }
+    }
+    return null;
+  }
+
+  function collapseMethodField(query: unknown): unknown {
+    if (typeof query !== "string") return query;
+    let out = query;
+    for (const [forms, field] of METHOD_FIELD_ALIASES) {
+      for (const form of forms) {
+        if (/^[a-z0-9 .+-]+$/i.test(form)) {
+          const escaped = form.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/\s+/g, "[\\s-]+");
+          out = out.replace(
+            new RegExp(`(^|[^a-z0-9])${escaped}(?![a-z0-9])`, "gi"),
+            (_m: string, head: string) => `${head}${field}`,
+          );
+        } else {
+          out = out.split(form).join(field);
+        }
+      }
+    }
+    return out;
+  }
+
   function queryTokenGroups(query: unknown, nowMs?: number): string[][] {
     if (typeof query === "string") query = collapseRankPhrase(query);
+    if (typeof query === "string") query = collapseMethodField(query) as string;
+    if (typeof query === "string") query = collapseEnglishRelativeTime(query);
+    if (typeof query === "string") query = collapseRankAdjective(query);
+    if (typeof query === "string") query = collapseJournalSpecialIssue(query);
+    if (typeof query === "string") query = collapseEnglishRegion(query);
+    if (typeof query === "string") query = collapseWorkshopOnly(query);
+    if (typeof query === "string") query = collapseSpecialTrack(query);
+    if (typeof query === "string") query = collapseSoonWindow(query);
+    if (typeof query === "string") query = collapseEnglishWeeks(query);
+    if (typeof query === "string") query = collapseUsCountry(query);
+    if (typeof query === "string") query = collapseQuestionPhrases(query);
+    if (typeof query === "string") query = collapseEnglishMonths(query);
+    /* `call for papers` は 3 語に割ると必ず 0 件になる（収録は `cfp` を持つ）。
+     * 募集の英字語と同じ 1 語に直す（AI がこの形で聞く）。 */
+    if (typeof query === "string")
+      query = query.replace(
+        /\bcalls?[\s-]+for[\s-]+(workshop proposals?|tutorial proposals?|special sessions?|papers?|workshops?|tutorials?)\b/gi,
+        (_m: string, what: string) => {
+          const 語 = what.toLowerCase();
+          if (語.startsWith("workshop proposal")) return "workshop proposal";
+          if (語.startsWith("tutorial proposal")) return "tutorial proposal";
+          if (語.startsWith("special session")) return "special session";
+          if (語.startsWith("paper")) return "cfp";
+          if (語.startsWith("workshop")) return "〔WS〕";
+          return "tutorial";
+        },
+      );
     if (typeof query === "string")
       query = query.replace(/([0-9０-９]{4})年の開催回/g, (_, year: string) =>
         editionYearSearchTerm(year),
@@ -13834,6 +14310,72 @@ const Recommender = (() => {
    * 「日本で開かれる国際会議」「日本で行われる国際会議」は 0 件で、「開かれる国際会議」を
    * 1 語として「収録に見当たりません」と案内していた）。 */
   const FUNCTION_WORDS_JA = ["開催", "実施", "開かれ", "行われ", "催され", "開く", "行う", "催す"];
+  /* 英語の冠詞・前置詞。AI は `workshop on HPC`・`deadline for SIGCOMM` の形で聞く。
+   * これらを語として要求すると、`on` が `online` に当たるなど**意味と違う条件**で絞られる
+   * （2026-10-26 実測: `workshop on HPC` 48 行 / `workshop HPC` 69 行）。2 語以上のときだけ、
+   * 日本語の機能語と同じ扱いで落とす（`on` だけの検索は今までどおり）。 */
+  const FUNCTION_WORDS_EN = [
+    "a",
+    "an",
+    "the",
+    "of",
+    "for",
+    "in",
+    "on",
+    "at",
+    "to",
+    "by",
+    "with",
+    "from",
+    "about",
+    // `top tier security` の `tier` は等級の言い方の一部（`top` は等級の条件になる）。
+    "tier",
+    "ranked",
+    "ranking",
+    // 「submit by December」の動詞。締切の語ではないので、ほかの語があるときは落とす。
+    "submit",
+    "submitted",
+    "submitting",
+    // これから先の締切を指す語。絞り込みの条件ではない。
+    "upcoming",
+    "coming",
+    "next",
+    // 会議の場所・日付を聞く語。行の値ではないので、ほかの語があるときは落とす。
+    "location",
+    "place",
+    "venue",
+    "date",
+    "dates",
+    "when",
+    "where",
+    "timezone",
+    // 質問・依頼の言い方（`find`・`show`・`list`・`which` など）。
+    "find",
+    "show",
+    "list",
+    "any",
+    "accept",
+    "accepts",
+    "accepted",
+    "colocated",
+    "co-located",
+    "recommend",
+    "suggest",
+    "what",
+    "which",
+    "who",
+    "how",
+    "want",
+    "need",
+    "please",
+    "me",
+    "looking",
+    // 代名詞・be 動詞（`show us`・`which conferences are`）。
+    "us",
+    "are",
+    "were",
+    "was",
+  ];
   function withoutFunctionGroups(groups: string[][]): string[][] {
     if (groups.length < 2) return groups;
     const 語々 = FUNCTION_WORDS_JA.map((word) => kanaFold(word));
@@ -13841,14 +14383,16 @@ const Recommender = (() => {
     const 名々 = ["会議", "学会", "大会", "研究会", "ワークショップ", "セッション"].map((word) =>
       kanaFold(word),
     );
-    const 機能語の組か = (group: string[]): boolean => {
-      if (group.length !== 1) return false;
-      const 語 = kanaFold(group[0]);
+    /* 組の**どの候補も**機能語なら落とす（`dates` は複数形の展開で
+     * `["dates","date"]` の 2 語になる – 1 語のときだけ落とすと残ってしまう）。 */
+    const 機能語か = (語: string): boolean => {
       if (語々.indexOf(語) >= 0) return true;
-
+      if (FUNCTION_WORDS_EN.indexOf(語) >= 0) return true;
       if (語.length > 16) return false;
       return 語々.some((w) => 語.startsWith(w)) && 名々.some((n) => 語.endsWith(n));
     };
+    const 機能語の組か = (group: string[]): boolean =>
+      group.length > 0 && group.every((term) => 機能語か(kanaFold(term)));
     const kept = groups.filter((group) => !機能語の組か(group));
     return kept.length ? kept : groups;
   }
@@ -13888,12 +14432,60 @@ const Recommender = (() => {
     );
   }
 
-  function searchMatcher(query: unknown, nowMs?: number): (hay: unknown) => boolean {
+  /* 名前の hay と URL のホストの hay を、1 つの照合の口にまとめる。行そのもの
+   * （`{hay, hostHay}`）を受け取るほか、文字列だけを渡されたら名前の側だけを見る
+   * （行を持たない呼び口と検査のため）。 */
+  function searchTargetParts(target: unknown): { hay: string; hostHay: string } {
+    if (isRecord(target)) {
+      return {
+        hay: typeof target.hay === "string" ? target.hay : "",
+        hostHay: typeof target.hostHay === "string" ? target.hostHay : "",
+      };
+    }
+    return {
+      hay: typeof target === "string" ? target : target == null ? "" : String(target),
+      hostHay: "",
+    };
+  }
+
+  /* ホストの語は**語全体**で立つときだけ当てる。`ICCV` は `iccvm` の左端に在るが、
+   * 語の続き（`m`）が在るので当たらない。`biometrics` は `ieee-biometrics.org` の
+   * 成分として語全体で立つので当たる（和語の寄せの再現率を落とさない）。 */
+  function matchOneHostGroup(target: string, group: string[]): boolean {
+    for (let k = 0; k < group.length; k++) {
+      const term = group[k];
+      if (!LATIN_TERM_TOKEN.test(term)) continue;
+      const 語列 = term.split(/\s+/).filter(Boolean);
+      if (語列.length && 語列.every((w) => foldedLetterAtWordBoundary(target, w, false)))
+        return true;
+    }
+    return false;
+  }
+
+  /* 1 つの語グループを、**名前の規則と URL の規則のどちらか**で当てる。語グループの
+   * 間は AND（呼び口が順に回す）。名前とホストを別の文字列に分けたので、片方にしか
+   * 無い語の組（`warwick aamas` のホスト語＋会議名）も前と同じように当たる。 */
+  function matchRowGroup(nameTarget: string, hostTarget: string, group: string[]): boolean {
+    if (matchOneFoldedGroup(nameTarget, group)) return true;
+    return hostTarget !== "" && matchOneHostGroup(hostTarget, group);
+  }
+
+  function matchRowGroups(row: { hay: string; hostHay: string }, groups: string[][]): boolean {
+    for (let i = 0; i < groups.length; i++) {
+      if (!matchRowGroup(row.hay, row.hostHay, groups[i])) return false;
+    }
+    return true;
+  }
+
+  function searchMatcher(query: unknown, nowMs?: number): (target: unknown) => boolean {
     const groups = searchGroups(query, nowMs);
     if (!groups.length) return () => true;
-    return (hay: unknown): boolean => {
-      const target = kanaFold(hay);
-      return matchFoldedGroups(target, groups);
+    return (target: unknown): boolean => {
+      const row = searchTargetParts(target);
+      return matchRowGroups(
+        { hay: kanaFold(row.hay), hostHay: row.hostHay ? kanaFold(row.hostHay) : "" },
+        groups,
+      );
     };
   }
 
@@ -13990,53 +14582,50 @@ const Recommender = (() => {
     );
   }
 
-  function matchFoldedGroups(target: string, groups: string[][]): boolean {
-    for (let i = 0; i < groups.length; i++) {
-      let hit = false;
-      for (let k = 0; k < groups[i].length; k++) {
-        const term = groups[i][k];
-        const rank = rankPhraseTermHit(target, term);
-        if (rank !== null) {
-          if (rank) {
-            hit = true;
+  function matchOneFoldedGroup(target: string, group: string[]): boolean {
+    let hit = false;
+    for (let k = 0; k < group.length; k++) {
+      const term = group[k];
+      const rank = rankPhraseTermHit(target, term);
+      if (rank !== null) {
+        if (rank) {
+          hit = true;
+          break;
+        }
+        continue;
+      }
+
+      if (LATIN_TERM_TOKEN.test(term) && /\s/.test(term)) {
+        const 語列 = term.split(/\s+/).filter(Boolean);
+
+        let 皆當 = true;
+        for (let w = 0; w < 語列.length; w++) {
+          if (!latinFoldedHit(target, 語列[w])) {
+            皆當 = false;
             break;
           }
-          continue;
         }
-
-        if (LATIN_TERM_TOKEN.test(term) && /\s/.test(term)) {
-          const 語列 = term.split(/\s+/).filter(Boolean);
-
-          let 皆當 = true;
-          for (let w = 0; w < 語列.length; w++) {
-            if (!latinFoldedHit(target, 語列[w])) {
-              皆當 = false;
-              break;
-            }
-          }
-          if (皆當) {
-            hit = true;
-            break;
-          }
-          continue;
+        if (皆當) {
+          hit = true;
+          break;
         }
-        if (latinFoldedHit(target, term)) {
+        continue;
+      }
+      if (latinFoldedHit(target, term)) {
+        hit = true;
+        break;
+      }
+    }
+    // どの候補も語そのものでは当たらなかったときだけ、長い和語の分割を試す。
+    if (!hit) {
+      for (let k = 0; k < group.length; k++) {
+        if (compoundSplitHit(target, group[k])) {
           hit = true;
           break;
         }
       }
-      // どの候補も語そのものでは当たらなかったときだけ、長い和語の分割を試す。
-      if (!hit) {
-        for (let k = 0; k < groups[i].length; k++) {
-          if (compoundSplitHit(target, groups[i][k])) {
-            hit = true;
-            break;
-          }
-        }
-      }
-      if (!hit) return false;
     }
-    return true;
+    return hit;
   }
 
   function hayMatches(hay: unknown, query: unknown): boolean {
@@ -14168,6 +14757,11 @@ const Recommender = (() => {
     ["madrid", "マドリード"],
     ["europe", "ヨーロッパ"],
     ["us", "アメリカ"],
+    // 収録が増えた都市（2026-11-08: 上流の更新で 5 行以上になった）。末尾の都市と同じ
+    // 形で、公式表記のまま残っていた都市を日本語に寄せる。
+    ["buenos aires", "ブエノスアイレス"],
+    ["grenoble", "グルノーブル"],
+    ["guiyang", "貴陽"],
     /* 意図的に入れていない語:
      *   BE      … 二字の国コードは "GA"（州か国か）のように迷うので推測しない
      *   Grenada … `Radisson Grenada Beach Resort Grenada` の会場名の中で置換が当たり、
@@ -14722,6 +15316,18 @@ const Recommender = (() => {
     return raw.trim();
   }
 
+  /* ワークショップの行か（タグ、または会議名に workshop）。名前だけの行も拾う –
+   * タグは全件には付いていない（2026-10-26 実測: 名前に workshop を持つ 82 会議のうち
+   * タグがあるのは 47）。 */
+  function isWorkshopConference(conf: {
+    tags?: string[];
+    title?: string;
+    full_name?: string;
+  }): boolean {
+    if ((conf.tags || []).indexOf("workshop") >= 0) return true;
+    return /workshop/i.test(`${conf.title || ""} ${conf.full_name || ""}`);
+  }
+
   /** Shared candidate-to-row boundary for browser rendering and offline ranking. */
   function candidateRows(data: unknown): CandidateRow[] {
     const out: CandidateRow[] = [];
@@ -14744,11 +15350,17 @@ const Recommender = (() => {
           conf.key,
           ed.place,
           eventSourceSearchText(ed),
-          linkSearchTerms(ed.link),
         ]
           .filter(Boolean)
           .join(" ")
           .toLowerCase();
+        /* URL のホストは名前の hay に混ぜない。混ぜると `ICCV` が `iccvm.org` の
+         * `iccvm` に左端だけで当たり、別の会議（CVM）が出る（2026-10-25 実測: 24 行）。
+         * ホストは `hostHay` に分け、照合側で語全体一致の規則に当てる。 */
+        const hostHay = searchNormalize(linkSearchTerms(ed.link));
+        /* 評価の形容詞（`top`）の条件。CCF A・CORE A* などの等級を持つ会議に付ける。 */
+        const upperRank = rankPairs.some((pair) => /:A\*?$/.test(pair)) ? "〔高位〕" : "";
+        const workshopMark = isWorkshopConference(conf) ? "〔WS〕" : "";
         const catHay = `${laterEditionSearchWords(conf, String(ed.event_start || ""), ed.id)} ${categorySearchTerms(conf.categories, confTags)} ${placeJa(ed.place)} ${placePrefectureJa(ed.place)} ${participationSearchTerms(ed.place)} ${domesticFacetSearchTerms(confTags, conf.title)} ${internationalFacetSearchTerms(confTags)}`;
         (ed.deadlines || []).forEach((dl) => {
           const dateOnly = dl.precision === "date-only";
@@ -14774,6 +15386,11 @@ const Recommender = (() => {
           const officialWords = officialDateSearchWords(dl, t, dateOnly);
 
           const shiftWords = deadlineShiftSearchWords(dl);
+          /* 英字で探す人の語。どの行も締切なので `deadline` は全部に入れ、`cfp` は
+           * 募集のある種別（論文・概要）だけに入れる（採否通知まで CFP とは呼ばない）。 */
+          const deadlineWords = `deadline deadlines due ${
+            dl.kind === "paper" || dl.kind === "abstract" ? "cfp" : ""
+          }`;
           out.push({
             conf,
             ed,
@@ -14790,7 +15407,7 @@ const Recommender = (() => {
             tags: conf.tags || [],
             rankPairs,
             hay: searchNormalize(
-              `${baseHay} ${dl.label || ""} ${dl.kind || ""} ${kindLabelJa(dl.kind)} ${statusBadgeWords(ed, dl).join(" ")} ${roundSearchTerms(dl.round).join(" ")} ${unconfirmedHayJa({ kind: dl.kind || "", ed, rankPairs })} ${rankSearchTerms(rankPairs)} ${catHay} ${tagSearchTerms(confTags)} ${monthTermsJa(dateOnly ? dl.local_date : t)} ${dayTermsJa(dateOnly ? dl.local_date : t)} ${ed.event_date_precision === "not-announced" ? "" : `${monthTermsJa(ed.event_start)} ${monthTermsJa(ed.event_end)}`} ${weekdaySearchTerms(
+              `${baseHay} ${dl.label || ""} ${dl.kind || ""} ${deadlineWords} ${upperRank} ${workshopMark} ${kindLabelJa(dl.kind)} ${statusBadgeWords(ed, dl).join(" ")} ${roundSearchTerms(dl.round).join(" ")} ${unconfirmedHayJa({ kind: dl.kind || "", ed, rankPairs })} ${rankSearchTerms(rankPairs)} ${catHay} ${tagSearchTerms(confTags)} ${monthTermsJa(dateOnly ? dl.local_date : t)} ${dayTermsJa(dateOnly ? dl.local_date : t)} ${ed.event_date_precision === "not-announced" ? "" : `${monthTermsJa(ed.event_start)} ${monthTermsJa(ed.event_end)}`} ${weekdaySearchTerms(
                 dateOnly ? dl.local_date : t,
               )} ${zoneSearchWords(dl, dateOnly)} ${cellWords} ${officialWords} ${shiftWords} ${eventDaySearchWords(
                 {
@@ -14798,6 +15415,7 @@ const Recommender = (() => {
                 },
               )}`,
             ),
+            hostHay,
             dupLabel: dl.comment || "",
           });
         });
@@ -14838,6 +15456,8 @@ const Recommender = (() => {
         .join(" ")
         .toLowerCase();
       const cats = conf.categories || [];
+      const upperRank = pairs.some((pair) => /:A\*?$/.test(pair)) ? "〔高位〕" : "";
+      const workshopMark = isWorkshopConference(conf) ? "〔WS〕" : "";
       out.push({
         conf: conf,
 
@@ -14854,7 +15474,7 @@ const Recommender = (() => {
         tags: tags,
         rankPairs: pairs,
         hay: searchNormalize(
-          `${baseHay} journal 常時受付 ${unconfirmedHayJa({
+          `${baseHay} ${upperRank} ${workshopMark} journal 常時受付 ${unconfirmedHayJa({
             kind: "journal",
             ed: { place: "", event_start: "" },
             rankPairs: pairs,
@@ -14862,6 +15482,7 @@ const Recommender = (() => {
         ),
         name: conf.title,
         year: null,
+        hostHay: "",
       });
     });
     return out;
@@ -14883,6 +15504,9 @@ const Recommender = (() => {
         .filter(Boolean)
         .join(" ")
         .toLowerCase();
+      const pairs = Object.entries(conf.rank || {}).map(([source, grade]) => `${source}:${grade}`);
+      const upperRank = pairs.some((pair) => /:A\*?$/.test(pair)) ? "〔高位〕" : "";
+      const workshopMark = isWorkshopConference(conf) ? "〔WS〕" : "";
       (conf.editions || []).forEach((ed) => {
         if (ed.estimated || (ed.deadlines || []).length || (ed.schedule_deadlines || []).length)
           return;
@@ -14901,7 +15525,7 @@ const Recommender = (() => {
           eventEnd: end,
           eventDatePrecision: ed.event_date_precision,
           eventSegments: segments,
-          rankPairs: Object.entries(conf.rank || {}).map(([source, grade]) => `${source}:${grade}`),
+          rankPairs: pairs,
           cats: conf.categories || [],
           tags: confTags,
           hay: searchNormalize(
@@ -14910,11 +15534,12 @@ const Recommender = (() => {
              * 開催回」として出る（2026-10-23 實測: `SIGCOMM` の 0 件の畫面に、IMC 2027
              * （https://conferences.sigcomm.org/imc/…）が出た）。締切の行の側は URL で引ける
              * ままにしてある。 */
-            `${baseHay} ${titleWithYearJa(conf.title || conf.key, ed.year)} ${ed.place || ""} ${eventSourceSearchText(ed)} ` +
+            `${baseHay} ${upperRank} ${workshopMark} ${titleWithYearJa(conf.title || conf.key, ed.year)} ${ed.place || ""} ${eventSourceSearchText(ed)} ` +
               `${categorySearchTerms(conf.categories, confTags)} ${tagSearchTerms(confTags)} ` +
               `${placeJa(ed.place)} ${placePrefectureJa(ed.place)} ` +
               `${ed.event_date_precision === "not-announced" ? "" : `${monthTermsJa(start)} ${monthTermsJa(end)}`} ${["month-only", "not-announced"].includes(String(ed.event_date_precision)) ? "" : weekdaySearchTerms(start)} ${eventDaySearchWords({ ed })}`,
           ),
+          hostHay: "",
         });
       });
     });
@@ -14955,6 +15580,11 @@ const Recommender = (() => {
     return safeConfs
       .filter((conf) => !keys.has(conf.key))
       .map((conf) => {
+        const rankPairs = Object.entries(conf.rank ?? {}).map(
+          ([name, grade]) => `${name}:${grade}`,
+        );
+        const upperRank = rankPairs.some((pair) => /:A\*?$/.test(pair)) ? "〔高位〕" : "";
+        const workshopMark = isWorkshopConference(conf) ? "〔WS〕" : "";
         const ed = [...(conf.editions ?? [])]
           .filter((edition) => !edition.estimated && !("estimate" in edition && edition.estimate))
           .sort((a, b) => Number(b.year ?? 0) - Number(a.year ?? 0))[0] ?? { id: conf.key };
@@ -14970,8 +15600,11 @@ const Recommender = (() => {
           tEvent: jstNoonMs(ed.event_start, Number.NaN),
           cats: conf.categories ?? [],
           tags: conf.tags ?? [],
-          rankPairs: Object.entries(conf.rank ?? {}).map(([name, grade]) => `${name}:${grade}`),
-          hay: searchNormalize([conf.title, conf.full_name, conf.key].filter(Boolean).join(" ")),
+          rankPairs,
+          hay: searchNormalize(
+            `${[conf.title, conf.full_name, conf.key].filter(Boolean).join(" ")} ${upperRank} ${workshopMark}`,
+          ),
+          hostHay: "",
           name: conf.title,
           year: ed.year ?? null,
         };
@@ -15122,7 +15755,7 @@ const Recommender = (() => {
   /* 掲載先に入れた語で行が引けるか（1 語について 1 回だけ照合式を作る）。 */
   function rowHayMatcher(venue: string, rows: readonly CandidateRow[]): boolean {
     const match = searchMatcher(venue);
-    return rows.some((r) => match(r.hay));
+    return rows.some((r) => match(r));
   }
 
   function venueLookupNoticeJa(venues: readonly string[]): string {

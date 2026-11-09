@@ -12,14 +12,12 @@ const 聲 = zeroResultLiveFunction();
 const 品書 = Recommender.candidateRows(
   JSON.parse(readFileSync(queryReferenceSnapshotPath(), "utf8")),
 );
-const hays = 品書.map((r: { hay?: string }) => String(r.hay ?? ""));
-
 function 搜(文: string): number {
   const f = Recommender.searchMatcher(Recommender.expandRelativeMonths(文, 基準), 基準);
-  return hays.filter((h) => f(h) === true).length;
+  return 品書.filter((r) => f(r) === true).length;
 }
 function 見当(文: string): Array<{ word: string; count: number; how: string }> {
-  return (Recommender.shorterHitWordsJa(文, hays, 基準, 4) || []) as Array<{
+  return (Recommender.shorterHitWordsJa(文, 品書, 基準, 4) || []) as Array<{
     word: string;
     count: number;
     how: string;
@@ -90,10 +88,10 @@ describe("欧文の一文字違いに収録の綴りを見当として出す（�
     // 実測 – 『embe』63 件・『ded』16 件と並んでいた（収録の語で無い切れ端を打てとは言へん）。
     expect(見当("embeded").map((h) => h.word)).toEqual(["embedded"]);
     expect(見当("clustar").map((h) => h.word)).toEqual(["cluster"]);
-    // 二語に割る見当は残るが、収録の綴りが先（落とした一文字を足す方が遠ざからん）。
+    /* 二語に割る見当は、切れ端が前置詞（`registrat on`）になるなら出さない – `on` を
+     * 外す規則で元の語と同じ行数になり、綴りの見当を追い越す（2026-10-26）。 */
     const 列 = 見当("registraton");
-    expect(列[0].word).toBe("registration");
-    expect(列[0].count).toBeGreaterThan(列[列.length - 1].count);
+    expect(列.map((h) => h.word)).toEqual(["registration"]);
   });
 
   it("二文字離れと収録外の語は黙る（噓の打ち手を表示しない）", () => {

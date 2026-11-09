@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>CASCADE Conferences</title>
+        <meta http-equiv="Content-Style-Type" content="text/css" />
+        <meta name="Content-Language" content="en" />
+        <meta name="authors" content="B. Colombier and V. Grosso" />
+        <meta name="KeyWords" content="CASACADE, Conference, Research, Security, Cryptography" />
+        <meta name="Description" content="Website of the CASCADE Conference" />
+        <link rel="shortcut icon" type="image/x-icon" href="Images/logo_cascade_1.jpeg">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link href="css/screen.css" rel="stylesheet" type="text/css" />
+        <!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>cascade | Website for cascade conference</title>
+<meta name="generator" content="Jekyll v3.10.0" />
+<meta property="og:title" content="cascade" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Website for cascade conference" />
+<meta property="og:description" content="Website for cascade conference" />
+<link rel="canonical" href="http://cascade-conference.org/" />
+<meta property="og:url" content="http://cascade-conference.org/" />
+<meta property="og:site_name" content="cascade" />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="cascade" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebSite","description":"Website for cascade conference","headline":"cascade","name":"cascade","url":"http://cascade-conference.org/"}</script>
+<!-- End Jekyll SEO tag -->
+
+    </head>
+    
+    
+    <body>
+    
+    <header></header>
+    
+    <section class="main_content">
+        <nav>
+            <!-- navigation menu -->
+            <div id="cascade_menu">
+                    <ul>
+                        <li><a href="index.html" class="class1">Home</a></li>
+                        <li class="class1">Call for papers</li>
+                        <ul>
+                            <li><a href="cfp.html" class="class1">Call For Papers </a></li>
+                            <li><a href="review_process.html" class="class1">Review Process</a></li>
+                            <li><a href="industry_forum.html" class="class1">Industry Forum</a></li>
+                                               
+                        </ul>
+                        <li><a href="cfs.html" class="class1">For Sponsors</a></li>
+                        <!--<li><a href="program.html">Program </a></li>-->
+                        <!--<li><a href="accepted_paper.html">Accepted papers </a></li>-->
+                        <!-- <li><a href="program_social.html">Social Program </a></li>-->
+                        <li class="class1">Committees</li>
+                        <ul>
+                            <li><a href="program_committee.html" class="class1">Program Committee</a></li>
+                            <li><a href="organizers.html" class="class1">Organizers</a></li>
+                            <li><a href="steering_committee.html" class="class1">Steering Committee</a></li>
+                        </ul>
+                        <li><a href="submission.html" class="class1">Submit your Papers </a></li>
+                        <!--<li><a href="registration.html">Register</a></li>-->
+                        <li class="class1">Venue</li>
+                        <ul>
+                            <li><a href="venue.html" class="class1">Venue</a></li>
+                            <li><a href="travel.html"class="class1"> Travel</a> </li>
+                            <li><a href="hotel.html"class="class1">Hotels</a> </li>
+                        </ul>
+                        <ul>
+                        <li><a href="archives.html"class="class1">Past Events</a></li>
+                        </ul>
+                   </ul>
+            </div>
+            <!-- end of navigation menu -->
+        </nav>
+    
+        <article>
+        
+
+
+            
+            <h1>CASCADE Conferences Home</h1>
+
+
+
+            <h2>CASCADE 2027  will be held in Heilbronn, Germany, on April 4 to April 7, 2027. </h2>
+
+
+            <p>
+CASCADE <strong>C</strong>onstructive <strong>A</strong>pproaches for <strong>S</strong>e<strong>C</strong>urity <strong>A</strong>nalysis and <strong>D</strong>esign of <strong>E</strong>mbedded systems is a new conference and the merge of COSADE and CARDIS. Its main goal is to encourage research and exchange on cryptographic implementations and embedded security challenges. It welcomes contributions from academia and industry. CASCADE encourages in particular submissions by European PhD students willing to present their work while benefiting from:
+            </p>
+            
+            <ul>
+                <li> a constructive review process prioritizing technical and editorial feedback over taste,
+                <li> interactions with their research community without long-distance travels,
+                <li> exposure to industrial challenges that may generate new research discussions.
+               
+            </ul>
+            <p>
+Papers can be submitted for review on two dates (one in the summer, one in the winter) for a single event in April.
+            </p>
+            <p>
+            The third conference will be organized by University of Stuttgart. For any inquiries, please contact Ilia Polian.
+            </p>
+            <p>
+
+            The program committee is seeking original papers on all aspects of physical security. You are invited to participate and submit your contribution to CASCADE'27. More details on <a href="cfp.html">Call For Papers page</a>.<!---The topics include but are not limited to:--->
+            </p>
+            
+       <h3>Important dates</h3> 
+       <h4> Summer Submission </h4>
+       <ul>
+            <li><strong>Paper submission </strong> <strike>June 26, 2026 </strike> July 3, 2026 </li>
+            <li><strong>Result notification </strong>: September 10, 2026 </li>
+       </ul>
+       <h4> Winter Submission </h4>
+       <ul>
+            <li><strong>Paper submission </strong>: <strike>November 10, 2026 </strike> November 17, 2026 </li>
+            <li><strong>Result notification </strong>: January 15, 2027 </li>
+       </ul> 
+       <h4> Conference dates</h4>
+       <ul>
+            <li><strong>Conference dates </strong>:  April 4 to April 7, 2027 </li>
+            <li><strong>Early registration deadline </strong>: TBD</li>
+            <li><strong>Registration deadline </strong>: TBD  </li>
+       </ul> 
+
+
+ </article>
+        <sponsor>
+            <h2>Platin</h2>
+            <h2>Gold</h2>
+            <h2>Silver</h2>
+
+        </sponsor>
+    </section>
+
+        <div id="footer"> CASCADE, Image copyright: Stadt Heilbronn/Jürgen Häffner; Bernhard LattnerM Nikolas Hesser, Puce: Sonia Barcet. Contact: vincent(dot)grosso(at)univ-st-etienne(dot)fr
+        
+        </div>
+    <!-- end footer -->
+
+    </body>
+
+</html>
+

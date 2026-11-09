@@ -13,10 +13,9 @@ function 品書(): Row[] {
   ) as Row[];
 }
 const rows = 品書();
-const hays = rows.map((r) => String(r.hay));
 function 當(文: string): number {
   const m = Recommender.searchMatcher(Recommender.expandRelativeMonths(文, AT), AT);
-  return rows.filter((r) => m(String(r.hay)) === true).length;
+  return rows.filter((r) => m(r) === true).length;
 }
 /** 画麵と同じ順で讓りを再現する（site/app.ts – 欄の名前 → 語の斷り → 日の幅 → 寄せ表 → 助詞）。 */
 function 讓り(文: string): string {
@@ -105,7 +104,7 @@ describe("出欠・原稿・合否を和語で打つ人", () => {
 
   it("打ち替えと同じ語に喋らん（黙つて二つの話をするな – 第 330 回）", () => {
     for (const 語 of ["欠席", "zoom", "書式", "スコア", "索引", "却下"]) {
-      const chip = Recommender.shorterHitWordsJa(語, hays, AT) || [];
+      const chip = Recommender.shorterHitWordsJa(語, rows, AT) || [];
       expect(chip.length, `"${語}" は打ち替えと讓りの両方が出て居る`).toBe(0);
     }
   });

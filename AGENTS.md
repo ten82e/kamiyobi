@@ -19,6 +19,9 @@ node src/cli.ts build --out public --offline --no-embeddings --cache .cache --no
   （2026-10-18 に実発生 – `--now 2026-10-18T05:00:00Z` で作り直したら落ち、固定時計で
   作り直したら通った）。今の時計で見た目を確かめたい時は、確かめた後に固定時計で
   作り直してからテストを走らせる。
+  `public/` を直接読む検査は先頭の `publicClockGuard()` が時計を確かめ、別の時計の物には
+  作り直しコマンド付きで落ちる（2026-11-08 に導入。online build の後に検査を走らせると
+  12 ファイルが前提の崩れで落ちた実測から）。
 - 整形は対象を絞って掛ける（`npx biome check --write site tests src` など）。リポジトリ全体に
   `--write .` を掛けると `data/**` の JSON まで再整形され、`data/recommender-reranker.json` の
   `input_hashes` 固定（`pins the reranker development inputs by hash`）が壊れる
