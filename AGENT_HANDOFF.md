@@ -94,6 +94,13 @@ eudat は頁に値が無く根拠を得られないため触らない（次回�
   coling (公式 commitment 12-23) を公式証拠付きで overrides に追加。正当な消失 (別版日程の
   統合・更新・round 再編) に supersession 台帳を付与。**ci・deploy・update-data・
   recommendation-bundle 全て success**。
+- **curation backlog の promotion 完了 (2026-11-10)**: 分野契約に合う候補を全て消化
+  (ACIIDS・AILA・AccML・PQCrypto・OpenSoC4HE・ICBDA・ICCCBDA・ICAIBD・icABCD・
+  Cyber Science・IEM-ICDC の 11 会議を curated.generated.yaml に promotion 正典として追加、
+  全て公式証拠 blob 付き)。discovered_candidates の status を accepted に統一
+  (「promoted」は無効な status で parseStatus が discovered にフォールバックする為)。
+  extra.yaml・manual.yaml に discovery 由来の重複条目 (aila2027・icaibd-2027・icbda2027・
+  icccbda-2027) が残っていた為 duplicate venue edition が出た — 削除して解消。
 - **2026-11-08 追加確認(4)**: OSDI 2027（概要 12-1・論文 12-8、共に 10:59 pm UTC =
   22:59:59Z ✓ USENIX は AoE でなく EST 表示）、PETS 2027（4 四半期 rolling: 5/31・8/31・
   11/30・2/28、全て firm・AoE ✓）。いずれも収録どおり正しい。
