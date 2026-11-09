@@ -27,6 +27,10 @@
   mcp-interrupted-mutations 2/2 検出・llms-count-mutations 18/18 検出・bench passed。
 - **CI nightly 失敗の原因特定と実証**: workflow_dispatch 手動実行で「VF-0127 が
   origin/main に未反映」が原因であることを実証（push で解消）。
+- **MCP サーバーの動作確認** (2026-11-09): stdio + `--now` フラグで initialize・
+  `list_upcoming` (days=30) を実際に叩いて応答を確認。固定時計での応答が正しく、
+  締切行の JST 換算・AoE/PT 原表記・種別・CCF/CORE/THCPL 評価・会期と場所の表示が
+  全て正しく返っている。
 - `public/` を直接読む検査に `publicClockGuard()`（別時計のビルドを作り直しコマンド付きで
   落とす）を全 12 検査ファイルに設置。MCP stdio に CLI と同じ `--now` を通した。
 - ブロックされた update-data の実行サマリーに新しい警告と発見の記録方法を出すようにした。
