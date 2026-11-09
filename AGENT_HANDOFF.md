@@ -31,6 +31,8 @@
   `list_upcoming` (days=30) を実際に叩いて応答を確認。固定時計での応答が正しく、
   締切行の JST 換算・AoE/PT 原表記・種別・CCF/CORE/THCPL 評価・会期と場所の表示が
   全て正しく返っている。
+  さらに `search_deadlines` (日本語クエリ「機械学習」で 32 件 ✓) と `search_venues`
+  (意味検索「graph neural networks」で 233 件・fit.score 付き) も確認。
 - `public/` を直接読む検査に `publicClockGuard()`（別時計のビルドを作り直しコマンド付きで
   落とす）を全 12 検査ファイルに設置。MCP stdio に CLI と同じ `--now` を通した。
 - ブロックされた update-data の実行サマリーに新しい警告と発見の記録方法を出すようにした。
