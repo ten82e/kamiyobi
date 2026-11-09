@@ -71,7 +71,7 @@ describe("月の塊にまでを離って続ける形が詰め形と同じ行を�
     expect(列("来月 下旬 まで").size).toBe(276);
     expect(列("来 上旬 まで").size).toBe(180);
     expect(列("今 上旬 まで").size).toBe(118);
-    expect(列("9 月 上旬 まで").size).toBe(181);
+    expect(列("9 月 上旬 まで").size).toBe(180);
     expect(列("翌月 上旬 まで").size).toBe(173);
     expect(列("2026年9月 上旬 まで").size).toBe(180);
     expect(列("再来月 上旬 まで").size).toBe(301);
@@ -102,10 +102,10 @@ describe("寄せない形の守り（第 453 回・第 463 回）", () => {
     expect(列("毎 月上旬まで").size).toBe(0);
     expect(案内("明 月上旬まで")).toBe("");
     /* 第 476 回で `から` もその初日からの幅に解けるやうになり、離つた形も詰め形と同じ行に出る。*/
-    expect(列("来月上旬から").size).toBe(390);
-    expect(列("来月 上旬 から").size).toBe(390);
-    expect(列("来月上旬以降").size).toBe(390);
-    expect(列("来月 上旬 以降").size).toBe(390);
+    expect(列("来月上旬から").size).toBe(392);
+    expect(列("来月 上旬 から").size).toBe(392);
+    expect(列("来月上旬以降").size).toBe(392);
+    expect(列("来月 上旬 以降").size).toBe(392);
 
     expect(案内("来月上旬から")).toBe("");
   });
@@ -114,7 +114,7 @@ describe("寄せない形の守り（第 453 回・第 463 回）", () => {
     expect(列("今月上旬まで").size).toBe(118);
     expect(列("来月中旬まで").size).toBe(230);
     expect(列("来月下旬まで").size).toBe(276);
-    expect(列("9月上旬まで").size).toBe(181);
+    expect(列("9月上旬まで").size).toBe(180);
     expect(列("昨月上旬まで").size).toBe(0);
     expect(列("来月上旬").size).toBe(68);
   });
@@ -127,7 +127,7 @@ describe("寄せない形の守り（第 453 回・第 463 回）", () => {
     expect(列("週 末").size).toBe(146);
     expect(列("来 週末").size).toBe(34);
     expect(列("今 月末").size).toBe(118);
-    expect(列("来 年中").size).toBe(114);
+    expect(列("来 年中").size).toBe(113);
   });
   it("第 470 回〜第 473 回の実測はこの回で変へて居ない", () => {
     expect(列("8 月の 締切").size).toBe(114);

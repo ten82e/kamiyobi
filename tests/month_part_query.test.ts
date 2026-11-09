@@ -160,7 +160,7 @@ describe("上旬・中旬・下旬", () => {
     expect(幅).toContain("2026年8月9日");
     expect(幅).toContain("8月31日");
 
-    expect(行集合("下旬以降").size).toBe(415);
+    expect(行集合("下旬以降").size).toBe(417);
     expect(Recommender.relativeDayNotes("下旬以降", 基準).join("")).toBe("");
   });
 

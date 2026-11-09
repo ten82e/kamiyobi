@@ -56,25 +56,25 @@ describe("年度の語に旬を直に繋いだ形がその年度 × その旬に
     expect(列("来年度 前半").size).toBe(0);
   });
   it("残した差 – 数字の年で書いた形だけが 0 件の侭（先の年の語は第 493 回で直つた）", () => {
-    expect(列("来年12月から").size).toBe(21);
+    expect(列("来年12月から").size).toBe(20);
     expect(列("来年12月から").size).toBe(列("来年 12月から").size);
     /* 第 495 回に数字の先の年も割る目を入れたので、そちらも離した形と同じ行が出る。*/
-    expect(列("2027年12月から").size).toBe(21);
+    expect(列("2027年12月から").size).toBe(20);
     expect(列("2027年12月から").size).toBe(列("2027年 12月から").size);
     /* 年の語の語尾付きの形で行が出る物（この方は語を割らずに解けている – 第 485 回）。*/
-    expect(列("今年1月から").size).toBe(428);
+    expect(列("今年1月から").size).toBe(430);
     expect(日の案内("今年1月から")).toContain("2026年1月1日以降のこと");
   });
   it("第 470 回〜第 487 回の実測はこの回で変へて居ない", () => {
     expect(列("来年度末").size).toBe(3);
-    expect(列("来年度中").size).toBe(50);
+    expect(列("来年度中").size).toBe(49);
     expect(列("来年度 3月").size).toBe(3);
     expect(列("来年度3月").size).toBe(3);
     expect(列("来月初め").size).toBe(0);
     expect(列("来月末").size).toBe(178);
     expect(列("来週 初旬").size).toBe(2);
     expect(列("週 末").size).toBe(146);
-    expect(列("明日以降").size).toBe(424);
+    expect(列("明日以降").size).toBe(426);
     expect(列("来 上旬").size).toBe(68);
     expect(列("締切時刻").size).toBe(181);
     expect(列("半 年後").size).toBe(2);

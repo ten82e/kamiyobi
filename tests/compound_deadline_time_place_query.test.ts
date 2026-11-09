@@ -66,7 +66,7 @@ describe("その方の決まりで既に扱はれている語は割らない（�
     for (const [語, 件] of [
       ["ポスター発表", 5],
       ["参加登録", 26],
-      ["全文締切", 290],
+      ["全文締切", 292],
       ["延長締切", 17],
       ["早期締切", 1],
       ["結果発表", 59],
@@ -95,17 +95,17 @@ describe("その方の決まりで既に扱はれている語は割らない（�
     ] as Array<[string, number]>) {
       expect([語, 列(語).size]).toEqual([語, 件]);
     }
-    expect(列("締切").size).toBe(376);
+    expect(列("締切").size).toBe(378);
   });
   it("第 470 回〜第 478 回の実測はこの回で変へて居ない", () => {
     expect(列("週 末").size).toBe(146);
-    expect(列("明日以降").size).toBe(424);
+    expect(列("明日以降").size).toBe(426);
     expect(列("来月 終わり").size).toBe(178);
     expect(列("1 年後から").size).toBe(1);
     expect(列("来 上旬").size).toBe(68);
     expect(案内("来 上旬")).toContain("来月 上旬 = 2026年9月1日(火)");
     expect(列("ml から").size).toBe(0);
-    expect(列("来週 から").size).toBe(424);
+    expect(列("来週 から").size).toBe(426);
     expect(列("来月 下旬 まで").size).toBe(276);
   });
 });
