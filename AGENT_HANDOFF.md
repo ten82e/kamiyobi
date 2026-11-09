@@ -94,6 +94,9 @@ eudat は頁に値が無く根拠を得られないため触らない（次回�
   （camera-ready 訂正済み）。
 - **2026-11-09 追加確認(16)**: MobileHCI 2027（概要 Feb 10・論文 Feb 17 AoE ✓）、
   EUSIPCO 2027（前項）、ICME 2027（前項）。Interspeech/ICASSP/KSEM は取得不能。
+- **2026-11-09 追加確認(17)**: S&P 2027（第二締切の review release Feb 11 AoE ✓ —
+  cfpapers.html を browser 取得。第一締切も 6 月の日程と一致）、CHI 2027（前項）、
+  DisCoTec 2027/FORTE（投稿締切未掲載 → 保留）。
 - **2026-11-09 追加確認(7)**: CODASPY 2027（概要 11-16・論文 11-23 AoE ✓）、ICDAR 2027
   （IJDAR Journal Track 論文 11-15 AoE ✓ / Conference Track 概要 2-26・論文 3-5 AoE ✓）。
   いずれも訂正不要。
