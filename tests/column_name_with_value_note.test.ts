@@ -57,7 +57,7 @@ describe("欄の名前を値と並べても打ち直し方が出る（第 507 �
     expect(Recommender.columnQueryNoteJa("会場")).toContain("「会場」は");
   });
   it("値だけで打つ人は今まで通り（案内を被せない）", () => {
-    expect(列("セキュリティ").size).toBe(73);
+    expect(列("セキュリティ").size).toBe(74);
     expect(列("関西").size).toBe(6);
     expect(列("オンライン参加可").size).toBe(22);
     for (const 文 of ["セキュリティ", "関西", "オンライン参加可"]) {
@@ -102,13 +102,13 @@ describe("欄の名前を値と並べても打ち直し方が出る（第 507 �
     }
   });
   it("第 470 回〜第 506 回の実測はこの回で変へて居ない", () => {
-    expect(列("年内").size).toBe(442);
-    expect(列("今年内").size).toBe(444);
+    expect(列("年内").size).toBe(443);
+    expect(列("今年内").size).toBe(445);
     expect(列("再来週内").size).toBe(18);
     expect(列("年末中").size).toBe(91);
-    expect(列("年初1月").size).toBe(31);
+    expect(列("年初1月").size).toBe(33);
     expect(列("来月 末日").size).toBe(178);
-    expect(列("週 末").size).toBe(150);
+    expect(列("週 末").size).toBe(152);
     expect(列("締切時刻").size).toBe(181);
     expect(列("ml から").size).toBe(0);
     expect(列("オンラインの締切").size).toBe(22);

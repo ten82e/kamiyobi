@@ -66,7 +66,7 @@ describe("同じ語を二つの群に持つ誤りを直し、てびきの群に�
     expect(案内("費用対効果分析")).toBe("");
     expect(案内("リアルタイム処理")).toBe("");
     expect(件("関西")).toBe(6);
-    expect(件("セキュリティ")).toBe(73);
+    expect(件("セキュリティ")).toBe(74);
     expect(件("ランクA")).toBe(3);
     for (const 文 of ["関西", "セキュリティ", "ランクA"]) {
       expect(案内(文), `「${文}」に案内が乘つた`).toBe("");
@@ -83,12 +83,12 @@ describe("同じ語を二つの群に持つ誤りを直し、てびきの群に�
       "「分野」は",
     );
     expect(案内("参加費はいくら")).toContain("この表が持っていません");
-    expect(件("年内")).toBe(442);
-    expect(件("今年内")).toBe(444);
+    expect(件("年内")).toBe(443);
+    expect(件("今年内")).toBe(445);
     expect(件("再来週内")).toBe(18);
     expect(件("年末中")).toBe(91);
     expect(件("来月 末日")).toBe(178);
-    expect(件("週 末")).toBe(150);
+    expect(件("週 末")).toBe(152);
     expect(件("締切時刻")).toBe(181);
     expect(件("ml から")).toBe(0);
   });

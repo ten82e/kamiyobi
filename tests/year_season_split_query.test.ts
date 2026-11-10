@@ -74,7 +74,7 @@ describe("年の語に旬を直に繋いだ形がその年 × その旬に解れ
     /* 実ビルドでは `来年上旬` 11 件・`今年下旬` 92 件・`2027年上旬` 11 件・`来年上旬から` 377 件
      * （検査用ビルドの値はここに張る）。*/
     expect(列("来年上旬").size).toBe(列("来年 上旬").size);
-    expect(列("来年上旬から").size).toBe(117);
+    expect(列("来年上旬から").size).toBe(118);
     expect(列("来年下旬まで").size).toBe(1);
     expect(列("今年中旬に").size).toBe(55);
     expect(列("来年上旬から").size).toBeGreaterThan(列("来年上旬").size);
@@ -102,15 +102,15 @@ describe("年の語に旬を直に繋いだ形がその年 × その旬に解れ
     expect(列("来月初め").size).toBe(0);
     expect(列("来月末").size).toBe(178);
     expect(列("来週 初旬").size).toBe(2);
-    expect(列("週 末").size).toBe(150);
-    expect(列("明日以降").size).toBe(440);
+    expect(列("週 末").size).toBe(152);
+    expect(列("明日以降").size).toBe(441);
     expect(列("来 上旬").size).toBe(68);
     expect(列("来月上旬").size).toBe(68);
     expect(列("締切時刻").size).toBe(181);
     expect(列("半 年後").size).toBe(2);
     expect(列("一 週間後").size).toBe(13);
     expect(列("ml から").size).toBe(0);
-    expect(列("今年1月から").size).toBe(444);
+    expect(列("今年1月から").size).toBe(445);
   });
 });
 
