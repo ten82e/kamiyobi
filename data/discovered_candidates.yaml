@@ -25037,7 +25037,7 @@ candidates:
     id: candidate-0e93ddd58e4a2f3510dd620f
     source: easychair
     source_item_id: icaigc-2027
-    status: discovered
+    status: accepted
     discovered_at: '2026-09-05T22:05:16.108Z'
     first_seen_at: '2026-09-05T22:05:16.108Z'
     last_seen_at: '2026-11-07T18:30:51.935Z'

@@ -632,6 +632,45 @@ conferences:
     tags:
       - niche
     title: WQS 2026
+
+  - categories:
+      - ai
+    editions:
+      - date_text: August 14-16, 2027
+        deadlines:
+          - date: '2027-02-20 23:59:59'
+            evidence:
+              - contentHash: 0b16c6faf3e4bf6f2e369c43c39b6e7125d33d7bc8ced19b9049730802a2750f
+                rawExcerpt: 'Submission deadline February 20, 2027'
+                retrievedAt: '2026-11-10T05:30:00Z'
+                sourceClass: official-cfp
+                sourceUrl: https://easychair.org/cfp/ICAIGC2027
+                verifiedAt: '2026-11-10T05:30:00Z'
+                verifiedFields:
+                  - date
+                  - time
+                  - timezone
+            kind: paper
+            label: Paper submission deadline
+            precision: exact
+            promotion_ref:
+              batch: 2026-11-10-icaigc-2027
+              resolution: resolution-icaigc-2027
+            round: 1
+            track: ''
+            tz: AoE
+        event_end: '2027-08-16'
+        event_start: '2027-08-14'
+        id: icaigc-2027
+        link: https://www.icaigc.net
+        place: Melaka, Malaysia
+        year: 2027
+    full_name: 2027 IEEE International Conference on Artificial Intelligence and Generated Content
+    key: icaigc
+    link: https://www.icaigc.net
+    tags:
+      - niche
+    title: IEEE ICAIGC 2027
   - categories:
       - networking
     editions:
