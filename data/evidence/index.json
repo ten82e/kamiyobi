@@ -392,6 +392,13 @@
         "data/evidence/reviews/recovered-captures-20261004.json"
       ]
     },
+    "78e66d1ad45cd74e898380bfcb9d99f4eab2c88a3ef226e424f77ef7b8c887f2": {
+      "bytes": 26487,
+      "content_type": "application/octet-stream",
+      "references": [
+        "data/snapshot.json"
+      ]
+    },
     "78e838df21338c35405deb432ec11c68d4c17ffbc9e55a964a9921df7915eab1": {
       "bytes": 7934,
       "content_type": "application/octet-stream",

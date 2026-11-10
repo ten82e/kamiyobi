@@ -214546,9 +214546,11 @@
          "observed_at": "",
          "original_value": "2026-11-20 23:59:59",
          "confidence": "aggregator",
-         "sourceClass": "aggregator",
+         "sourceClass": "official-cfp",
          "sourceUrl": "https://www.pakdd2027.org/",
-         "rawExcerpt": "2026-11-20 23:59:59"
+         "rawExcerpt": "Submission deadline November 20, 2026",
+         "contentHash": "78e66d1ad45cd74e898380bfcb9d99f4eab2c88a3ef226e424f77ef7b8c887f2",
+         "verifiedAt": "2026-11-10T08:00:00Z"
         }
        ],
        "verification": {
@@ -214557,9 +214559,9 @@
         "last_verified_at": null,
         "next_check_at": "2026-11-10T04:23:59.906Z",
         "content_hash": null,
-        "status": "manual-required",
-        "source_class": "aggregator",
-        "source_name": "ccfddl",
+        "status": "verified",
+        "source_class": "official-cfp",
+        "source_name": "official-cfp",
         "provider_identity": {
          "provider": "dedicated-domain",
          "providerKey": "www.pakdd2027.org",

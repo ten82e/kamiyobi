@@ -48930,7 +48930,7 @@ candidates:
     id: candidate-86d1013a57c69c12bbd4e0da
     source: dbworld
     source_item_id: pakdd2027-wellington-new-zealand-29-june-2-july-2027
-    status: discovered
+    status: rejected
     discovered_at: '2026-11-07T18:28:57.417Z'
     first_seen_at: '2026-11-07T18:28:57.417Z'
     last_seen_at: '2026-11-07T18:30:51.935Z'
@@ -48960,7 +48960,7 @@ candidates:
     id: candidate-e52219430a70b9f1d7104b6f
     source: easychair
     source_item_id: pakdd2027
-    status: discovered
+    status: accepted
     discovered_at: '2026-11-07T18:28:57.417Z'
     first_seen_at: '2026-11-07T18:28:57.417Z'
     last_seen_at: '2026-11-07T18:30:51.935Z'
