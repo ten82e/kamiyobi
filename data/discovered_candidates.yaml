@@ -10676,7 +10676,7 @@ candidates:
     id: candidate-b975fdb46712257a71574d24
     source: easychair
     source_item_id: bmsb-2027
-    status: accepted
+    status: discovered
     discovered_at: '2026-10-04T12:39:08.732Z'
     first_seen_at: '2026-10-04T12:39:08.732Z'
     last_seen_at: '2026-11-07T18:30:51.935Z'
@@ -37661,7 +37661,7 @@ candidates:
     id: candidate-7a577454685cd6aea270021a
     source: easychair
     source_item_id: ieee-latiniot-2027
-    status: accepted
+    status: discovered
     discovered_at: '2026-10-04T12:39:08.732Z'
     first_seen_at: '2026-10-04T12:39:08.732Z'
     last_seen_at: '2026-11-07T18:30:51.935Z'

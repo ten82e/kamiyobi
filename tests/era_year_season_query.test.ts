@@ -42,8 +42,8 @@ describe("元号で書いた年を繋げた形が、離した形と同じ行に�
   it("暦月を繋げた形は、西暦で同じ月と同じ行（先の年は第 499 回に割つた）", () => {
     expect(対称差(列("令和8年12月"), 列("2026年12月"))).toBe(0);
     expect(対称差(列("令和8年12月"), 列("令和8年 12月"))).toBe(0);
-    expect(列("令和8年12月").size).toBe(86);
-    expect([列("令和9年12月").size, 列("令和九年12月").size]).toEqual([21, 21]);
+    expect(列("令和8年12月").size).toBe(91);
+    expect([列("令和9年12月").size, 列("令和九年12月").size]).toEqual([26, 26]);
     expect(対称差(列("令和九年12月"), 列("令和九年 12月"))).toBe(0);
   });
   it("西暦への読み替へはそちらの機械と同じ（自分の元号表を持たない）", () => {
@@ -62,15 +62,15 @@ describe("元号で書いた年を繋げた形が、離した形と同じ行に�
   });
   it("第 470 回〜第 497 回の実測はこの回で変へて居ない", () => {
     expect(列("2027年上旬").size).toBe(列("2027年 上旬").size);
-    expect(列("2027年12月から").size).toBe(21);
-    expect(列("2026年1月から").size).toBe(432);
+    expect(列("2027年12月から").size).toBe(26);
+    expect(列("2026年1月から").size).toBe(444);
     expect(列("2028年3月").size).toBe(0);
     expect(列("再来年3月").size).toBe(0);
     expect(列("来年上旬").size).toBe(2);
     expect(列("来週中旬").size).toBe(43);
-    expect(列("年末上旬").size).toBe(41);
+    expect(列("年末上旬").size).toBe(44);
     expect(列("来月 末日").size).toBe(178);
-    expect(列("週 末").size).toBe(146);
+    expect(列("週 末").size).toBe(150);
     expect(列("ml から").size).toBe(0);
     expect(列("締切時刻").size).toBe(181);
   });

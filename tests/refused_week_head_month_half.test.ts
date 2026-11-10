@@ -86,8 +86,8 @@ describe("其它は其侭（第 431 回）", () => {
     /* 週の語＋旬は第 490 回で行が出る側になつた（案内は出さない）。*/
     expect(案内("来週中旬")).toBe("");
     expect(列("来週中旬").size).toBe(43);
-    expect(列("aiとml").size).toBe(17);
-    expect(列("").size).toBe(441);
+    expect(列("aiとml").size).toBe(18);
+    expect(列("").size).toBe(456);
   });
 });
 

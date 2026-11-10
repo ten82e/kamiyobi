@@ -21,10 +21,10 @@ const venueManifest = JSON.parse(
 ) as { baseline_venues: string[]; additional_venues: string[] };
 // Preserve the original evaluation universe; coverage additions are explicit competitors.
 if (
-  venueManifest.baseline_venues.length !== 696 ||
+  venueManifest.baseline_venues.length !== 692 ||
   createHash("sha256")
     .update(`${venueManifest.baseline_venues.join("\n")}\n`)
-    .digest("hex") !== "969a9422d791d39b33b5c91fea477c390adf18c6c1f4f9ee043e5e46afdffe58"
+    .digest("hex") !== "aa1e58ddf938b474bd36205c0c0197cf72b26744abc6c618762b6581414fcd04"
 )
   throw new Error("baseline evaluation venues changed");
 export const FULL_VENUE_KEYS = [

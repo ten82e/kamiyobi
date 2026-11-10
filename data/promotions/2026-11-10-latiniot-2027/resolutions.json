@@ -1,0 +1,15 @@
+[
+ {
+  "resolution_id": "resolution-latiniot-2027",
+  "decision": "promote",
+  "verifiedFields": [
+   "venue",
+   "date",
+   "kind",
+   "round",
+   "event_start",
+   "event_end"
+  ],
+  "reason": "primary fields and evidence verified from the official CFP"
+ }
+]

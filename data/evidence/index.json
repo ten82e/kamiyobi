@@ -68,7 +68,8 @@
       "bytes": 13580,
       "content_type": "application/octet-stream",
       "references": [
-        "data/curated.generated.yaml"
+        "data/curated.generated.yaml",
+        "data/snapshot.json"
       ]
     },
     "102104d3e465873bd04dc7eebc0b8b8915b67389b231a6c2bf84c524886132f1": {
@@ -92,13 +93,6 @@
         "data/snapshot.json"
       ]
     },
-    "11947bfce8baaec5477bfd0f3e6870842dd16650056d18e54555c91e45d54a20": {
-      "bytes": 9821,
-      "content_type": "application/octet-stream",
-      "references": [
-        "data/curated.generated.yaml"
-      ]
-    },
     "1339029168e09301b28389470e2542b7042457dd8ac2f8d6509c654c14ac7dbb": {
       "bytes": 13008,
       "content_type": "application/octet-stream",
@@ -112,21 +106,24 @@
       "bytes": 9355,
       "content_type": "application/octet-stream",
       "references": [
-        "data/curated.generated.yaml"
+        "data/curated.generated.yaml",
+        "data/snapshot.json"
       ]
     },
     "182d31db7e7cd744ce1a14f6ecd9f96b5d4f66f5012d6102cc94b32f8b02cbaa": {
       "bytes": 7606,
       "content_type": "application/octet-stream",
       "references": [
-        "data/curated.generated.yaml"
+        "data/curated.generated.yaml",
+        "data/snapshot.json"
       ]
     },
     "1db79ec6dd42cf5e0e1e800ea750a52411722bc9793e29a1f3895ef8d0218958": {
       "bytes": 6333,
       "content_type": "application/octet-stream",
       "references": [
-        "data/curated.generated.yaml"
+        "data/curated.generated.yaml",
+        "data/snapshot.json"
       ]
     },
     "24a85164b842fa0b7b5f98c75e1fa9dfa8851372f73571cbe2de94dc9141dd2d": {
@@ -149,7 +146,8 @@
       "bytes": 171708,
       "content_type": "application/octet-stream",
       "references": [
-        "data/curated.generated.yaml"
+        "data/curated.generated.yaml",
+        "data/snapshot.json"
       ]
     },
     "265a83c166a62e3f1853e101980f6e5ca91349e314d34ba13a1fb6b9f0eb136a": {
@@ -195,7 +193,8 @@
       "bytes": 5458,
       "content_type": "application/octet-stream",
       "references": [
-        "data/curated.generated.yaml"
+        "data/curated.generated.yaml",
+        "data/snapshot.json"
       ]
     },
     "38a8af2993bbd2ba098fb730a561987253b4634a01315c18678d2eaded00674f": {
@@ -218,7 +217,8 @@
       "bytes": 4768,
       "content_type": "application/octet-stream",
       "references": [
-        "data/curated.generated.yaml"
+        "data/curated.generated.yaml",
+        "data/snapshot.json"
       ]
     },
     "43381fd60c61406273ab27147a03907754bef439526e88735ad98122c6eab452": {
@@ -251,7 +251,8 @@
       "bytes": 34490,
       "content_type": "application/octet-stream",
       "references": [
-        "data/curated.generated.yaml"
+        "data/curated.generated.yaml",
+        "data/snapshot.json"
       ]
     },
     "4a41e3acf4f8e5be14c218b8abc2b31d5c4fbbbaf2728f88072051365e79bcbd": {
@@ -274,7 +275,8 @@
       "bytes": 9278,
       "content_type": "application/octet-stream",
       "references": [
-        "data/curated.generated.yaml"
+        "data/curated.generated.yaml",
+        "data/snapshot.json"
       ]
     },
     "53f80427fd3e7935279eb3387d15be2da7dba3d2db1979c7de1c1065965e9fa0": {
@@ -325,7 +327,8 @@
       "bytes": 18306,
       "content_type": "application/octet-stream",
       "references": [
-        "data/curated.generated.yaml"
+        "data/curated.generated.yaml",
+        "data/snapshot.json"
       ]
     },
     "671cb88b332167c09eded89e326a201a5ac0da4bb480256f70ed5a408da86c97": {
@@ -336,13 +339,6 @@
         "data/reverification-resolutions.json",
         "data/snapshot.json",
         "data/verification-ledger.json"
-      ]
-    },
-    "6c3b89113a8878b1df1182a642a8bfc79bc24464e30cd592b51d2470a93fa99a": {
-      "bytes": 15288,
-      "content_type": "application/octet-stream",
-      "references": [
-        "data/curated.generated.yaml"
       ]
     },
     "6c94db3b66fd1b4e3ffaa52819dca36d770b039e01dbfdbb8d614197bac34ab5": {
@@ -365,7 +361,8 @@
       "bytes": 50225,
       "content_type": "application/octet-stream",
       "references": [
-        "data/curated.generated.yaml"
+        "data/curated.generated.yaml",
+        "data/snapshot.json"
       ]
     },
     "7238cfba9ecf5eaffae6ecb6b86a1fdae90e4c2c28669f5a458965491c5d06a2": {
@@ -409,13 +406,6 @@
         "data/promotions/2026-08-31-sesame-jcdl-2026/resolutions.json",
         "data/snapshot.json",
         "data/source-snapshots/local.json"
-      ]
-    },
-    "7f8d835f3b0f5d2a0bcfc426bb39ef25662749a21289bebd0be0c0a90ee5ed4f": {
-      "bytes": 35328,
-      "content_type": "application/octet-stream",
-      "references": [
-        "data/curated.generated.yaml"
       ]
     },
     "8646e62b7b863709f586c7d12b76ce187fcdf1845049828bc421da61e6c389c7": {
@@ -505,7 +495,8 @@
       "bytes": 20015,
       "content_type": "application/octet-stream",
       "references": [
-        "data/curated.generated.yaml"
+        "data/curated.generated.yaml",
+        "data/snapshot.json"
       ]
     },
     "b49b9b1572db96b04c83c1f57208366d0c5d6e573809a54c271e1a0b0031eee3": {
@@ -530,13 +521,6 @@
       "references": [
         "data/snapshot.json",
         "data/verification-ledger.json"
-      ]
-    },
-    "bbbc6e8472de08822b9913edd412f7d4c135e5fcde0a6868ef0e60d454c13176": {
-      "bytes": 11771,
-      "content_type": "application/octet-stream",
-      "references": [
-        "data/curated.generated.yaml"
       ]
     },
     "c1e6b29dbe29b975ddbce5a222ca6a7a4d68d9789bd043f96b0830ffac79c483": {
@@ -580,7 +564,8 @@
       "bytes": 8426,
       "content_type": "application/octet-stream",
       "references": [
-        "data/curated.generated.yaml"
+        "data/curated.generated.yaml",
+        "data/snapshot.json"
       ]
     },
     "cdb226fa64645300f44f019877355aa756f663f5bdf9198e484f8dea597ad23c": {
@@ -608,7 +593,8 @@
       "bytes": 211759,
       "content_type": "application/octet-stream",
       "references": [
-        "data/curated.generated.yaml"
+        "data/curated.generated.yaml",
+        "data/snapshot.json"
       ]
     },
     "d92ede457dfb03539f155505991d440b11057bf750d0bb5b7b3ca4a98aa2ca21": {
@@ -661,7 +647,8 @@
       "bytes": 8196,
       "content_type": "application/octet-stream",
       "references": [
-        "data/curated.generated.yaml"
+        "data/curated.generated.yaml",
+        "data/snapshot.json"
       ]
     },
     "e9ce771eb54eda062c8f28fc20492fe17a2cc680f1079b1cec3a0d84aaef8e95": {
@@ -698,7 +685,8 @@
       "bytes": 9528,
       "content_type": "application/octet-stream",
       "references": [
-        "data/curated.generated.yaml"
+        "data/curated.generated.yaml",
+        "data/snapshot.json"
       ]
     },
     "f6cb4513ff75403485f32aa9b5d7e070d017a319a36751a33aabd14bb61c197d": {
@@ -724,7 +712,8 @@
       "bytes": 43998,
       "content_type": "application/octet-stream",
       "references": [
-        "data/curated.generated.yaml"
+        "data/curated.generated.yaml",
+        "data/snapshot.json"
       ]
     }
   }

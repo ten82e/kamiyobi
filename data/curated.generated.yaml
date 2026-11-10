@@ -632,7 +632,6 @@ conferences:
     tags:
       - niche
     title: WQS 2026
-
   - categories:
       - networking
     editions:
@@ -671,7 +670,41 @@ conferences:
     tags:
       - niche
     title: IEEE LatinIoT 2027
-
+  - categories:
+      - security
+    editions:
+      - date_text: May 25-28, 2027
+        deadlines:
+          - date: '2027-01-06 23:59:59'
+            evidence:
+              - contentHash: e5c1fae3d33f06e34560a4c3f9d7d1ad2a7bd1ce0ca97a4266694b2cd09ac90f
+                rawExcerpt: 'Submission deadline January 6, 2027'
+                retrievedAt: '2026-11-10T05:30:00Z'
+                sourceClass: official-cfp
+                sourceUrl: https://easychair.org/cfp/CyCon2027
+                verifiedAt: '2026-11-10T05:30:00Z'
+                verifiedFields:
+                  - date
+                  - time
+                  - timezone
+            kind: paper
+            label: Paper submission deadline
+            precision: exact
+            round: 1
+            track: ''
+            tz: AoE
+        event_end: '2027-05-28'
+        event_start: '2027-05-25'
+        id: cycon-2027
+        link: https://www.cycon.org
+        place: Tallinn, Estonia
+        year: 2027
+    full_name: 'The 19th International Conference on Cyber Conflict: Unified Response'
+    key: cycon
+    link: https://www.cycon.org
+    tags:
+      - niche
+    title: CyCon 2027
   - categories:
       - networking
     editions:
@@ -710,42 +743,6 @@ conferences:
     tags:
       - niche
     title: IEEE BMSB 2027
-
-  - categories:
-      - security
-    editions:
-      - date_text: May 25-28, 2027
-        deadlines:
-          - date: '2027-01-06 23:59:59'
-            evidence:
-              - contentHash: e5c1fae3d33f06e34560a4c3f9d7d1ad2a7bd1ce0ca97a4266694b2cd09ac90f
-                rawExcerpt: 'Submission deadline January 6, 2027'
-                retrievedAt: '2026-11-10T05:30:00Z'
-                sourceClass: official-cfp
-                sourceUrl: https://easychair.org/cfp/CyCon2027
-                verifiedAt: '2026-11-10T05:30:00Z'
-                verifiedFields:
-                  - date
-                  - time
-                  - timezone
-            kind: paper
-            label: Paper submission deadline
-            precision: exact
-            round: 1
-            track: ''
-            tz: AoE
-        event_end: '2027-05-28'
-        event_start: '2027-05-25'
-        id: cycon-2027
-        link: https://www.cycon.org
-        place: Tallinn, Estonia
-        year: 2027
-    full_name: 'The 19th International Conference on Cyber Conflict: Unified Response'
-    key: cycon
-    link: https://www.cycon.org
-    tags:
-      - niche
-    title: CyCon 2027
 
   - categories:
       - ai
@@ -1183,124 +1180,8 @@ conferences:
       - niche
     title: icABCD 2027
 
-  - categories:
-      - ai
-      - db
-    editions:
-      - date_text: May 28-30, 2027
-        deadlines:
-          - date: '2026-11-30 23:59:59'
-            evidence:
-              - contentHash: 11947bfce8baaec5477bfd0f3e6870842dd16650056d18e54555c91e45d54a20
-                rawExcerpt: 'Submission deadline November 30, 2026'
-                retrievedAt: '2026-11-10T03:15:00Z'
-                sourceClass: official-cfp
-                sourceUrl: https://easychair.org/cfp/ICAIBD2027
-                verifiedAt: '2026-11-10T03:15:00Z'
-                verifiedFields:
-                  - date
-                  - time
-                  - timezone
-            kind: paper
-            label: Paper submission deadline
-            precision: exact
-            promotion_ref:
-              batch: 2026-11-10-icaibd-2027
-              resolution: resolution-icaibd-2027
-            round: 1
-            track: ''
-            tz: AoE
-        event_end: '2027-05-30'
-        event_start: '2027-05-28'
-        id: icaibd-2027
-        link: https://www.icaibd.org/
-        place: Chengdu, China
-        year: 2027
-    full_name: The 10th International Conference on Artificial Intelligence and Big Data
-    key: icaibd
-    link: https://www.icaibd.org/
-    tags:
-      - niche
-    title: ICAIBD 2027
 
-  - categories:
-      - systems
-      - db
-    editions:
-      - date_text: April 23-25, 2027
-        deadlines:
-          - date: '2026-12-05 23:59:59'
-            evidence:
-              - contentHash: 6c3b89113a8878b1df1182a642a8bfc79bc24464e30cd592b51d2470a93fa99a
-                rawExcerpt: 'Submission deadline December 5, 2026'
-                retrievedAt: '2026-11-10T03:00:00Z'
-                sourceClass: official-cfp
-                sourceUrl: https://easychair.org/cfp/ICCCBDA2027
-                verifiedAt: '2026-11-10T03:00:00Z'
-                verifiedFields:
-                  - date
-                  - time
-                  - timezone
-            kind: paper
-            label: Paper submission deadline
-            precision: exact
-            promotion_ref:
-              batch: 2026-11-10-icccbda-2027
-              resolution: resolution-icccbda-2027
-            round: 1
-            track: ''
-            tz: AoE
-        event_end: '2027-04-25'
-        event_start: '2027-04-23'
-        id: icccbda-2027
-        link: https://www.icccbda.com/
-        place: Chengdu, China
-        year: 2027
-    full_name: The 12th International Conference on Cloud Computing and Big Data Analytics
-    key: icccbda
-    link: https://www.icccbda.com/
-    tags:
-      - niche
-    title: ICCCBDA 2027
 
-  - categories:
-      - db
-    editions:
-      - date_text: April 26-29, 2027
-        deadlines:
-          - date: '2026-12-10 23:59:59'
-            evidence:
-              - contentHash: bbbc6e8472de08822b9913edd412f7d4c135e5fcde0a6868ef0e60d454c13176
-                rawExcerpt: 'Submission deadline December 10, 2026'
-                retrievedAt: '2026-11-10T02:50:00Z'
-                sourceClass: official-cfp
-                sourceUrl: https://easychair.org/cfp/ICBDA2027
-                verifiedAt: '2026-11-10T02:50:00Z'
-                verifiedFields:
-                  - date
-                  - time
-                  - timezone
-            kind: paper
-            label: Paper submission deadline
-            precision: exact
-            promotion_ref:
-              batch: 2026-11-10-icbda-2027
-              resolution: resolution-icbda-2027
-            round: 1
-            track: ''
-            tz: AoE
-        event_end: '2027-04-29'
-        event_start: '2027-04-26'
-        id: icbda-2027
-        link: https://www.icbda.org/
-        place: Bangkok, Thailand
-        year: 2027
-    full_name: The 12th International Conference on Big Data Analytics
-    key: icbda
-    link: https://www.icbda.org/
-    tags:
-      - niche
-    title: ICBDA 2027
 
   - categories:
       - systems
@@ -1443,44 +1324,6 @@ conferences:
       - workshop
     title: AccML 2027
 
-  - categories:
-      - ai
-    editions:
-      - date_text: April 8-10, 2027
-        deadlines:
-          - date: '2026-11-15 23:59:59'
-            evidence:
-              - contentHash: 7f8d835f3b0f5d2a0bcfc426bb39ef25662749a21289bebd0be0c0a90ee5ed4f
-                rawExcerpt: 'Abstract registration: November 15, 2026 (AoE) -- extended! / Paper submission deadline: November 15, 2026 (AoE) -- extended!'
-                retrievedAt: '2026-11-10T01:55:00Z'
-                sourceClass: official-cfp
-                sourceUrl: http://ailasym.com/AILA2027/AILA2027.html
-                verifiedAt: '2026-11-10T01:55:00Z'
-                verifiedFields:
-                  - date
-                  - time
-                  - timezone
-            kind: paper
-            label: Paper submission deadline (extended)
-            precision: exact
-            promotion_ref:
-              batch: 2026-11-10-aila2027
-              resolution: resolution-aila2027
-            round: 1
-            track: ''
-            tz: AoE
-        event_end: '2027-04-10'
-        event_start: '2027-04-08'
-        id: aila2027
-        link: http://ailasym.com/AILA2027/AILA2027.html
-        place: Belfast, UK
-        year: 2027
-    full_name: The sixth International Conference on Artificial Intelligence Logic and Applications
-    key: aila
-    link: http://ailasym.com/AILA2027/AILA2027.html
-    tags:
-      - niche
-    title: AILA 2027
   - categories:
       - db
     editions:

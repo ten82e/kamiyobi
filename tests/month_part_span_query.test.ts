@@ -103,7 +103,7 @@ describe("旬を端に持つ幅", () => {
   });
 
   it("「下旬以降」はその初日からの幅で絞る（第 328 回の「絞らない」決まりは第 475 回で改めた）", () => {
-    expect(行列表("下旬以降").length, "『下旬以降』がその初日からの幅で絞れて居ない").toBe(419);
+    expect(行列表("下旬以降").length, "『下旬以降』がその初日からの幅で絞れて居ない").toBe(431);
     const 案内 = (Recommender.relativeDayNotes as (q: string, n: number) => string[])(
       "下旬以降",
       基準,

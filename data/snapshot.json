@@ -287039,6 +287039,1172 @@
     }
    ],
    "papers": []
+  },
+  {
+   "categories": [
+    "ai"
+   ],
+   "editions": [
+    {
+     "date_text": "June 9-12, 2027",
+     "deadlines": [
+      {
+       "date": "2027-01-22 23:59:59",
+       "evidence": [
+        {
+         "contentHash": "264540a50e70ebf234e49e0475c79c5baeee2411a897b67e20fc678fb8e44282",
+         "rawExcerpt": "Abstract Submission: January 22, 2027",
+         "retrievedAt": "2026-11-10T05:15:00Z",
+         "sourceClass": "official-cfp",
+         "sourceUrl": "https://www.um.org/umap2027/",
+         "verifiedAt": "2026-11-10T05:15:00Z",
+         "verifiedFields": [
+          "date",
+          "time",
+          "timezone"
+         ]
+        }
+       ],
+       "kind": "abstract",
+       "label": "Abstract submission deadline",
+       "precision": "exact",
+       "promotion_ref": {
+        "batch": "2026-11-10-umap-2027",
+        "resolution": "resolution-umap-2027"
+       },
+       "round": 1,
+       "track": "",
+       "tz": "AoE",
+       "utc": "2027-01-23T11:59:59.000Z",
+       "aoe": "2027-01-22 23:59:59 AoE"
+      },
+      {
+       "date": "2027-01-29 23:59:59",
+       "evidence": [
+        {
+         "contentHash": "264540a50e70ebf234e49e0475c79c5baeee2411a897b67e20fc678fb8e44282",
+         "rawExcerpt": "Submission deadline: January 29, 2027",
+         "retrievedAt": "2026-11-10T05:15:00Z",
+         "sourceClass": "official-cfp",
+         "sourceUrl": "https://www.um.org/umap2027/",
+         "verifiedAt": "2026-11-10T05:15:00Z",
+         "verifiedFields": [
+          "date",
+          "time",
+          "timezone"
+         ]
+        }
+       ],
+       "kind": "paper",
+       "label": "Paper submission deadline",
+       "precision": "exact",
+       "promotion_ref": {
+        "batch": "2026-11-10-umap-2027",
+        "resolution": "resolution-umap-2027"
+       },
+       "round": 1,
+       "track": "",
+       "tz": "AoE",
+       "utc": "2027-01-30T11:59:59.000Z",
+       "aoe": "2027-01-29 23:59:59 AoE"
+      }
+     ],
+     "event_end": "2027-06-12",
+     "event_start": "2027-06-09",
+     "id": "umap-2027",
+     "link": "https://www.um.org/umap2027/",
+     "place": "Chicago, IL, United States",
+     "year": 2027
+    }
+   ],
+   "full_name": "The 35th ACM International Conference on User Modeling, Adaptation and Personalization",
+   "key": "umap",
+   "link": "https://www.um.org/umap2027/",
+   "tags": [
+    "niche"
+   ],
+   "title": "ACM UMAP 2027"
+  },
+  {
+   "categories": [
+    "systems"
+   ],
+   "editions": [
+    {
+     "date_text": "June 8-11, 2027",
+     "deadlines": [
+      {
+       "date": "2027-03-30 23:59:59",
+       "evidence": [
+        {
+         "contentHash": "14e1aa1beb01ee493b50387163f1204673c109022511c97bf4fb40eb52ce8781",
+         "rawExcerpt": "Abstract registration deadline March 30, 2027 / Submission deadline March 31, 2027",
+         "retrievedAt": "2026-11-10T05:00:00Z",
+         "sourceClass": "official-cfp",
+         "sourceUrl": "https://easychair.org/cfp/meco2027",
+         "verifiedAt": "2026-11-10T05:00:00Z",
+         "verifiedFields": [
+          "date",
+          "time",
+          "timezone"
+         ]
+        }
+       ],
+       "kind": "paper",
+       "label": "Paper submission deadline",
+       "precision": "exact",
+       "promotion_ref": {
+        "batch": "2026-11-10-meco-2027",
+        "resolution": "resolution-meco-2027"
+       },
+       "round": 1,
+       "track": "",
+       "tz": "AoE",
+       "utc": "2027-04-01T11:59:59.000Z",
+       "aoe": "2027-03-31 23:59:59 AoE"
+      }
+     ],
+     "event_end": "2027-06-11",
+     "event_start": "2027-06-08",
+     "id": "meco-2027",
+     "link": "http://www.mecoconference.me/",
+     "place": "Budva, Montenegro",
+     "year": 2027
+    }
+   ],
+   "full_name": "The 16th Mediterranean Conference on Embedded Computing",
+   "key": "meco",
+   "link": "http://www.mecoconference.me/",
+   "tags": [
+    "niche"
+   ],
+   "title": "MECO 2027"
+  },
+  {
+   "categories": [
+    "systems"
+   ],
+   "editions": [
+    {
+     "date_text": "July 7-9, 2027",
+     "deadlines": [
+      {
+       "date": "2027-02-26 23:59:59",
+       "evidence": [
+        {
+         "contentHash": "d654fae08ca0415ef7d0b7d34c50fc123f16a415e89d04a0b6e37c0c4e5282dd",
+         "rawExcerpt": "Paper Submission: February 26, 2027",
+         "retrievedAt": "2026-11-10T04:45:00Z",
+         "sourceClass": "official-cfp",
+         "sourceUrl": "https://cyprusconferences.org/ispdc2027/",
+         "verifiedAt": "2026-11-10T04:45:00Z",
+         "verifiedFields": [
+          "date",
+          "time",
+          "timezone"
+         ]
+        }
+       ],
+       "kind": "paper",
+       "label": "Paper submission deadline",
+       "precision": "exact",
+       "promotion_ref": {
+        "batch": "2026-11-10-ispdc-2027",
+        "resolution": "resolution-ispdc-2027"
+       },
+       "round": 1,
+       "track": "",
+       "tz": "AoE",
+       "utc": "2027-02-27T11:59:59.000Z",
+       "aoe": "2027-02-26 23:59:59 AoE"
+      }
+     ],
+     "event_end": "2027-07-09",
+     "event_start": "2027-07-07",
+     "id": "ispdc-2027",
+     "link": "https://cyprusconferences.org/ispdc2027/",
+     "place": "Limassol, Cyprus",
+     "year": 2027
+    }
+   ],
+   "full_name": "The 26th International Symposium on Parallel and Distributed Computing",
+   "key": "ispdc",
+   "link": "https://cyprusconferences.org/ispdc2027/",
+   "tags": [
+    "niche"
+   ],
+   "title": "ISPDC 2027"
+  },
+  {
+   "categories": [
+    "systems"
+   ],
+   "editions": [
+    {
+     "date_text": "February 22-26, 2027",
+     "deadlines": [
+      {
+       "date": "2027-01-13 23:59:59",
+       "evidence": [
+        {
+         "contentHash": "47f4258d5a1a9cb7ea81f9313dada6a585d7e65f47ae9220a544e3348d0b8753",
+         "rawExcerpt": "Paper submission deadline extended until Jan 13th! (tz 表記なし → AoE 慣例)",
+         "retrievedAt": "2026-11-10T04:30:00Z",
+         "sourceClass": "official-cfp",
+         "sourceUrl": "https://aviose-workshop.github.io/",
+         "verifiedAt": "2026-11-10T04:30:00Z",
+         "verifiedFields": [
+          "date",
+          "time",
+          "timezone"
+         ]
+        }
+       ],
+       "kind": "paper",
+       "label": "Paper submission deadline (extended)",
+       "precision": "exact",
+       "promotion_ref": {
+        "batch": "2026-11-10-aviose-2027",
+        "resolution": "resolution-aviose-2027"
+       },
+       "round": 1,
+       "track": "",
+       "tz": "AoE",
+       "utc": "2027-01-14T11:59:59.000Z",
+       "aoe": "2027-01-13 23:59:59 AoE"
+      }
+     ],
+     "event_end": "2027-02-26",
+     "event_start": "2027-02-22",
+     "id": "aviose-2027",
+     "link": "https://aviose-workshop.github.io/",
+     "place": "Dortmund, Germany",
+     "year": 2027
+    }
+   ],
+   "full_name": "Workshop on Avionics Systems and Software Engineering 2027",
+   "key": "aviose",
+   "link": "https://aviose-workshop.github.io/",
+   "tags": [
+    "niche",
+    "workshop"
+   ],
+   "title": "AvioSE 2027"
+  },
+  {
+   "categories": [
+    "systems"
+   ],
+   "editions": [
+    {
+     "date_text": "January 18, 2027",
+     "deadlines": [
+      {
+       "date": "2026-11-16 23:59:59",
+       "evidence": [
+        {
+         "contentHash": "0fab5fedf01fe1e1d97e90c000b49b240bdbf1bbf9e1ccb0d75dbc6285e1e16c",
+         "rawExcerpt": "16/11/2026 - 23:59 (UTC): Paper Submission Deadline",
+         "retrievedAt": "2026-11-10T04:15:00Z",
+         "sourceClass": "official-cfp",
+         "sourceUrl": "https://parma-ditam-workshop.github.io/",
+         "verifiedAt": "2026-11-10T04:15:00Z",
+         "verifiedFields": [
+          "date",
+          "time",
+          "timezone"
+         ]
+        }
+       ],
+       "kind": "paper",
+       "label": "Paper submission deadline",
+       "precision": "exact",
+       "promotion_ref": {
+        "batch": "2026-11-10-parmaditam-2027",
+        "resolution": "resolution-parmaditam-2027"
+       },
+       "round": 1,
+       "track": "",
+       "tz": "UTC",
+       "utc": "2026-11-16T23:59:59.000Z",
+       "aoe": "2026-11-16 11:59:59 AoE"
+      }
+     ],
+     "event_end": "2027-01-18",
+     "event_start": "2027-01-18",
+     "id": "parmaditam-2027",
+     "link": "https://parma-ditam-workshop.github.io/",
+     "place": "Glasgow, UK",
+     "year": 2027
+    }
+   ],
+   "full_name": "18th Workshop on Parallel Programming and Run-Time Management Techniques for Many-core Architectures (HiPEAC 2027)",
+   "key": "parmaditam",
+   "link": "https://parma-ditam-workshop.github.io/",
+   "tags": [
+    "niche",
+    "workshop"
+   ],
+   "title": "PARMA-DITAM 2027"
+  },
+  {
+   "categories": [
+    "systems"
+   ],
+   "editions": [
+    {
+     "date_text": "January 18-20, 2027",
+     "deadlines": [
+      {
+       "date": "2026-11-15 23:59:59",
+       "evidence": [
+        {
+         "contentHash": "32f2460b98c0bda716c771c1c04eddee5197920c1f5852a7ec382847a6c01376",
+         "rawExcerpt": "Paper submission: November 15th, 2026 (23:59 AoE)",
+         "retrievedAt": "2026-11-10T04:00:00Z",
+         "sourceClass": "official-cfp",
+         "sourceUrl": "https://ng-res.deib.polimi.it/",
+         "verifiedAt": "2026-11-10T04:00:00Z",
+         "verifiedFields": [
+          "date",
+          "time",
+          "timezone"
+         ]
+        }
+       ],
+       "kind": "paper",
+       "label": "Paper submission deadline",
+       "precision": "exact",
+       "promotion_ref": {
+        "batch": "2026-11-10-ngres-2027",
+        "resolution": "resolution-ngres-2027"
+       },
+       "round": 1,
+       "track": "",
+       "tz": "AoE",
+       "utc": "2026-11-16T11:59:59.000Z",
+       "aoe": "2026-11-15 23:59:59 AoE"
+      }
+     ],
+     "event_end": "2027-01-20",
+     "event_start": "2027-01-18",
+     "id": "ngres-2027",
+     "link": "https://ng-res.deib.polimi.it/",
+     "place": "Glasgow, UK",
+     "year": 2027
+    }
+   ],
+   "full_name": "International Workshop on Next Generation Real-Time Embedded Systems (HiPEAC 2027)",
+   "key": "ngres",
+   "link": "https://ng-res.deib.polimi.it/",
+   "tags": [
+    "niche",
+    "workshop"
+   ],
+   "title": "NG-RES 2027"
+  },
+  {
+   "categories": [
+    "networking"
+   ],
+   "editions": [
+    {
+     "date_text": "May 25-28, 2027",
+     "deadlines": [
+      {
+       "date": "2026-12-15 23:59:59",
+       "evidence": [
+        {
+         "contentHash": "fd2ce0ad239cdad2045ddd642b21d9d39752a71b12ecb4a3864501ebb5adaf5b",
+         "rawExcerpt": "December 15, 2026 Paper submission",
+         "retrievedAt": "2026-11-10T03:20:00Z",
+         "sourceClass": "official-cfp",
+         "sourceUrl": "https://easychair.org/cfp/WebSci27",
+         "verifiedAt": "2026-11-10T03:20:00Z",
+         "verifiedFields": [
+          "date",
+          "time",
+          "timezone"
+         ]
+        }
+       ],
+       "kind": "paper",
+       "label": "Paper submission deadline",
+       "precision": "exact",
+       "promotion_ref": {
+        "batch": "2026-11-10-websci-2027",
+        "resolution": "resolution-websci-2027"
+       },
+       "round": 1,
+       "track": "",
+       "tz": "AoE",
+       "utc": "2026-12-16T11:59:59.000Z",
+       "aoe": "2026-12-15 23:59:59 AoE"
+      }
+     ],
+     "event_end": "2027-05-28",
+     "event_start": "2027-05-25",
+     "id": "websci-2027",
+     "link": "https://websci27.webscience.org/",
+     "place": "Singapore, Singapore",
+     "year": 2027
+    }
+   ],
+   "full_name": "The 19th ACM Web Science Conference 2027",
+   "key": "websci",
+   "link": "https://websci27.webscience.org/",
+   "tags": [
+    "niche"
+   ],
+   "title": "WebSci 2027"
+  },
+  {
+   "categories": [
+    "systems"
+   ],
+   "editions": [
+    {
+     "date_text": "March 17-19, 2027",
+     "deadlines": [
+      {
+       "date": "2026-12-10 23:59:59",
+       "evidence": [
+        {
+         "contentHash": "41887070e43becbbfe6876bd1988bfd86b46d00b58dd4eebf13462549af7414e",
+         "rawExcerpt": "Submission deadline December 10, 2026",
+         "retrievedAt": "2026-11-10T03:50:00Z",
+         "sourceClass": "official-cfp",
+         "sourceUrl": "https://easychair.org/cfp/iem-icdc2027",
+         "verifiedAt": "2026-11-10T03:50:00Z",
+         "verifiedFields": [
+          "date",
+          "time",
+          "timezone"
+         ]
+        }
+       ],
+       "kind": "paper",
+       "label": "Paper submission deadline",
+       "precision": "exact",
+       "promotion_ref": {
+        "batch": "2026-11-10-iemicdc-2027",
+        "resolution": "resolution-iemicdc-2027"
+       },
+       "round": 1,
+       "track": "",
+       "tz": "AoE",
+       "utc": "2026-12-11T11:59:59.000Z",
+       "aoe": "2026-12-10 23:59:59 AoE"
+      }
+     ],
+     "event_end": "2027-03-19",
+     "event_start": "2027-03-17",
+     "id": "iemicdc-2027",
+     "link": "https://www.iemicdc.org/",
+     "place": "Kolkata, India",
+     "year": 2027
+    }
+   ],
+   "full_name": "The 5th International Conference on Computational Intelligence, Data Science and Cloud Computing",
+   "key": "iemicdc",
+   "link": "https://www.iemicdc.org/",
+   "tags": [
+    "niche"
+   ],
+   "title": "IEM-ICDC 2027"
+  },
+  {
+   "categories": [
+    "security"
+   ],
+   "editions": [
+    {
+     "date_text": "June 16-18, 2027",
+     "deadlines": [
+      {
+       "date": "2026-12-01 23:59:59",
+       "evidence": [
+        {
+         "contentHash": "f6c2307aeb138fde46fdcc8331521d636586e3b26bedc3efb71532030e0311be",
+         "rawExcerpt": "Abstract registration deadline December 1, 2026",
+         "retrievedAt": "2026-11-10T03:40:00Z",
+         "sourceClass": "official-cfp",
+         "sourceUrl": "https://easychair.org/cfp/cyberscience2027",
+         "verifiedAt": "2026-11-10T03:40:00Z",
+         "verifiedFields": [
+          "date",
+          "time",
+          "timezone"
+         ]
+        }
+       ],
+       "kind": "abstract",
+       "label": "Abstract registration deadline",
+       "precision": "exact",
+       "promotion_ref": {
+        "batch": "2026-11-10-cyberscience-2027",
+        "resolution": "resolution-cyberscience-2027"
+       },
+       "round": 1,
+       "track": "",
+       "tz": "AoE",
+       "utc": "2026-12-02T11:59:59.000Z",
+       "aoe": "2026-12-01 23:59:59 AoE"
+      },
+      {
+       "date": "2026-12-31 23:59:59",
+       "evidence": [
+        {
+         "contentHash": "f6c2307aeb138fde46fdcc8331521d636586e3b26bedc3efb71532030e0311be",
+         "rawExcerpt": "Submission deadline December 31, 2026",
+         "retrievedAt": "2026-11-10T03:40:00Z",
+         "sourceClass": "official-cfp",
+         "sourceUrl": "https://easychair.org/cfp/cyberscience2027",
+         "verifiedAt": "2026-11-10T03:40:00Z",
+         "verifiedFields": [
+          "date",
+          "time",
+          "timezone"
+         ]
+        }
+       ],
+       "kind": "paper",
+       "label": "Paper submission deadline",
+       "precision": "exact",
+       "promotion_ref": {
+        "batch": "2026-11-10-cyberscience-2027",
+        "resolution": "resolution-cyberscience-2027"
+       },
+       "round": 1,
+       "track": "",
+       "tz": "AoE",
+       "utc": "2027-01-01T11:59:59.000Z",
+       "aoe": "2026-12-31 23:59:59 AoE"
+      }
+     ],
+     "event_end": "2027-06-18",
+     "event_start": "2027-06-16",
+     "id": "cyberscience-2027",
+     "link": "https://c-mric.org/",
+     "place": "London, UK",
+     "year": 2027
+    }
+   ],
+   "full_name": "The International Conference on Cybersecurity, Situational Awareness and Social Media",
+   "key": "cyberscience",
+   "link": "https://c-mric.org/",
+   "tags": [
+    "niche"
+   ],
+   "title": "Cyber Science 2027"
+  },
+  {
+   "categories": [
+    "ai",
+    "db"
+   ],
+   "editions": [
+    {
+     "date_text": "July 22-23, 2027",
+     "deadlines": [
+      {
+       "date": "2026-11-30 23:59:59",
+       "evidence": [
+        {
+         "contentHash": "1db79ec6dd42cf5e0e1e800ea750a52411722bc9793e29a1f3895ef8d0218958",
+         "rawExcerpt": "Submission deadline November 30, 2026",
+         "retrievedAt": "2026-11-10T03:30:00Z",
+         "sourceClass": "official-cfp",
+         "sourceUrl": "https://easychair.org/cfp/icABCD2027",
+         "verifiedAt": "2026-11-10T03:30:00Z",
+         "verifiedFields": [
+          "date",
+          "time",
+          "timezone"
+         ]
+        }
+       ],
+       "kind": "paper",
+       "label": "Paper submission deadline",
+       "precision": "exact",
+       "promotion_ref": {
+        "batch": "2026-11-10-icabcd-2027",
+        "resolution": "resolution-icabcd-2027"
+       },
+       "round": 1,
+       "track": "",
+       "tz": "AoE",
+       "utc": "2026-12-01T11:59:59.000Z",
+       "aoe": "2026-11-30 23:59:59 AoE"
+      }
+     ],
+     "event_end": "2027-07-23",
+     "event_start": "2027-07-22",
+     "id": "icabcd-2027",
+     "link": "https://icabcd.org/2027/",
+     "place": "Flic en Flac, Mauritius",
+     "year": 2027
+    }
+   ],
+   "full_name": "International Conference on Artificial Intelligence, Big Data, Computing and Data Communication Systems",
+   "key": "icabcd",
+   "link": "https://icabcd.org/2027/",
+   "tags": [
+    "niche"
+   ],
+   "title": "icABCD 2027"
+  },
+  {
+   "categories": [
+    "systems"
+   ],
+   "editions": [
+    {
+     "date_text": "January 18-19, 2027",
+     "deadlines": [
+      {
+       "date": "2026-11-16 23:59:59",
+       "evidence": [
+        {
+         "contentHash": "abc40cec790d6baa90b2c7521232b7c0537f0526ec91148149c502cc1f4128e0",
+         "rawExcerpt": "Deadline: 16 November 2026 (AoE).",
+         "retrievedAt": "2026-11-10T02:40:00Z",
+         "sourceClass": "official-cfp",
+         "sourceUrl": "https://edge-group-polito.github.io/OpenSoC4HE/",
+         "verifiedAt": "2026-11-10T02:40:00Z",
+         "verifiedFields": [
+          "date",
+          "time",
+          "timezone"
+         ]
+        }
+       ],
+       "kind": "paper",
+       "label": "Submission deadline",
+       "precision": "exact",
+       "promotion_ref": {
+        "batch": "2026-11-10-opensoc4he-2027",
+        "resolution": "resolution-opensoc4he-2027"
+       },
+       "round": 1,
+       "track": "",
+       "tz": "AoE",
+       "utc": "2026-11-17T11:59:59.000Z",
+       "aoe": "2026-11-16 23:59:59 AoE"
+      }
+     ],
+     "event_end": "2027-01-19",
+     "event_start": "2027-01-18",
+     "id": "opensoc4he-2027",
+     "link": "https://edge-group-polito.github.io/OpenSoC4HE/",
+     "place": "Glasgow, UK",
+     "year": 2027
+    }
+   ],
+   "full_name": "1st Workshop on Open System on Chips for Higher Education in Computer Architecture (HiPEAC 2027)",
+   "key": "opensoc4he",
+   "link": "https://edge-group-polito.github.io/OpenSoC4HE/",
+   "tags": [
+    "niche",
+    "workshop"
+   ],
+   "title": "OpenSoC4HE 2027"
+  },
+  {
+   "categories": [
+    "security"
+   ],
+   "editions": [
+    {
+     "date_text": "May 12-14, 2027",
+     "deadlines": [
+      {
+       "date": "2026-11-17 23:59:59",
+       "evidence": [
+        {
+         "contentHash": "182d31db7e7cd744ce1a14f6ecd9f96b5d4f66f5012d6102cc94b32f8b02cbaa",
+         "rawExcerpt": "Abstract registration deadline November 17, 2026",
+         "retrievedAt": "2026-11-10T02:25:00Z",
+         "sourceClass": "official-cfp",
+         "sourceUrl": "https://easychair.org/cfp/pqcrypto2027",
+         "verifiedAt": "2026-11-10T02:25:00Z",
+         "verifiedFields": [
+          "date",
+          "time",
+          "timezone"
+         ]
+        }
+       ],
+       "kind": "abstract",
+       "label": "Abstract registration deadline",
+       "precision": "exact",
+       "promotion_ref": {
+        "batch": "2026-11-10-pqcrypto-2027",
+        "resolution": "resolution-pqcrypto-2027"
+       },
+       "round": 1,
+       "track": "",
+       "tz": "AoE",
+       "utc": "2026-11-18T11:59:59.000Z",
+       "aoe": "2026-11-17 23:59:59 AoE"
+      },
+      {
+       "date": "2026-11-24 23:59:59",
+       "evidence": [
+        {
+         "contentHash": "182d31db7e7cd744ce1a14f6ecd9f96b5d4f66f5012d6102cc94b32f8b02cbaa",
+         "rawExcerpt": "Submission deadline November 24, 2026",
+         "retrievedAt": "2026-11-10T02:25:00Z",
+         "sourceClass": "official-cfp",
+         "sourceUrl": "https://easychair.org/cfp/pqcrypto2027",
+         "verifiedAt": "2026-11-10T02:25:00Z",
+         "verifiedFields": [
+          "date",
+          "time",
+          "timezone"
+         ]
+        }
+       ],
+       "kind": "paper",
+       "label": "Paper submission deadline",
+       "precision": "exact",
+       "promotion_ref": {
+        "batch": "2026-11-10-pqcrypto-2027",
+        "resolution": "resolution-pqcrypto-2027"
+       },
+       "round": 1,
+       "track": "",
+       "tz": "AoE",
+       "utc": "2026-11-25T11:59:59.000Z",
+       "aoe": "2026-11-24 23:59:59 AoE"
+      }
+     ],
+     "event_end": "2027-05-14",
+     "event_start": "2027-05-12",
+     "id": "pqcrypto-2027",
+     "link": "https://easychair.org/cfp/pqcrypto2027",
+     "place": "Waterloo, Canada",
+     "year": 2027
+    }
+   ],
+   "full_name": "The 18th International Conference on Post-Quantum Cryptography",
+   "key": "pqcrypto",
+   "link": "https://easychair.org/cfp/pqcrypto2027",
+   "tags": [
+    "niche"
+   ],
+   "title": "PQCrypto 2027"
+  },
+  {
+   "categories": [
+    "ai",
+    "systems"
+   ],
+   "editions": [
+    {
+     "date_text": "January 19, 2027",
+     "deadlines": [
+      {
+       "date": "2026-11-13 23:59:59",
+       "evidence": [
+        {
+         "contentHash": "65830f6a656d7fa9d2c49539befbbe05769395d3a7b0cbfe01349d207b6688a9",
+         "rawExcerpt": "Submission deadline: November 13, 2026 (end of day)",
+         "retrievedAt": "2026-11-10T02:10:00Z",
+         "sourceClass": "official-cfp",
+         "sourceUrl": "https://accml.dcs.gla.ac.uk/workshop-2027-hipeac.html",
+         "verifiedAt": "2026-11-10T02:10:00Z",
+         "verifiedFields": [
+          "date",
+          "time",
+          "timezone"
+         ]
+        }
+       ],
+       "kind": "paper",
+       "label": "Paper submission deadline",
+       "precision": "exact",
+       "tz": "AoE",
+       "promotion_ref": {
+        "batch": "2026-11-10-accml-2027",
+        "resolution": "resolution-accml-2027"
+       },
+       "round": 1,
+       "track": "",
+       "utc": "2026-11-14T11:59:59.000Z",
+       "aoe": "2026-11-13 23:59:59 AoE"
+      }
+     ],
+     "event_start": "2027-01-19",
+     "event_end": "2027-01-19",
+     "id": "accml-2027",
+     "link": "https://accml.dcs.gla.ac.uk/workshop-2027-hipeac.html",
+     "place": "Glasgow, UK",
+     "year": 2027
+    }
+   ],
+   "full_name": "9th Workshop on Accelerated Machine Learning (co-located with HiPEAC 2027)",
+   "key": "accml",
+   "link": "https://accml.dcs.gla.ac.uk/workshop-2027-hipeac.html",
+   "tags": [
+    "niche",
+    "workshop"
+   ],
+   "title": "AccML 2027"
+  },
+  {
+   "categories": [
+    "db"
+   ],
+   "editions": [
+    {
+     "date_text": "April 5-7, 2027",
+     "deadlines": [
+      {
+       "date": "2026-11-14 23:59:59",
+       "evidence": [
+        {
+         "contentHash": "70ccb809caef5bc8a9d798f16322e364e601e63425a2f8da976af03b3898e0b6",
+         "rawExcerpt": "Hard deadline · 14 November 2026, 23:59 AoE",
+         "retrievedAt": "2026-11-10T01:30:00Z",
+         "sourceClass": "official-cfp",
+         "sourceUrl": "http://aciids.pwr.edu.pl/2027",
+         "verifiedAt": "2026-11-10T01:30:00Z",
+         "verifiedFields": [
+          "date",
+          "time",
+          "timezone"
+         ]
+        }
+       ],
+       "kind": "paper",
+       "label": "Paper submission (hard deadline)",
+       "precision": "exact",
+       "promotion_ref": {
+        "batch": "2026-11-10-aciids-2027",
+        "resolution": "resolution-aciids-2027"
+       },
+       "round": 1,
+       "track": "",
+       "tz": "AoE",
+       "utc": "2026-11-15T11:59:59.000Z",
+       "aoe": "2026-11-14 23:59:59 AoE"
+      }
+     ],
+     "event_end": "2027-04-07",
+     "event_start": "2027-04-05",
+     "id": "aciids-2027",
+     "link": "http://aciids.pwr.edu.pl/2027",
+     "place": "Bali, Indonesia",
+     "year": 2027
+    }
+   ],
+   "full_name": "19th Asian Conference on Intelligent Information and Database Systems",
+   "key": "aciids",
+   "link": "http://aciids.pwr.edu.pl/2027",
+   "tags": [
+    "niche"
+   ],
+   "title": "ACIIDS 2027"
+  },
+  {
+   "categories": [
+    "networking"
+   ],
+   "editions": [
+    {
+     "date_text": "July 7-9, 2027",
+     "deadlines": [
+      {
+       "date": "2027-01-15 23:59:59",
+       "evidence": [
+        {
+         "contentHash": "4d142e429de97dac368ef2dca60132baabcf1d8e6d8d67c8a7c2bce02989272c",
+         "rawExcerpt": "Abstract registration deadline January 15, 2027 / Submission deadline January 15, 2027",
+         "retrievedAt": "2026-11-10T04:50:00Z",
+         "sourceClass": "official-cfp",
+         "sourceUrl": "https://easychair.org/cfp/bmsb-2027",
+         "verifiedAt": "2026-11-10T04:50:00Z",
+         "verifiedFields": [
+          "date",
+          "time",
+          "timezone"
+         ]
+        }
+       ],
+       "kind": "paper",
+       "label": "Paper submission deadline",
+       "precision": "exact",
+       "promotion_ref": {
+        "batch": "2026-11-10-bmsb-2027",
+        "resolution": "resolution-bmsb-2027"
+       },
+       "round": 1,
+       "track": "",
+       "tz": "AoE",
+       "utc": "2027-01-16T11:59:59.000Z",
+       "aoe": "2027-01-15 23:59:59 AoE"
+      }
+     ],
+     "event_end": "2027-07-09",
+     "event_start": "2027-07-07",
+     "id": "bmsb-2027",
+     "link": "https://www.bmsb2027.com/",
+     "place": "Sydney, Australia",
+     "year": 2027
+    }
+   ],
+   "full_name": "IEEE International Symposium on Broadband Multimedia Systems and Broadcasting 2027",
+   "key": "bmsb",
+   "link": "https://www.bmsb2027.com/",
+   "tags": [
+    "niche"
+   ],
+   "title": "IEEE BMSB 2027"
+  },
+  {
+   "categories": [
+    "security"
+   ],
+   "editions": [
+    {
+     "date_text": "May 25-28, 2027",
+     "deadlines": [
+      {
+       "date": "2027-01-06 23:59:59",
+       "evidence": [
+        {
+         "contentHash": "e5c1fae3d33f06e34560a4c3f9d7d1ad2a7bd1ce0ca97a4266694b2cd09ac90f",
+         "rawExcerpt": "Submission deadline January 6, 2027",
+         "retrievedAt": "2026-11-10T05:30:00Z",
+         "sourceClass": "official-cfp",
+         "sourceUrl": "https://easychair.org/cfp/CyCon2027",
+         "verifiedAt": "2026-11-10T05:30:00Z",
+         "verifiedFields": [
+          "date",
+          "time",
+          "timezone"
+         ]
+        }
+       ],
+       "kind": "paper",
+       "label": "Paper submission deadline",
+       "precision": "exact",
+       "round": 1,
+       "track": "",
+       "tz": "AoE",
+       "utc": "2027-01-07T11:59:59.000Z",
+       "aoe": "2027-01-06 23:59:59 AoE"
+      }
+     ],
+     "event_end": "2027-05-28",
+     "event_start": "2027-05-25",
+     "id": "cycon-2027",
+     "link": "https://www.cycon.org",
+     "place": "Tallinn, Estonia",
+     "year": 2027
+    }
+   ],
+   "full_name": "The 19th International Conference on Cyber Conflict: Unified Response",
+   "key": "cycon",
+   "link": "https://www.cycon.org",
+   "tags": [
+    "niche"
+   ],
+   "title": "CyCon 2027"
+  },
+  {
+   "categories": [
+    "networking"
+   ],
+   "editions": [
+    {
+     "date_text": "April 28-30, 2027",
+     "deadlines": [
+      {
+       "date": "2026-11-28 23:59:59",
+       "evidence": [
+        {
+         "contentHash": "cc537f0dd6fa306692340946503122c636400f4936a81aafe9deb53794f81289",
+         "rawExcerpt": "Submission deadline November 28, 2026",
+         "retrievedAt": "2026-11-10T05:05:00Z",
+         "sourceClass": "official-cfp",
+         "sourceUrl": "https://easychair.org/cfp/latinIoT2027",
+         "verifiedAt": "2026-11-10T05:05:00Z",
+         "verifiedFields": [
+          "date",
+          "time",
+          "timezone"
+         ]
+        }
+       ],
+       "kind": "paper",
+       "label": "Paper submission deadline",
+       "precision": "exact",
+       "promotion_ref": {
+        "batch": "2026-11-10-latiniot-2027",
+        "resolution": "resolution-latiniot-2027"
+       },
+       "round": 1,
+       "track": "",
+       "tz": "AoE",
+       "utc": "2026-11-29T11:59:59.000Z",
+       "aoe": "2026-11-28 23:59:59 AoE"
+      }
+     ],
+     "event_end": "2027-04-30",
+     "event_start": "2027-04-28",
+     "id": "latiniot-2027",
+     "link": "https://easychair.org/cfp/latinIoT2027",
+     "place": "Santiago, Chile",
+     "year": 2027
+    }
+   ],
+   "full_name": "IEEE Latin American Conference on Internet of Things",
+   "key": "latiniot",
+   "link": "https://easychair.org/cfp/latinIoT2027",
+   "tags": [
+    "niche"
+   ],
+   "title": "IEEE LatinIoT 2027"
+  },
+  {
+   "key": "aila2027",
+   "title": "AILA2027",
+   "full_name": "The sixth International Conference on Artificial Intelligence Logic and Applications",
+   "link": "https://easychair.org/cfp/AILA2027",
+   "categories": [
+    "ai"
+   ],
+   "editions": [
+    {
+     "year": 2027,
+     "id": "aila202727",
+     "link": "https://easychair.org/cfp/AILA2027",
+     "place": "Belfast, UK",
+     "date_text": "Apr 8, 2027",
+     "deadlines": [
+      {
+       "kind": "abstract",
+       "label": "Abstract registration",
+       "date": "2026-11-15",
+       "precision": "date-only",
+       "local_date": "2026-11-15"
+      },
+      {
+       "kind": "paper",
+       "label": "Submission deadline",
+       "date": "2026-11-30",
+       "precision": "date-only",
+       "local_date": "2026-11-30"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "key": "icaibd-2027",
+   "title": "ICAIBD 2027",
+   "full_name": "2027 The 10th International Conference on Artificial Intelligence and Big Data",
+   "link": "https://easychair.org/cfp/ICAIBD2027",
+   "categories": [
+    "ai",
+    "db"
+   ],
+   "editions": [
+    {
+     "year": 2027,
+     "id": "icaibd-202727",
+     "link": "https://easychair.org/cfp/ICAIBD2027",
+     "place": "Chengdu, China",
+     "date_text": "May 28, 2027",
+     "deadlines": [
+      {
+       "kind": "paper",
+       "label": "Submission deadline",
+       "date": "2026-11-30",
+       "precision": "date-only",
+       "local_date": "2026-11-30"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "key": "icbda2027",
+   "title": "ICBDA 2027",
+   "full_name": "2027 the 12th International Conference on Big Data Analytics",
+   "link": "https://icbda.org/",
+   "legacy_keys": [
+    "icbda-2027"
+   ],
+   "categories": [
+    "db"
+   ],
+   "editions": [
+    {
+     "year": 2027,
+     "id": "icbda202727",
+     "call_identity": {
+      "seriesId": "icbda",
+      "editionId": "icbda202727",
+      "callId": "icbda-2027",
+      "parentEventId": null
+     },
+     "legacy_ids": [
+      "icbda-202727"
+     ],
+     "link": "https://icbda.org/",
+     "place": "Bangkok, Thailand",
+     "date_text": "April 26-29, 2027",
+     "event_start": "2027-04-26",
+     "event_end": "2027-04-29",
+     "deadlines": [
+      {
+       "kind": "abstract",
+       "label": "Abstract submission deadline",
+       "date": "2026-12-10",
+       "precision": "date-only",
+       "local_date": "2026-12-10"
+      },
+      {
+       "kind": "paper",
+       "label": "Full-paper submission deadline",
+       "date": "2026-12-10",
+       "precision": "date-only",
+       "local_date": "2026-12-10"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "key": "icccbda-2027",
+   "title": "ICCCBDA 2027",
+   "full_name": "2027 the 12th International Conference on Cloud Computing and Big Data Analytics",
+   "link": "https://easychair.org/cfp/ICCCBDA2027",
+   "categories": [
+    "systems",
+    "db"
+   ],
+   "editions": [
+    {
+     "year": 2027,
+     "id": "icccbda-202727",
+     "link": "https://easychair.org/cfp/ICCCBDA2027",
+     "place": "Chengdu, China",
+     "date_text": "Apr 23, 2027",
+     "deadlines": [
+      {
+       "kind": "paper",
+       "label": "Submission deadline",
+       "date": "2026-12-05",
+       "precision": "date-only",
+       "local_date": "2026-12-05"
+      }
+     ]
+    }
+   ]
   }
  ],
  "identity_migrations": {

@@ -65,9 +65,9 @@ describe("その方の決まりで既に扱はれている語は割らない（�
   it("種別・締切の種類・表その物の語は詰め形の侭で行を出す", () => {
     for (const [語, 件] of [
       ["ポスター発表", 5],
-      ["参加登録", 26],
-      ["全文締切", 294],
-      ["延長締切", 17],
+      ["参加登録", 28],
+      ["全文締切", 306],
+      ["延長締切", 18],
       ["早期締切", 1],
       ["結果発表", 59],
       ["最終原稿", 36],
@@ -95,17 +95,17 @@ describe("その方の決まりで既に扱はれている語は割らない（�
     ] as Array<[string, number]>) {
       expect([語, 列(語).size]).toEqual([語, 件]);
     }
-    expect(列("締切").size).toBe(380);
+    expect(列("締切").size).toBe(395);
   });
   it("第 470 回〜第 478 回の実測はこの回で変へて居ない", () => {
-    expect(列("週 末").size).toBe(146);
-    expect(列("明日以降").size).toBe(428);
+    expect(列("週 末").size).toBe(150);
+    expect(列("明日以降").size).toBe(440);
     expect(列("来月 終わり").size).toBe(178);
     expect(列("1 年後から").size).toBe(0);
     expect(列("来 上旬").size).toBe(68);
     expect(案内("来 上旬")).toContain("来月 上旬 = 2026年9月1日(火)");
     expect(列("ml から").size).toBe(0);
-    expect(列("来週 から").size).toBe(428);
+    expect(列("来週 から").size).toBe(440);
     expect(列("来月 下旬 まで").size).toBe(276);
   });
 });

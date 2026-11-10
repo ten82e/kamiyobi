@@ -65,13 +65,13 @@ describe("月の語にその初めの言い方を繋いだ形が 0 件の訳を�
     }
     expect(列("来月末").size).toBe(178);
     expect(列("今月末").size).toBe(118);
-    expect(列("12月末").size).toBe(86);
+    expect(列("12月末").size).toBe(91);
     expect(列("再来月末").size).toBe(96);
     /* 実測（実ビルド 868 行では 夫々 245・192・178・194・262・40・192・82 件）。*/
-    expect(列("週 末").size).toBe(146);
+    expect(列("週 末").size).toBe(150);
     expect(列("来週 末").size).toBe(34);
     expect(列("月末").size).toBe(118);
-    expect(列("年度末").size).toBe(29);
+    expect(列("年度末").size).toBe(30);
   });
   it("その月の幅の語をそのまま打ち直しに書く（第 459 回 – 案内は打たれた語を名乗る）", () => {
     expect(画面案内("来月初め")).toContain("またはその月（「来月」）");
@@ -158,8 +158,8 @@ describe("その他の機械と前の回の実測は動かして居ない", () =
     expect(列("来 上旬").size).toBe(68);
     expect(列("来月末").size).toBe(178);
     expect(列("来月 終わり").size).toBe(178);
-    expect(列("週 末").size).toBe(146);
-    expect(列("明日以降").size).toBe(428);
+    expect(列("週 末").size).toBe(150);
+    expect(列("明日以降").size).toBe(440);
     expect(列("締切時刻").size).toBe(181);
     expect(列("一 月 五 日").size).toBe(5);
     expect(列("半 年後").size).toBe(2);
