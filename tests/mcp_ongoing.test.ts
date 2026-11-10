@@ -428,7 +428,7 @@ import {load} from "js-yaml";
 import {freshFullVenuePool} from ${JSON.stringify(join(repo, "tests/full_venue_pool.ts"))};
 import {setRoot,buildAll} from "./src/build.ts";
 const pool=freshFullVenuePool();
-if(pool.conferences.length!==733)throw new Error("full venue pool changed");
+if(pool.conferences.length!==734)throw new Error("full venue pool changed");
 setRoot(import.meta.dirname);
 globalThis.fetch=async()=>{throw new Error("network forbidden")};
 const config=load(fs.readFileSync(${JSON.stringify(join(repo, "config.yaml"))},"utf8"));
@@ -507,7 +507,7 @@ fs.rmSync(pool.raw,{recursive:true,force:true});
     }
     for (const [query, kind, venueKey, count, raw] of [
       ["ネットワーク", "registration", "percom", 1, 447],
-      ["分散システム", "registration", "percom", 1, 1694],
+      ["分散システム", "registration", "percom", 1, 1695],
       ["3DV", "paper", "3dv", 6, 12],
       ["3DV", "abstract", "3dv", 3, 12],
       ["AAAI", "abstract", "aaai", 11, 53],

@@ -44,10 +44,10 @@ describe("それより後の語を日の語に続けた形がその初日から�
     expect(列("来月上旬以降").size).toBe(408);
     expect(列("週末以降").size).toBe(442);
     expect(列("来週末以降").size).toBe(440);
-    expect(列("来年度以降").size).toBe(64);
-    expect(列("来年以降").size).toBe(134);
+    expect(列("来年度以降").size).toBe(65);
+    expect(列("来年以降").size).toBe(135);
     expect(列("22日以降").size).toBe(414);
-    expect(列("年度末以降").size).toBe(64);
+    expect(列("年度末以降").size).toBe(65);
     expect(列("来月末以降").size).toBe(314);
   });
   it("幅で絞れる形は件の数欄が「並びます」と嘘を書かない（暦日を打つ形と同じ決まり – 第 413 回）", () => {
@@ -101,7 +101,7 @@ describe("載せない形と其它の機械の守り（第 328 回・第 373 回
     expect(列("8月以降").size).toBe(444);
     expect(列("9月以降").size).toBe(408);
     expect(列("8月から").size).toBe(444);
-    expect(列("17時 以降").size).toBe(204);
+    expect(列("17時 以降").size).toBe(205);
     expect(案内("17時 以降")).toContain("17時 以降 = 17:00〜23:59");
     expect(案内("17時以降")).toContain("17時以降 = 17:00〜23:59");
   });
@@ -131,7 +131,7 @@ describe("載せない形と其它の機械の守り（第 328 回・第 373 回
     expect(列("来 週末").size).toBe(34);
     expect(案内("来 週末")).toContain("来週末 = 2026年8月15日(土)");
     expect(列("8 月の 締切").size).toBe(114);
-    expect(列("来 年中").size).toBe(134);
+    expect(列("来 年中").size).toBe(135);
   });
 });
 

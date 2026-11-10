@@ -67,7 +67,7 @@ describe("年度の語に旬を直に繋いだ形がその年度 × その旬に
   });
   it("第 470 回〜第 487 回の実測はこの回で変へて居ない", () => {
     expect(列("来年度末").size).toBe(3);
-    expect(列("来年度中").size).toBe(64);
+    expect(列("来年度中").size).toBe(65);
     expect(列("来年度 3月").size).toBe(3);
     expect(列("来年度3月").size).toBe(3);
     expect(列("来月初め").size).toBe(0);

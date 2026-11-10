@@ -39,9 +39,9 @@ describe("頭と単位を離つて打った半年の語が詰め形と同じ行�
     expect(列("半 年後").size).toBe(2);
     expect(列("半 年前").size).toBe(2);
     expect(列("半 年後に").size).toBe(2);
-    expect(列("半 年後 まで").size).toBe(457);
+    expect(列("半 年後 まで").size).toBe(458);
     expect(列("半年後").size).toBe(2);
-    expect(列("半年後まで").size).toBe(457);
+    expect(列("半年後まで").size).toBe(458);
   });
   it("件数欄は打たれた空格の侭を名乗り、その日を書く（第 459 回・第 332 回）", () => {
     expect(案内("半 年後")).toContain("半 年後 = 2027年2月9日(火)");

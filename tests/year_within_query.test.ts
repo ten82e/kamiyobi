@@ -41,9 +41,9 @@ describe("年＋中／内がその年の語と同じ行に出る（第 500 回�
     }
     /* 検査用ビルドの件数（実ビルドは 今年 796・来年 465）。*/
     expect(列("今年内").size).toBe(446);
-    expect(列("来年内").size).toBe(134);
+    expect(列("来年内").size).toBe(135);
     expect(列("2026年中").size).toBe(446);
-    expect(列("2027年内").size).toBe(134);
+    expect(列("2027年内").size).toBe(135);
   });
   it("語が続く形も同じ", () => {
     for (const [繋, 素] of [

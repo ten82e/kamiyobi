@@ -26323,7 +26323,7 @@ candidates:
     id: candidate-f3d144d8a386b7a75196c08a
     source: easychair
     source_item_id: iccad-27
-    status: discovered
+    status: accepted
     discovered_at: '2026-11-07T18:28:57.417Z'
     first_seen_at: '2026-11-07T18:28:57.417Z'
     last_seen_at: '2026-11-07T18:30:51.935Z'

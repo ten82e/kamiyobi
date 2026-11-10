@@ -659,6 +659,14 @@
         "data/overrides.yaml"
       ]
     },
+    "e52df06cfa8d8c1c46a70c8952f2e5d5cdfbd3921a2d779e8f9ca3817bb266da": {
+      "bytes": 6672,
+      "content_type": "application/octet-stream",
+      "references": [
+        "data/curated.generated.yaml",
+        "data/snapshot.json"
+      ]
+    },
     "e5c1fae3d33f06e34560a4c3f9d7d1ad2a7bd1ce0ca97a4266694b2cd09ac90f": {
       "bytes": 8196,
       "content_type": "application/octet-stream",

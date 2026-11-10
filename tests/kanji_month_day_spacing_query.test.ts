@@ -40,7 +40,7 @@ describe("漢数字の月・日を離つて打つ形が算用数字と同じ行�
   });
   it("行数の実測（固定ハーネスの品書 435 行 – 実ビルド 868 行ではそれより多い）", () => {
     expect(列("八 月").size).toBe(118);
-    expect(列("一 月").size).toBe(33);
+    expect(列("一 月").size).toBe(34);
     expect(列("五 日").size).toBe(30);
     expect(列("二十 日").size).toBe(67);
     expect(列("一 月 五 日").size).toBe(5);
