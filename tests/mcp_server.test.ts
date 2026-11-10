@@ -723,7 +723,7 @@ it("collection_stats が、収録その物の数とファイルを返す（第 7
   expect(text, "その語で引ける事を書いていない").toContain("検索語としても引けます");
   /* 名指した語は本当に引ける（`search_deadlines` に渡して行が出る）。 */
   const 穴場 = await call("search_deadlines", { query: "穴場", limit: 1, scope: "all" });
-  expect(穴場, "穴場が検索語として引けない（案内が空振り）").not.toContain("0 件");
+  expect(穴場, "穴場が検索語として引けない（案内が空振り）").not.toContain("締切: 0 件");
 
   const 全ての版 = ((收錄.conferences ?? []) as Array<{ editions?: unknown[] }>).flatMap(
     (c) => (c.editions ?? []) as Array<{ deadlines?: unknown[] }>,

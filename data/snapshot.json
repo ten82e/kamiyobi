@@ -288370,6 +288370,62 @@
     "niche"
    ],
    "title": "IEEE/IFAC ICCAD'27"
+  },
+  {
+   "categories": [
+    "ai",
+    "systems"
+   ],
+   "editions": [
+    {
+     "date_text": "September 20-22, 2027",
+     "deadlines": [
+      {
+       "date": "2027-04-13 23:59:59",
+       "evidence": [
+        {
+         "contentHash": "d11e58e48b4b91b42031e3e08effa65f297c2de7f40930e052bea338f7a22603",
+         "rawExcerpt": "Submission deadline April 13, 2027",
+         "retrievedAt": "2026-11-10T07:20:00Z",
+         "sourceClass": "official-cfp",
+         "sourceUrl": "https://easychair.org/cfp/AICAS2027",
+         "verifiedAt": "2026-11-10T07:20:00Z",
+         "verifiedFields": [
+          "date",
+          "time",
+          "timezone"
+         ]
+        }
+       ],
+       "kind": "paper",
+       "label": "Paper submission deadline",
+       "precision": "exact",
+       "promotion_ref": {
+        "batch": "2026-11-10-aicas-2027",
+        "resolution": "resolution-aicas-2027"
+       },
+       "round": 1,
+       "track": "",
+       "tz": "AoE",
+       "utc": "2027-04-14T11:59:59.000Z",
+       "aoe": "2027-04-13 23:59:59 AoE"
+      }
+     ],
+     "event_end": "2027-09-22",
+     "event_start": "2027-09-20",
+     "id": "aicas-2027",
+     "link": "https://2027.ieee-aicas.org/",
+     "place": "Hangzhou, China",
+     "year": 2027
+    }
+   ],
+   "full_name": "The 9th IEEE International Conference on Artificial Intelligence Circuits and Systems",
+   "key": "aicas",
+   "link": "https://2027.ieee-aicas.org/",
+   "tags": [
+    "niche"
+   ],
+   "title": "IEEE AICAS 2027"
   }
  ],
  "identity_migrations": {

@@ -5507,7 +5507,7 @@ candidates:
     id: candidate-af60a667284c160d2291b760
     source: easychair
     source_item_id: aicas-2027
-    status: discovered
+    status: accepted
     discovered_at: '2026-11-07T18:28:57.417Z'
     first_seen_at: '2026-11-07T18:28:57.417Z'
     last_seen_at: '2026-11-07T18:30:51.935Z'
