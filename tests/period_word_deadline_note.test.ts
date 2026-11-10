@@ -56,11 +56,11 @@ describe("期の区分の語に語尾を繋げても案内が出る（第 503 �
     expect(案内("週明けの締切")).toContain("週の明けという言い方は");
   });
   it("案内が導す語は実在する（第 353 回）", () => {
-    expect(列("1日").size).toBe(61);
+    expect(列("1日").size).toBe(62);
     expect(列("上旬").size).toBe(10);
     expect(列("月曜").size).toBe(59);
     expect(列("来週").size).toBe(43);
-    expect(列("年度初め").size).toBe(33);
+    expect(列("年度初め").size).toBe(34);
     expect(列("年度末").size).toBe(30);
     expect(案内("上半期の締切")).toContain("年度初め");
   });
@@ -104,10 +104,10 @@ describe("期の区分の語に語尾を繋げても案内が出る（第 503 �
     expect(案内("祝日")).toContain("祝日");
   });
   it("第 470 回〜第 502 回の実測はこの回で変へて居ない", () => {
-    expect(列("年内").size).toBe(443);
-    expect(列("今年内").size).toBe(445);
+    expect(列("年内").size).toBe(444);
+    expect(列("今年内").size).toBe(446);
     expect(列("再来週内").size).toBe(18);
-    expect(列("年末中").size).toBe(91);
+    expect(列("年末中").size).toBe(92);
     expect(列("年初1月").size).toBe(33);
     expect(列("来月 末日").size).toBe(178);
     expect(列("週 末").size).toBe(152);

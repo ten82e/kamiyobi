@@ -88,7 +88,7 @@ describe("その他は其侭（第 427 回）", () => {
     expect(対称差("来週と 再来週", "来週と再来週")).toBe(0);
     expect(対称差("aiとml", "ai ml")).toBe(0);
     expect(対称差("月 曜", "")).toBe(0);
-    expect(列("").size).toBe(459);
+    expect(列("").size).toBe(460);
   });
 });
 

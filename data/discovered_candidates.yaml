@@ -1843,7 +1843,7 @@ candidates:
     id: candidate-c40f52e4014c8269ba4b818a
     source: easychair
     source_item_id: aaiee-2027
-    status: discovered
+    status: accepted
     discovered_at: '2026-11-07T18:28:57.417Z'
     first_seen_at: '2026-11-07T18:28:57.417Z'
     last_seen_at: '2026-11-07T18:30:51.935Z'

@@ -428,7 +428,7 @@ import {load} from "js-yaml";
 import {freshFullVenuePool} from ${JSON.stringify(join(repo, "tests/full_venue_pool.ts"))};
 import {setRoot,buildAll} from "./src/build.ts";
 const pool=freshFullVenuePool();
-if(pool.conferences.length!==732)throw new Error("full venue pool changed");
+if(pool.conferences.length!==733)throw new Error("full venue pool changed");
 setRoot(import.meta.dirname);
 globalThis.fetch=async()=>{throw new Error("network forbidden")};
 const config=load(fs.readFileSync(${JSON.stringify(join(repo, "config.yaml"))},"utf8"));

@@ -288260,6 +288260,61 @@
     "niche"
    ],
    "title": "IEEE ICAIGC 2027"
+  },
+  {
+   "categories": [
+    "ai"
+   ],
+   "editions": [
+    {
+     "date_text": "April 23-26, 2027",
+     "deadlines": [
+      {
+       "date": "2026-11-30 23:59:59",
+       "evidence": [
+        {
+         "contentHash": "ac3389929f7415068b75a084e68634bcb3a9459013627136896f16a83ba76a67",
+         "rawExcerpt": "Submission deadline November 30, 2026",
+         "retrievedAt": "2026-11-10T06:10:00Z",
+         "sourceClass": "official-cfp",
+         "sourceUrl": "https://easychair.org/cfp/AAIEE2027",
+         "verifiedAt": "2026-11-10T06:10:00Z",
+         "verifiedFields": [
+          "date",
+          "time",
+          "timezone"
+         ]
+        }
+       ],
+       "kind": "paper",
+       "label": "Paper submission deadline",
+       "precision": "exact",
+       "promotion_ref": {
+        "batch": "2026-11-10-aaiee-2027",
+        "resolution": "resolution-aaiee-2027"
+       },
+       "round": 1,
+       "track": "",
+       "tz": "AoE",
+       "utc": "2026-12-01T11:59:59.000Z",
+       "aoe": "2026-11-30 23:59:59 AoE"
+      }
+     ],
+     "event_end": "2027-04-26",
+     "event_start": "2027-04-23",
+     "id": "aaiee-2027",
+     "link": "https://www.aaiee.net/",
+     "place": "Guangzhou, China",
+     "year": 2027
+    }
+   ],
+   "full_name": "2027 IEEE 3rd International Symposium on the Application of Artificial Intelligence in Electrical Engineering",
+   "key": "aaiee",
+   "link": "https://www.aaiee.net/",
+   "tags": [
+    "niche"
+   ],
+   "title": "IEEE AAIEE 2027"
   }
  ],
  "identity_migrations": {
