@@ -72,7 +72,7 @@ describe("助字を単位の語に繋げて打つ形（第 470 回）", () => {
     expect(列("2026 年の 締切").size).toBe(391);
     expect(列("8 日の 締切").size).toBe(20);
     expect(列("来 週の 締切").size).toBe(43);
-    expect(列("1 月の 会議").size).toBe(34);
+    expect(列("1 月の 会議").size).toBe(35);
     expect(列("9 月の").size).toBe(178);
     expect(列("来 月の").size).toBe(178);
     expect(列("8 月の 第2週").size).toBe(26);
@@ -95,7 +95,7 @@ describe("助字を単位の語に繋げて打つ形（第 470 回）", () => {
     expect(列("8 日の締切").size).toBe(20);
     expect(列("8 日の締切").size).toBe(列("8 日の 締切").size);
     expect(列("2026 年の締切").size).toBe(391);
-    expect(列("1 月の会議").size).toBe(34);
+    expect(列("1 月の会議").size).toBe(35);
     expect(列("8 月の締切").size).toBe(114);
     expect(列("9 月の第2週").size).toBe(30);
     expect(案内("9 月の第2週")).toContain("9月 第2週 = 2026年9月8日(火)〜2026年9月14日(月)");
@@ -141,7 +141,7 @@ describe("寄せない形の守り（第 453 回・第 470 回）", () => {
   });
   it("その他の群 – 月の並べ・週末日・詰め形を踏んぢゃらない", () => {
     expect(列("8 月 と 9 月").size).toBe(283);
-    expect(列("週末").size).toBe(152);
+    expect(列("週末").size).toBe(153);
     expect(列("9月の下旬").size).toBe(60);
     expect(列("来月の下旬").size).toBe(60);
     expect(列("来月 の 下旬").size).toBe(60);

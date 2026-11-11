@@ -75,7 +75,7 @@ describe("割らぬと決めた形（第 352 回・第 355 回・第 466 回）"
     expect(列("年度末").size).toBe(30);
     expect(画面案内("年度末")).toBe("");
     expect(列("年度末あたり").size).toBe(30);
-    expect(列("年度初めから").size).toBe(67);
+    expect(列("年度初めから").size).toBe(68);
   });
   it("それより後の語尾が離つて控へる年は割らぬ（行を減らさぬ為 – 第 466 回・第 469 回）", () => {
     expect(列("今年1月 から").size).toBe(448);
@@ -96,7 +96,7 @@ describe("割らぬと決めた形（第 352 回・第 355 回・第 466 回）"
   it("第 470 回〜第 483 回の実測はこの回で変へて居ない", () => {
     expect(列("来月 末").size).toBe(178);
     expect(列("来週 末").size).toBe(34);
-    expect(列("週 末").size).toBe(152);
+    expect(列("週 末").size).toBe(153);
     expect(列("月末").size).toBe(118);
     expect(列("明日以降").size).toBe(444);
     expect(列("来 上旬").size).toBe(68);

@@ -68,7 +68,7 @@ describe("数字で書いた年にその年の幅の案内が出る（第 496 �
     expect(列("来週中旬").size).toBe(43);
     expect(列("年末上旬").size).toBe(46);
     expect(列("来月 末日").size).toBe(178);
-    expect(列("週 末").size).toBe(152);
+    expect(列("週 末").size).toBe(153);
     expect(列("ml から").size).toBe(0);
     expect(列("締切時刻").size).toBe(181);
     expect(列("半 年後").size).toBe(3);

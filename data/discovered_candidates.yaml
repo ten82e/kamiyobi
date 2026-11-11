@@ -26763,7 +26763,7 @@ candidates:
     id: candidate-1dda1227f1b16592cb028599
     source: easychair
     source_item_id: icccas2027
-    status: discovered
+    status: accepted
     discovered_at: '2026-08-20T20:45:37.898Z'
     first_seen_at: '2026-08-20T20:45:37.898Z'
     last_seen_at: '2026-11-07T18:30:51.935Z'
