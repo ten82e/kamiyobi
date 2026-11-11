@@ -26923,7 +26923,7 @@ candidates:
     id: candidate-9a4022c9f8db5a8a287486b3
     source: wikicfp
     source_item_id: '203169'
-    status: discovered
+    status: accepted
     discovered_at: '2026-10-04T12:39:08.732Z'
     first_seen_at: '2026-10-04T12:39:08.732Z'
     last_seen_at: '2026-10-04T23:19:49.754Z'
@@ -26955,7 +26955,7 @@ candidates:
     id: candidate-fd6ada02c4635a2fe40289be
     source: easychair
     source_item_id: icccm-2027
-    status: discovered
+    status: accepted
     discovered_at: '2026-11-07T18:28:57.417Z'
     first_seen_at: '2026-11-07T18:28:57.417Z'
     last_seen_at: '2026-11-07T18:30:51.935Z'

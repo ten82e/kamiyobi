@@ -56,7 +56,7 @@ describe("行の『ランク』を逆の語順で繋いだ形が正準と同じ�
        実測 `評価` 476 件・`格` で絞る道は『ランク』欄。*/
     expect(集("評価").size).toBeGreaterThan(0);
     expect(案内("評価"), "行が出る語に格の案内を当てた").toBe("");
-    expect(集("ランク").size).toBe(465);
+    expect(集("ランク").size).toBe(466);
   });
   it("格の別名 – 無言の 0 件が打ち直しを言う", () => {
     for (const 文 of ["上位", "上位の会議", "上位会議", "格付け", "レベル", "グレード"]) {
@@ -93,9 +93,9 @@ describe("行の『ランク』を逆の語順で繋いだ形が正準と同じ�
     expect(集("今年内").size).toBe(449);
     expect(集("再来週内").size).toBe(18);
     expect(集("年末中").size).toBe(94);
-    expect(集("年初1月").size).toBe(35);
+    expect(集("年初1月").size).toBe(36);
     expect(集("来月 末日").size).toBe(178);
-    expect(集("週 末").size).toBe(154);
+    expect(集("週 末").size).toBe(155);
     expect(集("締切時刻").size).toBe(181);
     expect(集("ml から").size).toBe(0);
     expect(集("オンラインの締切").size).toBe(22);

@@ -77,7 +77,7 @@ describe("其它の打ち方は一寸も動かない（第 425 回）", () => {
     expect(対称差("来 週", "来週")).toBe(0);
     expect(対称差("3 日以内", "3日以内")).toBe(0);
     expect(対称差("ai ml", "ai ml")).toBe(0);
-    expect(列("").size).toBe(465);
+    expect(列("").size).toBe(466);
   });
 });
 

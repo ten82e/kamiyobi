@@ -108,9 +108,9 @@ describe("期の区分の語に語尾を繋げても案内が出る（第 503 �
     expect(列("今年内").size).toBe(449);
     expect(列("再来週内").size).toBe(18);
     expect(列("年末中").size).toBe(94);
-    expect(列("年初1月").size).toBe(35);
+    expect(列("年初1月").size).toBe(36);
     expect(列("来月 末日").size).toBe(178);
-    expect(列("週 末").size).toBe(154);
+    expect(列("週 末").size).toBe(155);
     expect(列("締切時刻").size).toBe(181);
     expect(列("ml から").size).toBe(0);
     expect(列("半 年後").size).toBe(3);
