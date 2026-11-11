@@ -82,15 +82,15 @@ describe("割らないと決めた形（第 466 回・第 485 回）", () => {
   it("今の年は割らずとも解けて居り、割ると行が減る", () => {
     /* 実測 – `今年1月から` 426 件（検査用ビルド）⇔ 割つた `今年 1月から` 104 件。行を減らす直しは
      * しないので、今の年・過ぎた年は觸らない。*/
-    expect(列("今年1月から").size).toBe(448);
+    expect(列("今年1月から").size).toBe(449);
     expect(列("今年 1月から").size).toBe(122);
-    expect(列("今年12月から").size).toBe(93);
+    expect(列("今年12月から").size).toBe(94);
     expect(案内("今年1月から")).toContain("2026年1月1日以降のこと（その年の中まで）");
   });
   it("数字の年で書いた形も第 495 回に割れるやうになった（今の年は觸らない）", () => {
     expect(列("2027年12月から").size).toBe(28);
     expect(列("2027年12月から").size).toBe(列("2027年 12月から").size);
-    expect(列("2026年1月から").size).toBe(448);
+    expect(列("2026年1月から").size).toBe(449);
   });
   it("第 470 回〜第 492 回の実測はこの回で変へて居ない", () => {
     expect(列("来年12月").size).toBe(28);
@@ -100,13 +100,13 @@ describe("割らないと決めた形（第 466 回・第 485 回）", () => {
     expect(列("来週中旬").size).toBe(43);
     expect(列("年末上旬").size).toBe(46);
     expect(列("来月 末日").size).toBe(178);
-    expect(列("週 末").size).toBe(153);
+    expect(列("週 末").size).toBe(154);
     expect(列("ml から").size).toBe(0);
     expect(列("締切時刻").size).toBe(181);
     expect(列("半 年後").size).toBe(3);
     expect(列("一 週間後").size).toBe(13);
-    expect(列("今年1月から").size).toBe(448);
-    expect(列("2026年1月から").size).toBe(448);
+    expect(列("今年1月から").size).toBe(449);
+    expect(列("2026年1月から").size).toBe(449);
   });
 });
 

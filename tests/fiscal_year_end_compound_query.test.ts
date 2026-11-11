@@ -54,7 +54,7 @@ describe("年度・年の語にその切れ目の語を継いだ形がその月�
       expect([漢, 対称差(列(漢), 列(解))]).toEqual([漢, 0]);
       expect(列(漢).size > 0, `「${漢}」が未だ 0 件`).toBe(true);
     }
-    expect(列("今年末").size).toBe(93);
+    expect(列("今年末").size).toBe(94);
     expect(列("来年末").size).toBe(28);
   });
   it("その幅で絞れる形に「絞り込めません」の案内は並ばない", () => {
@@ -78,8 +78,8 @@ describe("割らぬと決めた形（第 352 回・第 355 回・第 466 回）"
     expect(列("年度初めから").size).toBe(68);
   });
   it("それより後の語尾が離つて控へる年は割らぬ（行を減らさぬ為 – 第 466 回・第 469 回）", () => {
-    expect(列("今年1月 から").size).toBe(448);
-    expect(列("今年1月から").size).toBe(448);
+    expect(列("今年1月 から").size).toBe(449);
+    expect(列("今年1月から").size).toBe(449);
     expect(列("今年 1月 から").size).toBe(122);
     expect(列("今年1月 から").size).toBe(列("今年1月から").size);
 
@@ -96,9 +96,9 @@ describe("割らぬと決めた形（第 352 回・第 355 回・第 466 回）"
   it("第 470 回〜第 483 回の実測はこの回で変へて居ない", () => {
     expect(列("来月 末").size).toBe(178);
     expect(列("来週 末").size).toBe(34);
-    expect(列("週 末").size).toBe(153);
+    expect(列("週 末").size).toBe(154);
     expect(列("月末").size).toBe(118);
-    expect(列("明日以降").size).toBe(444);
+    expect(列("明日以降").size).toBe(445);
     expect(列("来 上旬").size).toBe(68);
     expect(列("来月上旬").size).toBe(68);
     expect(列("ml から").size).toBe(0);

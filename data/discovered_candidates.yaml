@@ -6256,7 +6256,7 @@ candidates:
     id: candidate-c97a545ff92309657989b4f1
     source: easychair
     source_item_id: aigc-2026
-    status: discovered
+    status: accepted
     discovered_at: '2026-08-20T20:45:37.898Z'
     first_seen_at: '2026-08-20T20:45:37.898Z'
     last_seen_at: '2026-11-07T18:30:51.935Z'
@@ -6286,7 +6286,7 @@ candidates:
     id: candidate-d5c852ac785f39e9d79ad7dc
     source: wikicfp
     source_item_id: '201316'
-    status: discovered
+    status: accepted
     discovered_at: '2026-10-04T12:39:08.732Z'
     first_seen_at: '2026-10-04T12:39:08.732Z'
     last_seen_at: '2026-10-04T23:19:49.754Z'

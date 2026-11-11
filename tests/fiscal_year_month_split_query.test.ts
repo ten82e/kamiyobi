@@ -71,7 +71,7 @@ describe("其它の形は動かして居ない（第 352 回・第 484 回・第
     expect(列("来年度末").size).toBe(3);
     expect(列("来年度初め").size).toBe(35);
     expect(列("来年度中").size).toBe(68);
-    expect(列("今年1月から").size).toBe(448);
+    expect(列("今年1月から").size).toBe(449);
     expect(日の案内("今年1月から")).toContain("2026年1月1日以降のこと（その年の中まで）");
 
     expect(列("来年12月から").size).toBe(28);
@@ -89,9 +89,9 @@ describe("其它の形は動かして居ない（第 352 回・第 484 回・第
   });
   it("第 470 回〜第 485 回の実測はこの回で変へて居ない", () => {
     expect(列("来月 末").size).toBe(178);
-    expect(列("週 末").size).toBe(153);
+    expect(列("週 末").size).toBe(154);
     expect(列("来週 初旬").size).toBe(2);
-    expect(列("明日以降").size).toBe(444);
+    expect(列("明日以降").size).toBe(445);
     expect(列("来 上旬").size).toBe(68);
     expect(列("来月上旬").size).toBe(68);
     expect(列("締切時刻").size).toBe(181);
@@ -101,7 +101,7 @@ describe("其它の形は動かして居ない（第 352 回・第 484 回・第
     expect(列("半 年後").size).toBe(3);
     expect(列("一 週間後").size).toBe(13);
     expect(列("ml から").size).toBe(0);
-    expect(列("来週から").size).toBe(444);
+    expect(列("来週から").size).toBe(445);
   });
 });
 

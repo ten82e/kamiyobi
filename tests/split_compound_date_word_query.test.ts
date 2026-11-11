@@ -39,14 +39,14 @@ describe("片段で離つた複合語が繋いだ形と同じ行を出す（第 
     }
   });
   it("行数の実測（固定ハーネスの品書 435 行）", () => {
-    expect(列("週 末").size).toBe(153);
+    expect(列("週 末").size).toBe(154);
     expect(列("今 月末").size).toBe(118);
     expect(列("来 月末").size).toBe(178);
     expect(列("先 月末").size).toBe(11);
     expect(列("再来 月末").size).toBe(96);
     expect(列("今 月中").size).toBe(118);
     expect(列("来 月中").size).toBe(178);
-    expect(列("今 年度").size).toBe(464);
+    expect(列("今 年度").size).toBe(465);
     expect(列("来 年度").size).toBe(68);
     expect(列("年 初").size).toBe(35);
     expect(列("2026 年 初").size).toBe(20);
@@ -56,7 +56,7 @@ describe("片段で離つた複合語が繋いだ形と同じ行を出す（第 
     expect(列("今 月末までに").size).toBe(列("今月末までに").size);
     expect(列("今 月末 までに").size).toBe(118);
     expect(列("来 月中 まで").size).toBe(178);
-    expect(列("週 末 日").size).toBe(153);
+    expect(列("週 末 日").size).toBe(154);
   });
   it("件数欄は寄せた複合語の範囲を書き、別の範囲を書かない", () => {
     const 今 = 案内("今 年度");
@@ -68,8 +68,8 @@ describe("片段で離つた複合語が繋いだ形と同じ行を出す（第 
     expect(案内("年 初 め")).not.toContain("2027年");
   });
   it("後ろにその他の語を続けても効く", () => {
-    expect(列("週 末 の 締切").size).toBe(126);
-    expect(列("週 末 論文").size).toBe(89);
+    expect(列("週 末 の 締切").size).toBe(127);
+    expect(列("週 末 論文").size).toBe(90);
     expect(列("ml 週 末").size).toBe(6);
     expect(列("今 月末 の 会議").size).toBe(118);
     expect(列("年 初 の 会議").size).toBe(35);
@@ -81,7 +81,7 @@ describe("寄せない形の守り（第 453 回・第 463 回・第 466 回）"
   it("両側がそれだけで行を出す対は寄せない – 寄せると行が減るから", () => {
     /* 実測 – `年 中` 27 行 ⇔ `年中` 0 行・`月 内` 38 行 ⇔ `月内` 0 行・`年 半ば` 55 行 ⇔ `年半ば` 0 行
      * （繋いだ形をその方の機械が解かないので、寄せた側は 0 行に減る）。*/
-    expect(列("年 中").size).toBe(32);
+    expect(列("年 中").size).toBe(33);
     expect(列("年中").size).toBe(0);
     expect(列("月 内").size).toBe(40);
     expect(列("月内").size).toBe(0);
@@ -103,7 +103,7 @@ describe("寄せない形の守り（第 453 回・第 463 回・第 466 回）"
     /* 実測 – `来 週末` はその方の語列のままその行が出て案内は無し。
      * 週の幅をその月の幅と取り違えた案内だけは出さない事を張る。*/
     expect(案内("来 週末")).not.toContain("来週 = 2026年8月10日(月)〜8月16日(日)の締切 – 土曜");
-    expect(列("年 末").size).toBe(93);
+    expect(列("年 末").size).toBe(94);
     expect(列("年 初 め").size).toBe(35);
     expect(列("年 初 め").size).toBe(列("年初め").size);
   });
@@ -116,7 +116,7 @@ describe("寄せない形の守り（第 453 回・第 463 回・第 466 回）"
     expect(案内("週 末日")).toBe("");
   });
   it("その他の機械が受ける語の内の字を複合語と取り違えない", () => {
-    expect(列("論文 中").size).toBe(25);
+    expect(列("論文 中").size).toBe(26);
     expect(列("8 月 末").size).toBe(118);
     expect(列("8 月 中").size).toBe(118);
     expect(列("9 月 下旬").size).toBe(60);

@@ -107,13 +107,13 @@ describe("収録にない物を告げる群が、締切らしい語尾を受け�
     expect(画面の案内("travel grantの締切")).not.toContain("「travel」は");
   });
   it("第 470 回〜第 504 回の実測はこの回で変へて居ない", () => {
-    expect(列("年内").size).toBe(446);
-    expect(列("今年内").size).toBe(448);
+    expect(列("年内").size).toBe(447);
+    expect(列("今年内").size).toBe(449);
     expect(列("再来週内").size).toBe(18);
-    expect(列("年末中").size).toBe(93);
+    expect(列("年末中").size).toBe(94);
     expect(列("年初1月").size).toBe(35);
     expect(列("来月 末日").size).toBe(178);
-    expect(列("週 末").size).toBe(153);
+    expect(列("週 末").size).toBe(154);
     expect(列("締切時刻").size).toBe(181);
     expect(列("ml から").size).toBe(0);
     expect(列("半 年後").size).toBe(3);

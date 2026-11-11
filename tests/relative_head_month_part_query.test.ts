@@ -111,7 +111,7 @@ describe("寄せない形の守り（第 453 回・第 463 回・第 466 回）"
     expect(列("8 月の 締切").size).toBe(114);
     expect(列("来 月の 下旬").size).toBe(60);
     expect(案内("来 月の 下旬")).toContain("来月 下旬 = 2026年9月21日(月)");
-    expect(列("週 末").size).toBe(153);
+    expect(列("週 末").size).toBe(154);
     expect(列("今 月末").size).toBe(118);
     expect(列("来 週末").size).toBe(34);
     expect(案内("来 週末")).toContain("来週末 = 2026年8月15日(土)");

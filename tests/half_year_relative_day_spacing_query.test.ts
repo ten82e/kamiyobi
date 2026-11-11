@@ -39,9 +39,9 @@ describe("頭と単位を離つて打った半年の語が詰め形と同じ行�
     expect(列("半 年後").size).toBe(3);
     expect(列("半 年前").size).toBe(3);
     expect(列("半 年後に").size).toBe(3);
-    expect(列("半 年後 まで").size).toBe(461);
+    expect(列("半 年後 まで").size).toBe(462);
     expect(列("半年後").size).toBe(3);
-    expect(列("半年後まで").size).toBe(461);
+    expect(列("半年後まで").size).toBe(462);
   });
   it("件数欄は打たれた空格の侭を名乗り、その日を書く（第 459 回・第 332 回）", () => {
     expect(案内("半 年後")).toContain("半 年後 = 2027年2月9日(火)");
@@ -72,9 +72,9 @@ describe("寄せない形の実測（第 453 回・第 466 回）", () => {
   it("第 470 回〜第 479 回の実測はこの回で変へて居ない", () => {
     expect(列("締切時刻").size).toBe(181);
     expect(列("来月 終わり").size).toBe(178);
-    expect(列("週 末").size).toBe(153);
+    expect(列("週 末").size).toBe(154);
     expect(列("ml から").size).toBe(0);
-    expect(列("明日以降").size).toBe(444);
+    expect(列("明日以降").size).toBe(445);
     expect(列("来 上旬").size).toBe(68);
     expect(列("来月 下旬 まで").size).toBe(276);
     expect(列("明日 から 明後日").size).toBe(4);
