@@ -27080,7 +27080,7 @@ candidates:
     id: candidate-9a2fd22acdb9f09342b0d565
     source: easychair
     source_item_id: icccs2027
-    status: discovered
+    status: accepted
     discovered_at: '2026-08-20T20:45:37.898Z'
     first_seen_at: '2026-08-20T20:45:37.898Z'
     last_seen_at: '2026-11-07T18:30:51.935Z'

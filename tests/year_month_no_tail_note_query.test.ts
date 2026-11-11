@@ -64,8 +64,8 @@ describe("語尾のない年＋暦月にもその年の幅の案内が出る（�
     expect(列("2027年12月から").size).toBe(28);
     expect(列("2028年3月から").size).toBe(0);
     expect(列("来年12月から").size).toBe(28);
-    expect(列("今年1月から").size).toBe(447);
-    expect(列("2026年1月から").size).toBe(447);
+    expect(列("今年1月から").size).toBe(448);
+    expect(列("2026年1月から").size).toBe(448);
     expect(列("2028年").size).toBe(0);
     expect(列("来年上旬").size).toBe(2);
     expect(列("来週中旬").size).toBe(43);

@@ -68,8 +68,8 @@ describe("相対の語と複合日語を離って打つ形が詰め形と揃ふ�
     expect(列("先 週末").size).toBe(5);
     expect(列("昨 週末").size).toBe(5);
     expect(列("翌 週末").size).toBe(34);
-    expect(列("今 年中").size).toBe(447);
-    expect(列("来 年中").size).toBe(136);
+    expect(列("今 年中").size).toBe(448);
+    expect(列("来 年中").size).toBe(137);
     expect(列("昨 年中").size).toBe(0);
     expect(列("昨 月").size).toBe(11);
     expect(列("昨 週").size).toBe(8);
@@ -83,7 +83,7 @@ describe("相対の語と複合日語を離って打つ形が詰め形と揃ふ�
     expect(列("今 週末 まで").size).toBe(1);
     expect(列("今 週末 まで").size).toBe(列("今週末 まで").size);
     expect(案内("今 週末 まで")).toContain("今週末 まで = 2026年8月8日(土)");
-    expect(列("今 年中 締切").size).toBe(390);
+    expect(列("今 年中 締切").size).toBe(391);
     expect(列("ml 来 年中 締切").size).toBe(4);
     expect(列("今 週末に").size).toBe(1);
     expect(案内("今 週末に")).toContain("今週末 = ");
@@ -108,20 +108,20 @@ describe("寄せない形の守り（第 453 回・第 463 回・第 466 回）"
   it("詰め形其身は一行も動かして居ない（総当り 3 405 語で変はつた語 0 語の実測）", () => {
     expect(列("今週末").size).toBe(1);
     expect(列("来週末").size).toBe(34);
-    expect(列("今年中").size).toBe(447);
-    expect(列("来年中").size).toBe(136);
+    expect(列("今年中").size).toBe(448);
+    expect(列("来年中").size).toBe(137);
     expect(列("昨月").size).toBe(11);
     expect(列("昨週").size).toBe(8);
     expect(列("再々週").size).toBe(18);
-    expect(列("翌年度").size).toBe(66);
+    expect(列("翌年度").size).toBe(67);
   });
   it("頭に複合語を既に持つ語とその他の機械の語は触らない", () => {
     /* `今年 月末` は詰め形 `今年月末` が解けぬ語（実測 – 離つた側 192 行 ⇔ 詰め形 0 行）なので
      * 寄せない – 境目が文の頭か空格の直後にある目でも、頭の表に載せて居ない対は発火しない。*/
     expect(列("今 週 末").size).toBe(列("今週末").size);
-    expect(列("年 中").size).toBe(30);
+    expect(列("年 中").size).toBe(31);
     expect(列("月 内").size).toBe(40);
-    expect(列("論文 中").size).toBe(23);
+    expect(列("論文 中").size).toBe(24);
     expect(列("8 月 末").size).toBe(118);
   });
   it("前回の残した差 – 上旬・中旬・下旬を相対の語に続ける形は第 473 回で解ける", () => {
@@ -137,7 +137,7 @@ describe("寄せない形の守り（第 453 回・第 463 回・第 466 回）"
     expect(列("来 月の 下旬").size).toBe(60);
     expect(列("週 末").size).toBe(152);
     expect(列("今 月末").size).toBe(118);
-    expect(列("来 年度").size).toBe(66);
+    expect(列("来 年度").size).toBe(67);
     expect(案内("来 月の 下旬")).toContain("来月 下旬 = 2026年9月21日(月)");
   });
 });

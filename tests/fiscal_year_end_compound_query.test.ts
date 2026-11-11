@@ -70,17 +70,17 @@ describe("割らぬと決めた形（第 352 回・第 355 回・第 466 回）"
   it("裸の年度のかたまりはその方の表が受け、その案内は其侭出る", () => {
     expect(列("年度末").size).toBeGreaterThan(0);
 
-    expect(列("年度初め").size).toBe(34);
+    expect(列("年度初め").size).toBe(35);
     expect(列("年度初め").size).toBe(列("年度 4月").size);
     expect(列("年度末").size).toBe(30);
     expect(画面案内("年度末")).toBe("");
     expect(列("年度末あたり").size).toBe(30);
-    expect(列("年度初めから").size).toBe(66);
+    expect(列("年度初めから").size).toBe(67);
   });
   it("それより後の語尾が離つて控へる年は割らぬ（行を減らさぬ為 – 第 466 回・第 469 回）", () => {
-    expect(列("今年1月 から").size).toBe(447);
-    expect(列("今年1月から").size).toBe(447);
-    expect(列("今年 1月 から").size).toBe(121);
+    expect(列("今年1月 から").size).toBe(448);
+    expect(列("今年1月から").size).toBe(448);
+    expect(列("今年 1月 から").size).toBe(122);
     expect(列("今年1月 から").size).toBe(列("今年1月から").size);
 
     expect(日の案内("今年1月 から")).toContain("2026年1月1日以降のこと");
@@ -98,7 +98,7 @@ describe("割らぬと決めた形（第 352 回・第 355 回・第 466 回）"
     expect(列("来週 末").size).toBe(34);
     expect(列("週 末").size).toBe(152);
     expect(列("月末").size).toBe(118);
-    expect(列("明日以降").size).toBe(443);
+    expect(列("明日以降").size).toBe(444);
     expect(列("来 上旬").size).toBe(68);
     expect(列("来月上旬").size).toBe(68);
     expect(列("ml から").size).toBe(0);

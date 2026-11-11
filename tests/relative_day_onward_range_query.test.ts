@@ -35,20 +35,20 @@ describe("それより後の語を日の語に続けた形がその初日から�
     }
   });
   it("行数の実測（固定ハーネスの品書 435 行 – 前はこの内すべて 0 行だった）", () => {
-    expect(列("明日以降").size).toBe(443);
-    expect(列("来週以降").size).toBe(443);
-    expect(列("今週以降").size).toBe(443);
-    expect(列("先週以降").size).toBe(445);
-    expect(列("下旬以降").size).toBe(434);
-    expect(列("中旬以降").size).toBe(443);
-    expect(列("来月上旬以降").size).toBe(409);
-    expect(列("週末以降").size).toBe(443);
-    expect(列("来週末以降").size).toBe(441);
-    expect(列("来年度以降").size).toBe(66);
-    expect(列("来年以降").size).toBe(136);
-    expect(列("22日以降").size).toBe(415);
-    expect(列("年度末以降").size).toBe(66);
-    expect(列("来月末以降").size).toBe(315);
+    expect(列("明日以降").size).toBe(444);
+    expect(列("来週以降").size).toBe(444);
+    expect(列("今週以降").size).toBe(444);
+    expect(列("先週以降").size).toBe(446);
+    expect(列("下旬以降").size).toBe(435);
+    expect(列("中旬以降").size).toBe(444);
+    expect(列("来月上旬以降").size).toBe(410);
+    expect(列("週末以降").size).toBe(444);
+    expect(列("来週末以降").size).toBe(442);
+    expect(列("来年度以降").size).toBe(67);
+    expect(列("来年以降").size).toBe(137);
+    expect(列("22日以降").size).toBe(416);
+    expect(列("年度末以降").size).toBe(67);
+    expect(列("来月末以降").size).toBe(316);
   });
   it("幅で絞れる形は件の数欄が「並びます」と嘘を書かない（暦日を打つ形と同じ決まり – 第 413 回）", () => {
     for (const 文 of [
@@ -65,22 +65,22 @@ describe("それより後の語を日の語に続けた形がその初日から�
   });
   it("後ろに其它の語を続けても効く", () => {
     expect(列("ml 明日以降 締切").size).toBe(15);
-    expect(列("明日以降 論文").size).toBe(277);
-    expect(列("来週 以降 の 締切").size).toBe(386);
-    expect(列("下旬以降 締切").size).toBe(377);
+    expect(列("明日以降 論文").size).toBe(278);
+    expect(列("来週 以降 の 締切").size).toBe(387);
+    expect(列("下旬以降 締切").size).toBe(378);
   });
 });
 
 describe("載せない形と其它の機械の守り（第 328 回・第 373 回・第 453 回）", () => {
   it("`から` `より` もその初日から絞る – 幅の終りが控へる形は三語を一語に継ぐ（第 476 回）", () => {
     for (const [文, 件] of [
-      ["今日から", 443],
-      ["明日から", 443],
-      ["来週から", 443],
-      ["来週 より", 443],
-      ["来月上旬から", 409],
-      ["3日後から", 443],
-      ["22日より", 415],
+      ["今日から", 444],
+      ["明日から", 444],
+      ["来週から", 444],
+      ["来週 より", 444],
+      ["来月上旬から", 410],
+      ["3日後から", 444],
+      ["22日より", 416],
     ] as Array<[string, number]>) {
       expect([文, 列(文).size]).toEqual([文, 件]);
       expect(案内(文), `「${文}」に案内が残つた`).toBe("");
@@ -98,10 +98,10 @@ describe("載せない形と其它の機械の守り（第 328 回・第 373 回
     expect(列("9 月 上旬 から 中旬").size).toBe(119);
   });
   it("月の語・年・時刻の語はその方の機械が既に絞る – この回は触つて居ない", () => {
-    expect(列("8月以降").size).toBe(445);
-    expect(列("9月以降").size).toBe(409);
-    expect(列("8月から").size).toBe(445);
-    expect(列("17時 以降").size).toBe(206);
+    expect(列("8月以降").size).toBe(446);
+    expect(列("9月以降").size).toBe(410);
+    expect(列("8月から").size).toBe(446);
+    expect(列("17時 以降").size).toBe(207);
     expect(案内("17時 以降")).toContain("17時 以降 = 17:00〜23:59");
     expect(案内("17時以降")).toContain("17時以降 = 17:00〜23:59");
   });
@@ -118,7 +118,7 @@ describe("載せない形と其它の機械の守り（第 328 回・第 373 回
     ] as Array<[string, string]>) {
       expect([離, 列(離).size]).toEqual([離, 列(繋).size]);
     }
-    expect(列("来月上旬以降").size).toBe(409);
+    expect(列("来月上旬以降").size).toBe(410);
   });
   it("在り得ない日は 0 行の侭で、案内がその事を立つて書く（締切の推測はしない）", () => {
     expect(列("2月30日以降").size).toBe(0);
@@ -131,7 +131,7 @@ describe("載せない形と其它の機械の守り（第 328 回・第 373 回
     expect(列("来 週末").size).toBe(34);
     expect(案内("来 週末")).toContain("来週末 = 2026年8月15日(土)");
     expect(列("8 月の 締切").size).toBe(114);
-    expect(列("来 年中").size).toBe(136);
+    expect(列("来 年中").size).toBe(137);
   });
 });
 
