@@ -69,8 +69,8 @@ describe("助字を単位の語に繋げて打つ形（第 470 回）", () => {
     expect(列("来 月の 下旬").size).toBe(60);
     expect(列("先 月の 下旬").size).toBe(6);
     expect(列("今 月の 中旬").size).toBe(55);
-    expect(列("2026 年の 締切").size).toBe(389);
-    expect(列("8 日の 締切").size).toBe(19);
+    expect(列("2026 年の 締切").size).toBe(390);
+    expect(列("8 日の 締切").size).toBe(20);
     expect(列("来 週の 締切").size).toBe(43);
     expect(列("1 月の 会議").size).toBe(34);
     expect(列("9 月の").size).toBe(178);
@@ -92,9 +92,9 @@ describe("助字を単位の語に繋げて打つ形（第 470 回）", () => {
     /* 寄せた形に後ろの語を続ける空格を落とすと、実測で `8 日の締切` 48 行 → 0 行・
      * `2026 年の締切` 643 行 → 0 行・`1 月の会議` 99 行 → 0 行・`9 月の下旬 まで` 19 行 → **419 行**
      * （月語とその他の語が一語に癒合して幅の目から外れる為 – 実ビルド 868 行 2026-11-08）。*/
-    expect(列("8 日の締切").size).toBe(19);
+    expect(列("8 日の締切").size).toBe(20);
     expect(列("8 日の締切").size).toBe(列("8 日の 締切").size);
-    expect(列("2026 年の締切").size).toBe(389);
+    expect(列("2026 年の締切").size).toBe(390);
     expect(列("1 月の会議").size).toBe(34);
     expect(列("8 月の締切").size).toBe(114);
     expect(列("9 月の第2週").size).toBe(30);

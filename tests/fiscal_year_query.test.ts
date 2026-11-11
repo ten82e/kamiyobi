@@ -98,9 +98,9 @@ describe("年でまとまって聞く入力", () => {
   });
 
   it("`来年以降` と `今年度から` はその年・その年度の初日から絞る（第 475 回・第 476 回）", () => {
-    expect(行集合("来年以降").size, "「来年以降」がその年から絞れて居ない").toBe(135);
+    expect(行集合("来年以降").size, "「来年以降」がその年から絞れて居ない").toBe(136);
     expect(Recommender.relativeDayNotes("来年以降", 基準)).toEqual([]);
-    expect(行集合("今年度から").size, "「今年度から」がその年度の初日から絞れて居ない").toBe(446);
+    expect(行集合("今年度から").size, "「今年度から」がその年度の初日から絞れて居ない").toBe(447);
     expect(Recommender.relativeDayNotes("今年度から", 基準)).toEqual([]);
   });
 

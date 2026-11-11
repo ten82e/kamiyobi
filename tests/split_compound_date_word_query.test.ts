@@ -46,8 +46,8 @@ describe("片段で離つた複合語が繋いだ形と同じ行を出す（第 
     expect(列("再来 月末").size).toBe(96);
     expect(列("今 月中").size).toBe(118);
     expect(列("来 月中").size).toBe(178);
-    expect(列("今 年度").size).toBe(461);
-    expect(列("来 年度").size).toBe(65);
+    expect(列("今 年度").size).toBe(462);
+    expect(列("来 年度").size).toBe(66);
     expect(列("年 初").size).toBe(34);
     expect(列("2026 年 初").size).toBe(20);
   });
@@ -73,7 +73,7 @@ describe("片段で離つた複合語が繋いだ形と同じ行を出す（第 
     expect(列("ml 週 末").size).toBe(6);
     expect(列("今 月末 の 会議").size).toBe(118);
     expect(列("年 初 の 会議").size).toBe(34);
-    expect(列("来 年度 の 論文").size).toBe(41);
+    expect(列("来 年度 の 論文").size).toBe(42);
   });
 });
 
@@ -103,7 +103,7 @@ describe("寄せない形の守り（第 453 回・第 463 回・第 466 回）"
     /* 実測 – `来 週末` はその方の語列のままその行が出て案内は無し。
      * 週の幅をその月の幅と取り違えた案内だけは出さない事を張る。*/
     expect(案内("来 週末")).not.toContain("来週 = 2026年8月10日(月)〜8月16日(日)の締切 – 土曜");
-    expect(列("年 末").size).toBe(92);
+    expect(列("年 末").size).toBe(93);
     expect(列("年 初 め").size).toBe(34);
     expect(列("年 初 め").size).toBe(列("年初め").size);
   });

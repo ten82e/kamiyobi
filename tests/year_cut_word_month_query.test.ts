@@ -32,8 +32,8 @@ function 解けた範囲(文: string) {
 describe("年の切れ目の語＋暦月・中がその月の語に解れる（第 502 回）", () => {
   it("年末は 12月、年初/年始/年明けは 1月、年度末は 3月、年度初めは 4月 – 暦月その物と『中』", () => {
     for (const [繋, 月語, 件] of [
-      ["年末12月", "12月", 92],
-      ["年末中", "12月中", 92],
+      ["年末12月", "12月", 93],
+      ["年末中", "12月中", 93],
       ["年初1月", "1月", 34],
       ["年初中", "1月中", 34],
       ["年始1月", "1月", 34],
@@ -105,19 +105,19 @@ describe("年の切れ目の語＋暦月・中がその月の語に解れる（�
     }
   });
   it("第 470 回〜第 501 回の実測はこの回で変へて居ない", () => {
-    expect(列("年内").size).toBe(444);
-    expect(列("今年内").size).toBe(446);
-    expect(列("2026年中").size).toBe(446);
-    expect(列("令和9年中").size).toBe(135);
+    expect(列("年内").size).toBe(445);
+    expect(列("今年内").size).toBe(447);
+    expect(列("2026年中").size).toBe(447);
+    expect(列("令和9年中").size).toBe(136);
     expect(列("来月中").size).toBe(178);
-    expect(列("年末").size).toBe(92);
+    expect(列("年末").size).toBe(93);
     expect(列("年末 中").size).toBe(12);
     expect(列("来月 末日").size).toBe(178);
     expect(列("週 末").size).toBe(152);
     expect(列("ml から").size).toBe(0);
     expect(列("締切時刻").size).toBe(181);
-    expect(列("2027年12月から").size).toBe(27);
-    expect(列("半 年後").size).toBe(2);
+    expect(列("2027年12月から").size).toBe(28);
+    expect(列("半 年後").size).toBe(3);
     expect(列("一 週間後").size).toBe(13);
   });
 });
