@@ -40,12 +40,12 @@ describe("漢数字の月・日を離つて打つ形が算用数字と同じ行�
   });
   it("行数の実測（固定ハーネスの品書 435 行 – 実ビルド 868 行ではそれより多い）", () => {
     expect(列("八 月").size).toBe(118);
-    expect(列("一 月").size).toBe(36);
-    expect(列("五 日").size).toBe(30);
+    expect(列("一 月").size).toBe(38);
+    expect(列("五 日").size).toBe(31);
     expect(列("二十 日").size).toBe(67);
-    expect(列("一 月 五 日").size).toBe(5);
+    expect(列("一 月 五 日").size).toBe(6);
     expect(列("八 月 二十 日").size).toBe(7);
-    expect(列("三 月 と 四 月").size).toBe(62);
+    expect(列("三 月 と 四 月").size).toBe(64);
     expect(列("八 月 の 締切").size).toBe(114);
   });
   it("その方に何も足さない – 月はその月、日はその日で絞れる", () => {
@@ -72,7 +72,7 @@ describe("名乗りは打たれた侭 – 畳まない形の実測（第 459 回
     expect(列("締切時刻").size).toBe(181);
     expect(列("一 週間後").size).toBe(13);
     expect(列("半 年後").size).toBe(3);
-    expect(列("週 末").size).toBe(155);
+    expect(列("週 末").size).toBe(156);
     expect(列("ml から").size).toBe(0);
     expect(列("明日以降").size).toBe(445);
     expect(列("来 上旬").size).toBe(68);

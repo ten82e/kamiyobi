@@ -16165,7 +16165,7 @@ candidates:
     id: candidate-f39e54b7525745f1a908d76d
     source: easychair
     source_item_id: cyber2-0
-    status: discovered
+    status: accepted
     discovered_at: '2026-11-07T18:28:57.417Z'
     first_seen_at: '2026-11-07T18:28:57.417Z'
     last_seen_at: '2026-11-07T18:30:51.935Z'

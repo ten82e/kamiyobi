@@ -634,6 +634,63 @@ conferences:
     title: WQS 2026
 
   - categories:
+      - security
+    editions:
+      - date_text: April 2, 2027
+        deadlines:
+          - date: '2027-01-05 23:59:59'
+            evidence:
+              - contentHash: df266975b344bcaf6113880cb3cddc0a2e8c92eacc3d7418cc5b3f06d39d94c3
+                rawExcerpt: 'Abstract registration deadline January 5, 2027'
+                retrievedAt: '2026-11-12T01:30:00Z'
+                sourceClass: official-cfp
+                sourceUrl: https://easychair.org/cfp/cybersecurity2027
+                verifiedAt: '2026-11-12T01:30:00Z'
+                verifiedFields:
+                  - date
+                  - time
+                  - timezone
+            kind: abstract
+            label: Abstract registration deadline
+            precision: exact
+            round: 1
+            track: ''
+            tz: AoE
+          - date: '2027-01-15 23:59:59'
+            evidence:
+              - contentHash: df266975b344bcaf6113880cb3cddc0a2e8c92eacc3d7418cc5b3f06d39d94c3
+                rawExcerpt: 'Submission deadline January 15, 2027'
+                retrievedAt: '2026-11-12T01:30:00Z'
+                sourceClass: official-cfp
+                sourceUrl: https://easychair.org/cfp/cybersecurity2027
+                verifiedAt: '2026-11-12T01:30:00Z'
+                verifiedFields:
+                  - date
+                  - time
+                  - timezone
+            kind: paper
+            label: Paper submission deadline
+            precision: exact
+            promotion_ref:
+              batch: 2026-11-12-cyber2
+              resolution: resolution-cyber2
+            round: 1
+            track: ''
+            tz: AoE
+        event_end: '2027-04-02'
+        event_start: '2027-04-02'
+        id: cyber2-2027
+        link: https://cybersecurity.fsu.edu/symposium/
+        place: Tallahassee, FL, United States
+        year: 2027
+    full_name: Cybersecurity 2.0 International Research Symposium
+    key: cyber2
+    link: https://cybersecurity.fsu.edu/symposium/
+    tags:
+      - niche
+    title: Cyber2.0 2027
+
+  - categories:
       - networking
     editions:
       - date_text: July 9-11, 2027

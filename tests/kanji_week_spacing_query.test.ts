@@ -66,7 +66,7 @@ describe("他の単位に空格を広げない決まり（第 459 回・第 466 
     expect(列("二 週").size).toBe(0);
     /* 其它の数字の語の離し方も其侭（実測 – この目を入れても変はらぬ）。*/
 
-    expect(列("一 月 五 日").size).toBe(5);
+    expect(列("一 月 五 日").size).toBe(6);
     expect(列("一 月 五 日").size).toBe(列("1 月 5 日").size);
     expect(列("五 日後").size).toBe(17);
     expect(案内("五 日後")).toContain("五 日後 = 2026年8月14日(金)");
@@ -74,7 +74,7 @@ describe("他の単位に空格を広げない決まり（第 459 回・第 466 
   it("第 470 回〜第 480 回の実測はこの回で変へて居ない", () => {
     expect(列("締切時刻").size).toBe(181);
     expect(列("来月 終わり").size).toBe(178);
-    expect(列("週 末").size).toBe(155);
+    expect(列("週 末").size).toBe(156);
     expect(列("ml から").size).toBe(0);
     expect(列("明日以降").size).toBe(445);
     expect(列("来 上旬").size).toBe(68);

@@ -80,7 +80,7 @@ describe("連体の「の」で繋がれた文がその群の導きを出す（�
   });
   it("行が出る打ち手には何も被せない", () => {
     expect(件("関西")).toBe(6);
-    expect(件("セキュリティ")).toBe(74);
+    expect(件("セキュリティ")).toBe(76);
     expect(件("国内")).toBe(40);
     expect(件("オンライン参加可")).toBe(22);
     expect(件("ランクA")).toBe(3);
@@ -108,7 +108,7 @@ describe("連体の「の」で繋がれた文がその群の導きを出す（�
     expect(件("年内")).toBe(447);
     expect(件("年末中")).toBe(94);
     expect(件("来月 末日")).toBe(178);
-    expect(件("週 末")).toBe(155);
+    expect(件("週 末")).toBe(156);
     expect(件("締切時刻")).toBe(181);
     expect(件("ml から")).toBe(0);
   });

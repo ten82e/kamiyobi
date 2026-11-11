@@ -81,7 +81,7 @@ describe("数字で書いた先の年の形が、離した形と同じ行に出�
     expect(日の案内("2026年1月から")).toContain("その年の締切が収録に無ければ何も出ません");
   });
   it("第 470 回〜第 494 回の実測はこの回で変へて居ない", () => {
-    expect(列("2027年3月から").size).toBe(96);
+    expect(列("2027年3月から").size).toBe(98);
     expect(列("2026年12月から").size).toBe(94);
     expect(列("2026年1月から").size).toBe(449);
     expect(列("来年12月から").size).toBe(28);
@@ -91,7 +91,7 @@ describe("数字で書いた先の年の形が、離した形と同じ行に出�
     expect(列("来週中旬").size).toBe(43);
     expect(列("年末上旬").size).toBe(46);
     expect(列("来月 末日").size).toBe(178);
-    expect(列("週 末").size).toBe(155);
+    expect(列("週 末").size).toBe(156);
     expect(列("ml から").size).toBe(0);
     expect(列("締切時刻").size).toBe(181);
     expect(列("半 年後").size).toBe(3);
