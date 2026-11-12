@@ -40,20 +40,20 @@ describe("数字の年＋暦月＋それより後には但し書が付く（第 
     /* 実測（実ビルド）– `2027年12月から` 0 件（その月の締切は `來年12月から` の 84 件で見える）・
      * `2027年3月から` 371 件・`2026年12月から` 178 件・`2026年1月から` 796 件。*/
     /* 先の年の形は第 495 回に割る目を入れたので、離した形と同じ行が出る。*/
-    expect(列("2027年12月から").size).toBe(28);
-    expect(列("2027年3月から").size).toBe(98);
-    expect(列("2026年1月から").size).toBe(449);
-    expect(列("2026年12月から").size).toBe(94);
+    expect(列("2027年12月から").size).toBe(29);
+    expect(列("2027年3月から").size).toBe(99);
+    expect(列("2026年1月から").size).toBe(450);
+    expect(列("2026年12月から").size).toBe(95);
     /* 同じ年の月を「來年」で打つと行が出る（打ち方で割れる事その物を但し書が説明する）。*/
-    expect(列("来年12月から").size).toBe(28);
+    expect(列("来年12月から").size).toBe(29);
   });
   it("第 470 回〜第 493 回の実測はこの回で変へて居ない", () => {
-    expect(列("来年12月から").size).toBe(28);
-    expect(列("来年12月").size).toBe(28);
-    expect(列("今年1月から").size).toBe(449);
+    expect(列("来年12月から").size).toBe(29);
+    expect(列("来年12月").size).toBe(29);
+    expect(列("今年1月から").size).toBe(450);
     expect(列("来年上旬").size).toBe(2);
     expect(列("来週中旬").size).toBe(43);
-    expect(列("年末上旬").size).toBe(46);
+    expect(列("年末上旬").size).toBe(47);
     expect(列("来月 末日").size).toBe(178);
     expect(列("週 末").size).toBe(157);
     expect(列("ml から").size).toBe(0);

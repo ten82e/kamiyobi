@@ -1711,7 +1711,7 @@ candidates:
     id: candidate-d9c027452b63f6ee69d47202
     source: easychair
     source_item_id: a2mra-2027
-    status: discovered
+    status: accepted
     discovered_at: '2026-10-04T12:39:08.732Z'
     first_seen_at: '2026-10-04T12:39:08.732Z'
     last_seen_at: '2026-11-12T01:58:49.893Z'

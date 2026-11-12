@@ -49,7 +49,7 @@ describe("年の切れ目を指す語に旬を繋いだ形がその月の旬に�
   });
   it("件数の実測（検査用ビルド – 実ビルドの値は頭の注）", () => {
     for (const [文, 件] of [
-      ["年末上旬", 46],
+      ["年末上旬", 47],
       ["年末中旬", 44],
       ["年末下旬", 9],
       ["年度末上旬", 9],
@@ -85,25 +85,25 @@ describe("残した差と守り（第 466 回・第 491 回）", () => {
     expect(列("年末 下旬 締切").size).toBe(6);
     expect(列("12月 下旬 締切").size).toBe(8);
     expect(列("年末 上旬").size).toBe(1);
-    expect(列("年末上旬").size).toBe(46);
+    expect(列("年末上旬").size).toBe(47);
   });
   it("第 470 回〜第 491 回の実測はこの回で変へて居ない", () => {
-    expect(列("年末").size).toBe(94);
+    expect(列("年末").size).toBe(95);
     expect(列("年初").size).toBe(39);
     expect(列("年度末").size).toBe(30);
     expect(列("年始").size).toBe(39);
-    expect(列("来年").size).toBe(142);
-    expect(列("今年").size).toBe(449);
-    expect(列("来年度").size).toBe(71);
+    expect(列("来年").size).toBe(143);
+    expect(列("今年").size).toBe(450);
+    expect(列("来年度").size).toBe(72);
     expect(列("年末 末").size).toBe(0);
     expect(列("来月 末日").size).toBe(178);
-    expect(列("来年 末").size).toBe(28);
+    expect(列("来年 末").size).toBe(29);
     expect(列("来年上旬").size).toBe(2);
     expect(列("来週中旬").size).toBe(43);
     /* 第 493 回に先の年の語を割る目を入れたので、離した形と同じ行が出る。*/
-    expect(列("来年12月から").size).toBe(28);
+    expect(列("来年12月から").size).toBe(29);
     expect(列("来年12月から").size).toBe(列("来年 12月から").size);
-    expect(列("今年1月から").size).toBe(449);
+    expect(列("今年1月から").size).toBe(450);
     expect(列("週 末").size).toBe(157);
     expect(列("ml から").size).toBe(0);
     expect(列("締切時刻").size).toBe(181);

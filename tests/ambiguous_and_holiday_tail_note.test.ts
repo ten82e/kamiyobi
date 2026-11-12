@@ -99,10 +99,10 @@ describe("曖昧な幅・祝日級に語尾を繋いだ形が画面上で何か�
     expect(画面の案内("令和7年の締切")).not.toContain("和暦");
   });
   it("第 470 回〜第 503 回の実測はこの回で変へて居ない", () => {
-    expect(列("年内").size).toBe(447);
-    expect(列("今年内").size).toBe(449);
+    expect(列("年内").size).toBe(448);
+    expect(列("今年内").size).toBe(450);
     expect(列("再来週内").size).toBe(18);
-    expect(列("年末中").size).toBe(94);
+    expect(列("年末中").size).toBe(95);
     expect(列("年初1月").size).toBe(39);
     expect(列("来月 末日").size).toBe(178);
     expect(列("週 末").size).toBe(157);

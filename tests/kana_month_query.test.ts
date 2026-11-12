@@ -82,7 +82,7 @@ describe("其它は其侭（第 429 回）", () => {
     expect(対称差("aiとml", "ai ml")).toBe(0);
     expect(対称差("月 曜", "")).toBe(0);
     expect(列("来月中").size).toBe(178);
-    expect(列("").size).toBe(469);
+    expect(列("").size).toBe(470);
   });
 
   it("一通に決まらない仮名は寄せない（締切の推測をしない）", () => {

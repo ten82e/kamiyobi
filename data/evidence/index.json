@@ -568,6 +568,14 @@
         "data/verification-ledger.json"
       ]
     },
+    "9a263bfc62d1b5ac601d480dd3fd59f1ad175dce9b205f8b6af5db772cf22fad": {
+      "bytes": 11277,
+      "content_type": "application/octet-stream",
+      "references": [
+        "data/curated.generated.yaml",
+        "data/snapshot.json"
+      ]
+    },
     "9fe1aef0f2fea8ac8f54344c0f4554effb08c545d24d0e77f6c28c25f7f541e6": {
       "bytes": 22621,
       "content_type": "application/octet-stream",

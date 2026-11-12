@@ -117,8 +117,8 @@ describe("訪ねて打つ形がその群の打ち直し方を出す（第 510 �
     expect((Recommender.columnQueryNoteJa("分野 セキュリティ") || "").trim()).toContain(
       "「分野」は",
     );
-    expect(件("年内")).toBe(447);
-    expect(件("年末中")).toBe(94);
+    expect(件("年内")).toBe(448);
+    expect(件("年末中")).toBe(95);
     expect(件("再来週内")).toBe(18);
     expect(件("来月 末日")).toBe(178);
     expect(件("週 末")).toBe(157);
