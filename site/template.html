@@ -34,6 +34,8 @@
 <!--__JSONLD__-->
 <style>
 :root {
+  /* 角丸は DADS (デジタル庁デザインシステム) の「基準単位の倍率で 5 段階を目安」に従い
+   * 0 / 4px (小部品) / 8px (標準) / 12px (大きい面) / 999px (pill) の 5 段階に統一。 */
   color-scheme: light dark;
   --bg: #f7f7f8;
   --panel: #ffffff;
@@ -269,7 +271,7 @@ header {
 .watch-list li { display: flex; align-items: center; gap: 8px; }
 .watch-list a { color: var(--accent); }
 .watch-when { color: var(--muted); font-size: 0.8rem; }
-.watch-list button { min-width: 24px; min-height: 24px; background: transparent; border: 1px solid var(--border); border-radius: 6px; color: var(--muted); cursor: pointer; }
+.watch-list button { min-width: 24px; min-height: 24px; background: transparent; border: 1px solid var(--border); border-radius: 8px; color: var(--muted); cursor: pointer; }
 .stats-hint { font-size: 0.78rem; color: var(--muted); margin: 8px 0 0; }
 
 /* Quick Preset Filter Bar */
@@ -285,7 +287,7 @@ header {
   background: var(--chip);
   color: var(--muted);
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: 8px;
   cursor: pointer;
   transition: all 0.15s ease;
 }
@@ -313,7 +315,7 @@ header {
   background: var(--chip);
   color: var(--muted);
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: 8px;
   cursor: pointer;
   font: inherit;
   font-size: 0.85rem;
@@ -377,7 +379,7 @@ input[type=search], input[type=text] {
   padding: 8px 12px;
   background: var(--chip);
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: 8px;
   color: var(--fg);
   font: inherit;
   font-size: 1rem;
@@ -400,7 +402,7 @@ select {
   padding: 8px 12px;
   background: var(--chip);
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: 8px;
   color: var(--fg);
   font: inherit;
   font-size: 1rem;
@@ -423,7 +425,7 @@ textarea {
   padding: 8px 12px;
   background: var(--chip);
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: 8px;
   color: var(--fg);
   font: inherit;
   font-size: 1rem;
@@ -442,7 +444,7 @@ textarea:focus { border-color: var(--accent); }
   gap: 6px;
   padding: 4px 10px;
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: 8px;
   background: var(--chip);
   font-size: 0.8rem;
   cursor: pointer;
@@ -506,7 +508,7 @@ label.check input:checked + span { color: var(--fg); }
   background: transparent;
   color: var(--muted);
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: 8px;
   cursor: pointer;
   margin-left: auto;
 }
@@ -524,7 +526,7 @@ a.btn-reset {
   background: transparent;
   color: var(--accent);
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: 8px;
   font-weight: 600;
   cursor: pointer;
   margin-bottom: 20px;
@@ -638,7 +640,7 @@ a.btn-reset {
   background: var(--accent);
   color: var(--on-accent);
   padding: 8px 12px;
-  border-radius: 6px;
+  border-radius: 8px;
   text-decoration: none;
 }
 .skip-link:focus {
@@ -758,7 +760,7 @@ tr.detail-row td {
 .detail-inner {
   border-left: 3px solid var(--accent);
   background: var(--panel);
-  border-radius: 0 6px 6px 0;
+  border-radius: 0 8px 8px 0;
   padding: 10px 14px;
   font-size: 0.78rem;
   color: var(--muted);
@@ -807,7 +809,7 @@ tr.detail-row td {
   margin-top: 10px;
   padding: 8px 12px;
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: 8px;
   background: var(--chip);
   font-size: 0.75rem;
   color: var(--muted);
@@ -822,7 +824,7 @@ tr.detail-row td {
   background: var(--chip);
   color: var(--fg);
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: 8px;
   cursor: pointer;
 }
 #more:hover { border-color: var(--muted); }
@@ -878,7 +880,7 @@ tr.detail-row td {
 .active-filters[hidden] { display: none; }
 .filter-remove, .row-detail {
   font: inherit; color: var(--accent); background: var(--panel); border: 1px solid var(--border);
-  border-radius: 6px; padding: 6px 10px; min-height: 36px; cursor: pointer;
+  border-radius: 8px; padding: 6px 10px; min-height: 36px; cursor: pointer;
 }
 .filter-remove:hover, .row-detail:hover { border-color: var(--accent); background: var(--accent-subtle); }
 .row-detail { margin-top: 6px; white-space: normal; }
@@ -907,7 +909,7 @@ body.drawer-open { overflow: hidden; }
 .past-edition-schedule > summary { cursor: pointer; min-height: 44px; padding: 12px 0; }
 .edition-schedule button {
   width: 100%; text-align: left; font: inherit; font-size: 0.85rem; line-height: 1.6; color: var(--fg);
-  background: var(--panel); border: 1px solid var(--border); border-radius: 6px; padding: 10px;
+  background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 10px;
   margin: 4px 0; cursor: pointer; overflow-wrap: anywhere;
 }
 .edition-schedule button[aria-current="true"] { border-color: var(--accent); background: var(--accent-subtle); }
