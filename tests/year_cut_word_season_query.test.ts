@@ -89,10 +89,10 @@ describe("残した差と守り（第 466 回・第 491 回）", () => {
   });
   it("第 470 回〜第 491 回の実測はこの回で変へて居ない", () => {
     expect(列("年末").size).toBe(94);
-    expect(列("年初").size).toBe(38);
+    expect(列("年初").size).toBe(39);
     expect(列("年度末").size).toBe(30);
-    expect(列("年始").size).toBe(38);
-    expect(列("来年").size).toBe(141);
+    expect(列("年始").size).toBe(39);
+    expect(列("来年").size).toBe(142);
     expect(列("今年").size).toBe(449);
     expect(列("来年度").size).toBe(71);
     expect(列("年末 末").size).toBe(0);
@@ -104,7 +104,7 @@ describe("残した差と守り（第 466 回・第 491 回）", () => {
     expect(列("来年12月から").size).toBe(28);
     expect(列("来年12月から").size).toBe(列("来年 12月から").size);
     expect(列("今年1月から").size).toBe(449);
-    expect(列("週 末").size).toBe(156);
+    expect(列("週 末").size).toBe(157);
     expect(列("ml から").size).toBe(0);
     expect(列("締切時刻").size).toBe(181);
   });

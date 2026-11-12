@@ -108,7 +108,7 @@ describe("連体の「の」で繋がれた文がその群の導きを出す（�
     expect(件("年内")).toBe(447);
     expect(件("年末中")).toBe(94);
     expect(件("来月 末日")).toBe(178);
-    expect(件("週 末")).toBe(156);
+    expect(件("週 末")).toBe(157);
     expect(件("締切時刻")).toBe(181);
     expect(件("ml から")).toBe(0);
   });

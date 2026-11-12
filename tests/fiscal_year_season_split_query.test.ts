@@ -73,7 +73,7 @@ describe("年度の語に旬を直に繋いだ形がその年度 × その旬に
     expect(列("来月初め").size).toBe(0);
     expect(列("来月末").size).toBe(178);
     expect(列("来週 初旬").size).toBe(2);
-    expect(列("週 末").size).toBe(156);
+    expect(列("週 末").size).toBe(157);
     expect(列("明日以降").size).toBe(445);
     expect(列("来 上旬").size).toBe(68);
     expect(列("締切時刻").size).toBe(181);

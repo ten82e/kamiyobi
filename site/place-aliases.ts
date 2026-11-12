@@ -367,6 +367,7 @@ export const PLACE_QUERY_ALIASES_JA: string[][] = [
   ["広島", "hiroshima"],
   ["広島市", "hiroshima"],
   ["マディソン", "madison"],
+  ["ジュネーブ", "geneva"],
 ];
 
 export default PLACE_QUERY_ALIASES_JA;

@@ -96,7 +96,7 @@ describe("割らぬと決めた形（第 352 回・第 355 回・第 466 回）"
   it("第 470 回〜第 483 回の実測はこの回で変へて居ない", () => {
     expect(列("来月 末").size).toBe(178);
     expect(列("来週 末").size).toBe(34);
-    expect(列("週 末").size).toBe(156);
+    expect(列("週 末").size).toBe(157);
     expect(列("月末").size).toBe(118);
     expect(列("明日以降").size).toBe(445);
     expect(列("来 上旬").size).toBe(68);

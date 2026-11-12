@@ -68,7 +68,7 @@ describe("月の語にその初めの言い方を繋いだ形が 0 件の訳を�
     expect(列("12月末").size).toBe(94);
     expect(列("再来月末").size).toBe(96);
     /* 実測（実ビルド 868 行では 夫々 245・192・178・194・262・40・192・82 件）。*/
-    expect(列("週 末").size).toBe(156);
+    expect(列("週 末").size).toBe(157);
     expect(列("来週 末").size).toBe(34);
     expect(列("月末").size).toBe(118);
     expect(列("年度末").size).toBe(30);
@@ -158,7 +158,7 @@ describe("その他の機械と前の回の実測は動かして居ない", () =
     expect(列("来 上旬").size).toBe(68);
     expect(列("来月末").size).toBe(178);
     expect(列("来月 終わり").size).toBe(178);
-    expect(列("週 末").size).toBe(156);
+    expect(列("週 末").size).toBe(157);
     expect(列("明日以降").size).toBe(445);
     expect(列("締切時刻").size).toBe(181);
     expect(列("一 月 五 日").size).toBe(6);

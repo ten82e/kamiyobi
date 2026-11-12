@@ -8503,7 +8503,7 @@ candidates:
     id: candidate-165b5e033393fadd07688767
     source: easychair
     source_item_id: arci-2027
-    status: discovered
+    status: accepted
     discovered_at: '2026-08-20T20:45:37.898Z'
     first_seen_at: '2026-08-20T20:45:37.898Z'
     last_seen_at: '2026-11-07T18:30:51.935Z'
@@ -8535,7 +8535,7 @@ candidates:
     id: candidate-ea5f8bc374a91a57827f5a50
     source: wikicfp
     source_item_id: '201270'
-    status: discovered
+    status: accepted
     discovered_at: '2026-08-30T13:30:12.117Z'
     first_seen_at: '2026-08-30T13:30:12.117Z'
     last_seen_at: '2026-10-04T23:19:49.754Z'
