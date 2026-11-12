@@ -4868,7 +4868,11 @@ describe("venue_info は版の一覽を収録通りに出す（第 969 回）", 
           const dls = (e as { deadlines?: unknown[] }).deadlines ?? [];
           return dls.map((d) => ({
             版: String((e as { id?: unknown }).id ?? ""),
-            日: Date.parse(String((d as { utc?: unknown }).utc ?? "")),
+            日: Date.parse(
+              String(
+                (d as { utc?: unknown }).utc ?? (d as { latest_utc?: unknown }).latest_utc ?? "",
+              ),
+            ),
             種別: String((d as { kind?: unknown }).kind ?? ""),
           }));
         })
@@ -5907,7 +5911,7 @@ it("上流が差し替へた締切も札で言う（第 1037 回）", async () =
     expect(n, `${key} が差し替へを言つて居ない`).toBeGreaterThan(0);
     行の合計 += n;
   }
-  expect(行の合計, "差し替への行が収録と合はない").toBe(37);
+  expect(行の合計, "差し替への行が収録と合はない").toBe(34);
 
   /* 差し替への**無い**行は從つて通り（札を足さない）。 */
   const wsdm = await call("venue_info", { key: "wsdm", scope: "all" });

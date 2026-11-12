@@ -5,7 +5,9 @@
       "bytes": 651894,
       "content_type": "application/octet-stream",
       "references": [
-        "data/overrides.yaml"
+        "data/overrides.yaml",
+        "data/snapshot.json",
+        "data/verification-ledger.json"
       ]
     },
     "043992d3db6a968ed2d1a507412846e35f66d15b27d46f4b096c526e497f4738": {
@@ -69,7 +71,9 @@
       "content_type": "application/octet-stream",
       "references": [
         "data/curated.generated.yaml",
-        "data/snapshot.json"
+        "data/snapshot.json",
+        "data/source-snapshots/local.json",
+        "data/verification-ledger.json"
       ]
     },
     "0b16c6faf3e4bf6f2e369c43c39b6e7125d33d7bc8ced19b9049730802a2750f": {
@@ -77,7 +81,9 @@
       "content_type": "application/octet-stream",
       "references": [
         "data/curated.generated.yaml",
-        "data/snapshot.json"
+        "data/snapshot.json",
+        "data/source-snapshots/local.json",
+        "data/verification-ledger.json"
       ]
     },
     "0fab5fedf01fe1e1d97e90c000b49b240bdbf1bbf9e1ccb0d75dbc6285e1e16c": {
@@ -85,7 +91,9 @@
       "content_type": "application/octet-stream",
       "references": [
         "data/curated.generated.yaml",
-        "data/snapshot.json"
+        "data/snapshot.json",
+        "data/source-snapshots/local.json",
+        "data/verification-ledger.json"
       ]
     },
     "102104d3e465873bd04dc7eebc0b8b8915b67389b231a6c2bf84c524886132f1": {
@@ -109,6 +117,15 @@
         "data/snapshot.json"
       ]
     },
+    "11a020e8817700675422ada96546728f27f191fed318914d6728d91dca304d82": {
+      "bytes": 275033,
+      "content_type": "application/octet-stream",
+      "references": [
+        "data/reverification-resolutions.json",
+        "data/snapshot.json",
+        "data/verification-ledger.json"
+      ]
+    },
     "1339029168e09301b28389470e2542b7042457dd8ac2f8d6509c654c14ac7dbb": {
       "bytes": 13008,
       "content_type": "application/octet-stream",
@@ -123,7 +140,9 @@
       "content_type": "application/octet-stream",
       "references": [
         "data/curated.generated.yaml",
-        "data/snapshot.json"
+        "data/snapshot.json",
+        "data/source-snapshots/local.json",
+        "data/verification-ledger.json"
       ]
     },
     "182d31db7e7cd744ce1a14f6ecd9f96b5d4f66f5012d6102cc94b32f8b02cbaa": {
@@ -131,7 +150,9 @@
       "content_type": "application/octet-stream",
       "references": [
         "data/curated.generated.yaml",
-        "data/snapshot.json"
+        "data/snapshot.json",
+        "data/source-snapshots/local.json",
+        "data/verification-ledger.json"
       ]
     },
     "1db79ec6dd42cf5e0e1e800ea750a52411722bc9793e29a1f3895ef8d0218958": {
@@ -139,7 +160,9 @@
       "content_type": "application/octet-stream",
       "references": [
         "data/curated.generated.yaml",
-        "data/snapshot.json"
+        "data/snapshot.json",
+        "data/source-snapshots/local.json",
+        "data/verification-ledger.json"
       ]
     },
     "24a85164b842fa0b7b5f98c75e1fa9dfa8851372f73571cbe2de94dc9141dd2d": {
@@ -163,7 +186,9 @@
       "content_type": "application/octet-stream",
       "references": [
         "data/curated.generated.yaml",
-        "data/snapshot.json"
+        "data/snapshot.json",
+        "data/source-snapshots/local.json",
+        "data/verification-ledger.json"
       ]
     },
     "265a83c166a62e3f1853e101980f6e5ca91349e314d34ba13a1fb6b9f0eb136a": {
@@ -190,11 +215,29 @@
         "data/verification-ledger.json"
       ]
     },
+    "2a5a9d1bce6545f883b0850677aa41ebabbae7cfe1e94238511706c44c988280": {
+      "bytes": 24241,
+      "content_type": "application/octet-stream",
+      "references": [
+        "data/snapshot.json",
+        "data/verification-ledger.json"
+      ]
+    },
     "2c3b6f97366c13af5de782b6b6073432984770c9f0f576557732ed84fe0915b5": {
       "bytes": 23264,
       "content_type": "application/octet-stream",
       "references": [
-        "data/overrides.yaml"
+        "data/overrides.yaml",
+        "data/snapshot.json"
+      ]
+    },
+    "2d33c32956cf677e134d51d189d7802ad036d909c7cab123808c947e042eddb7": {
+      "bytes": 23263,
+      "content_type": "application/octet-stream",
+      "references": [
+        "data/reverification-resolutions.json",
+        "data/snapshot.json",
+        "data/verification-ledger.json"
       ]
     },
     "313329e1b1243fb8c8297930dd410fccd368943906e10b6493354439916f6027": {
@@ -210,7 +253,9 @@
       "content_type": "application/octet-stream",
       "references": [
         "data/curated.generated.yaml",
-        "data/snapshot.json"
+        "data/snapshot.json",
+        "data/source-snapshots/local.json",
+        "data/verification-ledger.json"
       ]
     },
     "38a8af2993bbd2ba098fb730a561987253b4634a01315c18678d2eaded00674f": {
@@ -234,7 +279,9 @@
       "content_type": "application/octet-stream",
       "references": [
         "data/curated.generated.yaml",
-        "data/snapshot.json"
+        "data/snapshot.json",
+        "data/source-snapshots/local.json",
+        "data/verification-ledger.json"
       ]
     },
     "43381fd60c61406273ab27147a03907754bef439526e88735ad98122c6eab452": {
@@ -250,7 +297,8 @@
       "bytes": 88923,
       "content_type": "application/octet-stream",
       "references": [
-        "data/overrides.yaml"
+        "data/overrides.yaml",
+        "data/snapshot.json"
       ]
     },
     "461f26731d76116911c5f7cb1a1b842123a711b8cbb5a3a5451725e90768f254": {
@@ -268,7 +316,9 @@
       "content_type": "application/octet-stream",
       "references": [
         "data/curated.generated.yaml",
-        "data/snapshot.json"
+        "data/snapshot.json",
+        "data/source-snapshots/local.json",
+        "data/verification-ledger.json"
       ]
     },
     "4a41e3acf4f8e5be14c218b8abc2b31d5c4fbbbaf2728f88072051365e79bcbd": {
@@ -292,28 +342,33 @@
       "content_type": "application/octet-stream",
       "references": [
         "data/curated.generated.yaml",
-        "data/snapshot.json"
+        "data/snapshot.json",
+        "data/source-snapshots/local.json",
+        "data/verification-ledger.json"
       ]
     },
     "53f80427fd3e7935279eb3387d15be2da7dba3d2db1979c7de1c1065965e9fa0": {
       "bytes": 11784,
       "content_type": "application/octet-stream",
       "references": [
-        "data/overrides.yaml"
+        "data/overrides.yaml",
+        "data/snapshot.json",
+        "data/verification-ledger.json"
       ]
     },
     "5b99861c256615acb6ca97f42d6e2764b77b85d55dded610f50d4b7083d3c0b5": {
       "bytes": 49102,
       "content_type": "application/octet-stream",
       "references": [
-        "data/overrides.yaml"
+        "data/overrides.yaml",
+        "data/snapshot.json",
+        "data/verification-ledger.json"
       ]
     },
     "5b9b8eb89128a93b0d8fe681ba879c4e6892c9ad10e2187344df2422a1aef9e8": {
       "bytes": 22988,
       "content_type": "application/octet-stream",
       "references": [
-        "data/snapshot.json",
         "data/verification-ledger.json"
       ]
     },
@@ -344,7 +399,9 @@
       "content_type": "application/octet-stream",
       "references": [
         "data/curated.generated.yaml",
-        "data/snapshot.json"
+        "data/snapshot.json",
+        "data/source-snapshots/local.json",
+        "data/verification-ledger.json"
       ]
     },
     "671cb88b332167c09eded89e326a201a5ac0da4bb480256f70ed5a408da86c97": {
@@ -362,7 +419,9 @@
       "content_type": "application/octet-stream",
       "references": [
         "data/curated.generated.yaml",
-        "data/snapshot.json"
+        "data/snapshot.json",
+        "data/source-snapshots/local.json",
+        "data/verification-ledger.json"
       ]
     },
     "6c94db3b66fd1b4e3ffaa52819dca36d770b039e01dbfdbb8d614197bac34ab5": {
@@ -386,7 +445,8 @@
       "content_type": "application/octet-stream",
       "references": [
         "data/curated.generated.yaml",
-        "data/snapshot.json"
+        "data/snapshot.json",
+        "data/source-snapshots/local.json"
       ]
     },
     "7238cfba9ecf5eaffae6ecb6b86a1fdae90e4c2c28669f5a458965491c5d06a2": {
@@ -406,7 +466,9 @@
       "content_type": "application/octet-stream",
       "references": [
         "data/curated.generated.yaml",
-        "data/snapshot.json"
+        "data/snapshot.json",
+        "data/source-snapshots/local.json",
+        "data/verification-ledger.json"
       ]
     },
     "77f70f1aceb8fb84775488920b2af7c6d2bf44be386c954f2cfb86925e744e9c": {
@@ -414,13 +476,6 @@
       "content_type": "application/octet-stream",
       "references": [
         "data/evidence/reviews/recovered-captures-20261004.json"
-      ]
-    },
-    "78e66d1ad45cd74e898380bfcb9d99f4eab2c88a3ef226e424f77ef7b8c887f2": {
-      "bytes": 26487,
-      "content_type": "application/octet-stream",
-      "references": [
-        "data/snapshot.json"
       ]
     },
     "78e838df21338c35405deb432ec11c68d4c17ffbc9e55a964a9921df7915eab1": {
@@ -518,16 +573,7 @@
       "content_type": "application/octet-stream",
       "references": [
         "data/overrides.yaml",
-        "data/snapshot.json",
-        "data/verification-ledger.json"
-      ]
-    },
-    "ab29fe4cd6540a9ae411516e00e3a63045eda4cdae6d006e5858815010e29c03": {
-      "bytes": 5479,
-      "content_type": "application/octet-stream",
-      "references": [
-        "data/snapshot.json",
-        "data/verification-ledger.json"
+        "data/snapshot.json"
       ]
     },
     "abc40cec790d6baa90b2c7521232b7c0537f0526ec91148149c502cc1f4128e0": {
@@ -535,7 +581,9 @@
       "content_type": "application/octet-stream",
       "references": [
         "data/curated.generated.yaml",
-        "data/snapshot.json"
+        "data/snapshot.json",
+        "data/source-snapshots/local.json",
+        "data/verification-ledger.json"
       ]
     },
     "ac3389929f7415068b75a084e68634bcb3a9459013627136896f16a83ba76a67": {
@@ -543,7 +591,9 @@
       "content_type": "application/octet-stream",
       "references": [
         "data/curated.generated.yaml",
-        "data/snapshot.json"
+        "data/snapshot.json",
+        "data/source-snapshots/local.json",
+        "data/verification-ledger.json"
       ]
     },
     "b49b9b1572db96b04c83c1f57208366d0c5d6e573809a54c271e1a0b0031eee3": {
@@ -580,14 +630,6 @@
         "data/verification-ledger.json"
       ]
     },
-    "c679cb4f857777aa74d8a21d2032f74dc390dee1129385f269dbdcd59d7006c3": {
-      "bytes": 9801,
-      "content_type": "application/octet-stream",
-      "references": [
-        "data/snapshot.json",
-        "data/verification-ledger.json"
-      ]
-    },
     "c7d9a6de6f77a7ff281702ac593e813fd86aee5f4a66c6a9f40c6478852a4ac3": {
       "bytes": 7057,
       "content_type": "application/octet-stream",
@@ -612,7 +654,9 @@
       "content_type": "application/octet-stream",
       "references": [
         "data/curated.generated.yaml",
-        "data/snapshot.json"
+        "data/snapshot.json",
+        "data/source-snapshots/local.json",
+        "data/verification-ledger.json"
       ]
     },
     "cdb226fa64645300f44f019877355aa756f663f5bdf9198e484f8dea597ad23c": {
@@ -632,7 +676,9 @@
       "content_type": "application/octet-stream",
       "references": [
         "data/curated.generated.yaml",
-        "data/snapshot.json"
+        "data/snapshot.json",
+        "data/source-snapshots/local.json",
+        "data/verification-ledger.json"
       ]
     },
     "d11e58e48b4b91b42031e3e08effa65f297c2de7f40930e052bea338f7a22603": {
@@ -640,7 +686,9 @@
       "content_type": "application/octet-stream",
       "references": [
         "data/curated.generated.yaml",
-        "data/snapshot.json"
+        "data/snapshot.json",
+        "data/source-snapshots/local.json",
+        "data/verification-ledger.json"
       ]
     },
     "d172f2c1faa67879b7c991a5a01b247660dde6b1c5c7d03f17bf24b9c6b739c3": {
@@ -648,7 +696,6 @@
       "content_type": "application/octet-stream",
       "references": [
         "data/reverification-resolutions.json",
-        "data/snapshot.json",
         "data/verification-ledger.json"
       ]
     },
@@ -657,7 +704,9 @@
       "content_type": "application/octet-stream",
       "references": [
         "data/curated.generated.yaml",
-        "data/snapshot.json"
+        "data/snapshot.json",
+        "data/source-snapshots/local.json",
+        "data/verification-ledger.json"
       ]
     },
     "d92ede457dfb03539f155505991d440b11057bf750d0bb5b7b3ca4a98aa2ca21": {
@@ -696,7 +745,17 @@
       "content_type": "application/octet-stream",
       "references": [
         "data/curated.generated.yaml",
-        "data/snapshot.json"
+        "data/snapshot.json",
+        "data/source-snapshots/local.json",
+        "data/verification-ledger.json"
+      ]
+    },
+    "e26b9691ce30ae9b1e855324b8d8297ab561cfb5727719f5243568c226697283": {
+      "bytes": 9801,
+      "content_type": "application/octet-stream",
+      "references": [
+        "data/snapshot.json",
+        "data/verification-ledger.json"
       ]
     },
     "e36a837b58b55e998aa952e7e15a50a502e2c7dbb122ac881e6e63989e0bdc30": {
@@ -711,7 +770,9 @@
       "bytes": 99091,
       "content_type": "application/octet-stream",
       "references": [
-        "data/overrides.yaml"
+        "data/overrides.yaml",
+        "data/snapshot.json",
+        "data/verification-ledger.json"
       ]
     },
     "e52df06cfa8d8c1c46a70c8952f2e5d5cdfbd3921a2d779e8f9ca3817bb266da": {
@@ -719,7 +780,9 @@
       "content_type": "application/octet-stream",
       "references": [
         "data/curated.generated.yaml",
-        "data/snapshot.json"
+        "data/snapshot.json",
+        "data/source-snapshots/local.json",
+        "data/verification-ledger.json"
       ]
     },
     "e5c1fae3d33f06e34560a4c3f9d7d1ad2a7bd1ce0ca97a4266694b2cd09ac90f": {
@@ -727,7 +790,9 @@
       "content_type": "application/octet-stream",
       "references": [
         "data/curated.generated.yaml",
-        "data/snapshot.json"
+        "data/snapshot.json",
+        "data/source-snapshots/local.json",
+        "data/verification-ledger.json"
       ]
     },
     "e9ce771eb54eda062c8f28fc20492fe17a2cc680f1079b1cec3a0d84aaef8e95": {
@@ -743,7 +808,9 @@
       "content_type": "application/octet-stream",
       "references": [
         "data/curated.generated.yaml",
-        "data/snapshot.json"
+        "data/snapshot.json",
+        "data/source-snapshots/local.json",
+        "data/verification-ledger.json"
       ]
     },
     "efb31692c1c015580f9a41fac2a74666c580e3e7d2701f1d9021934e49ae7714": {
@@ -759,12 +826,22 @@
         "data/verification-ledger.json"
       ]
     },
+    "eff0b825e2631142d123e2377d6f4eea11646f775b9e6968504b366790191fcc": {
+      "bytes": 5479,
+      "content_type": "application/octet-stream",
+      "references": [
+        "data/snapshot.json",
+        "data/verification-ledger.json"
+      ]
+    },
     "f3024df4fdb7109531041c97d477088e7cfe95fe1d384a4a14132f4e93126562": {
       "bytes": 13962,
       "content_type": "application/octet-stream",
       "references": [
         "data/curated.generated.yaml",
-        "data/snapshot.json"
+        "data/snapshot.json",
+        "data/source-snapshots/local.json",
+        "data/verification-ledger.json"
       ]
     },
     "f60238fe68c2bdc8d10e87ab6a19d0d6668445a3679f2c1e83130457204a74ea": {
@@ -781,7 +858,9 @@
       "content_type": "application/octet-stream",
       "references": [
         "data/curated.generated.yaml",
-        "data/snapshot.json"
+        "data/snapshot.json",
+        "data/source-snapshots/local.json",
+        "data/verification-ledger.json"
       ]
     },
     "f6cb4513ff75403485f32aa9b5d7e070d017a319a36751a33aabd14bb61c197d": {
@@ -808,7 +887,9 @@
       "content_type": "application/octet-stream",
       "references": [
         "data/curated.generated.yaml",
-        "data/snapshot.json"
+        "data/snapshot.json",
+        "data/source-snapshots/local.json",
+        "data/verification-ledger.json"
       ]
     }
   }
