@@ -191,8 +191,10 @@ body {
   background: var(--bg);
   color: var(--fg);
   font-family: var(--font-sans);
-  font-size: 14px;
-  line-height: 1.5;
+  /* 文字は DADS (デジタル庁デザインシステム) の本文行高 160% に合わせる。表の行は
+     情報量優先 (DADS の 120-140% 用途) で個別に狭める。 */
+  font-size: 15px;
+  line-height: 1.6;
   -webkit-font-smoothing: antialiased;
 }
 
