@@ -2706,8 +2706,8 @@ it("venue_info は次の投稿締切を先頭で言う（第 893 回）", async 
    * 「KDD の次の締切は？」と聞いた人が**投稿の締切**を探すのに 60 を越える行を読まなければ
    * 成らなかつた（「締切」と言へば投稿の締切を指すのが普通）。行の一覽は変へず、先頭に
    * 投稿の種別（論文・概要）の行を 1 本だけ添へる。 */
-  const 今後の在る = await call("venue_info", { key: "icde", scope: "all" });
-  expect(今後の在る, "次の投稿締切を言つていない").toContain("次の投稿締切: 20");
+  const 今後の在る = await call("venue_info", { key: "acisp", scope: "all" });
+  expect(今後の在る, "次の投稿締切を言つていない").toContain("次の投稿締切: 2026");
   /* 画面と同じ行の形（`line()`）なので、何時・どの回・札が読める。 */
   expect(今後の在る, "投稿の締切の行が細い").toContain("論文締切");
   expect(今後の在る, "確認の札が付いていない").toContain("要確認");
@@ -4304,11 +4304,11 @@ it("venue_info の頭と行に、正式名を持つ（第 1104 回）", async ()
   expect(答, `${同しのkey} の會議名が出て居ない`).toContain("会議: ");
 
   /* 行の方でも正式名を持つ（文字は 7 欄の形を崩さない侭、機械可読で）。 */
-  const 行检 = await call("search_deadlines", { query: "ICDE", limit: 1, scope: "all" });
-  expect(行检).toContain("ICDE");
+  const 行检 = await call("search_deadlines", { query: "ACISP", limit: 1, scope: "all" });
+  expect(行检).toContain("ACISP");
   const 構造 = spawnSync(
     process.execPath,
-    [join(REPO_ROOT, "src", "mcp.ts"), "search", "ICDE", "1", "--limit", "1", "--json"],
+    [join(REPO_ROOT, "src", "mcp.ts"), "search", "ACISP", "1", "--limit", "1", "--json"],
     { cwd: REPO_ROOT, encoding: "utf8", timeout: 120_000 },
   );
   expect(構造.status, 構造.stderr).toBe(0);
@@ -6615,7 +6615,7 @@ it("search_deadlines の構造化の行に、分野を持つ（第 1107 回）",
     jsonrpc: "2.0",
     id: 2,
     method: "tools/call",
-    params: { name: "search_deadlines", arguments: { query: "ICDE", limit: 3, scope: "all" } },
+    params: { name: "search_deadlines", arguments: { query: "ACISP", limit: 3, scope: "all" } },
   })) as { result?: { structuredContent?: { rows?: Array<Record<string, unknown>> } } };
   const rows = 答.result?.structuredContent?.rows;
   expect(rows?.length, "行が返らない（前提が崩れた）").toBeGreaterThan(0);
@@ -6723,7 +6723,7 @@ it("search_deadlines の行が、配付カレンダーの UID を持つ（第 11
       jsonrpc: "2.0",
       id: 2,
       method: "tools/call",
-      params: { name: "search_deadlines", arguments: { query: "ICDE", limit: 3, scope } },
+      params: { name: "search_deadlines", arguments: { query: "ACISP", limit: 3, scope } },
     })) as { result?: { structuredContent?: { rows?: Array<Record<string, unknown>> } } };
 
   const 畫面 = (await 引く("screen")).result?.structuredContent?.rows ?? [];
@@ -6757,7 +6757,7 @@ it("MCP の中でも、分野の語は 1 つの正本から取る（第 1111 回
     "Recommender.categoryLabelJa(key)",
   );
   /* 両方の道具が、同じ会議について同じ語を同じ順で言う。 */
-  for (const key of ["icde", "sc"]) {
+  for (const key of ["acisp", "sc"]) {
     const v = await call("venue_info", { key, scope: "all" });
     const 分野 = (v.match(/分野: ([^\n]*)/) ?? [])[1] ?? "";
     expect(分野, `${key} の分野が空`).not.toBe("");

@@ -61,7 +61,7 @@ describe("期の区分の語に語尾を繋げても案内が出る（第 503 �
     expect(列("月曜").size).toBe(60);
     expect(列("来週").size).toBe(43);
     expect(列("年度初め").size).toBe(38);
-    expect(列("年度末").size).toBe(30);
+    expect(列("年度末").size).toBe(31);
     expect(案内("上半期の締切")).toContain("年度初め");
   });
   it("離して打つた形・単体の形は今まで通り", () => {
@@ -108,9 +108,9 @@ describe("期の区分の語に語尾を繋げても案内が出る（第 503 �
     expect(列("今年内").size).toBe(450);
     expect(列("再来週内").size).toBe(18);
     expect(列("年末中").size).toBe(95);
-    expect(列("年初1月").size).toBe(39);
+    expect(列("年初1月").size).toBe(40);
     expect(列("来月 末日").size).toBe(178);
-    expect(列("週 末").size).toBe(157);
+    expect(列("週 末").size).toBe(158);
     expect(列("締切時刻").size).toBe(181);
     expect(列("ml から").size).toBe(0);
     expect(列("半 年後").size).toBe(3);

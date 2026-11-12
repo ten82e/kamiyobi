@@ -51,7 +51,7 @@ describe("『年度内』『○年度中に』は年度のかたまり（第 430
   }
 
   it("件の数も同じ（0 行⇔0 行の空振りを防ぐ – 第 428 回の決まり）", () => {
-    expect(列("年度内").size).toBe(470);
+    expect(列("年度内").size).toBe(471);
     expect(列("来年度内").size).toBe(72);
   });
 
@@ -64,7 +64,7 @@ describe("『年度内』『○年度中に』は年度のかたまり（第 430
 
 describe("其它は其侭（第 430 回）", () => {
   it("年度末・年内・其它の語は一寸も動かない", () => {
-    expect(列("年度末").size).toBe(30);
+    expect(列("年度末").size).toBe(31);
     expect(列("年内").size).toBe(448);
     expect(対称差("らいげつ", "来月")).toBe(0);
     expect(対称差("来月一杯", "来月")).toBe(0);
@@ -72,13 +72,13 @@ describe("其它は其侭（第 430 回）", () => {
     expect(対称差("来週と 再来週", "来週と再来週")).toBe(0);
     expect(対称差("aiとml", "ai ml")).toBe(0);
     expect(対称差("月 曜", "")).toBe(0);
-    expect(列("").size).toBe(470);
+    expect(列("").size).toBe(471);
   });
 
   it("表に在らぬ語に『に』が付いただけの形は寄せない（締切の推測をしない）", () => {
     expect(列("月初に").size).toBe(0);
     expect(対称差("年度末に", "年度末")).toBe(0);
-    expect(列("年度末に").size).toBe(30);
+    expect(列("年度末に").size).toBe(31);
   });
 });
 

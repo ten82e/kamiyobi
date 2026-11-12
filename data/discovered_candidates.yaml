@@ -8058,7 +8058,7 @@ candidates:
     id: candidate-df0545cc99922aaad7200e8a
     source: easychair
     source_item_id: airise-2027
-    status: discovered
+    status: rejected
     discovered_at: '2026-11-07T18:28:57.417Z'
     first_seen_at: '2026-11-07T18:28:57.417Z'
     last_seen_at: '2026-11-12T01:58:49.893Z'
@@ -21230,7 +21230,7 @@ candidates:
     id: candidate-7bc7e7fc0356899e19e5f45d
     source: easychair
     source_item_id: edt-2027
-    status: discovered
+    status: accepted
     discovered_at: '2026-11-07T18:28:57.417Z'
     first_seen_at: '2026-11-07T18:28:57.417Z'
     last_seen_at: '2026-11-12T01:58:49.893Z'

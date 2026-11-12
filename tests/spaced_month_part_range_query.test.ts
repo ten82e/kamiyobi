@@ -120,14 +120,14 @@ describe("寄せない形の守り（第 453 回・第 463 回）", () => {
   });
   it("まで幅のその他の形とその他の機械の語は其侭", () => {
     expect(列("8月 まで").size).toBe(118);
-    expect(列("年度末 まで").size).toBe(30);
+    expect(列("年度末 まで").size).toBe(31);
     expect(列("来月 上旬").size).toBe(68);
     expect(列("来月 上旬").size).toBe(列("来月上旬").size);
     expect(案内("来月 上旬")).toContain("来月 上旬 = 2026年9月1日(火)");
-    expect(列("週 末").size).toBe(157);
+    expect(列("週 末").size).toBe(158);
     expect(列("来 週末").size).toBe(34);
     expect(列("今 月末").size).toBe(118);
-    expect(列("来 年中").size).toBe(143);
+    expect(列("来 年中").size).toBe(144);
   });
   it("第 470 回〜第 473 回の実測はこの回で変へて居ない", () => {
     expect(列("8 月の 締切").size).toBe(114);

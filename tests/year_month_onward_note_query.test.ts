@@ -51,11 +51,11 @@ describe("その年 ∧ その月以降で絞れている形は、その幅を�
     expect(列("今年一月から").size).toBe(450);
     expect(列("今年12月から").size).toBe(95);
     expect(列("今年 12月").size).toBe(95);
-    expect(列("来年1月から").size).toBe(143);
+    expect(列("来年1月から").size).toBe(144);
     /* 第 493 回に先の年の語を割る目を入れたので、離した形と同じ行が出る。*/
     expect(列("来年12月から").size).toBe(29);
     expect(列("来年12月から").size).toBe(列("来年 12月から").size);
-    expect(列("2027年3月から").size).toBe(99);
+    expect(列("2027年3月から").size).toBe(100);
     /* その月以降はその年より広い幅にならぬ（今年1月以降 ⊇ 今年12月以降 – 行の包含関係）。*/
     expect([...列("今年12月から")].every((行) => 列("今年1月から").has(行))).toBe(true);
   });
@@ -93,7 +93,7 @@ describe("その他の形は動かして居ない（第 352 回・第 369 回・
     expect(列("来年末").size).toBe(29);
     expect(列("今年末").size).toBe(95);
     expect(列("来月 末").size).toBe(178);
-    expect(列("週 末").size).toBe(157);
+    expect(列("週 末").size).toBe(158);
     expect(列("明日以降").size).toBe(446);
     expect(列("来 上旬").size).toBe(68);
     expect(列("来月終わり").size).toBe(178);

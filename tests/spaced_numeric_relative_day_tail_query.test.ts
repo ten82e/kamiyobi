@@ -47,10 +47,10 @@ describe("数を離つて打った相対日と語尾が詰め形と同じ行に�
   it("行数の実測（固定ハーネスの品書 435 行）", () => {
     expect(列("1 年後から").size).toBe(0);
     expect(列("1 年後以降").size).toBe(0);
-    expect(列("1 年後まで").size).toBe(469);
+    expect(列("1 年後まで").size).toBe(470);
     expect(列("1 か月後まで").size).toBe(161);
     expect(列("1 か月後までに").size).toBe(161);
-    expect(列("半 年後から").size).toBe(119);
+    expect(列("半 年後から").size).toBe(120);
     expect(列("1 か月前から").size).toBe(450);
     expect(列("2 週間後から").size).toBe(436);
     expect(列("10 か月後から").size).toBe(12);
@@ -80,7 +80,7 @@ describe("寄せない形の守り（第 459 回・第 466 回）", () => {
     expect(案内("1 年後 まで")).toContain("1 年後 まで = 2026年8月9日(日)〜");
     expect(案内("1 か月後")).toContain("1 か月後 = 2026年9月9日(水)");
     expect(列("3 か月後 まで").size).toBe(365);
-    expect(列("1 年後 まで").size).toBe(469);
+    expect(列("1 年後 まで").size).toBe(470);
     expect(列("1 年後 から").size).toBe(列("1 年後から").size);
   });
   it("その品書にその日がない形は 0 件の侭（締切の推測はしない）", () => {
@@ -98,7 +98,7 @@ describe("寄せない形の守り（第 459 回・第 466 回）", () => {
     expect(列("論文から").size).toBe(0);
   });
   it("第 470 回〜第 476 回の実測はこの回で変へて居ない", () => {
-    expect(列("週 末").size).toBe(157);
+    expect(列("週 末").size).toBe(158);
     expect(列("来月 上旬 まで").size).toBe(180);
     expect(列("明日から").size).toBe(446);
     expect(列("来 週末").size).toBe(34);

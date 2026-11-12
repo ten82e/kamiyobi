@@ -95,7 +95,7 @@ describe("訪ねて打つ形がその群の打ち直し方を出す（第 510 �
     expect(件("関西")).toBe(6);
     expect(件("国内")).toBe(40);
     expect(件("オンライン参加可")).toBe(22);
-    expect(件("セキュリティ")).toBe(76);
+    expect(件("セキュリティ")).toBe(77);
     expect(件("ランクA")).toBe(3);
     for (const 文 of ["関西", "国内", "オンライン参加可", "セキュリティ", "ランクA"]) {
       expect(画面の案内(文), `「${文}」に案内が乘つた`).toBe("");
@@ -121,7 +121,7 @@ describe("訪ねて打つ形がその群の打ち直し方を出す（第 510 �
     expect(件("年末中")).toBe(95);
     expect(件("再来週内")).toBe(18);
     expect(件("来月 末日")).toBe(178);
-    expect(件("週 末")).toBe(157);
+    expect(件("週 末")).toBe(158);
     expect(件("締切時刻")).toBe(181);
     expect(件("ml から")).toBe(0);
   });

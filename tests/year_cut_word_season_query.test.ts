@@ -54,7 +54,7 @@ describe("年の切れ目を指す語に旬を繋いだ形がその月の旬に�
       ["年末下旬", 9],
       ["年度末上旬", 9],
       ["年初上旬", 10],
-      ["年始下旬", 14],
+      ["年始下旬", 15],
     ] as Array<[string, number]>) {
       expect([文, 列(文).size]).toEqual([文, 件]);
     }
@@ -89,10 +89,10 @@ describe("残した差と守り（第 466 回・第 491 回）", () => {
   });
   it("第 470 回〜第 491 回の実測はこの回で変へて居ない", () => {
     expect(列("年末").size).toBe(95);
-    expect(列("年初").size).toBe(39);
-    expect(列("年度末").size).toBe(30);
-    expect(列("年始").size).toBe(39);
-    expect(列("来年").size).toBe(143);
+    expect(列("年初").size).toBe(40);
+    expect(列("年度末").size).toBe(31);
+    expect(列("年始").size).toBe(40);
+    expect(列("来年").size).toBe(144);
     expect(列("今年").size).toBe(450);
     expect(列("来年度").size).toBe(72);
     expect(列("年末 末").size).toBe(0);
@@ -104,7 +104,7 @@ describe("残した差と守り（第 466 回・第 491 回）", () => {
     expect(列("来年12月から").size).toBe(29);
     expect(列("来年12月から").size).toBe(列("来年 12月から").size);
     expect(列("今年1月から").size).toBe(450);
-    expect(列("週 末").size).toBe(157);
+    expect(列("週 末").size).toBe(158);
     expect(列("ml から").size).toBe(0);
     expect(列("締切時刻").size).toBe(181);
   });

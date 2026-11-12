@@ -56,7 +56,7 @@ describe("年度の語に暦月を直に繋いだ形がその年度 ∧ その�
   });
   it("行数の実測（固定ハーネスの品書 435 行）", () => {
     expect(列("来年度3月").size).toBe(3);
-    expect(列("今年度3月").size).toBe(30);
+    expect(列("今年度3月").size).toBe(31);
     expect(列("来年度12月").size).toBe(18);
     expect(列("来年度3月から").size).toBe(72);
     expect(列("来年度12月まで").size).toBe(18); // 年度の語に続く「まで」はその年度のその月（今月からの幅にしない）
@@ -89,7 +89,7 @@ describe("其它の形は動かして居ない（第 352 回・第 484 回・第
   });
   it("第 470 回〜第 485 回の実測はこの回で変へて居ない", () => {
     expect(列("来月 末").size).toBe(178);
-    expect(列("週 末").size).toBe(157);
+    expect(列("週 末").size).toBe(158);
     expect(列("来週 初旬").size).toBe(2);
     expect(列("明日以降").size).toBe(446);
     expect(列("来 上旬").size).toBe(68);
@@ -97,7 +97,7 @@ describe("其它の形は動かして居ない（第 352 回・第 484 回・第
     expect(列("締切時刻").size).toBe(181);
     expect(列("来月初め").size).toBe(0);
     expect(列("来年末").size).toBe(29);
-    expect(列("来年初").size).toBe(39);
+    expect(列("来年初").size).toBe(40);
     expect(列("半 年後").size).toBe(3);
     expect(列("一 週間後").size).toBe(13);
     expect(列("ml から").size).toBe(0);

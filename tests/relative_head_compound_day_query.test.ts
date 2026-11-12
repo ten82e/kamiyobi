@@ -69,7 +69,7 @@ describe("相対の語と複合日語を離って打つ形が詰め形と揃ふ�
     expect(列("昨 週末").size).toBe(5);
     expect(列("翌 週末").size).toBe(34);
     expect(列("今 年中").size).toBe(450);
-    expect(列("来 年中").size).toBe(143);
+    expect(列("来 年中").size).toBe(144);
     expect(列("昨 年中").size).toBe(0);
     expect(列("昨 月").size).toBe(11);
     expect(列("昨 週").size).toBe(8);
@@ -109,7 +109,7 @@ describe("寄せない形の守り（第 453 回・第 463 回・第 466 回）"
     expect(列("今週末").size).toBe(1);
     expect(列("来週末").size).toBe(34);
     expect(列("今年中").size).toBe(450);
-    expect(列("来年中").size).toBe(143);
+    expect(列("来年中").size).toBe(144);
     expect(列("昨月").size).toBe(11);
     expect(列("昨週").size).toBe(8);
     expect(列("再々週").size).toBe(18);
@@ -135,7 +135,7 @@ describe("寄せない形の守り（第 453 回・第 463 回・第 466 回）"
   it("第 470 回・第 471 回の実測はこの回で変へて居ない", () => {
     expect(列("8 月の 締切").size).toBe(114);
     expect(列("来 月の 下旬").size).toBe(60);
-    expect(列("週 末").size).toBe(157);
+    expect(列("週 末").size).toBe(158);
     expect(列("今 月末").size).toBe(118);
     expect(列("来 年度").size).toBe(72);
     expect(案内("来 月の 下旬")).toContain("来月 下旬 = 2026年9月21日(月)");

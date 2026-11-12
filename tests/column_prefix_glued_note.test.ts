@@ -103,8 +103,8 @@ describe("欄の名前が接頭辞の連結形を、門を通る時だけ受け�
     expect(磁石).not.toContain("「分類」はこの表の欄");
   });
   it("値だけで打つ人は今まで通り（案内を被せない）", () => {
-    expect(件("セキュリティ")).toBe(76);
-    expect(件("論文締切")).toBe(294);
+    expect(件("セキュリティ")).toBe(77);
+    expect(件("論文締切")).toBe(295);
     for (const 文 of ["セキュリティ", "論文締切", "機械学習", "関西"]) {
       expect(欄の案内(文), `「${文}」に案内が乘つた`).toBe("");
     }
@@ -118,9 +118,9 @@ describe("欄の名前が接頭辞の連結形を、門を通る時だけ受け�
     expect(件("今年内")).toBe(450);
     expect(件("再来週内")).toBe(18);
     expect(件("年末中")).toBe(95);
-    expect(件("年初1月")).toBe(39);
+    expect(件("年初1月")).toBe(40);
     expect(件("来月 末日")).toBe(178);
-    expect(件("週 末")).toBe(157);
+    expect(件("週 末")).toBe(158);
     expect(件("締切時刻")).toBe(181);
     expect(件("ml から")).toBe(0);
     expect(件("オンラインの締切")).toBe(22);
