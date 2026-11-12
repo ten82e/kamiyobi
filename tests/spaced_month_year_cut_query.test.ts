@@ -33,7 +33,7 @@ describe("月の語・年の語に切れ目を離して打つた形が詰め形�
       ["再来月 終わり", 96],
       ["8月 終わり", 118],
       ["1月 終わり", 40],
-      ["3月 終わり", 31],
+      ["3月 終わり", 32],
       ["12月 終わり", 95],
     ] as Array<[string, number]>) {
       const 詰 = 離.replace(/[ \u3000]+/g, "");
@@ -105,13 +105,13 @@ describe("壊してはならない形（第 390 回・第 466 回・第 490 回�
     expect(列("来月初め").size).toBe(0);
     expect(列("締切時刻").size).toBe(181);
     expect(列("ml から").size).toBe(0);
-    expect(列("来年度末").size).toBe(3);
-    expect(列("来年度 末").size).toBe(3);
+    expect(列("来年度末").size).toBe(4);
+    expect(列("来年度 末").size).toBe(4);
     expect(列("再来月 終わり").size).toBe(96);
     /* 第 493 回に先の年の語を割る目を入れたので、離した形と同じ行が出る。*/
     expect(列("来年12月から").size).toBe(29);
     expect(列("来年12月から").size).toBe(列("来年 12月から").size);
-    expect(列("今年1月から").size).toBe(450);
+    expect(列("今年1月から").size).toBe(451);
     expect(列("来年 12月").size).toBe(29);
     expect(列("来年上旬").size).toBe(2);
     expect(列("来週中旬").size).toBe(43);

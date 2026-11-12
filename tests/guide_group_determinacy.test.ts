@@ -83,8 +83,8 @@ describe("同じ語を二つの群に持つ誤りを直し、てびきの群に�
       "「分野」は",
     );
     expect(案内("参加費はいくら")).toContain("この表が持っていません");
-    expect(件("年内")).toBe(448);
-    expect(件("今年内")).toBe(450);
+    expect(件("年内")).toBe(449);
+    expect(件("今年内")).toBe(451);
     expect(件("再来週内")).toBe(18);
     expect(件("年末中")).toBe(95);
     expect(件("来月 末日")).toBe(178);

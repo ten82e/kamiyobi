@@ -54,7 +54,7 @@ describe("語尾のない年＋暦月にもその年の幅の案内が出る（�
     expect(列("2027年2月第5週").size).toBe(0);
   });
   it("行は一個も動かして居ない（案内だけの直し）", () => {
-    expect(列("2027年3月").size).toBe(31);
+    expect(列("2027年3月").size).toBe(32);
     expect(列("2026年12月").size).toBe(95);
     expect(列("2028年3月").size).toBe(0);
     expect(列("来年3月").size).toBe(列("来年 3月").size);
@@ -64,8 +64,8 @@ describe("語尾のない年＋暦月にもその年の幅の案内が出る（�
     expect(列("2027年12月から").size).toBe(29);
     expect(列("2028年3月から").size).toBe(0);
     expect(列("来年12月から").size).toBe(29);
-    expect(列("今年1月から").size).toBe(450);
-    expect(列("2026年1月から").size).toBe(450);
+    expect(列("今年1月から").size).toBe(451);
+    expect(列("2026年1月から").size).toBe(451);
     expect(列("2028年").size).toBe(0);
     expect(列("来年上旬").size).toBe(2);
     expect(列("来週中旬").size).toBe(43);

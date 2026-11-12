@@ -289328,6 +289328,61 @@
     "niche"
    ],
    "title": "EDT 2027"
+  },
+  {
+   "categories": [
+    "systems"
+   ],
+   "editions": [
+    {
+     "date_text": "March 30-April 2, 2027",
+     "deadlines": [
+      {
+       "date": "2026-11-15 23:59:59",
+       "evidence": [
+        {
+         "contentHash": "3a70df4a304ed8db998842f824d82f02603dbd37d15ab6030285547f0037c5b9",
+         "rawExcerpt": "Submission deadline November 15, 2026",
+         "retrievedAt": "2026-11-12T04:00:00Z",
+         "sourceClass": "official-cfp",
+         "sourceUrl": "https://easychair.org/cfp/hmds2027",
+         "verifiedAt": "2026-11-12T04:00:00Z",
+         "verifiedFields": [
+          "date",
+          "time",
+          "timezone"
+         ]
+        }
+       ],
+       "kind": "paper",
+       "label": "Paper submission deadline",
+       "precision": "exact",
+       "promotion_ref": {
+        "batch": "2026-11-12-hmds-2027",
+        "resolution": "resolution-hmds-2027"
+       },
+       "round": 1,
+       "track": "",
+       "tz": "AoE",
+       "utc": "2026-11-16T11:59:59.000Z",
+       "aoe": "2026-11-15 23:59:59 AoE"
+      }
+     ],
+     "event_end": "2027-04-02",
+     "event_start": "2027-03-30",
+     "id": "hmds-2027",
+     "link": "https://hmds2027.org/",
+     "place": "Tokyo, Japan",
+     "year": 2027
+    }
+   ],
+   "full_name": "2nd International Symposium on Heterogeneous and Multi-Domain Systems",
+   "key": "hmds",
+   "link": "https://hmds2027.org/",
+   "tags": [
+    "niche"
+   ],
+   "title": "HMDS 2027"
   }
  ],
  "identity_migrations": {

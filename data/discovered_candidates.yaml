@@ -26033,7 +26033,7 @@ candidates:
     id: candidate-b5aab5421a42fa2f61ca3899
     source: easychair
     source_item_id: hmds-2027
-    status: discovered
+    status: accepted
     discovered_at: '2026-08-20T20:45:37.898Z'
     first_seen_at: '2026-08-20T20:45:37.898Z'
     last_seen_at: '2026-11-12T01:58:49.893Z'

@@ -46,8 +46,8 @@ describe("片段で離つた複合語が繋いだ形と同じ行を出す（第 
     expect(列("再来 月末").size).toBe(96);
     expect(列("今 月中").size).toBe(118);
     expect(列("来 月中").size).toBe(178);
-    expect(列("今 年度").size).toBe(471);
-    expect(列("来 年度").size).toBe(72);
+    expect(列("今 年度").size).toBe(472);
+    expect(列("来 年度").size).toBe(73);
     expect(列("年 初").size).toBe(40);
     expect(列("2026 年 初").size).toBe(20);
   });
@@ -73,7 +73,7 @@ describe("片段で離つた複合語が繋いだ形と同じ行を出す（第 
     expect(列("ml 週 末").size).toBe(6);
     expect(列("今 月末 の 会議").size).toBe(118);
     expect(列("年 初 の 会議").size).toBe(40);
-    expect(列("来 年度 の 論文").size).toBe(47);
+    expect(列("来 年度 の 論文").size).toBe(48);
   });
 });
 
