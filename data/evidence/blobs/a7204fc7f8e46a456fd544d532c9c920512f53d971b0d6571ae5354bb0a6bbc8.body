@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="AccML workshop homepage">
+    <meta name="author" content="Valentin Radu">
+
+    <title>9th AccML Workshop at HiPEAC 2027</title>
+
+    <!-- Bootstrap Core CSS -->
+    <link rel="stylesheet" href="css/bootstrap.min.css" type="text/css">
+
+    <!-- Custom Fonts -->
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800' rel='stylesheet' type='text/css'>
+    <link href='https://fonts.googleapis.com/css?family=Merriweather:400,300,300italic,400italic,700,700italic,900,900italic' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" href="font-awesome/css/font-awesome.min.css" type="text/css">
+
+    <!-- Plugin CSS -->
+    <link rel="stylesheet" href="css/animate.min.css" type="text/css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/creative.css" type="text/css">
+    <!-- 2027 modern uplift (overrides, this page only) -->
+    <link rel="stylesheet" href="css/creative-2027.css" type="text/css">
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+</head>
+
+<body id="page-top">
+
+    <nav id="mainNav" class="navbar navbar-default navbar-fixed-top">
+        <div class="container-fluid">
+            <!-- Brand and toggle get grouped for better mobile display -->
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+		<a class="navbar-brand page-scroll" href="#page-top">9<sup>th</sup> AccML 2027</a>
+            </div>
+
+            <!-- Collect the nav links, forms, and other content for toggling -->
+            <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <a class="page-scroll" href="#about">About</a>
+                    </li>
+                    <li>
+                        <a class="page-scroll" href="#CfP">Contribution Call</a>
+                    </li>
+                    <li>
+                        <a class="page-scroll" href="#keynote">Speakers</a>
+                    </li>
+                    <li>
+                        <a class="page-scroll" href="#program">Program</a>
+                    </li>
+                    <!--<li>
+                        <a class="page-scroll" href="#program-committee">Program Committee</a>
+                    </li>-->
+                    <li>
+                        <a class="page-scroll" href="#organizers">Organizers</a>
+                    </li>
+                    <li>
+                        <a class="page-scroll" href="#contact">Contact</a>
+                    </li>
+
+                </ul>
+            </div>
+            <!-- /.navbar-collapse -->
+        </div>
+        <!-- /.container-fluid -->
+    </nav>
+
+    <header>
+        <div class="header-content">
+            <div class="header-content-inner">
+		<h1>9th Workshop on <br> Accelerated Machine Learning (AccML)</h1>
+                <h2>Co-located with the HiPEAC 2027 Conference</h2>
+                <hr>
+		<p> In this 9<sup>th</sup> AccML workshop, we aim to bring together researchers working in Machine Learning and System Architecture to discuss requirements, opportunities, challenges and next steps in developing novel approaches for machine learning systems.</p>
+                <a href="#about" class="btn btn-primary btn-xl page-scroll">Find Out More</a>
+            </div>
+        </div>
+    </header>
+
+    <section id="about">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-12 text-center">
+                    <h2 class="section-heading">HiPEAC 2027 workshop</h2>
+                    <h3 class="section-heading">19th January 2027</h3>
+                    <h3 class="section-heading">Glasgow, United Kingdom</h3>
+                    <hr class="light">
+
+                    <p class="text-black-faded text-left">
+The remarkable performance of machine learning across application areas (natural language processing, computer vision, games, etc.) has driven the emergence of heterogeneous architectures — and the compilers, runtime systems, libraries and tools around them — to accelerate these workloads. Since deep learning models are memory- and compute-intensive for both training and inference, acceleration cuts energy consumption in data centers and brings models to smaller devices at the edge. Meanwhile, models keep diversifying, from CNNs to Vision Transformers and Large Language Models, continually challenging computer architecture, the system stack, and programming abstractions. This calls for a dedicated forum on emerging acceleration techniques for machine learning, and on applying machine learning to build better computing systems.
+<br/><br/>
+The workshop brings together researchers and practitioners working on computing systems for machine learning, and using machine learning to build better computing systems, to raise awareness of existing efforts, foster collaboration, and enable the free exchange of ideas.
+
+<br/><br/>
+This builds on the success of our previous events:
+<ul style="text-align:left">
+    <li><a href="https://accml.dcs.gla.ac.uk/workshop-2026-hipeac.html">8th AccML at HiPEAC 2026</a></li>
+    <li><a href="https://accml.dcs.gla.ac.uk/workshop-2025-hipeac.html">7th AccML at HiPEAC 2025</a></li>
+    <li><a href="https://accml.dcs.gla.ac.uk/workshop-2024-hipeac.html">6th AccML at HiPEAC 2024</a></li>
+    <li><a href="https://accml.dcs.gla.ac.uk/workshop-2023-hipeac.html">5th AccML at HiPEAC 2023</a></li>
+    <li><a href="https://accml.dcs.gla.ac.uk/workshop-2022-hipeac.html">4th AccML at HiPEAC 2022</a></li>
+    <li><a href="https://accml.dcs.gla.ac.uk/workshop-2021-hipeac.html">3rd AccML at HiPEAC 2021</a></li>
+    <li><a href="https://accml.dcs.gla.ac.uk/workshop-2020-isca.html">2nd AccML at ISCA 2020</a></li>
+    <li><a href="https://accml.dcs.gla.ac.uk/workshop-2020-hipeac.html">1st AccML at HiPEAC 2020</a></li>
+</ul>
+
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+    <section id="CfP">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-12 text-center">
+                    <h2 class="section-heading">Call For Contributions</h2>
+                    <hr class="primary">
+                </div>
+            </div>
+        </div>
+        <div class="container">
+
+	    <h3>Topics</h3>
+            <div class="text-black-faded text-left">
+            </p><p>Topics of interest include (but are not limited to):</p>
+                <ul>
+
+<li><p class="text-left">Novel ML/AI systems: heterogeneous multi/many-core systems, GPUs, NPUs/TPUs, ASICs, FPGAs, and chiplet-based accelerators;</p></li>
+<li><p class="text-left">Software ML/AI acceleration: programming models, languages, primitives, libraries, compilers, runtimes, and frameworks;</p></li>
+<li><p class="text-left">Novel ML/AI hardware accelerators and associated system software;</p></li>
+<li><p class="text-left">Emerging semiconductor, near-/in-memory, analog, photonic, and neuromorphic technologies for ML/AI hardware acceleration;</p></li>
+<li><p class="text-left">ML/AI for the design, optimization, autotuning, and management of hardware, compilers, runtimes, and systems;</p></li>
+<li><p class="text-left">Cloud, data-center, edge, embedded, and on-device ML/AI computing: hardware and software to accelerate training and inference;</p></li>
+<li><p class="text-left">Hardware/software co-design techniques for efficient model training and inference, including quantization, sparsity, pruning, compression, efficient attention, and distillation;</p></li>
+<li><p class="text-left">Training, fine-tuning, serving, and deployment of foundation models, LLMs, multimodal models, large GNNs, recommender systems, agentic AI, and retrieval-augmented generation;</p></li>
+                </ul>
+            </div>
+
+            <div class="row text-black-faded">
+                <div class="col-sm-4 text-center">
+                    <div class="service-box">
+                        <i class="fa fa-4x fa-calendar wow bounceIn text-primary"></i>
+                        <h3>Important Dates</h3>
+                        <div class="text-black-faded text-left">
+				<p>Submission deadline: <b style="color:red"><strike>November 13</strike> November 27, 2026 (end of day)</b><br>
+                  Notification to authors: <b style="color:red"><strike>November 27</strike> December 9, 2026</b><br>
+                        </div>
+                        <a class="card-cta" href="https://calendar.google.com/calendar/render?action=TEMPLATE&amp;text=AccML%202027%20paper%20submission%20deadline&amp;dates=20261127/20261128&amp;details=Submission%20deadline%20(end%20of%20day%2C%2027%20November%202026)%20for%20the%209th%20Workshop%20on%20Accelerated%20Machine%20Learning%20(AccML)%2C%20co-located%20with%20HiPEAC%202027%20in%20Glasgow%2C%20UK.%0Ahttps%3A%2F%2Faccml.dcs.gla.ac.uk%2Fworkshop-2027-hipeac.html" target="_blank" rel="noopener">Add the deadline to your calendar</a>
+                    </div>
+                </div>
+                <div class="col-sm-4 text-center">
+                    <div class="service-box">
+                        <i class="fa fa-4x fa-file-text-o wow bounceIn text-primary" data-wow-delay=".1s"></i>
+                        <h3>Paper Format</h3>
+                        <p class="text-left">Papers should be in double column IEEE format of between 4 and 8 pages including references. Papers should be uploaded as PDF and not anonymized.</p>
+                        <a class="card-cta" href="https://www.ieee.org/conferences/publishing/templates.html" target="_blank" rel="noopener">Get the IEEE templates</a>
+                    </div>
+                </div>
+
+                <div class="col-sm-4 text-center">
+                    <div class="service-box">
+                        <i class="fa fa-4x fa-cloud-upload wow bounceIn text-primary" data-wow-delay=".2s"></i>
+                        <h3>Submission Site</h3>
+                        <p class="text-left">Submissions can be made through EasyChair.</p>
+                        <a class="card-cta" href="https://easychair.org/my/conference?conf=9thaccml" target="_blank" rel="noopener">Go to EasyChair</a>
+                    </div>
+                </div>
+            </div>
+
+            <h3 style="margin-top: 40px;">Submission Options</h3>
+            <div class="text-black-faded text-left">
+            <p>Papers will be reviewed by the workshop's <a href="#program-committee">technical program committee</a> according to criteria regarding a submission's quality, relevance to the workshop's topics, and, foremost, its potential to spark discussions about directions, insights, and solutions on the topics mentioned above. Research papers, case studies, and position papers are all welcome.
+            </p><p>In particular, we encourage authors to keep the following options in mind when preparing submissions:</p>
+                <ul>
+
+                  <li><p class="text-left"><b>Tentative Research Ideas</b>: Presenting your research idea early one to get feedback and enable collaborations.</p></li>
+
+                  <li><p class="text-left"><b>Works-In-Progress</b>: To facilitate sharing of thought-provoking ideas and high-potential though preliminary research, authors are welcome to make submissions describing early-stage, in-progress, and/or exploratory work in order to elicit feedback, discover collaboration opportunities, and generally spark discussion.</p></li>
+              </ul>
+            </div>
+
+        </div>
+    </section>
+
+
+    <!-- Speakers section -->
+
+    <section id="keynote">
+        <div class="container">
+         <div class="col-lg-12 text-center">
+                    <h2 class="section-heading">Keynote Speakers</h2>
+                    <hr class="primary">
+
+                <div class="row">
+                    <div class="col-sm-6 text-center speaker-card">
+                        <img class="img" src="img/vijay_janapa_reddi.jpg" alt="Vijay Janapa Reddi" width="200" height="200">
+                        <h3><a href="https://www.linkedin.com/in/vijay-janapa-reddi-63a6a173/">Vijay Janapa Reddi</a></h3>
+                        <p>Harvard University</p>
+                        <p><b>Title: TBD</b></p>
+                    </div>
+
+                    <div class="col-sm-6 text-center speaker-card">
+                        <img class="img" src="img/albert_cohen.jpg" alt="Albert Cohen" width="200" height="200">
+                        <h3><a href="https://www.linkedin.com/in/yendor/">Albert Cohen</a></h3>
+                        <p>Google DeepMind</p>
+                        <p><b>Title: TBD</b></p>
+                    </div>
+                </div>
+            </div>
+
+
+<div class="col-lg-12 text-center">
+                    <h2 class="section-heading">Invited Speakers</h2>
+                    <hr class="primary">
+
+                <div class="row">
+                    <div class="col-sm-4 text-center speaker-card">
+                        <img class="img" src="img/anton_lokhmotov.jpg" alt="Anton Lokhmotov" width="200" height="200">
+                        <h3><a href="https://www.linkedin.com/in/lokhmotov/">Anton Lokhmotov</a></h3>
+                        <p>KRAI</p>
+                        <p><b>Title: KRAI's vision on Accelerated Accelerator Programming</b></p>
+                    </div>
+
+                    <div class="col-sm-4 text-center speaker-card">
+                        <img class="img" src="img/miquel_moreto.jpg" alt="Miquel Moretó" width="200" height="200">
+                        <h3><a href="https://www.linkedin.com/in/miquelmoreto/">Miquel Moretó</a></h3>
+                        <p>Barcelona Supercomputing Center (BSC)</p>
+                        <p><b>Title: Designing HPC Architectures to Accelerate AI at BSC</b></p>
+                    </div>
+
+                    <div class="col-sm-4 text-center speaker-card">
+                        <img class="img" src="img/tom_st_john.svg" alt="Tom St. John" width="200" height="200">
+                        <h3><a href="https://www.linkedin.com/in/tomstjohn617/">Tom St. John</a></h3>
+                        <p>Gimlet Labs</p>
+                        <p><b>Title: Efficient and Scalable Agentic AI with Heterogeneous Systems</b></p>
+                    </div>
+                </div>
+
+           </div>
+
+        </div>
+    </section>
+
+
+    <section id="program">
+      <div class="container">
+        <div class="col-lg-12 text-center">
+          <h2 class="section-heading">Program</h2>
+          <hr class="primary"> </div>
+        <div class="col-lg-12 text-left">
+          <table class="table table-striped">
+            <thead class="thead-default">
+              <tr>
+                <th style="width: 180px;">Time</th>
+        <th>January 2027 (TBA)</th>
+              </tr>
+            </thead>
+            <tbody>
+
+              <tr>
+                <th class="text-nowrap" scope="row">TBA</th>
+                <td>The full program will be announced after the notification to authors.</td>
+              </tr>
+
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section id="organizers">
+    	<div class="container">
+		<div class="col-lg-12 text-center">
+                    <h2 class="section-heading">Organizers</h2>
+                    <hr class="primary">
+                </div>
+	</div>
+	<div class="row text-black-faded">
+
+		<div class="col-lg-12 text-center">            
+            <h4><a href="https://sites.google.com/view/jlabellan">José L. Abellán </a> (University of Murcia)</h4>
+            <h4><a href="http://vradu.uk/">Valentin Radu</a> (University of Sheffield)</h4>			
+			<!-- <h4><a href="https://www.hipeac.net/~marco.cornero">Marco Cornero</a> (Google DeepMind)</h4> -->
+			<h4><a href="https://www.linkedin.com/in/ulysse-beaugnon/?originalSubdomain=fr">Ulysse Beaugnon</a> (Google DeepMind)</h4>
+			<h4><a href="http://www.dcs.gla.ac.uk/~josecr/">José Cano</a> (University of Glasgow)</h4>
+			<!-- <h4><a href="https://scholar.google.co.uk/citations?user=bjaCSGoAAAAJ&hl=en">Juliana Franco</a> (Google DeepMind)</h4> -->
+		</div>
+	</div>
+	<div class="row text-black-faded">
+                <div class="col-lg-12 text-center"><br/>
+                    <h2 id="program-committee" class="section-heading">Program Committee</h2>
+                    <hr class="primary">
+                </div>
+            <div class="col-lg-12 text-center">
+            <h4>To be announced.</h4>
+        </div>
+
+        </div>
+    </section>
+
+    <section id="contact">
+        <div class="container">
+         <div class="col-lg-12 text-center">
+                    <h2 class="section-heading">Contact</h2>
+                    <hr class="primary">
+                </div>
+            </div>
+            <div class="row text-black-faded">
+                <div class="col-lg-12 text-center">
+                    If you have any questions, please feel free to send an email to <i>9th-accml@easychair.org</i>
+                </div>
+        </div>
+    </section>
+
+
+    <!-- jQuery -->
+    <script src="js/jquery.js"></script>
+
+    <!-- Bootstrap Core JavaScript -->
+    <script src="js/bootstrap.min.js"></script>
+
+    <!-- Plugin JavaScript -->
+    <script src="js/jquery.easing.min.js"></script>
+    <script src="js/jquery.fittext.js"></script>
+    <script src="js/wow.min.js"></script>
+
+    <!-- Custom Theme JavaScript -->
+    <script src="js/creative.js"></script>
+
+</body>
+
+</html>
