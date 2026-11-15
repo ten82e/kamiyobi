@@ -520,7 +520,7 @@ describe("数字と案内が画面と同じ（第 714 回）", () => {
 
   it("会議は略称でも引ける（key で一意に指せる）", async () => {
     /* 実測 2026-10-06: 略称（`KDD` `CCS`）では見付からなかつた – 題は長く、略称は別の欄にある。*/
-    const text = await call("venue_info", { key: "sigkdd", scope: "all" });
+    const text = await call("venue_info", { key: "aamas", scope: "all" });
     expect(text, "key で引けない").toContain("会議:");
     expect(text, "分野を日本語で出していない（画面と同じ語）").toMatch(
       /分野: (人工知能|データベース)/,
@@ -597,7 +597,7 @@ it("会議の一覽は、今後の物から並ぶ（第 752 回）", async () =>
   /* 実測 2026-10-06: `venue sigkdd` の一覽が 2021 年から始まつていた（日の早い順に並べていた）。
    * 人は「次はいつか」を聞いているので、過去を先に読ませない。今後の行を持つ会議で、
    * **最初の日付の行が過去で無い**事を見る（この会議には今後がある – 前提も張る）。 */
-  const text = await call("venue_info", { key: "sigkdd", scope: "all" });
+  const text = await call("venue_info", { key: "aamas", scope: "all" });
   const 日付の行 = text.split("\n").filter((l) => /^\d{4}-\d{2}-\d{2}/.test(l));
   expect(日付の行.length, "この検査の前提（日付の行がある）が崩れた").toBeGreaterThan(1);
   const 今後 = 日付の行.filter((l) => !過去の札.test(l));

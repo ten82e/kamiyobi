@@ -114,17 +114,17 @@ describe("守り", () => {
 
   it("相対語のそれより後（`以降` `から`）はその初日から絞る（第 475 回・第 476 回）", () => {
     for (const [語, 件] of [
-      ["来週から", 448],
-      ["上旬から", 450],
-      ["3日後から", 448],
+      ["来週から", 449],
+      ["上旬から", 451],
+      ["3日後から", 449],
     ] as Array<[string, number]>) {
       expect(列(語).size, `「${語}」が其の初日から絞れて居ない`).toBe(件);
       expect(Recommender.relativeDayNotes(語, 基準), `「${語}」に案内が残つた`).toEqual([]);
     }
-    expect(列("明日以降").size).toBe(448);
+    expect(列("明日以降").size).toBe(449);
     expect(Recommender.relativeDayNotes("明日以降", 基準)).toEqual([]);
     /* 月を打た無い日（`22日以降`）はその方の月の目で今年／来年を決めて絞る。 */
-    expect(列("22日以降").size).toBe(420);
+    expect(列("22日以降").size).toBe(421);
   });
 
   it("幅の打ち方と裸の暦日を変えて居ない", () => {

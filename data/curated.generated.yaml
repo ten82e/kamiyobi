@@ -634,6 +634,45 @@ conferences:
     title: WQS 2026
 
   - categories:
+      - systems
+    editions:
+      - date_text: February 19, 2027
+        deadlines:
+          - date: '2026-11-30 23:59:59'
+            evidence:
+              - contentHash: ac30964591faad02ab825a3a3fe1a94cbaffdec5949890f51dfff02729ba96ea
+                rawExcerpt: 'Submission deadline November 30, 2026'
+                retrievedAt: '2026-11-15T04:20:00Z'
+                sourceClass: official-cfp
+                sourceUrl: https://easychair.org/cfp/urgecc26
+                verifiedAt: '2026-11-15T04:20:00Z'
+                verifiedFields:
+                  - date
+                  - time
+                  - timezone
+            kind: paper
+            label: Paper submission deadline
+            precision: exact
+            promotion_ref:
+              batch: 2026-11-15-urgecc-2027
+              resolution: resolution-urgecc-2027
+            round: 1
+            track: ''
+            tz: AoE
+        event_end: '2027-02-19'
+        event_start: '2027-02-19'
+        id: urgecc-2027
+        link: https://coco-arcos.github.io/urge-cc/
+        place: Seoul, South Korea
+        year: 2027
+    full_name: 1st Workshop on Urgent Computing Applications Across the Edge-to-HPC Computing Continuum
+    key: urgecc
+    link: https://coco-arcos.github.io/urge-cc/
+    tags:
+      - niche
+    title: URGE-CC 2027
+
+  - categories:
       - hpc
     editions:
       - date_text: February 17, 2027
