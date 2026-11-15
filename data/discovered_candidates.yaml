@@ -21840,7 +21840,7 @@ candidates:
     id: candidate-9eed33dd639fb84ff065dfb5
     source: easychair
     source_item_id: ee-hpc-sop-2027
-    status: discovered
+    status: accepted
     discovered_at: '2026-11-07T18:28:57.417Z'
     first_seen_at: '2026-11-07T18:28:57.417Z'
     last_seen_at: '2026-11-15T00:01:23.381Z'

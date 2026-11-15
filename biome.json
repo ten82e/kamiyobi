@@ -8,7 +8,9 @@
       "!**/work",
       "!**/data/snapshot.json",
       "!**/data/**/*.yaml",
-      "!**/tests/fixtures/**/*.html"
+      "!**/tests/fixtures/**/*.html",
+      "!**/.claude",
+      "!**/.site-build"
     ]
   },
   "formatter": {

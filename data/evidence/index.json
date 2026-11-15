@@ -6,8 +6,7 @@
       "content_type": "application/octet-stream",
       "references": [
         "data/overrides.yaml",
-        "data/snapshot.json",
-        "data/verification-ledger.json"
+        "data/snapshot.json"
       ]
     },
     "043992d3db6a968ed2d1a507412846e35f66d15b27d46f4b096c526e497f4738": {
@@ -15,6 +14,15 @@
       "content_type": "application/octet-stream",
       "references": [
         "data/evidence/reviews/recovered-captures-20261004.json",
+        "data/snapshot.json",
+        "data/verification-ledger.json"
+      ]
+    },
+    "049dbd62be1ba6b6d2219e2426eb21a6326abc54d2abdcb8135a7fce0544fc2f": {
+      "bytes": 35606,
+      "content_type": "application/octet-stream",
+      "references": [
+        "data/reverification-resolutions.json",
         "data/snapshot.json",
         "data/verification-ledger.json"
       ]
@@ -72,8 +80,7 @@
       "references": [
         "data/curated.generated.yaml",
         "data/snapshot.json",
-        "data/source-snapshots/local.json",
-        "data/verification-ledger.json"
+        "data/source-snapshots/local.json"
       ]
     },
     "0b16c6faf3e4bf6f2e369c43c39b6e7125d33d7bc8ced19b9049730802a2750f": {
@@ -83,6 +90,15 @@
         "data/curated.generated.yaml",
         "data/snapshot.json",
         "data/source-snapshots/local.json",
+        "data/verification-ledger.json"
+      ]
+    },
+    "0b6a5b0af2cff45316367a10b78c99e34ad69463a74c841276b1dc3fe4cf08f1": {
+      "bytes": 275033,
+      "content_type": "application/octet-stream",
+      "references": [
+        "data/reverification-resolutions.json",
+        "data/snapshot.json",
         "data/verification-ledger.json"
       ]
     },
@@ -117,15 +133,6 @@
         "data/snapshot.json"
       ]
     },
-    "11a020e8817700675422ada96546728f27f191fed318914d6728d91dca304d82": {
-      "bytes": 275033,
-      "content_type": "application/octet-stream",
-      "references": [
-        "data/reverification-resolutions.json",
-        "data/snapshot.json",
-        "data/verification-ledger.json"
-      ]
-    },
     "1339029168e09301b28389470e2542b7042457dd8ac2f8d6509c654c14ac7dbb": {
       "bytes": 13008,
       "content_type": "application/octet-stream",
@@ -145,14 +152,21 @@
         "data/verification-ledger.json"
       ]
     },
+    "167b83f305574bbf2805825f3299923c9caf6ef0c5012d93e37788bc40cc5672": {
+      "bytes": 9800,
+      "content_type": "application/octet-stream",
+      "references": [
+        "data/snapshot.json",
+        "data/verification-ledger.json"
+      ]
+    },
     "182d31db7e7cd744ce1a14f6ecd9f96b5d4f66f5012d6102cc94b32f8b02cbaa": {
       "bytes": 7606,
       "content_type": "application/octet-stream",
       "references": [
         "data/curated.generated.yaml",
         "data/snapshot.json",
-        "data/source-snapshots/local.json",
-        "data/verification-ledger.json"
+        "data/source-snapshots/local.json"
       ]
     },
     "1db79ec6dd42cf5e0e1e800ea750a52411722bc9793e29a1f3895ef8d0218958": {
@@ -162,6 +176,14 @@
         "data/curated.generated.yaml",
         "data/snapshot.json",
         "data/source-snapshots/local.json",
+        "data/verification-ledger.json"
+      ]
+    },
+    "226aba269ed314e61e08cd3698d1521cc934333fe477e35cd32d87a25aad1fa5": {
+      "bytes": 7607,
+      "content_type": "application/octet-stream",
+      "references": [
+        "data/snapshot.json",
         "data/verification-ledger.json"
       ]
     },
@@ -207,6 +229,14 @@
         "data/snapshot.json"
       ]
     },
+    "28666de8d01fae9caee854158e4cff768f0353a439dd78da64344647fc37692c": {
+      "bytes": 5436,
+      "content_type": "application/octet-stream",
+      "references": [
+        "data/snapshot.json",
+        "data/verification-ledger.json"
+      ]
+    },
     "2981c7fce2be3dd37b2155a3f694777840792198b91bf12ceeca5b2ef30ffac1": {
       "bytes": 5490,
       "content_type": "application/octet-stream",
@@ -233,6 +263,15 @@
     },
     "2d33c32956cf677e134d51d189d7802ad036d909c7cab123808c947e042eddb7": {
       "bytes": 23263,
+      "content_type": "application/octet-stream",
+      "references": [
+        "data/reverification-resolutions.json",
+        "data/snapshot.json",
+        "data/verification-ledger.json"
+      ]
+    },
+    "2e32877a55a02d57c542b4f8a9de620d2f4f9a664696d686b85b487a9c4de790": {
+      "bytes": 7142,
       "content_type": "application/octet-stream",
       "references": [
         "data/reverification-resolutions.json",
@@ -272,7 +311,9 @@
       "content_type": "application/octet-stream",
       "references": [
         "data/curated.generated.yaml",
-        "data/snapshot.json"
+        "data/snapshot.json",
+        "data/source-snapshots/local.json",
+        "data/verification-ledger.json"
       ]
     },
     "3df25f395b304760d846a06aebf4a3f726bfda1edf0398a6ceccf3be771538b0": {
@@ -369,7 +410,9 @@
       "content_type": "application/octet-stream",
       "references": [
         "data/curated.generated.yaml",
-        "data/snapshot.json"
+        "data/snapshot.json",
+        "data/source-snapshots/local.json",
+        "data/verification-ledger.json"
       ]
     },
     "5b99861c256615acb6ca97f42d6e2764b77b85d55dded610f50d4b7083d3c0b5": {
@@ -398,6 +441,15 @@
         "data/promotions/2026-08-31-conversations-2026/resolutions.json",
         "data/snapshot.json",
         "data/source-snapshots/local.json",
+        "data/verification-ledger.json"
+      ]
+    },
+    "5f78141ebf44eb2346cf0e34da8733d4bc7c06ece7e433ec50542d7cf7cb30da": {
+      "bytes": 651894,
+      "content_type": "application/octet-stream",
+      "references": [
+        "data/reverification-resolutions.json",
+        "data/snapshot.json",
         "data/verification-ledger.json"
       ]
     },
@@ -477,14 +529,22 @@
         "data/source-snapshots/local.json"
       ]
     },
+    "7688fbd2f131347160136a58d1e6771a1404b958c50a40b7bdb77364ab3974a4": {
+      "bytes": 651410,
+      "content_type": "application/octet-stream",
+      "references": [
+        "data/reverification-resolutions.json",
+        "data/snapshot.json",
+        "data/verification-ledger.json"
+      ]
+    },
     "76b3c3439be4649685d1931936379041016a60df776c9dc5b22b20e51f3eaa2c": {
       "bytes": 7142,
       "content_type": "application/octet-stream",
       "references": [
         "data/curated.generated.yaml",
         "data/snapshot.json",
-        "data/source-snapshots/local.json",
-        "data/verification-ledger.json"
+        "data/source-snapshots/local.json"
       ]
     },
     "77f70f1aceb8fb84775488920b2af7c6d2bf44be386c954f2cfb86925e744e9c": {
@@ -589,7 +649,9 @@
       "content_type": "application/octet-stream",
       "references": [
         "data/curated.generated.yaml",
-        "data/snapshot.json"
+        "data/snapshot.json",
+        "data/source-snapshots/local.json",
+        "data/verification-ledger.json"
       ]
     },
     "9fe1aef0f2fea8ac8f54344c0f4554effb08c545d24d0e77f6c28c25f7f541e6": {
@@ -679,8 +741,7 @@
       "references": [
         "data/curated.generated.yaml",
         "data/snapshot.json",
-        "data/source-snapshots/local.json",
-        "data/verification-ledger.json"
+        "data/source-snapshots/local.json"
       ]
     },
     "cdb226fa64645300f44f019877355aa756f663f5bdf9198e484f8dea597ad23c": {
@@ -774,14 +835,6 @@
         "data/verification-ledger.json"
       ]
     },
-    "e26b9691ce30ae9b1e855324b8d8297ab561cfb5727719f5243568c226697283": {
-      "bytes": 9801,
-      "content_type": "application/octet-stream",
-      "references": [
-        "data/snapshot.json",
-        "data/verification-ledger.json"
-      ]
-    },
     "e36a837b58b55e998aa952e7e15a50a502e2c7dbb122ac881e6e63989e0bdc30": {
       "bytes": 25325,
       "content_type": "application/octet-stream",
@@ -819,6 +872,15 @@
         "data/verification-ledger.json"
       ]
     },
+    "e6f8be41255b69332d9b8f4896d924027f2a9b307a9bb27d72119640054b3247": {
+      "bytes": 17011,
+      "content_type": "application/octet-stream",
+      "references": [
+        "data/reverification-resolutions.json",
+        "data/snapshot.json",
+        "data/verification-ledger.json"
+      ]
+    },
     "e9ce771eb54eda062c8f28fc20492fe17a2cc680f1079b1cec3a0d84aaef8e95": {
       "bytes": 9800,
       "content_type": "application/octet-stream",
@@ -850,14 +912,6 @@
         "data/verification-ledger.json"
       ]
     },
-    "eff0b825e2631142d123e2377d6f4eea11646f775b9e6968504b366790191fcc": {
-      "bytes": 5479,
-      "content_type": "application/octet-stream",
-      "references": [
-        "data/snapshot.json",
-        "data/verification-ledger.json"
-      ]
-    },
     "f3024df4fdb7109531041c97d477088e7cfe95fe1d384a4a14132f4e93126562": {
       "bytes": 13962,
       "content_type": "application/octet-stream",
@@ -868,11 +922,10 @@
         "data/verification-ledger.json"
       ]
     },
-    "f60238fe68c2bdc8d10e87ab6a19d0d6668445a3679f2c1e83130457204a74ea": {
-      "bytes": 34941,
+    "f4358753f6ead7059896b0b9fed5b2e6788cb50c2f6789f295f08940236f1575": {
+      "bytes": 9069,
       "content_type": "application/octet-stream",
       "references": [
-        "data/reverification-resolutions.json",
         "data/snapshot.json",
         "data/verification-ledger.json"
       ]
@@ -897,11 +950,27 @@
         "data/verification-ledger.json"
       ]
     },
+    "f6fde928ef2da997c2cc725747eb2d309135ad34fefef03ee3fc01e0bf1fffb3": {
+      "bytes": 9284,
+      "content_type": "application/octet-stream",
+      "references": [
+        "data/curated.generated.yaml",
+        "data/snapshot.json"
+      ]
+    },
     "fb70f78d0d5bdccbe8acd308296ce0c3db2a90a8672b57178bfc490f74385dc4": {
       "bytes": 6024,
       "content_type": "application/octet-stream",
       "references": [
         "data/evidence/reviews/recovered-captures-20261004.json",
+        "data/snapshot.json",
+        "data/verification-ledger.json"
+      ]
+    },
+    "fbdd07e964cd3441e5e920a8cae5f5cf4da990f7a973c0c90b9c64a6dc46350d": {
+      "bytes": 13154,
+      "content_type": "application/octet-stream",
+      "references": [
         "data/snapshot.json",
         "data/verification-ledger.json"
       ]

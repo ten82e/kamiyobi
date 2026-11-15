@@ -105,15 +105,15 @@ describe("年の切れ目の語＋暦月・中がその月の語に解れる（�
     }
   });
   it("第 470 回〜第 501 回の実測はこの回で変へて居ない", () => {
-    expect(列("年内").size).toBe(449);
-    expect(列("今年内").size).toBe(451);
-    expect(列("2026年中").size).toBe(451);
-    expect(列("令和9年中").size).toBe(145);
+    expect(列("年内").size).toBe(450);
+    expect(列("今年内").size).toBe(452);
+    expect(列("2026年中").size).toBe(452);
+    expect(列("令和9年中").size).toBe(146);
     expect(列("来月中").size).toBe(178);
     expect(列("年末").size).toBe(95);
     expect(列("年末 中").size).toBe(13);
     expect(列("来月 末日").size).toBe(178);
-    expect(列("週 末").size).toBe(158);
+    expect(列("週 末").size).toBe(159);
     expect(列("ml から").size).toBe(0);
     expect(列("締切時刻").size).toBe(181);
     expect(列("2027年12月から").size).toBe(29);
