@@ -17,7 +17,7 @@ conferences:
             retrievedAt: '2026-11-07T18:28:28.724Z'
             verifiedAt: '2026-11-07T18:28:28.724Z'
             rawExcerpt: 'Paper submission: 2026-08-14 AoE'
-    _comment: 一次ソース (https://ai4s.github.io/) から自動抽出 (2026-11-12)
+    _comment: 一次ソース (https://ai4s.github.io/) から自動抽出 (2026-11-14)
   cna:
     editions:
       '2026':
@@ -29,12 +29,12 @@ conferences:
             structured: false
             selectorOrField: deadline-text-window
             sourceUrl: https://complexnetworks.org/
-            sourceRevision: 55900a822366ac764edfa6dff10037d533bd22cbc5042975e21ea8495364f323
-            contentHash: 55900a822366ac764edfa6dff10037d533bd22cbc5042975e21ea8495364f323
-            retrievedAt: '2026-11-12T01:56:06.932Z'
-            verifiedAt: '2026-11-12T01:56:06.932Z'
+            sourceRevision: caf06c691eb7862341cc6e82eff1eba0affb6b6419c6f675fc063cb385e91514
+            contentHash: caf06c691eb7862341cc6e82eff1eba0affb6b6419c6f675fc063cb385e91514
+            retrievedAt: '2026-11-14T23:58:10.015Z'
+            verifiedAt: '2026-11-14T23:58:10.015Z'
             rawExcerpt: 'Paper submission: 2026-09-02'
-    _comment: 一次ソース (https://complexnetworks.org/) から自動抽出 (2026-11-12)
+    _comment: 一次ソース (https://complexnetworks.org/) から自動抽出 (2026-11-14)
   geoindustry-2026:
     editions:
       '2026':
@@ -53,7 +53,7 @@ conferences:
             rawExcerpt: 'Paper submission: 2026-11-03'
     _comment: >-
       一次ソース (https://geoindustry.github.io/geoindustryworkshop2026/) から自動抽出
-      (2026-11-12)
+      (2026-11-14)
   hmem-2026:
     editions:
       '2026':
@@ -71,7 +71,7 @@ conferences:
             contentHash: 904c740605b2e532ecbaa524143496363590d670934a7f006428b2a736070956
             retrievedAt: '2026-11-07T18:28:33.030Z'
             verifiedAt: '2026-11-07T18:28:33.030Z'
-    _comment: 一次ソース (https://hmem-workshop.github.io/) から自動抽出 (2026-11-12)
+    _comment: 一次ソース (https://hmem-workshop.github.io/) から自動抽出 (2026-11-14)
   llvm-hpc-2026:
     editions:
       '2026':
@@ -85,14 +85,14 @@ conferences:
             structured: false
             selectorOrField: deadline-text-window
             sourceUrl: https://llvm-in-hpc-workshop.github.io/LLVM-HPC-2026-Workshop.github.io/
-            sourceRevision: 535367da74dc696aa0321651a50adc9f17087891d5890d64573014702ea066ab
-            contentHash: 535367da74dc696aa0321651a50adc9f17087891d5890d64573014702ea066ab
-            retrievedAt: '2026-11-07T18:28:33.311Z'
-            verifiedAt: '2026-11-07T18:28:33.311Z'
+            sourceRevision: b0c4dc4a729c3c509896c6233e05e0edc4faed8a9ee763dc36722ff0c2622522
+            contentHash: b0c4dc4a729c3c509896c6233e05e0edc4faed8a9ee763dc36722ff0c2622522
+            retrievedAt: '2026-11-14T23:58:10.527Z'
+            verifiedAt: '2026-11-14T23:58:10.527Z'
     _comment: >-
       一次ソース
       (https://llvm-in-hpc-workshop.github.io/LLVM-HPC-2026-Workshop.github.io/)
-      から自動抽出 (2026-11-12)
+      から自動抽出 (2026-11-14)
   network-flows-2-0:
     editions:
       '2026':
@@ -105,10 +105,10 @@ conferences:
             adapter: easychair-v1
             structured: true
             sourceUrl: https://easychair.org/cfp/flowchallenge2
-            sourceRevision: 679fb1ebb3ebde82ddbb7e0dbd0340d5b90ce781f3782916ed6a3044015855d7
-            contentHash: 679fb1ebb3ebde82ddbb7e0dbd0340d5b90ce781f3782916ed6a3044015855d7
-            retrievedAt: '2026-11-12T01:56:07.493Z'
-            verifiedAt: '2026-11-12T01:56:07.493Z'
+            sourceRevision: 38e6fa4eafdcc86e1ccc56d133b944cd5a05395f49feeeb545e7a6b94cb44729
+            contentHash: 38e6fa4eafdcc86e1ccc56d133b944cd5a05395f49feeeb545e7a6b94cb44729
+            retrievedAt: '2026-11-14T23:58:10.967Z'
+            verifiedAt: '2026-11-14T23:58:10.967Z'
           - kind: paper
             label: Paper submission
             date: '2026-09-19'
@@ -117,11 +117,11 @@ conferences:
             adapter: easychair-v1
             structured: true
             sourceUrl: https://easychair.org/cfp/flowchallenge2
-            sourceRevision: 679fb1ebb3ebde82ddbb7e0dbd0340d5b90ce781f3782916ed6a3044015855d7
-            contentHash: 679fb1ebb3ebde82ddbb7e0dbd0340d5b90ce781f3782916ed6a3044015855d7
-            retrievedAt: '2026-11-12T01:56:07.493Z'
-            verifiedAt: '2026-11-12T01:56:07.493Z'
-    _comment: 一次ソース (https://easychair.org/cfp/flowchallenge2) から自動抽出 (2026-11-12)
+            sourceRevision: 38e6fa4eafdcc86e1ccc56d133b944cd5a05395f49feeeb545e7a6b94cb44729
+            contentHash: 38e6fa4eafdcc86e1ccc56d133b944cd5a05395f49feeeb545e7a6b94cb44729
+            retrievedAt: '2026-11-14T23:58:10.967Z'
+            verifiedAt: '2026-11-14T23:58:10.967Z'
+    _comment: 一次ソース (https://easychair.org/cfp/flowchallenge2) から自動抽出 (2026-11-14)
   polds-2026:
     editions:
       '2026':
@@ -136,11 +136,11 @@ conferences:
             structured: false
             selectorOrField: deadline-text-window
             sourceUrl: https://iharp.umbc.edu/polds26/
-            sourceRevision: d918c9e4f419bb37b8a18e2f15f74ffbe99e316f15cfec4ae94fe35c399a5c3c
-            contentHash: d918c9e4f419bb37b8a18e2f15f74ffbe99e316f15cfec4ae94fe35c399a5c3c
-            retrievedAt: '2026-11-12T01:56:07.771Z'
-            verifiedAt: '2026-11-12T01:56:07.771Z'
-    _comment: 一次ソース (https://iharp.umbc.edu/polds26/) から自動抽出 (2026-11-12)
+            sourceRevision: b28a5aea536a74a3274d158be181c8bdb33fc4ff8a19634ed2f549a87dd041fe
+            contentHash: b28a5aea536a74a3274d158be181c8bdb33fc4ff8a19634ed2f549a87dd041fe
+            retrievedAt: '2026-11-14T23:58:11.339Z'
+            verifiedAt: '2026-11-14T23:58:11.339Z'
+    _comment: 一次ソース (https://iharp.umbc.edu/polds26/) から自動抽出 (2026-11-14)
   setta:
     editions:
       '2026':
@@ -153,14 +153,14 @@ conferences:
             adapter: easychair-v1
             structured: true
             sourceUrl: https://easychair.org/cfp/SETTA2026
-            sourceRevision: 5e9c29c26df9aadd561fed091069a3d7c5a26c74e370d1817c1b6a9d7b56ba68
-            contentHash: 5e9c29c26df9aadd561fed091069a3d7c5a26c74e370d1817c1b6a9d7b56ba68
-            retrievedAt: '2026-11-12T01:56:08.084Z'
-            verifiedAt: '2026-11-12T01:56:08.084Z'
+            sourceRevision: f5d87fe757669b2f05e911750ad1018f7f7a3b93cd191180d57c5435cec50a6e
+            contentHash: f5d87fe757669b2f05e911750ad1018f7f7a3b93cd191180d57c5435cec50a6e
+            retrievedAt: '2026-11-14T23:58:11.768Z'
+            verifiedAt: '2026-11-14T23:58:11.768Z'
         link: https://www.setta2026.sg
         place: Singapore
         date_text: December 2-4, 2026
-    _comment: 一次ソース (https://easychair.org/cfp/SETTA2026) から自動抽出 (2026-11-12)
+    _comment: 一次ソース (https://easychair.org/cfp/SETTA2026) から自動抽出 (2026-11-14)
   whpc-2026:
     editions:
       '2026':
@@ -176,8 +176,8 @@ conferences:
             selectorOrField: deadline-text-window
             tz: AoE
             sourceUrl: https://womeninhpc.org/events/sc-2026-workshop
-            sourceRevision: a81131a11446cadbdbe1b16769ad640186ada7864654ce3c15f560f1d730b9d8
-            contentHash: a81131a11446cadbdbe1b16769ad640186ada7864654ce3c15f560f1d730b9d8
-            retrievedAt: '2026-11-12T01:56:08.826Z'
-            verifiedAt: '2026-11-12T01:56:08.826Z'
-    _comment: 一次ソース (https://womeninhpc.org/events/sc-2026-workshop) から自動抽出 (2026-11-12)
+            sourceRevision: d5738b796935f02707e331a312f9c068555d8938c0ca0f41a33b82d2a03a5785
+            contentHash: d5738b796935f02707e331a312f9c068555d8938c0ca0f41a33b82d2a03a5785
+            retrievedAt: '2026-11-14T23:58:12.513Z'
+            verifiedAt: '2026-11-14T23:58:12.513Z'
+    _comment: 一次ソース (https://womeninhpc.org/events/sc-2026-workshop) から自動抽出 (2026-11-14)
