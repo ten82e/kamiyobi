@@ -634,6 +634,63 @@ conferences:
     title: WQS 2026
 
   - categories:
+      - security
+    editions:
+      - date_text: April 13-15, 2027
+        deadlines:
+          - date: '2026-11-20 23:59:59'
+            evidence:
+              - contentHash: 258e90b79d4fc213efd4afcb81ed7023a2709f911b752d5715ebef477680a24f
+                rawExcerpt: 'Abstract registration deadline November 20, 2026'
+                retrievedAt: '2026-11-15T06:00:00Z'
+                sourceClass: official-cfp
+                sourceUrl: https://easychair.org/cfp/TrustSecAI2027
+                verifiedAt: '2026-11-15T06:00:00Z'
+                verifiedFields:
+                  - date
+                  - time
+                  - timezone
+            kind: abstract
+            label: Abstract registration deadline
+            precision: exact
+            round: 1
+            track: ''
+            tz: AoE
+          - date: '2026-11-27 23:59:59'
+            evidence:
+              - contentHash: 258e90b79d4fc213efd4afcb81ed7023a2709f911b752d5715ebef477680a24f
+                rawExcerpt: 'Submission deadline November 27, 2026'
+                retrievedAt: '2026-11-15T06:00:00Z'
+                sourceClass: official-cfp
+                sourceUrl: https://easychair.org/cfp/TrustSecAI2027
+                verifiedAt: '2026-11-15T06:00:00Z'
+                verifiedFields:
+                  - date
+                  - time
+                  - timezone
+            kind: paper
+            label: Paper submission deadline
+            precision: exact
+            promotion_ref:
+              batch: 2026-11-15-trustsecai-2027
+              resolution: resolution-trustsecai-2027
+            round: 1
+            track: ''
+            tz: AoE
+        event_end: '2027-04-15'
+        event_start: '2027-04-13'
+        id: trustsecai-2027
+        link: https://rayentech.github.io/TrustSecAI2027/
+        place: Delft, Netherlands
+        year: 2027
+    full_name: 1st International Workshop on AI Security & Trustworthy Autonomous Cybersecurity
+    key: trustsecai
+    link: https://rayentech.github.io/TrustSecAI2027/
+    tags:
+      - niche
+    title: TrustSecAI 2027
+
+  - categories:
       - systems
     editions:
       - date_text: February 19, 2027

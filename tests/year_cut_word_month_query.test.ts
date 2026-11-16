@@ -42,10 +42,10 @@ describe("年の切れ目の語＋暦月・中がその月の語に解れる（�
       ["年明け中", "1月中", 40],
       ["年度末3月", "3月", 32],
       ["年度末中", "3月中", 32],
-      ["年度初め4月", "4月", 39],
-      ["年度初め中", "4月中", 39],
-      ["年度始め4月", "4月", 39],
-      ["年度当初4月", "4月", 39],
+      ["年度初め4月", "4月", 41],
+      ["年度初め中", "4月中", 41],
+      ["年度始め4月", "4月", 41],
+      ["年度当初4月", "4月", 41],
     ] as Array<[string, string, number]>) {
       expect([繋, 対称差(列(繋), 列(月語))], `「${繋}」が「${月語}」と違ふ`).toEqual([繋, 0]);
       expect(列(繋).size, `「${繋}」が 0 件の侭`).toBeGreaterThan(0);
@@ -105,15 +105,15 @@ describe("年の切れ目の語＋暦月・中がその月の語に解れる（�
     }
   });
   it("第 470 回〜第 501 回の実測はこの回で変へて居ない", () => {
-    expect(列("年内").size).toBe(451);
-    expect(列("今年内").size).toBe(453);
-    expect(列("2026年中").size).toBe(453);
-    expect(列("令和9年中").size).toBe(147);
+    expect(列("年内").size).toBe(453);
+    expect(列("今年内").size).toBe(455);
+    expect(列("2026年中").size).toBe(455);
+    expect(列("令和9年中").size).toBe(149);
     expect(列("来月中").size).toBe(178);
     expect(列("年末").size).toBe(96);
     expect(列("年末 中").size).toBe(13);
     expect(列("来月 末日").size).toBe(178);
-    expect(列("週 末").size).toBe(159);
+    expect(列("週 末").size).toBe(161);
     expect(列("ml から").size).toBe(0);
     expect(列("締切時刻").size).toBe(181);
     expect(列("2027年12月から").size).toBe(30);

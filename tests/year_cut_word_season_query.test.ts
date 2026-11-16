@@ -92,9 +92,9 @@ describe("残した差と守り（第 466 回・第 491 回）", () => {
     expect(列("年初").size).toBe(40);
     expect(列("年度末").size).toBe(32);
     expect(列("年始").size).toBe(40);
-    expect(列("来年").size).toBe(147);
-    expect(列("今年").size).toBe(453);
-    expect(列("来年度").size).toBe(73);
+    expect(列("来年").size).toBe(149);
+    expect(列("今年").size).toBe(455);
+    expect(列("来年度").size).toBe(75);
     expect(列("年末 末").size).toBe(0);
     expect(列("来月 末日").size).toBe(178);
     expect(列("来年 末").size).toBe(30);
@@ -103,8 +103,8 @@ describe("残した差と守り（第 466 回・第 491 回）", () => {
     /* 第 493 回に先の年の語を割る目を入れたので、離した形と同じ行が出る。*/
     expect(列("来年12月から").size).toBe(30);
     expect(列("来年12月から").size).toBe(列("来年 12月から").size);
-    expect(列("今年1月から").size).toBe(453);
-    expect(列("週 末").size).toBe(159);
+    expect(列("今年1月から").size).toBe(455);
+    expect(列("週 末").size).toBe(161);
     expect(列("ml から").size).toBe(0);
     expect(列("締切時刻").size).toBe(181);
   });

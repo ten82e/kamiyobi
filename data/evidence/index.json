@@ -195,6 +195,14 @@
         "data/snapshot.json"
       ]
     },
+    "258e90b79d4fc213efd4afcb81ed7023a2709f911b752d5715ebef477680a24f": {
+      "bytes": 9310,
+      "content_type": "application/octet-stream",
+      "references": [
+        "data/curated.generated.yaml",
+        "data/snapshot.json"
+      ]
+    },
     "25ddda7467fd4e6d3c3db4c34c29d969c1db6f718904d4622d03725fed6b3a4d": {
       "bytes": 9788,
       "content_type": "application/octet-stream",
