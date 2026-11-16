@@ -1035,6 +1035,12 @@
       "source_url_hash": "566f979704ec8421a7d8b4f6930c6ed2b54ff993dec87c11b1a6260e8d757b77"
     },
     {
+      "fingerprint": "candidate-4fc9294eb7e87d3f3ceb5930",
+      "decision": "expired",
+      "last_reviewed": "2026-11-16T00:03:05.823Z",
+      "source_url_hash": "b4dacde62e0dc969f6ee0d0e42b49fb843fcf747c5bda2b390d5eb7acdf0623d"
+    },
+    {
       "fingerprint": "candidate-def00833ee9b303c2b7ae052",
       "decision": "expired",
       "last_reviewed": "2026-10-04T12:42:32.442Z",
@@ -1917,6 +1923,12 @@
       "source_url_hash": "cc2e56708990c0962e0f11fa26c4112a3ff392c22d3a03a28fae6d54a5aa929b"
     },
     {
+      "fingerprint": "candidate-d46eba0d308b95a0da06444a",
+      "decision": "expired",
+      "last_reviewed": "2026-11-16T00:03:05.823Z",
+      "source_url_hash": "3e1f4cfba22314ee9093e8591845e51629b0c4830a5d1a4c6a4d11c18b7fed24"
+    },
+    {
       "fingerprint": "candidate-e92aa91ba108d4f2ecbef46e",
       "decision": "expired",
       "last_reviewed": "2026-10-04T12:42:32.442Z",
@@ -2409,6 +2421,12 @@
       "source_url_hash": "07fa2d245f533e0fd8b5c2dcff339fd3ddc832d6d4b6447758ffdb5a619c22f5"
     },
     {
+      "fingerprint": "candidate-04df1e00e06605e0e8f35e29",
+      "decision": "expired",
+      "last_reviewed": "2026-11-16T00:03:05.823Z",
+      "source_url_hash": "744ca23f8a427d60c95bb09254d5a136d054483f72b20b906e28a852844e4a9a"
+    },
+    {
       "fingerprint": "candidate-51488e94b82c0ffd00f94b21",
       "decision": "no-official-evidence",
       "last_reviewed": "2026-10-04T12:42:32.442Z",
@@ -2497,6 +2515,12 @@
       "decision": "expired",
       "last_reviewed": "2026-11-15T00:01:23.569Z",
       "source_url_hash": "868e0c8fceeb7ef64a588a75c83d01fef183fbe5be21c7d4cdb825cc00dede2f"
+    },
+    {
+      "fingerprint": "candidate-3fa6db779ad804f587bafebc",
+      "decision": "expired",
+      "last_reviewed": "2026-11-16T00:03:05.823Z",
+      "source_url_hash": "eb7bb21ef8c05ada1cce8a0374ff6a10d1401132076104cfedcb21bbf9550e86"
     },
     {
       "fingerprint": "candidate-17a20862c07a8d457bc684bb",
@@ -3975,6 +3999,12 @@
       "source_url_hash": "74a40904b9e053562438150de9432e09537d50dbc04b028c0d42e1f23074ab82"
     },
     {
+      "fingerprint": "candidate-9eed33dd639fb84ff065dfb5",
+      "decision": "already-curated",
+      "last_reviewed": "2026-11-16T00:03:05.823Z",
+      "source_url_hash": "491d7f7345f8cfed57c47fd48f757b30b9f7e2d08c03cc1d39c613c1fd6a7c82"
+    },
+    {
       "fingerprint": "candidate-19ef4e28a0972bd29d65890e",
       "decision": "already-curated",
       "last_reviewed": "2026-09-01T00:00:00.000Z",
@@ -4249,6 +4279,12 @@
       "decision": "expired",
       "last_reviewed": "2026-10-04T12:42:32.442Z",
       "source_url_hash": "3d02e043917a3a76cc5b8cc17725775dc469d3de2d80abb605a89ee7a251fc7a"
+    },
+    {
+      "fingerprint": "candidate-b7c428c7b99c0fec4844b23a",
+      "decision": "expired",
+      "last_reviewed": "2026-11-16T00:03:05.823Z",
+      "source_url_hash": "5bb51090487f4149e46ed6eee32fdb8617a591c127ab5f658d348f0d9f022620"
     },
     {
       "fingerprint": "candidate-e8267449a249115f65e0cd9e",
@@ -6495,15 +6531,21 @@
       "source_url_hash": "c82e74774ebdca5028f412e84ca0507287b89c0c2c31ad7c432e20d751bb5d9a"
     },
     {
+      "fingerprint": "candidate-1542e23e7775359deb3c0581",
+      "decision": "expired",
+      "last_reviewed": "2026-11-16T00:03:05.823Z",
+      "source_url_hash": "0478e95326be8b6d388f61a4d7da145026598b7852d8bd78ced1faf39c3ab472"
+    },
+    {
       "fingerprint": "candidate-1584dc539568ccc54870a637",
-      "decision": "duplicate",
-      "last_reviewed": "2026-11-07T18:30:52.017Z",
+      "decision": "no-reviewable-deadline",
+      "last_reviewed": "2026-11-16T00:03:05.823Z",
       "source_url_hash": "d36e30f723a2bba20203b80adf39bdffc7212bd85cfa789ac935cbc6545bc558"
     },
     {
       "fingerprint": "candidate-412a3de6003559324e3d8614",
-      "decision": "duplicate",
-      "last_reviewed": "2026-11-12T01:58:50.159Z",
+      "decision": "no-official-evidence",
+      "last_reviewed": "2026-11-16T00:03:05.823Z",
       "source_url_hash": "c1712236c6787fe9d00e51535206b45402fec945a9c997eda3069b4f19d0ec69"
     },
     {
@@ -6829,6 +6871,12 @@
       "decision": "expired",
       "last_reviewed": "2026-11-07T18:30:52.017Z",
       "source_url_hash": "deae7bcb44ff479e93a5cf14e944ad8e16aadf3e22727e5955bd60b68fe1800a"
+    },
+    {
+      "fingerprint": "candidate-b73c48a99c2f5cfcab51b8c5",
+      "decision": "expired",
+      "last_reviewed": "2026-11-16T00:03:05.823Z",
+      "source_url_hash": "bd71ec30c0e265e889f03b6531eb42ffe0de49e4edded10003030bf96aa6cbfe"
     },
     {
       "fingerprint": "candidate-479dead1d3e3638e73779c51",
@@ -8313,6 +8361,12 @@
       "source_url_hash": "5e13291cf5cc2fcdeeba0ef8a8b95728e780b150d6645b481941fe5096b7f37b"
     },
     {
+      "fingerprint": "candidate-260977acf6a5fd951b1e2c18",
+      "decision": "expired",
+      "last_reviewed": "2026-11-16T00:03:05.823Z",
+      "source_url_hash": "466a1f98018f63f8026dd5c6846c6f61a354726bdefd56ae9dac4e946d5820c0"
+    },
+    {
       "fingerprint": "candidate-de8699a687221749cc5a24f1",
       "decision": "duplicate",
       "last_reviewed": "2026-11-07T18:30:52.017Z",
@@ -8365,6 +8419,12 @@
       "decision": "no-official-evidence",
       "last_reviewed": "2026-10-04T12:42:32.442Z",
       "source_url_hash": "fe349feea1401034e7c1b948ff2421c23c78dee1652e0755e19b03a95b11bc84"
+    },
+    {
+      "fingerprint": "candidate-2e09a379501d7cb7968ed437",
+      "decision": "expired",
+      "last_reviewed": "2026-11-16T00:03:05.823Z",
+      "source_url_hash": "757780dcae93e85f8aaaa936c7196072ac690471533edba472d4cd77640b0e11"
     },
     {
       "fingerprint": "candidate-1cecc5c52b3be867dfe1ba71",
@@ -9051,6 +9111,12 @@
       "source_url_hash": "f626c9eff42fc2ca77286cec243e5ae1205410afdf3cbb8b05da1b4accc396c8"
     },
     {
+      "fingerprint": "candidate-f61bd98b55746d4e4187b2ef",
+      "decision": "expired",
+      "last_reviewed": "2026-11-16T00:03:05.823Z",
+      "source_url_hash": "b46be5acb188e91d7f0bf80b516e06feaab62ab7114c378630dadcba5fea076a"
+    },
+    {
       "fingerprint": "candidate-fbcb1a1d009fada90ca3cc37",
       "decision": "no-official-evidence",
       "last_reviewed": "2026-10-04T12:42:32.442Z",
@@ -9325,6 +9391,12 @@
       "decision": "expired",
       "last_reviewed": "2026-10-04T12:42:32.442Z",
       "source_url_hash": "2e9023def6a637a4f1e55f4fd13cb2d1a1549e50b9103904523e296040d15c3c"
+    },
+    {
+      "fingerprint": "candidate-2e8324507f67d9ed1a532ab8",
+      "decision": "expired",
+      "last_reviewed": "2026-11-16T00:03:05.823Z",
+      "source_url_hash": "3495e2f8aa5c4b32282b4ed8f4a2c3fe09a7ecc5cdf7c19e67de81f6d2834ab6"
     },
     {
       "fingerprint": "candidate-dbd2e9d00766867f23c7ce53",
@@ -9625,6 +9697,12 @@
       "decision": "no-official-evidence",
       "last_reviewed": "2026-11-12T01:58:50.159Z",
       "source_url_hash": "791f975e06a4314793ff9b23947bc772c7f7065e38d46ccac674eeffbc83e173"
+    },
+    {
+      "fingerprint": "candidate-2259259d7726bb299a4b8aed",
+      "decision": "expired",
+      "last_reviewed": "2026-11-16T00:03:05.823Z",
+      "source_url_hash": "e6d34c4b3615ab2f50c4147d25aa87f4b7ef3ca3ced6e71fd3b6bc99ea508eea"
     },
     {
       "fingerprint": "candidate-191951edadbe463b3dcaaaec",
@@ -10903,6 +10981,12 @@
       "decision": "expired",
       "last_reviewed": "2026-10-04T12:42:32.442Z",
       "source_url_hash": "3d0a44a1d06ff815f795250e9f557825bdbba82a7465256ff19ed6c6bac86906"
+    },
+    {
+      "fingerprint": "candidate-f10ae32922a262df14d4fe5d",
+      "decision": "expired",
+      "last_reviewed": "2026-11-16T00:03:05.823Z",
+      "source_url_hash": "ed0e9f012b9beec55e77a62841bf6fd2ab5f0ff4feaac67a485219ffcac71663"
     },
     {
       "fingerprint": "candidate-a8c3a2c9a82b0ad9598a3f80",
