@@ -290509,6 +290509,61 @@
     "niche"
    ],
    "title": "TrustSecAI 2027"
+  },
+  {
+   "categories": [
+    "hpc"
+   ],
+   "editions": [
+    {
+     "date_text": "February 17-19, 2027",
+     "deadlines": [
+      {
+       "date": "2026-11-27 23:59:59",
+       "evidence": [
+        {
+         "contentHash": "6e29e7834b9aabb0b7ec8a5179d6abcb36457b2224ae5fd55ffdeb477de168d3",
+         "rawExcerpt": "Submission deadline November 27, 2026",
+         "retrievedAt": "2026-11-16T12:00:00Z",
+         "sourceClass": "official-cfp",
+         "sourceUrl": "https://easychair.org/cfp/ixpugworkshopathpcasia2027",
+         "verifiedAt": "2026-11-16T12:00:00Z",
+         "verifiedFields": [
+          "date",
+          "time",
+          "timezone"
+         ]
+        }
+       ],
+       "kind": "paper",
+       "label": "Paper submission deadline",
+       "precision": "exact",
+       "promotion_ref": {
+        "batch": "2026-11-16-ixpug-2027",
+        "resolution": "resolution-ixpug-2027"
+       },
+       "round": 1,
+       "track": "",
+       "tz": "AoE",
+       "utc": "2026-11-28T11:59:59.000Z",
+       "aoe": "2026-11-27 23:59:59 AoE"
+      }
+     ],
+     "event_end": "2027-02-19",
+     "event_start": "2027-02-17",
+     "id": "ixpug-2027",
+     "link": "https://www.ixpug.org/events/ixpug-hpc-asia-2027",
+     "place": "Seoul, South Korea",
+     "year": 2027
+    }
+   ],
+   "full_name": "IXPUG Workshop at HPC Asia 2027",
+   "key": "ixpug",
+   "link": "https://www.ixpug.org/events/ixpug-hpc-asia-2027",
+   "tags": [
+    "niche"
+   ],
+   "title": "IXPUG Workshop 2027"
   }
  ],
  "identity_migrations": {

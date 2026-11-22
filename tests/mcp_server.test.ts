@@ -5807,7 +5807,9 @@ it("推定の行は幅を出し、事実のやうに見せない（第 1034 回�
 });
 
 it("投稿のトラックも行に出す（第 1035 回）", async () => {
-  const closer = await call("search_deadlines", {
+  /* 固定時計（NOW_ARG）で呼ぶ: CLOSER regular (2026-11-17 AoE) が実時計で過ぎた後も
+   * 両トラックの表示と悉皆検査の前提を保つ。 */
+  const closer = await callAt("search_deadlines", {
     query: "closer",
     scope: "all",
     limit: 20,
@@ -5826,7 +5828,7 @@ it("投稿のトラックも行に出す（第 1035 回）", async () => {
   ).toBeGreaterThan(0);
 
   /* トラックの**無い**行は從つて通り（余計な括弧を足さない – 5,061 行が空）。 */
-  const wsdm = await call("search_deadlines", { query: "wsdm", scope: "all", limit: 5 });
+  const wsdm = await callAt("search_deadlines", { query: "wsdm", scope: "all", limit: 5 });
   for (const l of wsdm.split("\n").filter((l) => /^2\d{3}-/.test(l))) {
     expect(l, "トラックのない行に空の括弧を出した").not.toMatch(/論文締切（\s*）/);
   }
@@ -5854,7 +5856,7 @@ it("投稿のトラックも行に出す（第 1035 回）", async () => {
   );
   expect(會議.size, "トラックを持つ会議が読めない").toBeGreaterThan(0);
   for (const key of 會議) {
-    const 答 = await call("search_deadlines", {
+    const 答 = await callAt("search_deadlines", {
       query: key,
       scope: "all",
       limit: 30,

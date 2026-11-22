@@ -507,6 +507,14 @@
         "data/promotions/2026-08-31-sesame-jcdl-2026/manifest.json"
       ]
     },
+    "6e29e7834b9aabb0b7ec8a5179d6abcb36457b2224ae5fd55ffdeb477de168d3": {
+      "bytes": 5581,
+      "content_type": "application/octet-stream",
+      "references": [
+        "data/curated.generated.yaml",
+        "data/snapshot.json"
+      ]
+    },
     "6faedc0b8a06a9b9f7888af19dcff75484951597267dbe1f373821206da3d6ef": {
       "bytes": 7934,
       "content_type": "application/octet-stream",
