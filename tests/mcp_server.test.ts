@@ -160,7 +160,7 @@ function 当たる語を作る(): string {
   expect(今後.length, "この検査の前提（固定時計で今後の行）が崩れた").toBeGreaterThan(0);
   const 行 = 今後.slice().sort((a, b) => a.t - b.t)[0];
   const 当たる =
-    (String(行.conf?.title ?? "") + " " + String(行.conf?.full_name ?? ""))
+    `${String(行.conf?.title ?? "")} ${String(行.conf?.full_name ?? "")}`
       .match(/[\p{L}\p{N}]{2,}/gu)
       ?.find(
         (w) =>
@@ -3822,7 +3822,7 @@ it("索引（llms.txt）が、ランクを受ける道具を漏らさず書い�
   const llms = readFileSync(join(REPO_ROOT, "public", "llms.txt"), "utf8");
   const 行 = llms.split("\n").find((l) => l.includes("`rank` は")) ?? "";
   for (const 道具 of ランクを受ける)
-    expect(行, "索引が " + 道具 + " の rank を書いていない").toContain("`" + 道具 + "`");
+    expect(行, `索引が ${道具} の rank を書いていない`).toContain(`\`${道具}\``);
 });
 
 it("list_upcoming のランクの絞り込みは、締切の検索と同じ（同じ種別・同じ窓 – 第 41 回）", async () => {
