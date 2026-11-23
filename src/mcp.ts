@@ -1764,7 +1764,7 @@ export function 開催の行(days: number, now: number): UpcomingEventRow[] {
   /* 「今日から N 日（JST の暦日で数える）」なので、終端も JST の日の始めから数える
    * （生のミリ秒から数えると、最終日の開始が時刻で出入りする – 締切側と揃える）。 */
   const 日の始め = Date.parse(
-    new Date(now + 9 * 3600000).toISOString().slice(0, 10) + "T00:00:00+09:00",
+    `${new Date(now + 9 * 3600000).toISOString().slice(0, 10)}T00:00:00+09:00`,
   );
   const 限り = Recommender.withinDaysLimitMs(days, 日の始め);
   const today = Date.parse(new Date(now + 9 * 3600000).toISOString().slice(0, 10));
@@ -1929,7 +1929,7 @@ function listUpcoming(
    * 始めに落とす。呼び出しのたびのミリ秒で境界の 1 行が出入りすると、同じ日の結果が
    * 時刻で変わる（2026-10-25 実測: 00:19 は緑・22:4x は赤）。 */
   const 日の始め = Date.parse(
-    new Date(now + 9 * 3600000).toISOString().slice(0, 10) + "T00:00:00+09:00",
+    `${new Date(now + 9 * 3600000).toISOString().slice(0, 10)}T00:00:00+09:00`,
   );
   const 限り = Recommender.withinDaysLimitMs(days, 日の始め);
   /* 表示している暦日で比べる（`tShown`。無ければ `t`）。 */
