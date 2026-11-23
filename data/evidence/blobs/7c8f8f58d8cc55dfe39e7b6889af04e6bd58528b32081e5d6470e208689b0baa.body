@@ -1,0 +1,145 @@
+<h2>CoNEXT 2027 Call for Papers</h2>
+<div class="row">
+    <div class="col-md-9">
+        <p>The Proceedings of the ACM on Networking (PACMNET) journal is seeking papers containing significant and novel research results on emerging computer networks and their applications. All accepted papers will also be presented in the ACM CoNEXT 2027 conference. This is a new model that strives to combine the benefits of both conference and journal-based publication.</p>
+        <p>The ACM transition to all publications in Open Access ensures that everyone can freely access and benefit from the papers, increasing their visibility and impact. To help authors cover eventual APC fees, both ACM and SIGCOMM have put in place discounts and waivers. More information can be found <a href="https://dl.acm.org/journal/pacmnet/open-access" target="_blank" rel="noopener">here</a>.</p>
+        <p>We especially encourage submissions that present novel experimentation, creative use of networking technologies, and new insights made possible using analysis. We invite submissions on a wide range of networking topics. The list of topics includes (in alphabetical order):</p>
+        <ul>
+            <li>Content distribution and caching, e.g., CDN, peer-to-peer, overlays</li>
+            <li>Design, analysis, and evaluation of network architectures</li>
+            <li>Experience and lessons learned by deploying large-scale networked systems</li>
+            <li>Experience with applying machine learning, large language models (LLMs) and generative AI to networking problems</li>
+            <li>In-network computing, NFV and network programmability</li>
+            <li>Innovative uses of network data beyond communication</li>
+            <li>Network measurements and modeling</li>
+            <li>Internet economics and policy</li>
+            <li>Mobile and wireless network protocols and applications</li>
+            <li>Machine learning as applied to all layers of networking</li>
+            <li>Networked applications including XR, web, video, and online social networks</li>
+            <li>Network and systems for AI</li>
+            <li>Network aspects of datacenters, cloud computing, operating systems, virtualization</li>
+            <li>Network aspects of IoT</li>
+            <li>Network control and management, including SDN</li>
+            <li>Network, transport, and application-layer protocols</li>
+            <li>Next generation mobile networks</li>
+            <li>Reliability and availability of networks, protocols, and applications</li>
+            <li>Reproducibility of networking research</li>
+            <li>Routing and traffic engineering</li>
+            <li>Security and privacy aspects of network applications, protocols and systems</li>
+            <li>Sustainable (e.g., energy-efficient, carbon-efficient) computing and networking</li>
+        </ul>
+        <p>We are open to other contributions that stretch networking research outside of these topics, present new emerging computing trends, or potentially involve unfamiliar techniques. We welcome experience submissions that clearly articulate lessons learned, as well as submissions that refute prior published results.</p>
+        <p>We emphasize that the focus of CoNEXT is networking and its impact on networked applications. For example, papers focusing on the wireless physical layer without considering the impact on the network (e.g., quantitative performance benefits, deployment challenges) are out of scope. Similarly, contributions that focus on improvements and applications of AI models are welcome if they present a critical and in-depth analysis of the advantages and disadvantages of the proposed solutions, with a clear take-home message from a networking perspective. Potential authors who are unsure of the scope are encouraged to contact the PC chairs before submission.</p>
+        <p>The CoNEXT conference will present all papers that have been accepted to appear in the Proceedings of the ACM on Networking (PACMNET). There are two deadlines to submit your work in time for a presentation at the conference (see below).</p>
+
+        <h3>Important Dates</h3>
+
+        <p>There are two submission opportunities over the year:</p>
+
+        <p><b><i>December</i> submission:</b></p>
+        <ul>
+            <li>Paper Registration: November 27, 2026</li>
+            <li>Paper Submission: December 4, 2026</li>
+            <li>Early reject notification: February 2027</li>
+            <li>Notification of Acceptance: March 31, 2027</li>
+            <li>Camera Ready for accepted papers: April 30, 2027</li>
+            <li>Publication of accepted papers: June 2027 issue of PACMNET</li>
+        </ul>
+        <p>For papers given the <u>one-shot major revision</u> option:</p>
+        <ul>
+            <li>Major revision due: May 28, 2027</li>
+            <li>Final decision notification: June 21, 2027</li>
+            <li>Camera ready: July 30, 2027</li>
+            <li>Publication of accepted papers: September 2027 issue of PACMNET</li>
+        </ul>
+
+        <p><b><i>June</i> submission:</b></p>
+        <ul>
+            <li>Paper Registration: May 28, 2027</li>
+            <li>Paper Submission: June 4, 2027</li>
+            <li>Early reject notification: Late July – Early August 2027</li>
+            <li>Notification of Acceptance: September 10, 2027</li>
+            <li>Camera Ready for accepted papers: October 11, 2027</li>
+            <li>Publication of accepted papers: December 2027 issue of PACMNET</li>
+        </ul>
+        <p>For papers given the <u>one-shot major revision</u> option:</p>
+        <ul>
+            <li>Major revision due: November 12, 2027</li>
+            <li>Final decision notification: December 14, 2027</li>
+            <li>Camera Ready for accepted papers: January 21, 2028</li>
+            <li>Publication of accepted papers: March 2028 issue of PACMNET</li>
+        </ul>
+
+        <p>All deadline times are at 23:59 Anywhere on Earth (AoE).</p>
+
+        <h3>Submission</h3>
+
+        <p>CoNEXT welcomes the submission of both long and short papers. All the submissions should be <b>double-anonymous</b> (more instructions below) and will be peer-reviewed. Per the anonymity guidelines, you must remove any author names.</p>
+        <p><b>Long papers</b> are the traditional form to present technical work. Submissions should be no more than <b>16 pages</b>, with unlimited pages for references and up to four pages for appendices.</p>
+        <p><b>Short papers</b> are the preferred vehicle for contributions whose novelty and impact show the same technical excellence, and whose description does not need 16 pages. Short papers should be no more than <b>10 pages</b>, with unlimited pages for references and up to two pages for appendices.</p>
+        <p>Authors may be given up to two extra pages to address comments and requirements received during the review process.</p>
+        <p>Authors shall use a single column, 10pt, ACM small template for articles following (more details <a href="#!/submission">here</a>).</p>
+        <p>Both long and short papers will be scheduled for publication in the closest issue of the <a href="https://dl.acm.org/journal/pacmnet" target="_blank" rel="noopener">Proceedings of the ACM on Networking (PACMNET)</a>.</p>
+        <p>Short papers will be reviewed with a more open mind towards the scope of evaluation or breadth of topics compared to long papers. Note that position papers, critiques of networking research, and ideas that are not yet fully complete or evaluated are a better fit for the HotNets workshop.</p>
+        <p>Submission portal for both types of paper for the December deadline: <a href="https://conext27-winter.hotcrp.com/" target="_blank" rel="noopener">https://conext27-winter.hotcrp.com</a></p>
+        <p>Submission portal for both types of paper for the June deadline: <a href="https://conext27-june.hotcrp.com/" target="_blank" rel="noopener">https://conext27-june.hotcrp.com</a></p>
+        <p>For details, please check the <a href="#!/submission">Submission instructions</a> page.</p>
+        <p>Please ensure that you and your co-authors <a href="https://orcid.org/register" target="_blank" rel="noopener">obtain an ORCID ID</a>, so you can complete the publishing process for your accepted paper. ACM has been involved in ORCID from the start and we have recently made a <a href="https://authors.acm.org/author-resources/orcid-faqs" target="_blank" rel="noopener">commitment to collect ORCID IDs from all of our published authors</a>. We are committed to improve author discoverability, ensure proper attribution and contribute to ongoing community efforts around name normalization; your ORCID ID will help in these efforts.</p>
+
+        <h3>One-shot major revision</h3>
+
+        <p>Each paper may be accepted, rejected, or given the option of one-shot “major” revision.</p>
+        <p>The one-shot revision decision will be followed by a summary of the paper's merits and a list of minimum necessary changes that are required for the paper to be accepted for publication in PACMNET. The authors will be given a deadline (about two months) to submit a version of their work addressing the issues. The paper will then be subject to the final decision of accept or reject, at which point the paper will be reviewed to judge whether it addresses the requirements requested, to the extent possible, by the same reviewers as earlier. The reviewers will primarily judge the paper based on whether it has successfully addressed the requirements detailed in the document, accompanied by the notification, but will factor in the independent merit of the revision. During this review period, the paper is still considered under review by CoNEXT and therefore cannot be submitted to other conferences or journals unless the authors first withdraw it from consideration.</p>
+        <p>The one-shot revision option will be given to a select number of papers. Reviewers will be instructed not to offer a one-shot revision option if they cannot determine that the paper sufficiently meets the bar after successfully addressing the required/proposed changes.</p>
+        <p>Authors given a one-shot revision decision will be sent detailed instructions on how to proceed with the major revision. These instructions will include the list of minimum necessary changes required by the PC for the paper to be accepted.</p>
+        <p>By the revision deadline, the authors must submit the following:</p>
+        <ul>
+            <li>A revised version of the paper</li>
+            <li>A cover letter explaining the differences between the original submission and the revised version</li>
+            <li>An additional version of the paper in which revision changes since the first submission are clearly marked</li>
+        </ul>
+        <p>Note that papers that have been rejected at any stage of the process may not be resubmitted to any ACM CoNEXT deadline within 12 months following the initial submission of the paper.</p>
+
+        <h3>Early Reject Notification</h3>
+
+        <p>The review process will consist of multiple rounds of scrutiny. In order to allow authors to submit an improved version of work to other venues, authors of submissions for which there is a consensus on rejection will be notified earlier.</p>
+
+        <h3>Research Reproducibility</h3>
+
+        <p>We value submissions that are accompanied by clearly defined artifacts not previously available, including traces, original data, source code, or tools developed as part of the submitted work. If the paper plans to release any associated artifacts, a summary must be included in the appendix. This should include a description of the artifacts and how they will be made available to the community. Any accepted papers that committed to artifact release will be checked upon the camera-ready deadline to ensure availability.</p>
+        <p>Beyond this, CoNEXT 2027 will also run a reproducibility committee that is responsible for awarding accepted papers the optional ACM reproducibility badges (for details visit: <a href="http://www.acm.org/publications/policies/artifact-review-badging" target="_blank" rel="noopener">http://www.acm.org/publications/policies/artifact-review-badging</a>). For accepted papers to be eligible for ACM badging, the authors (1) must opt-in for ACM badging before the paper submission deadline, and (2) submit to the artifact evaluation committee (<a href="#!/artifact-submission">https://conferences.sigcomm.org/co-next/2027/#!/artifact-submission</a>) by the appropriate deadline. Artifact pointers and a description must be included in the camera-ready version of the paper.</p>
+
+        <h3>Double-anonymous requirements</h3>
+
+        <p>All submitted papers will be assessed through a double-anonymous review process. This means that the authors do not see who are the reviewers and the reviewers do not see who are the authors. As an author, you should do your best to ensure that your paper submission does not directly or indirectly reveal the authors' identities. The following steps are minimal requirements for a double-anonymous submission:</p>
+        <ul>
+            <li>Remove all personal information about the authors from the paper (e.g., names, affiliations)</li>
+            <li>Remove acknowledgements to organizations and/or people</li>
+            <li>When referring in the paper to your previous work, this should be done similarly to any other work, as if you are not an author of that work.</li>
+            <li>Do not add references to external repositories or technical reports that can be used to identify any of the authors or institutions/organizations. You are encouraged to mention that your code will be made available during your submission.</li>
+            <li>Uploading a version of the paper to a non-peer-reviewed location is acceptable. The authors should however avoid advertising the paper on popular mailing lists and social media.</li>
+        </ul>
+        <p>At the same time, PC members should not actively try to de-anonymize the authors’ identities. Any violation of the double-anonymous reviewing process should be reported to the PC chairs.</p>
+
+        <h3>Ethical concerns</h3>
+
+        <p><b>All papers must include a statement or subsection about ethical issues raised by the work.</b> In limited cases, this could simply be a sentence disclaiming ethical issues, but work involving human subjects or potentially sensitive data (e.g., user traffic, social network information, censorship evasion) must clearly discuss the relevant issues. Papers that do not include an ethics statement may be rejected.</p>
+        <p>Papers must follow basic precepts of ethical research and subscribe to community norms. Works must also show respect for norms around privacy, secure storage of sensitive data, voluntary and informed consent for human subjects and users who might be placed at risk, avoiding deceptive practices when not essential, beneficence (maximizing the benefits to an individual or to society while minimizing potential harm to an individual), and risk mitigation. Authors may want to consult the Menlo Report and the ACM ethics policy for further information on ethical principles, and they may find the Allman/Paxson paper in IMC 2007 helpful for a perspective on ethical data sharing.</p>
+        <p>By submitting your article to an ACM Publication, you are hereby acknowledging that you and your co-authors are subject to all <a href="https://www.acm.org/publications/policies" target="_blank" rel="noopener">ACM Publications Policies</a>, including ACM's new <a href="https://www.acm.org/publications/policies/research-involving-human-participants-and-subjects" target="_blank" rel="noopener">Publications Policy on Research Involving Human Participants and Subjects</a>. Alleged violations of this policy or any ACM Publications Policy will be investigated by ACM and may result in a full retraction of your paper, in addition to other potential penalties, as per ACM Publications Policy.</p>
+        <p>Many organizations have an ethics review process, sometimes called an Institutional Review Board (IRB), and in many projects, IRB involvement is appropriate. IRB approval of research is an important factor and should be mentioned, but the program committee will independently evaluate the ethical soundness of the work just as they evaluate its technical soundness.</p>
+        <p>The Program Committee takes a broad view of what constitutes an ethical concern, and the PC chairs may reach out to authors during the review process if questions arise.</p>
+
+        <h3>Use of Generative AI</h3>
+
+        <p>While generative AI systems—such as large language models (LLMs)—are powerful and useful tools, there remain open questions as to how and which data they use to train, raising potential concerns over integrity and confidentiality. The ACM has established a set of guidelines pertaining to how authors and reviewers can use generative AI. We summarize some of the main points below, but we refer authors to the following links. Failure to adhere to these guidelines can result in paper rejection.</p>
+        <p>By authors: The <a href="https://www.acm.org/publications/policies/frequently-asked-questions" target="_blank" rel="noopener">ACM's author guidelines</a> state that authors are allowed to use generative AI in limited ways, and that their use must be acknowledged in the paper. For small portions of text (phrases or sentences), papers must include a footnote stating that it was generated by AI; for larger portions of text, graphics, and other content, authors must disclose in the Appendix what content was generated by an AI, along with the specific tools and versions used. Please refer to the ACM guidelines for more specific instructions.</p>
+        <p><b>(New in 2027)</b> In light of recent events at other ACM conferences, authors will be asked to submit the source of their bibliography with the paper (the <tt>.bbl</tt> file for LaTeX submissions) so that references can be checked for potentially fabricated or incorrect entries.</p>
+        <p>By reviewers: Reviewers are not allowed to upload any portion of the submitted papers to generative AI tools. However, according to the <a href="https://www.acm.org/publications/policies/peer-review" target="_blank" rel="noopener">ACM's peer review guidelines</a>, reviewers may upload the content of their own reviews to generative AI "with the sole purpose of improving the quality and readability of reviewer reports for the author, provided any and all parts of the review that would potentially identify the submission, author identities, reviewer identity, or other confidential content is removed prior to uploading into third party tools."</p>
+
+        <h3>Contact us</h3>
+
+        <p>If you have any questions, please email the TPC co-chairs:</p>
+        <p>Gyuyeong Kim (gyuyeong.kim [at] yonsei.ac.kr)</p>
+        <p>Fernando Ramos (fvramos [at] tecnico.ulisboa.pt)</p>
+    </div>
+</div>

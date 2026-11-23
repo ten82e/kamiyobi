@@ -3220,3 +3220,209 @@ conferences:
             supersededBy: jip|jip-compsac2027-si|paper|1|
             reason: manual-resolution
             supersededAt: '2026-10-03T14:34:11Z'
+
+  # --- CoNEXT 2027 December cycle: 秒丸めドリフトの pin（2026-11-23 公式取得）---
+  # 根拠: https://conferences.sigcomm.org/co-next/2027/partials/cfp.html (2026-11-23 取得)
+  #   「Paper Registration: November 27, 2026 / Paper Submission: December 4, 2026 /
+  #    All deadline times are at 23:59 Anywhere on Earth (AoE).」
+  #   上流 ccfddl が秒を 23:59:59→23:59:00 に丸め直し、health gate が 59 秒差を
+  #   「前倒し」と誤検知した。公式日付を 23:59:59 AoE（SPEC の confirmed-tz 慣例・
+  #   公開値と一致）で pin し公式証拠を添える。June cycle (round 2) は触らない。
+  conext:
+    editions:
+      conext27:
+        year: 2027
+        deadlines:
+          - kind: abstract
+            label: Abstract submission
+            date: '2026-11-27 23:59:59'
+            tz: AoE
+            round: 1
+            comment: December Cycle
+            evidence:
+              - source_name: CoNEXT 2027 official CFP
+                source_url: https://conferences.sigcomm.org/co-next/2027/partials/cfp.html
+                sourceClass: official-cfp
+                observed_at: '2026-11-23T09:48:33Z'
+                retrievedAt: '2026-11-23T09:48:33Z'
+                verifiedAt: '2026-11-23T09:48:33Z'
+                contentHash: 7c8f8f58d8cc55dfe39e7b6889af04e6bd58528b32081e5d6470e208689b0baa
+                evidenceRef: data/evidence/blobs/7c8f8f58d8cc55dfe39e7b6889af04e6bd58528b32081e5d6470e208689b0baa.body
+                rawExcerpt: 'Paper Registration: November 27, 2026; All deadline times are at 23:59 Anywhere on Earth (AoE).'
+                verifiedFields:
+                  - date
+                  - time
+                  - timezone
+                  - kind
+                  - round
+                confidence: official
+          - kind: paper
+            label: Paper submission
+            date: '2026-12-04 23:59:59'
+            tz: AoE
+            round: 1
+            comment: December Cycle
+            evidence:
+              - source_name: CoNEXT 2027 official CFP
+                source_url: https://conferences.sigcomm.org/co-next/2027/partials/cfp.html
+                sourceClass: official-cfp
+                observed_at: '2026-11-23T09:48:33Z'
+                retrievedAt: '2026-11-23T09:48:33Z'
+                verifiedAt: '2026-11-23T09:48:33Z'
+                contentHash: 7c8f8f58d8cc55dfe39e7b6889af04e6bd58528b32081e5d6470e208689b0baa
+                evidenceRef: data/evidence/blobs/7c8f8f58d8cc55dfe39e7b6889af04e6bd58528b32081e5d6470e208689b0baa.body
+                rawExcerpt: 'Paper Submission: December 4, 2026; All deadline times are at 23:59 Anywhere on Earth (AoE).'
+                verifiedFields:
+                  - date
+                  - time
+                  - timezone
+                  - kind
+                  - round
+                confidence: official
+        mode: merge-slots
+        remove:
+          - kind: abstract
+            label: Abstract submission
+            round: 1
+            values:
+              - '2026-11-28T11:59:00.000Z'
+              - '2026-11-28T11:59:59.000Z'
+          - kind: paper
+            label: Paper submission
+            round: 1
+            values:
+              - '2026-12-05T11:59:00.000Z'
+              - '2026-12-05T11:59:59.000Z'
+
+  # --- ICSME 2027 Research Papers Track: 公式前倒し Mar 5 → Feb 26（2026-11-23 取得）---
+  # 根拠: https://conf.researchr.org/track/icsme-2027/icsme-2027-papers (2026-11-23 取得)
+  #   「All submission dates are at 23:59 AoE (Anywhere on Earth) /
+  #    Abstract Submission: February 19, 2027 / Paper Submission: February 26, 2027」。
+  #   Paper 行は頁で「Date changed at Fri 13 Nov 2026」と更新済み（旧 Mar 5 → Feb 26）。
+  #   上流 ccfddl は既に Feb 26 + Feb 19 abstract を反映。公開 baseline の Mar 5 からの
+  #   前倒しを公式証拠で承認させ、旧値を supersession 台帳に記録する。
+  icsme:
+    editions:
+      icsme27:
+        year: 2027
+        deadlines:
+          - kind: abstract
+            label: Abstract submission
+            date: '2027-02-19 23:59:59'
+            tz: AoE
+            round: 1
+            comment: Research Papers Track
+            evidence:
+              - source_name: ICSME 2027 official research track
+                source_url: https://conf.researchr.org/track/icsme-2027/icsme-2027-papers
+                sourceClass: official-cfp
+                observed_at: '2026-11-23T09:48:35Z'
+                retrievedAt: '2026-11-23T09:48:35Z'
+                verifiedAt: '2026-11-23T09:48:35Z'
+                contentHash: 2f3dda1265aa294e1cd266054d58a200b54202c2b4dbe43eb87d41074f1ab4e1
+                evidenceRef: data/evidence/blobs/2f3dda1265aa294e1cd266054d58a200b54202c2b4dbe43eb87d41074f1ab4e1.body
+                rawExcerpt: 'Abstract Submission: February 19, 2027; All submission dates are at 23:59 AoE (Anywhere on Earth)'
+                verifiedFields:
+                  - date
+                  - time
+                  - timezone
+                  - kind
+                  - round
+                confidence: official
+          - kind: paper
+            label: Paper submission
+            date: '2027-02-26 23:59:59'
+            tz: AoE
+            round: 1
+            comment: Research Papers Track
+            evidence:
+              - source_name: ICSME 2027 official research track
+                source_url: https://conf.researchr.org/track/icsme-2027/icsme-2027-papers
+                sourceClass: official-cfp
+                observed_at: '2026-11-23T09:48:35Z'
+                retrievedAt: '2026-11-23T09:48:35Z'
+                verifiedAt: '2026-11-23T09:48:35Z'
+                contentHash: 2f3dda1265aa294e1cd266054d58a200b54202c2b4dbe43eb87d41074f1ab4e1
+                evidenceRef: data/evidence/blobs/2f3dda1265aa294e1cd266054d58a200b54202c2b4dbe43eb87d41074f1ab4e1.body
+                rawExcerpt: 'Paper Submission: February 26, 2027; All submission dates are at 23:59 AoE (Anywhere on Earth)'
+                verifiedFields:
+                  - date
+                  - time
+                  - timezone
+                  - kind
+                  - round
+                confidence: official
+            superseded_deadlines:
+              - value: '2027-03-06T11:59:59Z'
+                precision: exact
+                source: https://conf.researchr.org/track/icsme-2027/icsme-2027-papers
+                evidenceRef: data/evidence/blobs/2f3dda1265aa294e1cd266054d58a200b54202c2b4dbe43eb87d41074f1ab4e1.body
+                status: superseded
+                supersededBy: icsme|icsme27|paper|1|
+                reason: manual-resolution
+                supersededAt: '2026-11-23T09:48:35Z'
+        mode: merge-slots
+        remove:
+          - kind: paper
+            label: Paper submission
+            round: 1
+            values:
+              - '2027-03-06T11:59:59.000Z'
+
+  # --- CC 2027: 上流が落とした abstract 行を公式証拠で復元（2026-11-23 取得）---
+  # 根拠: https://conf.researchr.org/track/CC-2027/CC-2027-research-papers (2026-11-23 取得)
+  #   Important Dates (AoE UTC-12h)「Tue 1 Dec 2026 Abstract registration deadline /
+  #    Thu 3 Dec 2026 Full paper submission deadline」。
+  #   上流 ccfddl が abstract_deadline を comment に降格して構造化 abstract 行を落とし、
+  #   公開 baseline の Dec 1 abstract が消失 → gate が identity migration required と
+  #   誤検知した。公式は abstract を依然掲載しているので行を復元し paper も pin する。
+  cc:
+    editions:
+      cc27:
+        year: 2027
+        deadlines:
+          - kind: abstract
+            label: Abstract submission
+            date: '2026-12-01 23:59:59'
+            tz: AoE
+            round: 1
+            evidence:
+              - source_name: CC 2027 official research papers track
+                source_url: https://conf.researchr.org/track/CC-2027/CC-2027-research-papers
+                sourceClass: official-cfp
+                observed_at: '2026-11-23T09:48:37Z'
+                retrievedAt: '2026-11-23T09:48:37Z'
+                verifiedAt: '2026-11-23T09:48:37Z'
+                contentHash: b293f8fa4d5c46186185c8eb70e770c2f8680f655bda78ab2f40a4ee8e40c76a
+                evidenceRef: data/evidence/blobs/b293f8fa4d5c46186185c8eb70e770c2f8680f655bda78ab2f40a4ee8e40c76a.body
+                rawExcerpt: 'Tue 1 Dec 2026 Abstract registration deadline; Important Dates AoE (UTC-12h)'
+                verifiedFields:
+                  - date
+                  - time
+                  - timezone
+                  - kind
+                  - round
+                confidence: official
+          - kind: paper
+            label: Paper submission
+            date: '2026-12-03 23:59:59'
+            tz: AoE
+            round: 1
+            evidence:
+              - source_name: CC 2027 official research papers track
+                source_url: https://conf.researchr.org/track/CC-2027/CC-2027-research-papers
+                sourceClass: official-cfp
+                observed_at: '2026-11-23T09:48:37Z'
+                retrievedAt: '2026-11-23T09:48:37Z'
+                verifiedAt: '2026-11-23T09:48:37Z'
+                contentHash: b293f8fa4d5c46186185c8eb70e770c2f8680f655bda78ab2f40a4ee8e40c76a
+                evidenceRef: data/evidence/blobs/b293f8fa4d5c46186185c8eb70e770c2f8680f655bda78ab2f40a4ee8e40c76a.body
+                rawExcerpt: 'Thu 3 Dec 2026 Full paper submission deadline; Important Dates AoE (UTC-12h)'
+                verifiedFields:
+                  - date
+                  - time
+                  - timezone
+                  - kind
+                  - round
+                confidence: official
+        mode: merge-slots

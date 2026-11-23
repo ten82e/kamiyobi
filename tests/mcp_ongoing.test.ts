@@ -506,8 +506,8 @@ fs.rmSync(pool.raw,{recursive:true,force:true});
       });
     }
     for (const [query, kind, venueKey, count, raw] of [
-      ["ネットワーク", "registration", "percom", 1, 452],
-      ["分散システム", "registration", "percom", 1, 1700],
+      ["ネットワーク", "registration", "percom", 1, 454],
+      ["分散システム", "registration", "percom", 1, 1701],
       ["3DV", "paper", "3dv", 6, 12],
       ["3DV", "abstract", "3dv", 3, 12],
       ["AAAI", "abstract", "aaai", 11, 53],

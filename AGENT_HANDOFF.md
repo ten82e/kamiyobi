@@ -1,5 +1,38 @@
 # kamiyobi agent handoff
 
+## 現在地（2026-11-23・nightly update-data の health gate 修復）
+
+本体ブランチは `main`（origin/main と同期）。**2026-11-18〜11-23 の nightly
+`update-data` が毎晩 Health gate で失敗**していたのを修復した。原因は上流 ccfddl の
+変更に対する公式証拠の欠落で、gate が 4 件を配信阻止していた:
+
+- `conext|conext27|abstract|1|` / `paper|1`: 上流が秒を `23:59:59`→`23:59:00` に
+  丸め直し、59 秒差を「前倒し」と誤検知。公式 CFP（CoNEXT 2027・2026-11-23 取得）は
+  「Paper Registration: November 27 / Paper Submission: December 4 / All deadline
+  times are at 23:59 AoE」。公式日付を 23:59:59 AoE（SPEC の confirmed-tz 慣例・
+  公開値と一致）で pin し公式証拠を添えた。
+- `icsme|icsme27|paper|1`: 公式が Mar 5 → **Feb 26** へ前倒し（頁に「Date changed at
+  Fri 13 Nov 2026」）。abstract Feb 19 も新規。公式証拠で前倒しを承認させ、旧値
+  Mar 5 を supersession 台帳に記録。
+- `cc|cc27|abstract|1`: 上流が `abstract_deadline` を comment に降格して構造化
+  abstract 行を落とし、公開 baseline の Dec 1 abstract が消失 → 「identity migration
+  required」と誤検知。公式は abstract（Dec 1）/ paper（Dec 3）を依然掲載（AoE）。
+  abstract 行を公式証拠で復元し paper も pin。
+
+証拠は `data/evidence/blobs` の CAS 3 件（conext-cfp / icsme-papers / cc-papers、
+2026-11-23 取得）。訂正は `data/overrides.yaml` に merge-slots で記録。
+固定語彙の件数検査は `tests/fixtures/query-reference-overrides.yaml` で中和
+（conext/icsme/cc を空 patch・cvm 前例）。`tests/mcp_ongoing.test.ts` の実測 raw 件数は
+conext27 追加で ネットワーク 452→454・icsme27 abstract 追加で 分散システム 1700→1701
+（d585ff33 の promotion 前例どおり）。
+
+**検証（2026-11-23）**: typecheck / check / 全 6772 tests（529 ファイル・skipped 0）/
+`npm run update` / evidence verify 0 issues / health gate が公開 baseline・
+新規 committed baseline・nightly 構成（snapshot baseline vs online current）の
+3 通りで全て緑。**CI は空キャッシュ（snapshot fallback）で public を建てる**ので、
+手元も `--cache /tmp/kamiyobi-test-cache`（空）で建てて検査すること（ populated
+`.cache` で建てると snapshot との drift で mcp_server が落ちる – 2026-11-23 実測）。
+
 ## 現在地（2026-11-09・goal ラウンド 66 継続中）
 
 本体ブランチは `main`。`origin/main` より **136 コミット**先行しており、**push は未承認**

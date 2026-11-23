@@ -48,6 +48,13 @@ jip:
 # Both were absent from the original a844570 override input.
 cvm: {}
 evomusart-2027: {}
+# 2026-11-23 の公式訂正（CoNEXT 秒丸め pin・ICSME 前倒し・CC abstract 復元）も
+# 固定語彙の件数には載せない。凍結 snapshot（ee942cd）に conext27/icsme27/cc27 は
+# 無い（conext26/icsme26 のみ・cc は不在）ので、本番 override が 2027 版を足すと
+# 历史件数がずれる。cvm と同じ空 patch で中和する。
+conext: {}
+icsme: {}
+cc: {}
 # This historical input instant is already present in the original query fixture.
 # Production uses the independently verified November correction.
 dasfaa:
