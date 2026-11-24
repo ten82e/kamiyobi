@@ -11,6 +11,8 @@ export const PLACE_QUERY_ALIASES_JA: string[][] = [
   ["ブエノスアイレス", "buenos aires"],
   ["グルノーブル", "grenoble"],
   ["貴陽", "guiyang"],
+  // Published-data refresh 2026-11-22: newly reaching five recorded rows.
+  ["ヘラクレオン", "heraklion"],
   // Published-data refresh 2026-10-04: cities with at least five recorded rows.
   ["デトロイト", "detroit"],
   ["ケンブリッジ", "cambridge"],

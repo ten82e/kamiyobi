@@ -180,7 +180,7 @@ jobs:
               } catch { console.log("- (validation report unavailable)"); }
             '
             echo '```'
-            echo "新しい警告が出ているときは、`data/validator-findings.json` に発見としてレビューして記録する（code・subject・count と、reviewed_by・reviewed_at・review_reason・evidence_ref・expires_at。既存条目 VF-0001 の形を写す）。記録すると次の実行からゲートが通る。"
+            echo "新しい警告が出ているときは、\`data/validator-findings.json\` に発見としてレビューして記録する（code・subject・count と、reviewed_by・reviewed_at・review_reason・evidence_ref・expires_at。既存条目 VF-0001 の形を写す）。記録すると次の実行からゲートが通る。"
             echo "Diagnosis artifacts are in the generated-update artifact (baseline/, current/, health-violations.json, validation.json)."
           } >> "$GITHUB_STEP_SUMMARY"
       - name: Upload generated update
