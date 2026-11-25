@@ -7,6 +7,8 @@
  * `tests/place_spelling_variants.test.ts`、`tests/place_query_alias.test.ts`）。
  */
 export const PLACE_QUERY_ALIASES_JA: string[][] = [
+  // Published-data refresh 2026-11-25: cities that reached five recorded rows.
+  ["イラクリオ", "heraklion"],
   // Published-data refresh 2026-11-08: cities that reached five recorded rows.
   ["ブエノスアイレス", "buenos aires"],
   ["グルノーブル", "grenoble"],
