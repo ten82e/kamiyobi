@@ -927,6 +927,60 @@ function 窓の外の案内(counts: { raw: number; filtered: number }): string {
     : `${countsText}収録範囲を変えるだけでは結果は増えません。scope: "all" に切り替えたうえで、種別・期間・ランク・国内・オンライン・過去や推定を含める条件を見直してください。`;
 }
 
+/** 検索語が会議の key・略称と**ちょうど**一致する時、その会議の key を返す（無ければ null）。
+ * key の一致を優先し（`venue_info` の解決と同じ）、略称が複数の会議に当たる時は
+ * 名指しにしない。 */
+function 名指しの会議(query: string): string | null {
+  const 求 = venueLookupText(query);
+  if (!求) return null;
+  const venues = snapshot().conferences ?? [];
+  const keyHit = venues.filter((c) => venueLookupText(c.key) === 求);
+  if (keyHit.length === 1) return String(keyHit[0].key);
+  if (keyHit.length > 1) return null;
+  const acrHit = venues.filter((c) => venueLookupText(c.acronym) === 求);
+  return acrHit.length === 1 ? String(acrHit[0].key) : null;
+}
+
+/** 名指しされた会議自身の行を、収録の全体から拾う（既定の窓の外の行も含む）。
+ * 既定の絞り込みは過去・推定を除くので、会議を名指してもその会議の行が窓の外にしか
+ * 無い時は、部分一致の他会議の行だけが返っていた（例: `sc` は画面の窓に行が無い）。
+ * 名指しの時は、その会議の行に限って過去・推定の既定を外す。利用者が
+ * `include_past` / `include_estimated` を明示した時はその指定に従い、種別・ランク・
+ * 分野・国内・オンライン・ワークショップ・`within_days` の絞り込みは通常どおり効く。
+ * 行の状態（過去・推定）の印は行自身が持つ表示のまま返す（意味は変えない）。
+ * 既定の当たりにその会議の行が既にある時は足さない（並びも件数も従来どおり）。
+ * 既定の当たりが**空**の時も足さない – 当たりが無い時は、名簿の注と scope の比較が
+ * その会議の過去・推定の状態を答える既存の決まり（第 875・917・928〜930・964・989 回）
+ * があり、行を足すとその案内が消えてしまう。足すのは「部分一致の他会議の行だけが
+ * 返り、名指した会議の行が無い」時だけ（第 1111 回）。
+ * 収録を読めない時は名指しを諦める（本体の検索を壊さない）。 */
+function 名指しの行(
+  query: string,
+  now: number,
+  args: Parameters<typeof 畫面の既定>[2],
+  既定の当たり: Row[],
+): Row[] {
+  let key: string | null;
+  let 収録: Row[];
+  try {
+    key = 名指しの会議(query);
+    if (!key) return [];
+    if (!既定の当たり.length) return [];
+    if (既定の当たり.some((r) => venueLookupText(r.conf.key) === venueLookupText(key))) return [];
+    収録 = withJournals(displayRows(allRows()), snapshot().conferences ?? [], now);
+  } catch {
+    return [];
+  }
+  const 自分 = 収録.filter((r) => venueLookupText(r.conf.key) === venueLookupText(key));
+  if (!自分.length) return [];
+  const 緩めた = {
+    ...args,
+    include_past: args.include_past === undefined ? true : args.include_past,
+    include_estimated: args.include_estimated === undefined ? true : args.include_estimated,
+  };
+  return sortRows(畫面の既定(自分, now, 緩めた));
+}
+
 /** 名前の殼の中で、語が**獨立に立つ**か（英数字は前後が區切りの事を要求する – `sc` が
  * `science` や `isca` に当たらない。画面の `nameOnlyConferenceMatch` と同じ規則）。 */
 function 名前に立つ(語: string, 殼: string): boolean {
@@ -1524,7 +1578,12 @@ function searchDeadlines(
     絞り込みが効く || 絞り込みだけ
       ? ""
       : `絞り込みとして効く語がありません（「${query}」は記号だけなので、すべての行を表示しています）。会議名・分野・開催地・日付を指定してください`;
-  const hit = sortRows(畫面の既定(素の, now, args));
+  const 既定の当たり = sortRows(畫面の既定(素の, now, args));
+  /* 会議を名指した検索（key・略称と完全一致）では、その会議自身の行が既定の窓の外に
+   * しか無い時、窓の外の行を部分一致の行より前に足す。窓の中にその会議の行がある時
+   * ・名指しでない検索では、並びも件数も従来どおり。 */
+  const 名指し = 名指しの行(query, now, args, 既定の当たり);
+  const hit = 名指し.length ? [...名指し, ...既定の当たり] : 既定の当たり;
   const 窓の外 = hit.length
     ? { raw: 0, filtered: 0, generated_at: null }
     : 窓の外の件數(照合, 名, now, args);
