@@ -5,7 +5,7 @@
 
 ## G1 — 型検査・静的検査
 ```sh
-npm run typecheck   # tsc --noEmit (src + site)
+npm run typecheck   # tsc --noEmit (src + tests / site / scripts)
 npm run check       # biome lint
 ```
 
