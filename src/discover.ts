@@ -18,7 +18,7 @@ import { localSourcePaths } from "./sources/local.ts";
 const ROOT = join(import.meta.dirname, "..");
 
 // Domain-specific keywords for classifying niche venues
-export const DOMAIN_KEYWORDS: Record<string, string[]> = {
+const DOMAIN_KEYWORDS: Record<string, string[]> = {
   hpc: [
     "hpc",
     "supercomputing",
@@ -234,7 +234,7 @@ const WIKICFP_CATEGORY_MAP: Record<string, string[]> = {
   ],
 };
 
-export const DISCOVERY_CATEGORIES = new Set(Object.keys(DOMAIN_KEYWORDS));
+const DISCOVERY_CATEGORIES = new Set(Object.keys(DOMAIN_KEYWORDS));
 
 /** Canonicalize raw/sub-domain categories to known taxonomy categories. */
 export function canonicalizeCategories(rawCategories: string[]): string[] {
@@ -285,12 +285,12 @@ export interface CandidateEvidence {
   observed_at: string;
 }
 
-export interface CandidateRegistry {
+interface CandidateRegistry {
   schema: 2;
   candidates: Candidate[];
 }
 
-export type CandidateArchiveDecision =
+type CandidateArchiveDecision =
   | "expired"
   | "duplicate"
   | "out-of-scope"
@@ -300,19 +300,19 @@ export type CandidateArchiveDecision =
   | "rejected"
   | "superseded";
 
-export interface CandidateArchiveRecord {
+interface CandidateArchiveRecord {
   fingerprint: string;
   decision: CandidateArchiveDecision;
   last_reviewed: string;
   source_url_hash: string;
 }
 
-export interface CandidateLifecycleSplit {
+interface CandidateLifecycleSplit {
   active: Candidate[];
   archive: CandidateArchiveRecord[];
 }
 
-export interface CandidateFingerprintInput {
+interface CandidateFingerprintInput {
   source: string;
   sourceItemId: string | null;
   normalizedTitle: string;
@@ -347,7 +347,7 @@ export interface Candidate {
   deadlines: Array<Record<string, unknown>>;
 }
 
-export const CANDIDATE_REGISTRY_SCHEMA = 2 as const;
+const CANDIDATE_REGISTRY_SCHEMA = 2 as const;
 const CANDIDATE_STALE_AFTER_DAYS = 90;
 
 const CANDIDATE_STATUSES = new Set<CandidateStatus>([
@@ -390,7 +390,7 @@ function candidateYear(candidate: Candidate): number | null {
   );
 }
 
-export function normalizeCandidateTitle(title: string | null | undefined): string {
+function normalizeCandidateTitle(title: string | null | undefined): string {
   return String(title ?? "")
     .normalize("NFKC")
     .toLowerCase()
@@ -399,7 +399,7 @@ export function normalizeCandidateTitle(title: string | null | undefined): strin
     .replace(/\s+/g, " ");
 }
 
-export function candidateFingerprint(input: CandidateFingerprintInput): string {
+function candidateFingerprint(input: CandidateFingerprintInput): string {
   const payload = JSON.stringify([
     input.source.trim().toLowerCase(),
     input.sourceItemId?.trim() || null,
@@ -1388,9 +1388,7 @@ export function cleanDbworldTitle(subject: string | null | undefined): [string, 
 }
 
 /** DBWorld メーリス public アーカイブから CFP 候補を抽出する。 */
-export async function discoverFromDbworld(
-  minYear: number,
-): Promise<Array<Record<string, unknown>>> {
+async function discoverFromDbworld(minYear: number): Promise<Array<Record<string, unknown>>> {
   const url = "https://dbworld.sigmod.org/browse.html";
   const html = await fetchText(url, DISCOVER_UA, 20_000);
 
@@ -1557,9 +1555,7 @@ export function easyChairEntriesFromRows(
 }
 
 /** EasyChair Smart CFP 一覧から締切登録済みの候補を抽出する。 */
-export async function discoverFromEasyChair(
-  minYear: number,
-): Promise<Array<Record<string, unknown>>> {
+async function discoverFromEasyChair(minYear: number): Promise<Array<Record<string, unknown>>> {
   const url = "https://easychair.org/cfp/";
   const html = await fetchText(url, DISCOVER_UA, 25_000);
   return easyChairEntriesFromRows(parseEasyChairCfpHtml(html), minYear);
@@ -1615,9 +1611,7 @@ export function parseComsocCfpHtml(
 }
 
 /** IEEE ComSoc 誌のオープン特集号 CFP を候補化する (ネットワーク層)。 */
-export async function discoverFromComsocCfps(
-  minYear: number,
-): Promise<Array<Record<string, unknown>>> {
+async function discoverFromComsocCfps(minYear: number): Promise<Array<Record<string, unknown>>> {
   const pages: Array<[string, string]> = [
     ["journals/ieee-tnsm", "IEEE TNSM"],
     ["journals/ieee-tccn", "IEEE TCCN"],
@@ -1681,9 +1675,7 @@ export function parseIeiceCfpHtml(
 }
 
 /** IEICE 論文誌の特集号 CFP 一覧を候補化する (ネットワーク層)。 */
-export async function discoverFromIeiceCfps(
-  minYear: number,
-): Promise<Array<Record<string, unknown>>> {
+async function discoverFromIeiceCfps(minYear: number): Promise<Array<Record<string, unknown>>> {
   const url = "https://www.ieice.org/eng_r/information/schedule/journals.php";
   const entries: Array<Record<string, unknown>> = [];
   // IEICE はカスタム UA を 403 で拒否するため Mozilla 系 UA を使う
@@ -1740,9 +1732,7 @@ export function parseIpsjCfpHtml(
 }
 
 /** IPSJ 論文誌ジャーナルの特集論文募集を候補化する (ネットワーク層)。 */
-export async function discoverFromIpsjCfps(
-  minYear: number,
-): Promise<Array<Record<string, unknown>>> {
+async function discoverFromIpsjCfps(minYear: number): Promise<Array<Record<string, unknown>>> {
   const url = "https://www.ipsj.or.jp/journal/index.html";
   const entries: Array<Record<string, unknown>> = [];
   const html = await fetchText(url, MAC_UA, 20_000);

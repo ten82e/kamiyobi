@@ -350,7 +350,7 @@ export interface ScreenDeadlineInput {
  * 此方が `kamiyobi-dl2ws2026-abstract@kamiyobi` で、同じ日が二度並んだ）。
  * 渡されない行（購読に入つて居ない締切 – 過ぎた物など）だけ此処で組む – 其の行は
  * 購読の側に無いので、別の予定に成つても二重には成らない。 */
-export function icsRowsFromScreen(
+function icsRowsFromScreen(
   items: readonly ScreenDeadlineInput[] | null | undefined,
   now: Date | null | undefined,
 ): IcsRow[] {

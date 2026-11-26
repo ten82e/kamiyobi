@@ -22,7 +22,7 @@ import { load as loadYaml } from "js-yaml";
 const UA =
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36";
 
-export interface ScheduleRow {
+interface ScheduleRow {
   event_start: string;
   event_end: string;
   date_text: string;
@@ -36,7 +36,7 @@ export interface ScheduleRow {
 const WEEKDAY_RE = /\((?:月|火|水|木|金|土|日)\)/g;
 
 /** 全角英数・全角記号を半角に畳み空白正規化する（スケジュール表は全角混在）。 */
-export function foldWidths(text: string): string {
+function foldWidths(text: string): string {
   const folded = [...String(text)].reduce((acc: string[], ch) => {
     const code = ch.codePointAt(0) ?? 0;
     acc.push(code >= 0xff01 && code <= 0xff5e ? String.fromCodePoint(code - 0xfee0) : ch);
@@ -152,13 +152,13 @@ export function parseSchedule(html: string): ScheduleRow[] {
 
 // --- data/manual.yaml への反映 -------------------------------------------------
 
-export interface PlanEntry {
+interface PlanEntry {
   key: string;
   deadlinesFilled: string[];
   editionsAdded: string[];
 }
 
-export interface PlanResult {
+interface PlanResult {
   text: string;
   entries: PlanEntry[];
   /** 手動収録が必要な研究会（manual.yaml にまだ無い）。 */
@@ -383,7 +383,7 @@ export function planIeiceUpdate(
 // --- 取得 --------------------------------------------------------------------
 
 /** ken.ieice.org は既知のブラウザ UA でないと 403 を返し、間隔を詰めると 503 を返す。 */
-export async function fetchProgram(tgid: string, timeoutMs = 20_000): Promise<string> {
+async function fetchProgram(tgid: string, timeoutMs = 20_000): Promise<string> {
   const res = await fetch(programUrl(tgid), {
     headers: { "User-Agent": UA },
     signal: AbortSignal.timeout(timeoutMs),

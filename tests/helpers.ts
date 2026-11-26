@@ -218,7 +218,7 @@ export function tempCache(): string {
 
 // --- run the CLI ---------------------------------------------------------------
 
-export interface RunResult {
+interface RunResult {
   status: number | null;
   stdout: string;
   stderr: string;

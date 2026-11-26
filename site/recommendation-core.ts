@@ -2,7 +2,7 @@
 
 type JsonRecord = Record<string, unknown>;
 
-export type TrustLevel =
+type TrustLevel =
   | "official"
   | "publisher"
   | "curated-manual"

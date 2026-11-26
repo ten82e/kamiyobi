@@ -33,13 +33,13 @@ export interface PageObservation {
   bodyRef: string;
 }
 
-export interface CapturedPage extends PageObservation {
+interface CapturedPage extends PageObservation {
   body?: Uint8Array;
   notModified: boolean;
   retryable: boolean;
 }
 
-export interface CapturePageOptions {
+interface CapturePageOptions {
   fetchImpl?: typeof fetch;
   bodyRoot?: string;
   previous?: Partial<PageObservation> | null;

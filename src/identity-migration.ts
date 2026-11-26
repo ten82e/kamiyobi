@@ -1,7 +1,7 @@
 import { dateOnlyWindow, deadlineTrackKey } from "./model.ts";
 
 export const IDENTITY_MIGRATION_SCHEMA_VERSION = 1;
-export const IDENTITY_REVISION = "identity-v1";
+const IDENTITY_REVISION = "identity-v1";
 
 export type IdentityMigrationAction = "rename" | "duplicate-collapse" | "official-supersession";
 

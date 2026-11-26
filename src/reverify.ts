@@ -112,7 +112,7 @@ export interface VerificationLedger {
   readonly entries: Record<string, VerificationLedgerEntry>;
 }
 
-export interface VerificationTarget {
+interface VerificationTarget {
   deadlineId: string;
   pageId: string;
   url: string;
@@ -135,17 +135,17 @@ export interface VerificationTarget {
   edition: JsonEdition;
 }
 
-export interface ExtractedDeadlineField extends CfpExtractionCandidate {
+interface ExtractedDeadlineField extends CfpExtractionCandidate {
   callIdentity?: string | { editionId?: string; callId?: string };
 }
 
-export interface ReverificationAdapter {
+interface ReverificationAdapter {
   name: string;
   supports(observation: PageObservation & { providerIdentity?: ProviderIdentity }): boolean;
   extract(body: Uint8Array, observation: PageObservation): ExtractedDeadlineField[];
 }
 
-export interface ReverifyLimits {
+interface ReverifyLimits {
   maxPages: number;
   maxDeadlines: number;
   maxPerHost: number;
@@ -155,7 +155,7 @@ export interface ReverifyLimits {
   maxBodyBytes: number;
 }
 
-export interface ReverifyOptions {
+interface ReverifyOptions {
   dataPath: string;
   ledgerPath: string;
   now?: Date;
@@ -166,7 +166,7 @@ export interface ReverifyOptions {
   resolutionsPath?: string;
 }
 
-export interface ReverifyResult {
+interface ReverifyResult {
   processed: number;
   deferred: number;
   statuses: Record<string, number>;
@@ -969,12 +969,12 @@ function serializableLedger(ledger: VerificationLedger): Record<string, unknown>
   };
 }
 
-export function writeVerificationLedger(path: string, ledger: VerificationLedger): void {
+function writeVerificationLedger(path: string, ledger: VerificationLedger): void {
   mkdirSync(dirname(path), { recursive: true });
   writeFileSync(path, `${JSON.stringify(serializableLedger(ledger), null, 2)}\n`, "utf8");
 }
 
-export function writeVerificationResolutions(path: string, ledger: VerificationLedger): void {
+function writeVerificationResolutions(path: string, ledger: VerificationLedger): void {
   mkdirSync(dirname(path), { recursive: true });
   writeFileSync(
     path,
@@ -1404,7 +1404,7 @@ function genericFields(
   }));
 }
 
-export const REVERIFICATION_ADAPTERS: ReverificationAdapter[] = [
+const REVERIFICATION_ADAPTERS: ReverificationAdapter[] = [
   {
     name: "easychair-v1",
     supports: (observation) => observation.providerIdentity?.provider === "easychair",

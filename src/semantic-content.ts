@@ -65,7 +65,7 @@ export function recommendationGatePolicyId(root = new URL("../", import.meta.url
     .digest("hex");
 }
 
-export interface SemanticContentInputs {
+interface SemanticContentInputs {
   profileHash: string;
   rerankerHash: string;
   algorithmRevision: string;

@@ -2,7 +2,7 @@ import { isDeepStrictEqual } from "node:util";
 import { deadlineSlotKey } from "./merge.ts";
 import { type Conference, type Deadline, type Edition, eventDatePrecisionOf } from "./model.ts";
 
-export interface HistoryRetention {
+interface HistoryRetention {
   venue: string;
   edition: string;
   year: number;

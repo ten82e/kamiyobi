@@ -33,7 +33,7 @@ import {
 } from "../model.ts";
 import { rankOf } from "./aideadlines.ts";
 
-export const NAME = "local";
+const NAME = "local";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 export const DEFAULT_PATH = join(ROOT, "data", "extra.yaml");
@@ -182,7 +182,7 @@ export function deadlinesOf(raw: Record<string, unknown> | null | undefined): De
  *   deadline フィールド有・受理 = 0    → keepExisting + 警告 (棄却行は観測として隔離)
  *   clear_deadlines: true             → clear (明示的な空配列。既定 false)
  */
-export interface PatchDeadlineSemantics {
+interface PatchDeadlineSemantics {
   action: "keep-existing" | "replace" | "clear";
   accepted: Deadline[];
   rejectedCount: number;

@@ -11,7 +11,7 @@ import {
   providerIdentityFromUrl,
 } from "../src/promotion.ts";
 
-export interface ObserveOptions {
+interface ObserveOptions {
   url?: string;
   bodyPath?: string;
   candidate?: string;

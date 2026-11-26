@@ -1,5 +1,5 @@
 /** 骨（小文字に畳み、英数字以外を落とした綴り）から、その骨を書く語と件数。 */
-export type LatinVocabularyJa = Map<string, { word: string; count: number }>;
+type LatinVocabularyJa = Map<string, { word: string; count: number }>;
 
 const 字種Ja = /^[a-z][a-z0-9]*$/;
 

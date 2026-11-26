@@ -150,7 +150,7 @@ export function consolidateReviewedSubmissions<T extends SubmissionRow>(
   );
 }
 
-export interface SharedRowIdentity {
+interface SharedRowIdentity {
   legacyShareKey?: string;
   shareDiscriminator?: string;
 }

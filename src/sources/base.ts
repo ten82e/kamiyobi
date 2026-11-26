@@ -21,7 +21,7 @@ import { warn } from "../model.ts";
 const USER_AGENT = "kamiyobi/1.0 (+https://github.com/ten82e/kamiyobi; node)";
 const CODELOAD = "https://codeload.github.com/{repo}/tar.gz/refs/heads/{ref}";
 
-export interface FetchMetadata {
+interface FetchMetadata {
   status: "fresh" | "cache-fallback";
   revision: string | null;
   fetchedAt: string | null;

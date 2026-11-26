@@ -121,7 +121,7 @@ export interface PromotionObservation {
   callIdentity?: string | CallIdentity;
 }
 
-export interface PromotionResolution {
+interface PromotionResolution {
   resolution_id?: string;
   candidate: string;
   decision: "promote" | "hold" | "reject";
@@ -152,7 +152,7 @@ export interface PromotionResolution {
   };
 }
 
-export type PromotionCanonicalDecision =
+type PromotionCanonicalDecision =
   | "add-new-venue"
   | "add-new-edition"
   | "enrich-existing-edition"
@@ -161,7 +161,7 @@ export type PromotionCanonicalDecision =
   | "hold"
   | "reject";
 
-export interface PromotionCanonicalization {
+interface PromotionCanonicalization {
   decision: PromotionCanonicalDecision;
   score: number;
   matchedBy: string[];
@@ -174,13 +174,13 @@ export interface PromotionCanonicalization {
   autoApplicable?: boolean;
 }
 
-export interface PromotionCanonicalMatch {
+interface PromotionCanonicalMatch {
   venueKey: string;
   score: number;
   matchedBy: string[];
 }
 
-export interface CanonicalizationDecision {
+interface CanonicalizationDecision {
   best: PromotionCanonicalMatch | null;
   alternatives: PromotionCanonicalMatch[];
   margin: number | null;
@@ -200,7 +200,7 @@ export interface CaptureVerificationOptions {
   canonicalizationMargin?: number;
 }
 
-export interface CaptureVerification {
+interface CaptureVerification {
   valid: boolean;
   errors: string[];
   checkedFields: string[];

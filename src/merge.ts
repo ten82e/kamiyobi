@@ -1706,7 +1706,7 @@ function exactInsideDateOnly(exact: Deadline, dateOnly: Deadline): boolean {
 }
 
 /** Apply primary observations slot-by-slot without letting lower precision erase exact data. */
-export type DeadlineSlotObservation = Deadline & { remove?: boolean; removeValues?: string[] };
+type DeadlineSlotObservation = Deadline & { remove?: boolean; removeValues?: string[] };
 
 export function mergeDeadlineSlots(
   existing: Deadline[],

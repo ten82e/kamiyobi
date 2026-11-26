@@ -15,14 +15,14 @@ import * as runtime from "../src/embedding-runtime.ts";
 import { FULL_VENUE_COUNT } from "./full_venue_pool.ts";
 import { prepareLiveConsumerSite } from "./live_consumer_site.ts";
 
-export interface RecoveryPaper {
+interface RecoveryPaper {
   id: string;
   language: string;
   title: string;
   abstract: string;
   acceptable_venues: string[];
 }
-export interface RecoveryCorpus {
+interface RecoveryCorpus {
   candidate_count: number;
   top_k: number;
   papers: RecoveryPaper[];
