@@ -204,7 +204,7 @@ npm run update
 落ちたときの退避先を兼ねており、取得に失敗した日は前回の内容から生成を続ける。
 スナップショットでも補えないほど収集が縮退した場合は、ビルドが非ゼロで終了して公開物を作らない。
 
-変更は `git branch` → ローカルで `npm run typecheck && npm run check && npm test` → `git merge` の順で main に反映する。
+変更は `git branch` → ローカルで `npm run typecheck && npm run check && npm test` → PR を作り、CI（typecheck / check / test）が緑になってから merge の順で main に反映する。
 
 ## 手元で動かす
 
