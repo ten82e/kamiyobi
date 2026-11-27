@@ -60,6 +60,7 @@ export function extractObservationTime(text: string | null | undefined): string 
     const folded = String(text).normalize("NFKC");
     if (folded.includes("真夜中")) return "23:59:00";
     if (folded.includes("午前0時")) return "00:00:00";
+    if (String(text).includes("正午")) return "12:00:00";
     const hourH = HOUR_H_TIME_RE.exec(String(text));
     if (!hourH) return null;
     const hour = Number(hourH[1]);

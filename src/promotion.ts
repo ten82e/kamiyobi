@@ -368,6 +368,10 @@ function extractedTime(text: string): string | undefined {
   const folded = text.normalize("NFKC");
   if (folded.includes("真夜中")) return "23:59:00";
   if (folded.includes("午前0時")) return "00:00:00";
+  // 和文 CFP の「正午」は壁時計 12:00。英語 noon は別issue (#782)。
+  if (text.includes("正午")) {
+    return "12:00:00";
+  }
   return undefined;
 }
 
