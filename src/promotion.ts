@@ -356,6 +356,9 @@ function extractedTime(text: string): string | undefined {
   if (/\bmid-?day\b/i.test(text)) {
     return "12:00:00";
   }
+  const folded = text.normalize("NFKC");
+  if (folded.includes("真夜中")) return "23:59:00";
+  if (folded.includes("午前0時")) return "00:00:00";
   return undefined;
 }
 
@@ -571,7 +574,7 @@ export function extractCfpCandidates(body: string): CfpExtractionCandidate[] {
   const seen = new Set<string>();
   const hasTimeExpression = (value: string) =>
     Boolean(extractedTime(value)) ||
-    /\b(?:\d{1,2}:\d{2}(?::\d{2})?|\d{1,2}\s*(?:a\.?m\.?|p\.?m\.?)|at\s+\d{3,4}|noon|mid-?day|midnight|end of (?:the )?day|eod)\b/i.test(
+    /\b(?:\d{1,2}:\d{2}(?::\d{2})?|\d{1,2}\s*(?:a\.?m\.?|p\.?m\.?)|at\s+\d{3,4}|noon|mid-?day|midnight|end of (?:the )?day|eod)\b|真夜中|午前0時/i.test(
       value,
     );
   for (const originalRaw of lines) {

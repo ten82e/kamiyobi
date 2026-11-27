@@ -56,6 +56,9 @@ export function extractObservationTime(text: string | null | undefined): string 
   if (!m) {
     if (/\bnoon\b/i.test(String(text))) return "12:00:00";
     if (/\bmid-?day\b/i.test(String(text))) return "12:00:00";
+    const folded = String(text).normalize("NFKC");
+    if (folded.includes("真夜中")) return "23:59:00";
+    if (folded.includes("午前0時")) return "00:00:00";
     return null;
   }
   let h = Number(m[1]);

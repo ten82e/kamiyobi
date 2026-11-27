@@ -134,6 +134,12 @@ describe("fetch-primary extraction", () => {
       time: "23:59:00",
       tz: "AEDT",
     });
+    expect(extractDeadline("論文締切: 2026年5月15日 真夜中 JST", 2026)).toMatchObject({
+      date: "2026-05-15",
+      time: "23:59:00",
+      tz: "JST",
+    });
+    expect(extractDeadline("論文締切: 2026年5月15日 午前0時 JST", 2026)?.time).toBe("00:00:00");
   });
 
   it("abstract with round and tz", () => {
