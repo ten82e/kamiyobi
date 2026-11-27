@@ -547,7 +547,7 @@ export function extractCfpCandidates(body: string): CfpExtractionCandidate[] {
     .filter(Boolean);
   const globalDeadlineTiming = lines.find(
     (line) =>
-      /^all deadlines?(?:\s+(?:are\s+at|are|at))?\s*[:\s]\s*\d{1,2}:\d{2}(?::\d{2})?\s*(?:[ap]\.?m\.?\s+)?[(（]?(?:AoE|UTC(?:[+-]\d{1,2}(?::?\d{2})?)?|GMT(?:[+-]\d{1,2}(?::?\d{2})?)?|PST|PDT|MST|MDT|CST|CDT|EST|EDT|CET|CEST|WET|WEST|JST|KST|SGT|HKT|AEDT|AEST|AWST|PT|ET|CT|MT|[A-Za-z_]+(?:\/[A-Za-z_-]+)+)[)）]?(?:\s*\(Anywhere on Earth\))?[.!]?$/i.test(
+      /^all deadlines?(?:\s+(?:are\s+at|are|at))?\s*[:\s]\s*\d{1,2}:\d{2}(?::\d{2})?\s*(?:[ap]\.?m\.?\s+)?[(（]?(?:AoE|UTC(?:[+-]\d{1,2}(?::?\d{2})?)?|GMT(?:[+-]\d{1,2}(?::?\d{2})?)?|PST|PDT|MST|MDT|CST|CDT|EST|EDT|CET|CEST|WET|WEST|JST|KST|SGT|HKT|AEDT|AEST|AWST|PT|ET|CT|MT|(?:Pacific|Eastern|Central|Mountain)(?:\s+(?:Daylight|Standard))?\s+Time|[A-Za-z_]+(?:\/[A-Za-z_-]+)+)[)）]?(?:\s*\(Anywhere on Earth\))?[.!]?$/i.test(
         line.normalize("NFKC"),
       ) &&
       extractedTime(line) &&
