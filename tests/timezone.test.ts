@@ -407,5 +407,4 @@ describe("asDate and timezone caching fixes (#746)", () => {
       parseInstant("2026-07-15 12:00:00", "PT")?.toISOString(),
     );
   });
-
 });
