@@ -1155,6 +1155,139 @@ it("does not waive a sibling track's disappearance via an unrelated track's supe
   expect(result.reasons).toContain(`future deadline disappeared: ${TRACK_SLOT}`);
 });
 
+it("waives a track rename via an explicitly bound supersession ledger", () => {
+  // ラベル改名 (track 変更) は旧 track を台帳に明示すれば正当な継続とみなす。
+  // 束縛なし・誤束縛では従来どおり阻止する (#722 の保護を維持)。
+  const previous = health([
+    {
+      deadline_id: SLOT,
+      at_utc: "2026-09-10T11:59:00.000Z",
+      edition_year: 2026,
+    },
+  ]);
+  const bound = [
+    {
+      value: "2026-09-10T11:59:00.000Z",
+      precision: "exact" as const,
+      reason: "manual-resolution",
+      superseded_at: "2026-08-05T00:00:00.000Z",
+      superseded_by: TRACK_SLOT,
+      superseded_track: "",
+    },
+  ];
+  const renamed = {
+    deadline_id: TRACK_SLOT,
+    at_utc: "2026-09-23T11:59:00.000Z",
+    edition_year: 2026,
+    superseded_values: bound,
+  };
+  expect(evaluateHealthGate(health([renamed]), previous).ok).toBe(true);
+  // 旧 track の束縛が誤っている場合は免責しない。
+  const misbound = {
+    ...renamed,
+    superseded_values: [{ ...bound[0], superseded_track: "unrelated" }],
+  };
+  const misresult = evaluateHealthGate(health([misbound]), previous);
+  expect(misresult.ok).toBe(false);
+  expect(misresult.reasons).toContain(`future deadline disappeared: ${SLOT}`);
+  // 束縛なし台帳も改名を免責しない (#722)。
+  const unresult = evaluateHealthGate(
+    health([
+      {
+        ...renamed,
+        superseded_values: [
+          {
+            value: "2026-09-10T11:59:00.000Z",
+            precision: "exact" as const,
+            reason: "manual-resolution",
+            superseded_at: "2026-08-05T00:00:00.000Z",
+            superseded_by: TRACK_SLOT,
+          },
+        ],
+      },
+    ]),
+    previous,
+  );
+  expect(unresult.ok).toBe(false);
+  expect(unresult.reasons).toContain(`future deadline disappeared: ${SLOT}`);
+});
+
+it("does not waive a different kind's disappearance via an explicitly bound supersession ledger (#722 kind axis)", () => {
+  // superseded_track/superseded_round による束縛は round/track の不一致だけを
+  // 免除するものであり、kind の不一致までは免除しない。これが無いと、ある kind
+  // (paper) の台帳が round/track の値一致だけで無関係な別 kind (abstract) の
+  // 消失まで免責してしまう — #722 と同型のバグが kind 軸で再発する。
+  const ABSTRACT_INDUSTRY_SLOT = deadlineSlotId("venue", "venue26", "abstract", 1, "industry");
+  const PAPER_SLOT = deadlineSlotId("venue", "venue26", "paper", 1, "");
+  const previous = health([
+    {
+      deadline_id: ABSTRACT_INDUSTRY_SLOT,
+      at_utc: "2026-09-10T11:59:00.000Z",
+      edition_year: 2026,
+    },
+  ]);
+  const bound = {
+    deadline_id: PAPER_SLOT,
+    at_utc: "2026-09-10T11:59:00.000Z",
+    edition_year: 2026,
+    superseded_values: [
+      {
+        value: "2026-09-10T11:59:00.000Z",
+        precision: "exact" as const,
+        reason: "manual-resolution",
+        superseded_at: "2026-08-05T00:00:00.000Z",
+        superseded_by: PAPER_SLOT,
+        superseded_track: "industry",
+        superseded_round: 1,
+      },
+    ],
+  };
+  const result = evaluateHealthGate(health([bound]), previous);
+  expect(result.ok).toBe(false);
+  expect(result.reasons).toContain(`future deadline disappeared: ${ABSTRACT_INDUSTRY_SLOT}`);
+});
+
+it("waives a round renumber via an explicitly bound supersession ledger", () => {
+  // round 振り直し (1 → 2) は、値が同一なら round-free の構造的マッチで
+  // 別途救済されてしまい束縛の効果を検証できない。値も動かす(本物の
+  // 振り直し + 延長)ことで、束縛の正誤だけが結果を左右するようにする。
+  const previous = health([
+    {
+      deadline_id: SLOT,
+      at_utc: "2026-11-20T11:59:00.000Z",
+      edition_year: 2026,
+    },
+  ]);
+  const renumbered = {
+    deadline_id: ROUND_SLOT,
+    at_utc: "2026-12-04T11:59:00.000Z",
+    edition_year: 2026,
+    superseded_values: [
+      {
+        value: "2026-11-20T11:59:00.000Z",
+        precision: "exact" as const,
+        reason: "manual-resolution",
+        superseded_at: "2026-08-05T00:00:00.000Z",
+        superseded_by: ROUND_SLOT,
+        superseded_round: 1,
+      },
+    ],
+  };
+  expect(evaluateHealthGate(health([renumbered]), previous).ok).toBe(true);
+  // round 束縛が誤っている場合は免責しない。
+  const misresult = evaluateHealthGate(
+    health([
+      {
+        ...renumbered,
+        superseded_values: [{ ...renumbered.superseded_values[0], superseded_round: 3 }],
+      },
+    ]),
+    previous,
+  );
+  expect(misresult.ok).toBe(false);
+  expect(misresult.reasons).toContain(`future deadline disappeared: ${SLOT}`);
+});
+
 it("waives a legacy-venue disappearance only through its migration target's scoped ledger", () => {
   const previous = health([
     {
