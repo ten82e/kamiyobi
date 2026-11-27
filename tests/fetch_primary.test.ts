@@ -145,6 +145,12 @@ describe("fetch-primary extraction", () => {
       time: "23:59:00",
       tz: "CET",
     });
+    expect(extractDeadline("論文締切: 2026年5月15日 正午 JST", 2026)).toMatchObject({
+      kind: "paper",
+      date: "2026-05-15",
+      time: "12:00:00",
+      tz: "JST",
+    });
   });
 
   it("treats standalone workshop and doctoral consortium deadlines as other (#824)", () => {
