@@ -1757,6 +1757,8 @@ const PAPER = new Set([
   "manuscript",
   "manuscript_deadline",
   "full_manuscript",
+  "paper_deadline",
+  "submission_deadline",
 ]);
 const CAMERA = new Set([
   "camera_ready",

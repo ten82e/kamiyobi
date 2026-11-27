@@ -380,7 +380,7 @@ export function kindOf(rawTypeOrKey: string | null | undefined): DeadlineKind;
 
 | raw | kind |
 |---|---|
-| `deadline`, `paper`, `submission`, `full_paper`, `fullpaper`, `paper_submission`, `short_paper`, `manuscript`, `manuscript_deadline`, `full_manuscript` | `paper` |
+| `deadline`, `paper`, `submission`, `full_paper`, `paper_deadline`, `submission_deadline`, `fullpaper`, `paper_submission`, `short_paper`, `manuscript`, `manuscript_deadline`, `full_manuscript` | `paper` |
 | `abstract_deadline`, `abstract deadline`, `abstract` | `abstract` |
 | `supplementary` | `supplementary` |
 | `notification`, `first-notification`, `final-notification` | `notification` |
