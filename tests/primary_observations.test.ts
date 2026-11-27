@@ -52,6 +52,10 @@ describe("extractObservationTime", () => {
     expect(extractObservationTime("Paper deadline: May 15, 2026 23h59 CET")).toBe("23:59:00");
     expect(extractObservationTime("due 9h30 CET")).toBe("09:30:00");
     expect(extractObservationTime("25h00")).toBeNull();
+    expect(extractObservationTime("Submission deadline: 15 May 2026 23.59 AoE")).toBe("23:59:00");
+    expect(extractObservationTime("due 11.59 p.m. CET")).toBe("23:59:00");
+    expect(extractObservationTime("Deadline: 15.05.2026")).toBeNull();
+    expect(extractObservationTime("Deadline: 2026.05.15")).toBeNull();
     expect(extractObservationTime("May 10, 2026")).toBeNull(); // 日付のみ
     expect(extractObservationTime("25:00")).toBeNull();
     expect(extractObservationTime(null)).toBeNull();

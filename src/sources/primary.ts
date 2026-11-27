@@ -38,6 +38,7 @@ import {
 
 const TIME_RE = /(?<!(?:utc|gmt)\s*[+-]\s*)\b(\d{1,2}):(\d{2})(?::(\d{2}))?\s*([AaPp]\.?[Mm]\.?)?/i;
 const HOUR_H_TIME_RE = /\b(\d{1,2})h([0-5]\d)\b/i;
+const DOTTED_TIME_RE = /(?<![.\d])(\d{1,2})\.([0-5]\d)(?!\.\d)\s*([AaPp]\.?[Mm]\.?)?/;
 
 /** 解決済み行: そのまま applyOverrides/deadlinesOf に渡せる YAML 行。 */
 type ResolvedRow = Record<string, unknown>;
@@ -53,8 +54,11 @@ function editionYearOf(date: string): number {
  */
 export function extractObservationTime(text: string | null | undefined): string | null {
   if (!text) return null;
-  const m = TIME_RE.exec(String(text).normalize("NFKC").trim());
-  if (!m) {
+  const value = String(text).normalize("NFKC").trim();
+  const m = TIME_RE.exec(value);
+  const dotted = m ? null : DOTTED_TIME_RE.exec(value);
+  const hit = m ?? dotted;
+  if (!hit) {
     if (/\bnoon\b/i.test(String(text))) return "12:00:00";
     if (/\bmid-?day\b/i.test(String(text))) return "12:00:00";
     const folded = String(text).normalize("NFKC");
@@ -69,10 +73,10 @@ export function extractObservationTime(text: string | null | undefined): string 
     const pad = (n: number): string => String(n).padStart(2, "0");
     return `${pad(hour)}:${pad(minute)}:00`;
   }
-  let h = Number(m[1]);
-  const min = Number(m[2]);
-  const sec = m[3] ? Number(m[3]) : 0;
-  const ap = (m[4] ?? "").replace(/\./g, "").toLowerCase();
+  let h = Number(hit[1]);
+  const min = Number(hit[2]);
+  const sec = m && hit[3] ? Number(hit[3]) : 0;
+  const ap = ((m ? hit[4] : hit[3]) ?? "").replace(/\./g, "").toLowerCase();
   if (min > 59 || sec > 59 || h > 23) return null;
   if (ap === "pm" && h < 12) h += 12;
   if (ap === "am" && h === 12) h = 0;
