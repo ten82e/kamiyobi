@@ -75,6 +75,18 @@ export function extractObservationTime(text: string | null | undefined): string 
         return `${String(hh).padStart(2, "0")}:00:00`;
       }
     }
+    const at = /\bat\s+(\d{3,4})\b/i.exec(String(text));
+    const digits = at?.[1] ?? compactHmmDigits(String(text));
+    if (digits) {
+      const padded = digits.length === 3 ? digits.padStart(4, "0") : digits;
+      if (padded.length === 4) {
+        const hh = Number(padded.slice(0, 2));
+        const mm = Number(padded.slice(2));
+        if (hh <= 23 && mm <= 59) {
+          return `${String(hh).padStart(2, "0")}:${String(mm).padStart(2, "0")}:00`;
+        }
+      }
+    }
     const hourH = HOUR_H_TIME_RE.exec(String(text));
     if (!hourH) return null;
     const hour = Number(hourH[1]);
@@ -93,6 +105,11 @@ export function extractObservationTime(text: string | null | undefined): string 
   if (h > 23) return null;
   const pad = (n: number): string => String(n).padStart(2, "0");
   return `${pad(h)}:${pad(min)}:${pad(sec)}`;
+}
+
+function compactHmmDigits(text: string): string | undefined {
+  const stripped = text.replace(/\b20[2-9]\d\b/g, " ");
+  return /\b((?:[01]?\d|2[0-3])[0-5]\d)\b/.exec(stripped)?.[1];
 }
 
 interface ObservationRow {
