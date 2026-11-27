@@ -23,6 +23,7 @@ import {
   resolveTzStatus,
   roundOf,
   slug,
+  usTimeZonePhraseOf,
   type VenueIdentity,
 } from "./model.ts";
 
@@ -375,7 +376,7 @@ function extractedTime(text: string): string | undefined {
 // 切り詰められ、後段の実在性検証で誤って棄却されてしまう (#723 の独立
 // 反証レビューで発見)。
 const TIMEZONE_PATTERN =
-  /(\b(?:anywhere on (?:the )?(?:inhabited )?earth|Japan Standard Time|AoE|UTC(?:[+-]\d{1,2}(?::?\d{2})?)?|GMT(?:[+-]\d{1,2}(?::?\d{2})?)?|PST|PDT|MST|MDT|CST|CDT|EST|EDT|CET|CEST|WET|WEST|JST|KST|SGT|HKT|BOT|COT|FJT|GET|PKT|TRT|BRT|CAT|WAT|NZST|NZDT|WIB|WITA|WIT|IDT|MSK|ChST|CHST|HAST|HADT|AKDT|AKST|HST|EAT|SAST|ACST|ACDT|AEDT|AEST|AWST|PT|ET|CT|MT|[A-Za-z_]+(?:\/[A-Za-z_-]+)+)\b|日本時間)/gi;
+  /(\b(?:anywhere on (?:the )?(?:inhabited )?earth|Japan Standard Time|AoE|UTC(?:[+-]\d{1,2}(?::?\d{2})?)?|GMT(?:[+-]\d{1,2}(?::?\d{2})?)?|PST|PDT|MST|MDT|CST|CDT|EST|EDT|CET|CEST|WET|WEST|JST|KST|SGT|HKT|BOT|COT|FJT|GET|PKT|TRT|BRT|CAT|WAT|NZST|NZDT|WIB|WITA|WIT|IDT|MSK|ChST|CHST|HAST|HADT|AKDT|AKST|HST|EAT|SAST|ACST|ACDT|AEDT|AEST|AWST|PT|ET|CT|MT|(?:Pacific|Eastern|Central|Mountain)(?:\s+(?:Daylight|Standard))?\s+Time|[A-Za-z_]+(?:\/[A-Za-z_-]+)+)\b|日本時間)/gi;
 
 /**
  * IANA Area/Location 名として実在するかだけを判定する (model.ts の
@@ -393,6 +394,8 @@ function isKnownIanaTimezone(name: string): boolean {
 }
 
 function extractedTimezone(text: string): string | undefined {
+  const phrase = usTimeZonePhraseOf(text);
+  if (phrase) return phrase;
   text = text.normalize("NFKC");
   for (const match of text.matchAll(TIMEZONE_PATTERN)) {
     const candidate = match[1];
@@ -567,7 +570,7 @@ export function extractCfpCandidates(body: string): CfpExtractionCandidate[] {
     .filter(Boolean);
   const globalDeadlineTiming = lines.find(
     (line) =>
-      /^all deadlines?(?:\s+(?:are\s+at|are|at))?\s*[:\s]\s*\d{1,2}:\d{2}(?::\d{2})?\s*(?:[ap]\.?m\.?\s+)?[(（]?(?:AoE|UTC(?:[+-]\d{1,2}(?::?\d{2})?)?|GMT(?:[+-]\d{1,2}(?::?\d{2})?)?|PST|PDT|MST|MDT|CST|CDT|EST|EDT|CET|CEST|WET|WEST|JST|KST|SGT|HKT|AEDT|AEST|AWST|PT|ET|CT|MT|[A-Za-z_]+(?:\/[A-Za-z_-]+)+)[)）]?(?:\s*\(Anywhere on Earth\))?[.!]?$/i.test(
+      /^all deadlines?(?:\s+(?:are\s+at|are|at))?\s*[:\s]\s*\d{1,2}:\d{2}(?::\d{2})?\s*(?:[ap]\.?m\.?\s+)?[(（]?(?:AoE|UTC(?:[+-]\d{1,2}(?::?\d{2})?)?|GMT(?:[+-]\d{1,2}(?::?\d{2})?)?|PST|PDT|MST|MDT|CST|CDT|EST|EDT|CET|CEST|WET|WEST|JST|KST|SGT|HKT|AEDT|AEST|AWST|PT|ET|CT|MT|(?:Pacific|Eastern|Central|Mountain)(?:\s+(?:Daylight|Standard))?\s+Time|[A-Za-z_]+(?:\/[A-Za-z_-]+)+)[)）]?(?:\s*\(Anywhere on Earth\))?[.!]?$/i.test(
         line.normalize("NFKC"),
       ) &&
       extractedTime(line) &&

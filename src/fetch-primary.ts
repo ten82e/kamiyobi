@@ -18,6 +18,7 @@ import {
   monthOf,
   resolveTzStatus,
   roundOf,
+  usTimeZonePhraseOf,
   warn,
 } from "./model.ts";
 import { extractObservationTime } from "./sources/primary.ts";
@@ -303,6 +304,10 @@ export function extractDeadline(
             ? "JST"
             : raw.toUpperCase();
     }
+  }
+  if (!tz) {
+    const phraseTz = usTimeZonePhraseOf(timeSrc) ?? usTimeZonePhraseOf(window);
+    if (phraseTz) tz = phraseTz;
   }
   // 日付を含む側の行から壁時計の時刻を取る。
   // 無ければ time を載せない。
