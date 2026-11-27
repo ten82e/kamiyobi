@@ -1833,7 +1833,12 @@ const NON_PAPER_LABEL_RE =
 
 /** Workshop/DC labels alone do not establish a paper submission; explicit papers do. */
 export function isNonPaperWorkshopLabel(label: string): boolean {
-  if (!/\b(?:workshops?|doctoral consortium)\b/i.test(label)) return false;
+  if (
+    !/\b(?:workshops?|doctoral consortium|phd symposium)\b|ワークショップ|博士コンソーシアム/i.test(
+      label,
+    )
+  )
+    return false;
   return /\bproposals?\b/i.test(label) || !/\b(?:papers?|manuscripts?)\b|論文|原稿/i.test(label);
 }
 

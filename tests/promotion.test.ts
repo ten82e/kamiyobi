@@ -661,6 +661,18 @@ describe("promotion batch", () => {
     ]);
   });
 
+  it("treats standalone workshop and doctoral consortium deadlines as other (#824)", () => {
+    expect(extractCfpCandidates("Workshop deadline: May 15, 2026")).toMatchObject([
+      { kind: "other", date: "2026-05-15" },
+    ]);
+    expect(extractCfpCandidates("Doctoral consortium deadline: June 1, 2026")).toMatchObject([
+      { kind: "other", date: "2026-06-01" },
+    ]);
+    expect(extractCfpCandidates("Workshop paper deadline: May 15, 2026")).toMatchObject([
+      { kind: "paper", date: "2026-05-15" },
+    ]);
+  });
+
   it("keeps uppercase BOT as an extracted timezone (#925)", () => {
     expect(extractCfpCandidates("Deadline: May 15, 2026 23:59 BOT")).toMatchObject([
       { date: "2026-05-15", time: "23:59:00", timezone: "BOT" },

@@ -147,6 +147,15 @@ describe("fetch-primary extraction", () => {
     });
   });
 
+  it("treats standalone workshop and doctoral consortium deadlines as other (#824)", () => {
+    expect(extractDeadline("Workshop deadline: May 15, 2026", 2026)).toMatchObject({
+      kind: "other",
+      date: "2026-05-15",
+    });
+    expect(extractDeadline("Doctoral consortium deadline: June 1, 2026", 2026)?.kind).toBe("other");
+    expect(extractDeadline("Workshop paper deadline: May 15, 2026", 2026)?.kind).toBe("paper");
+  });
+
   it("abstract with round and tz", () => {
     const got = extractDeadline("Abstract submission (Round 2) deadline: Aug 16, 2026 (AoE)", 2026);
     expect(got).not.toBeNull();
