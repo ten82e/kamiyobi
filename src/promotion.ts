@@ -245,7 +245,7 @@ export function canonicalJson(value: unknown): string {
 const DATE_PATTERNS = [
   /\b20\d{2}[-/.]\d{1,2}[-/.]\d{1,2}\b/g,
   /\b(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\.?[-/\s]+\d{1,2}(?:st|nd|rd|th)?(?:,)?[-/\s]+20\d{2}\b/gi,
-  /\b\d{1,2}(?:st|nd|rd|th)?[-/\s]+(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\.?[,]?[-/\s]+20\d{2}\b/gi,
+  /\b\d{1,2}(?:st|nd|rd|th)?(?:[-/\s]+(?:of\s+)?|\s+of\s+)(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\.?[,]?[-/\s]+20\d{2}\b/gi,
   /\b20\d{2}年\d{1,2}月\d{1,2}(?!\d)日?/g,
 ];
 
@@ -256,7 +256,7 @@ function extractedDate(text: string): { date: string; year: number } | null {
       text,
     );
   const dayFirst =
-    /\b(\d{1,2})(?:st|nd|rd|th)?[-/\s]+(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\.?[,]?[-/\s]+(20\d{2})\b/i.exec(
+    /\b(\d{1,2})(?:st|nd|rd|th)?(?:[-/\s]+(?:of\s+)?|\s+of\s+)(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\.?[,]?[-/\s]+(20\d{2})\b/i.exec(
       text,
     );
   const japanese = /\b(20\d{2})年(\d{1,2})月(\d{1,2})(?!\d)日?/.exec(text);
@@ -339,6 +339,9 @@ function extractedTime(text: string): string | undefined {
   }
   if (/\b(?:(?:12\s*)?midnight|end of (?:the )?day|eod)\b/i.test(text)) {
     return "23:59:00";
+  }
+  if (/\bmid-?day\b/i.test(text)) {
+    return "12:00:00";
   }
   return undefined;
 }
@@ -496,7 +499,6 @@ function candidateTrack(text: string): string | undefined {
 /** Extract only date-bearing CFP/deadline lines; ambiguous values stay candidates for review. */
 export function extractCfpCandidates(body: string): CfpExtractionCandidate[] {
   const text = body
-    .normalize("NFKC")
     .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, " ")
     .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, " ")
     .replace(/<\/?(?:b|strong|em|i)\b[^>]*>/gi, "")
@@ -556,7 +558,7 @@ export function extractCfpCandidates(body: string): CfpExtractionCandidate[] {
   const seen = new Set<string>();
   const hasTimeExpression = (value: string) =>
     Boolean(extractedTime(value)) ||
-    /\b(?:\d{1,2}:\d{2}(?::\d{2})?|\d{1,2}\s*(?:a\.?m\.?|p\.?m\.?)|at\s+\d{3,4}|noon|midnight|end of (?:the )?day|eod)\b/i.test(
+    /\b(?:\d{1,2}:\d{2}(?::\d{2})?|\d{1,2}\s*(?:a\.?m\.?|p\.?m\.?)|at\s+\d{3,4}|noon|mid-?day|midnight|end of (?:the )?day|eod)\b/i.test(
       value,
     );
   for (const originalRaw of lines) {
