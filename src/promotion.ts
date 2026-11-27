@@ -353,7 +353,7 @@ function extractedTime(text: string): string | undefined {
     }
     return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}:${String(second).padStart(2, "0")}`;
   }
-  const hm = /\b(\d{1,2})\s*(a\.?m\.?|p\.?m\.?)\b/i.exec(text);
+  const hm = /(?<![.\d])\b(\d{1,2})\s*(a\.?m\.?|p\.?m\.?)\b/i.exec(text);
   if (hm) {
     let hour = Number(hm[1]);
     const meridiem = hm[2].replace(/\./g, "").toLowerCase();
