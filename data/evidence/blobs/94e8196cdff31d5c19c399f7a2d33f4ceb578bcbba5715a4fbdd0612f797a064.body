@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link href="https://conf.researchr.org/favicon.ico?28d37e6d7e5e12d24c39bdba0f4f3cfd" rel="shortcut icon" type="image/x-icon" />
+<link href="https://conf.researchr.org/stylesheets/common_.css?d7bcca3579a066193caf560ede9d6399" rel="stylesheet" type="text/css" />
+<title>CC 2027 - Research papers - CC 2027</title>
+<script type="text/javascript">var show_webdsl_debug=false;</script>
+<script type="text/javascript">var contextpath="https://conf.researchr.org";</script>
+<link rel="stylesheet" href="https://conf.researchr.org/stylesheets/bootstrap/css/bootstrap.min.css?7f89537eaf606bff49f5cc1a7c24dbca" type="text/css" /><link rel="stylesheet" href="https://conf.researchr.org/stylesheets/conf.css?dc67d9c30931f0a68747014a5b907cdc" type="text/css" /><link rel="stylesheet" href="https://conf.researchr.org/stylesheets/logobar.css?d68c282160782c2b5f5bfb8ceb47a30e" type="text/css" /><link rel="stylesheet" href="https://conf.researchr.org/stylesheets/theme.bootstrap_3.min.css?6867e70881e6ed2c03b6c9cf9c3152e0" type="text/css" /><script type="text/javascript" src="//code.jquery.com/jquery-3.5.1.min.js"></script>
+<script type="text/javascript" src="https://conf.researchr.org/javascript/jquery.tablesorter.combined.min.js?285b21976326641f8f1b910492e6d5d0"></script>
+<script type="text/javascript" src="https://conf.researchr.org/javascript/jquery.tablesorter.pager.min.js?4551cdfea66f45a11ae5548f3d50a06f"></script>
+<script type="text/javascript" src="https://conf.researchr.org/javascript/tablesorter-init.js?ee6babedf1a6be960e4543a1bb57b421"></script>
+<script type="text/javascript" src="https://conf.researchr.org/javascript/bootstrap/js/bootstrap.min.js?2f34b630ffe30ba2ff2b91e3f3c322a1"></script>
+<script type="text/javascript" src="https://conf.researchr.org/javascript/notify.min.js?e86d399917a84b69a4683f504c7a7813"></script>
+<script type="text/javascript" src="https://conf.researchr.org/javascript/ajax.js?2dbd1cc4f8f2d52ae9c879d7346f4f8a"></script>
+<meta name='description' content='The ACM SIGPLAN 2027 International Conference on Compiler Construction (CC 2027) is interested in work on processing programs in the most general sense: analyzing, transforming or executing input programs that describe how a system operates.
+CC 2027 is the 36th edition of the conference. CC is an ACM SIGPLAN conference and implements guidelines and procedures recommended by SIGPLAN https://www.sigplan.org. Prospective authors should be aware of ACM’s Copyright policies https://authors.acm.org/main.html. Proceedings will be made available online in the ACM digital library from one week befo ...'>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-4G0QWEKVQS"></script>
+<script>window.dataLayer = window.dataLayer || [];function gtag(){dataLayer.push(arguments);}gtag('js', new Date());gtag('config', 'G-4G0QWEKVQS', {'cookie_domain': 'auto', 'anonymizeIp': true });gtag('config', 'UA-9607501-2', {'cookie_domain': 'auto', 'anonymizeIp': true });</script>
+<meta prefix='og: http://ogp.me/ns#' property='og:title' content='CC 2027 - Research papers - CC 2027'>
+<script type="text/javascript">var ignoreHashChange = false;
+    function hashChangeFunc(){
+      // show active tab on hash in url
+      if (window.location.hash !== ''){
+        var hashTargetAll = $('a[href="' + window.location.hash + '"]');
+        if(hashTargetAll.length){
+          var hashTarget = hashTargetAll.filter('[data-toggle="tab"]')
+          if( hashTarget.length ){
+            hashTarget = hashTarget.first();
+            hashTarget.tab('show');
+          } else {
+            hashTarget = hashTargetAll.first();
+          }
+          // and open parent tabs in case the target element is nested in a tab
+          var parentPane = hashTarget.closest( '.tab-pane' );
+          if(parentPane.length){
+            $('.nav a[href="#'+ parentPane.attr('id') +'"]').tab('show');
+          }
+          var parentCollapse = hashTarget.closest( '.panel-collapse:not(.in)' ).collapse('show');
+        }
+      }
+      return false;
+    }
+
+    $(document).ready(function(){
+      var tabFromRequestUrl = window.location.hash !== '' ? $('a[href="' + window.location.hash + '"][data-toggle="tab"]') : [];
+      var initUrlHash = window.location.hash;
+      hashChangeFunc()
+      if( tabFromRequestUrl.length ){
+        //Prevent the browser to auto-scroll to the anchor of the tab
+        window.location.hash = "";
+      }
+      //make in-page #links open the tabs
+      if ($._data( $(window)[0], 'events' ).hashchange == undefined){
+        $(window).on('hashchange', hashChangeFunc);
+      }
+      if(tabFromRequestUrl.length){
+        setTimeout( function(){
+          ignoreHashChange = true;
+          history.replaceState(null, null, initUrlHash);
+          ignoreHashChange = false;
+        }, 10 );
+      }
+    });
+    var autoTabFunction = function(node){
+      var isActivatingFirstTab = false;
+      // remember the hash in the URL without jumping
+      $('a[data-toggle="tab"]:not(.no-hash):not(.bound)').addClass('bound').on('shown.bs.tab', function(e){
+        if(!isActivatingFirstTab){
+          var newhash = '#' + $(e.target).attr('href').substr(1);
+          if(history.replaceState){
+            history.replaceState(null, null, newhash);
+          } else{
+            location.hash = newhash;
+          }
+        }
+      });
+
+      //When no tab is active, set the first one to active
+      $(node).find('.nav-tabs:not(.bound), .nav-pills:not(.bound)').addClass('bound').each(function(){
+        if( $(this).children().length > 0 && 1 > $(this).find('.active').length){
+          const firstItem = $(this).find('a[data-toggle="tab"]').first();
+          isActivatingFirstTab = true;
+          firstItem.tab('show');
+          isActivatingFirstTab = false;
+        }
+      });
+      //In case this is an AJAX replacement with a .tab-content without .active element, and its associated .nav element is already in DOM, try adding missing active class
+      if (!$(node).is(document)) {
+        $(node).find('.tab-content').each(function () {
+          var $tabContent = $(this);
+          if (!$tabContent.children('.active').length) {
+            $('.nav a[data-toggle="tab"][aria-expanded="true"]').each(function () {
+              $tabContent.children($(this).attr('href')).addClass('active');
+            });
+          }
+        });
+      }
+      
+    }
+  </script>
+<meta  prefix='og: http://ogp.me/ns#' property='og:description' content='The ACM SIGPLAN 2027 International Conference on Compiler Construction (CC 2027) is interested in work on processing programs in the most general sense: analyzing, transforming or executing input programs that describe how a system operates.
+CC 2027 is the 36th edition of the conference. CC is an ACM SIGPLAN conference and implements guidelines and procedures recommended by SIGPLAN https://www.sigplan.org. Prospective authors should be aware of ACM’s Copyright policies https://authors.acm.org/main.html. Proceedings will be made available online in the ACM digital library from one week befo ...'>
+<script type="text/javascript">function addEventModalLoadOnClick( containerNode ){
+        $(containerNode).find( "a[data-event-modal]" ).on("click", function(e){
+          var eventId = $(this).data("event-modal"); 
+          var modalElem = $("#modal-" + eventId);
+          if(modalElem.length){
+            modalElem.modal({ backdrop: 'static', keyboard: true}, 'show');
+          } else {
+            var loaderElem = $("#event-modal-loader");
+            loaderElem.find("input.event-id-input").val( eventId );
+            loaderElem.find("#load-modal-action").click();
+          }
+          e.preventDefault();
+        } );
+      }
+    </script><script type="text/javascript">function addStarredEventOnClick( containerNode ){
+        $(containerNode).find( "[data-event-star]" ).on("click", function(e){
+          var eventId = $(this).data("event-star"); 
+          var starEventFormElem = $("#event-star-form");
+          starEventFormElem.find("input.event-id-input").val( eventId );
+          starEventFormElem.find("#star-event-action").click();
+          e.preventDefault();
+          e.stopPropagation();
+        } );
+      }
+    </script><script type="text/javascript">function pauseOnCloseModal( modalid ){
+        //pauses video (only youtube at the moment) when closing modal
+        $('#' + modalid).on('hidden.bs.modal', function () {
+          $(this).find('.embed-container iframe[src*=enablejsapi]').each( function(){ this.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*') } );
+        } )
+      }
+    </script>
+</head>
+<body id="track"><div class="frame"><div class="logobar"><div class="container"><a href="https://conf.researchr.org/home/CC-2027" class="navbar-brand navigate"><span class="brand-text">CC 2027</span></a><div class="place">Sat 20 - Sun 21 March 2027 <a href="https://conf.researchr.org/venue/CC-2027/hpca-cgo-ppopp-cc-2027-venue" class="navigate"></a></div><div class="place2">co-located with <a href="https://conf.researchr.org/home/hpca-cgo-ppopp-cc-2027" class="navigate">HPCA/CGO/PPoPP/CC 2027</a></div></div></div><div class="navbar navbar-default"><div class="container"><div class="navbar-header"><button type="button" data-toggle="collapse" data-target="#navigationbar" class="navbar-toggle"><span class="sr-only">Toggle navigation</span><span class="icon-bar"></span><span class="icon-bar"></span><span class="icon-bar"></span></button></div><div id="navigationbar" class="navigationbar collapse navbar-collapse"><ul class="block nav navbar-nav"><li class="dropdown"><a href="#" data-toggle="dropdown" class="dropdown-toggle">Attending <span class="caret"></span></a><ul class="block dropdown-menu"><li class="block"><a href="https://conf.researchr.org/venue/CC-2027/hpca-cgo-ppopp-cc-2027-venue" class="navigate">Venue: Venue Name (change me)</a></li></ul></li><li class="block"><a href="https://conf.researchr.org/track/CC-2027/CC-2027-research-papers" class="navigate">Track/Call</a></li><li class="dropdown"><a href="#" data-toggle="dropdown" class="dropdown-toggle">Organization <span class="caret"></span></a><ul class="block dropdown-menu multi-column columns-1"><div class="row"><div class="col-sm-12"><ul class="block multi-column-dropdown"><li class="block dropdown-header">CC 2027 Committees</li><li class="block"><a href="https://conf.researchr.org/committee/CC-2027/CC-2027-organizing-committee" class="navigate">Organizing Committee</a></li><li class="block"><a href="https://conf.researchr.org/committee/CC-2027/CC-2027-program-committee" class="navigate">Program Committee</a></li><li class="block dropdown-header">Contributors</li><li class="block"><a href="https://conf.researchr.org/people-index/CC-2027" class="navigate"><span class="glyphicon glyphicon-search"></span><sup><span class="glyphicon glyphicon-user"></span></sup> People Index</a></li></ul></div></div></ul></li><li class="block"><a href="https://conf.researchr.org/search/CC-2027//all" class="navigate"><span class="glyphicon glyphicon-search"></span><span class="hidden-sm"> Search</span></a></li><li class="dropdown"><a href="#" data-toggle="dropdown" class="dropdown-toggle"><span class="hidden-sm">Series <span class="caret"></span></span><span title="Series" class="visible-sm"><span class="glyphicon glyphicon-repeat"></span> <span class="caret"></span></span></a><ul class="block dropdown-menu"><li class="block"><a href="https://conf.researchr.org/series/CC" class="navigate"><span class="glyphicon glyphicon-home"></span> Series</a></li><li class="block divider"></li><li class="block"><span class="text-muted" style="margin-left: 2px;"><span class="glyphicon glyphicon-hand-right"></span> CC 2027</span></li><li class="block"><a href="https://conf.researchr.org/home/CC-2026" class="navigate">CC 2026</a></li><li class="block"><a href="https://conf.researchr.org/home/CC-2025" class="navigate">CC 2025</a></li><li class="block"><a href="https://conf.researchr.org/home/CC-2024" class="navigate">CC 2024</a></li><li class="block"><a href="https://conf.researchr.org/home/CC-2023" class="navigate">CC 2023</a></li><li class="block"><a href="https://conf.researchr.org/home/CC-2022" class="navigate">CC 2022</a></li><li class="block"><a href="https://conf.researchr.org/home/CC-2021" class="navigate">CC 2021</a></li><li class="block"><a href="https://conf.researchr.org/home/CC-2020" class="navigate">CC 2020</a></li><li class="block"><a href="https://cc-conference.github.io/19/" target="_blank" class="navigate">CC 2019 <span class="pull-right"><span class="glyphicon glyphicon-new-window"></span></span></a></li><li class="block"><a href="https://cc-conference.github.io/18/" target="_blank" class="navigate">CC 2018 <span class="pull-right"><span class="glyphicon glyphicon-new-window"></span></span></a></li><li class="block"><a href="https://conf.researchr.org/home/CC-2017" class="navigate">CC 2017</a></li><li class="block"><a href="https://cc-conference.github.io/16/" target="_blank" class="navigate">CC 2016 <span class="pull-right"><span class="glyphicon glyphicon-new-window"></span></span></a></li><li class="block"><a href="https://www.etaps.org/index.php/2015/cc" target="_blank" class="navigate">CC 2015 <span class="pull-right"><span class="glyphicon glyphicon-new-window"></span></span></a></li><li class="block"><a href="https://www.etaps.org/index.php/2014/cc" target="_blank" class="navigate">CC 2014 <span class="pull-right"><span class="glyphicon glyphicon-new-window"></span></span></a></li><li class="block"><a href="http://cc2013.elis.ugent.be/?file=home" target="_blank" class="navigate">CC 2013 <span class="pull-right"><span class="glyphicon glyphicon-new-window"></span></span></a></li><li class="block"><a href="https://www.etaps.org/2012/cc" target="_blank" class="navigate">CC 2012 <span class="pull-right"><span class="glyphicon glyphicon-new-window"></span></span></a></li><li class="block"><a href="http://www.complang.tuwien.ac.at/cc2011/" target="_blank" class="navigate">CC 2011 <span class="pull-right"><span class="glyphicon glyphicon-new-window"></span></span></a></li><li class="block"><a href="http://www.cs.ucr.edu/~gupta/CC%202010.htm" target="_blank" class="navigate">CC 2010 <span class="pull-right"><span class="glyphicon glyphicon-new-window"></span></span></a></li></ul></li></ul><div class="navbar-right"><ul class="block nav navbar-nav"><li class="block"><a href="https://conf.researchr.org/signin/CC-2027/https%3A%5Es%5Esconf.researchr.org%5Estrack%5EsCC-2027%5EsCC-2027-research-papers" rel="nofollow" class="navigate">Sign in</a></li><li class="block"><a href="https://conf.researchr.org/signup/CC-2027" class="navigate">Sign up</a></li></ul></div></div></div></div><div id="content" class="container"><div class="page-header"><span class="text-muted small"><span class="glyphicon glyphicon-home"></span> <a href="https://conf.researchr.org/home/hpca-cgo-ppopp-cc-2027" class="navigate">HPCA/CGO/PPoPP/CC 2027</a> (<a href="https://conf.researchr.org/series/hpca-cgo-ppopp-cc" class="navigate">series</a>) / </span><span class="text-muted small"><span class="glyphicon glyphicon-home"></span> <a href="https://conf.researchr.org/home/CC-2027" class="navigate">CC 2027</a> (<a href="https://conf.researchr.org/series/CC" class="navigate">series</a>) / </span><h1>Research papers<span class="pull-right small h1">CC 2027</span></h1></div><div class="row"><div class="col-sm-8"><ul id="tab" class="nav nav-pills"><li><a href="#call-Call-for-Papers-ACM-SIGPLAN-CC-27" data-toggle="tab">Call for Papers: ACM SIGPLAN CC'27</a></li></ul><script type="text/javascript">(function(){
+    var post_process_function = function(n){ var node=(n&&n.nodeType === 1)?n:document; autoTabFunction(node); };
+    var original_post_process_func = ajax_post_process;
+    ajax_post_process = function(){
+      original_post_process_func.apply(this,arguments);
+      post_process_function.apply(this,arguments);
+    };
+    $(document).ready( post_process_function );
+  })();   
+  </script><div class="tab-content"><div id="call-Call-for-Papers-ACM-SIGPLAN-CC-27" class="tab-pane "><h2>Call for Papers: ACM SIGPLAN CC'27</h2><p><p>The ACM SIGPLAN 2027 International Conference on Compiler Construction (CC 2027) is interested in work on processing programs in the most general sense: analyzing, transforming, or executing input programs that describe how a system operates.</p>
+<p>Original contributions are solicited on the topics of interest, which include, but are not limited to:</p>
+<ul>
+<li>
+<p>Compilation and interpretation techniques, including program representation, analysis, and transformation; code generation, optimization, and synthesis; the verification thereof.</p>
+</li>
+<li>
+<p>Design and implementation of novel language constructs, programming models, and domain-specific languages.</p>
+</li>
+<li>
+<p>Compiler design and construction for modern, emerging, or non-conventional domains of computing, e.g., AI and deep learning programming frameworks, EDA toolchains, high-level synthesis of hardware, database engines, quantum computing, and DNA computing.</p>
+</li>
+<li>
+<p>Compiler design and construction for modern, emerging, or non-conventional hardware, e.g., specialized AI chips and accelerators, quantum computing hardware, etc.</p>
+</li>
+<li>
+<p>Techniques, ranging from programming languages to micro-architectural support, for various domains of computing, including secure, parallel, distributed, embedded, or mobile environments.</p>
+</li>
+<li>
+<p>Run-time techniques, including memory management, virtual machines, and dynamic and just-in-time compilation.</p>
+</li>
+<li>
+<p>Programming tools, including refactoring editors, checkers, verifiers, compilers, debuggers, and profilers.</p>
+</li>
+</ul>
+<p>CC is an ACM SIGPLAN conference and implements guidelines and procedures recommended by SIGPLAN. Prospective authors should be aware of ACM’s Copyright policies. Proceedings will be made available online in the ACM digital library from one week before to one week after the conference.</p>
+<h3>Call for Tool and Practical Experience Papers</h3>
+<p>This year, CC will offer a second category of papers called “Tools and Practical Experience”. Papers in this category must either give a clear account of a tool’s functionality or summarize a practical experience with realistic case studies. The successful evaluation of an artifact is mandatory for a Tool Paper. Therefore, authors of work conditionally accepted as Tool Papers must submit an artifact to the Artifact Evaluation Committee. The successful evaluation of the artifact is a requirement for final acceptance.</p>
+<p>Practical experience papers are encouraged, but not required, to submit an artifact to the Artifact Evaluation process.</p>
+<p>When submitting in HotCRP, select Tool Paper or Practical Experience Paper as the paper type. Prefix the title in both HotCRP and the submitted PDF with “Tool:” or “Practice:”, respectively. This helps reviewers identify the paper type and apply the appropriate selection criteria.</p>
+<p>The selection criteria for papers in this category are:</p>
+<p>Originality: Papers should present CC-related technologies applied to real-world problems with scope or characteristics that set them apart from previous solutions.</p>
+<p>Usability: The presented tools or compilers should have broad usage or applicability. They are expected to assist in CC-related research, or could be extended to investigate or demonstrate new technologies. If significant components are not yet implemented, the paper will not be considered.</p>
+<p>Documentation: The tool or compiler should be presented on a website giving documentation and further information about the tool.</p>
+<p>Benchmark Repository: A suite of benchmarks for testing should be provided.</p>
+<p>Availability: Authors are encouraged to make the tool or compiler available for public use.</p>
+<p>Foundations: Papers should incorporate the principles underpinning Compiler Construction (CC). However, a thorough discussion of theoretical foundations is not required; a summary of such should suffice.</p>
+<p>Artifact Evaluation: The submitted artifact must be functional and support the claims made in the paper. Submission of an artifact is mandatory for papers presenting a tool.</p>
+<p>Tool and Practical Experience papers abide by the same limit of 10 pages in the ACM format, references excluded, and are not distinguished in the final proceedings. We encourage shorter submissions that give an account of how scientific ideas have been incorporated and used in practice.</p>
+<p><b>Submission Guidelines</b></p>
+<p>Submission site (now open): <a href="https://cc27.hotcrp.com">https://cc27.hotcrp.com</a></p>
+<p>All submissions must be made electronically through the conference submission website and include an abstract (100–400 words), author contact information, the full list of authors, and their affiliations. Full paper submissions must be in PDF format and printable on US letter-size paper.</p>
+<p>All papers must be prepared in ACM Conference Format using the 2-column acmart format in 10pt font: use the options \documentclass[sigplan,10pt,review,anonymous]{acmart} for LaTeX, and interim-layout.docx for Word. The templates for LaTeX and Microsoft Word can be found at the SIGPLAN author information page. Important note: The Word template (interim-layout.docx) on the ACM website uses 9pt font; you need to increase it to 10pt.</p>
+<p>Papers should contain a maximum of 10 pages of text (in a typeface no smaller than 10 point) or figures, NOT INCLUDING references. There is no page limit for references, and they must include the names of all authors (do not use et al.).</p>
+<p>Appendices are not allowed, but the authors may submit anonymous supplementary material, such as proofs, source code, or data sets; all supplementary material must be in PDF or ZIP format. Looking at supplementary material is at the discretion of the reviewers.</p>
+<p>Papers may be resubmitted to the submission site multiple times until the deadline; however, only the last version submitted before the deadline will be reviewed. Papers that exceed the length requirement, that deviate from the expected format, or that are submitted late will be rejected.</p>
+<p><b>Presentation</b></p>
+<p>One or more authors of every accepted paper are required to register for the conference and present it in person at the conference venue. If travel is not ultimately possible due to unforeseen circumstances like visa denial, unexpected visa processing delays, or medical emergencies, please contact the program chairs.</p>
+<p><b>AI Use</b></p>
+<p>Were AI tools used in conducting research that directly bears on the paper’s conclusions? If yes, include a separate AI Use section in the main text before the references. Identify the tools and describe how they were used. This section counts toward the 10-page limit. AI assistance with manuscript writing alone does not require disclosure.</p>
+<p><b>Supplemental Material</b></p>
+<p>Authors may upload an optional PDF containing supplemental material through the Supplemental Material field in HotCRP. Please anonymize the PDF and its metadata. The paper should be self-contained, as reviewers are not required to read the supplemental material.</p>
+<p><b>Distinguished Paper Awards</b></p>
+<p>CC 2027 will recognize outstanding contributions to compiler construction through Distinguished Paper Awards. Up to 10% of accepted papers may receive this distinction, which celebrates work that advances the theory or practice of compiler construction.</p>
+<p><b>ACM Publication Policies</b></p>
+<p>CC follows ACM’s Copyright Policies. Prospective authors should adhere to SIGPLAN’s Republication Policy and to ACM’s Policy and Procedures on Plagiarism.</p>
+<p>By submitting your article to an ACM Publication, you are hereby acknowledging that you and your co-authors are subject to all ACM Publications Policies, including ACM’s new Publications Policy on Research Involving Human Participants and Subjects. Alleged violations of this policy or any ACM Publications Policy will be investigated by ACM and may result in a full retraction of your paper, in addition to other potential penalties, as per ACM Publications Policy. <a href="https://www.acm.org/publications/policies/research-involving-human-participants-and-subjects">https://www.acm.org/publications/policies/research-involving-human-participants-and-subjects</a></p>
+<p>Please ensure that you and your co-authors obtain an ORCID ID, so you can complete the publishing process for your accepted paper. ACM has been involved in ORCID from the start and we have recently made a commitment to collect ORCID IDs from all of our published authors. The collection process has started and will roll out as a requirement throughout 2022. We are committed to improving author discoverability, ensuring proper attribution, and contributing to ongoing community efforts around name normalization; your ORCID ID will help in these efforts.</p>
+<p>Important update on ACM’s new open access publishing model for 2026 ACM conferences!</p>
+<p>Starting January 1, 2026, ACM will fully transition to Open Access. All ACM publications, including those from ACM-sponsored conferences, will be 100% Open Access. Authors will have two primary options for publishing Open Access articles with ACM: the ACM Open institutional model or by paying Article Processing Charges (APCs). With over 2,600 institutions already part of ACM Open, the majority of ACM-sponsored conference papers will not require APCs from authors or conferences (currently, around 76%).</p>
+<p>Authors from institutions not participating in ACM Open will need to pay an APC to publish their papers, unless they qualify for a financial waiver. To find out whether an APC applies to your article, please consult the list of participating institutions in ACM Open and review the <a href="https://www.acm.org/publications/policies/policy-on-discretionary-open-access-apc-waivers">https://www.acm.org/publications/policies/policy-on-discretionary-open-access-apc-waivers</a>. Keep in mind that waivers are rare and are granted based on specific criteria set by ACM.</p>
+<p>Understanding that this change could present financial challenges, ACM has approved a temporary subsidy for 2026 to ease the transition and allow more time for institutions to join ACM Open. The subsidy will offer:</p>
+<p>$250 APC for ACM/SIG members,</p>
+<p>$350 for non-members.</p>
+<p>This represents a 65% discount, funded directly by ACM. Authors are encouraged to help advocate for their institutions to join ACM Open during this transition period.</p>
+<p><b>Double-Blind Reviewing Process</b></p>
+<p>CC uses a double-blind reviewing process. Authors will need to identify any potential conflicts of interest with PC, as defined in the SIGPLAN policy.</p>
+<p>To facilitate the double-blind reviewing process, submissions (including supplementary material) should not reveal the identity of the authors in any way. Authors should leave out author names and affiliations from the body of their submission. They should also ensure that any references to the authors’ own related work should be in the third person (e.g., not “We build on our previous work …” but rather “We build on the work of …”).</p>
+<p>The purpose of this process is to help the PC and external reviewers reach an initial judgment about the paper without bias, not to make it impossible for them to discover the authors if they were to try. Nothing should be done in the name of anonymity that weakens the submission or makes the job of reviewing the paper more difficult. In particular, important background references should not be omitted or anonymized.</p>
+<p><b>Artifact Evaluation</b></p>
+<p>Authors are encouraged to submit their artifacts for the Artifact Evaluation (AE). The Artifact Evaluation process begins after the acceptance notification, and is run by a separate committee whose task is to assess how the artifacts support the work described in the papers.</p>
+<p>To ease the organization of the AE committee, we kindly ask authors to indicate at the time they submit the paper whether they are interested in submitting an artifact.</p>
+<p>Papers that go through the Artifact Evaluation process successfully will receive a seal of approval printed on the papers themselves.</p>
+<p>Authors of accepted papers are encouraged, but not required, to make these materials publicly available upon publication of the proceedings by including them as “source materials” in the ACM Digital Library.</p>
+<p>Additional information will be made available later.</p>
+<p><b>Distinguished Artifact Awards</b></p>
+<p>CC 2027 will recognize outstanding research artifacts that make it easy for others to reproduce results or build on the work. Up to 10% of the artifacts evaluated may receive a Distinguished Artifact Award.</p>
+<p><b>Publication Date</b></p>
+<p>AUTHORS TAKE NOTE: The official publication date is the date the proceedings are made available in the ACM Digital Library. This date may be up to two weeks prior to the first day of your conference. The official publication date affects the deadline for any patent filings related to published work.</p>
+</p></div></div></div><div class="col-sm-4 sidebar"><div class="panel panel-primary"><div class="panel-heading clearfix"><div class="panel-title">Important Dates<span class="pull-right"><small><span class="glyphicon glyphicon-globe"></span><span class="glyphicon glyphicon-time"></span> AoE (UTC-12h)</small></span></div></div><table class="table table-hover important-dates-in-sidebar"><tr href="https://conf.researchr.org/track/CC-2027/CC-2027-research-papers" class="clickable-row text-success"><td>Tue 1 Dec 2026<br/>Abstract registration deadline</td></tr><tr href="https://conf.researchr.org/track/CC-2027/CC-2027-research-papers" class="clickable-row text-success"><td>Thu 3 Dec 2026<br/>Full paper submission deadline</td></tr><tr href="https://conf.researchr.org/track/CC-2027/CC-2027-research-papers" class="clickable-row text-success"><td>Fri 8 Jan 2027<br/>Authors response period opens</td></tr><tr href="https://conf.researchr.org/track/CC-2027/CC-2027-research-papers" class="clickable-row text-success"><td>Wed 20 Jan 2027<span class="pull-right"><span title="Date changed at Thu 19 Nov 2026" class="label-warning label">updated</span></span><br/>Authors notification</td></tr></table></div><div class="panel panel-primary"><div class="panel-heading clearfix"><div class="panel-title">Submission Link</div></div><div class="panel-body"><small><span class="text-muted"><span class="glyphicon glyphicon-new-window"></span></span> <a href="https://cc27.hotcrp.com" title="Submission link for Call for Papers: ACM SIGPLAN CC'27" target="_blank" class="navigate">https://cc27.hotcrp.com</a></small></div></div></div></div><div id="messages-placeholder" class="alert alert-warning" style="display:none;"><a data-dismiss="alert" class="close">x</a><em>Fri 27 Nov 03:58</em></div></div><div id="notifications-ph" class="webdsl-placeholder"></div><div id="event-modal-loader" class="webdsl-placeholder"><form name="form_131600131703c411e65b13378d08eb1f6672b5a0259" id="form_131600131703c411e65b13378d08eb1f6672b5a0259" action="https://conf.researchr.org/eventDetailsModalByAjaxConferenceEdition" accept-charset="UTF-8" method="POST" class="hidden"><input type="hidden" name="form_131600131703c411e65b13378d08eb1f6672b5a0259" value="1" /><input type="hidden" name="context" value="CC-2027" /><input name="ae03f7f6f951d515a297b161e922205d" type="text" value="" class="inputString form-control event-id-input"/><button style="position: absolute; left: -9999px; width: 1px; height: 1px;" onclick='javascript:serverInvoke("https://conf.researchr.org/eventDetailsModalByAjaxConferenceEdition","eventDetailsModalByAjaxConferenceEdition_ia0_3c411e65b13378d08eb1f6672b5a0259", [{"name":"context", "value":"CC-2027"},],"form_131600131703c411e65b13378d08eb1f6672b5a0259", this.nextSibling, false,"event-modal-loader"); return false;'></button><a submitid="eventDetailsModalByAjaxConferenceEdition_ia0_3c411e65b13378d08eb1f6672b5a0259" href="javascript:void(0)" onclick="javascript:loadImageElem=this;$(this.previousSibling).click()" id="load-modal-action"></a></form></div><div id="event-star-form" class="webdsl-placeholder"><form name="form_509860938088b48fd14544d4239b498a2cf339e02b" id="form_509860938088b48fd14544d4239b498a2cf339e02b" action="https://conf.researchr.org/eventStarByAjaxConferenceEdition" accept-charset="UTF-8" method="POST" class="hidden"><input type="hidden" name="form_509860938088b48fd14544d4239b498a2cf339e02b" value="1" /><input type="hidden" name="context" value="CC-2027" /><input name="a0b55aa29cf9431a9461b359872014e3" type="text" value="" class="inputString form-control event-id-input"/><button style="position: absolute; left: -9999px; width: 1px; height: 1px;" onclick='javascript:serverInvoke("https://conf.researchr.org/eventStarByAjaxConferenceEdition","eventStarByAjaxConferenceEdition_ia0_88b48fd14544d4239b498a2cf339e02b", [{"name":"context", "value":"CC-2027"},],"form_509860938088b48fd14544d4239b498a2cf339e02b", this.nextSibling, false,"event-star-form"); return false;'></button><a submitid="eventStarByAjaxConferenceEdition_ia0_88b48fd14544d4239b498a2cf339e02b" href="javascript:void(0)" onclick="javascript:loadImageElem=this;$(this.previousSibling).click()" id="star-event-action"></a></form></div><div id="event-modals" class="webdsl-placeholder"></div><script type="text/javascript">(function(){
+    var post_process_function = function(n){ var node=(n&&n.nodeType === 1)?n:document; addEventModalLoadOnClick(node); addStarredEventOnClick(node); };
+    var original_post_process_func = ajax_post_process;
+    ajax_post_process = function(){
+      original_post_process_func.apply(this,arguments);
+      post_process_function.apply(this,arguments);
+    };
+    $(document).ready( post_process_function );
+  })();   
+  </script><footer class="footer"><div class="container"><div class="footer-box"><div class="row"><div class="col-sm-3"><h3><a href="https://conf.researchr.org/home/CC-2027" class="navigate"><span class="glyphicon glyphicon-home"></span> CC 2027</a></h3><div><a href="https://conf.researchr.org/contact/CC-2027" class="navigate"><span class="glyphicon glyphicon-envelope"></span> contact form</a></div><hr/>using <a href="https://conf.researchr.org" class="navigate">conf.researchr.org</a> (<a href="http://yellowgrass.org/roadmap/conf.researchr.org" class="navigate">v1.76.1</a>)<br/><small><a href="https://conf.researchr.org/support/CC-2027" target="_blank" class="navigate"><span class="glyphicon glyphicon-question-sign"></span> Support page</a></small><br/><small></small></div><div class="col-sm-5"><div class="row"><div class="col-sm-6"><h4>Tracks</h4><a href="https://conf.researchr.org/track/CC-2027/CC-2027-research-papers" class="navigate">Research papers</a></div><div class="col-sm-6"></div></div></div><div class="col-sm-2"><h4>Attending</h4><a href="https://conf.researchr.org/venue/CC-2027/hpca-cgo-ppopp-cc-2027-venue" class="navigate">Venue: Venue Name (change me)</a><br></div><div class="col-sm-2"><a href="https://conf.researchr.org/signup/CC-2027" class="navigate">Sign Up</a></div></div></div></div></footer></div><script type="text/javascript">(function(){
+    var post_process_function = function(n){ var node=(n&&n.nodeType === 1)?n:document; let defaultplacement = $(document).scrollLeft() > 100 ? 'auto left' : 'auto top'; $(node).find('[title]').each( function(i,el){ var $e=$(el);$e.tooltip({placement: function(tt, elem){ var attval = elem.getAttribute('data-placement'); return attval ? attval : defaultplacement; }, sanitize: false, container: 'body' }) } ).on('show.bs.tooltip', function () {  let el = this; while (el && window.getComputedStyle(el).position !== 'fixed') { el = el.parentElement; } if(el) $(this).data('bs.tooltip').options.container = el;});$('.tooltip.fade.in, .ui-tooltip-content').remove();  };
+    var original_post_process_func = ajax_post_process;
+    ajax_post_process = function(){
+      original_post_process_func.apply(this,arguments);
+      post_process_function.apply(this,arguments);
+    };
+    $(document).ready( post_process_function );
+  })();   
+  </script><script type="text/javascript">jQuery(document).ready(function($) {
+        $(".clickable-row").click(function() {
+          var href = $(this).attr("href");
+          if( window.location.href.indexOf( href ) < 0 ){
+            if ($(this).hasClass('new-window') ){
+              window.open( href );
+            } else {
+              window.document.location = href;
+            }
+          }
+        });
+    });
+    </script></body></html>
