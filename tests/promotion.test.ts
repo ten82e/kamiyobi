@@ -390,7 +390,6 @@ describe("promotion batch", () => {
       extractCfpCandidates("Paper submission deadline: May 15, 2026 mid-day AoE"),
     ).toMatchObject([{ date: "2026-05-15", time: "12:00:00", timezone: "AoE" }]);
   });
-  });
 
   it("applies an explicit page-wide deadline time without treating the event date as a deadline", () => {
     const [deadline, notification, event] = extractCfpCandidates(
