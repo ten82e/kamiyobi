@@ -270,7 +270,7 @@ function extractedDate(text: string): { date: string; year: number } | null {
     `\\b(\\d{1,2})(?:st|nd|rd|th)?[-/\\s]+(${MONTH_NAME})\\.?[,]?[-/\\s]+(20\\d{2})\\b`,
     "i",
   ).exec(text);
-  const japanese = /\b(20\d{2})年(\d{1,2})月(\d{1,2})日/.exec(text);
+  const japanese = /\b(20\d{2})年(\d{1,2})月(\d{1,2})(?!\d)日?/.exec(text);
   const year = iso
     ? Number(iso[1])
     : monthFirst
