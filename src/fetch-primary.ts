@@ -17,6 +17,7 @@ import {
   isNonPaperWorkshopLabel,
   isStandaloneNonPaperDeadline,
   monthOf,
+  namedTimeZonePhraseOf,
   resolveTzStatus,
   roundOf,
   usTimeZonePhraseOf,
@@ -313,6 +314,7 @@ export function extractDeadline(
   if (!tz) {
     const phraseTz = usTimeZonePhraseOf(timeSrc) ?? usTimeZonePhraseOf(window);
     if (phraseTz) tz = phraseTz;
+    else tz = namedTimeZonePhraseOf(window) ?? undefined;
   }
   // 日付を含む側の行から壁時計の時刻を取る。
   // 無ければ time を載せない。
