@@ -19,6 +19,7 @@ import {
   isNonPaperWorkshopLabel,
   isStandaloneNonPaperDeadline,
   monthOf,
+  namedTimeZonePhraseOf,
   type ProviderIdentity,
   parseInstant,
   resolveTzStatus,
@@ -420,7 +421,7 @@ function extractedTimezone(text: string): string | undefined {
     if (candidate.includes("/") && !isKnownIanaTimezone(candidate)) continue;
     return candidate;
   }
-  return undefined;
+  return namedTimeZonePhraseOf(text) ?? undefined;
 }
 
 // 提出開始日や原稿に含まれる要旨の説明から、概要締切を作らない。
