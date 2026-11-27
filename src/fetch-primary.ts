@@ -15,6 +15,7 @@ import { booleanValue, normalizeShortEquals, stringValue } from "./args.ts";
 import {
   deadlineTrackKey,
   isNonPaperWorkshopLabel,
+  isStandaloneNonPaperDeadline,
   monthOf,
   resolveTzStatus,
   roundOf,
@@ -45,6 +46,7 @@ const LABELS: Record<string, string> = {
   registration: "Registration",
   supplementary: "Supplementary material",
   rebuttal_end: "Rebuttal deadline",
+  other: "Other deadline",
 };
 
 async function fetchPage(url: string, timeout = 30_000): Promise<string> {
@@ -163,6 +165,9 @@ function kindOf(window: string | null | undefined): string {
     low.includes("リバッタル")
   ) {
     return "rebuttal_end";
+  }
+  if (isStandaloneNonPaperDeadline(low)) {
+    return "other";
   }
   return isNonPaperWorkshopLabel(String(window ?? "")) ? "other" : "paper";
 }
