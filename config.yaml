@@ -21,6 +21,7 @@ promotion:
 venue_identities:
   aamas: {source_ids: {aideadlines: aamas, ccfddl: AI/aamas}}
   acl: {source_ids: {aideadlines: acl, ccfddl: AI/acl}}
+  acm-mm: {source_ids: {aideadlines: acm_mm, ccfddl: CG/mm}} # https://2026.acmmm.org/ → https://2027.acmmm.org/
   coling: {source_ids: {aideadlines: coling, ccfddl: AI/coling}}
   colm: {source_ids: {aideadlines: colm, ccfddl: AI/colm}} # https://colmweb.org/ → https://colm.cc/
   cvm: {source_ids: {ccfddl: CG/cvm, local: cvm}}
