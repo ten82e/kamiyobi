@@ -61,6 +61,16 @@ export function extractObservationTime(text: string | null | undefined): string 
     if (folded.includes("真夜中")) return "23:59:00";
     if (folded.includes("午前0時")) return "00:00:00";
     if (String(text).includes("正午")) return "12:00:00";
+    const hm = /\b(\d{1,2})\s*([AaPp]\.?[Mm]\.?)\b/.exec(String(text));
+    if (hm) {
+      let hh = Number(hm[1]);
+      const ap = hm[2].replace(/\./g, "").toLowerCase();
+      if (hh >= 1 && hh <= 12) {
+        if (ap === "pm" && hh < 12) hh += 12;
+        if (ap === "am" && hh === 12) hh = 0;
+        return `${String(hh).padStart(2, "0")}:00:00`;
+      }
+    }
     const hourH = HOUR_H_TIME_RE.exec(String(text));
     if (!hourH) return null;
     const hour = Number(hourH[1]);
