@@ -613,6 +613,21 @@ describe("promotion batch", () => {
     ]);
   });
 
+  it("extracts month-first day ranges as the last published day (#836)", () => {
+    expect(extractCfpCandidates("Deadline: June 17-21, 2026")).toMatchObject([
+      { date: "2026-06-21" },
+    ]);
+    expect(extractCfpCandidates("Deadline: June 17–21, 2026")).toMatchObject([
+      { date: "2026-06-21" },
+    ]);
+    expect(extractCfpCandidates("Deadline: June 17 to 21, 2026")).toMatchObject([
+      { date: "2026-06-21" },
+    ]);
+    expect(extractCfpCandidates("Paper submission deadline: June 17, 2026")).toMatchObject([
+      { date: "2026-06-17" },
+    ]);
+  });
+
   it("keeps uppercase BOT as an extracted timezone (#925)", () => {
     expect(extractCfpCandidates("Deadline: May 15, 2026 23:59 BOT")).toMatchObject([
       { date: "2026-05-15", time: "23:59:00", timezone: "BOT" },
