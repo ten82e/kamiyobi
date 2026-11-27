@@ -9,6 +9,7 @@
 export const PLACE_QUERY_ALIASES_JA: string[][] = [
   // Published-data refresh 2026-11-25: cities that reached five recorded rows.
   ["イラクリオ", "heraklion"],
+  ["ヘラクレオン", "heraklion"],
   // Published-data refresh 2026-11-08: cities that reached five recorded rows.
   ["ブエノスアイレス", "buenos aires"],
   ["グルノーブル", "grenoble"],
