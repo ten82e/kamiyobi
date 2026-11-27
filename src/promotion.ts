@@ -17,6 +17,7 @@ import {
   type IdentityProvider,
   isDateOnlyDeadline,
   isNonPaperWorkshopLabel,
+  isStandaloneNonPaperDeadline,
   monthOf,
   type ProviderIdentity,
   parseInstant,
@@ -448,6 +449,7 @@ function candidateKind(text: string): string {
   if (value.includes("rebuttal") || value.includes("author response") || value.includes("査読回答"))
     return "rebuttal_end";
   if (value.includes("registration") || value.includes("参加登録")) return "registration";
+  if (isStandaloneNonPaperDeadline(value)) return "other";
   return isNonPaperWorkshopLabel(text) ? "other" : "paper";
 }
 
