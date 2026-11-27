@@ -42,6 +42,12 @@ describe("extractObservationTime", () => {
     expect(extractObservationTime("deadline 11 p.m. AoE")).toBe("23:00:00");
     expect(extractObservationTime("due 12 AM")).toBe("00:00:00");
     expect(extractObservationTime("due 12 PM")).toBe("12:00:00");
+    expect(extractObservationTime("due 2026-05-10 1700 UTC")).toBe("17:00:00");
+    expect(extractObservationTime("deadline 2359 AoE")).toBe("23:59:00");
+    expect(extractObservationTime("due at 900 JST")).toBe("09:00:00");
+    expect(extractObservationTime("due 2026-05-10 1700 UTC")).toBe("17:00:00");
+    expect(extractObservationTime("deadline 2359 AoE")).toBe("23:59:00");
+    expect(extractObservationTime("due at 900 JST")).toBe("09:00:00");
     expect(extractObservationTime("deadline: 2026-08-14 12:00 noon AoE")).toBe("12:00:00"); // 'noon' は修飾語・数値時刻は正
     expect(extractObservationTime("Deadline: May 15, 2026 UTC+09:00")).toBeNull();
     expect(extractObservationTime("Deadline: May 15, 2026 23:59 UTC+09:00")).toBe("23:59:00");
