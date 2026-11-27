@@ -450,6 +450,15 @@ describe("fetch-primary extraction", () => {
     ).toBe("EDT");
   });
 
+  it("treats 要旨締切 as an abstract deadline (#796)", () => {
+    expect(extractDeadline("要旨締切: 2026年5月10日 (JST)", 2026)).toMatchObject({
+      kind: "abstract",
+      date: "2026-05-10",
+      tz: "JST",
+    });
+    expect(extractDeadline("原稿投稿締切: 2026年6月1日", 2026)?.kind).toBe("paper");
+  });
+
   it("extracts confirmed Asia/Pacific abbreviations that resolveTz already accepts (#788)", () => {
     expect(extractDeadline("Paper deadline: May 15, 2026 23:59 KST", 2026)).toMatchObject({
       date: "2026-05-15",

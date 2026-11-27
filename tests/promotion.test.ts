@@ -673,6 +673,18 @@ describe("promotion batch", () => {
     ]);
   });
 
+  it("treats 要旨締切 and アブストラクト締切 as abstract deadlines (#796)", () => {
+    expect(
+      extractCfpCandidates("要旨締切: 2026年5月1日\n原稿投稿締切: 2026年6月1日"),
+    ).toMatchObject([
+      { kind: "abstract", date: "2026-05-01" },
+      { kind: "paper", date: "2026-06-01" },
+    ]);
+    expect(extractCfpCandidates("アブストラクト締切: 2026年6月1日")).toMatchObject([
+      { kind: "abstract", date: "2026-06-01" },
+    ]);
+  });
+
   it("keeps uppercase BOT as an extracted timezone (#925)", () => {
     expect(extractCfpCandidates("Deadline: May 15, 2026 23:59 BOT")).toMatchObject([
       { date: "2026-05-15", time: "23:59:00", timezone: "BOT" },

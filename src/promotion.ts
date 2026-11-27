@@ -432,6 +432,7 @@ function candidateKind(text: string): string {
   if (
     value.includes("abstract") ||
     value.includes("概要") ||
+    value.includes("アブストラクト") ||
     ABSTRACT_DEADLINE_JA.test(text) ||
     value.includes("発表申込") ||
     value.includes("講演申込")
