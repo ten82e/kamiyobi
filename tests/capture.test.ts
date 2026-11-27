@@ -1,7 +1,15 @@
 import { readFileSync, writeFileSync } from "node:fs";
+import type { IncomingMessage } from "node:http";
 import { join } from "node:path";
+import { Readable } from "node:stream";
 import { describe, expect, it } from "vitest";
-import { assertSafePageUrl, capturePage, PageCaptureError, writeCasBody } from "../src/capture.ts";
+import {
+  assertSafePageUrl,
+  capturePage,
+  PageCaptureError,
+  responseFromIncoming,
+  writeCasBody,
+} from "../src/capture.ts";
 import { tempWork } from "./helpers.ts";
 
 describe("capture safety and SSRF protections", () => {
@@ -172,6 +180,18 @@ describe("capturePage resource cleanup and error mapping", () => {
         new Uint8Array([1]),
       ),
     ).toThrow(/content-addressed body mismatch/);
+  });
+
+  it("converts a pinned 304 response without a body and retains its cache headers", async () => {
+    const incoming = Object.assign(Readable.from([]), {
+      statusCode: 304,
+      statusMessage: "Not Modified",
+      rawHeaders: ["ETag", '"revision-2"'],
+    }) as IncomingMessage;
+    const response = responseFromIncoming(incoming);
+    expect(response.status).toBe(304);
+    expect(response.body).toBeNull();
+    expect(response.headers.get("etag")).toBe('"revision-2"');
   });
 
   it("preserves cached contentLength on 304 Not Modified", async () => {
