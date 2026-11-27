@@ -245,13 +245,13 @@ export function canonicalJson(value: unknown): string {
 }
 
 const MONTH_NAME =
-  "Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?";
+  "Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e|i)?|Jul(?:y|i)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?|Mai|Mär(?:z)?|Maerz|Okt(?:ober)?|Dez(?:ember)?";
 const MONTH_THEN_DAY = new RegExp(
   `\\b(?:${MONTH_NAME})\\.?[-/\\s]+\\d{1,2}(?:st|nd|rd|th)?(?:\\s*(?:[-–—]|to)\\s*\\d{1,2}(?:st|nd|rd|th)?)?(?:,)?[-/\\s]+20\\d{2}\\b`,
   "gi",
 );
 const DAY_THEN_MONTH = new RegExp(
-  `\\b\\d{1,2}(?:st|nd|rd|th)?(?:[-/\\s]+(?:of\\s+)?|\\s+of\\s+)(?:${MONTH_NAME})\\.?[,]?[-/\\s]+20\\d{2}\\b`,
+  `\\b\\d{1,2}(?:st|nd|rd|th)?(?:\\.[\\s/-]*|[-/\\s]+(?:of\\s+)?|\\s+of\\s+)(?:${MONTH_NAME})\\.?[,]?[-/\\s]+20\\d{2}\\b`,
   "gi",
 );
 
@@ -269,7 +269,7 @@ function extractedDate(text: string): { date: string; year: number } | null {
     "i",
   ).exec(text);
   const dayFirst = new RegExp(
-    `\\b(\\d{1,2})(?:st|nd|rd|th)?(?:[-/\\s]+(?:of\\s+)?|\\s+of\\s+)(${MONTH_NAME})\\.?[,]?[-/\\s]+(20\\d{2})\\b`,
+    `\\b(\\d{1,2})(?:st|nd|rd|th)?(?:\\.[\\s/-]*|[-/\\s]+(?:of\\s+)?|\\s+of\\s+)(${MONTH_NAME})\\.?[,]?[-/\\s]+(20\\d{2})\\b`,
     "i",
   ).exec(text);
   const japanese = /\b(20\d{2})年(\d{1,2})月(\d{1,2})(?!\d)日?/.exec(text);
@@ -285,9 +285,9 @@ function extractedDate(text: string): { date: string; year: number } | null {
   const month = iso
     ? Number(iso[2])
     : monthFirst
-      ? monthOf(monthFirst[1].slice(0, 3))
+      ? monthOf(monthFirst[1])
       : dayFirst
-        ? monthOf(dayFirst[2].slice(0, 3))
+        ? monthOf(dayFirst[2])
         : japanese
           ? Number(japanese[2])
           : 0;
