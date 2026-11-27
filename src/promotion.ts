@@ -249,7 +249,7 @@ const MONTH_THEN_DAY = new RegExp(
   "gi",
 );
 const DAY_THEN_MONTH = new RegExp(
-  `\\b\\d{1,2}(?:st|nd|rd|th)?[-/\\s]+(?:${MONTH_NAME})\\.?[,]?[-/\\s]+20\\d{2}\\b`,
+  `\\b\\d{1,2}(?:st|nd|rd|th)?(?:[-/\\s]+(?:of\\s+)?|\\s+of\\s+)(?:${MONTH_NAME})\\.?[,]?[-/\\s]+20\\d{2}\\b`,
   "gi",
 );
 
@@ -267,7 +267,7 @@ function extractedDate(text: string): { date: string; year: number } | null {
     "i",
   ).exec(text);
   const dayFirst = new RegExp(
-    `\\b(\\d{1,2})(?:st|nd|rd|th)?[-/\\s]+(${MONTH_NAME})\\.?[,]?[-/\\s]+(20\\d{2})\\b`,
+    `\\b(\\d{1,2})(?:st|nd|rd|th)?(?:[-/\\s]+(?:of\\s+)?|\\s+of\\s+)(${MONTH_NAME})\\.?[,]?[-/\\s]+(20\\d{2})\\b`,
     "i",
   ).exec(text);
   const japanese = /\b(20\d{2})年(\d{1,2})月(\d{1,2})(?!\d)日?/.exec(text);
