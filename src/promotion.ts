@@ -581,8 +581,7 @@ export function extractCfpCandidates(body: string): CfpExtractionCandidate[] {
   const seen = new Set<string>();
   const hasTimeExpression = (value: string) =>
     Boolean(extractedTime(value)) ||
-    /\b(?:\d{1,2}:\d{2}(?::\d{2})?|\d{1,2}\s*(?:a\.?m\.?|p\.?m\.?)|at\s+\d{3,4}|noon|mid-?day|midnight|end of (?:the )?day|eod)\b|真夜中|午前0時/i.test(
-    /\b(?:\d{1,2}:\d{2}(?::\d{2})?|\d{1,2}h[0-5]\d|\d{1,2}\s*(?:a\.?m\.?|p\.?m\.?)|at\s+\d{3,4}|noon|mid-?day|midnight|end of (?:the )?day|eod)\b/i.test(
+    /\b(?:\d{1,2}:\d{2}(?::\d{2})?|\d{1,2}h[0-5]\d|\d{1,2}\s*(?:a\.?m\.?|p\.?m\.?)|at\s+\d{3,4}|noon|mid-?day|midnight|end of (?:the )?day|eod)\b|真夜中|午前0時/i.test(
       value,
     );
   for (const originalRaw of lines) {
