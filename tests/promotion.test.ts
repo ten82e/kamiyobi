@@ -611,6 +611,12 @@ describe("promotion batch", () => {
     expect(extractCfpCandidates("Paper submission deadline: 2026/05/15 23:59 AoE")).toMatchObject([
       { date: "2026-05-15", time: "23:59:00", timezone: "AoE" },
     ]);
+    expect(extractCfpCandidates("Deadline: 15. May 2026 23:59 CET")).toMatchObject([
+      { date: "2026-05-15", time: "23:59:00", timezone: "CET" },
+    ]);
+    expect(extractCfpCandidates("Deadline: 15. Mai 2026 23:59 CET")).toMatchObject([
+      { date: "2026-05-15", time: "23:59:00", timezone: "CET" },
+    ]);
   });
 
   it("extracts month-first day ranges as the last published day (#836)", () => {
