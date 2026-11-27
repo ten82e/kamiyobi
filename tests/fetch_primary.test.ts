@@ -170,6 +170,11 @@ describe("fetch-primary extraction", () => {
     });
     expect(extractDeadline("Doctoral consortium deadline: June 1, 2026", 2026)?.kind).toBe("other");
     expect(extractDeadline("Workshop paper deadline: May 15, 2026", 2026)?.kind).toBe("paper");
+    expect(extractDeadline("Submission deadline: 15 May 2026 23.59 AoE", 2026)).toMatchObject({
+      date: "2026-05-15",
+      time: "23:59:00",
+      tz: "AoE",
+    });
   });
 
   it("abstract with round and tz", () => {

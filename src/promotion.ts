@@ -365,6 +365,17 @@ function extractedTime(text: string): string | undefined {
   if (/\b(?:(?:12\s*)?midnight|end of (?:the )?day|eod)\b/i.test(text)) {
     return "23:59:00";
   }
+  const dotted = /(?<![.\d])(\d{1,2})\.([0-5]\d)(?!\.\d)\s*(a\.?m\.?|p\.?m\.?)?/i.exec(text);
+  if (dotted) {
+    let hour = Number(dotted[1]);
+    const minute = Number(dotted[2]);
+    const meridiem = (dotted[3] ?? "").replace(/\./g, "").toLowerCase();
+    if (hour > 23 || (meridiem && hour > 12)) return undefined;
+    if (meridiem === "pm" && hour < 12) hour += 12;
+    if (meridiem === "am" && hour === 12) hour = 0;
+    if (hour > 23) return undefined;
+    return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}:00`;
+  }
   if (/\bmid-?day\b/i.test(text)) {
     return "12:00:00";
   }
@@ -601,7 +612,7 @@ export function extractCfpCandidates(body: string): CfpExtractionCandidate[] {
   const seen = new Set<string>();
   const hasTimeExpression = (value: string) =>
     Boolean(extractedTime(value)) ||
-    /\b(?:\d{1,2}:\d{2}(?::\d{2})?|\d{1,2}h[0-5]\d|\d{1,2}\s*(?:a\.?m\.?|p\.?m\.?)|at\s+\d{3,4}|noon|mid-?day|midnight|end of (?:the )?day|eod)\b|真夜中|午前0時/i.test(
+    /\b(?:\d{1,2}:\d{2}(?::\d{2})?|\d{1,2}h[0-5]\d|\d{1,2}\.\d{2}|\d{1,2}\s*(?:a\.?m\.?|p\.?m\.?)|at\s+\d{3,4}|noon|mid-?day|midnight|end of (?:the )?day|eod)\b|真夜中|午前0時/i.test(
       value,
     );
   for (const originalRaw of lines) {
