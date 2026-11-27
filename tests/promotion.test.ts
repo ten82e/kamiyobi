@@ -840,6 +840,10 @@ describe("promotion batch", () => {
   it("treats Closes and Closing date as deadline lines (#838)", () => {
     expect(extractCfpCandidates("Closes: May 15, 2026")).toMatchObject([{ date: "2026-05-15" }]);
     expect(extractCfpCandidates("Closing date: May 15, 2026")).toMatchObject([
+      { date: "2026-05-15" },
+    ]);
+  });
+
   it("extracts day-month dates that include of (#774)", () => {
     expect(
       extractCfpCandidates("Paper submission deadline: 15th of May, 2026 23:59 AoE"),
