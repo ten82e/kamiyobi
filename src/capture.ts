@@ -275,6 +275,28 @@ export function pinnedLookup(address: string): LookupFunction {
       : callback(null, address, isIP(address));
 }
 
+/** Convert a pinned-transport response; bodyless statuses get a null body (#961). */
+export function responseFromIncoming(incoming: IncomingMessage): Response {
+  const responseHeaders = new Headers();
+  for (let i = 0; i < incoming.rawHeaders.length; i += 2)
+    responseHeaders.append(incoming.rawHeaders[i]!, incoming.rawHeaders[i + 1]!);
+  const status = incoming.statusCode ?? 0;
+  /* Response の constructor は本文を持つ 204・205・304 を拒む（Fetch spec）。条件付き取得
+   * (SPEC §3.6) の 304 は本文が無い応答で、呼び出し側 (capturePage) は status・headers・
+   * url だけを読む。実測 2026-11-08: サーバが 304 を返すと Node の IncomingMessage は
+   * 空の本文ストリームを持ち、toWeb した物を其のまま渡すと constructor が例外で reverify
+   * 全体が落ちて居た。此れらの状態には null を渡す。 */
+  const body =
+    status === 204 || status === 205 || status === 304
+      ? null
+      : (Readable.toWeb(incoming) as unknown as ReadableStream<Uint8Array>);
+  return new Response(body, {
+    status,
+    statusText: incoming.statusMessage,
+    headers: responseHeaders,
+  });
+}
+
 function fetchPinned(url: URL, address: string, init: RequestInit): Promise<Response> {
   const headers = new Headers(init.headers);
   const lookup = pinnedLookup(address);
@@ -289,28 +311,7 @@ function fetchPinned(url: URL, address: string, init: RequestInit): Promise<Resp
       agent: false,
       ...(init.signal ? { signal: init.signal } : {}),
     };
-    const onResponse = (incoming: IncomingMessage): void => {
-      const responseHeaders = new Headers();
-      for (let i = 0; i < incoming.rawHeaders.length; i += 2)
-        responseHeaders.append(incoming.rawHeaders[i]!, incoming.rawHeaders[i + 1]!);
-      const status = incoming.statusCode ?? 0;
-      /* Response の constructor は本文を持つ 204・205・304 を拒む（Fetch spec）。条件付き取得
-       * (SPEC §3.6) の 304 は本文が無い応答で、呼び出し側 (capturePage) は status・headers・
-       * url だけを読む。実測 2026-11-08: サーバが 304 を返すと Node の IncomingMessage は
-       * 空の本文ストリームを持ち、toWeb した物を其のまま渡すと constructor が例外で reverify
-       * 全体が落ちて居た。此れらの状態には null を渡す。 */
-      const body =
-        status === 204 || status === 205 || status === 304
-          ? null
-          : (Readable.toWeb(incoming) as unknown as ReadableStream<Uint8Array>);
-      resolve(
-        new Response(body, {
-          status,
-          statusText: incoming.statusMessage,
-          headers: responseHeaders,
-        }),
-      );
-    };
+    const onResponse = (incoming: IncomingMessage): void => resolve(responseFromIncoming(incoming));
     const request =
       url.protocol === "https:"
         ? httpsRequest(options, onResponse)
